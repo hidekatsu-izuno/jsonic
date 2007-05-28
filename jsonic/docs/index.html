@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>jsonic - simple json encoder/decoder for java</title>
+<style type="text/css">
+	body { margin: 0px; font: 10pt sans-serif; }
+	.title { font: bold 20pt sans-serif; color: #6699FF; margin: 10px 5px 5px 5px; }
+	.title a { color: #6699FF; text-decoration: none; }
+	h1 .subtitle { font: italic 12pt sans-serif; color: gray; }
+	.menu { color: white; background: gray; padding: 0px 16px; }
+	.menu a { color: white; }
+	.main { padding: 5px 16px; width: 600px; line-height: 1.5; }
+	h2 { font: bold 12pt sans-serif; color: #666666; margin: 20px 0px 10px 0px;
+		border-left: 5px solid #6699FF; padding: 0px 5px; }
+	h3 { font: bold 11pt sans-serif; }
+	h3 .subtitle { font: 9pt sans-serif; }
+	h4 { font: bold 10pt sans-serif; }
+	h4 .subtitle { font: 9pt sans-serif; }
+	a { color: darkblue; }
+	p { margin: 0px 0px 1em 0px; padding: 0px; }
+	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
+	.comment { color: #0066FF; }
+	.em { font-weight: bold; color: #000099; }
+	table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
+		margin: 0px 0px 1em 0px; }
+	th { background-color: silver; border: 1px solid gray; }
+	td { border: 1px solid gray; padding: 2px 2px;}
+	sup { font-size: 8pt; }
+	.caption { font: 8pt sans-serif; margin: 10px; }
+	.copyright { color: white; background: gray; padding: 0px 16px; }
+</style>
+</head>
+<body>
+<h1 class="title"><a href="">JSONIC</a> <span class="subtitle">- simple json encoder/decoder for java</span></h1>
+<div class="menu">
+	<a href="#introduction">JSONICとは</a>
+	&nbsp;&nbsp;|&nbsp;&nbsp;
+	<a href="#download">ダウンロード</a>
+	&nbsp;&nbsp;|&nbsp;&nbsp;
+	<a href="#usage">使い方</a>
+	&nbsp;&nbsp;|&nbsp;&nbsp;
+	<a href="api/index.html">Javadoc</a>
+	&nbsp;&nbsp;|&nbsp;&nbsp;
+	<a href="#license">ライセンス</a>
+	&nbsp;&nbsp;|&nbsp;&nbsp;
+	<a href="#releasenote">リリースノート</a>
+</div>
+<div class="main">
+<h2 id="introduction">JSONICとは</h2>
+<p>JSONICは、Java用のシンプル(１クラスのみ！)かつ高機能なJSONエンコーダー/デコーダーライブラリです。<br />
+Java用のJSONライブラリは他にも複数ありますが、JSONICは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に従った正式なJSON形式でのデコード/エンコードを行いながらも、プログラミング言語に依存する情報をJSON内に含めることなくPOJO(Plain Old Java Object)と自然な変換を行える点に特徴があります。</p>
+<p>使い方も非常に簡単です。</p>
+<pre class="source">
+import net.arnx.jsonic.JSON;
+
+<span class="comment">// POJOをJSONに変換します</span>
+String text = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// JSONをPOJOに変換します</span>
+Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em">)</span>;
+</pre>
+
+<h2 id="download">ダウンロード</h2>
+<p>JSONICの現時点での最新バージョンは1.0です。</p>
+<p>以下のどちらかをダウンロードしてください。なお、JSONICには、Javaバージョン5.0以上が必要です。</p>
+<ul>
+<li><a href="http://www.asahi-net.or.jp/~dp8h-izn/resource/json-1.2.zip">jsonic-1.0.zip</a>（ソースコード含む）</li>
+<li><a href="http://www.asahi-net.or.jp/~dp8h-izn/resource/JSON.java">JSON.java</a>（ソースコードのみ）</li>
+</ul>
+
+<h2 id="usage">使い方</h2>
+
+<h3>基本的な使い方</h3>
+
+<p>通常の用途では、二つの静的メソッドencode/decodeだけ利用すれば事足ります。</p>
+<h4>■ encodeメソッド <span class="subtitle">- POJOからJSONへの変換</span></h4>
+<p>POJOからJSONに変換する場合は、encodeを使います。デフォルトでは、空白などを含まない可読性の低いJSONが出力されますが、二番目の引数をtrueにすることで可読性の高いJSONが出力されるようになります（Pretty Printモード）。</p>
+<pre class="source">
+<span class="comment">// 変換対象のPOJOを準備</span>
+Hoge hoge = new Hoge();
+hoge.number = 10;      <span class="comment">// public field</span>
+hoge.setString("aaa"); <span class="comment">// publid property</span>
+hoge.setArray(new int[] {1, 2, 3});
+
+<span class="comment">// POJOをJSONに変換します。戻り値は {"number":10,"string":"aaa","array":[1,2,3]}となります</span>
+String text = <span class="em">JSON.encode(</span>hoge<span class="em">)</span>;
+
+<span class="comment">// POJOを可読性の高いJSONに変換します。戻り値は次のような文字列になります
+// {
+//     "number": 10,
+//     "string": "aaa",
+//     "array": [1, 2, 3]
+// }</span>
+String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>; 
+</pre>
+<p>POJOからJSONへの変換ルールは次の通りです。</p>
+<table summary="POJOからJSONへの変換ルール">
+<tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
+<tr><td>Map</td><td rowspan="2">object</td></tr>
+<tr><td>Object</td></tr>
+<tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="2">array</td></tr>
+<tr><td>Collection</td></tr>
+<tr><td>char[], CharSequence</td><td rowspan="2">string</td></tr>
+<tr><td>char, Character</td></tr>
+<tr><td>byte[]</td><td>string (BASE64)</td></tr>
+<tr><td>Locale</td><td>string (言語コード-国コード)</td></tr>
+<tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※1)</sup></td></tr>
+<tr><td>Number</td></tr>
+<tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
+<tr><td>boolean, Boolean</td><td>true/false</td></tr>
+<tr><td>null</td><td>null</td></tr>
+</table>
+<div class="caption">(※1) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。</div>
+<p>なお、JSONのルートはobjectかarrayでなければなりません。このため、直接、intやStringのインスタンスをencodeメソッドの引数にしてもエラーとなり変換できません。この制約は後述の拡張モードをONにすることで解除することが可能です。</p>
+
+<h4>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h4>
+<p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
+<p>なお、JSON文字列が不正な場合にはParseExceptionを発生させますが、型の変換に失敗した場合は例外を発生させず単にnullをセットします（どうしても変換時のエラーを捕捉したい場合には、handConvertErrorをオーバーライドすることにより情報を取得することもできます）。</p>
+<pre class="source">
+<span class="comment">// JSONをPOJOに変換します。戻り値としてサイズが4のArrayListが返されます</span>
+List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<span class="em">)</span>;
+
+<span class="comment">// JSONをHogeクラスのインスタンスに変換します（キャストは不要です）</span>
+Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1, 2, 3]}", Hoge.class<span class="em">)</span>;
+</pre>
+<p>JSONからPOJOへの変換ルールは次の通りです。</p>
+<table summary="JSONからPOJOへの変換ルール">
+<tr><th style="width: 20%">変換元（JSON）</th><th style="width: 40%">指定された型</th><th style="width: 40%">変換先（Java）</th></tr>
+<tr><td rowspan="7">object</td><td>なし, Object, Map</td><td>HashMap</td></tr>
+<tr><td>SortedMap</td><td>TreeMap</td></tr>
+<tr><td>その他のMapを継承する型</td><td>指定された型</td></tr>
+<tr><td>CharSequence, String</td><td>String</td></tr>
+<tr><td>Appendable</td><td>StringBuilder</td></tr>
+<tr><td>その他のAppendableを継承する型</td><td>指定された型（文字列化したものをappend）</td></tr>
+<tr><td>その他の型</td><td>指定された型（パブリック・フィールド／プロパティに値をセット)</td></tr>
+<tr><td rowspan="6">array</td><td>なし, Object, Collection, List</td><td>ArrayList</td></tr>
+<tr><td>Set</td><td>HashSet</td></tr>
+<tr><td>SortedSet</td><td>TreeSet</td></tr>
+<tr><td>その他のCollectionを継承する型</td><td>指定された型</td></tr>
+<tr><td>short[], byte[], int[], long[], float[], double[], Object[]</td><td>指定された型</td></tr>
+<tr><td>Locale</td><td>Locale（「言語コード」「国コード」「バリアントコード」からなる配列とみなし変換）</td></tr>
+<tr><td rowspan="8">string</td><td>なし, Object, char,<br />Character, CharSequence, String</td><td>String</td></tr>
+<tr><td>Appendable</td><td>StringBuilder</td></tr>
+<tr><td>その他のAppendableを継承する型</td><td>指定された型（文字列化したものをappend）</td></tr>
+<tr><td>Dateを継承する型,<br />Calendarを継承する型</td><td>指定された型（文字列をDateFormatで変換）</td></tr>
+<tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型（文字列を数値とみなし変換）</td></tr>
+<tr><td>byte[]</td><td>byte[]（文字列をBASE64とみなし変換）</td></tr>
+<tr><td>Locale</td><td>Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換）</td></tr>
+<tr><td>boolean, Boolean</td><td>指定された型（"", "false", "NaN"の時false、その他の時true）</td></tr>
+<tr><td rowspan="4">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
+<tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
+<tr><td>Dateを継承する型,<br />Calendarを継承する型</td><td>指定された型（数値を1970年からのミリ秒とみなし変換）</td></tr>
+<tr><td>boolean, Boolean</td><td>指定された型（0以外の時true、0の時false）</td></tr>
+<tr><td rowspan="4">true/false</td><td>なし, Object, Boolean</td><td>Boolean</td></tr>
+<tr><td>float, double, Float, Double</td><td>指定された型（trueの時1.0、falseの時NaN）</td></tr>
+<tr><td>byte, short, int, long,<br />Byte, Short, Integer, Long,<br />BigInteger, その他のNumberを継承する型</td><td>指定された型（trueの時1、falseの時0）</td></tr>
+<tr><td>boolean</td><td>boolean</td></tr>
+<tr><td rowspan="4">null</td><td>なし, Object</td><td>null</td></tr>
+<tr><td>byte, short, int, long, float, double</td><td>0</td></tr>
+<tr><td>boolean</td><td>false</td></tr>
+<tr><td>char</td><td>'\u0000'</td></tr>
+</table>
+
+<h3>高度な使い方</h3>
+<p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
+<ul>
+<li><a href="#extends">継承による機能拡張</a></li>
+<li><a href="#extendedmode">拡張モード</a></li>
+<li><a href="#invoke">JSONを使ったメソッドの実行</a></li>
+<li><a href="#maxdepth">最大深度の設定</a></li>
+</ul>
+
+<h4 id="extends">■ 継承による機能拡張</h4>
+<p>JSONICは、フレームワークでの利用を考慮しインスタンスを生成したり、継承して拡張することができるように設計してあります。</p>
+<pre class="source">
+<span class="comment">// インスタンスを生成します</span>
+<span class="em">JSON</span> json = new <span class="em">JSON()</span>;
+
+<span class="comment">// POJOをJSONに変換します(encodeと同じ機能)</span>
+String text = json<span class="em">.format(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// POJOを可読性の高いJSONに変換します(Pretty Printモード)</span>
+json.<span class="em">setPrettyPrint(</span>true<span class="em">)</span>;
+String text = json<span class="em">.format(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// JSONをPOJOに変換します(decodeと同じ機能)</span>
+Map map = (Map)json<span class="em">.parse(</span>text<span class="em">)</span>;
+
+<span class="comment">// JSONをHogeクラスのインスタンスに変換します(decodeと同じ機能)</span>
+Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">)</span>;
+</pre>
+
+<p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を行うためにオーバーライド可能な次のメソッドが用意されています。</p>
+<pre class="source">
+JSON json = new JSON() {
+    <span class="comment">// 型cに対するインスタンスを生成します</span>
+    protected <span class="em">Object create(Class c)</span> {
+        return super.create(c);
+    }
+    
+    <span class="comment">// 値valueを型cに変換します（Generics型の場合にはtypeに対象の型が入ります）</span>
+    protected <span class="em">Object convert(Object value, Class c, Type type)</span> {
+        return super.convert(value, c, type);
+    }
+};
+</pre>
+
+<p>また、エラーを捕捉するためにオーバーライド可能な二つのメソッドが用意されています。</p>
+<pre class="source">
+JSON json = new JSON() {
+    <span class="comment">// JSONの構文解析でエラーが起こった場合に呼ばれます
+    // message: エラーメッセージ
+    // s: 入力文字列
+    // pos: エラーが発生した入力文字列上の位置
+    // line: エラーが発生した行
+    // col: エラーが発生した列</span>
+    protected <span class="em">void handleParseError(String message, CharSequence s,
+        int pos, int line, int col) throws ParseException</span> {
+        <span class="comment">// デフォルトでParseExceptionを投げます</span>
+        super.handleParseError(message, s, pos, line, col);
+    }
+    
+    <span class="comment">// JSONからPOJOの変換時にエラーが起こった場合に呼ばれます
+    // key: JavaBeansのproperty/field名
+    // value: 変換前の値
+    // c: 指定された型
+    // type: Genericsの指定型
+    // e: 発生した例外</span>
+    protected <span class="em">void handleConvertError(String key, Object value, Class c,
+        Type type, Exception e) throws Exception</span> {
+        <span class="comment">// デフォルトでは何もしません</span>
+        return super.handleConvertError(e);
+    }
+};
+</pre>
+
+<h4 id="extendedmode">■ setExtendedMode <span class="subtitle">- 拡張モードの利用</span></h4>
+<p>JSONのRFCに記載された仕様はシンプルで実装しやすい反面、制約がきつすぎる面があります。例えばJavaScriptではObjectのkeyとして文字列だけでなくidentifierが使えますし、文字列もダブルクォートだけでなくシングルクォートも使えますがJSONでは禁止されています。コメントや日付型も定義されていません。また、前述のようにルート要素がobjectとarrayに制限されています。このことは、JSONを設定ファイルとして利用したい場合やAjaxにてJSONを容易に扱いたい場合には不便です。</p>
+<p>そこで、JSONICでは拡張モードを用意しています。拡張モードをONにするとformat/parseメソッドの制限が緩くなり下記のことが可能になります（その代わりRFCの仕様からははずれてしまいますが）。</p>
+<ul>
+<li>[format/parse] ルートがobjectとarrayに制限されなくなります</li>
+<li>[format] DateやCalendar型をJSONに変換する場合「new Date(number)」と出力されます</li>
+<li>[format] NaN, Infinity, -Infinityが、stringではなくリテラルとして出力されます</li>
+<li>[parse] ダブルクォートだけでなくシングルクォートのstringが使えるようになります</li>
+<li>[parse] /**/および//形式のコメントを無視します</li>
+<li>[parse] objectのkeyとしてidentifierの使用を許容します</li>
+</ul>
+<p>拡張モードをONにするには次のようにsetExtendedModeにtrueをセットするだけです。</p>
+<pre class="source">
+<span class="comment">// 拡張モードをONにします</span>
+json<span class="em">.setExtendedMode(</span>true<span class="em">)</span>;
+</pre>
+
+<h4 id="invoke">■ invoke <span class="subtitle">- JSONを使ったメソッドの実行</span></h4>
+<p>JSONでRPC(Remote Procedure Call)を行おうと考えた場合、servletなどから送られてくるパラメータを上手い具合にメソッドの引数に引き渡す必要があります。JSONICでは、簡単にメソッドを実行できるようinvokeメソッドを用意しました。</p>
+<pre class="source">
+<span class="comment">// target.test(1, 2, 3)を実行します（引き渡すJSONはarrayでなければなりません）</span>
+json<span class="em">.invoke(</span>target, "test", "[1, 2, 3]"<span class="em">)</span>;
+</pre>
+<p>この時、あるメソッドは実行させたくない場合があります。その際にはlimitメソッドをオーバーライドすることで実行対象のメソッドを制限することができます。デフォルトではObjectクラスのメソッドを実行しないよう制限がかけられていますが、アノテーションが設定されているメソッドのみ実行するといった制限をかけることも容易に実現できます。</p>
+<pre class="source">
+JSON json = new JSON() {
+    <span class="comment">// methodの実行を制限する場合はtrue</span>
+    protected <span class="em">boolean limit(Method method)</span> {
+        <span class="comment">// デフォルトではObjectクラスのメソッドは実行しないように制限されています</span>
+        super.limit(method);
+    }
+};
+</pre>
+
+<h4 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h4>
+<p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため単純に入れ子の深さに制限を設けています。</p>
+<p>この最大深度は、デフォルトでは255に設定されていますが変更することも可能です。</p>
+<pre class="source">
+<span class="comment">// 5階層以下の情報は取得しない</span>
+json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
+</pre>
+
+<h2 id="license">ライセンス</h2>
+<p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
+<p>なお、書くまでもないことですが自分のライブラリへの組み込みやその際にパッケージ名や処理の変更など行っていただいて一向に構いません。保障はありませんが、ライセンスの範囲内でご自由にお使いください。</p>
+
+<h2 id="report">バグ・要望の報告先</h2>
+<p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONIC</a>のフォーラムにご連絡ください。</p>
+
+<h2 id="releasenote">リリースノート</h2>
+<h3>2007/05/27</h3>
+<p>日記上でほそぼそと公開していたSimple JSON Class for Javaを仕様などを整理し名前も新たに0.9にリバージョンして公開（機能面での変更はありませんが、微妙に変換ルールや仕様を調整してあります）。</p>
+</div>
+<div class="copyright">Copyright (C) 2007 Hidekatsu Izuno All right reserved.</div>
+</body>
+</html>
