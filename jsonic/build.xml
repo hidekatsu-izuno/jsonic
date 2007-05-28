@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+
+<project name="jsonic" basedir="." default="dist">
+	<property name="version" value="0.9.0" />
+
+	<property name="src" location="src" />
+	<property name="build" location="build" />
+	<property name="dist" location="." />
+	<property name="docs" location="docs" />
+	
+	<target name="init">
+		<tstamp />
+	</target>
+	
+	<target name="dist" depends="init">
+		<mkdir dir="${build}" />
+		<javac source="1.5" target="1.5" 
+			srcdir="${src}" destdir="${build}">
+		</javac>
+		<jar destfile="jsonic-${version}.jar">
+			<fileset dir="${build}">
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+		<zip destfile="jsonic-${version}.zip">
+			<zipfileset dir="${src}" prefix="jsonic-${version}/src" />
+			<zipfileset dir="${docs}" prefix="jsonic-${version}/docs" />
+			<zipfileset dir="." includes="jsonic-${version}.jar" prefix="jsonic-${version}" />
+			<zipfileset dir="." includes="build.xml" prefix="jsonic-${version}" />
+		</zip>
+		<delete includeemptydirs="on">
+			<fileset dir="${build}" />
+			<fileset file="jsonic-${version}.jar" />
+		</delete>
+	</target>
+	
+	<target name="clean">
+		<delete file="jsonic-${version}.zip" />
+	</target>
+</project>
