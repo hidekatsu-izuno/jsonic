@@ -140,7 +140,9 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>その他のCollectionを継承する型</td><td>指定された型</td></tr>
 <tr><td>short[], byte[], int[], long[], float[], double[], Object[]</td><td>指定された型</td></tr>
 <tr><td>Locale</td><td>Locale（「言語コード」「国コード」「バリアントコード」からなる配列とみなし変換）</td></tr>
-<tr><td rowspan="8">string</td><td>なし, Object, char,<br />Character, CharSequence, String</td><td>String</td></tr>
+<tr><td rowspan="10">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
+<tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
 <tr><td>その他のAppendableを継承する型</td><td>指定された型（文字列化したものをappend）</td></tr>
 <tr><td>Dateを継承する型,<br />Calendarを継承する型</td><td>指定された型（文字列をDateFormatで変換）</td></tr>
@@ -152,7 +154,8 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
 <tr><td>Dateを継承する型,<br />Calendarを継承する型</td><td>指定された型（数値を1970年からのミリ秒とみなし変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（0以外の時true、0の時false）</td></tr>
-<tr><td rowspan="4">true/false</td><td>なし, Object, Boolean</td><td>Boolean</td></tr>
+<tr><td rowspan="5">true/false</td><td>なし, Object, Boolean</td><td>Boolean</td></tr>
+<tr><td>char, Character</td><td>指定された型（trueの時'1'、falseの時'0'）</td></tr>
 <tr><td>float, double, Float, Double</td><td>指定された型（trueの時1.0、falseの時NaN）</td></tr>
 <tr><td>byte, short, int, long,<br />Byte, Short, Integer, Long,<br />BigInteger, その他のNumberを継承する型</td><td>指定された型（trueの時1、falseの時0）</td></tr>
 <tr><td>boolean</td><td>boolean</td></tr>
