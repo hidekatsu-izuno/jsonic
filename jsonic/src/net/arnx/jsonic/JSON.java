@@ -1483,7 +1483,9 @@ public class JSON {
 				} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
 					data = new BigDecimal(value.toString());
 				} else if (Character.class.equals(c)) {
-					if (value instanceof Number) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? '1' : '0';
+					} else if (value instanceof Number) {
 						data = (char)((Number)value).intValue();
 					} else {
 						String s = value.toString();
