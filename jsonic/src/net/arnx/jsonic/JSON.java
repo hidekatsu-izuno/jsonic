@@ -15,6 +15,8 @@
  */
 package net.arnx.jsonic;
 
+import java.lang.Package;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -281,11 +283,17 @@ public class JSON {
 				|| source instanceof Boolean)) {
 				throw new IllegalArgumentException("source object has to be encoded a object or array.");
 		}
-		format(source, sb, 0);
+		
+		Package pk = null;
+		if (source != null) {
+			pk = source.getClass().getPackage();
+		}
+		
+		format(pk, source, sb, 0);
 		return sb;
 	}
 	
-	private void format(Object o, StringBuilder sb, int level) {
+	private void format(Package pk, Object o, StringBuilder sb, int level) {
 		if (level > this.maxDepth) {
 			throw new IllegalArgumentException("nest level is over max depth.");
 		}		
@@ -372,9 +380,9 @@ public class JSON {
 			Locale locale = (Locale)o;
 			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
 				if (locale.getCountry() != null && locale.getCountry().length() > 0) {
-					format(locale.getLanguage() + "-" + locale.getCountry(), sb, level);
+					format(pk, locale.getLanguage() + "-" + locale.getCountry(), sb, level);
 				} else {
-					format(locale.getLanguage(), sb, level);
+					format(pk, locale.getLanguage(), sb, level);
 				}
 			} else {
 				sb.append("null");
@@ -390,7 +398,7 @@ public class JSON {
 				for (int i = 0; i < array.length; i++) {
 					if (array[i] != o) {
 				        if (this.prettyPrint && i != 0) sb.append(' ');
-						format(array[i], sb, level+1);
+						format(pk, array[i], sb, level+1);
 						sb.append(',');
 						if (this.prettyPrint) sb.append('\n');
 					}
@@ -510,7 +518,7 @@ public class JSON {
 						if (this.prettyPrint) {
 							for (int j = 0; j < level+1; j++) sb.append('\t');
 						}
-						format(item, sb, level+1);
+						format(pk, item, sb, level+1);
 						sb.append(',');
 						if (this.prettyPrint) sb.append('\n');
 					}
@@ -540,10 +548,10 @@ public class JSON {
 						if (this.prettyPrint) {
 							for (int j = 0; j < level+1; j++) sb.append('\t');
 						}
-						format(((Map.Entry)entry).getKey().toString(), sb, level+1);
+						format(pk, ((Map.Entry)entry).getKey().toString(), sb, level+1);
 						sb.append(':');
 						if (this.prettyPrint) sb.append(' ');
-						format(value, sb, level+1);
+						format(pk, value, sb, level+1);
 						sb.append(',');
 						if (this.prettyPrint) sb.append('\n');
 					}
@@ -559,26 +567,32 @@ public class JSON {
 				}
 			}
 		} else {
+			Class c = o.getClass();
+			boolean access = (!Modifier.isPublic(c.getModifiers()) 
+					&& !Modifier.isPrivate(c.getModifiers())
+					&& c.getPackage().equals(pk));
+			
 			TreeMap<String, Object> map = new TreeMap<String, Object>();
 			
-			Field[] fields = o.getClass().getFields();
+			Field[] fields = c.getFields();
 			for (Field f : fields) {
 				if (!Modifier.isStatic(f.getModifiers())
 						&& Modifier.isPublic(f.getModifiers())
 						&& !Modifier.isTransient(f.getModifiers())) {
-			        try {
-			        	Object value =  f.get(o);
-			        	
-			        	if (value != o) {
-			        		map.put(f.getName(), value);
-			        	}
-			        } catch (Exception e) {
-			        	// no handle
-			        }
+					try {
+						if (access) f.setAccessible(true);
+						Object value =  f.get(o);
+						
+						if (value != o) {
+							map.put(f.getName(), value);
+						}
+					} catch (Exception e) {
+						// no handle
+					}
 				}
 			}
 
-			Method[] methods = o.getClass().getMethods();
+			Method[] methods = c.getMethods();
 			for (Method m : methods) {
 				String name = m.getName();
 				if (!Modifier.isStatic(m.getModifiers())
@@ -596,9 +610,10 @@ public class JSON {
 						&& m.getParameterTypes().length == 0
 						) {
 					try {
-			        	Object value = m.invoke(o, (Object[])null);
-			        	
-			        	if (value != o) {
+						if (access) m.setAccessible(true);
+						Object value = m.invoke(o, (Object[])null);
+						
+						if (value != o) {
 							String key = null;
 							int prefix = name.startsWith("get") ? 3 : 2;
 							if (!(name.length() > prefix+1 && Character.isUpperCase(name.charAt(prefix+1)))) {
@@ -610,11 +625,10 @@ public class JSON {
 							}
 							
 							map.put(key, value);
-							
-			        	}
-			        } catch (Exception e) {
-			        	// no handle
-			        }
+						}
+					} catch (Exception e) {
+						// no handle
+					}
 				}
 			}
 			
@@ -630,10 +644,10 @@ public class JSON {
 					if (this.prettyPrint) {
 						for (int j = 0; j < level+1; j++) sb.append('\t');
 					}
-			        format(entry.getKey(), sb, level+1);
+			        format(pk, entry.getKey(), sb, level+1);
 			        sb.append(':');
 			        if (this.prettyPrint) sb.append(' ');
-		        	format(entry.getValue(), sb, level+1);
+		        	format(pk, entry.getValue(), sb, level+1);
 					sb.append(',');
 					if (this.prettyPrint) sb.append('\n');
 				}
@@ -720,7 +734,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence source, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(source), c, c);
+		return (T)convert(c.getPackage(), parse(source), c, c);
 	}
 	
 	/**
@@ -759,11 +773,17 @@ public class JSON {
 			throw new NoSuchMethodException();
 		}
 		
+		Class c = o.getClass();
+		Package pk = c.getPackage();
+		boolean access = (!Modifier.isPublic(c.getModifiers()) 
+				&& !Modifier.isPrivate(c.getModifiers()));
+		
 		Object[] params = new Object[paramTypes.length];
 		for (int i = 0; i < paramTypes.length; i++) {
-			params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
+			params[i] = convert(pk, values.get(i), paramTypes[i], paramTypes[i]);
 		}
 		
+		if (access) method.setAccessible(true);
 		return method.invoke(o, params);
 	}
 	
@@ -1314,7 +1334,7 @@ public class JSON {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected Object convert(Object value, Class c, Type type) throws Exception {
+	protected Object convert(Package pk, Object value, Class c, Type type) throws Exception {
 		Object data = null;
 		
 		try {
@@ -1527,7 +1547,7 @@ public class JSON {
 				} else if (Locale.class.equals(c)) {
 					String[] s = null;
 					if (value instanceof Collection || value.getClass().isArray()) {
-						s = (String[])convert(value, String[].class, String.class);
+						s = (String[])convert(pk, value, String[].class, String.class);
 					} else {
 						s = value.toString().split("\\p{Punct}");
 					}
@@ -1556,7 +1576,7 @@ public class JSON {
 								}
 							}
 							for (Object o : (Collection)value) {
-								collection.add(convert(o, cClasses, cTypes[0]));
+								collection.add(convert(pk, o, cClasses, cTypes[0]));
 							}
 						} else {
 							collection.addAll((Collection)value);
@@ -1571,7 +1591,7 @@ public class JSON {
 								((GenericArrayType)type).getGenericComponentType() : null;
 						
 						for (Object o : (Collection)value) {
-							Array.set(array, i++, convert(o, c.getComponentType(), cType));
+							Array.set(array, i++, convert(pk, o, c.getComponentType(), cType));
 						}
 						data = array;
 					} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
@@ -1596,8 +1616,8 @@ public class JSON {
 							for (Object entry : ((Map)value).entrySet()) {
 								Map.Entry entry2 = (Map.Entry)entry;
 								
-								map.put(convert(entry2.getKey(), cClasses[0], cTypes[0]),
-										convert(entry2.getValue(), cClasses[1], cTypes[1]));
+								map.put(convert(pk, entry2.getKey(), cClasses[0], cTypes[0]),
+										convert(pk, entry2.getValue(), cClasses[1], cTypes[1]));
 							}
 						} else {
 							map.putAll((Map)value);
@@ -1640,21 +1660,27 @@ public class JSON {
 									map.put(key, m);
 								}
 							}
-						
+							
+							boolean access = (!Modifier.isPublic(c.getModifiers()) 
+									&& !Modifier.isPrivate(c.getModifiers())
+									&& c.getPackage().equals(pk));
+							
 							for (Object o2 : ((Map)value).entrySet()) {
 								Map.Entry entry = (Map.Entry)o2;
 								Object target = map.get(entry.getKey());
 								if (target instanceof Method) {
 									Method m = (Method)target;
 									try {
-										m.invoke(o, convert(entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+										if (access) m.setAccessible(true);
+										m.invoke(o, convert(pk, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 									} catch (Exception e) {
 										handleConvertError((String)entry.getKey(), entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
 									}
 								} else {
 									Field f = (Field)target;
 									try {
-										f.set(o, convert(entry.getValue(), f.getType(), f.getGenericType()));
+										if (access) f.setAccessible(true);
+										f.set(o, convert(pk, entry.getValue(), f.getType(), f.getGenericType()));
 									} catch (Exception e) {
 										handleConvertError((String)entry.getKey(), entry.getValue(), f.getType(), f.getGenericType(), e);
 									}
@@ -1676,7 +1702,7 @@ public class JSON {
 		// no handle
 	}
 	
-	protected Object create(Class c) {
+	protected Object create(Class<?> c) throws Exception {
 		Object instance = null;
 		
 		if (c.isInterface()) {
@@ -1700,11 +1726,9 @@ public class JSON {
 				instance = Calendar.getInstance();
 			}
 		} else {
-			try {
-				instance = c.newInstance();
-			} catch (Exception e) {
-				// no handle
-			}
+			Constructor con = c.getDeclaredConstructor((Class[])null);
+			if (!Modifier.isPublic(con.getModifiers())) con.setAccessible(true);
+			instance = con.newInstance((Object[])null);
 		}
 		
 		return instance;
