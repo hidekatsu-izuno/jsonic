@@ -98,20 +98,23 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <table summary="POJOからJSONへの変換ルール">
 <tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
 <tr><td>Map</td><td rowspan="2">object</td></tr>
-<tr><td>Object</td></tr>
+<tr><td>Object<sup>(※1)</sup></td></tr>
 <tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="2">array</td></tr>
 <tr><td>Collection</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="2">string</td></tr>
 <tr><td>char, Character</td></tr>
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コード)</td></tr>
-<tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※1)</sup></td></tr>
+<tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※2)</sup></td></tr>
 <tr><td>Number</td></tr>
 <tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
 <tr><td>boolean, Boolean</td><td>true/false</td></tr>
 <tr><td>null</td><td>null</td></tr>
 </table>
-<div class="caption">(※1) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。</div>
+<div class="caption">
+(※1) 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
+(※2) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
+</div>
 <p>なお、JSONのルートはobjectかarrayでなければなりません。このため、直接、intやStringのインスタンスをencodeメソッドの引数にしてもエラーとなり変換できません。この制約は後述の拡張モードをONにすることで解除することが可能です。</p>
 
 <h4>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h4>
@@ -133,7 +136,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>CharSequence, String</td><td>String</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
 <tr><td>その他のAppendableを継承する型</td><td>指定された型（文字列化したものをappend）</td></tr>
-<tr><td>その他の型</td><td>指定された型（パブリック・フィールド／プロパティに値をセット)</td></tr>
+<tr><td>その他の型</td><td>指定された型（パブリック・フィールド／プロパティに値をセット)<sup>(※3)</sup></td></tr>
 <tr><td rowspan="6">array</td><td>なし, Object, Collection, List</td><td>ArrayList</td></tr>
 <tr><td>Set</td><td>HashSet</td></tr>
 <tr><td>SortedSet</td><td>TreeSet</td></tr>
@@ -164,6 +167,9 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>boolean</td><td>false</td></tr>
 <tr><td>char</td><td>'\u0000'</td></tr>
 </table>
+<div class="caption">
+(※1) 対象となるインスタンスをパブリック・setterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
+</div>
 
 <h3>高度な使い方</h3>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
@@ -288,6 +294,14 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>のトラッキング情報あるいはフォーラムまでご連絡ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2007/05/30</h3>
+<p>下記のバグ修正と機能追加を行いました。</p>
+<ul>
+<li>booleanをcharに変換するロジックとCharcterに変換するロジックに不整合があったため変更した。</li>
+<li>デフォルトアクセスのクラスであっても、入力引数として指定したクラスと同一パッケージ内の場合には、setAccessibleをtrueに設定しencode/decodeの対象とできるようにした。</li>
+</ul>
+
 <h3>2007/05/27</h3>
 <p>今まで日記上でほそぼそと公開していたSimple JSON Class for Javaを仕様などを整理し名前も新たに0.9にリバージョンして公開（機能面での変更はありませんが、微妙に変換ルールや仕様を調整してあります）。</p>
 </div>
