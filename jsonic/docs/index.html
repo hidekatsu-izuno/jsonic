@@ -278,12 +278,37 @@ JSON json = new JSON() {
 };
 </pre>
 
+
 <h4 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h4>
 <p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため単純に入れ子の深さに制限を設けています。</p>
 <p>この最大深度は、デフォルトでは255に設定されていますが変更することも可能です。</p>
 <pre class="source">
 <span class="comment">// 5階層以下の情報は取得しない</span>
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
+</pre>
+
+<h3>JSON-RPC Servlet</h3>
+<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です（注：現時点のものは簡易実装です。仕様を完全に満たせているわけではありません）。<br />
+JSON-RPCを利用するには、web.xmlに下記のような設定を記載するとservlet pathが呼び出されたとき、class nameで指定されたクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
+<pre class="source">
+&lt;servlet&gt;
+    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
+    &lt;servlet-class&gt;net.arnx.jsonic.JSONRPCServlet&lt;/servlet-class&gt;
+    &lt;init-param&gt;
+        &lt;param-name&gt;config&lt;/param-name&gt;
+        &lt;param-value&gt;
+            {
+                "servlet path" : "class name",
+                ...
+            }
+        &lt;/param-value&gt;
+    &lt;/init-param&gt;
+&lt;/servlet&gt;
+
+&lt;servlet-mapping&gt;
+    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
+    &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;
 </pre>
 
 <h2 id="license">ライセンス</h2>
@@ -298,8 +323,8 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <h3>2007/06/03 version 0.9.2</h3>
 <p>下記のバグ修正と機能追加を行いました。</p>
 <ul>
-<li>継承の比較順序が逆になっており、convert時に変換元が変換先のClassを継承している場合にnullとなっていたのを修正</li>
-<li>JSON-RPCの簡易実装としてJSONRpcServletを追加しsampleも用意した。</li>
+<li>継承の比較順序が逆になっており、convert時に変換元が変換先のClassを継承している場合にnullに変換されていたバグを修正</li>
+<li>JSON-RPCの簡易実装を用意しました（JSONRpcServlet）</li>
 </ul>
 
 <h3>2007/06/02 version 0.9.1</h3>
