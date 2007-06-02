@@ -66,7 +66,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 </pre>
 
 <h2 id="download">ダウンロード</h2>
-<p>JSONICの現時点での最新バージョンは0.9.1です。</p>
+<p>JSONICの現時点での最新バージョンは0.9.2です。</p>
 <p><a href="http://sourceforge.jp/projects/jsonic/files/">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Javaバージョン5.0以上が必要です。</p>
 
 <h2 id="usage">使い方</h2>
@@ -295,11 +295,18 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 
 <h2 id="releasenote">リリースノート</h2>
 
+<h3>2007/06/03 version 0.9.2</h3>
+<p>下記のバグ修正と機能追加を行いました。</p>
+<ul>
+<li>継承の比較順序が逆になっており、convert時に変換元が変換先のClassを継承している場合にnullとなっていたのを修正</li>
+<li>JSON-RPCの簡易実装としてJSONRpcServletを追加しsampleも用意した。</li>
+</ul>
+
 <h3>2007/06/02 version 0.9.1</h3>
 <p>下記のバグ修正と機能追加を行いました。</p>
 <ul>
 <li>charとCharacterでboolean値の変換規則に一貫性を持たせるように変更</li>
-<li>inner classのencode/decodeに対応</li>
+<li><del>inner</del>public以外のclassであっても、引数に指定されたクラスと同一のパッケージ内であれば、encode/decodeするように対応</li>
 </ul>
 
 <h3>2007/05/27 version 0.9.0</h3>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+	
+	<description>jsonic sample</description>
+	
+	<servlet>
+		<description>json-rpc sample</description>
+		<servlet-name>json-rpc sample</servlet-name>
+		<servlet-class>net.arnx.jsonic.JSONRpcServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				{
+					"/calc.json" : "Calc"
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>json-rpc sample</servlet-name>
+		<url-pattern>*.json</url-pattern>
+	</servlet-mapping>
+</web-app>
