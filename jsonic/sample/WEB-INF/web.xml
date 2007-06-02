@@ -10,7 +10,7 @@
 	<servlet>
 		<description>json-rpc sample</description>
 		<servlet-name>json-rpc sample</servlet-name>
-		<servlet-class>net.arnx.jsonic.JSONRpcServlet</servlet-class>
+		<servlet-class>net.arnx.jsonic.JSONRPCServlet</servlet-class>
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>

@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class JSONRpcServlet extends HttpServlet {
+public class JSONRPCServlet_ extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
 	
 	private Map<String, Object> container = new HashMap<String, Object>();
