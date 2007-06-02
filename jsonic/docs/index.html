@@ -168,7 +168,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>char</td><td>'\u0000'</td></tr>
 </table>
 <div class="caption">
-(※1) 対象となるインスタンスをパブリック・setterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
+(※1) 対象となるインスタンスに対しパブリックなsetterメソッド、パブリックなフィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
 </div>
 
 <h3>高度な使い方</h3>
@@ -298,8 +298,8 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <h3>2007/05/30</h3>
 <p>下記のバグ修正と機能追加を行いました。</p>
 <ul>
-<li>booleanをcharに変換するロジックとCharcterに変換するロジックに不整合があったため変更した。</li>
-<li>デフォルトアクセスのクラスであっても、入力引数として指定したクラスと同一パッケージ内の場合には、setAccessibleをtrueに設定しencode/decodeの対象とできるようにした。</li>
+<li>charとCharacterでboolean値の変換規則に一貫性を持たせるように変更</li>
+<li>inner classのencode/decodeに対応</li>
 </ul>
 
 <h3>2007/05/27</h3>
