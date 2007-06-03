@@ -14,10 +14,26 @@
  * governing permissions and limitations under the License.
  */
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Edit {
-	public Map execute(Map map) {
+	public Map execute(Map params) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("url", "edit.json");
+		
+		Map<String, Object> concatMethod = new HashMap<String, Object>();
+		concatMethod.put("name", "concat");
+		concatMethod.put("example", "[\"blue\", \"bird\"]");
+		concatMethod.put("code", "public String concat(String a, String b) {\n\treturn a + b;\n}");
+		
+		Map<String, Object> splitMethod = new HashMap<String, Object>();
+		splitMethod.put("name", "split");
+		splitMethod.put("example", "[\"abc-efg-hij\", \"-\"]");
+		splitMethod.put("code", "public String[] split(String a, String b) {\n\treturn a.split(b);\n}");
+		
+		map.put("methods", new Map[] {concatMethod, splitMethod});
+		
 		return map;
 	}
 	

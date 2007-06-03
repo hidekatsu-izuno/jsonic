@@ -4,48 +4,26 @@
 <title>JSON-RPC sample</title>
 <script type="text/javascript" src="prototype.js"></script>
 <script type="text/javascript">
-	var targets = {
-		"calc.json": {
-			"source" : 
-				"public class Calc {\n"
-				+ "    public int sum(int a, int b) {\n"
-				+ "        return a + b;\n"
-				+ "    }\n"
-				+ "    \n"
-				+ "    public int sum(int[] a) {\n"
-				+ "        int result = 0;\n"
-				+ "        for (int n : a) {\n"
-				+ "            result += n;\n"
-				+ "        }\n"
-				+ "    	   return result;\n"
-				+ "    }\n"
-				+ "}",
-			"methods" : ["sum"]
-		},
-		"edit.json": {
-			"source" :
-				"public class Edit {\n"
-				+ "    public String concat(String a, String b) {\n"
-				+ "        return a + b;\n"
-				+ "    }\n"
-				+ "    \n"
-				+ "    public String[] split(String a, String b) {\n"
-				+ "        return a.split(b);\n"
-				+ "    }\n"
-				+ "}",
-			"methods" : ["concat", "split"]
-		}
-	};
-
+	var ds = [];
+	
+	function setup(value) {
+		var url = $('url');
+		url.options[url.options.length] = new Option(value.url, value.url);
+		ds[value.url] = value.methods;
+	}
+	
 	function submit() {
+		var url = $('url').value;
+		var method = ds[url][$("method").value].name;
+		var params = $('params').value;
 		var ajax = new Ajax.Updater(
 			{success: 'result'},
-			$('url').value,
+			url,
 			{
 				method: 'POST',
 				postBody: '{'
-					+ 'method: "' + $("method").value + '",'
-					+ 'params: ' + $("params").value + ','
+					+ 'method: "' + method + '",'
+					+ 'params: ' + params + ','
 					+ 'id: 1'
 					+ '}',
 				onFailure: reportError
@@ -57,35 +35,45 @@
 		Element.update($("result"), "error!");
 	}
 	
-	function changeSource(target) {
-		if (!target.value) return;
+	function changeUrl(value) {
+		var method = $('method');
+		var params = $('params');
+		method.options.length = 0;
 		
-		Element.update($("source"), targets[target.value]["source"]);
+		var methods = ds[value];
+		for (var i = 0; i < methods.length; i++) {
+			method.options[i] = new Option(methods[i].name, i);
+		}
+		changeMethod(0);
+	}
+	
+	function changeMethod(value) {
+		var url = $('url')
+		var params = $('params');
+		params.value = ds[url.value][value].example;
+		Element.update($('code'), ds[url.value][value].code);
+	}
+	
+	function init() {
+		changeUrl($('url').value);
 	}
 </script>
 </head>
-<body>
+<body onload="init()">
 <h1>JSON-RPC sample</h1>
 
 <h2>request</h2>
-url: <select id="url" onchange="changeSource(this)">
-<option></option>
-<option value="calc.json">calc.json</option>
-<option value="edit.json">edit.json</option>
-</select>
-method: <select id="method">
-<option></option>
-<option value="sum">sum</option>
-<option value="concat">concat</option>
-<option value="split">split</option>
-</select>
-params: <input id="params" type="text" size="50" value="[1,2]"/>
+url: <select id="url" onchange="changeUrl(this.value)"></select>
+method: <select id="method" onchange="changeMethod(this.value)"></select>
+params: <input id="params" type="text" size="50" value=""/>
 <input type="button" value="send" onclick="submit()" />
 
-<pre id="source" style="font: 9pt monospace; border: 1px solid black; padding: 5px;">
+<pre id="code" style="font: 9pt monospace; border: 1px solid black; padding: 5px;">
 </pre>
 
 <h2>result</h2>
 <pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
+<script type="text/javascript" src="calc.json?callback=setup"></script>
+<script type="text/javascript" src="edit.json?callback=setup"></script>
 </body>
 </html>

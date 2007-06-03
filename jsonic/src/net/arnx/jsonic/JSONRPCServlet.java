@@ -81,7 +81,7 @@ public class JSONRPCServlet extends HttpServlet {
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
-		response.setContentType("application/json");
+		response.setContentType("text/javascript");
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
