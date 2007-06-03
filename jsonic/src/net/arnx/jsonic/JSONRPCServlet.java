@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
+import java.text.ParseException;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -37,7 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
 	
-	private Map<String, Object> container = new HashMap<String, Object>();
+	private Map<String, Class> container = new HashMap<String, Class>();
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
@@ -48,7 +49,7 @@ public class JSONRPCServlet extends HttpServlet {
 			for (Object o : config.entrySet()) {
 				Map.Entry entry = (Map.Entry)o;
 				container.put(entry.getKey().toString(), 
-						Class.forName(entry.getValue().toString()).newInstance());
+						Class.forName(entry.getValue().toString()));
 			}
 		} catch (Exception e) {
 			throw new ServletException(e);
@@ -62,13 +63,13 @@ public class JSONRPCServlet extends HttpServlet {
 		JSON json = new JSON();
 		
 		Request req = null;
-		Map<String, Object> res = new LinkedHashMap<String, Object>();
 		
-		Object o = container.get(request.getServletPath());
-		Method method = null;
-		Object[] params = null;
+		Object result = null;
+		Map<String, Object> error = null;
 		
 		try {
+			Object o = container.get(request.getServletPath()).newInstance();
+			
 			json.setExtendedMode(true);
 			req = json.parse(content, Request.class);
 			
@@ -77,15 +78,15 @@ public class JSONRPCServlet extends HttpServlet {
 			}
 			
 			Class target = o.getClass();
-			Class[] paramTypes = null;
-			do {
+			Method method = null;
+			loop: do {
 				for (Method m : target.getDeclaredMethods()) {
 					if (req.method.equals(m.getName())
 							&& !Modifier.isStatic(m.getModifiers())
 							&& Modifier.isPublic(m.getModifiers())) {
-						paramTypes = m.getParameterTypes();
-						if (method == null && req.params.size() == paramTypes.length) {
+						if (method == null && req.params.size() == m.getParameterTypes().length) {
 							method = m;
+							break loop;
 						}
 					}
 				}
@@ -97,32 +98,41 @@ public class JSONRPCServlet extends HttpServlet {
 				throw new NoSuchMethodException();
 			}
 			
-			params = new Object[paramTypes.length];
-			for (int i = 0; i < paramTypes.length; i++) {
+			Class[] paramTypes = method.getParameterTypes();
+			Object[] params = new Object[paramTypes.length];
+			for (int i = 0; i < params.length; i++) {
 				params[i] = json.convert(null, req.params.get(i), paramTypes[i], paramTypes[i]);
 			}
-			res.put("result", method.invoke(o, params));
-			res.put("error", null);
-			res.put("id", req.id);
-		} catch (InvocationTargetException e) {
-			Map<String, Object> error = new LinkedHashMap<String, Object>();
-			error.put("name", "JSONError");
-			error.put("code", 0);
-			error.put("message", e.getCause().getMessage());
-			
-			res.put("result", null);
-			res.put("error", error);
-			res.put("id", req.id);
+			result = method.invoke(o, params);
 		} catch (Exception e) {
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					e.getMessage());
-			return;
+			error = new LinkedHashMap<String, Object>();
+			error.put("name", "JSONError");
+			
+			int code = 0;
+			String message = null;
+			if (e instanceof InvocationTargetException) {
+				message = e.getCause().getMessage();
+			} else if (e instanceof ParseException) {
+				message = e.getMessage();
+			} else {
+				message = e.getMessage();
+			}
+			
+			error.put("code", code);
+			error.put("message", message);
 		}
 		
+		Map<String, Object> res = new LinkedHashMap<String, Object>();
+		res.put("result", result);
+		res.put("error", error);
+		res.put("id", req.id);
+		
 		response.setContentType("application/json");
+		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
 		json.setExtendedMode(false);
+		json.setPrettyPrint(true);
 		writer.write(json.format(res));
 	}
 	
@@ -143,7 +153,7 @@ public class JSONRPCServlet extends HttpServlet {
 }
 
 class Request {
-	public String version;
+	public String version = "1.0";
 	public String method;
 	public List params;
 	public Object id;

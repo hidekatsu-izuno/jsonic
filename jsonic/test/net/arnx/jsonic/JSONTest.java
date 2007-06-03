@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import net.arnx.jsonic.JSON;
 
@@ -37,7 +38,9 @@ public class JSONTest {
 		list.add(null);
 		list.add(new Object());
 		list.add(new int[] {});
-		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[]]", JSON.encode(list));
+		list.add(Pattern.compile("\\.*"));
+		
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\"]", JSON.encode(list));
 		
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
@@ -111,7 +114,7 @@ public class JSONTest {
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"d\":null,\"e\":\"en\",\"f\":null}", JSON.encode(test));
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null}", JSON.encode(test));
 	}
 
 	@Test
@@ -180,6 +183,7 @@ public class JSONTest {
 		test.setC(false);
 		test.d = new Date();
 		test.e = Locale.JAPAN;
+		test.setG(Pattern.compile("\\.*"));
 		
 		assertEquals(test, JSON.decode(JSON.encode(test), TestBean.class));
 		
@@ -189,8 +193,9 @@ public class JSONTest {
 		test.setC(false);
 		test.d = null;
 		test.e = Locale.JAPAN;
+		test.setG(Pattern.compile("\\.*"));
 		
-		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"d\":null,\"e\":[\"ja\", \"JP\"]}", TestBean.class));
+		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\"}", TestBean.class));
 		
 		GenericsBean gb = new GenericsBean();
 		List<String> list2 = new ArrayList<String>();
@@ -323,7 +328,7 @@ public class JSONTest {
 			assertEquals(list, json.parse("[{\"aaa': 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 			fail();
 		} catch (Exception e) {
-			assertNotNull(e);			
+			assertNotNull(e);
 		}
 
 		assertEquals(list, json.parse("[{   \taaa   : 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
@@ -334,12 +339,7 @@ public class JSONTest {
 			}
 		});
 
-		try {
-			assertEquals(list, json.parse("[{float   : 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
-			fail();
-		} catch (Exception e) {
-			assertNotNull(e);			
-		}
+		assertEquals(list, json.parse("[{float   : 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 		
 		list.set(0, new HashMap() {
 			{
@@ -429,6 +429,10 @@ class TestBean {
 	private Boolean f;
 	public Boolean getF() { return f; }
 	public void setF(Boolean f) { this.f = f; }
+
+	private Pattern g;
+	public Pattern getG() { return g; }
+	public void setG(Pattern g) { this.g = g; }
 	
 	@Override
 	public int hashCode() {

@@ -4,6 +4,39 @@
 <title>JSON-RPC sample</title>
 <script type="text/javascript" src="prototype.js"></script>
 <script type="text/javascript">
+	var targets = {
+		"calc.json": {
+			"source" : 
+				"public class Calc {\n"
+				+ "    public int sum(int a, int b) {\n"
+				+ "        return a + b;\n"
+				+ "    }\n"
+				+ "    \n"
+				+ "    public int sum(int[] a) {\n"
+				+ "        int result = 0;\n"
+				+ "        for (int n : a) {\n"
+				+ "            result += n;\n"
+				+ "        }\n"
+				+ "    	   return result;\n"
+				+ "    }\n"
+				+ "}",
+			"methods" : ["sum"]
+		},
+		"edit.json": {
+			"source" :
+				"public class Edit {\n"
+				+ "    public String concat(String a, String b) {\n"
+				+ "        return a + b;\n"
+				+ "    }\n"
+				+ "    \n"
+				+ "    public String[] split(String a, String b) {\n"
+				+ "        return a.split(b);\n"
+				+ "    }\n"
+				+ "}",
+			"methods" : ["concat", "split"]
+		}
+	};
+
 	function submit() {
 		var ajax = new Ajax.Updater(
 			{success: 'result'},
@@ -23,32 +56,33 @@
 	function reportError(request) {
 		Element.update($("result"), "error!");
 	}
+	
+	function changeSource(target) {
+		if (!target.value) return;
+		
+		Element.update($("source"), targets[target.value]["source"]);
+	}
 </script>
 </head>
 <body>
 <h1>JSON-RPC sample</h1>
 
 <h2>request</h2>
-url: <select id="url">
+url: <select id="url" onchange="changeSource(this)">
+<option></option>
 <option value="calc.json">calc.json</option>
+<option value="edit.json">edit.json</option>
 </select>
 method: <select id="method">
+<option></option>
 <option value="sum">sum</option>
-<option value="append">append</option>
+<option value="concat">concat</option>
+<option value="split">split</option>
 </select>
 params: <input id="params" type="text" size="50" value="[1,2]"/>
 <input type="button" value="send" onclick="submit()" />
 
-<pre style="font: 9pt monospace; border: 1px solid black; padding: 5px;">
-public class Calc {
-	public int sum(int a, int b) {
-		return a + b;
-	}
-	
-	public String append(String a, int b) {
-		return a + b;
-	}
-}
+<pre id="source" style="font: 9pt monospace; border: 1px solid black; padding: 5px;">
 </pre>
 
 <h2>result</h2>

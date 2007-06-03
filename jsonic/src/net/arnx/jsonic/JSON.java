@@ -41,6 +41,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.regex.Pattern;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 
@@ -83,10 +84,11 @@ import java.math.BigDecimal;
  * <tr><td>java.lang.Object[]</td><td rowspan="3">array</td></tr>
  * <tr><td>java.util.Collection</td></tr>
  * <tr><td>boolean[], short[], int[], long[], float[], double[]</td></tr>
- * <tr><td>java.lang.CharSequence</td><td rowspan="4">string</td></tr>
+ * <tr><td>java.lang.CharSequence</td><td rowspan="5">string</td></tr>
  * <tr><td>char[]</td></tr>
  * <tr><td>java.lang.Character</td></tr>
  * <tr><td>char</td></tr>
+ * <tr><td>java.util.regex.Pattern</td></tr>
  * <tr><td>byte[]</td><td>string (base64)</td></tr>
  * <tr><td>java.util.Locale</td><td>string (language-country)</td></tr>
  * <tr><td>java.lang.Number</td><td rowspan="2">number</td></tr>
@@ -118,7 +120,13 @@ import java.math.BigDecimal;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 public class JSON {
+	private Object context = null;
+	
 	public JSON() {
+	}
+	
+	public JSON(Object context) {
+		this.context = context;
 	}
 	
 	private boolean prettyPrint = false;
@@ -147,7 +155,6 @@ public class JSON {
 	}
 	
 	private boolean extendedMode = false;
-	private Set<String> reservedSet = null;
 	
 	/**
 	 * Sets extended mode.
@@ -155,65 +162,6 @@ public class JSON {
 	 * @param value true to enable extension mode, false to disable
 	 */
 	public void setExtendedMode(boolean value) {
-		if (value && reservedSet == null) {
-			reservedSet = new HashSet<String>();
-			reservedSet.add("break");
-			reservedSet.add("case");
-			reservedSet.add("catch");
-			reservedSet.add("continue");
-			reservedSet.add("default");
-			reservedSet.add("delete");
-			reservedSet.add("do");
-			reservedSet.add("else");
-			reservedSet.add("finally");
-			reservedSet.add("for");
-			reservedSet.add("function");
-			reservedSet.add("if");
-			reservedSet.add("in");
-			reservedSet.add("instanceof");
-			reservedSet.add("new");
-			reservedSet.add("return");
-			reservedSet.add("switch");
-			reservedSet.add("this");
-			reservedSet.add("throw");
-			reservedSet.add("try");
-			reservedSet.add("typeof");
-			reservedSet.add("var");
-			reservedSet.add("void");
-			reservedSet.add("while");
-			reservedSet.add("with");
-			reservedSet.add("abstract");
-			reservedSet.add("boolean");
-			reservedSet.add("byte");
-			reservedSet.add("char");
-			reservedSet.add("class");
-			reservedSet.add("const");
-			reservedSet.add("debugger");
-			reservedSet.add("double");
-			reservedSet.add("enum");
-			reservedSet.add("export");
-			reservedSet.add("extends");
-			reservedSet.add("final");
-			reservedSet.add("float");
-			reservedSet.add("goto");
-			reservedSet.add("implements");
-			reservedSet.add("import");
-			reservedSet.add("int");
-			reservedSet.add("interface");
-			reservedSet.add("long");
-			reservedSet.add("native");
-			reservedSet.add("package");
-			reservedSet.add("private");
-			reservedSet.add("protected");
-			reservedSet.add("public");
-			reservedSet.add("short");
-			reservedSet.add("static");
-			reservedSet.add("super");
-			reservedSet.add("synchronized");
-			reservedSet.add("throws");
-			reservedSet.add("transient");
-			reservedSet.add("volatile");
-		}
 		this.extendedMode = value;
 	}
 
@@ -285,7 +233,9 @@ public class JSON {
 		}
 		
 		Package pk = null;
-		if (source != null) {
+		if (context != null) {
+			pk = context.getClass().getPackage();
+		} else if (source != null) {
 			pk = source.getClass().getPackage();
 		}
 		
@@ -307,35 +257,7 @@ public class JSON {
 		if (o == null) {
 			sb.append("null");
 		} else if (o instanceof CharSequence) {
-			CharSequence cs = (CharSequence)o;
-			sb.append('"');
-			for (int i = 0; i < cs.length(); i++) {
-				char c = cs.charAt(i);
-				switch (c) {
-				case '"': 
-				case '\\': 
-					sb.append('\\').append(c);
-					break;
-				case '\b':
-					sb.append("\\b");
-					break;
-				case '\f':
-					sb.append("\\f");
-					break;
-				case '\n':
-					sb.append("\\n");
-					break;
-				case '\r':
-					sb.append("\\r");
-					break;
-				case '\t':
-					sb.append("\\t");
-					break;
-				default: 
-					sb.append(c);
-				}
-			}
-			sb.append('"');
+			formatString(sb, (CharSequence)o);
 		} else if (o instanceof Float) {
 			float f = ((Float)o).floatValue();
 			if (Float.isNaN(f)) {
@@ -387,6 +309,8 @@ public class JSON {
 			} else {
 				sb.append("null");
 			}
+		} else if (o instanceof Pattern) {
+			formatString(sb, ((Pattern)o).pattern());
 		} else if (o instanceof Object[]) {
 			Object[] array = (Object[])o;
 			sb.append('[');
@@ -397,7 +321,9 @@ public class JSON {
 				
 				for (int i = 0; i < array.length; i++) {
 					if (array[i] != o) {
-				        if (this.prettyPrint && i != 0) sb.append(' ');
+						if (this.prettyPrint) {
+							for (int j = 0; j < level+1; j++) sb.append('\t');
+						}
 						format(pk, array[i], sb, level+1);
 						sb.append(',');
 						if (this.prettyPrint) sb.append('\n');
@@ -663,6 +589,37 @@ public class JSON {
 			}
 		}
 	}
+	
+	private void formatString(StringBuilder sb, CharSequence cs) {
+		sb.append('"');
+		for (int i = 0; i < cs.length(); i++) {
+			char c = cs.charAt(i);
+			switch (c) {
+			case '"': 
+			case '\\': 
+				sb.append('\\').append(c);
+				break;
+			case '\b':
+				sb.append("\\b");
+				break;
+			case '\f':
+				sb.append("\\f");
+				break;
+			case '\n':
+				sb.append("\\n");
+				break;
+			case '\r':
+				sb.append("\\r");
+				break;
+			case '\t':
+				sb.append("\\t");
+				break;
+			default: 
+				sb.append(c);
+			}
+		}
+		sb.append('"');
+	}
 
 	public Object parse(CharSequence source) throws ParseException {
 		if (source == null) {
@@ -753,14 +710,12 @@ public class JSON {
 		
 		Class target = o.getClass();
 		Method method = null;
-		Class[] paramTypes = null;
 		do {
 			for (Method m : target.getDeclaredMethods()) {
 				if (methodName.equals(m.getName())
 						&& !Modifier.isStatic(m.getModifiers())
 						&& Modifier.isPublic(m.getModifiers())) {
-					paramTypes = m.getParameterTypes();
-					if (method == null && values.size() == paramTypes.length) {
+					if (method == null && values.size() == m.getParameterTypes().length) {
 						method = m;
 					}
 				}
@@ -778,8 +733,9 @@ public class JSON {
 		boolean access = (!Modifier.isPublic(c.getModifiers()) 
 				&& !Modifier.isPrivate(c.getModifiers()));
 		
+		Class[] paramTypes = method.getParameterTypes();
 		Object[] params = new Object[paramTypes.length];
-		for (int i = 0; i < paramTypes.length; i++) {
+		for (int i = 0; i < params.length; i++) {
 			params[i] = convert(pk, values.get(i), paramTypes[i], paramTypes[i]);
 		}
 		
@@ -1143,8 +1099,6 @@ public class JSON {
 		
 		if (value.length() == 0) {
 			handleParseError("unexpected char: "+s.charAt(pc[0]), s, pc[0], pc[1], pc[2]);
-		} else if (reservedSet.contains(value)) {
-			handleParseError("identifier name is reserved: "+value, s, pc[0], pc[1], pc[2]);			
 		}
 		
 		return value;
@@ -1544,6 +1498,8 @@ public class JSON {
 						}
 					}
 					data = cal;
+				} else if (Pattern.class.equals(c)) {
+					data = Pattern.compile(value.toString());
 				} else if (Locale.class.equals(c)) {
 					String[] s = null;
 					if (value instanceof Collection || value.getClass().isArray()) {
@@ -1727,6 +1683,12 @@ public class JSON {
 			if (Calendar.class.equals(c)) {
 				instance = Calendar.getInstance();
 			}
+		} else if (c.getEnclosingClass() != null
+				&& this.context != null
+				&& this.context.getClass().equals(c.getEnclosingClass())) {
+			Constructor con = c.getDeclaredConstructor(c.getEnclosingClass());
+			if (!Modifier.isPublic(con.getModifiers())) con.setAccessible(true);
+			instance = con.newInstance(this.context);
 		} else {
 			Constructor con = c.getDeclaredConstructor((Class[])null);
 			if (!Modifier.isPublic(con.getModifiers())) con.setAccessible(true);
