@@ -223,7 +223,7 @@ public class JSONTest {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testFormat() {
+	public void testFormat() throws Exception {
 		JSON json = new JSON();
 		ArrayList<Object> list = new ArrayList<Object>();
 		assertEquals("[]", json.format(list, new StringBuilder()).toString());

@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.Writer;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -38,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
 	
+	private boolean debug = false;
 	private Map<String, Class> container = new HashMap<String, Class>();
 	
 	@Override
@@ -45,6 +44,8 @@ public class JSONRPCServlet extends HttpServlet {
 		JSON json = new JSON();
 		json.setExtendedMode(true);
 		try {
+			debug = Boolean.valueOf(servletConfig.getInitParameter("debug"));
+			
 			Map config = json.parse(servletConfig.getInitParameter("config"), Map.class);
 			for (Object o : config.entrySet()) {
 				Map.Entry entry = (Map.Entry)o;
@@ -58,25 +59,19 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		JSON json = new JSON();
+		JSON json = null;
 		
 		Object result = null;
-		String callback = null;
+		String callback = request.getParameter("callback");
 		
 		try {
 			Class target = container.get(request.getServletPath());
 			Object o = target.newInstance();
 			
-			Map pmap = request.getParameterMap();
+			List<Map> params = new ArrayList<Map>(1);
+			params.add(request.getParameterMap());
 			
-			List<Map> params = null;
-			if (pmap != null && !pmap.isEmpty()) {
-				params = new ArrayList<Map>(1);
-				params.add(pmap);
-				callback = (String)pmap.get("callback");
-			}
-			
-			result = invoke(json, o, "execute", params);
+			result = json.invoke(target.getPackage(), o, "execute", params);
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -85,13 +80,11 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Writer writer = response.getWriter();
 		json.setExtendedMode(false);
-		json.setPrettyPrint(true);
+		json.setPrettyPrint(debug);
 		
-		if (callback != null) {
-			writer.write(callback + "(" + json.format(result) + ");");
-		} else {
-			writer.write(json.format(result));
-		}
+		if (callback != null) writer.append(callback).append("(");
+		json.format(result, writer);
+		if (callback != null) writer.append(");");
 	}
 	
 	@Override
@@ -112,7 +105,7 @@ public class JSONRPCServlet extends HttpServlet {
 			json.setExtendedMode(true);
 			req = json.parse(content, Request.class);
 			
-			result = invoke(json, o, req.method, req.params);
+			result = json.invoke(target.getPackage(), o, req.method, req.params);
 		} catch (InvocationTargetException e) {
 			error = new LinkedHashMap<String, Object>();
 			error.put("name", "JSONError");
@@ -132,42 +125,8 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Writer writer = response.getWriter();
 		json.setExtendedMode(false);
-		json.setPrettyPrint(true);
+		json.setPrettyPrint(debug);
 		writer.write(json.format(res));
-	}
-	
-	protected Object invoke(JSON json, Object o, String methodName, List params) throws Exception {
-		if (params == null) {
-			params = Collections.EMPTY_LIST;
-		}
-		
-		Class target = o.getClass();
-		Method method = null;
-		loop: do {
-			for (Method m : target.getDeclaredMethods()) {
-				if (methodName.equals(m.getName())
-						&& !Modifier.isStatic(m.getModifiers())
-						&& Modifier.isPublic(m.getModifiers())) {
-					if (method == null && params.size() == m.getParameterTypes().length) {
-						method = m;
-						break loop;
-					}
-				}
-			}
-			
-			target = target.getSuperclass();
-		} while (method == null && target != null);
-		
-		if (method == null || limit(method)) {
-			throw new NoSuchMethodException();
-		}
-		
-		Class[] paramTypes = method.getParameterTypes();
-		Object[] paramArray = new Object[paramTypes.length];
-		for (int i = 0; i < paramArray.length; i++) {
-			paramArray[i] = json.convert(null, params.get(i), paramTypes[i], paramTypes[i]);
-		}
-		return method.invoke(o, paramArray);
 	}
 	
 	protected boolean limit(Method method) {
