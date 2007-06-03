@@ -474,8 +474,7 @@ public class JSON {
 						if (this.prettyPrint) {
 							for (int j = 0; j < level+1; j++) sb.append('\t');
 						}
-						format(pk, ((Map.Entry)entry).getKey().toString(), sb, level+1);
-						sb.append(':');
+						formatString(sb, (String)((Map.Entry)entry).getKey()).append(':');
 						if (this.prettyPrint) sb.append(' ');
 						format(pk, value, sb, level+1);
 						sb.append(',');
@@ -570,9 +569,8 @@ public class JSON {
 					if (this.prettyPrint) {
 						for (int j = 0; j < level+1; j++) sb.append('\t');
 					}
-			        format(pk, entry.getKey(), sb, level+1);
-			        sb.append(':');
-			        if (this.prettyPrint) sb.append(' ');
+					formatString(sb, (String)entry.getKey()).append(':');
+					if (this.prettyPrint) sb.append(' ');
 		        	format(pk, entry.getValue(), sb, level+1);
 					sb.append(',');
 					if (this.prettyPrint) sb.append('\n');
@@ -590,7 +588,7 @@ public class JSON {
 		}
 	}
 	
-	private void formatString(StringBuilder sb, CharSequence cs) {
+	private StringBuilder formatString(StringBuilder sb, CharSequence cs) {
 		sb.append('"');
 		for (int i = 0; i < cs.length(); i++) {
 			char c = cs.charAt(i);
@@ -619,6 +617,8 @@ public class JSON {
 			}
 		}
 		sb.append('"');
+		
+		return sb;
 	}
 
 	public Object parse(CharSequence source) throws ParseException {
