@@ -18,7 +18,6 @@ package net.arnx.jsonic;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.Writer;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -59,19 +58,26 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		JSON json = null;
+		JSON json = new JSON();
 		
 		Object result = null;
 		String callback = request.getParameter("callback");
 		
+		Object o = null;
 		try {
-			Class target = container.get(request.getServletPath());
-			Object o = target.newInstance();
-			
+			o = getComponent(request.getServletPath());
+		} catch (Exception e) {
+			log(e.getMessage());
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
+		try {
 			List<Map> params = new ArrayList<Map>(1);
 			params.add(request.getParameterMap());
 			
-			result = json.invoke(target.getPackage(), o, "execute", params);
+			json.setContext(o);
+			result = json.invokeDynamic(o, "execute", params);
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -93,26 +99,36 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		JSON json = new JSON();
 		
+		Object o = null;
+		try {
+			o = getComponent(request.getServletPath());
+		} catch (Exception e) {
+			log(e.getMessage());
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
 		Request req = null;
 		
 		Object result = null;
 		Map<String, Object> error = null;
 		
 		try {
-			Class target = container.get(request.getServletPath());
-			Object o = target.newInstance();
-			
 			json.setExtendedMode(true);
+			json.setContext(this);
 			req = json.parse(content, Request.class);
 			
-			result = json.invoke(target.getPackage(), o, req.method, req.params);
+			json.setContext(o);
+			result = json.invokeDynamic(o, req.method, req.params);
 		} catch (InvocationTargetException e) {
 			error = new LinkedHashMap<String, Object>();
 			error.put("name", "JSONError");
 			error.put("code", 100);
 			error.put("message", e.getCause().getMessage());
 		} catch (Exception e) {
-			throw new ServletException(e);
+			log(e.getMessage());
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			return;
 		}
 		
 		Map<String, Object> res = new LinkedHashMap<String, Object>();
@@ -129,8 +145,12 @@ public class JSONRPCServlet extends HttpServlet {
 		writer.write(json.format(res));
 	}
 	
-	protected boolean limit(Method method) {
-		return method.getDeclaringClass().equals(Object.class);
+	protected Object getComponent(String path) throws Exception {
+		Class target = container.get(path);
+		if (target == null) {
+			throw new IllegalArgumentException("target class is not found.");
+		}
+		return target.newInstance();
 	}
 	
 	private String read(BufferedReader reader, String encoding) throws IOException {

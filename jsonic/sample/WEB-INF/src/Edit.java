@@ -13,7 +13,14 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
+import java.util.Map;
+
 public class Edit {
+	public Map execute(Map map) {
+		return map;
+	}
+	
 	public String concat(String a, String b) {
 		return a + b;
 	}
