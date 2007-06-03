@@ -39,6 +39,8 @@ public class JSONTest {
 		} catch (Exception e) {
 			assertNotNull(e);
 		}
+		
+		assertEquals(new InnerHoge(), JSON.decode("{\"a\":100}", InnerHoge.class));
 	}
 	
 	class InnerHoge {

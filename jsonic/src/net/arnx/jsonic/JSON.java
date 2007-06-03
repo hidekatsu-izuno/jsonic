@@ -122,13 +122,14 @@ import java.math.BigDecimal;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 public class JSON {
+	private Class contextClass = null;
 	private Object context = null;
 	
 	public JSON() {
 	}
 	
 	public JSON(Object context) {
-		this.context = context;
+		this.setContext(context);
 	}
 	
 	private boolean prettyPrint = false;
@@ -168,7 +169,13 @@ public class JSON {
 	}
 	
 	public void setContext(Object value) {
-		this.context = value;
+		if (value instanceof Class) {
+			this.context = null;
+			this.contextClass = (Class)value;
+		} else {
+			this.context = value;
+			this.contextClass = (value != null) ? value.getClass() : null;
+		}
 	}
 
 	/**
@@ -223,7 +230,7 @@ public class JSON {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(String source, Class<? extends T> c) throws Exception {
-		return (new JSON()).parse(source, c);
+		return (new JSON(c)).parse(source, c);
 	}
 	
 	public String format(Object source) throws IOException {
@@ -1590,11 +1597,12 @@ public class JSON {
 				instance = Calendar.getInstance();
 			}
 		} else if (c.isMemberClass()) {
-			Constructor con = c.getDeclaredConstructor(c.getEnclosingClass());
+			Class eClass = c.getEnclosingClass();
+			Constructor con = c.getDeclaredConstructor(eClass);
 			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
 				con.setAccessible(true);
 			}
-			instance = con.newInstance(this.context);
+			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
 		} else {
 			Constructor con = c.getDeclaredConstructor((Class[])null);
 			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
@@ -1612,12 +1620,12 @@ public class JSON {
 	
 	private boolean tryAccess(Class c) {
 		int modifier = c.getModifiers();
-		if (this.context == null || Modifier.isPublic(modifier)) return false;
+		if (this.contextClass == null || Modifier.isPublic(modifier)) return false;
 		
 		if (Modifier.isPrivate(modifier)) {
-			return this.context.getClass().equals(c.getEnclosingClass());
+			return this.contextClass.equals(c.getEnclosingClass());
 		}
-		return c.getPackage().equals(this.context.getClass().getPackage());
+		return c.getPackage().equals(this.contextClass.getPackage());
 	}
 
 	private static String encodeBase64(byte[] data) {
