@@ -42,6 +42,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.math.BigInteger;
@@ -223,7 +224,7 @@ public class JSON {
 	}
 	
 	public String format(Object source) throws IOException {
-		return format(source, new StringBuilder()).toString();
+		return format(source, new StringBuilder(1024)).toString();
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
@@ -259,21 +260,29 @@ public class JSON {
 			o = o.toString();
 		} else if (o instanceof char[]) {
 			o = new String((char[])o);
+		} else if (o instanceof Object[]) {
+			o = Arrays.asList((Object[])o);
+		} else if (o instanceof Pattern) {
+			o = ((Pattern)o).pattern();
+		} else if (o instanceof Locale) {
+			Locale locale = (Locale)o;
+			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
+				if (locale.getCountry() != null && locale.getCountry().length() > 0) {
+					o = locale.getLanguage() + "-" + locale.getCountry();
+				} else {
+					o = locale.getLanguage();
+				}
+			} else {
+				o = null;
+			}
 		}
 		
 		if (o == null) {
 			ap.append("null");
 		} else if (o instanceof CharSequence) {
-			formatString(ap, (CharSequence)o);
-		} else if (o instanceof Float) {
-			float f = ((Float)o).floatValue();
-			if (!this.extendedMode && (Float.isNaN(f) || Float.isInfinite(f))) {
-				ap.append('"').append(Float.toString(f)).append('"');
-			} else {
-				ap.append(Float.toString(f));
-			}
-		} else if (o instanceof Double) {
-			double d = ((Double)o).doubleValue();
+			formatString((CharSequence)o, ap);
+		} else if (o instanceof Double || o instanceof Float) {
+			double d = ((Number)o).doubleValue();
 			if (!this.extendedMode && (Double.isNaN(d) || Double.isInfinite(d))) {
 				ap.append('"').append(Double.toString(d)).append('"');
 			} else {
@@ -281,7 +290,9 @@ public class JSON {
 			}
 		} else if (o instanceof Byte) {
 			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
-		} else if (o instanceof Number || o instanceof Boolean) {
+		} else if (o instanceof Number) {
+			ap.append(o.toString());
+		} else if (o instanceof Boolean) {
 			ap.append(o.toString());
 		} else if (o instanceof Date) {
 			if (this.extendedMode) ap.append("new Date(");
@@ -291,112 +302,84 @@ public class JSON {
 			if (this.extendedMode) ap.append("new Date(");
 			ap.append(Long.toString(((Calendar)o).getTimeInMillis()));
 			if (this.extendedMode) ap.append(")");
-		} else if (o instanceof Locale) {
-			Locale locale = (Locale)o;
-			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
-				if (locale.getCountry() != null && locale.getCountry().length() > 0) {
-					formatString(ap, locale.getLanguage() + "-" + locale.getCountry());
-				} else {
-					formatString(ap, locale.getLanguage());
+		} else if (o.getClass().isArray()) {
+			if (o instanceof boolean[]) {
+				boolean[] array = (boolean[])o;
+				ap.append('[');
+				for (int i = 0; i < array.length; i++) {
+					ap.append(Boolean.toString(array[i]));
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
 				}
-			} else {
-				ap.append("null");
+				ap.append(']');
+			} else if (o instanceof byte[]) {
+				ap.append('"').append(encodeBase64((byte[])o)).append('"');
+			} else if (o instanceof short[]) {
+				short[] array = (short[])o;
+				ap.append('[');
+				for (int i = 0; i < array.length; i++) {
+					ap.append(Short.toString(array[i]));
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+				}
+				ap.append(']');
+			} else if (o instanceof int[]) {
+				int[] array = (int[])o;
+				ap.append('[');
+				for (int i = 0; i < array.length; i++) {
+					ap.append(Integer.toString(array[i]));
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+				}
+				ap.append(']');
+			} else if (o instanceof long[]) {
+				long[] array = (long[])o;
+				ap.append('[');
+				for (int i = 0; i < array.length; i++) {
+					ap.append(Long.toString(array[i]));
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+				}
+				ap.append(']');
+			} else if (o instanceof float[]) {
+				float[] array = (float[])o;
+				ap.append('[');
+				for (int i = 0; i < array.length; i++) {
+					if (!this.extendedMode && (Float.isNaN(array[i]) || Float.isInfinite(array[i]))) {
+						ap.append('"').append(Float.toString(array[i])).append('"');
+					} else {
+						ap.append(Float.toString(array[i]));
+					}
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+				}
+				ap.append(']');
+			} else if (o instanceof double[]) {
+				double[] array = (double[])o;
+				ap.append('[');
+				for (int i = 0; i < array.length; i++) {
+					if (!this.extendedMode && (Double.isNaN(array[i]) || Double.isInfinite(array[i]))) {
+						ap.append('"').append(Double.toString(array[i])).append('"');
+					} else {
+						ap.append(Double.toString(array[i]));
+					}
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+				}
+				ap.append(']');
 			}
-		} else if (o instanceof Pattern) {
-			formatString(ap, ((Pattern)o).pattern());
-		} else if (o instanceof Object[]) {
-			Object[] array = (Object[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (this.prettyPrint) {
-					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
-				}
-				if (array[i] == o) array[i] = null;
-				format(pk, array[i], ap, level+1);
-				if (i != array.length-1) ap.append(',');
-			}
-			if (this.prettyPrint && array.length > 0) {
-				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
-			}
-			ap.append(']');
-		} else if (o instanceof boolean[]) {
-			boolean[] array = (boolean[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				ap.append(Boolean.toString(array[i]));
-				if (i != array.length-1) {
-					ap.append(',');
-					if (this.prettyPrint) ap.append(' ');
-				}
-			}
-			ap.append(']');
-		} else if (o instanceof byte[]) {
-			ap.append('"').append(encodeBase64((byte[])o)).append('"');
-		} else if (o instanceof short[]) {
-			short[] array = (short[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				ap.append(Short.toString(array[i]));
-				if (i != array.length-1) {
-					ap.append(',');
-					if (this.prettyPrint) ap.append(' ');
-				}
-			}
-			ap.append(']');
-		} else if (o instanceof int[]) {
-			int[] array = (int[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				ap.append(Integer.toString(array[i]));
-				if (i != array.length-1) {
-					ap.append(',');
-					if (this.prettyPrint) ap.append(' ');
-				}
-			}
-			ap.append(']');
-		} else if (o instanceof long[]) {
-			long[] array = (long[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				ap.append(Long.toString(array[i]));
-				if (i != array.length-1) {
-					ap.append(',');
-					if (this.prettyPrint) ap.append(' ');
-				}
-			}
-			ap.append(']');
-		} else if (o instanceof float[]) {
-			float[] array = (float[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (!this.extendedMode && (Float.isNaN(array[i]) || Float.isInfinite(array[i]))) {
-					ap.append('"').append(Float.toString(array[i])).append('"');
-				} else {
-					ap.append(Float.toString(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (this.prettyPrint) ap.append(' ');
-				}
-			}
-			ap.append(']');
-		} else if (o instanceof double[]) {
-			double[] array = (double[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (!this.extendedMode && (Double.isNaN(array[i]) || Double.isInfinite(array[i]))) {
-					ap.append('"').append(Double.toString(array[i])).append('"');
-				} else {
-					ap.append(Double.toString(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (this.prettyPrint) ap.append(' ');
-				}
-			}
-			ap.append(']');
 		} else if (o instanceof Collection) {
 			Collection collection = (Collection)o;
 			ap.append('[');
@@ -417,26 +400,7 @@ public class JSON {
 			ap.append(']');
 		} else if (o instanceof Map) {
 			Map map = (Map)o;
-			ap.append('{');
-			Map.Entry entry = null;
-			for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
-				entry = (Map.Entry)i.next();
-				if (this.prettyPrint) {
-					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
-				}
-				formatString(ap, (String)entry.getKey()).append(':');
-				if (this.prettyPrint) ap.append(' ');
-				Object item = entry.getValue();
-				if (item == o) item = null;
-				format(pk, item, ap, level+1);
-				if (i.hasNext()) ap.append(',');
-			}
-			if (this.prettyPrint && !map.isEmpty()) {
-				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
-			}
-			ap.append('}');
+			formatMap(pk, map, o, ap, level);
 		} else {
 			Class c = o.getClass();
 			boolean access = (!Modifier.isPublic(c.getModifiers()) 
@@ -503,31 +467,36 @@ public class JSON {
 				}
 			}
 			
-			ap.append('{');
-			Map.Entry entry = null;
-			for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
-				entry = (Map.Entry)i.next();
-				if (this.prettyPrint) {
-					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
-				}
-				formatString(ap, (String)entry.getKey()).append(':');
-				if (this.prettyPrint) ap.append(' ');
-				Object item = entry.getValue();
-				if (item == o) item = null;
-				format(pk, item, ap, level+1);
-				if (i.hasNext()) ap.append(',');
-			}
-			if (this.prettyPrint && !map.isEmpty()) {
-				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
-			}
-			ap.append('}');
+			formatMap(pk, map, o, ap, level);
 		}
 		return ap;
 	}
 	
-	private Appendable formatString(Appendable ap, CharSequence cs) throws IOException {
+	private Appendable formatMap(Package pk, Map map, Object o, Appendable ap, int level) throws IOException {
+		ap.append('{');
+		Map.Entry entry = null;
+		for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
+			entry = (Map.Entry)i.next();
+			if (this.prettyPrint) {
+				ap.append('\n');
+				for (int j = 0; j < level+1; j++) ap.append('\t');
+			}
+			formatString((String)entry.getKey(), ap).append(':');
+			if (this.prettyPrint) ap.append(' ');
+			Object item = entry.getValue();
+			if (item == o) item = null;
+			format(pk, item, ap, level+1);
+			if (i.hasNext()) ap.append(',');
+		}
+		if (this.prettyPrint && !map.isEmpty()) {
+			ap.append('\n');
+			for (int j = 0; j < level; j++) ap.append('\t');
+		}
+		ap.append('}');
+		return ap;
+	}
+	
+	private Appendable formatString(CharSequence cs, Appendable ap) throws IOException {
 		ap.append('"');
 		for (int i = 0; i < cs.length(); i++) {
 			char c = cs.charAt(i);
