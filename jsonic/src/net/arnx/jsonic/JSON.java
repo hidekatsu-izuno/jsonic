@@ -543,14 +543,15 @@ public class JSON {
 		
 		int[] pc = new int[3]; // position counter
 		Object o = null;
+		char old = '\0';
 		while (pc[0] < source.length()) {
 			char c = source.charAt(pc[0]);
 			switch (c) {
-			case '\n':
+			case '\r':
 				line(pc);
 				break;
-			case '\r':
-				if (pc[0]+1 == source.length() || source.charAt(pc[0]+1) != '\n') {
+			case '\n':
+				if (old != '\r') {
 					line(pc);
 					break;
 				}
@@ -597,6 +598,7 @@ public class JSON {
 					handleParseError("a JSON text must start with a object or array", source, pc[0], pc[1], pc[2]);
 				}
 			}
+			old = c;
 		}
 		if (o == null) {
 			handleParseError("source text is empty.", source, pc[0], pc[1], pc[2]);
@@ -609,74 +611,20 @@ public class JSON {
 		return (T)convert(parse(source), c, c);
 	}
 	
-	/**
-	 * Invokes the targeted method for the specified object, with the specified json parameters.
-	 * 
-	 * @param o the object the underlying method is invoked from
-	 * @param methodName the invoked method name
-	 * @param json the parameters used for the method call. json should be array, or appended '[' and ']'.
-	 */
-	public Object invoke(Object o, String methodName, CharSequence json) throws Exception {
-		List values = (json != null) ? parseArray(json, new int[3]) : null;
-		return invokeDynamic(o, methodName, values);
-	}
-		
-	protected Object invokeDynamic(Object o, String methodName, List values) throws Exception {
-		if (values == null) {
-			values = Collections.EMPTY_LIST;
-		}
-		
-		Class target = o.getClass();
-		Method method = null;
-		loop: do {
-			for (Method m : target.getDeclaredMethods()) {
-				if (methodName.equals(m.getName())
-						&& !Modifier.isStatic(m.getModifiers())
-						&& Modifier.isPublic(m.getModifiers())) {
-					if (method == null && values.size() == m.getParameterTypes().length) {
-						method = m;
-						break loop;
-					}
-				}
-			}
-			
-			target = target.getSuperclass();
-		} while (method == null && target != null);
-		
-		if (method == null || limit(method)) {
-			throw new NoSuchMethodException();
-		}
-		
-		Class c = o.getClass();
-		
-		Class[] paramTypes = method.getParameterTypes();
-		Object[] params = new Object[paramTypes.length];
-		for (int i = 0; i < params.length; i++) {
-			params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
-		}
-		
-		boolean access = (!Modifier.isPublic(c.getModifiers()) 
-				&& !Modifier.isPrivate(c.getModifiers())
-				&& this.context != null
-				&& c.getPackage().equals(this.context.getClass().getPackage()));
-		
-		if (access) method.setAccessible(true);
-		return method.invoke(o, params);
-	}
-	
 	private Map<String, Object> parseObject(CharSequence s, int[] pc) throws ParseException {
 		Map<String, Object> map = new HashMap<String, Object>();
 		String key = null;
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
 		
-		while (pc[0] < s.length()) {
+		char old = '\0';
+		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
 			char c = s.charAt(pc[0]);
 			switch (c) {
-			case '\n':
+			case '\r':
 				line(pc);
 				break;
-			case '\r':
-				if (pc[0]+1 == s.length() || s.charAt(pc[0]+1) != '\n') {
+			case '\n':
+				if (old != '\r') {
 					line(pc);
 					break;
 				}
@@ -767,9 +715,7 @@ public class JSON {
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			}
 			
-			if (point == Integer.MAX_VALUE) {
-				break;
-			}
+			old = c;
 		}
 		
 		if (point != Integer.MAX_VALUE) {
@@ -783,14 +729,15 @@ public class JSON {
 		List<Object> list = new ArrayList<Object>();
 		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' E
 		
-		while (pc[0] < s.length()) {
+		char old = '\0';
+		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
 			char c = s.charAt(pc[0]);
 			switch (c) {
-			case '\n':
+			case '\r':
 				line(pc);
 				break;
-			case '\r':
-				if (pc[0]+1 == s.length() || s.charAt(pc[0]+1) != '\n') {
+			case '\n':
+				if (old != '\r') {
 					line(pc);
 					break;
 				}
@@ -862,9 +809,7 @@ public class JSON {
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			}
 			
-			if (point == Integer.MAX_VALUE) {
-				break;
-			}
+			old = c;
 		}
 		
 		if (point != Integer.MAX_VALUE) {
@@ -876,96 +821,92 @@ public class JSON {
 	private String parseString(CharSequence s, int[] pc) throws ParseException {
 		StringBuilder sb = new StringBuilder();
 		char start = '\0';
-		int point = 0; // 0 '"' 1 'value' 2 'value' ... '"' E
+		int point = 0; // 0 '"' 1 '\' 2 'c' ... '"' E
 		
-		while (pc[0] < s.length()) {
+		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
 			char c = s.charAt(pc[0]);
-			switch(c) {
-			case '\\':
-				next(pc, 1);
-				if ((point == 1 || point == 2) && pc[0]+1 < s.length()) {
-					c = s.charAt(pc[0]);
-					switch (c) {
-					case '"':
-					case '\\':
-					case '/':
+			if (point == 2) {
+				switch (c) {
+				case '"':
+				case '\\':
+				case '/':
+					sb.append(c);
+					next(pc, 1);
+					break;
+				case 'b':
+					sb.append('\b');
+					next(pc, 1);
+					break;
+				case 'f':
+					sb.append('\f');
+					next(pc, 1);
+					break;
+				case 'n':
+					sb.append('\n');
+					next(pc, 1);
+					break;
+				case 'r':
+					sb.append('\r');
+					next(pc, 1);
+					break;
+				case 't':
+					sb.append('\t');
+					next(pc, 1);
+					break;
+				case 'u':
+					try {
+						sb.append((char)Integer.parseInt(s.subSequence(pc[0]+1, pc[0]+5).toString(), 16));
+						next(pc, 5);
+					} catch (Exception e) {
+						handleParseError("illegal unicode escape", s, pc[0], pc[1], pc[2]);
+					}
+					break;
+				default:
+					if (this.extendedMode) {
 						sb.append(c);
 						next(pc, 1);
 						break;
-					case 'b':
-						sb.append('\b');
-						next(pc, 1);
-						break;
-					case 'f':
-						sb.append('\f');
-						next(pc, 1);
-						break;
-					case 'n':
-						sb.append('\n');
-						next(pc, 1);
-						break;
-					case 'r':
-						sb.append('\r');
-						next(pc, 1);
-						break;
-					case 't':
-						sb.append('\t');
-						next(pc, 1);
-						break;
-					case 'u':
-						try {
-							sb.append((char)Integer.parseInt(s.subSequence(pc[0]+1, pc[0]+5).toString(), 16));
-							next(pc, 5);
-						} catch (Exception e) {
-							handleParseError("illegal unicode escape", s, pc[0], pc[1], pc[2]);
-						}
-						break;
-					default:
-						if (this.extendedMode) {
-							sb.append(c);
-							next(pc, 1);
-							break;
-						}
-						handleParseError("illegal escape character", s, pc[0], pc[1], pc[2]);
 					}
+					handleParseError("illegal escape character", s, pc[0], pc[1], pc[2]);
+				}
+				point = 1;
+			} else {
+				switch(c) {
+				case '\\':
+					next(pc, 1);
 					point = 2;
 					break;
-				}
-				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
-			case '\'':
-				if (!this.extendedMode) {
+				case '\'':
+					if (!this.extendedMode) {
+						if (c >= 0x20) {
+							sb.append(c);
+							next(pc, 1);
+							point = 1;
+							break;
+						}
+						handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+					}
+				case '"':
+					if (point == 0) {
+						start = c;
+						next(pc, 1);
+						point = 1;
+						break;
+					} else if (point == 1 && start == c) {
+						next(pc, 1);
+						point = Integer.MAX_VALUE;
+						break;
+					}
+					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+				default:
 					if (c >= 0x20) {
 						sb.append(c);
 						next(pc, 1);
-						point = 2;
+						point = 1;
 						break;
 					}
 					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 				}
-			case '"':
-				if (point == 0) {
-					start = c;
-					next(pc, 1);
-					point = 1;
-					break;
-				} else if ((point == 1 || point == 2) && start == c) {
-					next(pc, 1);
-					point = Integer.MAX_VALUE;
-					break;
-				}
-				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
-			default:
-				if (c >= 0x20) {
-					sb.append(c);
-					next(pc, 1);
-					point = 2;
-					break;
-				}
-				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
-			}
-			
-			if (point == Integer.MAX_VALUE) {
-				break;
 			}
 		}
 		
@@ -976,7 +917,7 @@ public class JSON {
 		StringBuilder sb = new StringBuilder();
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		
-		while (pc[0] < s.length()) {
+		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
 			char c = s.charAt(pc[0]);
 			switch(c) {
 			case '\\':
@@ -1010,10 +951,6 @@ public class JSON {
 					break;
 				}
 			}
-			
-			if (point == Integer.MAX_VALUE) {
-				break;
-			}
 		}
 		
 		String value = sb.toString();
@@ -1029,7 +966,7 @@ public class JSON {
 		int start = pc[0];
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 		
-		while (pc[0] < s.length()) {
+		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
 			char c = s.charAt(pc[0]);
 			
 			switch(c) {
@@ -1088,10 +1025,6 @@ public class JSON {
 					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);					
 				}
 			}
-			
-			if (point == Integer.MAX_VALUE) {
-				break;
-			}
 		}
 		
 		return new BigDecimal(s.subSequence(start, pc[0]).toString());
@@ -1137,7 +1070,7 @@ public class JSON {
 		int point = 0; // 0 '/*' 1  '*/' E or  0 '//' 1  '\r|\n|\r\n' E
 		boolean isMulti = false;
 		
-		while (pc[0] < s.length()) {
+		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
 			char c = s.charAt(pc[0]);
 			switch(c) {
 			case '/':
@@ -1173,10 +1106,6 @@ public class JSON {
 					break;
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
-			}
-			
-			if (point == Integer.MAX_VALUE) {
-				break;
 			}
 		}	
 	}
@@ -1618,6 +1547,61 @@ public class JSON {
 		}
 		
 		return instance;
+	}
+	
+	/**
+	 * Invokes the targeted method for the specified object, with the specified json parameters.
+	 * 
+	 * @param o the object the underlying method is invoked from
+	 * @param methodName the invoked method name
+	 * @param json the parameters used for the method call. json should be array, or appended '[' and ']'.
+	 */
+	public Object invoke(Object o, String methodName, CharSequence json) throws Exception {
+		List values = (json != null) ? parseArray(json, new int[3]) : null;
+		return invokeDynamic(o, methodName, values);
+	}
+		
+	protected Object invokeDynamic(Object o, String methodName, List values) throws Exception {
+		if (values == null) {
+			values = Collections.EMPTY_LIST;
+		}
+		
+		Class target = o.getClass();
+		Method method = null;
+		loop: do {
+			for (Method m : target.getDeclaredMethods()) {
+				if (methodName.equals(m.getName())
+						&& !Modifier.isStatic(m.getModifiers())
+						&& Modifier.isPublic(m.getModifiers())) {
+					if (method == null && values.size() == m.getParameterTypes().length) {
+						method = m;
+						break loop;
+					}
+				}
+			}
+			
+			target = target.getSuperclass();
+		} while (method == null && target != null);
+		
+		if (method == null || limit(method)) {
+			throw new NoSuchMethodException();
+		}
+		
+		Class c = o.getClass();
+		
+		Class[] paramTypes = method.getParameterTypes();
+		Object[] params = new Object[paramTypes.length];
+		for (int i = 0; i < params.length; i++) {
+			params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
+		}
+		
+		boolean access = (!Modifier.isPublic(c.getModifiers()) 
+				&& !Modifier.isPrivate(c.getModifiers())
+				&& this.context != null
+				&& c.getPackage().equals(this.context.getClass().getPackage()));
+		
+		if (access) method.setAccessible(true);
+		return method.invoke(o, params);
 	}
 	
 	protected boolean limit(Method method) {
