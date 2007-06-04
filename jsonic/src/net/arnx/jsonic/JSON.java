@@ -233,8 +233,14 @@ public class JSON {
 		return (new JSON(c)).parse(source, c);
 	}
 	
-	public String format(Object source) throws IOException {
-		return format(source, new StringBuilder(1024)).toString();
+	public String format(Object source) {
+		String value = null;
+		try {
+			value = format(source, new StringBuilder(1024)).toString();
+		} catch (Exception e) {
+			// never occur
+		}
+		return value;
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {

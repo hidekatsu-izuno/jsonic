@@ -1,6 +1,5 @@
 package net.arnx.jsonic;
 
-
 import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
@@ -14,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
+import java.io.*;
 
 import net.arnx.jsonic.JSON;
 
@@ -408,6 +408,28 @@ public class JSONTest {
 		}
 		return sb.toString();
 	}
+	
+	/*
+	@Test
+	public void testDecodeTime() throws Exception {
+		Reader reader = new InputStreamReader(this.getClass().getResourceAsStream("KEN_ALL.json"), "UTF-8");
+		char[] cbuf = new char[65536];
+
+		StringBuilder sb = new StringBuilder();
+
+		int size = 0;
+		while (size != -1) {
+			size = reader.read(cbuf, 0, 65536);
+			sb.append(cbuf, 0, size);
+		}
+		
+		JSON json = new JSON();
+		
+		long start = System.currentTimeMillis();
+		json.parse(sb);
+		System.out.println("time: " + (System.currentTimeMillis() - start));
+	}
+	*/
 }
 
 class TestBean {
