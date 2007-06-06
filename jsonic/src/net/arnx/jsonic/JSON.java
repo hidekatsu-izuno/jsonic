@@ -122,6 +122,14 @@ import java.math.BigDecimal;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 public class JSON {
+	private static final Map<String, Object> LITERALS = new HashMap<String, Object>();
+
+	static {
+		LITERALS.put("null", null);
+		LITERALS.put("true", Boolean.TRUE);
+		LITERALS.put("false", Boolean.FALSE);
+	}
+	
 	private Class contextClass = null;
 	private Object context = null;
 	
@@ -503,10 +511,10 @@ public class JSON {
 		return ap;
 	}
 	
-	private Appendable formatString(CharSequence cs, Appendable ap) throws IOException {
+	private Appendable formatString(CharSequence s, Appendable ap) throws IOException {
 		ap.append('"');
-		for (int i = 0; i < cs.length(); i++) {
-			char c = cs.charAt(i);
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
 			switch (c) {
 			case '"':
 			case '\\': 
@@ -536,17 +544,18 @@ public class JSON {
 		return ap;
 	}
 	
-	public Object parse(CharSequence source) throws ParseException {
-		if (source == null) {
+	public Object parse(CharSequence s) throws ParseException {
+		if (s == null) {
 			throw new IllegalArgumentException("source text is null.");
 		}
 		
 		int[] pc = new int[3]; // position counter
 		Object o = null;
-		char old = '\0';
-		while (pc[0] < source.length()) {
-			char c = source.charAt(pc[0]);
-			switch (c) {
+		
+		char c = '\0';
+		while (pc[0] < s.length()) {
+			char old = c;
+			switch(c = s.charAt(pc[0])) {
 			case '\r':
 				line(pc);
 				break;
@@ -557,58 +566,57 @@ public class JSON {
 				}
 			case ' ':
 			case '\t':
-				next(pc, 1);
+				next(pc);
 				break;
 			case '{':
 				if (o == null) {
-					o = parseObject(source, pc);
+					o = parseObject(s, pc);
 					break;
 				}
-				handleParseError("unexpected char: "+c, source, pc[0], pc[1], pc[2]);
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case '[':
 				if (o == null) {
-					o = parseArray(source, pc);
+					o = parseArray(s, pc);
 					break;
 				}
-				handleParseError("unexpected char: "+c, source, pc[0], pc[1], pc[2]);
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case '\'':
 			case '"':
 				if (this.extendedMode) {
-					o = parseString(source, pc);
+					o = parseString(s, pc);
 					break;
 				}
 			case 't':
 			case 'f':
 			case 'n':
 				if (this.extendedMode) {
-					o = parseLiteral(source, pc);
+					o = parseLiteral(s, pc);
 					break;
 				}
 			default:
 				if (this.extendedMode) {
 					if ((c == '-') || (c >= '0' && c <= '9')) {
-						o = parseNumber(source, pc);
+						o = parseNumber(s, pc);
 						break;
 					} else if (c == '/') {
-						skipComment(source, pc);
+						skipComment(s, pc);
 						break;
 					}
-					handleParseError("unexpected char: "+c, source, pc[0], pc[1], pc[2]);
+					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 				} else {
-					handleParseError("a JSON text must start with a object or array", source, pc[0], pc[1], pc[2]);
+					handleParseError("a JSON text must start with a object or array", s, pc[0], pc[1], pc[2]);
 				}
 			}
-			old = c;
 		}
 		if (o == null) {
-			handleParseError("source text is empty.", source, pc[0], pc[1], pc[2]);
+			handleParseError("source text is empty.", s, pc[0], pc[1], pc[2]);
 		}
 		return o;
 	}	
 	
 	@SuppressWarnings("unchecked")
-	public <T> T parse(CharSequence source, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(source), c, c);
+	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
+		return (T)convert(parse(s), c, c);
 	}
 	
 	private Map<String, Object> parseObject(CharSequence s, int[] pc) throws ParseException {
@@ -616,10 +624,10 @@ public class JSON {
 		String key = null;
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
 		
-		char old = '\0';
+		char c = '\0';
 		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
-			char c = s.charAt(pc[0]);
-			switch (c) {
+			char old = c;
+			switch(c = s.charAt(pc[0])) {
 			case '\r':
 				line(pc);
 				break;
@@ -630,11 +638,11 @@ public class JSON {
 				}
 			case ' ':
 			case '\t':
-				next(pc, 1);
+				next(pc);
 				break;
 			case '{':
 				if (point == 0) {
-					next(pc, 1);
+					next(pc);
 					point = 1;
 					break;
 				} else if (point == 3){
@@ -645,21 +653,21 @@ public class JSON {
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case ':':
 				if (point == 2) {
-					next(pc, 1);
+					next(pc);
 					point = 3;
 					break;
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case ',':
 				if (point == 4) {
-					next(pc, 1);
+					next(pc);
 					point = 1;
 					break;
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case '}':
 				if (point == 1 || point == 4) {
-					next(pc, 1);
+					next(pc);
 					point = Integer.MAX_VALUE;
 					break;
 				}
@@ -704,7 +712,7 @@ public class JSON {
 					break;
 				} else if (this.extendedMode) {
 					if (point == 1 && (Character.isUnicodeIdentifierStart(c) || c == '$' || c == '_' || c == '\\')) {
-						key = parseIdentifier(s, pc);
+						key = (String)parseLiteral(s, pc);
 						point = 2;
 						break;
 					} else if (c == '/') {
@@ -714,8 +722,6 @@ public class JSON {
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			}
-			
-			old = c;
 		}
 		
 		if (point != Integer.MAX_VALUE) {
@@ -729,10 +735,10 @@ public class JSON {
 		List<Object> list = new ArrayList<Object>();
 		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' E
 		
-		char old = '\0';
+		char c = '\0';
 		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
-			char c = s.charAt(pc[0]);
-			switch (c) {
+			char old = c;
+			switch(c = s.charAt(pc[0])) {
 			case '\r':
 				line(pc);
 				break;
@@ -743,11 +749,11 @@ public class JSON {
 				}
 			case ' ':
 			case '\t':
-				next(pc, 1);
+				next(pc);
 				break;
 			case '[':
 				if (point == 0) {
-					next(pc, 1);
+					next(pc);
 					point = 1;
 					break;
 				} else if (point == 1) {
@@ -758,14 +764,14 @@ public class JSON {
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case ',':
 				if (point == 2) {
-					next(pc, 1);
+					next(pc);
 					point = 1;
 					break;
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case ']':
 				if (point == 1 || point == 2) {
-					next(pc, 1);
+					next(pc);
 					point = Integer.MAX_VALUE;
 					break;
 				}
@@ -808,8 +814,6 @@ public class JSON {
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			}
-			
-			old = c;
 		}
 		
 		if (point != Integer.MAX_VALUE) {
@@ -821,176 +825,104 @@ public class JSON {
 	private String parseString(CharSequence s, int[] pc) throws ParseException {
 		StringBuilder sb = new StringBuilder();
 		char start = '\0';
-		int point = 0; // 0 '"' 1 '\' 2 'c' ... '"' E
+		int point = 0; // 0 '"' 1 'c' ... '"' E
 		
+		char c = '\0';
 		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
-			char c = s.charAt(pc[0]);
-			if (point == 2) {
-				switch (c) {
-				case '"':
-				case '\\':
-				case '/':
-					sb.append(c);
-					next(pc, 1);
-					break;
-				case 'b':
-					sb.append('\b');
-					next(pc, 1);
-					break;
-				case 'f':
-					sb.append('\f');
-					next(pc, 1);
-					break;
-				case 'n':
-					sb.append('\n');
-					next(pc, 1);
-					break;
-				case 'r':
-					sb.append('\r');
-					next(pc, 1);
-					break;
-				case 't':
-					sb.append('\t');
-					next(pc, 1);
-					break;
-				case 'u':
-					try {
-						sb.append((char)Integer.parseInt(s.subSequence(pc[0]+1, pc[0]+5).toString(), 16));
-						next(pc, 5);
-					} catch (Exception e) {
-						handleParseError("illegal unicode escape", s, pc[0], pc[1], pc[2]);
-					}
-					break;
-				default:
-					if (this.extendedMode) {
-						sb.append(c);
-						next(pc, 1);
-						break;
-					}
-					handleParseError("illegal escape character", s, pc[0], pc[1], pc[2]);
-				}
-				point = 1;
-			} else {
-				switch(c) {
-				case '\\':
-					next(pc, 1);
-					point = 2;
-					break;
-				case '\'':
-					if (!this.extendedMode) {
-						if (c >= 0x20) {
-							sb.append(c);
-							next(pc, 1);
-							point = 1;
-							break;
-						}
-						handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
-					}
-				case '"':
-					if (point == 0) {
-						start = c;
-						next(pc, 1);
-						point = 1;
-						break;
-					} else if (point == 1 && start == c) {
-						next(pc, 1);
-						point = Integer.MAX_VALUE;
-						break;
-					}
-					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
-				default:
+			switch(c = s.charAt(pc[0])) {
+			case '\\':
+				sb.append(parseEscape(s, pc));
+				break;
+			case '\'':
+				if (!this.extendedMode) {
 					if (c >= 0x20) {
 						sb.append(c);
-						next(pc, 1);
+						next(pc);
 						point = 1;
 						break;
 					}
 					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 				}
+			case '"':
+				if (point == 0) {
+					start = c;
+					next(pc);
+					point = 1;
+					break;
+				} else if (point == 1 && start == c) {
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				}
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+			default:
+				if (c >= 0x20) {
+					sb.append(c);
+					next(pc);
+					point = 1;
+					break;
+				}
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			}
 		}
 		
 		return sb.toString();
 	}
-
-	private String parseIdentifier(CharSequence s, int[] pc) throws ParseException {
+	
+	
+	private Object parseLiteral(CharSequence s, int[] pc) throws ParseException {
 		StringBuilder sb = new StringBuilder();
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		
+		char c = '\0';
 		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
-			char c = s.charAt(pc[0]);
-			switch(c) {
+			switch(c = s.charAt(pc[0])) {
 			case '\\':
-				if ((point == 0 || point == 1) && pc[0]+1 < s.length()) {
-					c = s.charAt(pc[0]);
-					switch (c) {
-					case 'u':
-						try {
-							sb.append((char)Integer.parseInt(s.subSequence(pc[0]+1, pc[0]+5).toString(), 16));
-							next(pc, 5);
-						} catch (Exception e) {
-							handleParseError("illegal unicode escape", s, pc[0], pc[1], pc[2]);
-						}
-						break;
-					default:
-						handleParseError("illegal escape character", s, pc[0], pc[1], pc[2]);
-					}
-					point = 1;
-					break;
-				}
-				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+				c = parseEscape(s, pc);
 			default:
-				if ((Character.isUnicodeIdentifierStart(c) || c == '$' || c == '_')
-						|| (point == 1 && Character.isUnicodeIdentifierPart(c))) {
+				if (point == 0 && (Character.isUnicodeIdentifierStart(c) || c == '$' || c == '_')
+					|| (point == 1 && Character.isUnicodeIdentifierPart(c))){
 					sb.append(c);
-					next(pc, 1);
+					next(pc);
 					point = 1;
-					break;
 				} else {
 					point = Integer.MAX_VALUE;
-					break;
 				}
 			}
 		}
 		
-		String value = sb.toString();
-		
-		if (value.length() == 0) {
-			handleParseError("unexpected char: "+s.charAt(pc[0]), s, pc[0], pc[1], pc[2]);
-		}
-		
-		return value;
+		String literal = sb.toString();
+		return (LITERALS.containsKey(literal)) ? LITERALS.get(literal) : literal;
 	}	
 	
 	private Number parseNumber(CharSequence s, int[] pc) throws ParseException {
 		int start = pc[0];
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 		
+		char c = '\0';
 		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
-			char c = s.charAt(pc[0]);
-			
-			switch(c) {
+			switch(c = s.charAt(pc[0])) {
 			case '+':
 				if (point == 7) {
-					next(pc, 1);
+					next(pc);
 					point = 8;
 					break;
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case '-':
 				if (point == 0) {
-					next(pc, 1);
+					next(pc);
 					point = 1;
 					break;
 				} else if (point == 7) {
-					next(pc, 1);
+					next(pc);
 					point = 8;
 					break;
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case '.':
 				if (point == 2 || point == 3) {
-					next(pc, 1);
+					next(pc);
 					point = 4;
 					break;
 				}
@@ -998,7 +930,7 @@ public class JSON {
 			case 'e':
 			case 'E':
 				if (point == 2 || point == 3 || point == 5 || point == 6) {
-					next(pc, 1);
+					next(pc);
 					point = 7;
 					break;
 				}
@@ -1006,23 +938,23 @@ public class JSON {
 			default:
 				if (c >= '0' && c <= '9') {
 					if (point == 0 || point == 1) {
-						next(pc, 1);
+						next(pc);
 						point = (c == '0') ? 3 : 2;
 					} else if (point == 2 || point == 5) {
-						next(pc, 1);
+						next(pc);
 					} else if (point == 4) {
-						next(pc, 1);
+						next(pc);
 						point = 5;
 					} else if (point == 7 || point == 8) {
-						next(pc, 1);
+						next(pc);
 						point = Integer.MAX_VALUE;
 					} else {
-						handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);					
+						handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 					}
 				} else if (point == 2 || point == 3 || point == 5 || point == 6) {
 					point = Integer.MAX_VALUE;
 				} else {
-					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);					
+					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 				}
 			}
 		}
@@ -1030,79 +962,160 @@ public class JSON {
 		return new BigDecimal(s.subSequence(start, pc[0]).toString());
 	}
 	
-	private Boolean parseLiteral(CharSequence s, int[] pc) throws ParseException {
-		Boolean literal = null;
+	private char parseEscape(CharSequence s, int[] pc) throws ParseException {
+		char escape = '\0';
+		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		
-		char c = s.charAt(pc[0]);
-		switch (c) {
-		case 't':
-			if (s.length() > pc[0]+3 
-					&& s.charAt(pc[0]+1) == 'r' && s.charAt(pc[0]+2) == 'u' && s.charAt(pc[0]+3) == 'e') {
-				next(pc, 4);
-				literal = Boolean.TRUE;
-				break;
+		char c = '\0';
+		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
+			c = s.charAt(pc[0]);
+			if (point == 0) {
+				if (c == '\\') {
+					next(pc);
+					point = 1;
+				} else {
+					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+				}
+			} else if (point == 1) {
+				switch(c) {
+				case '"':
+				case '\\':
+				case '/':
+					escape = c;
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				case 'b':
+					escape = '\b';
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				case 'f':
+					escape = '\f';
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				case 'n':
+					escape = '\n';
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				case 'r':
+					escape = '\r';
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				case 't':
+					escape = '\t';
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				case 'u':
+					next(pc);
+					point = 2;
+					break;
+				default:
+					if (this.extendedMode) {
+						escape = c;
+						next(pc);
+						point = Integer.MAX_VALUE;
+						break;
+					}
+					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+				}
+			} else {
+				int hex = (c >= '0' && c <= '9') ? c-48 :
+					(c >= 'A' && c <= 'F') ? c-65+10 :
+					(c >= 'a' && c <= 'f') ? c-97+10 : -1;
+				if (hex != -1) {
+					escape |= (hex << ((5-point)*8));
+					next(pc);
+					if (point != 5) {
+						point++;
+					} else {
+						point = Integer.MAX_VALUE;
+					}
+				} else {
+					handleParseError("illegal unicode escape", s, pc[0], pc[1], pc[2]);
+				}
 			}
-			handleParseError("'true' expected", s, pc[0], pc[1], pc[2]);	
-		case 'f':
-			if (s.length() > pc[0]+4 
-					&& s.charAt(pc[0]+1) == 'a' && s.charAt(pc[0]+2) == 'l' && s.charAt(pc[0]+3) == 's' && s.charAt(pc[0]+4) == 'e') {
-				next(pc, 5);
-				literal = Boolean.FALSE;
-				break;
-			}
-			handleParseError("'false' expected", s, pc[0], pc[1], pc[2]);	
-		case 'n':
-			if (s.length() > pc[0]+3
-					&& s.charAt(pc[0]+1) == 'u' && s.charAt(pc[0]+2) == 'l' && s.charAt(pc[0]+3) == 'l') {
-				next(pc, 4);
-				literal = null;
-				break;
-			}
-			handleParseError("'null' expected", s, pc[0], pc[1], pc[2]);	
-		default:
-			handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 		}
 		
-		return literal;
+		return escape;
 	}
 	
 	private void skipComment(CharSequence s, int[] pc) throws ParseException {
-		int point = 0; // 0 '/*' 1  '*/' E or  0 '//' 1  '\r|\n|\r\n' E
-		boolean isMulti = false;
+		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
+		char c = '\0';
 		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
-			char c = s.charAt(pc[0]);
-			switch(c) {
+			char old = c;
+			switch(c = s.charAt(pc[0])) {
 			case '/':
-				if (point == 0 && pc[0]+1 < s.length() 
-						&& (s.charAt(pc[0]+1) == '*' || s.charAt(pc[0]+1) == '/')) {
-					isMulti = (s.charAt(pc[0]+1) == '*');
+				if (point == 0) {
+					next(pc);
 					point = 1;
-					next(pc, 2);
+					break;
+				} else if (point == 1) {
+					next(pc);
+					point = 4;
+					break;
+				} else if (point == 3) {
+					next(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				} else if (point == 2 || point == 4) {
+					next(pc);
 					break;
 				}
-			default:
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+			case '*':
 				if (point == 1) {
-					switch (c) {
-					case '*':
-						if (isMulti && pc[0]+1 < s.length() && s.charAt(pc[0]+1) == '/') {
-							point = Integer.MAX_VALUE;
-							next(pc, 2);
-							break;
-						}
-					case '\n':
-						line(pc);
-						if (!isMulti) point = Integer.MAX_VALUE;
+					next(pc);
+					point = 2;
+					break;
+				} else if (point == 2) {
+					next(pc);
+					point = 3;
+					break;
+				} else if (point == 3 || point == 4) {
+					next(pc);
+					break;
+				}
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+			case '\n':
+				if (old == '\r') {
+					if (point == 2 || point == 4) {
+						next(pc);
 						break;
-					case '\r':
-						if (pc[0]+1 == s.length() || s.charAt(pc[0]+1) != '\n') {
-							line(pc);
-							if (!isMulti) point = Integer.MAX_VALUE;
-							break;
-						}
-					default:
-						next(pc, 1);
+					} else if (point == 3) {
+						next(pc);
+						point = 2;
+						break;
 					}
+					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+				}
+			case '\r':
+				if (point == 2) {
+					line(pc);
+					break;
+				} else if (point == 3) {
+					line(pc);
+					point = 2;
+					break;
+				} else if (point == 4) {
+					line(pc);
+					point = Integer.MAX_VALUE;
+					break;
+				}
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
+			default:
+				if (point == 2 || point == 4) {
+					next(pc);
+					break;
+				} else if (point == 3) {
+					next(pc);
+					point = 2;
 					break;
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
@@ -1110,9 +1123,9 @@ public class JSON {
 		}	
 	}
 	
-	private void next(int[] pc, int n) {
-		pc[0]+=n;
-		pc[2]+=n;
+	private void next(int[] pc) {
+		pc[0]++;
+		pc[2]++;
 	}
 	
 	private void line(int[] pc) {

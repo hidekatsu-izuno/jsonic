@@ -283,7 +283,7 @@ public class JSONTest {
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
 			{
-				put("aaa", "bbb");
+				put("maa", "bbb");
 			}
 		});
 		list.add(new ArrayList());
@@ -294,44 +294,44 @@ public class JSONTest {
 		list.add(null);
 		
 		try {
-			assertEquals(list, json.parse("[{'aaa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
+			assertEquals(list, json.parse("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			assertNotNull(e);			
 		}
 		
 		try {
-			assertEquals(list, json.parse("[{aaa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
+			assertEquals(list, json.parse("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			assertNotNull(e);			
 		}
 		
 		try {
-			assertEquals(list, json.parse("[{\"aaa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
+			assertEquals(list, json.parse("[{\"\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			assertNotNull(e);			
 		}
 
 		json.setExtendedMode(true);
-		assertEquals(list, json.parse("[{'aaa': 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
+		assertEquals(list, json.parse("[{'\u006Daa': 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 		
 		try {
-			assertEquals(list, json.parse("[{'aaa\": 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
+			assertEquals(list, json.parse("[{'\u006daa\": 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			assertNotNull(e);			
 		}
 		
 		try {
-			assertEquals(list, json.parse("[{\"aaa': 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
+			assertEquals(list, json.parse("[{\"maa': 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			assertNotNull(e);
 		}
 
-		assertEquals(list, json.parse("[{   \taaa   : 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
+		assertEquals(list, json.parse("[{   \t\u006da\u0061   : 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 		
 		list.set(0, new HashMap() {
 			{
