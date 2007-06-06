@@ -841,14 +841,16 @@ public class JSON {
 		while (pc[0] < s.length() && point != Integer.MAX_VALUE) {
 			switch(c = next(s, pc)) {
 			case '\\':
-				back(pc);
-				sb.append(parseEscape(s, pc));
-				break;
+				if (point == 1) {
+					back(pc);
+					sb.append(parseEscape(s, pc));
+					break;
+				}
+				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			case '\'':
 				if (!this.extendedMode) {
-					if (c >= 0x20) {
+					if (point == 1 && c >= 0x20) {
 						sb.append(c);
-						point = 1;
 						break;
 					}
 					handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
@@ -864,7 +866,7 @@ public class JSON {
 				}
 				handleParseError("unexpected char: "+c, s, pc[0], pc[1], pc[2]);
 			default:
-				if (c >= 0x20) {
+				if (point == 1 && c >= 0x20) {
 					sb.append(c);
 					point = 1;
 					break;
