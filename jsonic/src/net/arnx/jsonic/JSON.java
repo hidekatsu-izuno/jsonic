@@ -26,7 +26,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -225,7 +224,7 @@ public class JSON {
 	 * @return a decoded object
 	 * @exception ParseException if the beginning of the specified string cannot be parsed.
 	 */
-	public static Object decode(String source) throws ParseException {
+	public static Object decode(String source) {
 		Object value = null;
 		try {
 			value = (new JSON()).parse(new CharSequenceJSONSource(source));
@@ -552,7 +551,7 @@ public class JSON {
 		return ap;
 	}
 
-	public Object parse(CharSequence cs) throws ParseException {
+	public Object parse(CharSequence cs) {
 		if (cs == null) {
 			throw new IllegalArgumentException("source text is null.");
 		}
@@ -565,14 +564,14 @@ public class JSON {
 		return value;
 	}
 	
-	public Object parse(Reader reader) throws ParseException, IOException {
+	public Object parse(Reader reader) throws IOException {
 		if (reader == null) {
 			throw new IllegalArgumentException("source text is null.");
 		}
 		return parse(new ReaderJSONSource(reader));
 	}
 	
-	private Object parse(JSONSource s) throws ParseException, IOException {
+	private Object parse(JSONSource s) throws IOException {
 		Object o = null;
 		
 		int n = -1;
@@ -641,7 +640,7 @@ public class JSON {
 		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
 	}
 	
-	private Map<String, Object> parseObject(JSONSource s) throws ParseException, IOException {
+	private Map<String, Object> parseObject(JSONSource s) throws IOException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
 		Map<String, Object> map = new HashMap<String, Object>();
 		String key = null;
@@ -750,7 +749,7 @@ public class JSON {
 	}
 
 	
-	private List<Object> parseArray(JSONSource s) throws ParseException, IOException {
+	private List<Object> parseArray(JSONSource s) throws IOException {
 		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
@@ -837,7 +836,7 @@ public class JSON {
 		return list;
 	}
 	
-	private String parseString(JSONSource s) throws ParseException, IOException {
+	private String parseString(JSONSource s) throws IOException {
 		int point = 0; // 0 '"' 1 'c' ... '"' E
 		StringBuilder sb = new StringBuilder();
 		char start = '\0';
@@ -885,7 +884,7 @@ public class JSON {
 	}
 	
 	
-	private Object parseLiteral(JSONSource s) throws ParseException, IOException {
+	private Object parseLiteral(JSONSource s) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = new StringBuilder();
 		
@@ -912,7 +911,7 @@ public class JSON {
 		return (LITERALS.containsKey(literal)) ? LITERALS.get(literal) : literal;
 	}	
 	
-	private Number parseNumber(JSONSource s) throws ParseException, IOException {
+	private Number parseNumber(JSONSource s) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 		StringBuilder sb = new StringBuilder();
 		
@@ -981,7 +980,7 @@ public class JSON {
 		return new BigDecimal(sb.toString());
 	}
 	
-	private char parseEscape(JSONSource s) throws ParseException, IOException {
+	private char parseEscape(JSONSource s) throws IOException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -1053,7 +1052,7 @@ public class JSON {
 		return escape;
 	}
 	
-	private void skipComment(JSONSource s) throws ParseException, IOException {
+	private void skipComment(JSONSource s) throws IOException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -1765,7 +1764,7 @@ class ReaderJSONSource implements JSONSource{
 	
 	public int next() throws IOException {
 		if (start == end) {
-			int size = reader.read(buf, start, buf.length/2);
+			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
 			if (size != -1) {
 				end = (end + size) % buf.length;
 			} else {
