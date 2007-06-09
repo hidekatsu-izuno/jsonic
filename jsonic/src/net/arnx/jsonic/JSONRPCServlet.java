@@ -21,7 +21,6 @@ import java.io.Writer;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
@@ -36,21 +35,19 @@ public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
 	
 	private boolean debug = false;
-	private Map<String, Class> container = new HashMap<String, Class>();
+	private Map<String, Class> container = null;
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public void init(ServletConfig servletConfig) throws ServletException {
 		JSON json = new JSON();
 		json.setExtendedMode(true);
 		try {
 			debug = Boolean.valueOf(servletConfig.getInitParameter("debug"));
 			
-			Map config = json.parse(servletConfig.getInitParameter("config"), Map.class);
-			for (Object o : config.entrySet()) {
-				Map.Entry entry = (Map.Entry)o;
-				container.put(entry.getKey().toString(), 
-						Class.forName(entry.getValue().toString()));
-			}
+			container = json.parse(servletConfig.getInitParameter("config"), 
+					Map.class,
+					getClass().getDeclaredField("container").getGenericType());
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}

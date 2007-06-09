@@ -640,9 +640,16 @@ public class JSON {
 		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
 		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
+	}
+	
+	public <T> T parse(CharSequence s, Class<? extends T> c, Type t) throws Exception {
+		return (T)convert(parse(new CharSequenceJSONSource(s)), c, t);
+	}
+	
+	public <T> T parse(Reader reader, Class<? extends T> c, Type t) throws Exception {
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
 	private Map<String, Object> parseObject(JSONSource s) throws IOException, ParseException {
