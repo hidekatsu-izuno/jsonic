@@ -17,6 +17,7 @@ package net.arnx.jsonic;
 
 import java.io.Reader;
 import java.io.IOException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
@@ -87,11 +88,13 @@ import java.text.ParseException;
  * <tr><td>java.lang.Object[]</td><td rowspan="3">array</td></tr>
  * <tr><td>java.util.Collection</td></tr>
  * <tr><td>boolean[], short[], int[], long[], float[], double[]</td></tr>
- * <tr><td>java.lang.CharSequence</td><td rowspan="5">string</td></tr>
+ * <tr><td>java.lang.CharSequence</td><td rowspan="7">string</td></tr>
  * <tr><td>char[]</td></tr>
  * <tr><td>java.lang.Character</td></tr>
  * <tr><td>char</td></tr>
  * <tr><td>java.util.regex.Pattern</td></tr>
+ * <tr><td>java.lang.reflect.Type</td></tr>
+ * <tr><td>java.lang.reflect.Member</td></tr>
  * <tr><td>byte[]</td><td>string (base64)</td></tr>
  * <tr><td>java.util.Locale</td><td>string (language-country)</td></tr>
  * <tr><td>java.lang.Number</td><td rowspan="2">number</td></tr>
@@ -260,19 +263,6 @@ public class JSON {
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		if (!this.extendedMode && (source == null
-				|| source instanceof CharSequence
-				|| source instanceof Character
-				|| source instanceof char[]
-				|| source instanceof byte[]
-				|| source instanceof Number
-				|| source instanceof Locale
-				|| source instanceof Date
-				|| source instanceof Calendar
-				|| source instanceof Boolean)) {
-				throw new IllegalArgumentException("source object has to be encoded a object or array.");
-		}
-		
 		return format(source, ap, 0);
 	}
 	
@@ -283,7 +273,7 @@ public class JSON {
 		
 		if (o instanceof Class) {
 			o = ((Class)o).getName();
-		} else if (o instanceof Character || o instanceof Type) {
+		} else if (o instanceof Character || o instanceof Type || o instanceof Member) {
 			o = o.toString();
 		} else if (o instanceof char[]) {
 			o = new String((char[])o);
@@ -291,6 +281,8 @@ public class JSON {
 			o = Arrays.asList((Object[])o);
 		} else if (o instanceof Pattern) {
 			o = ((Pattern)o).pattern();
+		} else if (o instanceof Calendar) {
+			o = ((Calendar)o).getTime();
 		} else if (o instanceof Locale) {
 			Locale locale = (Locale)o;
 			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
@@ -301,6 +293,17 @@ public class JSON {
 				}
 			} else {
 				o = null;
+			}
+		}
+		
+		if (level == 0 && !this.extendedMode) {
+			if (o == null
+					|| o instanceof CharSequence
+					|| o instanceof Boolean
+					|| o instanceof byte[]
+					|| o instanceof Number
+					|| o instanceof Date) {
+				throw new IllegalArgumentException("source object has to be encoded a object or array.");
 			}
 		}
 		
@@ -324,10 +327,6 @@ public class JSON {
 		} else if (o instanceof Date) {
 			if (this.extendedMode) ap.append("new Date(");
 			ap.append(Long.toString(((Date)o).getTime()));
-			if (this.extendedMode) ap.append(")");
-		} else if (o instanceof Calendar) {
-			if (this.extendedMode) ap.append("new Date(");
-			ap.append(Long.toString(((Calendar)o).getTimeInMillis()));
 			if (this.extendedMode) ap.append(")");
 		} else if (o.getClass().isArray()) {
 			if (o instanceof boolean[]) {
