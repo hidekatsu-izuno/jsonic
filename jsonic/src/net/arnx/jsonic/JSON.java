@@ -568,7 +568,7 @@ public class JSON {
 	
 	public Object parse(Reader reader) throws IOException, ParseException {
 		if (reader == null) {
-			throw new IllegalArgumentException("source text is null.");
+			throw new IllegalArgumentException("reader is null.");
 		}
 		return parse(new ReaderJSONSource(reader));
 	}
@@ -640,6 +640,11 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
 		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	private Map<String, Object> parseObject(JSONSource s) throws IOException, ParseException {

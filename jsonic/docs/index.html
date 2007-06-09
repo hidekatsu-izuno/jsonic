@@ -103,7 +103,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>Collection</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
-<tr><td>Pattern</td></tr>
+<tr><td>Pattern, Type, Member</td></tr>
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コード)</td></tr>
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※2)</sup></td></tr>
@@ -144,7 +144,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>その他のCollectionを継承する型</td><td>指定された型</td></tr>
 <tr><td>short[], byte[], int[], long[], float[], double[], Object[]</td><td>指定された型</td></tr>
 <tr><td>Locale</td><td>Locale（「言語コード」「国コード」「バリアントコード」からなる配列とみなし変換）</td></tr>
-<tr><td rowspan="11">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td rowspan="12">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
 <tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
 <tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
@@ -154,6 +154,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>byte[]</td><td>byte[]（文字列をBASE64とみなし変換）</td></tr>
 <tr><td>Locale</td><td>Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換）</td></tr>
 <tr><td>Pattern</td><td>Pattern（文字列をパターンとみなし変換）</td></tr>
+<tr><td>Class</td><td>Class（文字列をClass.forNameを使い変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（"", "false", "NaN"の時false、その他の時true）</td></tr>
 <tr><td rowspan="4">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
@@ -227,10 +228,9 @@ JSON json = new JSON() {
     // pos: エラーが発生した入力文字列上の位置
     // line: エラーが発生した行
     // col: エラーが発生した列</span>
-    protected <span class="em">void handleParseError(String message, CharSequence s,
-        int pos, int line, int col) throws ParseException</span> {
+    protected <span class="em">void handleParseError(JSONParseException e) throws ParseException</span> {
         <span class="comment">// デフォルトでParseExceptionを投げます</span>
-        super.handleParseError(message, s, pos, line, col);
+        super.handleParseError(e);
     }
     
     <span class="comment">// JSONからPOJOの変換時にエラーが起こった場合に呼ばれます
@@ -344,12 +344,16 @@ JSON-RPCを利用するには、web.xmlに下記のような設定を記載す�
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2007/06/03 version 0.9.3</h3>
-<p>下記のバグ修正と機能追加を行いました。</p>
+<h3>2007/06/10 version 0.9.3</h3>
+<p>主に機能追加、メソッドの整理が変更点です。</p>
 <ul>
+<li>Readerを使ったparseに対応しました。</li>
+<li>java.lang.reflect.Type/Memberをのencodeに対応しました。</li>
+<li>java.lang.Classのencode/decodeに対応しました。</li>
 <li>java.util.regex.Patternのencode/decodeに対応しました。</li>
 <li>真の内部クラス対応を行いました。setContextでEnclosingしているインスタンスを指定できます。</li>
 <li>JSONRPCServletの文字化け対応を行いました。</li>
+<li>JSONRPCServletでGETによるメソッド起動を可能にしました。なお、GETの場合にはJSONP機能が使えます。</li>
 </ul>
 
 <h3>2007/06/03 version 0.9.2</h3>
