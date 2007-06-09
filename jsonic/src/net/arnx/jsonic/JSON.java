@@ -278,9 +278,11 @@ public class JSON {
 	private Appendable format(Object o, Appendable ap, int level) throws IOException {
 		if (level > this.maxDepth) {
 			throw new IllegalArgumentException("nest level is over max depth.");
-		}		
+		}
 		
-		if (o instanceof Character) {
+		if (o instanceof Class) {
+			o = ((Class)o).getName();
+		} else if (o instanceof Character || o instanceof Type) {
 			o = o.toString();
 		} else if (o instanceof char[]) {
 			o = new String((char[])o);
@@ -1288,7 +1290,7 @@ public class JSON {
 						String s = value.toString();
 						data = (s.length() > 0) ? s.charAt(0) : null;
 					}
-				} else if (String.class.equals(c) || CharSequence.class.equals(c)) {
+				} else if (CharSequence.class.isAssignableFrom(c)) {
 					data = value.toString();
 				} else if (Appendable.class.isAssignableFrom(c)) {
 					Appendable a = (Appendable)create(c);
@@ -1321,25 +1323,6 @@ public class JSON {
 						}
 					}
 					data = cal;
-				} else if (Pattern.class.equals(c)) {
-					data = Pattern.compile(value.toString());
-				} else if (Locale.class.equals(c)) {
-					String[] s = null;
-					if (value instanceof Collection || value.getClass().isArray()) {
-						s = (String[])convert(value, String[].class, String[].class);
-					} else {
-						s = value.toString().split("\\p{Punct}");
-					}
-					
-					if (s.length == 0) {
-						data = null;
-					} else if (s.length == 1) {
-						data = new Locale(s[0]);
-					} else if (s.length == 2) {
-						data = new Locale(s[0], s[1]);
-					} else {
-						data = new Locale(s[0], s[1], s[2]);
-					}
 				} else if (Collection.class.isAssignableFrom(c)) {
 					if (value instanceof Collection) {
 						Collection collection = (Collection)create(c);
@@ -1404,6 +1387,44 @@ public class JSON {
 							map.putAll((Map)value);
 						}
 						data = map;
+					}
+				} else if (Pattern.class.equals(c)) {
+					data = Pattern.compile(value.toString());
+				} else if (Locale.class.equals(c)) {
+					String[] s = null;
+					if (value instanceof Collection || value.getClass().isArray()) {
+						s = (String[])convert(value, String[].class, String[].class);
+					} else {
+						s = value.toString().split("\\p{Punct}");
+					}
+					
+					if (s.length == 0) {
+						data = null;
+					} else if (s.length == 1) {
+						data = new Locale(s[0]);
+					} else if (s.length == 2) {
+						data = new Locale(s[0], s[1]);
+					} else {
+						data = new Locale(s[0], s[1], s[2]);
+					}
+				} else if (Class.class.equals(c)) {
+					String s = value.toString();
+					if (s.equals("boolean")) {
+						data = boolean.class;
+					} else if (s.equals("byte")) {
+						data = byte.class;
+					} else if (s.equals("short")) {
+						data = short.class;
+					} else if (s.equals("int")) {
+						data = int.class;
+					} else if (s.equals("long")) {
+						data = long.class;
+					} else if (s.equals("float")) {
+						data = float.class;
+					} else if (s.equals("double")) {
+						data = double.class;
+					} else {
+						data = Class.forName(value.toString());
 					}
 				} else {
 					if (value instanceof Map) {
@@ -1721,19 +1742,22 @@ class CharSequenceJSONSource implements JSONSource {
 	}
 	
 	public int next() {
-		int c = (count < cs.length()) ? cs.charAt(count++) : -1;
-		if (c == '\r' || (c == '\n' && count > 1 && cs.charAt(count-2) != '\r')) {
-			lines++;
-			columns = 0;
-		} else {
-			columns++;
+		if (count < cs.length()) {
+			char c = cs.charAt(count++);
+			if (c == '\r' || (c == '\n' && count > 1 && cs.charAt(count-2) != '\r')) {
+				lines++;
+				columns = 0;
+			} else {
+				columns++;
+			}
+			return c;
 		}
-		return c;
+		return -1;
 	}
 	
 	public void back() {
-		columns--;
 		count--;
+		columns--;
 	}
 	
 	public long getLines() {

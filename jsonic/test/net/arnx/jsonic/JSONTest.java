@@ -39,8 +39,9 @@ public class JSONTest {
 		list.add(new Object());
 		list.add(new int[] {});
 		list.add(Pattern.compile("\\.*"));
+		list.add(boolean.class);
 		
-		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\"]", JSON.encode(list));
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\"]", JSON.encode(list));
 		
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
@@ -114,7 +115,7 @@ public class JSONTest {
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null}", JSON.encode(test));
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null}", JSON.encode(test));
 	}
 
 	@Test
@@ -184,8 +185,12 @@ public class JSONTest {
 		test.d = new Date();
 		test.e = Locale.JAPAN;
 		test.setG(Pattern.compile("\\.*"));
+		test.setH(boolean.class);
 		
-		assertEquals(test, JSON.decode(JSON.encode(test), TestBean.class));
+		String json = JSON.encode(test);
+		TestBean result = JSON.decode(json, TestBean.class);
+		
+		assertEquals(test, result);
 		
 		test = new TestBean();
 		test.setA(0);
@@ -194,8 +199,9 @@ public class JSONTest {
 		test.d = null;
 		test.e = Locale.JAPAN;
 		test.setG(Pattern.compile("\\.*"));
+		test.setH(Object.class);
 		
-		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\"}", TestBean.class));
+		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\",\"h\":\"java.lang.Object\"}", TestBean.class));
 		
 		GenericsBean gb = new GenericsBean();
 		List<String> list2 = new ArrayList<String>();
@@ -442,6 +448,10 @@ class TestBean {
 	private Pattern g;
 	public Pattern getG() { return g; }
 	public void setG(Pattern g) { this.g = g; }
+
+	private Class h;
+	public Class getH() { return h; }
+	public void setH(Class h) { this.h = h; }	
 	
 	@Override
 	public int hashCode() {
@@ -453,6 +463,7 @@ class TestBean {
 		result = PRIME * result + ((d == null) ? 0 : d.hashCode());
 		result = PRIME * result + ((e == null) ? 0 : e.hashCode());
 		result = PRIME * result + ((f == null) ? 0 : f.hashCode());
+		result = PRIME * result + ((h == null) ? 0 : h.hashCode());
 		return result;
 	}
 	@Override
@@ -487,6 +498,11 @@ class TestBean {
 			if (other.f != null)
 				return false;
 		} else if (!f.equals(other.f))
+			return false;
+		if (h == null) {
+			if (other.h != null)
+				return false;
+		} else if (!h.equals(other.h))
 			return false;
 		return true;
 	}
