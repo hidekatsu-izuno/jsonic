@@ -16,14 +16,12 @@
 package net.arnx.jsonic;
 
 import java.io.IOException;
-import java.io.BufferedReader;
 import java.io.Writer;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URLDecoder;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -92,8 +90,6 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String content = read(request.getReader(), request.getCharacterEncoding());
-		
 		JSON json = new JSON();
 		
 		Object o = null;
@@ -113,7 +109,8 @@ public class JSONRPCServlet extends HttpServlet {
 		try {
 			json.setExtendedMode(true);
 			json.setContext(this);
-			req = json.parse(content, Request.class);
+			
+			req = json.parse(request.getReader(), Request.class);
 			
 			json.setContext(o);
 			result = json.invokeDynamic(o, req.method, req.params);
@@ -162,16 +159,6 @@ public class JSONRPCServlet extends HttpServlet {
 			throw new IllegalArgumentException("target class is not found.");
 		}
 		return target.newInstance();
-	}
-	
-	private String read(BufferedReader reader, String encoding) throws IOException {
-		StringBuilder sb = new StringBuilder(8192);
-		char[] cs = new char[1024];
-		int len = 0;
-		while ((len = reader.read(cs)) != -1) {
-			sb.append(cs, 0, len);
-		}
-		return URLDecoder.decode(sb.toString(), encoding);
 	}
 	
 	class Request {
