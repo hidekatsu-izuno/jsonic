@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Edit {
-	public Map execute(Map params) {
+	public Map get(Map params) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("url", "edit.json");
 		

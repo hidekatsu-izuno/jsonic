@@ -77,7 +77,7 @@ public class JSONRPCServlet extends HttpServlet {
 			params.add(request.getParameterMap());
 			
 			json.setContext(o);
-			result = json.invokeDynamic(o, "execute", params);
+			result = json.invokeDynamic(o, "get", params);
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}

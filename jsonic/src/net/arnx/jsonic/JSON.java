@@ -246,7 +246,6 @@ public class JSON {
 	 * @return a decoded object
 	 * @exception ParseException if the beginning of the specified string cannot be parsed.
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> T decode(String source, Class<? extends T> c) throws Exception {
 		JSON json = new JSON(c);
 		return (T)json.convert(json.parse(new CharSequenceJSONSource(source)), c, c);
@@ -637,7 +636,6 @@ public class JSON {
 		return o;
 	}	
 	
-	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
 		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
 	}
@@ -1106,7 +1104,7 @@ public class JSON {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected Object convert(Object value, Class c, Type type) throws Exception {
+	protected <T> T convert(Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
 		try {
@@ -1321,7 +1319,7 @@ public class JSON {
 							ParameterizedType pType = (ParameterizedType)type;
 							Type[] cTypes = pType.getActualTypeArguments();
 							Type cType = (cTypes != null && cTypes.length > 0) ? cTypes[0] : Object.class;
-							Class cClasses = null;
+							Class<?> cClasses = null;
 							if (cType instanceof ParameterizedType) {
 								cClasses = (Class)((ParameterizedType)cType).getRawType();
 							} else if (cType instanceof Class) {
@@ -1341,7 +1339,7 @@ public class JSON {
 					if (value instanceof Collection) {
 						Object array = Array.newInstance(c.getComponentType(), ((Collection)value).size());
 						int i = 0;
-						Class cClass = c.getComponentType();
+						Class<?> cClass = c.getComponentType();
 						Type cType = (type instanceof GenericArrayType) ? 
 								((GenericArrayType)type).getGenericComponentType() : cClass;
 						
@@ -1358,7 +1356,7 @@ public class JSON {
 						if (type instanceof ParameterizedType) {
 							ParameterizedType pType = (ParameterizedType)type;
 							Type[] cTypes = pType.getActualTypeArguments();
-							Class[] cClasses = new Class[2];
+							Class<?>[] cClasses = new Class[2];
 							for (int i = 0; i < cClasses.length; i++) {
 								if (cTypes[i] instanceof ParameterizedType) {
 									cClasses[i] = (Class)((ParameterizedType)cTypes[i]).getRawType();
@@ -1486,14 +1484,15 @@ public class JSON {
 			handleConvertError(null, value, c, type, e);
 		}
 		
-		return data;
+		return (T)data;
 	}
 	
 	protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
 		// no handle
 	}
 	
-	protected Object create(Class<?> c) throws Exception {
+	@SuppressWarnings("unchecked")
+	protected <T> T create(Class<? extends T> c) throws Exception {
 		Object instance = null;
 		
 		if (c.isInterface()) {
@@ -1531,7 +1530,7 @@ public class JSON {
 			instance = con.newInstance((Object[])null);
 		}
 		
-		return instance;
+		return (T)instance;
 	}
 	
 	/**
@@ -1574,7 +1573,7 @@ public class JSON {
 		
 		Class c = o.getClass();
 		
-		Class[] paramTypes = method.getParameterTypes();
+		Class<?>[] paramTypes = method.getParameterTypes();
 		Object[] params = new Object[paramTypes.length];
 		for (int i = 0; i < params.length; i++) {
 			params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
