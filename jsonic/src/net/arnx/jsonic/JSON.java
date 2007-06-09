@@ -1729,25 +1729,26 @@ public class JSON {
 	static interface JSONSource {
 		int next() throws IOException;
 		void back();
-		long getLines();
-		long getColumns();
+		long getLineNumber();
+		long getColumnNumber();
+		long getOffset();
 	}
 
 	private static class CharSequenceJSONSource implements JSONSource {
 		private int lines = 0;
 		private int columns = 0;
+		private int offset = 0;
 		
 		private CharSequence cs;
-		private int count = 0;
 		
 		public CharSequenceJSONSource(CharSequence cs) {
 			this.cs = cs;
 		}
 		
 		public int next() {
-			if (count < cs.length()) {
-				char c = cs.charAt(count++);
-				if (c == '\r' || (c == '\n' && count > 1 && cs.charAt(count-2) != '\r')) {
+			if (offset < cs.length()) {
+				char c = cs.charAt(offset++);
+				if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
 					lines++;
 					columns = 0;
 				} else {
@@ -1759,26 +1760,31 @@ public class JSON {
 		}
 		
 		public void back() {
-			count--;
+			offset--;
 			columns--;
 		}
 		
-		public long getLines() {
+		public long getLineNumber() {
 			return lines;
 		}
 		
-		public long getColumns() {
+		public long getColumnNumber() {
 			return columns;
 		}
 		
+		public long getOffset() {
+			return offset;
+		}
+		
 		public String toString() {
-			return cs.subSequence(count-columns, count).toString();
+			return cs.subSequence(offset-columns, offset).toString();
 		}
 	}
 
 	private static class ReaderJSONSource implements JSONSource{
 		private long lines = 0;
 		private long columns = 0;
+		private long offset = 0;
 
 		private Reader reader;
 		private char[] buf = new char[256];
@@ -1805,6 +1811,7 @@ public class JSON {
 			} else {
 				columns++;
 			}
+			offset++;
 			start = (start+1) % buf.length;
 			return c;
 		}
@@ -1814,12 +1821,16 @@ public class JSON {
 			start = (start+buf.length-1) % buf.length;
 		}
 		
-		public long getLines() {
+		public long getLineNumber() {
 			return lines;
 		}
 		
-		public long getColumns() {
+		public long getColumnNumber() {
 			return columns;
+		}
+		
+		public long getOffset() {
+			return offset;
 		}
 		
 		public String toString() {
@@ -1838,17 +1849,17 @@ public class JSON {
 		private JSON.JSONSource s;
 		
 		JSONParseException(String message, JSON.JSONSource s) {
-			super("" + s.getLines() + " " + message + "\n" + s.toString() + " <- ?", 
-				(s.getLines() <= Integer.MAX_VALUE) ? (int)s.getLines() : -1);
+			super("" + s.getLineNumber() + " " + message + "\n" + s.toString() + " <- ?", 
+				(s.getOffset() <= Integer.MAX_VALUE) ? (int)s.getOffset() : -1);
 			this.s = s;
 		}
 		
-		public long getLines() {
-			return s.getLines();
+		public long getLineNumber() {
+			return s.getLineNumber();
 		}
 		
-		public long getColumns() {
-			return s.getColumns();
+		public long getColumnNumber() {
+			return s.getColumnNumber();
 		}
 	}
 }
