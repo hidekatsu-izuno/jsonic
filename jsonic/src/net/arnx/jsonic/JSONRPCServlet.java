@@ -32,8 +32,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.*;
+
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
+	private static final Log log = LogFactory.getLog(JSONRPCServlet.class);
 	
 	private boolean debug = false;
 	private Map<String, Class> container = new HashMap<String, Class>();
@@ -103,7 +106,7 @@ public class JSONRPCServlet extends HttpServlet {
 		try {
 			o = getComponent(request.getServletPath());
 		} catch (Exception e) {
-			log(e.getMessage());
+			log.error(e.getMessage());
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -126,7 +129,7 @@ public class JSONRPCServlet extends HttpServlet {
 			error.put("code", 100);
 			error.put("message", e.getCause().getMessage());
 		} catch (Exception e) {
-			log(e.getMessage());
+			log.error(e.getMessage());
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
