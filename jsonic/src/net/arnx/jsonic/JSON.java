@@ -127,7 +127,7 @@ import java.text.ParseException;
  */
 public class JSON {
 	private static final Map<String, Object> LITERALS = new HashMap<String, Object>();
-
+	
 	static {
 		LITERALS.put("null", null);
 		LITERALS.put("true", Boolean.TRUE);
@@ -255,7 +255,7 @@ public class JSON {
 	public String format(Object source) {
 		String value = null;
 		try {
-			value = format(source, new StringBuilder(1024)).toString();
+			value = format(source, getBuffer()).toString();
 		} catch (Exception e) {
 			// never occur
 		}
@@ -268,7 +268,7 @@ public class JSON {
 	
 	private Appendable format(Object o, Appendable ap, int level) throws IOException {
 		if (level > this.maxDepth) {
-			throw new IllegalArgumentException("nest level is over max depth.");
+			o = null;
 		}
 		
 		if (o instanceof Class) {
@@ -648,12 +648,12 @@ public class JSON {
 	}
 	
 	private Map<String, Object> parseObject(JSONSource s) throws IOException, ParseException {
-		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' 255
+		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
 		Map<String, Object> map = new HashMap<String, Object>();
 		String key = null;
 		
 		int n = -1;
-		while (point != 255 && (n = s.next()) != -1) {
+		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
 			case '\r':
@@ -686,8 +686,7 @@ public class JSON {
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			case '}':
 				if (point == 1 || point == 4) {
-					point = 255;
-					break;
+					break loop;
 				}
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			case '\'':
@@ -749,7 +748,7 @@ public class JSON {
 			}
 		}
 		
-		if (point != 255) {
+		if (n != '}') {
 			handleParseError(new JSONParseException("object is not closed.", s));
 		}
 		return map;
@@ -757,11 +756,11 @@ public class JSON {
 
 	
 	private List<Object> parseArray(JSONSource s) throws IOException, ParseException {
-		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' 255
+		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
 		int n = -1;
-		while (point != 255 && (n = s.next()) != -1) {
+		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
 			case '\r':
@@ -788,8 +787,7 @@ public class JSON {
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			case ']':
 				if (point == 1 || point == 2) {
-					point = 255;
-					break;
+					break loop;
 				}
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			case '{':
@@ -837,19 +835,19 @@ public class JSON {
 			}
 		}
 		
-		if (point != 255) {
+		if (n != ']') {
 			handleParseError(new JSONParseException("array is not closed.", s));
 		}
 		return list;
 	}
 	
 	private String parseString(JSONSource s) throws IOException, ParseException {
-		int point = 0; // 0 '"' 1 'c' ... '"' 255
-		StringBuilder sb = new StringBuilder();
+		int point = 0; // 0 '"' 1 'c' ... '"' E
+		StringBuilder sb = getBuffer();
 		char start = '\0';
 		
 		int n = -1;
-		while (point != 255 && (n = s.next()) != -1) {
+		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
 			case '\\':
@@ -873,8 +871,7 @@ public class JSON {
 					point = 1;
 					break;
 				} else if (point == 1 && start == c) {
-					point = 255;
-					break;
+					break loop;
 				}
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			default:
@@ -893,10 +890,10 @@ public class JSON {
 	
 	private Object parseLiteral(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = getBuffer();
 		
 		int n = -1;
-		while (point != 255 && (n = s.next()) != -1) {
+		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
 			case '\\':
@@ -909,7 +906,7 @@ public class JSON {
 					point = 1;
 				} else {
 					s.back();
-					point = 255;
+					break loop;
 				}
 			}
 		}
@@ -919,11 +916,11 @@ public class JSON {
 	}	
 	
 	private Number parseNumber(JSONSource s) throws IOException, ParseException {
-		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 255
-		StringBuilder sb = new StringBuilder();
+		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
+		StringBuilder sb = getBuffer();
 		
 		int n = -1;
-		while (point != 255 && (n = s.next()) != -1) {
+		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
 			case '+':
@@ -971,13 +968,13 @@ public class JSON {
 						point = 5;
 					} else if (point == 7 || point == 8) {
 						sb.append(c);
-						point = 255;
+						break loop;
 					} else {
 						handleParseError(new JSONParseException("unexpected char: "+c, s));
 					}
 				} else if (point == 2 || point == 3 || point == 5 || point == 6) {
 					s.back();
-					point = 255;
+					break loop;
 				} else {
 					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
@@ -988,11 +985,11 @@ public class JSON {
 	}
 	
 	private char parseEscape(JSONSource s) throws IOException, ParseException {
-		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' 255
+		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
 		int n = -1;
-		while (point != 255 && (n = s.next()) != -1) {
+		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			if (point == 0) {
 				if (c == '\\') {
@@ -1006,36 +1003,29 @@ public class JSON {
 				case '\\':
 				case '/':
 					escape = c;
-					point = 255;
-					break;
+					break loop;
 				case 'b':
 					escape = '\b';
-					point = 255;
-					break;
+					break loop;
 				case 'f':
 					escape = '\f';
-					point = 255;
-					break;
+					break loop;
 				case 'n':
 					escape = '\n';
-					point = 255;
-					break;
+					break loop;
 				case 'r':
 					escape = '\r';
-					point = 255;
-					break;
+					break loop;
 				case 't':
 					escape = '\t';
-					point = 255;
-					break;
+					break loop;
 				case 'u':
 					point = 2;
 					break;
 				default:
 					if (this.extendedMode) {
 						escape = c;
-						point = 255;
-						break;
+						break loop;
 					}
 					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
@@ -1048,7 +1038,7 @@ public class JSON {
 					if (point != 5) {
 						point++;
 					} else {
-						point = 255;
+						break loop;
 					}
 				} else {
 					handleParseError(new JSONParseException("illegal unicode escape", s));
@@ -1060,10 +1050,10 @@ public class JSON {
 	}
 	
 	private void skipComment(JSONSource s) throws IOException, ParseException {
-		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' 255
+		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
-		while (point != 255 && (n = s.next()) != -1) {
+		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
 			case '/':
@@ -1074,8 +1064,7 @@ public class JSON {
 					point = 4;
 					break;
 				} else if (point == 3) {
-					point = 255;
-					break;
+					break loop;
 				} else if (point == 2 || point == 4) {
 					break;
 				}
@@ -1097,8 +1086,7 @@ public class JSON {
 					point = 2;
 					break;
 				} else if (point == 4) {
-					point = 255;
-					break;
+					break loop;
 				}
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			default:
@@ -1614,7 +1602,17 @@ public class JSON {
 		}
 		return c.getPackage().equals(this.contextClass.getPackage());
 	}
-
+	
+	private transient StringBuilder cache = null;
+	
+	private StringBuilder getBuffer() {
+		if (cache == null) {
+			cache = new StringBuilder();
+		}
+		cache.setLength(0);
+		return cache;
+	}
+	
 	private static String encodeBase64(byte[] data) {
 		if (data == null) return null;
 		
