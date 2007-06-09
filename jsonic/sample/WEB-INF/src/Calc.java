@@ -17,23 +17,26 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class Calc {
-	public Map get(Map params) {
+	public Map get(Map params) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("url", "calc.json");
 		
+		Map<String, Object> plusMethod = new HashMap<String, Object>();
+		plusMethod.put("name", "plus");
+		plusMethod.put("example", "[1, 2]");
+		plusMethod.put("code", this.getClass().getMethod("plus", new Class[] {int.class, int.class}));
+		
 		Map<String, Object> sumMethod = new HashMap<String, Object>();
 		sumMethod.put("name", "sum");
-		sumMethod.put("example", "[1, 2]");
-		sumMethod.put("code", "public int sum(int a, int b) {\n\treturn a + b;\n}\n\n"
-				+ "public int sum(int[] a) {\n\tint result = 0;\n\tfor (int n : a) {\n"
-				+ "\t\tresult += n;\n\t}\n\treturn result;\n}");
+		sumMethod.put("example", "[[1, 2, 3, 4, 5, 6]]");
+		sumMethod.put("code", this.getClass().getMethod("sum", new Class[] {int[].class}));
 		
-		map.put("methods", new Map[] {sumMethod});
+		map.put("methods", new Map[] {plusMethod, sumMethod});
 		
 		return map;
 	}
 	
-	public int sum(int a, int b) {
+	public int plus(int a, int b) {
 		return a + b;
 	}
 	

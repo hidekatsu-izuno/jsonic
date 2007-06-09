@@ -18,19 +18,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Edit {
-	public Map get(Map params) {
+	public Map get(Map params) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("url", "edit.json");
 		
 		Map<String, Object> concatMethod = new HashMap<String, Object>();
 		concatMethod.put("name", "concat");
 		concatMethod.put("example", "[\"blue\", \"bird\"]");
-		concatMethod.put("code", "public String concat(String a, String b) {\n\treturn a + b;\n}");
+		concatMethod.put("code", this.getClass().getMethod("concat", new Class[] {String.class, String.class}));
 		
 		Map<String, Object> splitMethod = new HashMap<String, Object>();
 		splitMethod.put("name", "split");
 		splitMethod.put("example", "[\"abc-efg-hij\", \"-\"]");
-		splitMethod.put("code", "public String[] split(String a, String b) {\n\treturn a.split(b);\n}");
+		splitMethod.put("code", this.getClass().getMethod("split", new Class[] {String.class, String.class}));
 		
 		map.put("methods", new Map[] {concatMethod, splitMethod});
 		
