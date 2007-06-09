@@ -186,7 +186,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 </ul>
 
 <h4 id="generics">■ 総称型を指定してのdecode/parse</h4>
-<p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用して指定する方法を用意しています。</p>
+<p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
 <pre class="source">
 public class JSONConfigLoader {
     private Map&lt;String, Hoge&gt; config;
@@ -199,7 +199,7 @@ public class JSONConfigLoader {
         
         <span class="comment">// これならOK</span>
         config = json.parse(reader,
-            LinkedHashMap.class,
+            Map.class,
             getClass().getField("config").getGenericType());
             
         return config;
@@ -335,7 +335,10 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
 <h3>JSON-RPC Servlet</h3>
-<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です（注：現時点のものは簡易実装です。仕様を完全に満たせているわけではありません）。<br />
+
+<h4>JSON-RPC 1.0</h4>
+
+<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です。<br />
 JSON-RPCを利用するには、web.xmlに下記のような設定を記載するとservlet pathが呼び出されたとき、class nameで指定されたクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
 <pre class="source">
 &lt;servlet&gt;
@@ -358,6 +361,24 @@ JSON-RPCを利用するには、web.xmlに下記のような設定を記載す�
 &lt;/servlet-mapping&gt;
 </pre>
 
+<h4>JSONP</h4>
+<p>JSON-RPCで設定されたクラスに「public Object get(Map params)」のようなメソッドを定義すると、HTTPのGETメソッドで処理を呼び出すことができます。paramsには、HTTPパラメータで指定した値が入り、戻り値はJSONに変換されクライアントに返されます。<br />
+paramsや戻り値には任意のクラスを指定することもできますが、JSONの制約上objectかarrayに変換される必要があります。</p>
+<p>getにより返されるJSONはJSONPに対応していますので、HTTPパラメータに「callback=call」と指定すると「call(...)」とメソッドを呼び出す形となって出力されます。<br />
+例えば、HTML上に下記のように記載すれば、自動的にメソッドが呼び出され引数にサーバより返された値がcallの引数として設定されます。</p>
+
+<pre class="source">
+&lt;script type="text/javascript" &gt;
+    function call(value) {
+        alert(value);
+    }
+&lt;/script&gt;
+
+...
+
+&lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
+</pre>
+
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
 <p>なお、書くまでもないことですが自分のライブラリへの組み込みやその際にパッケージ名や処理の変更など行っていただいて一向に構いません。保障はありませんが、ライセンスの範囲内でご自由にお使いください。</p>
@@ -378,7 +399,7 @@ JSON-RPCを利用するには、web.xmlに下記のような設定を記載す�
 <li>JSONRPCServletの文字化け対応を行いました。</li>
 <li>JSONRPCServletでGETによるメソッド起動を可能にしました。なお、GETの場合にはJSONP機能が使えます。</li>
 <li>setMaxDepthによる階層の制限を越えた場合、エラーにするのではなくnullを設定するように変更しました。</li>
-<li>parse中に使うStringBuilderを再利用するように変更しました。</li>
+<li>parseで利用するStringBuilderを再利用するように変更しました。</li>
 <li>handleParseExceptionの仕様を見直しました。</li>
 </ul>
 

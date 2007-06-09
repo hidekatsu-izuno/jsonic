@@ -50,7 +50,7 @@
 	function changeMethod(value) {
 		var url = $('url')
 		var params = $('params');
-		params.value = ds[url.value][value].example;
+		params.value = ds[url.value][value].example.toString();
 		Element.update($('code'), ds[url.value][value].code);
 	}
 	

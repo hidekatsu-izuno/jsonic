@@ -28,7 +28,7 @@ public class Calc {
 		
 		Map<String, Object> sumMethod = new HashMap<String, Object>();
 		sumMethod.put("name", "sum");
-		sumMethod.put("example", "[[1, 2, 3, 4, 5, 6]]");
+		sumMethod.put("example", "[[1, 2, 3, 4, 5]]");
 		sumMethod.put("code", this.getClass().getMethod("sum", new Class[] {int[].class}));
 		
 		map.put("methods", new Map[] {plusMethod, sumMethod});
