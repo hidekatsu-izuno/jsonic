@@ -1726,7 +1726,7 @@ public class JSON {
 	}
 	
 
-	static interface JSONSource {
+	private static interface JSONSource {
 		int next() throws IOException;
 		void back();
 		long getLineNumber();
