@@ -126,14 +126,6 @@ import java.text.ParseException;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 public class JSON {
-	private static final Map<String, Object> LITERALS = new HashMap<String, Object>();
-	
-	static {
-		LITERALS.put("null", null);
-		LITERALS.put("true", Boolean.TRUE);
-		LITERALS.put("false", Boolean.FALSE);
-	}
-	
 	private Class contextClass = null;
 	private Object context = null;
 	
@@ -586,6 +578,22 @@ public class JSON {
 		return parse(new ReaderJSONSource(reader));
 	}
 	
+	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
+		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
+	}
+	
+	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
+	}
+	
+	public <T> T parse(CharSequence s, Class<? extends T> c, Type t) throws Exception {
+		return (T)convert(parse(new CharSequenceJSONSource(s)), c, t);
+	}
+	
+	public <T> T parse(Reader reader, Class<? extends T> c, Type t) throws Exception {
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
+	}
+	
 	private Object parse(JSONSource s) throws IOException, ParseException {
 		StringBuilder sb = new StringBuilder(1000);
 		
@@ -604,43 +612,54 @@ public class JSON {
 				if (o == null) {
 					s.back();
 					o = parseObject(s, sb);
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '[':
 				if (o == null) {
 					s.back();
 					o = parseArray(s, sb);
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '\'':
 			case '"':
-				if (this.extendedMode) {
+				if (this.extendedMode && o == null) {
 					s.back();
 					o = parseString(s, sb);
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-			case 't':
-			case 'f':
-			case 'n':
+				break;
+			case '/':
 				if (this.extendedMode) {
 					s.back();
-					o = parseLiteral(s, sb);
-					break;
+					skipComment(s);
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
+				break;
 			default:
-				if (this.extendedMode) {
+				if (this.extendedMode && o == null) {
 					if ((c == '-') || (c >= '0' && c <= '9')) {
 						s.back();
 						o = parseNumber(s, sb);
-						break;
-					} else if (c == '/') {
+					} else {
 						s.back();
-						skipComment(s);
-						break;
+						String literal = parseLiteral(s, sb);
+						if (literal.equals("null")) {
+							o = null;
+						} else if (literal.equals("true")) {
+							o = Boolean.TRUE;
+						} else if (literal.equals("false")) {
+							o = Boolean.FALSE;
+						} else {
+							handleParseError(new JSONParseException("unrecognized literal: "+literal, s));
+							break;
+						}
 					}
-					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				} else {
 					handleParseError(new JSONParseException("a JSON text must start with a object or array", s));
 				}
@@ -651,22 +670,6 @@ public class JSON {
 		}
 		return o;
 	}	
-	
-	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
-	}
-	
-	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
-	}
-	
-	public <T> T parse(CharSequence s, Class<? extends T> c, Type t) throws Exception {
-		return (T)convert(parse(new CharSequenceJSONSource(s)), c, t);
-	}
-	
-	public <T> T parse(Reader reader, Class<? extends T> c, Type t) throws Exception {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
-	}
 	
 	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb) throws IOException, ParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
@@ -685,87 +688,97 @@ public class JSON {
 			case '{':
 				if (point == 0) {
 					point = 1;
-					break;
 				} else if (point == 3){
 					s.back();
 					map.put(key, parseObject(s, sb));
 					point = 4;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case ':':
 				if (point == 2) {
 					point = 3;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case ',':
 				if (point == 4) {
 					point = 1;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '}':
 				if (point == 1 || point == 4) {
 					break loop;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '\'':
 				if (!this.extendedMode) {
 					handleParseError(new JSONParseException("unexpected char: "+c, s));
+					break;
 				}
 			case '"':
 				if (point == 1) {
 					s.back();
 					key = parseString(s, sb);
 					point = 2;
-					break;
 				} else if (point == 3) {
 					s.back();
 					map.put(key, parseString(s, sb));
 					point = 4;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '[':
 				if (point == 3) {
 					s.back();
 					map.put(key, parseArray(s, sb));
 					point = 4;
-					break;
-				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
-			case 't':
-			case 'f':
-			case 'n':
-				if (point == 3) {
-					s.back();
-					map.put(key, parseLiteral(s, sb));
-					point = 4;
-					break;
-				}
-				if (!this.extendedMode) {
+				} else {
 					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-			default:
-				if (point == 3 && ((c == '-') || (c >= '0' && c <= '9'))) {
+				break;
+			case '/':
+				if (this.extendedMode) {
 					s.back();
-					map.put(key, parseNumber(s, sb));
-					point = 4;
-					break;
-				} else if (this.extendedMode) {
-					if (point == 1 && (Character.isUnicodeIdentifierStart(c) || c == '$' || c == '_' || c == '\\')) {
-						s.back();
-						key = (String)parseLiteral(s, sb);
-						point = 2;
-						break;
-					} else if (c == '/') {
-						s.back();
-						skipComment(s);
-						break;
-					}
+					skipComment(s);
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
+			default:
+				if (point == 1 && this.extendedMode) {
+					s.back();
+					key = parseLiteral(s, sb);
+					point = 2;
+				} else if (point == 3) {
+					if ((c == '-') || (c >= '0' && c <= '9')) {
+						s.back();
+						map.put(key, parseNumber(s, sb));
+					} else {
+						s.back();
+						String literal = parseLiteral(s, sb);
+						if (literal.equals("null")) {
+							map.put(key, null);
+						} else if (literal.equals("true")) {
+							map.put(key, Boolean.TRUE);
+						} else if (literal.equals("false")) {
+							map.put(key, Boolean.FALSE);
+						} else {
+							handleParseError(new JSONParseException("unrecognized literal: "+literal, s));
+							break;
+						}
+					}
+					point = 4;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
+				}
 			}
 		}
 		
@@ -792,67 +805,82 @@ public class JSON {
 			case '[':
 				if (point == 0) {
 					point = 1;
-					break;
 				} else if (point == 1) {
 					s.back();
 					list.add(parseArray(s, sb));
 					point = 2;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case ',':
 				if (point == 2) {
 					point = 1;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case ']':
 				if (point == 1 || point == 2) {
 					break loop;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '{':
 				if (point == 1){
 					s.back();
 					list.add(parseObject(s, sb));
 					point = 2;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '\'':
 				if (!this.extendedMode) {
 					handleParseError(new JSONParseException("unexpected char: "+c, s));
+					break;
 				}
 			case '"':
 				if (point == 1) {
 					s.back();
 					list.add(parseString(s, sb));
 					point = 2;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
-			case 't':
-			case 'f':
-			case 'n':
-				if (point == 1) {
-					s.back();
-					list.add(parseLiteral(s, sb));
-					point = 2;
-					break;
-				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
-			default:
-				if (point == 1 && ((c == '-') || (c >= '0' && c <= '9'))) {
-					s.back();
-					list.add(parseNumber(s, sb));
-					point = 2;
-					break;
-				} else if (this.extendedMode && c == '/') {
+				break;
+			case '/':
+				if (this.extendedMode) {
 					s.back();
 					skipComment(s);
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
+			default:
+				if (point == 1) {
+					if ((c == '-') || (c >= '0' && c <= '9')) {
+						s.back();
+						list.add(parseNumber(s, sb));
+					} else if (point == 1) {
+						s.back();
+						String literal = parseLiteral(s, sb);
+						if (literal.equals("null")) {
+							list.add(null);
+						} else if (literal.equals("true")) {
+							list.add(Boolean.TRUE);
+						} else if (literal.equals("false")) {
+							list.add(Boolean.FALSE);
+						} else {
+							handleParseError(new JSONParseException("unrecognized literal: "+literal, s));
+							break;
+						}
+					}
+					point = 2;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
+				}
 			}
 		}
 		
@@ -875,33 +903,36 @@ public class JSON {
 				if (point == 1) {
 					s.back();
 					sb.append(parseEscape(s));
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '\'':
 				if (!this.extendedMode) {
 					if (point == 1 && c >= 0x20) {
 						sb.append(c);
-						break;
+					} else {
+						handleParseError(new JSONParseException("unexpected char: "+c, s));
 					}
-					handleParseError(new JSONParseException("unexpected char: "+c, s));
+					break;
 				}
 			case '"':
 				if (point == 0) {
 					start = c;
 					point = 1;
-					break;
 				} else if (point == 1 && start == c) {
 					break loop;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			default:
 				if (point == 1 && c >= 0x20) {
 					sb.append(c);
 					point = 1;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			}
 		}
 		
@@ -909,7 +940,7 @@ public class JSON {
 	}
 	
 	
-	private Object parseLiteral(JSONSource s, StringBuilder sb) throws IOException, ParseException {
+	private String parseLiteral(JSONSource s, StringBuilder sb) throws IOException, ParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		sb.setLength(0);
 		
@@ -931,9 +962,7 @@ public class JSON {
 				}
 			}
 		}
-		
-		String literal = sb.toString();
-		return (LITERALS.containsKey(literal)) ? LITERALS.get(literal) : literal;
+		return sb.toString();
 	}	
 	
 	private Number parseNumber(JSONSource s, StringBuilder sb) throws IOException, ParseException {
@@ -948,35 +977,38 @@ public class JSON {
 				if (point == 7) {
 					sb.append(c);
 					point = 8;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '-':
 				if (point == 0) {
 					sb.append(c);
 					point = 1;
-					break;
 				} else if (point == 7) {
 					sb.append(c);
 					point = 8;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '.':
 				if (point == 2 || point == 3) {
 					sb.append(c);
 					point = 4;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case 'e':
 			case 'E':
 				if (point == 2 || point == 3 || point == 5 || point == 6) {
 					sb.append(c);
 					point = 7;
-					break;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			default:
 				if (c >= '0' && c <= '9') {
 					if (point == 0 || point == 1) {
@@ -1047,8 +1079,9 @@ public class JSON {
 					if (this.extendedMode) {
 						escape = c;
 						break loop;
+					} else {
+						handleParseError(new JSONParseException("unexpected char: "+c, s));
 					}
-					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
 			} else {
 				int hex = (c >= '0' && c <= '9') ? c-48 :
@@ -1080,44 +1113,39 @@ public class JSON {
 			case '/':
 				if (point == 0) {
 					point = 1;
-					break;
 				} else if (point == 1) {
 					point = 4;
-					break;
 				} else if (point == 3) {
 					break loop;
-				} else if (point == 2 || point == 4) {
-					break;
+				} else if (!(point == 2 || point == 4)) {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '*':
 				if (point == 1) {
 					point = 2;
-					break;
 				} else if (point == 2) {
 					point = 3;
-					break;
-				} else if (point == 3 || point == 4) {
-					break;
+				} else if (!(point == 3 || point == 4)) {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			case '\n':
 			case '\r':
 				if (point == 2 || point == 3) {
 					point = 2;
-					break;
 				} else if (point == 4) {
 					break loop;
+				} else {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
+				break;
 			default:
-				if (point == 2 || point == 4) {
-					break;
-				} else if (point == 3) {
+				if (point == 3) {
 					point = 2;
-					break;
+				} else if (!(point == 2 || point == 4)) {
+					handleParseError(new JSONParseException("unexpected char: "+c, s));
 				}
-				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			}
 		}	
 	}
