@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.text.ParseException;
 
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as 
@@ -224,7 +225,7 @@ public class JSON {
 	 * @return a decoded object
 	 * @exception ParseException if the beginning of the specified string cannot be parsed.
 	 */
-	public static Object decode(String source) {
+	public static Object decode(String source) throws ParseException {
 		Object value = null;
 		try {
 			value = (new JSON()).parse(new CharSequenceJSONSource(source));
@@ -553,7 +554,7 @@ public class JSON {
 		return ap;
 	}
 
-	public Object parse(CharSequence cs) {
+	public Object parse(CharSequence cs) throws ParseException {
 		if (cs == null) {
 			throw new IllegalArgumentException("source text is null.");
 		}
@@ -566,14 +567,14 @@ public class JSON {
 		return value;
 	}
 	
-	public Object parse(Reader reader) throws IOException {
+	public Object parse(Reader reader) throws IOException, ParseException {
 		if (reader == null) {
 			throw new IllegalArgumentException("source text is null.");
 		}
 		return parse(new ReaderJSONSource(reader));
 	}
 	
-	private Object parse(JSONSource s) throws IOException {
+	private Object parse(JSONSource s) throws IOException, ParseException {
 		Object o = null;
 		
 		int n = -1;
@@ -642,7 +643,7 @@ public class JSON {
 		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
 	}
 	
-	private Map<String, Object> parseObject(JSONSource s) throws IOException {
+	private Map<String, Object> parseObject(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' 255
 		Map<String, Object> map = new HashMap<String, Object>();
 		String key = null;
@@ -751,7 +752,7 @@ public class JSON {
 	}
 
 	
-	private List<Object> parseArray(JSONSource s) throws IOException {
+	private List<Object> parseArray(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' 255
 		List<Object> list = new ArrayList<Object>();
 		
@@ -838,7 +839,7 @@ public class JSON {
 		return list;
 	}
 	
-	private String parseString(JSONSource s) throws IOException {
+	private String parseString(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '"' 1 'c' ... '"' 255
 		StringBuilder sb = new StringBuilder();
 		char start = '\0';
@@ -886,7 +887,7 @@ public class JSON {
 	}
 	
 	
-	private Object parseLiteral(JSONSource s) throws IOException {
+	private Object parseLiteral(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = new StringBuilder();
 		
@@ -913,7 +914,7 @@ public class JSON {
 		return (LITERALS.containsKey(literal)) ? LITERALS.get(literal) : literal;
 	}	
 	
-	private Number parseNumber(JSONSource s) throws IOException {
+	private Number parseNumber(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 255
 		StringBuilder sb = new StringBuilder();
 		
@@ -982,7 +983,7 @@ public class JSON {
 		return new BigDecimal(sb.toString());
 	}
 	
-	private char parseEscape(JSONSource s) throws IOException {
+	private char parseEscape(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' 255
 		char escape = '\0';
 		
@@ -1054,7 +1055,7 @@ public class JSON {
 		return escape;
 	}
 	
-	private void skipComment(JSONSource s) throws IOException {
+	private void skipComment(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' 255
 		
 		int n = -1;
@@ -1108,7 +1109,7 @@ public class JSON {
 		}	
 	}
 	
-	protected void handleParseError(JSONParseException e) {
+	protected void handleParseError(JSONParseException e) throws ParseException {
 		throw e;
 	}
 	
@@ -1828,6 +1829,26 @@ public class JSON {
 				sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
 			}
 			return sb.toString();
+		}
+	}
+	
+	protected class JSONParseException extends ParseException {
+		private static final long serialVersionUID = -8323989588488596436L;
+		
+		private JSON.JSONSource s;
+		
+		JSONParseException(String message, JSON.JSONSource s) {
+			super("" + s.getLines() + " " + message + "\n" + s.toString() + " <- ?", 
+				(s.getLines() <= Integer.MAX_VALUE) ? (int)s.getLines() : -1);
+			this.s = s;
+		}
+		
+		public long getLines() {
+			return s.getLines();
+		}
+		
+		public long getColumns() {
+			return s.getColumns();
 		}
 	}
 }
