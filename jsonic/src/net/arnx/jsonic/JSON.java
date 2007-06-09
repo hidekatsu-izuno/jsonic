@@ -1148,7 +1148,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).byteValue();
 					} else {
-						data = new Byte(value.toString());
+						data = Byte.valueOf(value.toString());
 					}
 				} else if (c.equals(short.class)) {
 					if (value == null) {
@@ -1158,7 +1158,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).shortValue();
 					} else {
-						data = new Short(value.toString());
+						data = Short.valueOf(value.toString());
 					}
 				} else if (c.equals(int.class)) {
 					if (value == null) {
@@ -1168,7 +1168,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).intValue();
 					} else {
-						data = new Integer(value.toString());
+						data = Integer.valueOf(value.toString());
 					}
 				} else if (c.equals(long.class)) {
 					if (value == null) {
@@ -1178,7 +1178,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).longValue();
 					} else {
-						data = new Long(value.toString());
+						data = Long.valueOf(value.toString());
 					}
 				} else if (c.equals(float.class)) {
 					if (value == null) {
@@ -1188,7 +1188,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).floatValue();
 					} else {
-						data = new Float(value.toString());
+						data = Float.valueOf(value.toString());
 					}
 				} else if (c.equals(double.class)) {
 					if (value == null) {
@@ -1198,7 +1198,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).doubleValue();
 					} else {
-						data = new Double(value.toString());
+						data = Double.valueOf(value.toString());
 					}
 				} else if (c.equals(char.class)) {
 					if (value == null) {
@@ -1236,7 +1236,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).byteValue();
 					} else {
-						data = new Byte(value.toString());
+						data = Byte.valueOf(value.toString());
 					}
 				} else if (Short.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1244,7 +1244,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).shortValue();
 					} else {
-						data = new Short(value.toString());
+						data = Short.valueOf(value.toString());
 					}				
 				} else if (Integer.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1252,7 +1252,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).intValue();
 					} else {
-						data = new Integer(value.toString());
+						data = Integer.valueOf(value.toString());
 					}
 				} else if (Long.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1260,7 +1260,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).longValue();
 					} else {
-						data = new Long(value.toString());
+						data = Long.valueOf(value.toString());
 					}
 				} else if (Float.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1268,7 +1268,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).floatValue();
 					} else {
-						data = new Float(value.toString());
+						data = Float.valueOf(value.toString());
 					}
 				} else if (Double.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1276,7 +1276,7 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).doubleValue();
 					} else {
-						data = new Double(value.toString());
+						data = Double.valueOf(value.toString());
 					}
 				} else if (BigInteger.class.equals(c)) {				
 					if (value instanceof Boolean) {
@@ -1301,11 +1301,7 @@ public class JSON {
 					data = value.toString();
 				} else if (Appendable.class.isAssignableFrom(c)) {
 					Appendable a = (Appendable)create(c);
-					try {
-						a.append(value.toString());
-					} catch (Exception e) {
-						// no handle
-					}
+					data = a.append(value.toString());
 				} else if (Date.class.isAssignableFrom(c)) {
 					if (value instanceof Number) {
 						Date date = (Date)create(c);

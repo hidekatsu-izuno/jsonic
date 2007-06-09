@@ -126,7 +126,21 @@ public class JSONRPCServlet extends HttpServlet {
 			error.put("code", 100);
 			error.put("message", e.getCause().getMessage());
 		} catch (Exception e) {
-			log(e.getMessage());
+			if (e instanceof NoSuchMethodException) {
+				StringBuilder sb = new StringBuilder("missing method: ");
+				sb.append(o.getClass().getName()).append(".");
+				sb.append(req.method).append("(");
+				if (req.params != null) {
+					for (int i = 0; i < req.params.size(); i++) {
+						if (i != 0) sb.append(", ");
+						sb.append(req.params.get(i));
+					}
+				}
+				sb.append(")");
+				log(sb.toString());
+			} else {
+				log(e.getMessage(), e);
+			}
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
