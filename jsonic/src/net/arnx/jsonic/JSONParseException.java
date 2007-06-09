@@ -3,14 +3,14 @@ package net.arnx.jsonic;
 public class JSONParseException extends RuntimeException {
 	private static final long serialVersionUID = -8323989588488596436L;
 	
-	private JSONSource s;
+	private JSON.JSONSource s;
 	
-	JSONParseException(String message, JSONSource s) {
+	JSONParseException(String message, JSON.JSONSource s) {
 		super(createMessage(message, s));
 		this.s = s;
 	}
 	
-	static String createMessage(String message, JSONSource s) {
+	static String createMessage(String message, JSON.JSONSource s) {
 		StringBuilder sb = new StringBuilder();
 		sb.append('[').append(s.getLines()).append(',').append(s.getColumns()).append(']');
 		sb.append(' ').append(message).append('\n');

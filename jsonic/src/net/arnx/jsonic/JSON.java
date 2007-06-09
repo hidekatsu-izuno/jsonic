@@ -1723,110 +1723,111 @@ public class JSON {
 		
 		return buffer;
 	}
-}
-
-interface JSONSource {
-	int next() throws IOException;
-	void back();
-	long getLines();
-	long getColumns();
-}
-
-class CharSequenceJSONSource implements JSONSource {
-	private int lines = 0;
-	private int columns = 0;
 	
-	private CharSequence cs;
-	private int count = 0;
-	
-	public CharSequenceJSONSource(CharSequence cs) {
-		this.cs = cs;
+
+	static interface JSONSource {
+		int next() throws IOException;
+		void back();
+		long getLines();
+		long getColumns();
 	}
-	
-	public int next() {
-		if (count < cs.length()) {
-			char c = cs.charAt(count++);
-			if (c == '\r' || (c == '\n' && count > 1 && cs.charAt(count-2) != '\r')) {
+
+	private static class CharSequenceJSONSource implements JSONSource {
+		private int lines = 0;
+		private int columns = 0;
+		
+		private CharSequence cs;
+		private int count = 0;
+		
+		public CharSequenceJSONSource(CharSequence cs) {
+			this.cs = cs;
+		}
+		
+		public int next() {
+			if (count < cs.length()) {
+				char c = cs.charAt(count++);
+				if (c == '\r' || (c == '\n' && count > 1 && cs.charAt(count-2) != '\r')) {
+					lines++;
+					columns = 0;
+				} else {
+					columns++;
+				}
+				return c;
+			}
+			return -1;
+		}
+		
+		public void back() {
+			count--;
+			columns--;
+		}
+		
+		public long getLines() {
+			return lines;
+		}
+		
+		public long getColumns() {
+			return columns;
+		}
+		
+		public String toString() {
+			return cs.subSequence(count-columns, count).toString();
+		}
+	}
+
+	private static class ReaderJSONSource implements JSONSource{
+		private long lines = 0;
+		private long columns = 0;
+
+		private Reader reader;
+		private char[] buf = new char[256];
+		private int start = 0;
+		private int end = 0;
+		
+		public ReaderJSONSource(Reader reader) {
+			this.reader = reader;
+		}
+		
+		public int next() throws IOException {
+			if (start == end) {
+				int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
+				if (size != -1) {
+					end = (end + size) % buf.length;
+				} else {
+					return -1;
+				}
+			}
+			char c = buf[start];
+			if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
 				lines++;
 				columns = 0;
 			} else {
 				columns++;
 			}
+			start = (start+1) % buf.length;
 			return c;
 		}
-		return -1;
-	}
-	
-	public void back() {
-		count--;
-		columns--;
-	}
-	
-	public long getLines() {
-		return lines;
-	}
-	
-	public long getColumns() {
-		return columns;
-	}
-	
-	public String toString() {
-		return cs.subSequence(count-columns, count).toString();
-	}
-}
-
-class ReaderJSONSource implements JSONSource{
-	private long lines = 0;
-	private long columns = 0;
-
-	private Reader reader;
-	private char[] buf = new char[256];
-	private int start = 0;
-	private int end = 0;
-	
-	public ReaderJSONSource(Reader reader) {
-		this.reader = reader;
-	}
-	
-	public int next() throws IOException {
-		if (start == end) {
-			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
-			if (size != -1) {
-				end = (end + size) % buf.length;
-			} else {
-				return -1;
+		
+		public void back() {
+			columns--;
+			start = (start+buf.length-1) % buf.length;
+		}
+		
+		public long getLines() {
+			return lines;
+		}
+		
+		public long getColumns() {
+			return columns;
+		}
+		
+		public String toString() {
+			StringBuffer sb = new StringBuffer();
+			int maxlength = (columns < buf.length) ? (int)columns : buf.length-1;
+			for (int i = maxlength; i >= 0; i--) {
+				sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
 			}
+			return sb.toString();
 		}
-		char c = buf[start];
-		if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
-			lines++;
-			columns = 0;
-		} else {
-			columns++;
-		}
-		start = (start+1) % buf.length;
-		return c;
-	}
-	
-	public void back() {
-		columns--;
-		start = (start+buf.length-1) % buf.length;
-	}
-	
-	public long getLines() {
-		return lines;
-	}
-	
-	public long getColumns() {
-		return columns;
-	}
-	
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		int maxlength = (columns < buf.length) ? (int)columns : buf.length-1;
-		for (int i = maxlength; i >= 0; i--) {
-			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
-		}
-		return sb.toString();
 	}
 }
