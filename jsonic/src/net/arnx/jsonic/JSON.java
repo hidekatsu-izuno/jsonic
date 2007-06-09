@@ -189,7 +189,7 @@ public class JSON {
 			this.contextClass = (value != null) ? value.getClass() : null;
 		}
 	}
-
+	
 	/**
 	 * Encodes a object into a json string.
 	 * 
@@ -251,10 +251,24 @@ public class JSON {
 		return (T)json.convert(json.parse(new CharSequenceJSONSource(source)), c, c);
 	}
 	
+	/**
+	 * Decodes a json string into a typed object.
+	 * 
+	 * @param source a json string to decode
+	 * @param c class for converting
+	 * @param t type specified generics parameters
+	 * @return a decoded object
+	 * @exception ParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static <T> T decode(String source, Class<? extends T> c, Type t) throws Exception {
+		JSON json = new JSON(c);
+		return (T)json.convert(json.parse(new CharSequenceJSONSource(source)), c, t);
+	}
+	
 	public String format(Object source) {
 		String value = null;
 		try {
-			value = format(source, getBuffer()).toString();
+			value = format(source, new StringBuilder(1000)).toString();
 		} catch (Exception e) {
 			// never occur
 		}
@@ -573,6 +587,8 @@ public class JSON {
 	}
 	
 	private Object parse(JSONSource s) throws IOException, ParseException {
+		StringBuilder sb = new StringBuilder(1000);
+		
 		Object o = null;
 		
 		int n = -1;
@@ -587,14 +603,14 @@ public class JSON {
 			case '{':
 				if (o == null) {
 					s.back();
-					o = parseObject(s);
+					o = parseObject(s, sb);
 					break;
 				}
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
 			case '[':
 				if (o == null) {
 					s.back();
-					o = parseArray(s);
+					o = parseArray(s, sb);
 					break;
 				}
 				handleParseError(new JSONParseException("unexpected char: "+c, s));
@@ -602,7 +618,7 @@ public class JSON {
 			case '"':
 				if (this.extendedMode) {
 					s.back();
-					o = parseString(s);
+					o = parseString(s, sb);
 					break;
 				}
 			case 't':
@@ -610,14 +626,14 @@ public class JSON {
 			case 'n':
 				if (this.extendedMode) {
 					s.back();
-					o = parseLiteral(s);
+					o = parseLiteral(s, sb);
 					break;
 				}
 			default:
 				if (this.extendedMode) {
 					if ((c == '-') || (c >= '0' && c <= '9')) {
 						s.back();
-						o = parseNumber(s);
+						o = parseNumber(s, sb);
 						break;
 					} else if (c == '/') {
 						s.back();
@@ -652,7 +668,7 @@ public class JSON {
 		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
-	private Map<String, Object> parseObject(JSONSource s) throws IOException, ParseException {
+	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb) throws IOException, ParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
 		Map<String, Object> map = new HashMap<String, Object>();
 		String key = null;
@@ -672,7 +688,7 @@ public class JSON {
 					break;
 				} else if (point == 3){
 					s.back();
-					map.put(key, parseObject(s));
+					map.put(key, parseObject(s, sb));
 					point = 4;
 					break;
 				}
@@ -701,12 +717,12 @@ public class JSON {
 			case '"':
 				if (point == 1) {
 					s.back();
-					key = parseString(s);
+					key = parseString(s, sb);
 					point = 2;
 					break;
 				} else if (point == 3) {
 					s.back();
-					map.put(key, parseString(s));
+					map.put(key, parseString(s, sb));
 					point = 4;
 					break;
 				}
@@ -714,7 +730,7 @@ public class JSON {
 			case '[':
 				if (point == 3) {
 					s.back();
-					map.put(key, parseArray(s));
+					map.put(key, parseArray(s, sb));
 					point = 4;
 					break;
 				}
@@ -724,7 +740,7 @@ public class JSON {
 			case 'n':
 				if (point == 3) {
 					s.back();
-					map.put(key, parseLiteral(s));
+					map.put(key, parseLiteral(s, sb));
 					point = 4;
 					break;
 				}
@@ -734,13 +750,13 @@ public class JSON {
 			default:
 				if (point == 3 && ((c == '-') || (c >= '0' && c <= '9'))) {
 					s.back();
-					map.put(key, parseNumber(s));
+					map.put(key, parseNumber(s, sb));
 					point = 4;
 					break;
 				} else if (this.extendedMode) {
 					if (point == 1 && (Character.isUnicodeIdentifierStart(c) || c == '$' || c == '_' || c == '\\')) {
 						s.back();
-						key = (String)parseLiteral(s);
+						key = (String)parseLiteral(s, sb);
 						point = 2;
 						break;
 					} else if (c == '/') {
@@ -760,7 +776,7 @@ public class JSON {
 	}
 
 	
-	private List<Object> parseArray(JSONSource s) throws IOException, ParseException {
+	private List<Object> parseArray(JSONSource s, StringBuilder sb) throws IOException, ParseException {
 		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
@@ -779,7 +795,7 @@ public class JSON {
 					break;
 				} else if (point == 1) {
 					s.back();
-					list.add(parseArray(s));
+					list.add(parseArray(s, sb));
 					point = 2;
 					break;
 				}
@@ -798,7 +814,7 @@ public class JSON {
 			case '{':
 				if (point == 1){
 					s.back();
-					list.add(parseObject(s));
+					list.add(parseObject(s, sb));
 					point = 2;
 					break;
 				}
@@ -810,7 +826,7 @@ public class JSON {
 			case '"':
 				if (point == 1) {
 					s.back();
-					list.add(parseString(s));
+					list.add(parseString(s, sb));
 					point = 2;
 					break;
 				}
@@ -820,7 +836,7 @@ public class JSON {
 			case 'n':
 				if (point == 1) {
 					s.back();
-					list.add(parseLiteral(s));
+					list.add(parseLiteral(s, sb));
 					point = 2;
 					break;
 				}
@@ -828,7 +844,7 @@ public class JSON {
 			default:
 				if (point == 1 && ((c == '-') || (c >= '0' && c <= '9'))) {
 					s.back();
-					list.add(parseNumber(s));
+					list.add(parseNumber(s, sb));
 					point = 2;
 					break;
 				} else if (this.extendedMode && c == '/') {
@@ -846,9 +862,9 @@ public class JSON {
 		return list;
 	}
 	
-	private String parseString(JSONSource s) throws IOException, ParseException {
+	private String parseString(JSONSource s, StringBuilder sb) throws IOException, ParseException {
 		int point = 0; // 0 '"' 1 'c' ... '"' E
-		StringBuilder sb = getBuffer();
+		sb.setLength(0);
 		char start = '\0';
 		
 		int n = -1;
@@ -893,9 +909,9 @@ public class JSON {
 	}
 	
 	
-	private Object parseLiteral(JSONSource s) throws IOException, ParseException {
+	private Object parseLiteral(JSONSource s, StringBuilder sb) throws IOException, ParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilder sb = getBuffer();
+		sb.setLength(0);
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -920,9 +936,9 @@ public class JSON {
 		return (LITERALS.containsKey(literal)) ? LITERALS.get(literal) : literal;
 	}	
 	
-	private Number parseNumber(JSONSource s) throws IOException, ParseException {
+	private Number parseNumber(JSONSource s, StringBuilder sb) throws IOException, ParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
-		StringBuilder sb = getBuffer();
+		sb.setLength(0);
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1548,7 +1564,7 @@ public class JSON {
 	 * @param json the parameters used for the method call. json should be array, or appended '[' and ']'.
 	 */
 	public Object invoke(Object o, String methodName, CharSequence json) throws Exception {
-		List values = (json != null) ? parseArray(new CharSequenceJSONSource(json)) : null;
+		List values = (json != null) ? parseArray(new CharSequenceJSONSource(json), new StringBuilder()) : null;
 		return invokeDynamic(o, methodName, values);
 	}
 		
@@ -1607,16 +1623,6 @@ public class JSON {
 			return this.contextClass.equals(c.getEnclosingClass());
 		}
 		return c.getPackage().equals(this.contextClass.getPackage());
-	}
-	
-	private transient StringBuilder cache = null;
-	
-	private StringBuilder getBuffer() {
-		if (cache == null) {
-			cache = new StringBuilder();
-		}
-		cache.setLength(0);
-		return cache;
 	}
 	
 	private static String encodeBase64(byte[] data) {

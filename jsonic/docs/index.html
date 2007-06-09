@@ -177,12 +177,35 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <h3>高度な使い方</h3>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
+<li><a href="#generics">総称型を指定してのdecode/parse</a></li>
 <li><a href="#extends">継承による機能拡張</a></li>
 <li><a href="#extendedmode">拡張モード</a></li>
 <li><a href="#invoke">JSONを使ったメソッドの実行</a></li>
 <li><a href="#innerclass">内部クラスを利用したデコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
 </ul>
+
+<h4 id="generics">■ 総称型を指定してのdecode/parse</h4>
+<p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用して指定する方法を用意しています。</p>
+<pre class="source">
+public class JSONConfigLoader {
+    private Map&lt;String, Hoge&gt; config;
+    
+    public Map load(Reader reader) throws ParseException, IOException {
+        JSON json = new JSON();
+        
+        <span class="comment">// これはコンパイルエラー</span>
+        config = json.parse(reader, Map&lt;String, Hoge&gt;.class);
+        
+        <span class="comment">// これならOK</span>
+        config = json.parse(reader,
+            LinkedHashMap.class,
+            getClass().getField("config").getGenericType());
+            
+        return config;
+    }
+}
+</pre>
 
 <h4 id="extends">■ 継承による機能拡張</h4>
 <p>JSONICは、フレームワークでの利用を考慮しインスタンスを生成したり、継承して拡張することができるように設計してあります。</p>
@@ -281,15 +304,15 @@ JSON json = new JSON() {
 };
 </pre>
 
-<h4 id="innerclass">■ コンテキスト付きコンストラクタ <span class="subtitle">- 内部クラスを利用したデコード</span></h4>
+<h4 id="innerclass">■ コンテキストの指定 <span class="subtitle">- 内部クラスを利用したデコード</span></h4>
 <p>decode/parseメソッドの引数にClassオブジェクトを指定するということは、指定されたクラス通常publicでなければならないことを意味します。
 しかし、JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
-JSONICでは、decodeメソッドやparseメソッドの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。また、
-内部クラスのインスタンスを生成するためにを用意しています。</p>
+JSONICでは、decodeメソッドやparseメソッドの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。</p>
 <pre class="source">
 public class EnclosingClass {
     public void decode() {
         JSON json = <span class="em">new JSON(this)</span>; <span class="comment">// このクラスのコンテキストで動作</span>
+        json.<span class="em">setContext(this)</span>; // <span class="comment">setContextを使って指定することも可能です</span>
         InnerClass ic = json.parse("{\"a\": 100}", InnerClass.class);
         
         System.out.println("ic.a = " + ic.a); <span class="comment">// ic.a = 100</span>
@@ -354,6 +377,9 @@ JSON-RPCを利用するには、web.xmlに下記のような設定を記載す�
 <li>真の内部クラス対応を行いました。setContextでEnclosingしているインスタンスを指定できます。</li>
 <li>JSONRPCServletの文字化け対応を行いました。</li>
 <li>JSONRPCServletでGETによるメソッド起動を可能にしました。なお、GETの場合にはJSONP機能が使えます。</li>
+<li>setMaxDepthによる階層の制限を越えた場合、エラーにするのではなくnullを設定するように変更しました。</li>
+<li>parse中に使うStringBuilderを再利用するように変更しました。</li>
+<li>handleParseExceptionの仕様を見直しました。</li>
 </ul>
 
 <h3>2007/06/03 version 0.9.2</h3>
