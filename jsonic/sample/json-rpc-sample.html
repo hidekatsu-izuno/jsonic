@@ -8,7 +8,6 @@
 	var ds = [];
 	
 	function setup(value) {
-		alert(JSON.encode(value));
 		var url = $('url');
 		url.options[url.options.length] = new Option(value.url, value.url);
 		ds[value.url] = value.methods;
@@ -16,18 +15,16 @@
 	
 	function submit() {
 		var url = $('url').value;
-		var method = ds[url][$("method").value].name;
-		var params = $('params').value;
 		var ajax = new Ajax.Updater(
 			{success: 'result'},
 			url,
 			{
 				method: 'POST',
-				postBody: '{'
-					+ 'method: "' + method + '",'
-					+ 'params: ' + params + ','
-					+ 'id: 1'
-					+ '}',
+				postBody: JSON.encode({
+					method: ds[url][$("method").value].name,
+					params: JSON.decode($('params').value),
+					id: (new Date()).getTime()
+				}),
 				onFailure: reportError
 			}
 		);

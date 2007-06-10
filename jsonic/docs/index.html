@@ -355,6 +355,13 @@ JSON-RPCを利用するには、web.xmlに下記のような設定を記載す�
     &lt;/init-param&gt;
 &lt;/servlet&gt;
 
+&lt;-- JavaScriptクライアント共通ライブラリ用 --&gt;
+&lt;servlet-mapping&gt;
+    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
+    &lt;url-pattern&gt;/jsonic/*&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;
+
+&lt;-- RPC用 --&gt;
 &lt;servlet-mapping&gt;
     &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
     &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;

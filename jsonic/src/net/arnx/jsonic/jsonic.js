@@ -18,7 +18,7 @@ JSON = new Object();
 
 JSON.encode = function (value) {
 	var i = 0;
-	var text = null;
+	var text = 'null';
 	var type = typeof(value);
 
 	if (type == 'boolean' || value instanceof Boolean) {
@@ -68,7 +68,7 @@ JSON.encode = function (value) {
 		for (var i = 0; i < value.length; i++)
 			data.push(JSON.encode(value[i]));
 		text = '[' + data.join(',') + ']';
-	} else if (type != 'function') {
+	} else if (type == 'object') {
 		var data = [];
 		for (var key in value) {
 			data.push(JSON.encode(key) + ':' + JSON.encode(value[key]));
@@ -77,4 +77,11 @@ JSON.encode = function (value) {
 	}
 	
 	return text;
+}
+
+JSON.decode = function (value) {
+	if (/^("(\\.|[^"\\\n\r])*"|[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t])+?$/.test(value)) {
+		return eval("(" + value + ")");
+	}
+	throw new Error(1000, 'JSON syntax error.');
 }
