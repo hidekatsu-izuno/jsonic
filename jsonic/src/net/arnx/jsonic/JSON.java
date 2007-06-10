@@ -460,7 +460,6 @@ public class JSON {
 			for (Method m : methods) {
 				String name = m.getName();
 				if (!Modifier.isStatic(m.getModifiers())
-						&& Modifier.isPublic(m.getModifiers())
 						&& !name.equals("getClass")
 						&& ((name.startsWith("get") 
 								&& name.length() > 3 
@@ -1473,9 +1472,8 @@ public class JSON {
 							Map<String, Object> map = new HashMap<String, Object>();
 							
 							for (Field f : c.getFields()) {
-								if (!Modifier.isStatic(f.getModifiers())
-										&& Modifier.isPublic(f.getModifiers())
-										&& !Modifier.isTransient(f.getModifiers())) {
+								int modifiers = f.getModifiers();
+								if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
 									map.put(f.getName(), f);
 								}
 							}
@@ -1483,7 +1481,6 @@ public class JSON {
 							for (Method m : c.getMethods()) {
 								String name = m.getName();
 								if (!Modifier.isStatic(m.getModifiers())
-										&& Modifier.isPublic(m.getModifiers())
 										&& name.startsWith("set")
 										&& name.length() > 3
 										&& Character.isUpperCase(name.charAt(3))

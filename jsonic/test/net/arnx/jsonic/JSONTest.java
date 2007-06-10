@@ -451,7 +451,11 @@ class TestBean {
 
 	private Class h;
 	public Class getH() { return h; }
-	public void setH(Class h) { this.h = h; }	
+	public void setH(Class h) { this.h = h; }
+	
+	private int x = 10;
+	int y = 100;
+	protected int z = 1000;
 	
 	@Override
 	public int hashCode() {
