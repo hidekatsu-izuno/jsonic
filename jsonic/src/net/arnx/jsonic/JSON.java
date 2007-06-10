@@ -649,7 +649,7 @@ public class JSON {
 						s.back();
 						String literal = parseLiteral(s, sb);
 						if (literal.equals("null")) {
-							o = null;
+							o = Void.class;
 						} else if (literal.equals("true")) {
 							o = Boolean.TRUE;
 						} else if (literal.equals("false")) {
@@ -666,6 +666,8 @@ public class JSON {
 		}
 		if (o == null) {
 			handleParseError(new JSONParseException("source text is empty.", s));
+		} else if (o.equals(Void.class)) {
+			o = null;
 		}
 		return o;
 	}	
