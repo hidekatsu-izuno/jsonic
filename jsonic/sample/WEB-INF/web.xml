@@ -9,7 +9,7 @@
 	
 	<servlet>
 		<description>json-rpc sample</description>
-		<servlet-name>json-rpc sample</servlet-name>
+		<servlet-name>json-rpc</servlet-name>
 		<servlet-class>net.arnx.jsonic.JSONRPCServlet</servlet-class>
 		<init-param>
 			<param-name>config</param-name>
@@ -27,7 +27,12 @@
 	</servlet>
 	
 	<servlet-mapping>
-		<servlet-name>json-rpc sample</servlet-name>
+		<servlet-name>json-rpc</servlet-name>
+		<url-pattern>/jsonic/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>json-rpc</servlet-name>
 		<url-pattern>*.json</url-pattern>
 	</servlet-mapping>
 </web-app>

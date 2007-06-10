@@ -15,6 +15,8 @@
  */
 package net.arnx.jsonic;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
@@ -52,7 +54,29 @@ public class JSONRPCServlet extends HttpServlet {
 	}
 	
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {;
+		if (request.getServletPath().startsWith("/jsonic")) {
+			response.setCharacterEncoding("UTF-8");
+			response.setContentType("text/javascript");
+			
+			String name = request.getPathInfo();
+			if (name.startsWith("/")) name = name.substring(1);
+			
+			InputStream in = getClass().getResourceAsStream(name);
+			if (in != null) { 
+				OutputStream out = response.getOutputStream();
+				
+				byte[] buffer = new byte[1024];
+				int n = -1;
+				while ((n = in.read(buffer)) != -1) {
+					out.write(buffer, 0, n);
+				}
+			} else {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			}
+			return;
+		}
+		
 		JSON json = new JSON();
 		
 		Object result = null;
