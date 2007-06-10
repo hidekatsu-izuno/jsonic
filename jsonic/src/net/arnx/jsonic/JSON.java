@@ -557,7 +557,7 @@ public class JSON {
 		return ap;
 	}
 
-	public Object parse(CharSequence cs) throws ParseException {
+	public Object parse(CharSequence cs) throws JSONParseException {
 		if (cs == null) {
 			throw new IllegalArgumentException("source text is null.");
 		}
@@ -570,7 +570,7 @@ public class JSON {
 		return value;
 	}
 	
-	public Object parse(Reader reader) throws IOException, ParseException {
+	public Object parse(Reader reader) throws IOException, JSONParseException {
 		if (reader == null) {
 			throw new IllegalArgumentException("reader is null.");
 		}
@@ -593,7 +593,7 @@ public class JSON {
 		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
-	private Object parse(JSONSource s) throws IOException, ParseException {
+	private Object parse(JSONSource s) throws IOException, JSONParseException {
 		StringBuilder sb = new StringBuilder(1000);
 		
 		Object o = null;
@@ -670,7 +670,7 @@ public class JSON {
 		return o;
 	}	
 	
-	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb) throws IOException, ParseException {
+	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
 		Map<String, Object> map = new HashMap<String, Object>();
 		String key = null;
@@ -788,7 +788,7 @@ public class JSON {
 	}
 
 	
-	private List<Object> parseArray(JSONSource s, StringBuilder sb) throws IOException, ParseException {
+	private List<Object> parseArray(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
 		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
@@ -889,7 +889,7 @@ public class JSON {
 		return list;
 	}
 	
-	private String parseString(JSONSource s, StringBuilder sb) throws IOException, ParseException {
+	private String parseString(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
 		int point = 0; // 0 '"' 1 'c' ... '"' E
 		sb.setLength(0);
 		char start = '\0';
@@ -939,7 +939,7 @@ public class JSON {
 	}
 	
 	
-	private String parseLiteral(JSONSource s, StringBuilder sb) throws IOException, ParseException {
+	private String parseLiteral(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		sb.setLength(0);
 		
@@ -964,7 +964,7 @@ public class JSON {
 		return sb.toString();
 	}	
 	
-	private Number parseNumber(JSONSource s, StringBuilder sb) throws IOException, ParseException {
+	private Number parseNumber(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 		sb.setLength(0);
 		
@@ -1036,7 +1036,7 @@ public class JSON {
 		return new BigDecimal(sb.toString());
 	}
 	
-	private char parseEscape(JSONSource s) throws IOException, ParseException {
+	private char parseEscape(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -1102,7 +1102,7 @@ public class JSON {
 		return escape;
 	}
 	
-	private void skipComment(JSONSource s) throws IOException, ParseException {
+	private void skipComment(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -1149,7 +1149,7 @@ public class JSON {
 		}	
 	}
 	
-	protected void handleParseError(JSONParseException e) throws ParseException {
+	protected void handleParseError(JSONParseException e) throws JSONParseException {
 		throw e;
 	}
 	
@@ -1901,7 +1901,7 @@ public class JSON {
 		}
 	}
 	
-	protected class JSONParseException extends ParseException {
+	public class JSONParseException extends ParseException {
 		private static final long serialVersionUID = -8323989588488596436L;
 		
 		private JSON.JSONSource s;

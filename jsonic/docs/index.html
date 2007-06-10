@@ -400,6 +400,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <ul>
 <li>JSON objectのname項目が空白、ハイフン、アンダースコアで区切られている場合や先頭の文字が大文字になっている場合でも、Java Classのプロパティ名に変換できるように変更しました。</li>
 <li>JavaScript版のJSON.encode/JSON.decode機能を追加し、JSONRPCServlet経由で呼び出せるようにしました。</li>
+<li>JSON.JSONParseExceptionをpublicに変更するとともに、parseメソッドはJSONParseExceptionをthrowするようにメソッド定義を変更しました（decodeメソッドは従来どおりParseExceptionです）。</li>
 </ul>
 
 <h3>2007/06/10 version 0.9.3</h3>
