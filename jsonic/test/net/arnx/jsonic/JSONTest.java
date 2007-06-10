@@ -371,7 +371,14 @@ public class JSONTest {
 		assertEquals(new BigDecimal(-100), json.parse("  -100  "));
 
 		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,"
-				+ " [/*\n x\r */], 1, 'str\\'in\\g',/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ "));	
+				+ " [/*\n x\r */], 1, 'str\\'in\\g',/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ "));
+		
+		NamedBean nb = new NamedBean();
+		nb.namedPropertyAaa = 100;
+		assertEquals(nb, json.parse("{\"namedPropertyAaa\":100}", NamedBean.class));
+		assertEquals(nb, json.parse("{\"named property aaa\":100}", NamedBean.class));
+		assertEquals(nb, json.parse("{\"named_property_aaa\":100}", NamedBean.class));
+		assertEquals(nb, json.parse("{\"Named Property Aaa\":100}", NamedBean.class));
 	}
 
 	@Test
@@ -507,6 +514,32 @@ class TestBean {
 			if (other.h != null)
 				return false;
 		} else if (!h.equals(other.h))
+			return false;
+		return true;
+	}
+}
+
+class NamedBean {
+	public int namedPropertyAaa = 0;
+
+	@Override
+	public int hashCode() {
+		final int PRIME = 31;
+		int result = 1;
+		result = PRIME * result + namedPropertyAaa;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final NamedBean other = (NamedBean) obj;
+		if (namedPropertyAaa != other.namedPropertyAaa)
 			return false;
 		return true;
 	}

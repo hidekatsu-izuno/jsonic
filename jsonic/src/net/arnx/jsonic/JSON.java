@@ -1469,12 +1469,12 @@ public class JSON {
 					if (value instanceof Map) {
 						Object o = create(c);
 						if (o != null) {
-							Map<String, Object> map = new HashMap<String, Object>();
+							Map<String, Object> props = new HashMap<String, Object>();
 							
 							for (Field f : c.getFields()) {
 								int modifiers = f.getModifiers();
 								if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
-									map.put(f.getName(), f);
+									props.put(f.getName(), f);
 								}
 							}
 							
@@ -1496,30 +1496,32 @@ public class JSON {
 										key = name.substring(3);
 									}
 									
-									map.put(key, m);
+									props.put(key, m);
 								}
 							}
 							
 							boolean access = tryAccess(c);
 							
-							for (Object o2 : ((Map)value).entrySet()) {
-								Map.Entry entry = (Map.Entry)o2;
-								Object target = map.get(entry.getKey());
-								if (target instanceof Method) {
+							Map<String, Object> map = (Map<String, Object>)value;
+							for (String key : map.keySet()) {
+								Object target = props.get(toPropertyName(key));
+								if (target == null) {
+									continue;
+								} else if (target instanceof Method) {
 									Method m = (Method)target;
 									try {
 										if (access) m.setAccessible(true);
-										m.invoke(o, convert(entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+										m.invoke(o, convert(map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 									} catch (Exception e) {
-										handleConvertError((String)entry.getKey(), entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
+										handleConvertError(key, map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
 									}
-								} else {
+								} else if (target instanceof Field) {
 									Field f = (Field)target;
 									try {
 										if (access) f.setAccessible(true);
-										f.set(o, convert(entry.getValue(), f.getType(), f.getGenericType()));
+										f.set(o, convert(map.get(key), f.getType(), f.getGenericType()));
 									} catch (Exception e) {
-										handleConvertError((String)entry.getKey(), entry.getValue(), f.getType(), f.getGenericType(), e);
+										handleConvertError(key, map.get(key), f.getType(), f.getGenericType(), e);
 									}
 								}
 							}
@@ -1648,6 +1650,27 @@ public class JSON {
 			return this.contextClass.equals(c.getEnclosingClass());
 		}
 		return c.getPackage().equals(this.contextClass.getPackage());
+	}
+	
+	private String toPropertyName(String name) {
+		StringBuilder sb = new StringBuilder(name.length());
+		int i = 0;
+		boolean toUpperCase = false;
+		for (i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
+		}
+		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
+			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+		}
+		return sb.toString();
 	}
 	
 	private static String encodeBase64(byte[] data) {

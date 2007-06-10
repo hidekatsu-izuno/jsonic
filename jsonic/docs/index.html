@@ -66,7 +66,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 </pre>
 
 <h2 id="download">ダウンロード</h2>
-<p>JSONICの現時点での最新バージョンは0.9.3です。</p>
+<p>JSONICの現時点での最新バージョンは0.9.4です。</p>
 <p><a href="http://sourceforge.jp/projects/jsonic/files/">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Javaバージョン5.0以上が必要です。</p>
 
 <h2 id="usage">使い方</h2>
@@ -394,6 +394,13 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>のトラッキング情報あるいはフォーラムまでご連絡ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2007/06/XX version 0.9.4</h3>
+<p>下記の機能追加が行われています。</p>
+<ul>
+<li>JSON objectのname項目が空白、ハイフン、アンダースコアで区切られている場合や先頭の文字が大文字になっている場合でも、Java Classのプロパティ名に変換できるように変更しました。</li>
+<li>JavaScript版のJSON.encode/JSON.decode機能を追加し、JSONRPCServlet経由で呼び出せるようにしました。</li>
+</ul>
 
 <h3>2007/06/10 version 0.9.3</h3>
 <p>主に機能追加、メソッドの整理が変更点です。</p>
