@@ -3,10 +3,12 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <title>JSON-RPC sample</title>
 <script type="text/javascript" src="prototype.js"></script>
+<script type="text/javascript" src="jsonic.js"></script>
 <script type="text/javascript">
 	var ds = [];
 	
 	function setup(value) {
+		alert(value.toJSON())
 		var url = $('url');
 		url.options[url.options.length] = new Option(value.url, value.url);
 		ds[value.url] = value.methods;
