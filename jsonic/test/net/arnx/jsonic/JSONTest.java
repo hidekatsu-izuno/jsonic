@@ -427,7 +427,7 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		long start = System.currentTimeMillis();
-		json.parse(new InputStreamReader(this.getClass().getResourceAsStream("KEN_ALL.json"), "UTF-8"));
+		Object o = json.parse(new InputStreamReader(this.getClass().getResourceAsStream("KEN_ALL.json"), "UTF-8"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 	}
 }

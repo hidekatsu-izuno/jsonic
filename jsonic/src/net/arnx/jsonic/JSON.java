@@ -16,6 +16,7 @@
 package net.arnx.jsonic;
 
 import java.io.Reader;
+import java.io.Flushable;
 import java.io.IOException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Constructor;
@@ -497,6 +498,11 @@ public class JSON {
 			
 			formatMap(map, o, ap, level);
 		}
+		
+		if (ap instanceof Flushable) {
+			((Flushable)ap).flush();
+		}
+		
 		return ap;
 	}
 	

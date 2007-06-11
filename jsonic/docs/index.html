@@ -402,6 +402,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <li>JavaScript版のJSON.encode/JSON.decode機能を追加し、JSONRPCServlet経由で呼び出せるようにしました。</li>
 <li>JSON.JSONParseExceptionをpublicに変更するとともに、parseメソッドはJSONParseExceptionをthrowするようにメソッド定義を変更しました（decodeメソッドは従来どおりParseExceptionです）。</li>
 <li>拡張モード時、文字列"null"が入力された場合エラーとなっていたバグを修正しました。</li>
+<li>format時にWriterを使った場合flushがされず大量データの場合、OutOfMemoryErrorが発生していたのを修正しました。</li>
 </ul>
 
 <h3>2007/06/10 version 0.9.3</h3>
