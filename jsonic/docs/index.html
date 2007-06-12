@@ -131,7 +131,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <p>JSONからPOJOへの変換ルールは次の通りです。</p>
 <table summary="JSONからPOJOへの変換ルール">
 <tr><th style="width: 20%">変換元（JSON）</th><th style="width: 40%">指定された型</th><th style="width: 40%">変換先（Java）</th></tr>
-<tr><td rowspan="7">object</td><td>なし, Object, Map</td><td>HashMap</td></tr>
+<tr><td rowspan="7">object</td><td>なし, Object, Map</td><td>LinkedHashMap</td></tr>
 <tr><td>SortedMap</td><td>TreeMap</td></tr>
 <tr><td>その他のMapを継承する型</td><td>指定された型</td></tr>
 <tr><td>CharSequence, String</td><td>String</td></tr>
@@ -139,7 +139,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>その他のAppendableを継承する型</td><td>指定された型（文字列化したものをappend）</td></tr>
 <tr><td>その他の型</td><td>指定された型（パブリック・フィールド／プロパティに値をセット)<sup>(※3)</sup></td></tr>
 <tr><td rowspan="6">array</td><td>なし, Object, Collection, List</td><td>ArrayList</td></tr>
-<tr><td>Set</td><td>HashSet</td></tr>
+<tr><td>Set</td><td>LinkedHashSet</td></tr>
 <tr><td>SortedSet</td><td>TreeSet</td></tr>
 <tr><td>その他のCollectionを継承する型</td><td>指定された型</td></tr>
 <tr><td>short[], byte[], int[], long[], float[], double[], Object[]</td><td>指定された型</td></tr>
@@ -242,20 +242,9 @@ JSON json = new JSON() {
 };
 </pre>
 
-<p>また、エラーを捕捉するためにオーバーライド可能な二つのメソッドが用意されています。</p>
+<p>また、変換エラーを捕捉するために次のメソッドがオーバーライド可能な形で用意されています。</p>
 <pre class="source">
 JSON json = new JSON() {
-    <span class="comment">// JSONの構文解析でエラーが起こった場合に呼ばれます
-    // message: エラーメッセージ
-    // s: 入力文字列
-    // pos: エラーが発生した入力文字列上の位置
-    // line: エラーが発生した行
-    // col: エラーが発生した列</span>
-    protected <span class="em">void handleParseError(JSONParseException e) throws ParseException</span> {
-        <span class="comment">// デフォルトでParseExceptionを投げます</span>
-        super.handleParseError(e);
-    }
-    
     <span class="comment">// JSONからPOJOの変換時にエラーが起こった場合に呼ばれます
     // key: JavaBeansのproperty/field名
     // value: 変換前の値
@@ -398,11 +387,15 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <h3>2007/06/XX version 0.9.4</h3>
 <p>下記の機能追加とバグ修正が行われています。</p>
 <ul>
+<li>パーサは1クラスのみにするという自己規制を取り払いました。</li>
 <li>JSON objectのname項目が空白、ハイフン、アンダースコアで区切られている場合や先頭の文字が大文字になっている場合でも、Java Classのプロパティ名に変換できるように変更しました。</li>
 <li>JavaScript版のJSON.encode/JSON.decode機能を追加し、JSONRPCServlet経由で呼び出せるようにしました。</li>
-<li>JSON.JSONParseExceptionをpublicに変更するとともに、parseメソッドはJSONParseExceptionをthrowするようにメソッド定義を変更しました（decodeメソッドは従来どおりParseExceptionです）。</li>
+<li>JSONParseExceptionを独立したクラスとするとともに、decode/parseメソッドをJSONParseExceptionをthrowするようにメソッド定義を変更しました。</li>
+<li>Parseエラーを拾ったところで意味がないことに気づいたので、handleParseErrorを廃止しました。</li>
 <li>拡張モード時、文字列"null"が入力された場合エラーとなっていたバグを修正しました。</li>
-<li>format時にWriterを使った場合flushがされず大量データの場合、OutOfMemoryErrorが発生していたのを修正しました。</li>
+<li>formatの引数にWriterを指定した場合flushがされずOutOfMemoryErrorが発生していたのを修正しました。</li>
+<li>メッセージをプロパティファイル化したことにより、英語と日本語にてエラーメッセージが出力できるようになりました。</li>
+<li>順序を保存させるため、Map/Setのデフォルト変換先をHashMap/HashSetからLinkedHashMap/LinkedHashSetに変更しました。</li>
 </ul>
 
 <h3>2007/06/10 version 0.9.3</h3>

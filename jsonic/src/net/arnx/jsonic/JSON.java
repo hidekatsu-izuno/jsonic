@@ -40,7 +40,8 @@ import java.util.Date;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.ArrayList;
@@ -124,10 +125,11 @@ import java.text.ParseException;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 0.9.3
+ * @version 0.9.4
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
+@SuppressWarnings("unchecked")
 public class JSON {
 	private Class contextClass = null;
 	private Object context = null;
@@ -668,7 +670,7 @@ public class JSON {
 	
 	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 ',' ... '}' E
-		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		String key = null;
 		
 		int n = -1;
@@ -779,7 +781,6 @@ public class JSON {
 		}
 		return map;
 	}
-
 	
 	private List<Object> parseArray(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
 		int point = 0; // 0 '[' 1 'value' 2 ',' ... ']' E
@@ -1139,8 +1140,7 @@ public class JSON {
 		}	
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected <T> T convert(Object value, Class<? extends T> c, Type type) throws Exception {
+	protected Object convert(Object value, Class c, Type type) throws Exception {
 		Object data = null;
 		
 		try {
@@ -1402,11 +1402,9 @@ public class JSON {
 									cClasses[i] = Object.class;
 								}
 							}
-							for (Object entry : ((Map)value).entrySet()) {
-								Map.Entry entry2 = (Map.Entry)entry;
-								
-								map.put(convert(entry2.getKey(), cClasses[0], cTypes[0]),
-										convert(entry2.getValue(), cClasses[1], cTypes[1]));
+							for (Object key : ((Map)value).keySet()) {
+								map.put(convert(key, cClasses[0], cTypes[0]),
+										convert(((Map)value).get(key), cClasses[1], cTypes[1]));
 							}
 						} else {
 							map.putAll((Map)value);
@@ -1488,26 +1486,26 @@ public class JSON {
 							
 							boolean access = tryAccess(c);
 							
-							Map<String, Object> map = (Map<String, Object>)value;
-							for (String key : map.keySet()) {
-								Object target = props.get(toPropertyName(key));
+							Map map = (Map)value;
+							for (Object key : map.keySet()) {
+								Object target = props.get(toPropertyName(key.toString()));
 								if (target == null) {
 									continue;
 								} else if (target instanceof Method) {
 									Method m = (Method)target;
 									try {
 										if (access) m.setAccessible(true);
-										m.invoke(o, convert(map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+										m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 									} catch (Exception e) {
-										handleConvertError(key, map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
+										handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
 									}
 								} else if (target instanceof Field) {
 									Field f = (Field)target;
 									try {
 										if (access) f.setAccessible(true);
-										f.set(o, convert(map.get(key), f.getType(), f.getGenericType()));
+										f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
 									} catch (Exception e) {
-										handleConvertError(key, map.get(key), f.getType(), f.getGenericType(), e);
+										handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
 									}
 								}
 							}
@@ -1520,26 +1518,25 @@ public class JSON {
 			handleConvertError(null, value, c, type, e);
 		}
 		
-		return (T)data;
+		return data;
 	}
 	
 	protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
 		// no handle
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected <T> T create(Class<? extends T> c) throws Exception {
+	protected Object create(Class c) throws Exception {
 		Object instance = null;
 		
 		if (c.isInterface()) {
 			if (SortedMap.class.equals(c)) {
 				instance = new TreeMap();
 			} else if (Map.class.equals(c)) {
-				instance = new HashMap();
+				instance = new LinkedHashMap();
 			} else if (SortedSet.class.equals(c)) {
 				instance = new TreeSet();
 			} else if (Set.class.equals(c)) {
-				instance = new HashSet();
+				instance = new LinkedHashSet();
 			} else if (List.class.equals(c)) {
 				instance = new ArrayList();
 			} else if (Collection.class.equals(c)) {
@@ -1566,7 +1563,7 @@ public class JSON {
 			instance = con.newInstance((Object[])null);
 		}
 		
-		return (T)instance;
+		return instance;
 	}
 	
 	/**
@@ -1638,7 +1635,7 @@ public class JSON {
 		return c.getPackage().equals(this.contextClass.getPackage());
 	}
 	
-	private String toPropertyName(String name) {
+	private static String toPropertyName(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		int i = 0;
 		boolean toUpperCase = false;
@@ -1769,6 +1766,10 @@ public class JSON {
 		return buffer;
 	}
 	
+	private static String getMessage(String id, Object... arguments) {
+		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName());
+		return MessageFormat.format(bundle.getString(id), arguments);
+	}
 
 	static interface JSONSource {
 		int next() throws IOException;
@@ -1885,10 +1886,5 @@ public class JSON {
 			}
 			return sb.toString();
 		}
-	}
-	
-	private static String getMessage(String id, Object... arguments) {
-		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName());
-		return MessageFormat.format(bundle.getString(id), arguments);
 	}
 }
