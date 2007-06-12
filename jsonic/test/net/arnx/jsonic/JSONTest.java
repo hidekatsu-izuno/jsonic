@@ -267,6 +267,7 @@ public class JSONTest {
 			json.format(true, new StringBuilder());
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
 			assertNotNull(e);
 		}
 		
@@ -284,6 +285,7 @@ public class JSONTest {
 	@Test
 	@SuppressWarnings({ "unchecked", "serial" })
 	public void testParse() throws Exception {
+		Locale.setDefault(Locale.ENGLISH);
 		JSON json = new JSON();
 		
 		ArrayList<Object> list = new ArrayList<Object>();
@@ -300,9 +302,18 @@ public class JSONTest {
 		list.add(null);
 		
 		try {
+			assertEquals(list, json.parse("[{\"maa\": \"bbb\"}, [], 1, \"str\\'ing\", true, false, null"));
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);			
+		}
+		
+		try {
 			assertEquals(list, json.parse("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
 			assertNotNull(e);			
 		}
 		
@@ -310,6 +321,7 @@ public class JSONTest {
 			assertEquals(list, json.parse("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
 			assertNotNull(e);			
 		}
 		
@@ -317,6 +329,7 @@ public class JSONTest {
 			assertEquals(list, json.parse("[{\"\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
 			assertNotNull(e);			
 		}
 
@@ -327,6 +340,7 @@ public class JSONTest {
 			assertEquals(list, json.parse("[{'\u006daa\": 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
 			assertNotNull(e);			
 		}
 		
@@ -334,6 +348,7 @@ public class JSONTest {
 			assertEquals(list, json.parse("[{\"maa': 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
 			assertNotNull(e);
 		}
 
@@ -357,6 +372,7 @@ public class JSONTest {
 			assertEquals(list, json.parse("[{0float   : 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
 			assertNotNull(e);			
 		}
 
