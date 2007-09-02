@@ -262,14 +262,8 @@ public class JSON {
 		return (T)json.convert(json.parse(new CharSequenceJSONSource(source)), c, t);
 	}
 	
-	public String format(Object source) {
-		String value = null;
-		try {
-			value = format(source, new StringBuilder(1000)).toString();
-		} catch (Exception e) {
-			// never occur
-		}
-		return value;
+	public String format(Object source) throws IOException {
+		return format(source, new StringBuilder(1000)).toString();
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
@@ -295,8 +289,10 @@ public class JSON {
 			o = Arrays.asList((Object[])o);
 		} else if (o instanceof Pattern) {
 			o = ((Pattern)o).pattern();
+		} else if (o instanceof Date) {
+			o = ((Date)o).getTime();
 		} else if (o instanceof Calendar) {
-			o = ((Calendar)o).getTime();
+			o = ((Calendar)o).getTimeInMillis();
 		} else if (o instanceof Locale) {
 			Locale locale = (Locale)o;
 			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
@@ -310,14 +306,12 @@ public class JSON {
 			}
 		}
 		
-		if (level == 0 && !this.extendedMode) {
-			if (o == null
-					|| o instanceof CharSequence
-					|| o instanceof Boolean
-					|| o instanceof Number
-					|| o instanceof Date) {
-				throw new IllegalArgumentException(getMessage("json.format.IllegalRootTypeError"));
-			}
+		if (level == 0 && (o == null
+				|| o instanceof CharSequence
+				|| o instanceof Boolean
+				|| o instanceof Number
+				|| o instanceof Date)) {
+			throw new IllegalArgumentException(getMessage("json.format.IllegalRootTypeError"));
 		}
 		
 		if (o == null) {
@@ -330,19 +324,15 @@ public class JSON {
 			}
 		} else if (o instanceof Double || o instanceof Float) {
 			double d = ((Number)o).doubleValue();
-			if (!this.extendedMode && (Double.isNaN(d) || Double.isInfinite(d))) {
-				ap.append('"').append(Double.toString(d)).append('"');
+			if (Double.isNaN(d) || Double.isInfinite(d)) {
+				ap.append('"').append(o.toString()).append('"');
 			} else {
-				ap.append(Double.toString(d));
+				ap.append(o.toString());
 			}
 		} else if (o instanceof Byte) {
 			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
 		} else if (o instanceof Number || o instanceof Boolean) {
 			ap.append(o.toString());
-		} else if (o instanceof Date) {
-			if (this.extendedMode) ap.append("new Date(");
-			ap.append(Long.toString(((Date)o).getTime()));
-			if (this.extendedMode) ap.append(")");
 		} else if (o.getClass().isArray()) {
 			ap.append('[');
 			if (o instanceof boolean[]) {
@@ -384,7 +374,7 @@ public class JSON {
 			} else if (o instanceof float[]) {
 				float[] array = (float[])o;
 				for (int i = 0; i < array.length; i++) {
-					if (!this.extendedMode && (Float.isNaN(array[i]) || Float.isInfinite(array[i]))) {
+					if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
 						ap.append('"').append(Float.toString(array[i])).append('"');
 					} else {
 						ap.append(String.valueOf(array[i]));
@@ -397,7 +387,7 @@ public class JSON {
 			} else if (o instanceof double[]) {
 				double[] array = (double[])o;
 				for (int i = 0; i < array.length; i++) {
-					if (!this.extendedMode && (Double.isNaN(array[i]) || Double.isInfinite(array[i]))) {
+					if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
 						ap.append('"').append(Double.toString(array[i])).append('"');
 					} else {
 						ap.append(String.valueOf(array[i]));

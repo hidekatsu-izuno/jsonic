@@ -273,13 +273,21 @@ public class JSONTest {
 		
 		json.setPrettyPrint(false);
 		json.setExtendedMode(true);
-		assertEquals("true", json.format(true, new StringBuilder()).toString());
-		assertEquals("[NaN,Infinity,-Infinity]", json.format(
+		try {
+			assertEquals("true", json.format(true, new StringBuilder()).toString());
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.format(
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
 		
 		Date d = new Date();
-		assertEquals("new Date(" + Long.toString(d.getTime()) + ")", json.format(d, new StringBuilder()).toString());
-		assertEquals("\"AQID\"", json.format(new byte[] {1,2,3}, new StringBuilder()).toString());
+		assertEquals("[" + Long.toString(d.getTime()) + "]", json.format(new Date[] {d}, new StringBuilder()).toString());
+		
+		
+		assertEquals("[\"AQID\"]", json.format(new byte[][] {{1,2,3}}, new StringBuilder()).toString());
 	}
 	
 	@Test
@@ -417,13 +425,12 @@ public class JSONTest {
 		Random rand = new Random();
 		
 		for (int i = 0; i < 100; i++) {
-			byte[] input = new byte[i];
-			rand.nextBytes(input);
+			byte[][] input = new byte[1][i];
+			rand.nextBytes(input[0]);
 			
-			byte[] output = (byte[])json.parse(json.format(input), byte[].class);
+			byte[][] output = (byte[][])json.parse(json.format(input), byte[][].class);
 			
-			
-			assertEquals(toHexString(input), toHexString(output));
+			assertEquals(toHexString(input[0]), toHexString(output[0]));
 		}
 	}
 	
