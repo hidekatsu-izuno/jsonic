@@ -591,6 +591,7 @@ public class JSON {
 				}
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			case '/':
+			case '#':
 				s.back();
 				skipComment(s);
 				break;
@@ -680,6 +681,7 @@ public class JSON {
 				}
 				break;
 			case '/':
+			case '#':
 				s.back();
 				skipComment(s);
 				break;
@@ -781,6 +783,7 @@ public class JSON {
 				}
 				break;
 			case '/':
+			case '#':
 				s.back();
 				skipComment(s);
 				break;
@@ -1052,6 +1055,11 @@ public class JSON {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
+			case '#':
+				if (point == 0) {
+					point = 4;
+					break;
+				}
 			default:
 				if (point == 3) {
 					point = 2;

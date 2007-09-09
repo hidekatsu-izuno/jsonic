@@ -417,8 +417,8 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
-		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,"
-				+ " [/*\n x\r */], 1, 'str\\'in\\g',/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ "));
+		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,#d\r\r\r\r"
+				+ " [/*#\n x\r */], 1, 'str\\'in\\g',/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ #  aaaa"));
 		
 		NamedBean nb = new NamedBean();
 		nb.namedPropertyAaa = 100;
@@ -444,7 +444,22 @@ public class JSONTest {
 			}
 		};
 		assertEquals(map, json.parse("map: {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
-		assertEquals(map, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
+		assertEquals(map, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		
+		
+		map = new LinkedHashMap() {
+			{
+				put("database", new LinkedHashMap() {
+					{
+						put("description", "ms sql server");
+						put("user", "sa");
+						put("password", "xxxx");
+					}
+				});
+			}
+		};
+		assertEquals(map, json.parse("# database settings\ndatabase {\n  description: 'ms sql server'\n  user: sa\n  password:"
+				+ " xxxx // you need to replace your password.\n}\n/* {\"database\": {\"description\": \"ms sql server\", \"user\": \"sa\", \"password\": \"xxxx\"}} */\n"));
 	}
 
 	@Test
