@@ -268,12 +268,14 @@ href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された�
   <li>シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します。</li>
   <li>objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
   <li>objectにおいてキーに対する値がobjectの場合、':'を省略することができます。</li>
+  <li>string中では改行やタブなどの制御文字を有効な文字として認識します。</li>
 </ul>
 <p>例えば、次のテキストは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>では無効ですが、JSONICでは読み込むことが可能です。</p>
 <pre class="source">
 # database settings
 database {
-  description: 'ms sql server'
+  description: 'ms sql server
+	connecter settings'
   user: sa
   password: xxxx // you need to replace your password.
 }

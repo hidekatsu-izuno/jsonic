@@ -14,10 +14,8 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				{
-					"/calc.json" : "Calc",
-					"/edit.json" : "Edit"
-				}
+				'/calc.json': 'Calc'
+				'/edit.json': 'Edit'
 			</param-value>
 		</init-param>
 		<init-param>

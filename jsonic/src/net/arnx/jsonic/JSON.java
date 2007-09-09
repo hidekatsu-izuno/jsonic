@@ -659,7 +659,10 @@ public class JSON {
 				}
 			case '\'':
 			case '"':
-				if (point == 1 || point == 5) {
+				if (point == 0) {
+					s.back();
+					point = 1;
+				} else if (point == 1 || point == 5) {
 					s.back();
 					key = parseString(s, sb);
 					point = 2;
@@ -871,10 +874,11 @@ public class JSON {
 				s.back();
 				c = parseEscape(s);
 			default:
-				if (point == 0 && (Character.isJavaIdentifierStart(c))
-					|| (point == 1 && Character.isJavaIdentifierPart(c))){
+				if (point == 0 && Character.isJavaIdentifierStart(c)) {
 					sb.append(c);
 					point = 1;
+				} else if (point == 1 && Character.isJavaIdentifierPart(c)){
+					sb.append(c);
 				} else {
 					s.back();
 					break loop;

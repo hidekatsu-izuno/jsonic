@@ -445,20 +445,22 @@ public class JSONTest {
 		};
 		assertEquals(map, json.parse("map: {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
 		assertEquals(map, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		assertEquals(map, json.parse("\"map\" {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		assertEquals(map, json.parse("'map' {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
 		
 		
 		map = new LinkedHashMap() {
 			{
 				put("database", new LinkedHashMap() {
 					{
-						put("description", "ms sql server");
+						put("description", "ms sql server\n\tconnecter settings");
 						put("user", "sa");
 						put("password", "xxxx");
 					}
 				});
 			}
 		};
-		assertEquals(map, json.parse("# database settings\ndatabase {\n  description: 'ms sql server'\n  user: sa\n  password:"
+		assertEquals(map, json.parse("# database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
 				+ " xxxx // you need to replace your password.\n}\n/* {\"database\": {\"description\": \"ms sql server\", \"user\": \"sa\", \"password\": \"xxxx\"}} */\n"));
 	}
 
