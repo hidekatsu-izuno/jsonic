@@ -116,11 +116,11 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 (※1) 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
 (※2) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
 </div>
-<p>なお、JSONのルートはobjectかarrayでなければなりません。このため、直接、intやStringのインスタンスをencodeメソッドの引数にしてもエラーとなり変換できません。この制約は後述の拡張モードをONにすることで解除することが可能です。</p>
+<p>なお、JSONのルートはobjectかarrayでなければなりません。このため、直接、intやStringのインスタンスをencodeメソッドの引数にしてもエラーとなり変換できません。</p>
 
 <h4>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h4>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
-<p>なお、JSON文字列が不正な場合にはParseExceptionを発生させますが、型の変換に失敗した場合は例外を発生させず単にnullをセットします（どうしても変換時のエラーを捕捉したい場合には、handConvertErrorをオーバーライドすることにより情報を取得することもできます）。</p>
+<p>なお、JSON文字列が不正な場合にはParseExceptionを発生させますが、型の変換に失敗した場合は例外を発生させず単にnullをセットします（変換時のエラーを捕捉したい場合には、handConvertErrorをオーバーライドすることにより情報を取得することもできます）。</p>
 <pre class="source">
 <span class="comment">// JSONをPOJOに変換します。戻り値としてサイズが4のArrayListが返されます</span>
 List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<span class="em">)</span>;
