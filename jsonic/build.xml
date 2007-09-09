@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <project name="jsonic" basedir="." default="dist">
-	<property name="version" value="0.9.3" />
+	<property name="version" value="0.9.4" />
 
 	<property name="src" location="src" />
 	<property name="build" location="build" />
