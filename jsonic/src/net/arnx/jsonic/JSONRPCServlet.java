@@ -41,7 +41,6 @@ public class JSONRPCServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	public void init(ServletConfig servletConfig) throws ServletException {
 		JSON json = new JSON();
-		json.setExtendedMode(true);
 		try {
 			debug = Boolean.valueOf(servletConfig.getInitParameter("debug"));
 			
@@ -108,7 +107,6 @@ public class JSONRPCServlet extends HttpServlet {
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
-		json.setExtendedMode(false);
 		json.setPrettyPrint(debug);
 		
 		if (callback != null) writer.append(callback).append("(");
@@ -135,7 +133,6 @@ public class JSONRPCServlet extends HttpServlet {
 		Map<String, Object> error = null;
 		
 		try {
-			json.setExtendedMode(true);
 			json.setContext(this);
 			
 			req = json.parse(request.getReader(), Request.class);
@@ -176,7 +173,6 @@ public class JSONRPCServlet extends HttpServlet {
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
-		json.setExtendedMode(false);
 		json.setPrettyPrint(debug);
 		writer.write(json.format(res));
 	}

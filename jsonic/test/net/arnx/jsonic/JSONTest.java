@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.TreeMap;
 import java.util.List;
 import java.util.Locale;
@@ -272,7 +273,6 @@ public class JSONTest {
 		}
 		
 		json.setPrettyPrint(false);
-		json.setExtendedMode(true);
 		try {
 			assertEquals("true", json.format(true, new StringBuilder()).toString());
 			fail();
@@ -317,31 +317,12 @@ public class JSONTest {
 			assertNotNull(e);			
 		}
 		
-		try {
-			assertEquals(list, json.parse("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
-			fail();
-		} catch (Exception e) {
-			System.out.println(e);
-			assertNotNull(e);			
-		}
+		assertEquals(list, json.parse("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
 		
-		try {
-			assertEquals(list, json.parse("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
-			fail();
-		} catch (Exception e) {
-			System.out.println(e);
-			assertNotNull(e);			
-		}
+		assertEquals(list, json.parse("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
 		
-		try {
-			assertEquals(list, json.parse("[{\"\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
-			fail();
-		} catch (Exception e) {
-			System.out.println(e);
-			assertNotNull(e);			
-		}
+		assertEquals(list, json.parse("[{\"\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
 
-		json.setExtendedMode(true);
 		assertEquals(list, json.parse("[{'\u006Daa': 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 		
 		try {
@@ -391,9 +372,51 @@ public class JSONTest {
 		});
 		assertEquals(list, json.parse("[{float0   : 'bbb'}, [], 1, 'str\\'in\\g', true, false, null]"));
 		
-		assertEquals(true, json.parse("  true  "));
-		assertEquals(new BigDecimal(-100), json.parse("  -100  "));
+		assertEquals(new HashMap() {{put("true", true);}}, json.parse("  true: true  "));
+		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  "));
+		
+		try {
+			assertEquals(new HashMap() {{put("true", true);}}, json.parse("  {true: true  "));
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 
+		try {
+			assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  }"));
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		assertEquals(new HashMap() {
+			{
+				put("numbers", new HashMap() {
+					{
+						put("number", new BigDecimal(-100));
+					}
+				});
+			}
+		}, json.parse(" numbers: { number: -100 } "));
+		
+		try {
+			assertEquals(new HashMap() {
+				{
+					put("numbers", new HashMap() {
+						{
+							put("number", new BigDecimal(-100));
+						}
+					});
+				}
+			}, json.parse(" numbers: { number: -100 "));
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
 		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,"
 				+ " [/*\n x\r */], 1, 'str\\'in\\g',/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ "));
 		
@@ -403,6 +426,25 @@ public class JSONTest {
 		assertEquals(nb, json.parse("{\"named property aaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"named_property_aaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"Named Property Aaa\":100}", NamedBean.class));
+		
+		HashMap map = new LinkedHashMap() {
+			{
+				put("map", new LinkedHashMap() {
+					{
+						put("string", "string_aaa");
+						put("int", new BigDecimal(100));
+					}
+				});
+				put("list", new ArrayList() {
+					{
+						add("string");
+						add(new BigDecimal(100));
+					}
+				});
+			}
+		};
+		assertEquals(map, json.parse("map: {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
+		assertEquals(map, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
 	}
 
 	@Test
@@ -420,7 +462,6 @@ public class JSONTest {
 	@Test
 	public void testBase64() throws Exception {
 		JSON json = new JSON();
-		json.setExtendedMode(true);
 		
 		Random rand = new Random();
 		
@@ -450,7 +491,7 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		long start = System.currentTimeMillis();
-		Object o = json.parse(new InputStreamReader(this.getClass().getResourceAsStream("KEN_ALL.json"), "UTF-8"));
+		json.parse(new InputStreamReader(this.getClass().getResourceAsStream("KEN_ALL.json"), "UTF-8"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 	}
 }
