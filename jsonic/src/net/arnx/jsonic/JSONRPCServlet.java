@@ -40,6 +40,8 @@ public class JSONRPCServlet extends HttpServlet {
 	@Override
 	@SuppressWarnings("unchecked")
 	public void init(ServletConfig servletConfig) throws ServletException {
+		super.init(servletConfig);
+		
 		JSON json = new JSON();
 		try {
 			debug = Boolean.valueOf(servletConfig.getInitParameter("debug"));
