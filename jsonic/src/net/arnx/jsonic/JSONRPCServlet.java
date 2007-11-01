@@ -35,7 +35,7 @@ public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
 	
 	private boolean debug = false;
-	private Map<String, Class> container = null;
+	private Map<String, Class<?>> container = null;
 	
 	@Override
 	@SuppressWarnings("unchecked")
@@ -74,6 +74,7 @@ public class JSONRPCServlet extends HttpServlet {
 					while ((n = in.read(buffer)) != -1) {
 						out.write(buffer, 0, n);
 					}
+					in.close();
 					return;
 				}
 			}
@@ -97,7 +98,7 @@ public class JSONRPCServlet extends HttpServlet {
 		}
 		
 		try {
-			List<Map> params = new ArrayList<Map>(1);
+			List<Map<?,?>> params = new ArrayList<Map<?,?>>(1);
 			params.add(request.getParameterMap());
 			
 			json.setContext(o);
@@ -180,7 +181,7 @@ public class JSONRPCServlet extends HttpServlet {
 	}
 	
 	protected Object getComponent(String path) throws Exception {
-		Class target = container.get(path);
+		Class<?> target = container.get(path);
 		if (target == null) {
 			throw new IllegalArgumentException("target class is not found.");
 		}
@@ -190,7 +191,7 @@ public class JSONRPCServlet extends HttpServlet {
 	class Request {
 		public String version = "1.0";
 		public String method;
-		public List params;
+		public List<?> params;
 		public Object id;
 	}
 }

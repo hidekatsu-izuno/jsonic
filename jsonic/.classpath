@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" output="sample/WEB-INF/classes" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="src" output="sample/WEB-INF/classes" path="sample/WEB-INF/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/geronimo-j2ee_1.4_spec-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/commons-beanutils-core.jar"/>
+	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/servlet-api.jar"/>
+	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jasper-runtime.jar"/>
+	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

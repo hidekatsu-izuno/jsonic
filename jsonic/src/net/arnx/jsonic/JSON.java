@@ -1296,6 +1296,7 @@ public class JSON {
 								cClasses = (Class)cType;
 							} else {
 								cClasses = Object.class;
+								cType = cClasses;
 							}
 							for (Object o : (Collection)value) {
 								collection.add(convert(o, cClasses, cType));
@@ -1334,6 +1335,7 @@ public class JSON {
 									cClasses[i] = (Class)cTypes[i];
 								} else {
 									cClasses[i] = Object.class;
+									cTypes[i] = cClasses[i];
 								}
 							}
 							for (Object key : ((Map)value).keySet()) {
