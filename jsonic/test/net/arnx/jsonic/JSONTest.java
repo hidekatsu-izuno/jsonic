@@ -513,6 +513,7 @@ public class JSONTest {
 	}
 }
 
+@SuppressWarnings("unused")
 class TestBean {
 	private int a;
 	public void setA(int a) { this.a = a; }
