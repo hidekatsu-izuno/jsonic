@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class Calc {
-	public Map<String, Object> get(Map<String, Object> params) throws Exception {
+	public Map get(Map params) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("url", "calc.json");
 		
