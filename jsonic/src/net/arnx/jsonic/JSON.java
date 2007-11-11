@@ -608,7 +608,7 @@ public class JSON {
 	}	
 	
 	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
-		int point = 0; // 0 '{' 1 'key' 2 ':' 3 'value' 4 '\n'? 5 ',' ... '}' E
+		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		String key = null;
 		char start = '\0';
@@ -619,8 +619,8 @@ public class JSON {
 			switch(c) {
 			case '\r':
 			case '\n':
-				if (point == 4) {
-					point = 5;
+				if (point == 5) {
+					point = 6;
 				}
 			case ' ':
 			case '\t':
@@ -632,7 +632,7 @@ public class JSON {
 				} else if (point == 2 || point == 3){
 					s.back();
 					map.put(key, parseObject(s, sb));
-					point = 4;
+					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -645,14 +645,20 @@ public class JSON {
 				}
 				break;
 			case ',':
-				if (point == 4 || point == 5) {
+				if (point == 3) {
+					map.put(key, null);
+					point = 1;
+				} else if (point == 5 || point == 6) {
 					point = 1;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '}':
-				if (start == '{' && (point == 1 || point == 4 || point == 5)) {
+				if (start == '{' && (point == 1 || point == 3 || point == 5 || point == 6)) {
+					if (point == 3) {
+						map.put(key, null);
+					}
 					break loop;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -662,14 +668,14 @@ public class JSON {
 				if (point == 0) {
 					s.back();
 					point = 1;
-				} else if (point == 1 || point == 5) {
+				} else if (point == 1 || point == 6) {
 					s.back();
 					key = parseString(s, sb);
 					point = 2;
 				} else if (point == 3) {
 					s.back();
 					map.put(key, parseString(s, sb));
-					point = 4;
+					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -678,7 +684,7 @@ public class JSON {
 				if (point == 3) {
 					s.back();
 					map.put(key, parseArray(s, sb));
-					point = 4;
+					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -692,7 +698,7 @@ public class JSON {
 				if (point == 0) {
 					s.back();
 					point = 1;
-				} else if (point == 1 || point == 5) {
+				} else if (point == 1 || point == 6) {
 					s.back();
 					key = parseLiteral(s, sb);
 					point = 2;
@@ -713,7 +719,7 @@ public class JSON {
 							map.put(key, literal);
 						}
 					}
-					point = 4;
+					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -754,14 +760,19 @@ public class JSON {
 				}
 				break;
 			case ',':
-				if (point == 2 || point == 3) {
+				if (point == 1) {
+					list.add(null);
+				} else if (point == 2 || point == 3) {
 					point = 1;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case ']':
-				if (point == 1 || point == 2 || point == 3) {
+				if (point == 1) {
+					if (!list.isEmpty()) list.add(null);
+					break loop;					
+				} else if (point == 2 || point == 3) {
 					break loop;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
