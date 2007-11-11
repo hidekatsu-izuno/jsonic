@@ -447,7 +447,29 @@ public class JSONTest {
 		assertEquals(map, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
 		assertEquals(map, json.parse("\"map\" {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
 		assertEquals(map, json.parse("'map' {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+
+		map = new LinkedHashMap() {
+			{
+				put("emap", new LinkedHashMap());
+				put("map", new LinkedHashMap() {
+					{
+						put("string", null);
+						put("int", null);
+					}
+				});
+				put("elist", new ArrayList());
+				put("list", new ArrayList() {
+					{
+						add(null);
+						add("string");
+						add(null);
+					}
+				});
+			}
+		};
 		
+		assertEquals(map, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
+		assertEquals(map, json.parse("emap:{}\n\n map: {string: \n int:}, elist:[]\nlist: [,string, ]"));
 		
 		map = new LinkedHashMap() {
 			{
