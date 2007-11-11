@@ -38,7 +38,6 @@ public class JSONRPCServlet extends HttpServlet {
 	private Map<String, Class<?>> container = null;
 	
 	@Override
-	@SuppressWarnings("unchecked")
 	public void init(ServletConfig servletConfig) throws ServletException {
 		super.init(servletConfig);
 		
@@ -191,7 +190,7 @@ public class JSONRPCServlet extends HttpServlet {
 	class Request {
 		public String version = "1.0";
 		public String method;
-		public List<?> params;
+		public List<Object> params;
 		public Object id;
 	}
 }

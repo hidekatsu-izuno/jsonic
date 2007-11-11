@@ -269,6 +269,7 @@ href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された�
   <li>objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
   <li>objectにおいてキーに対する値がobjectの場合、':'を省略することができます。</li>
   <li>string中で改行やタブなどの制御文字を有効な文字として認識します。</li>
+  <li>objectやarrayにおいて値が省略された場合、nullとして認識します。</li>
 </ul>
 <p>例えば、次のテキストは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>では無効ですが、JSONICでは読み込むことが可能です。</p>
 <pre class="source">
@@ -390,6 +391,13 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>のトラッキング情報あるいはフォーラムまでご連絡ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2007/11/XX version 0.9.5</h3>
+<p>下記の機能追加とバグ修正が行われています。</p>
+<ul>
+<li>Servletの仕様に則り、JSONRPCServlet#init(config)内でsuper.init(config)を呼び出すよう修正しました。</li>
+<li>Parse時に値が指定されない場合、nullと認識するようにしました。</li>
+</ul>
 
 <h3>2007/09/09 version 0.9.4</h3>
 <p>下記の機能追加とバグ修正が行われています。</p>

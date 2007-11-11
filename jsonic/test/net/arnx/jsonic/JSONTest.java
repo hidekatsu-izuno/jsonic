@@ -427,7 +427,7 @@ public class JSONTest {
 		assertEquals(nb, json.parse("{\"named_property_aaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"Named Property Aaa\":100}", NamedBean.class));
 		
-		HashMap map = new LinkedHashMap() {
+		Map map1 = new LinkedHashMap() {
 			{
 				put("map", new LinkedHashMap() {
 					{
@@ -443,12 +443,12 @@ public class JSONTest {
 				});
 			}
 		};
-		assertEquals(map, json.parse("map: {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
-		assertEquals(map, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
-		assertEquals(map, json.parse("\"map\" {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
-		assertEquals(map, json.parse("'map' {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		assertEquals(map1, json.parse("map: {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
+		assertEquals(map1, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		assertEquals(map1, json.parse("\"map\" {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		assertEquals(map1, json.parse("'map' {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
 
-		map = new LinkedHashMap() {
+		Map map2 = new LinkedHashMap() {
 			{
 				put("emap", new LinkedHashMap());
 				put("map", new LinkedHashMap() {
@@ -468,10 +468,10 @@ public class JSONTest {
 			}
 		};
 		
-		assertEquals(map, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
+		assertEquals(map2, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
 		//assertEquals(map, json.parse("emap:{}\n\n map: {string: \n int:}, elist:[]\nlist: [,string, ]"));
 		
-		map = new LinkedHashMap() {
+		Map map3 = new LinkedHashMap() {
 			{
 				put("database", new LinkedHashMap() {
 					{
@@ -482,7 +482,7 @@ public class JSONTest {
 				});
 			}
 		};
-		assertEquals(map, json.parse("# database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
+		assertEquals(map3, json.parse("# database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
 				+ " xxxx // you need to replace your password.\n}\n/* {\"database\": {\"description\": \"ms sql server\", \"user\": \"sa\", \"password\": \"xxxx\"}} */\n"));
 	}
 

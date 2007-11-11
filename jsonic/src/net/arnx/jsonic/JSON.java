@@ -1603,38 +1603,38 @@ public class JSON {
 		return sb.toString();
 	}
 	
+	private static final String BASE64_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	
 	private static String encodeBase64(byte[] data) {
 		if (data == null) return null;
 		
 		char[] buffer = new char[data.length / 3 * 4 + ((data.length % 3 == 0) ? 0 : 4)];
 		
-		String map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
 		int buf = 0;
 		for (int i = 0; i < data.length; i++) {
 			switch (i % 3) {
 				case 0 :
-					buffer[i / 3 * 4] = map.charAt((data[i] & 0xFC) >> 2);
+					buffer[i / 3 * 4] = BASE64_MAP.charAt((data[i] & 0xFC) >> 2);
 					buf = (data[i] & 0x03) << 4;
 					if (i + 1 == data.length) {
-						buffer[i / 3 * 4 + 1] = map.charAt(buf);
+						buffer[i / 3 * 4 + 1] = BASE64_MAP.charAt(buf);
 						buffer[i / 3 * 4 + 2] = '=';
 						buffer[i / 3 * 4 + 3] = '=';
 					}
 					break;
 				case 1 :
 					buf += (data[i] & 0xF0) >> 4;
-					buffer[i / 3 * 4 + 1] = map.charAt(buf);
+					buffer[i / 3 * 4 + 1] = BASE64_MAP.charAt(buf);
 					buf = (data[i] & 0x0F) << 2;
 					if (i + 1 == data.length) {
-						buffer[i / 3 * 4 + 2] = map.charAt(buf);
+						buffer[i / 3 * 4 + 2] = BASE64_MAP.charAt(buf);
 						buffer[i / 3 * 4 + 3] = '=';
 					}
 					break;
 				case 2 :
 					buf += (data[i] & 0xC0) >> 6;
-					buffer[i / 3 * 4 + 2] = map.charAt(buf);
-					buffer[i / 3 * 4 + 3] = map.charAt(data[i] & 0x3F);
+					buffer[i / 3 * 4 + 2] = BASE64_MAP.charAt(buf);
+					buffer[i / 3 * 4 + 3] = BASE64_MAP.charAt(data[i] & 0x3F);
 					break;
 			}
 		}
