@@ -129,6 +129,7 @@ public class JSONRPCServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		JSON json = new JSON();
+		DynamicInvoker invoker = new DynamicInvoker();
 		
 		Object o = null;
 		try {
@@ -143,18 +144,22 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Object result = null;
 		Map<String, Object> error = null;
+		byte[] state = null;
 		
 		try {
 			json.setContext(this);
 			req = json.parse(request.getReader(), Request.class);
 			
-			DynamicInvoker invoker = new DynamicInvoker();
 			invoker.setContext(o);
 
 			if (req.state != null && req.state != NULL_STATE) {
 				invoker.apply(o, decrypt(req.state));
 			}
 			result = invoker.invoke(o, req.method, req.params);
+			
+			if (req.state != null) {
+				state = encrypt(invoker.convert(o, Map.class));
+			}
 		} catch (InvocationTargetException e) {
 			error = new LinkedHashMap<String, Object>();
 			error.put("name", "JSONError");
@@ -184,8 +189,8 @@ public class JSONRPCServlet extends HttpServlet {
 		res.put("result", result);
 		res.put("error", error);
 		res.put("id", req.id);
-		if (req.state != null) {
-			res.put("state", encrypt(o));
+		if (state != null) {
+			res.put("state", state);
 		}
 		
 		response.setContentType("application/json");
@@ -204,21 +209,21 @@ public class JSONRPCServlet extends HttpServlet {
 		return target.newInstance();
 	}
 	
-	protected byte[] encrypt(Object o) {
+	protected byte[] encrypt(Map value) {
 		try {
 			Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORISM);
 			cipher.init(Cipher.ENCRYPT_MODE, encryptKey);
-			return cipher.doFinal(JSON.encode(o).getBytes("UTF-8"));
+			return cipher.doFinal(JSON.encode(value).getBytes("UTF-8"));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
-	protected Object decrypt(byte[] data) {
+	protected Map decrypt(byte[] data) {
 		try {
 			Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORISM);
 			cipher.init(Cipher.DECRYPT_MODE, encryptKey);
-			return JSON.decode(new String(cipher.doFinal(data), "UTF-8"));
+			return JSON.decode(new String(cipher.doFinal(data), "UTF-8"), Map.class);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
