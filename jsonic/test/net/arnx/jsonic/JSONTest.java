@@ -294,7 +294,7 @@ public class JSONTest {
 	@SuppressWarnings({ "unchecked", "serial" })
 	public void testParse() throws Exception {
 		Locale.setDefault(Locale.ENGLISH);
-		JSON json = new JSON();
+		JSON json = new JSON(this);
 		
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
@@ -488,7 +488,7 @@ public class JSONTest {
 
 	@Test
 	public void testInvoke() throws Exception {
-		JSON json = new JSON();
+		JSON json = new JSON(this);
 		
 		TestBean test = new TestBean();
 		json.invoke(test, "setA", "[100]");
