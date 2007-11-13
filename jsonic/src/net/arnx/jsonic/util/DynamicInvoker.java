@@ -43,6 +43,9 @@ public class DynamicInvoker {
 		}
 	}
 	
+	public void apply(Object o, Object value) {
+	}
+	
 	public Object invoke(Object o, String methodName, List values) throws Exception {
 		if (values == null) {
 			values = Collections.EMPTY_LIST;

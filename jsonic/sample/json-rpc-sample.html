@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <title>JSON-RPC sample</title>
 <script type="text/javascript" src="prototype.js"></script>
-<script type="text/javascript" src="jsonic/json.js"></script>
+<script type="text/javascript" src="json-rpc/jsonic/json.js"></script>
 <script type="text/javascript">
 	var ds = [];
 	
@@ -17,7 +17,7 @@
 		var url = $('url').value;
 		var ajax = new Ajax.Updater(
 			{success: 'result'},
-			url,
+			'json-rpc/' + url,
 			{
 				method: 'POST',
 				postBody: JSON.encode({
@@ -74,7 +74,7 @@ params: <input id="params" type="text" size="50" value=""/>
 
 <h2>result</h2>
 <pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
-<script type="text/javascript" src="calc.json?callback=setup"></script>
-<script type="text/javascript" src="edit.json?callback=setup"></script>
+<script type="text/javascript" src="json-rpc/calc.json?callback=setup"></script>
+<script type="text/javascript" src="json-rpc/edit.json?callback=setup"></script>
 </body>
 </html>

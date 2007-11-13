@@ -10,27 +10,22 @@
 	<servlet>
 		<description>json-rpc sample</description>
 		<servlet-name>json-rpc</servlet-name>
-		<servlet-class>net.arnx.jsonic.JSONRPCServlet</servlet-class>
+		<servlet-class>net.arnx.jsonic.servlet.JSONRPCServlet</servlet-class>
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				'/calc.json': 'Calc'
-				'/edit.json': 'Edit'
+				debug: true
+				mapping {
+					'/calc.json': 'Calc'
+					'/edit.json': 'Edit'
+				}
+				key: 'secret key'
 			</param-value>
-		</init-param>
-		<init-param>
-			<param-name>debug</param-name>
-			<param-value>true</param-value>
 		</init-param>
 	</servlet>
 	
 	<servlet-mapping>
 		<servlet-name>json-rpc</servlet-name>
-		<url-pattern>/jsonic/*</url-pattern>
-	</servlet-mapping>
-	
-	<servlet-mapping>
-		<servlet-name>json-rpc</servlet-name>
-		<url-pattern>*.json</url-pattern>
+		<url-pattern>/json-rpc/*</url-pattern>
 	</servlet-mapping>
 </web-app>

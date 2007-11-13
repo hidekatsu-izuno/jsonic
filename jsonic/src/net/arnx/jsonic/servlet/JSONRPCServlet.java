@@ -24,6 +24,11 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
+import java.nio.charset.Charset;
+
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.Cipher;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -37,30 +42,31 @@ import net.arnx.jsonic.util.DynamicInvoker;
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
 	
-	private boolean debug = false;
-	private Map<String, Class<?>> container = null;
+	private Config config;
+	
+	private static final byte[] NULL_STATE = new byte[0];
+	private static final String ENCRYPT_ALGORISM = "AES";
+	private SecretKeySpec encryptKey;
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
 		super.init(servletConfig);
 		
-		JSON json = new JSON();
+		JSON json = new JSON(this);
 		try {
-			debug = Boolean.valueOf(servletConfig.getInitParameter("debug"));
-			
-			container = json.parse(servletConfig.getInitParameter("config"), 
-					Map.class,
-					getClass().getDeclaredField("container").getGenericType());
+			config = json.parse(servletConfig.getInitParameter("config"), Config.class);
+			if (config.key != null) {
+				encryptKey = new SecretKeySpec(config.key.getBytes("UTF-8"), ENCRYPT_ALGORISM);
+			}
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
 	}
 	
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {;
-		if (request.getServletPath().startsWith("/jsonic")) {
-			String name = request.getPathInfo();
-			if (name.startsWith("/")) name = name.substring(1);
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		if (request.getPathInfo().startsWith("/jsonic")) {
+			String name = request.getPathInfo().substring("/jsonic/".length());
 			
 			if (name.endsWith(".js")) {
 				response.setCharacterEncoding("UTF-8");
@@ -92,7 +98,7 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Object o = null;
 		try {
-			o = getComponent(request.getServletPath());
+			o = getComponent(request.getPathInfo());
 		} catch (Exception e) {
 			log(e.getMessage());
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -113,7 +119,7 @@ public class JSONRPCServlet extends HttpServlet {
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
-		json.setPrettyPrint(debug);
+		json.setPrettyPrint(config.debug);
 		
 		if (callback != null) writer.append(callback).append("(");
 		json.format(result, writer);
@@ -126,7 +132,7 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Object o = null;
 		try {
-			o = getComponent(request.getServletPath());
+			o = getComponent(request.getPathInfo());
 		} catch (Exception e) {
 			log(e.getMessage());
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -140,11 +146,14 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		try {
 			json.setContext(this);
-			
 			req = json.parse(request.getReader(), Request.class);
 			
 			DynamicInvoker invoker = new DynamicInvoker();
 			invoker.setContext(o);
+
+			if (req.state != null && req.state != NULL_STATE) {
+				invoker.apply(o, decrypt(req.state));
+			}
 			result = invoker.invoke(o, req.method, req.params);
 		} catch (InvocationTargetException e) {
 			error = new LinkedHashMap<String, Object>();
@@ -175,21 +184,50 @@ public class JSONRPCServlet extends HttpServlet {
 		res.put("result", result);
 		res.put("error", error);
 		res.put("id", req.id);
+		if (req.state != null) {
+			res.put("state", encrypt(o));
+		}
 		
 		response.setContentType("application/json");
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
-		json.setPrettyPrint(debug);
+		json.setPrettyPrint(config.debug);
 		writer.write(json.format(res));
 	}
 	
 	protected Object getComponent(String path) throws Exception {
-		Class<?> target = container.get(path);
+		Class<?> target = config.mapping.get(path);
 		if (target == null) {
-			throw new IllegalArgumentException("target class is not found.");
+			throw new IllegalArgumentException("target class is not found: " + path);
 		}
 		return target.newInstance();
+	}
+	
+	protected byte[] encrypt(Object o) {
+		try {
+			Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORISM);
+			cipher.init(Cipher.ENCRYPT_MODE, encryptKey);
+			return cipher.doFinal(JSON.encode(o).getBytes("UTF-8"));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	protected Object decrypt(byte[] data) {
+		try {
+			Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORISM);
+			cipher.init(Cipher.DECRYPT_MODE, encryptKey);
+			return JSON.decode(new String(cipher.doFinal(data), "UTF-8"));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	class Config {
+		public boolean debug;
+		public Map<String, Class<?>> mapping;
+		public String key;
 	}
 	
 	class Request {
@@ -197,5 +235,6 @@ public class JSONRPCServlet extends HttpServlet {
 		public String method;
 		public List<Object> params;
 		public Object id;
+		public byte[] state = NULL_STATE;
 	}
 }
