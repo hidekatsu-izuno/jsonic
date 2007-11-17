@@ -15,6 +15,7 @@
  */
 package net.arnx.jsonic.servlet;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -57,6 +59,15 @@ public class JSONRPCServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String path = request.getServletPath();
 		if (request.getPathInfo() != null) path += request.getPathInfo();
+		
+		if (new File(getServletContext().getRealPath(path)).exists()) {
+			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(path);
+			dispatcher.forward(request, response);
+			return;
+		}
+		
+		path = request.getPathInfo();
+		if (path == null) path = request.getServletPath();
 		
 		JSON json = new JSON();
 		
@@ -95,8 +106,8 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String path = request.getServletPath();
-		if (request.getPathInfo() != null) path += request.getPathInfo();
+		String path = request.getPathInfo();
+		if (path == null) path = request.getServletPath();
 
 		JSON json = new JSON();
 		DynamicInvoker invoker = new DynamicInvoker();

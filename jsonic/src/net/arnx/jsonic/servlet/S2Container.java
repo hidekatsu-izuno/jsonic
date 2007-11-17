@@ -9,17 +9,15 @@ import org.seasar.framework.convention.NamingConvention;
 public class S2Container implements Container {
 	private org.seasar.framework.container.S2Container container;
 	private Logger logger = Logger.getLogger(S2Container.class);
-	private NamingConvention nc;
 	
 	@Override
 	public void init() {
 		container = SingletonS2ContainerFactory.getContainer();
-		nc = (NamingConvention)container.getComponent(NamingConvention.class);
 	}
 
 	@Override
 	public Object getComponent(String path) throws Exception {
-		return container.getComponent(fromPathToConmponentName(path, nc.getServiceSuffix()));
+		return container.getComponent(fromPathToConmponentName(path));
 	}
 
 	@Override
@@ -36,7 +34,9 @@ public class S2Container implements Container {
 	public void destory() {
 	}
 	
-    protected String fromPathToConmponentName(String path, String nameSuffix) {
+    protected String fromPathToConmponentName(String path) {
+    	NamingConvention nc = (NamingConvention)container.getComponent(NamingConvention.class);
+    	String nameSuffix = nc.getServiceSuffix();
         if (!path.startsWith(nc.getViewRootPath()) || !path.endsWith(nc.getViewExtension())) {
             throw new IllegalArgumentException(path);
         }
