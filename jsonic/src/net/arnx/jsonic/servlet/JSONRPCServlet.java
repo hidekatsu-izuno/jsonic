@@ -37,15 +37,19 @@ import net.arnx.jsonic.util.DynamicInvoker;
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = 494827308910359676L;
 	
-	private Config config;
+	private Container container = null;
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
 		super.init(servletConfig);
 		
+		String containerName = servletConfig.getInitParameter("container");
+		
 		JSON json = new JSON(this);
 		try {
-			config = json.parse(servletConfig.getInitParameter("config"), Config.class);
+			container = (Container)json.parse(servletConfig.getInitParameter("config"),
+					(containerName != null) ? Class.forName(containerName) : SimpleContainer.class);
+			container.init();
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -86,9 +90,9 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Object o = null;
 		try {
-			o = getComponent(request.getPathInfo());
+			o = container.getComponent(request.getPathInfo());
 		} catch (Exception e) {
-			log(e.getMessage());
+			container.log(e.getMessage(), null);
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -107,7 +111,7 @@ public class JSONRPCServlet extends HttpServlet {
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
-		json.setPrettyPrint(config.debug);
+		json.setPrettyPrint(!container.isDebugMode());
 		
 		if (callback != null) writer.append(callback).append("(");
 		json.format(result, writer);
@@ -121,9 +125,9 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Object o = null;
 		try {
-			o = getComponent(request.getPathInfo());
+			o = container.getComponent(request.getPathInfo());
 		} catch (Exception e) {
-			log(e.getMessage());
+			container.log(e.getMessage(), e);
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -156,9 +160,9 @@ public class JSONRPCServlet extends HttpServlet {
 					}
 				}
 				sb.append(")");
-				log(sb.toString());
+				container.log(sb.toString(), null);
 			} else {
-				log(e.getMessage(), e);
+				container.log(e.getMessage(), e);
 			}
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
@@ -173,22 +177,14 @@ public class JSONRPCServlet extends HttpServlet {
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
 		Writer writer = response.getWriter();
-		json.setPrettyPrint(config.debug);
+		json.setPrettyPrint(container.isDebugMode());
 		writer.write(json.format(res));
 	}
 	
-	protected Object getComponent(String path) throws Exception {
-		Class<?> target = config.mapping.get(path);
-		if (target == null) {
-			throw new IllegalArgumentException("target class is not found: " + path);
-		}
-		return target.newInstance();
-	}
-	
-	class Config {
-		public boolean debug;
-		public Map<String, Class<?>> mapping;
-		public String key;
+	@Override
+	public void destroy() {
+		container.destory();
+		super.destroy();
 	}
 	
 	class Request {
@@ -196,5 +192,41 @@ public class JSONRPCServlet extends HttpServlet {
 		public String method;
 		public List<Object> params;
 		public Object id;
+	}
+	
+	class SimpleContainer implements Container {
+		public boolean debug;
+		public Map<String, Class<?>> mapping;
+
+		@Override
+		public void init() {
+		}
+
+		@Override
+		public boolean isDebugMode() {
+			return debug;
+		}
+
+		@Override
+		public Object getComponent(String path) throws Exception {
+			Class<?> target = mapping.get(path);
+			if (target == null) {
+				throw new IllegalArgumentException("target class is not found: " + path);
+			}
+			return target.newInstance();
+		}
+
+		@Override
+		public void log(String message, Throwable e) {
+			if (e != null) {
+				JSONRPCServlet.this.log(message, e);
+			} else {
+				JSONRPCServlet.this.log(message);
+			}
+		}
+
+		@Override
+		public void destory() {
+		}
 	}
 }
