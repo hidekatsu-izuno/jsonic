@@ -461,68 +461,37 @@ public class DynamicInvoker {
 					} else {
 						data = Class.forName(value.toString());
 					}
-				} else {
-					if (value instanceof Map) {
-						Object o = create(c);
-						if (o != null) {
-							Map<String, Object> props = new HashMap<String, Object>();
-							
-							for (Field f : c.getFields()) {
-								int modifiers = f.getModifiers();
-								if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
-									props.put(f.getName(), f);
+				} else if (value instanceof Map) {
+					Object o = create(c);
+					if (o != null) {
+						Map<String, Object> props = getGetProperties(c);
+						
+						boolean access = tryAccess(c);
+						
+						Map map = (Map)value;
+						for (Object key : map.keySet()) {
+							Object target = props.get(toPropertyName(key.toString()));
+							if (target == null) {
+								continue;
+							} else if (target instanceof Method) {
+								Method m = (Method)target;
+								try {
+									if (access) m.setAccessible(true);
+									m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+								} catch (Exception e) {
+									handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
+								}
+							} else if (target instanceof Field) {
+								Field f = (Field)target;
+								try {
+									if (access) f.setAccessible(true);
+									f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
+								} catch (Exception e) {
+									handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
 								}
 							}
-							
-							for (Method m : c.getMethods()) {
-								String name = m.getName();
-								if (!Modifier.isStatic(m.getModifiers())
-										&& name.startsWith("set")
-										&& name.length() > 3
-										&& Character.isUpperCase(name.charAt(3))
-										&& m.getParameterTypes().length == 1
-										&& m.getReturnType().equals(void.class)) {
-									
-									String key = null;
-									if (!(name.length() > 4 && Character.isUpperCase(name.charAt(4)))) {
-										char[] carray = name.toCharArray();
-										carray[3] = Character.toLowerCase(carray[3]);
-										key = new String(carray, 3, carray.length-3);
-									} else {
-										key = name.substring(3);
-									}
-									
-									props.put(key, m);
-								}
-							}
-							
-							boolean access = tryAccess(c);
-							
-							Map map = (Map)value;
-							for (Object key : map.keySet()) {
-								Object target = props.get(toPropertyName(key.toString()));
-								if (target == null) {
-									continue;
-								} else if (target instanceof Method) {
-									Method m = (Method)target;
-									try {
-										if (access) m.setAccessible(true);
-										m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
-									} catch (Exception e) {
-										handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
-									}
-								} else if (target instanceof Field) {
-									Field f = (Field)target;
-									try {
-										if (access) f.setAccessible(true);
-										f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
-									} catch (Exception e) {
-										handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
-									}
-								}
-							}
-							data = o;
 						}
+						data = o;
 					}
 				}
 			}
@@ -590,6 +559,40 @@ public class DynamicInvoker {
 			return this.contextClass.equals(c.getEnclosingClass());
 		}
 		return c.getPackage().equals(this.contextClass.getPackage());
+	}
+	
+	private static Map<String, Object> getGetProperties(Class c) {
+		Map<String, Object> props = new HashMap<String, Object>();
+		
+		for (Field f : c.getFields()) {
+			int modifiers = f.getModifiers();
+			if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
+				props.put(f.getName(), f);
+			}
+		}
+		
+		for (Method m : c.getMethods()) {
+			String name = m.getName();
+			if (!Modifier.isStatic(m.getModifiers())
+					&& name.startsWith("set")
+					&& name.length() > 3
+					&& Character.isUpperCase(name.charAt(3))
+					&& m.getParameterTypes().length == 1
+					&& m.getReturnType().equals(void.class)) {
+				
+				String key = null;
+				if (!(name.length() > 4 && Character.isUpperCase(name.charAt(4)))) {
+					char[] carray = name.toCharArray();
+					carray[3] = Character.toLowerCase(carray[3]);
+					key = new String(carray, 3, carray.length-3);
+				} else {
+					key = name.substring(3);
+				}
+				
+				props.put(key, m);
+			}
+		}
+		return props;
 	}
 	
 	private static String toPropertyName(String name) {

@@ -6,11 +6,13 @@
 <script type="text/javascript" src="json-rpc/jsonic/json.js"></script>
 <script type="text/javascript">
 	var ds = [];
+	var state = [];
 	
 	function setup(value) {
 		var url = $('url');
 		url.options[url.options.length] = new Option(value.url, value.url);
 		ds[value.url] = value.methods;
+		state[value.url] = {state: null};
 	}
 	
 	function submit() {
@@ -23,7 +25,8 @@
 				postBody: JSON.encode({
 					method: ds[url][$("method").value].name,
 					params: JSON.decode($('params').value),
-					id: (new Date()).getTime()
+					id: (new Date()).getTime(),
+					state: state[url]
 				}),
 				onFailure: reportError
 			}

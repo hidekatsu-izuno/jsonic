@@ -19,7 +19,6 @@
 					'/calc.json': 'Calc'
 					'/edit.json': 'Edit'
 				}
-				key: 'secret key'
 			</param-value>
 		</init-param>
 	</servlet>

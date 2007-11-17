@@ -24,11 +24,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
-import java.nio.charset.Charset;
-
-import javax.crypto.spec.SecretKeySpec;
-import javax.crypto.Cipher;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -44,10 +39,6 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	private Config config;
 	
-	private static final byte[] NULL_STATE = new byte[0];
-	private static final String ENCRYPT_ALGORISM = "AES";
-	private SecretKeySpec encryptKey;
-	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
 		super.init(servletConfig);
@@ -55,9 +46,6 @@ public class JSONRPCServlet extends HttpServlet {
 		JSON json = new JSON(this);
 		try {
 			config = json.parse(servletConfig.getInitParameter("config"), Config.class);
-			if (config.key != null) {
-				encryptKey = new SecretKeySpec(config.key.getBytes("UTF-8"), ENCRYPT_ALGORISM);
-			}
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -144,22 +132,13 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Object result = null;
 		Map<String, Object> error = null;
-		byte[] state = null;
 		
 		try {
 			json.setContext(this);
 			req = json.parse(request.getReader(), Request.class);
 			
 			invoker.setContext(o);
-
-			if (req.state != null && req.state != NULL_STATE) {
-				invoker.apply(o, decrypt(req.state));
-			}
 			result = invoker.invoke(o, req.method, req.params);
-			
-			if (req.state != null) {
-				state = encrypt(invoker.convert(o, Map.class));
-			}
 		} catch (InvocationTargetException e) {
 			error = new LinkedHashMap<String, Object>();
 			error.put("name", "JSONError");
@@ -189,9 +168,6 @@ public class JSONRPCServlet extends HttpServlet {
 		res.put("result", result);
 		res.put("error", error);
 		res.put("id", req.id);
-		if (state != null) {
-			res.put("state", state);
-		}
 		
 		response.setContentType("application/json");
 		response.setCharacterEncoding(request.getCharacterEncoding());
@@ -209,26 +185,6 @@ public class JSONRPCServlet extends HttpServlet {
 		return target.newInstance();
 	}
 	
-	protected byte[] encrypt(Map value) {
-		try {
-			Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORISM);
-			cipher.init(Cipher.ENCRYPT_MODE, encryptKey);
-			return cipher.doFinal(JSON.encode(value).getBytes("UTF-8"));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	protected Map decrypt(byte[] data) {
-		try {
-			Cipher cipher = Cipher.getInstance(ENCRYPT_ALGORISM);
-			cipher.init(Cipher.DECRYPT_MODE, encryptKey);
-			return JSON.decode(new String(cipher.doFinal(data), "UTF-8"), Map.class);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	class Config {
 		public boolean debug;
 		public Map<String, Class<?>> mapping;
@@ -240,6 +196,5 @@ public class JSONRPCServlet extends HttpServlet {
 		public String method;
 		public List<Object> params;
 		public Object id;
-		public byte[] state = NULL_STATE;
 	}
 }
