@@ -15,8 +15,8 @@
 			<param-value>
 				debug: true
 				mapping {
-					'/calc.json': 'jsonrpc_sample.CalcService'
-					'/edit.json': 'jsonrpc_sample.EditService'
+					'/calc.json': 'sample.CalcService'
+					'/edit.json': 'sample.EditService'
 				}
 			</param-value>
 		</init-param>
