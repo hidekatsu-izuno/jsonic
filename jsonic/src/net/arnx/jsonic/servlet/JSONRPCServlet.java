@@ -15,8 +15,6 @@
  */
 package net.arnx.jsonic.servlet;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
@@ -57,31 +55,8 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		if (request.getPathInfo().startsWith("/jsonic")) {
-			String name = request.getPathInfo().substring("/jsonic/".length());
-			
-			if (name.endsWith(".js")) {
-				response.setCharacterEncoding("UTF-8");
-				response.setContentType("text/javascript");
-				
-				
-				InputStream in = getClass().getResourceAsStream(name);
-				if (in != null) { 
-					OutputStream out = response.getOutputStream();
-					
-					byte[] buffer = new byte[1024];
-					int n = -1;
-					while ((n = in.read(buffer)) != -1) {
-						out.write(buffer, 0, n);
-					}
-					in.close();
-					return;
-				}
-			}
-			
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
+		String path = request.getServletPath();
+		if (request.getPathInfo() != null) path += request.getPathInfo();
 		
 		JSON json = new JSON();
 		
@@ -90,7 +65,7 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		Object o = null;
 		try {
-			o = container.getComponent(request.getPathInfo());
+			o = container.getComponent(path);
 		} catch (Exception e) {
 			container.log(e.getMessage(), null);
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -120,12 +95,15 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String path = request.getServletPath();
+		if (request.getPathInfo() != null) path += request.getPathInfo();
+
 		JSON json = new JSON();
 		DynamicInvoker invoker = new DynamicInvoker();
 		
 		Object o = null;
 		try {
-			o = container.getComponent(request.getPathInfo());
+			o = container.getComponent(path);
 		} catch (Exception e) {
 			container.log(e.getMessage(), e);
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
