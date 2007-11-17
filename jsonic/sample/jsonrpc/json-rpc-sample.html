@@ -1,0 +1,82 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>JSON-RPC sample</title>
+<script type="text/javascript" src="prototype.js"></script>
+<script type="text/javascript">
+	var ds = [];
+	var state = [];
+	
+	function setup(value) {
+		var url = $('url');
+		url.options[url.options.length] = new Option(value.url, value.url);
+		ds[value.url] = value.methods;
+		state[value.url] = {state: null};
+	}
+	
+	function submit() {
+		var url = $('url').value;
+		var ajax = new Ajax.Updater(
+			{success: 'result'},
+			'jsonrpc/' + url,
+			{
+				method: 'POST',
+				postBody: Object.toJSON({
+					method: ds[url][$("method").value].name,
+					params: $('params').value.evalJSON(),
+					id: (new Date()).getTime(),
+					state: state[url]
+				}),
+				onFailure: reportError
+			}
+		);
+	}
+	
+	function reportError(request) {
+		Element.update($("result"), "error!");
+	}
+	
+	function changeUrl(value) {
+		var method = $('method');
+		var params = $('params');
+		method.options.length = 0;
+		
+		var methods = ds[value];
+		for (var i = 0; i < methods.length; i++) {
+			method.options[i] = new Option(methods[i].name, i);
+		}
+		changeMethod(0);
+	}
+	
+	function changeMethod(value) {
+		var url = $('url')
+		var params = $('params');
+		params.value = ds[url.value][value].example.toString();
+		Element.update($('code'), ds[url.value][value].code);
+	}
+	
+	function init() {
+		changeUrl($('url').value);
+	}
+</script>
+</head>
+<body onload="init()">
+<h1>JSON-RPC sample</h1>
+
+<h2>request</h2>
+<div style="font: 9pt monospace;">
+url: <select id="url" onchange="changeUrl(this.value)"></select>
+method: <select id="method" onchange="changeMethod(this.value)"></select>
+params: <input id="params" type="text" size="50" value=""/>
+<input type="button" value="send" onclick="submit()" />
+</div>
+
+<pre id="code" style="font: 9pt monospace; border: 1px solid black; padding: 5px;">
+</pre>
+
+<h2>result</h2>
+<pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
+<script type="text/javascript" src="jsonrpc/calc.json?callback=setup"></script>
+<script type="text/javascript" src="jsonrpc/edit.json?callback=setup"></script>
+</body>
+</html>
