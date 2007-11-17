@@ -7,6 +7,10 @@
 	
 	<description>jsonic sample</description>
 	
+	<listener>
+    	<listener-class>org.seasar.framework.container.servlet.S2ServletContextListener</listener-class>
+	</listener>
+	
 	<servlet>
 		<description>json-rpc sample</description>
 		<servlet-name>json-rpc</servlet-name>
