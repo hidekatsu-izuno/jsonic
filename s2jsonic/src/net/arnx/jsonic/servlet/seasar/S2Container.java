@@ -4,13 +4,14 @@ import net.arnx.jsonic.servlet.Container;
 
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
 import org.seasar.framework.env.Env;
-import org.seasar.framework.log.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.seasar.framework.util.StringUtil;
 import org.seasar.framework.convention.NamingConvention;
 
 public class S2Container implements Container {
 	private org.seasar.framework.container.S2Container container;
-	private Logger logger = Logger.getLogger(S2Container.class);
+	private Log logger = LogFactory.getLog(S2Container.class);
 	
 	@Override
 	public void init() {
@@ -29,11 +30,7 @@ public class S2Container implements Container {
 
 	@Override
 	public void log(String message, Throwable e) {
-		if (e != null) {
-			logger.log(message, null, e);
-		} else {
-			logger.log(message, null);
-		}
+		logger.error(message, e);
 	}
 	
 	@Override
