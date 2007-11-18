@@ -9,33 +9,28 @@ import org.apache.commons.logging.LogFactory;
 import org.seasar.framework.util.StringUtil;
 
 public class S2Container implements Container {
-	private org.seasar.framework.container.S2Container container;
 	private Log logger = LogFactory.getLog(S2Container.class);
 	
 	public Boolean debug;
-	public ServiceConfig service;
+	public ServiceConfig service = new ServiceConfig();
 	
-	@Override
 	public void init() {
-		container = SingletonS2ContainerFactory.getContainer();
 	}
 
-	@Override
 	public Object getComponent(String path) throws Exception {
-		return container.getComponent(fromPathToConmponentName(path));
+		return SingletonS2ContainerFactory
+			.getContainer()
+			.getComponent(fromPathToConmponentName(path));
 	}
 
-	@Override
 	public boolean isDebugMode() {
 		return (debug != null) ? debug : Env.UT.equals(Env.getValue());
 	}
 
-	@Override
 	public void log(String message, Throwable e) {
 		logger.error(message, e);
 	}
 	
-	@Override
 	public void destory() {
 	}
 	

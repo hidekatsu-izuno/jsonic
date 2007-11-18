@@ -18,7 +18,7 @@
 		var url = $('url').value;
 		var ajax = new Ajax.Updater(
 			{success: 'result'},
-			'jsonrpc/' + url,
+			url,
 			{
 				method: 'POST',
 				postBody: Object.toJSON({
@@ -76,7 +76,7 @@ params: <input id="params" type="text" size="50" value=""/>
 
 <h2>result</h2>
 <pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
-<script type="text/javascript" src="jsonrpc/calc.json?callback=setup"></script>
-<script type="text/javascript" src="jsonrpc/edit.json?callback=setup"></script>
+<script type="text/javascript" src="calc.json?callback=setup"></script>
+<script type="text/javascript" src="edit.json?callback=setup"></script>
 </body>
 </html>
