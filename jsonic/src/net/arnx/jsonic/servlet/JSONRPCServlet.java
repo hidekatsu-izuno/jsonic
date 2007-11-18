@@ -44,10 +44,14 @@ public class JSONRPCServlet extends HttpServlet {
 		super.init(servletConfig);
 		
 		String containerName = servletConfig.getInitParameter("container");
+		String configText = servletConfig.getInitParameter("config");
+		if (configText == null || configText.trim().length() == 0) {
+			configText = "{}";
+		}
 		
 		JSON json = new JSON(this);
 		try {
-			container = (Container)json.parse(servletConfig.getInitParameter("config"),
+			container = (Container)json.parse(configText,
 					(containerName != null) ? Class.forName(containerName) : SimpleContainer.class);
 			container.init();
 		} catch (Exception e) {
