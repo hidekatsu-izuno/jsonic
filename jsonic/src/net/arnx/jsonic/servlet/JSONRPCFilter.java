@@ -83,7 +83,7 @@ public class JSONRPCFilter implements Filter {
 		try {
 			o = container.getComponent(path);
 		} catch (Exception e) {
-			container.log(e.getMessage(), null);
+			container.log(e.getMessage(), e);
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
