@@ -66,7 +66,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 </pre>
 
 <h2 id="download">ダウンロード</h2>
-<p>JSONICの現時点での最新バージョンは0.9.4です。</p>
+<p>JSONICの現時点での最新バージョンは0.9.5です。</p>
 <p><a href="http://sourceforge.jp/projects/jsonic/files/">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Javaバージョン5.0以上が必要です。</p>
 
 <h2 id="usage">使い方</h2>
@@ -331,38 +331,32 @@ public class EnclosingClass {
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
-<h3>JSON-RPC Servlet</h3>
+<h3>JSON-RPC Filter</h3>
 
 <h4>JSON-RPC 1.0</h4>
 
-<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です。<br />
-JSON-RPCを利用するには、web.xmlに下記のような設定を記載するとservlet pathが呼び出されたとき、class nameで指定されたクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
+<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCFilterを使うことでJSON-RPCを利用することが可能です。<br />
+JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載するとpathに対し対応したclass nameのクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
 <pre class="source">
-&lt;servlet&gt;
-    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
-    &lt;servlet-class&gt;net.arnx.jsonic.JSONRPCServlet&lt;/servlet-class&gt;
+&lt;filter&gt;
+    &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
+    &lt;filter-class&gt;net.arnx.jsonic.JSONRPCServlet&lt;/filter-class&gt;
     &lt;init-param&gt;
         &lt;param-name&gt;config&lt;/param-name&gt;
         &lt;param-value&gt;
-            {
-                "servlet path" : "class name",
+        	debug: true
+            mapping {
+                "path" : "class name",
                 ...
             }
         &lt;/param-value&gt;
     &lt;/init-param&gt;
-&lt;/servlet&gt;
+&lt;/filter&gt;
 
-&lt;-- JavaScriptクライアント共通ライブラリ用 --&gt;
-&lt;servlet-mapping&gt;
-    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
-    &lt;url-pattern&gt;/jsonic/*&lt;/url-pattern&gt;
-&lt;/servlet-mapping&gt;
-
-&lt;-- RPC用 --&gt;
-&lt;servlet-mapping&gt;
-    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
+&lt;filter-mapping&gt;
+    &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
     &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;
-&lt;/servlet-mapping&gt;
+&lt;/filter-mapping&gt;
 </pre>
 
 <h4>JSONP</h4>
@@ -383,6 +377,8 @@ paramsや戻り値には任意のクラスを指定することもできます�
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
 
+<p>※version 0.9.4まではFilterではなくServletでしたが、同名の実ファイルが置かれた場合にはそちらを優先して表示することを可能なようにFilterに変更しました。</p>
+
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
 <p>なお、書くまでもないことですが自分のライブラリへの組み込みやその際にパッケージ名や処理の変更など行っていただいて一向に構いません。保障はありませんが、ライセンスの範囲内でご自由にお使いください。</p>
@@ -395,7 +391,8 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <h3>2007/11/XX version 0.9.5</h3>
 <p>下記の機能追加とバグ修正が行われています。</p>
 <ul>
-<li>Servletの仕様に則り、JSONRPCServlet#init(config)内でsuper.init(config)を呼び出すよう修正しました。</li>
+<li>JSONRPCServletを廃止し、JSONRPCFilterに変更しました。これは同名の実ファイルが置かれた場合にはそちらを優先して表示することを可能にするためです。</li>
+<li>Parse時にnullが入力された場合、NullPointerExceptionではなくIllegalArgumentExceptionをメッセージと共に投げるように修正しました。</li>
 <li>Parse時に値が指定されない場合、nullと認識するようにしました。</li>
 </ul>
 

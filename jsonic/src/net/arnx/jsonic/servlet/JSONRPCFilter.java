@@ -39,7 +39,9 @@ public class JSONRPCFilter implements Filter {
 			Class containerClass = (containerName != null) ? 
 					Class.forName(containerName) : SimpleContainer.class;
 					
-			JSON json = new JSON(this);
+			JSON json = (containerName != null) ? 
+					new JSON(containerClass) : new JSON(this);
+					
 			container = (Container)json.parse(configText, containerClass);
 			container.init();
 		} catch (Exception e) {
