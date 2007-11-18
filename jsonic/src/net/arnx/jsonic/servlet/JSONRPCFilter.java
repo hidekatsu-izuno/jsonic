@@ -1,50 +1,36 @@
-/*
- * Copyright 2007 Hidekatsu Izuno
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
- * either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- */
 package net.arnx.jsonic.servlet;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.LinkedHashMap;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-import javax.servlet.ServletConfig;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.ServletContext;
+import javax.servlet.http.*;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.util.DynamicInvoker;
 
-public class JSONRPCServlet extends HttpServlet {
-	private static final long serialVersionUID = 494827308910359676L;
+public class JSONRPCFilter implements Filter {
 	
+	private ServletContext context = null;
 	private Container container = null;
-	
-	@Override
-	public void init(ServletConfig servletConfig) throws ServletException {
-		super.init(servletConfig);
+
+	public void init(FilterConfig config) throws ServletException {
+		context = config.getServletContext();
 		
-		String containerName = servletConfig.getInitParameter("container");
-		String configText = servletConfig.getInitParameter("config");
+		String containerName = config.getInitParameter("container");
+		String configText = config.getInitParameter("config");
 		if (configText == null || configText.trim().length() == 0) {
 			configText = "{}";
 		}
@@ -53,29 +39,42 @@ public class JSONRPCServlet extends HttpServlet {
 			Class containerClass = (containerName != null) ? 
 					Class.forName(containerName) : SimpleContainer.class;
 					
-			JSON json = new JSON(containerClass);
+			JSON json = new JSON(this);
 			container = (Container)json.parse(configText, containerClass);
 			container.init();
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
 	}
-	
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String path = request.getServletPath();
-		if (request.getPathInfo() != null) path += request.getPathInfo();
+
+	public void doFilter(ServletRequest request, ServletResponse response,
+			FilterChain chain) throws IOException, ServletException {
 		
-		if (new File(getServletContext().getRealPath(path)).exists()) {
-			RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(path);
-			dispatcher.forward(request, response);
-			return;
+		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+			HttpServletRequest hrequest = (HttpServletRequest)request;
+			HttpServletResponse hresponse = (HttpServletResponse)response;
+			
+			String path = hrequest.getRequestURI();
+			if (!path.equals("/")) path = path.substring(hrequest.getContextPath().length());
+			
+			if (!new File(context.getRealPath(path)).exists()) {
+				if ("GET".equalsIgnoreCase(hrequest.getMethod())) {
+					doGet(hrequest, hresponse, path);
+				} else if ("POST".equalsIgnoreCase(hrequest.getMethod())) {
+					doPost(hrequest, hresponse, path);
+				} else {
+					hresponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+				}
+				
+				return;
+			}
 		}
 		
-		path = request.getPathInfo();
-		if (path == null) path = request.getServletPath();
-		
-		JSON json = new JSON();
+		chain.doFilter(request, response);
+	}
+	
+	public void doGet(HttpServletRequest request, HttpServletResponse response, String path)
+	throws IOException, ServletException {
 		
 		Object result = null;
 		String callback = request.getParameter("callback");
@@ -102,6 +101,8 @@ public class JSONRPCServlet extends HttpServlet {
 		response.setContentType("text/javascript");
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
+		JSON json = new JSON();
+		
 		Writer writer = response.getWriter();
 		json.setPrettyPrint(!container.isDebugMode());
 		
@@ -110,12 +111,9 @@ public class JSONRPCServlet extends HttpServlet {
 		if (callback != null) writer.append(");");
 	}
 	
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String path = request.getPathInfo();
-		if (path == null) path = request.getServletPath();
-
-		JSON json = new JSON();
+	public void doPost(HttpServletRequest request, HttpServletResponse response, String path)
+		throws IOException, ServletException {
+		
 		DynamicInvoker invoker = new DynamicInvoker();
 		
 		Object o = null;
@@ -132,8 +130,8 @@ public class JSONRPCServlet extends HttpServlet {
 		Object result = null;
 		Map<String, Object> error = null;
 		
+		JSON json = new JSON(this);
 		try {
-			json.setContext(this);
 			req = json.parse(request.getReader(), Request.class);
 			
 			invoker.setContext(o);
@@ -175,11 +173,9 @@ public class JSONRPCServlet extends HttpServlet {
 		json.setPrettyPrint(container.isDebugMode());
 		writer.write(json.format(res));
 	}
-	
-	@Override
+
 	public void destroy() {
 		container.destory();
-		super.destroy();
 	}
 	
 	class Request {
@@ -210,9 +206,9 @@ public class JSONRPCServlet extends HttpServlet {
 
 		public void log(String message, Throwable e) {
 			if (e != null) {
-				JSONRPCServlet.this.log(message, e);
+				context.log(message, e);
 			} else {
-				JSONRPCServlet.this.log(message);
+				context.log(message);
 			}
 		}
 
