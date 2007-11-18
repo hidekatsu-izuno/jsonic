@@ -334,7 +334,6 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <h3>JSON-RPC Filter</h3>
 
 <h4>JSON-RPC 1.0</h4>
-
 <p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCFilterを使うことでJSON-RPCを利用することが可能です。<br />
 JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載するとpathに対し対応したclass nameのクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
 <pre class="source">
@@ -376,6 +375,22 @@ paramsや戻り値には任意のクラスを指定することもできます�
 
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
+
+<h4>DI Container対応</h4>
+<p>JSONRPCFilterは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerで管理することが可能です。</p>
+
+<pre class="source">
+&lt;filter&gt;
+    &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
+    &lt;filter-class&gt;net.arnx.jsonic.servlet.JSONRPCFilter&lt;/filter-class&gt;
+    &lt;init-param&gt;
+        &lt;param-name&gt;container&lt;/param-name&gt;
+        &lt;param-value&gt;(net.arnx.jsonic.servlet.Containerを実装したクラス)&lt;/param-value&gt;
+    &lt;/init-param&gt;
+&lt;/filter&gt;
+</pre>
+
+<p>JSONICでは、Seasar2に対応したContainerを用意しています。このContainerに差し替えると、Seasar2上で管理されるServiceクラスが自動的にJSON-RPCとしてアクセス可能になります。</p>
 
 <p>※version 0.9.4まではFilterではなくServletでしたが、同名の実ファイルが置かれた場合にはそちらを優先して表示することを可能なようにFilterに変更しました。</p>
 
