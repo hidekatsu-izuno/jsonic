@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tomcatProjectProperties>
+    <rootDir>/sample</rootDir>
+    <exportSource>false</exportSource>
+    <reloadable>true</reloadable>
+    <redirectLogger>false</redirectLogger>
+    <updateXml>true</updateXml>
+    <warLocation></warLocation>
+    <extraInfo></extraInfo>
+    <webPath>s2sample</webPath>
+    <webClassPathEntries>
+        <webClassPathEntry>/jsonic/bin</webClassPathEntry>
+        <webClassPathEntry>/s2jsonic/bin</webClassPathEntry>
+    </webClassPathEntries>
+</tomcatProjectProperties>
