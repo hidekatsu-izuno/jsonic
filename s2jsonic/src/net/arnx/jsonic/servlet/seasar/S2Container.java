@@ -7,11 +7,13 @@ import org.seasar.framework.env.Env;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.seasar.framework.util.StringUtil;
-import org.seasar.framework.convention.NamingConvention;
 
 public class S2Container implements Container {
 	private org.seasar.framework.container.S2Container container;
 	private Log logger = LogFactory.getLog(S2Container.class);
+	
+	public Boolean debug;
+	public ServiceConfig service;
 	
 	@Override
 	public void init() {
@@ -25,7 +27,7 @@ public class S2Container implements Container {
 
 	@Override
 	public boolean isDebugMode() {
-		return Env.UT.equals(Env.getValue());
+		return (debug != null) ? debug : Env.UT.equals(Env.getValue());
 	}
 
 	@Override
@@ -38,20 +40,24 @@ public class S2Container implements Container {
 	}
 	
     protected String fromPathToConmponentName(String path) {
-    	NamingConvention nc = (NamingConvention)container.getComponent(NamingConvention.class);
-    	String nameSuffix = nc.getServiceSuffix();
-        if (!path.startsWith(nc.getViewRootPath()) || !path.endsWith(nc.getViewExtension())) {
+        if (!path.startsWith(service.rootPath) || !path.endsWith(service.extension)) {
             throw new IllegalArgumentException(path);
         }
         String componentName = (path.substring(
-                nc.adjustViewRootPath().length() + 1, path.length()
-                        - nc.getViewExtension().length()) + nameSuffix).replace('/',
-                '_');
+                ("/".equals(service.rootPath) ? "" : service.rootPath).length() + 1,
+                path.length() - service.extension.length())
+                + service.suffix).replace('/','_');
         int pos = componentName.lastIndexOf('_');
         if (pos == -1) {
             return StringUtil.decapitalize(componentName);
         }
         return componentName.substring(0, pos + 1)
         	+ StringUtil.decapitalize(componentName.substring(pos + 1));
+    }
+    
+    class ServiceConfig {
+    	public String rootPath = "";
+    	public String suffix = "Service";
+    	public String extension = ".json";
     }
 }
