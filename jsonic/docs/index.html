@@ -340,12 +340,12 @@ JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載�
 <pre class="source">
 &lt;filter&gt;
     &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
-    &lt;filter-class&gt;net.arnx.jsonic.JSONRPCServlet&lt;/filter-class&gt;
+    &lt;filter-class&gt;net.arnx.jsonic.servlet.JSONRPCFilter&lt;/filter-class&gt;
     &lt;init-param&gt;
         &lt;param-name&gt;config&lt;/param-name&gt;
         &lt;param-value&gt;
-        	debug: true
-            mapping {
+        	"debug": true
+            "mapping": {
                 "path" : "class name",
                 ...
             }
