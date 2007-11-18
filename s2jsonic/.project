@@ -3,6 +3,7 @@
 	<name>s2jsonic</name>
 	<comment></comment>
 	<projects>
+		<project>jsonic</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
