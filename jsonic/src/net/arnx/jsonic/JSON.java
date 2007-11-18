@@ -1117,7 +1117,7 @@ public class JSON {
 		
 		public CharSequenceJSONSource(CharSequence cs) {
 			if (cs == null) {
-				throw new IllegalArgumentException("input is null");
+				throw new IllegalArgumentException(getMessage("json.parse.NullInputError"));
 			}
 			this.cs = cs;
 		}
@@ -1170,7 +1170,7 @@ public class JSON {
 		
 		public ReaderJSONSource(Reader reader) {
 			if (reader == null) {
-				throw new IllegalArgumentException("input is null");
+				throw new IllegalArgumentException(getMessage("json.parse.NullInputError"));
 			}
 			this.reader = reader;
 		}
