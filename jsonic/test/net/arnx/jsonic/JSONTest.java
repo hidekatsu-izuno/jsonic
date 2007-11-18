@@ -296,6 +296,24 @@ public class JSONTest {
 		Locale.setDefault(Locale.ENGLISH);
 		JSON json = new JSON(this);
 		
+		try {
+			CharSequence cs = null;
+			assertEquals(null, json.parse(cs));
+			fail();
+		} catch (IllegalArgumentException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			Reader reader = null;
+			assertEquals(null, json.parse(reader));
+			fail();
+		} catch (IllegalArgumentException e) {
+			System.out.println(e);
+			assertNotNull(e);			
+		}
+		
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
 			{
@@ -316,7 +334,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);			
 		}
-		
+				
 		assertEquals(list, json.parse("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
 		
 		assertEquals(list, json.parse("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
