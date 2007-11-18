@@ -193,16 +193,13 @@ public class JSONRPCServlet extends HttpServlet {
 		public boolean debug;
 		public Map<String, Class<?>> mapping;
 
-		@Override
 		public void init() {
 		}
 
-		@Override
 		public boolean isDebugMode() {
 			return debug;
 		}
 
-		@Override
 		public Object getComponent(String path) throws Exception {
 			Class<?> target = mapping.get(path);
 			if (target == null) {
@@ -211,7 +208,6 @@ public class JSONRPCServlet extends HttpServlet {
 			return target.newInstance();
 		}
 
-		@Override
 		public void log(String message, Throwable e) {
 			if (e != null) {
 				JSONRPCServlet.this.log(message, e);
@@ -220,7 +216,6 @@ public class JSONRPCServlet extends HttpServlet {
 			}
 		}
 
-		@Override
 		public void destory() {
 		}
 	}
