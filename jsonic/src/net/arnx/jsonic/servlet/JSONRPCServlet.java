@@ -49,10 +49,12 @@ public class JSONRPCServlet extends HttpServlet {
 			configText = "{}";
 		}
 		
-		JSON json = new JSON(this);
 		try {
-			container = (Container)json.parse(configText,
-					(containerName != null) ? Class.forName(containerName) : SimpleContainer.class);
+			Class containerClass = (containerName != null) ? 
+					Class.forName(containerName) : SimpleContainer.class;
+					
+			JSON json = new JSON(containerClass);
+			container = (Container)json.parse(configText, containerClass);
 			container.init();
 		} catch (Exception e) {
 			throw new ServletException(e);
