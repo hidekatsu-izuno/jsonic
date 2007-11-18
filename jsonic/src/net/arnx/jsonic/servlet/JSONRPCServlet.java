@@ -153,7 +153,7 @@ public class JSONRPCServlet extends HttpServlet {
 					}
 				}
 				sb.append(")");
-				container.log(sb.toString(), null);
+				container.log(sb.toString(), e);
 			} else {
 				container.log(e.getMessage(), e);
 			}

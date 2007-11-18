@@ -1116,6 +1116,9 @@ public class JSON {
 		private CharSequence cs;
 		
 		public CharSequenceJSONSource(CharSequence cs) {
+			if (cs == null) {
+				throw new IllegalArgumentException("input is null");
+			}
 			this.cs = cs;
 		}
 		
@@ -1166,6 +1169,9 @@ public class JSON {
 		private int end = 0;
 		
 		public ReaderJSONSource(Reader reader) {
+			if (reader == null) {
+				throw new IllegalArgumentException("input is null");
+			}
 			this.reader = reader;
 		}
 		
