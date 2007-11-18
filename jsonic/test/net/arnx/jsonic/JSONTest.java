@@ -314,7 +314,7 @@ public class JSONTest {
 			assertNotNull(e);			
 		}
 		
-		assertEquals(null, json.parse(""));
+		assertEquals(new LinkedHashMap(), json.parse(""));
 		
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
