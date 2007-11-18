@@ -23,12 +23,14 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
+			/*
 				debug: true
 				service {
 					rootPath: ''
 					suffix: 'Service'
 					extension: '.json'
 				}
+			*/
 			</param-value>
 		</init-param>
 	</filter>

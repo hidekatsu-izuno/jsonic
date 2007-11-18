@@ -12,9 +12,13 @@ public class S2Container implements Container {
 	private Log logger = LogFactory.getLog(S2Container.class);
 	
 	public Boolean debug;
-	public ServiceConfig service = new ServiceConfig();
+	public ServiceConfig service;
 	
 	public void init() {
+		if (service == null) service = new ServiceConfig();
+		if (service.rootPath == null) service.rootPath = "";
+		if (service.suffix == null) service.suffix = "Service";
+		if (service.extension == null) service.extension = ".json";
 	}
 
 	public Object getComponent(String path) throws Exception {
@@ -51,8 +55,8 @@ public class S2Container implements Container {
     }
     
     class ServiceConfig {
-    	public String rootPath = "";
-    	public String suffix = "Service";
-    	public String extension = ".json";
+    	public String rootPath;
+    	public String suffix;
+    	public String extension;
     }
 }
