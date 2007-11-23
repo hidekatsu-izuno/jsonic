@@ -76,7 +76,7 @@ public class JSONRPCFilter implements Filter {
 	}
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response, String path)
-	throws IOException, ServletException {
+		throws IOException, ServletException {
 		
 		Object result = null;
 		String callback = request.getParameter("callback");
@@ -86,20 +86,32 @@ public class JSONRPCFilter implements Filter {
 			o = container.getComponent(path);
 		} catch (Exception e) {
 			container.log(e.getMessage(), e);
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
 		
+		Map map = request.getParameterMap();
 		try {
 			List<Map<?,?>> params = new ArrayList<Map<?,?>>(1);
-			params.add(request.getParameterMap());
+			if (!map.isEmpty()) {
+				params.add(request.getParameterMap());
+			}
 			
 			DynamicInvoker invoker = new DynamicInvoker();
 			invoker.setContext(o);
 			result = invoker.invoke(o, "get", params);
+		} catch (NoSuchMethodException e) {
+			StringBuilder sb = new StringBuilder("missing method: ");
+			sb.append(o.getClass().getName()).append(".get(Map params)");
+			container.log(sb.toString());
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
 		} catch (Exception e) {
-			throw new ServletException(e);
+			container.log(e.getMessage(), e);
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			return;
 		}
+
 		response.setContentType("text/javascript");
 		response.setCharacterEncoding(request.getCharacterEncoding());
 		
@@ -115,8 +127,6 @@ public class JSONRPCFilter implements Filter {
 	
 	public void doPost(HttpServletRequest request, HttpServletResponse response, String path)
 		throws IOException, ServletException {
-		
-		DynamicInvoker invoker = new DynamicInvoker();
 		
 		Object o = null;
 		try {
@@ -136,6 +146,7 @@ public class JSONRPCFilter implements Filter {
 		try {
 			req = json.parse(request.getReader(), Request.class);
 			
+			DynamicInvoker invoker = new DynamicInvoker();
 			invoker.setContext(o);
 			result = invoker.invoke(o, req.method, req.params);
 		} catch (InvocationTargetException e) {
@@ -143,22 +154,22 @@ public class JSONRPCFilter implements Filter {
 			error.put("name", "JSONError");
 			error.put("code", 100);
 			error.put("message", e.getCause().getMessage());
-		} catch (Exception e) {
-			if (e instanceof NoSuchMethodException) {
-				StringBuilder sb = new StringBuilder("missing method: ");
-				sb.append(o.getClass().getName()).append(".");
-				sb.append(req.method).append("(");
-				if (req.params != null) {
-					for (int i = 0; i < req.params.size(); i++) {
-						if (i != 0) sb.append(", ");
-						sb.append(req.params.get(i));
-					}
+		} catch (NoSuchMethodException e) {
+			StringBuilder sb = new StringBuilder("missing method: ");
+			sb.append(o.getClass().getName()).append(".");
+			sb.append(req.method).append("(");
+			if (req.params != null) {
+				for (int i = 0; i < req.params.size(); i++) {
+					if (i != 0) sb.append(", ");
+					sb.append(req.params.get(i));
 				}
-				sb.append(")");
-				container.log(sb.toString(), e);
-			} else {
-				container.log(e.getMessage(), e);
 			}
+			sb.append(")");
+			container.log(sb.toString());
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		} catch (Exception e) {
+			container.log(e.getMessage(), e);
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
@@ -206,12 +217,12 @@ public class JSONRPCFilter implements Filter {
 			return target.newInstance();
 		}
 
+		public void log(String message) {
+			context.log(message);
+		}
+		
 		public void log(String message, Throwable e) {
-			if (e != null) {
-				context.log(message, e);
-			} else {
-				context.log(message);
-			}
+			context.log(message, e);
 		}
 
 		public void destory() {
