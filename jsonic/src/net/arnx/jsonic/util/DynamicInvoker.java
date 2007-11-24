@@ -43,70 +43,12 @@ public class DynamicInvoker {
 		}
 	}
 	
-	public void apply(Object o, Map value) throws Exception {
-		Class c = o.getClass();
-		
-		Map<String, Object> props = new HashMap<String, Object>();
-		
-		for (Field f : c.getFields()) {
-			int modifiers = f.getModifiers();
-			if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
-				props.put(f.getName(), f);
-			}
-		}
-		
-		for (Method m : c.getMethods()) {
-			String name = m.getName();
-			if (!Modifier.isStatic(m.getModifiers())
-					&& name.startsWith("set")
-					&& name.length() > 3
-					&& Character.isUpperCase(name.charAt(3))
-					&& m.getParameterTypes().length == 1
-					&& m.getReturnType().equals(void.class)) {
-				
-				String key = null;
-				if (!(name.length() > 4 && Character.isUpperCase(name.charAt(4)))) {
-					char[] carray = name.toCharArray();
-					carray[3] = Character.toLowerCase(carray[3]);
-					key = new String(carray, 3, carray.length-3);
-				} else {
-					key = name.substring(3);
-				}
-				
-				props.put(key, m);
-			}
-		}
-		
-		boolean access = tryAccess(c);
-		
-		for (Object key : value.keySet()) {
-			Object target = props.get(toPropertyName(key.toString()));
-			if (target == null) {
-				continue;
-			} else if (target instanceof Method) {
-				Method m = (Method)target;
-				try {
-					if (access) m.setAccessible(true);
-					m.invoke(o, convert(value.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
-				} catch (Exception e) {
-					handleConvertError(key.toString(), value.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
-				}
-			} else if (target instanceof Field) {
-				Field f = (Field)target;
-				try {
-					if (access) f.setAccessible(true);
-					f.set(o, convert(value.get(key.toString()), f.getType(), f.getGenericType()));
-				} catch (Exception e) {
-					handleConvertError(key.toString(), value.get(key), f.getType(), f.getGenericType(), e);
-				}
-			}
-		}
-	}
-	
 	public Object invoke(Object o, String methodName, List values) throws Exception {
 		if (values == null) {
 			values = Collections.EMPTY_LIST;
 		}
+		
+		methodName = toJavaName(methodName);
 		
 		Class target = o.getClass();
 		Method method = null;
@@ -470,7 +412,7 @@ public class DynamicInvoker {
 						
 						Map map = (Map)value;
 						for (Object key : map.keySet()) {
-							Object target = props.get(toPropertyName(key.toString()));
+							Object target = props.get(toJavaName(key.toString()));
 							if (target == null) {
 								continue;
 							} else if (target instanceof Method) {
@@ -595,7 +537,7 @@ public class DynamicInvoker {
 		return props;
 	}
 	
-	private static String toPropertyName(String name) {
+	private static String toJavaName(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		int i = 0;
 		boolean toUpperCase = false;
