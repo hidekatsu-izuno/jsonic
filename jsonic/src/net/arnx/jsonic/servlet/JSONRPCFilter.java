@@ -22,7 +22,6 @@ import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.util.DynamicInvoker;
 
 public class JSONRPCFilter implements Filter {
-	
 	private ServletContext context = null;
 	private Container container = null;
 
@@ -113,7 +112,7 @@ public class JSONRPCFilter implements Filter {
 		}
 
 		response.setContentType("text/javascript");
-		response.setCharacterEncoding(request.getCharacterEncoding());
+		response.setCharacterEncoding("UTF-8");
 		
 		JSON json = new JSON();
 		
@@ -180,7 +179,7 @@ public class JSONRPCFilter implements Filter {
 		res.put("id", req.id);
 		
 		response.setContentType("application/json");
-		response.setCharacterEncoding(request.getCharacterEncoding());
+		response.setCharacterEncoding("UTF-8");
 		
 		Writer writer = response.getWriter();
 		json.setPrettyPrint(container.isDebugMode());
