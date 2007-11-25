@@ -24,7 +24,7 @@ import net.arnx.jsonic.util.DynamicInvoker;
 public class JSONRPCFilter implements Filter {
 	private ServletContext context = null;
 	private Container container = null;
-
+	
 	public void init(FilterConfig config) throws ServletException {
 		context = config.getServletContext();
 		
@@ -59,6 +59,12 @@ public class JSONRPCFilter implements Filter {
 			if (!path.equals("/")) path = path.substring(hrequest.getContextPath().length());
 			
 			if (!new File(context.getRealPath(path)).exists()) {
+				String encoding = container.getCharacterEncoding();
+				if (encoding != null) {
+					hrequest.setCharacterEncoding(encoding);
+					hresponse.setCharacterEncoding(encoding);
+				}
+				
 				if ("GET".equalsIgnoreCase(hrequest.getMethod())) {
 					doGet(hrequest, hresponse, path);
 				} else if ("POST".equalsIgnoreCase(hrequest.getMethod())) {
@@ -76,7 +82,7 @@ public class JSONRPCFilter implements Filter {
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response, String path)
 		throws IOException, ServletException {
-		
+				
 		Object result = null;
 		String callback = request.getParameter("callback");
 		
@@ -112,7 +118,6 @@ public class JSONRPCFilter implements Filter {
 		}
 
 		response.setContentType("text/javascript");
-		response.setCharacterEncoding("UTF-8");
 		
 		JSON json = new JSON();
 		
@@ -149,10 +154,12 @@ public class JSONRPCFilter implements Filter {
 			invoker.setContext(o);
 			result = invoker.invoke(o, req.method, req.params);
 		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause();
+			container.log(cause.getMessage(), cause);
 			error = new LinkedHashMap<String, Object>();
 			error.put("name", "JSONError");
 			error.put("code", 100);
-			error.put("message", e.getCause().getMessage());
+			error.put("message", cause.getMessage());
 		} catch (NoSuchMethodException e) {
 			StringBuilder sb = new StringBuilder("missing method: ");
 			sb.append(o.getClass().getName()).append(".");
@@ -179,7 +186,6 @@ public class JSONRPCFilter implements Filter {
 		res.put("id", req.id);
 		
 		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
 		
 		Writer writer = response.getWriter();
 		json.setPrettyPrint(container.isDebugMode());
@@ -200,12 +206,17 @@ public class JSONRPCFilter implements Filter {
 	class SimpleContainer implements Container {
 		public boolean debug;
 		public Map<String, Class<?>> mapping;
+		public String encoding = "UTF-8";
 
 		public void init() {
 		}
 
 		public boolean isDebugMode() {
 			return debug;
+		}
+		
+		public String getCharacterEncoding() {
+			return encoding;
 		}
 
 		public Object getComponent(String path) throws Exception {
