@@ -12,6 +12,7 @@ public class S2Container implements Container {
 	private Log logger = LogFactory.getLog(S2Container.class);
 	
 	public Boolean debug;
+	public String encoding;
 	public ServiceConfig service;
 	
 	public void init() {
@@ -19,6 +20,10 @@ public class S2Container implements Container {
 		if (service.rootPath == null) service.rootPath = "";
 		if (service.suffix == null) service.suffix = "Service";
 		if (service.extension == null) service.extension = ".json";
+	}
+	
+	public String getCharacterEncoding() {
+		return encoding;
 	}
 
 	public Object getComponent(String path) throws Exception {
