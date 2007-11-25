@@ -46,11 +46,14 @@ public class S2Container implements Container {
         if (!path.startsWith(service.rootPath) || !path.endsWith(service.extension)) {
             throw new IllegalArgumentException(path);
         }
-        String componentName = (path.substring(
-                ("/".equals(service.rootPath) ? "" : service.rootPath).length() + 1,
-                path.length() - service.extension.length())
-                + service.suffix).replace('/','_');
+        
+        String componentName = path.substring(
+        		("/".equals(service.rootPath) ? "" : service.rootPath).length() + 1,
+                path.length() - service.extension.length()
+            ).replace('/','_') + service.suffix;
+        
         int pos = componentName.lastIndexOf('_');
+        
         if (pos == -1) {
             return StringUtil.decapitalize(componentName);
         }
