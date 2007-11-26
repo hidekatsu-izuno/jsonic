@@ -12,7 +12,7 @@ public class S2Container implements Container {
 	private Log logger = LogFactory.getLog(S2Container.class);
 	
 	public Boolean debug;
-	public String encoding;
+	public String encoding = "UTF-8";
 	public ServiceConfig service;
 	
 	public void init() {
