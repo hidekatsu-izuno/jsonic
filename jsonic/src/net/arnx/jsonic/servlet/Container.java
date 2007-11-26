@@ -1,7 +1,9 @@
 package net.arnx.jsonic.servlet;
 
+import javax.servlet.ServletContext;
+
 public interface Container {
-	void init();
+	void init(ServletContext context);
 	boolean isDebugMode();
 	String getCharacterEncoding();
 	Object getComponent(String path) throws Exception;

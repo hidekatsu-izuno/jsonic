@@ -42,7 +42,7 @@ public class JSONRPCFilter implements Filter {
 					new JSON(containerClass) : new JSON(this);
 					
 			container = (Container)json.parse(configText, containerClass);
-			container.init();
+			container.init(context);
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -201,41 +201,5 @@ public class JSONRPCFilter implements Filter {
 		public String method;
 		public List<Object> params;
 		public Object id;
-	}
-	
-	class SimpleContainer implements Container {
-		public boolean debug;
-		public Map<String, Class<?>> mapping;
-		public String encoding = "UTF-8";
-
-		public void init() {
-		}
-
-		public boolean isDebugMode() {
-			return debug;
-		}
-		
-		public String getCharacterEncoding() {
-			return encoding;
-		}
-
-		public Object getComponent(String path) throws Exception {
-			Class<?> target = mapping.get(path);
-			if (target == null) {
-				throw new IllegalArgumentException("target class is not found: " + path);
-			}
-			return target.newInstance();
-		}
-
-		public void log(String message) {
-			context.log(message);
-		}
-		
-		public void log(String message, Throwable e) {
-			context.log(message, e);
-		}
-
-		public void destory() {
-		}
 	}
 }
