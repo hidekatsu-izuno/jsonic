@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/jsonic"/>
 	<classpathentry kind="lib" path="lib/s2-framework-2.4.18-rc2.jar" sourcepath="sample/WEB-INF/lib/s2-framework-2.4.18-rc2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.1.jar"/>
+	<classpathentry kind="lib" path="/jsonic/lib/servlet-api.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

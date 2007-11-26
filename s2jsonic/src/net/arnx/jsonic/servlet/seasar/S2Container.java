@@ -1,5 +1,7 @@
 package net.arnx.jsonic.servlet.seasar;
 
+import javax.servlet.ServletContext;
+
 import net.arnx.jsonic.servlet.Container;
 
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
@@ -15,7 +17,7 @@ public class S2Container implements Container {
 	public String encoding = "UTF-8";
 	public ServiceConfig service;
 	
-	public void init() {
+	public void init(ServletContext context) {
 		if (service == null) service = new ServiceConfig();
 		if (service.rootPath == null) service.rootPath = "";
 		if (service.suffix == null) service.suffix = "Service";
