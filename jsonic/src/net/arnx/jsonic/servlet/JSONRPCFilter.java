@@ -91,7 +91,7 @@ public class JSONRPCFilter implements Filter {
 			o = container.getComponent(path);
 		} catch (Exception e) {
 			container.log(e.getMessage(), e);
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
 		
@@ -117,7 +117,7 @@ public class JSONRPCFilter implements Filter {
 			return;
 		}
 
-		response.setContentType("text/javascript");
+		response.setContentType((callback != null) ? "text/javascript" : "application/json");
 		
 		JSON json = new JSON();
 		
