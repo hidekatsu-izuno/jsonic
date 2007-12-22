@@ -18,6 +18,11 @@
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
+		
+		<javadoc srcdir="${src}" destdir="${docs}/api"
+			docencoding="UTF-8" encoding="UTF-8" charset="UTF-8">
+		</javadoc>
+		
 		<zip destfile="jsonic-${version}.zip">
 			<zipfileset dir="${src}" prefix="jsonic-${version}/src" />
 			<zipfileset dir="docs" prefix="jsonic-${version}/docs" />
@@ -30,6 +35,9 @@
 		<delete includeemptydirs="on">
 			<fileset dir="${build}" />
 			<fileset file="jsonic-${version}.jar" />
+			<!--
+				<fileset dir="${docs}/api" />
+			-->
 		</delete>
 	</target>
 	

@@ -10,14 +10,15 @@
 	<filter>
 		<description>json-rpc sample</description>
 		<filter-name>json-rpc</filter-name>
-		<filter-class>net.arnx.jsonic.servlet.JSONRPCFilter</filter-class>
+		<filter-class>net.arnx.jsonic.servlet.JsonicFilter</filter-class>
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
 				debug: true
-				mapping {
-					'/calc.json': 'sample.service.CalcService'
-					'/edit.json': 'sample.service.EditService'
+				encoding: 'UTF-8'
+				routes: {
+					'/(\w+)': 'sample.\1'
+					'/': 'sample'
 				}
 			</param-value>
 		</init-param>

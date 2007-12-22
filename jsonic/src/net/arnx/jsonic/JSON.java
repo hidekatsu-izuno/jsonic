@@ -18,12 +18,21 @@ package net.arnx.jsonic;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.text.MessageFormat;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.ResourceBundle;
 import java.util.Collection;
 import java.util.Map;
@@ -32,14 +41,18 @@ import java.util.Date;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.LinkedHashMap;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.ParseException;
-import net.arnx.jsonic.util.*;
 
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as 
@@ -117,11 +130,60 @@ import net.arnx.jsonic.util.*;
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "serial"})
 public class JSON {
-	private DynamicInvoker invoker = new DynamicInvoker() {
-		protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
-			JSON.this.handleConvertError(key, value, c, type, e);
+	private static final Set<String> RESERVED_WORDS = new HashSet<String>() {
+		{
+			add("abstract");
+			add("abstract");
+			add("boolean");
+			add("break");
+			add("byte");
+			add("case");
+			add("catch");
+			add("char");
+			add("class");
+			add("const");
+			add("continue");
+			add("default");
+			add("do");
+			add("double");
+			add("else");
+			add("extends");
+			add("final");
+			add("finally");
+			add("float");
+			add("for");
+			add("goto");
+			add("if");
+			add("implements");
+			add("import");
+			add("instanceof");
+			add("int");
+			add("interface");
+			add("long");
+			add("native");
+			add("new");
+			add("package");
+			add("private");
+			add("protected");
+			add("public");
+			add("return");
+			add("short");
+			add("static");
+			add("strictfp");
+			add("super");
+			add("switch");
+			add("synchronized");
+			add("this");
+			add("throw");
+			add("throws");
+			add("transient");
+			add("try");
+			add("void");
+			add("volatile");
+			add("while");
+			
 		}
 	};
 		
@@ -158,8 +220,22 @@ public class JSON {
 		this.maxDepth = value;
 	}
 	
+	private Class contextClass = null;
+	private Object context = null;
+	
+	/**
+	 * Sets context for inner class.
+	 * 
+	 * @param value context object or class
+	 */
 	public void setContext(Object value) {
-		invoker.setContext(value);
+		if (value instanceof Class) {
+			this.context = null;
+			this.contextClass = (Class)value;
+		} else {
+			this.context = value;
+			this.contextClass = (value != null) ? value.getClass() : null;
+		}
 	}
 	
 	/**
@@ -187,7 +263,7 @@ public class JSON {
 		try {
 			value = json.format(source, new StringBuilder()).toString();
 		} catch (IOException e) {
-			// never occur
+			// never happen
 		}
 		
 		return value;
@@ -205,7 +281,7 @@ public class JSON {
 		try {
 			value = (new JSON()).parse(new CharSequenceJSONSource(source));
 		} catch (IOException e) {
-			// never occur
+			// never happen
 		}
 		return value;
 	}
@@ -259,7 +335,7 @@ public class JSON {
 			o = new String((char[])o);
 		} else if (o instanceof byte[]) {
 			escape = false;
-			o = Base64.encode((byte[])o);
+			o = encodeBase64((byte[])o);
 		} else if (o instanceof Object[]) {
 			o = Arrays.asList((Object[])o);
 		} else if (o instanceof Pattern) {
@@ -397,7 +473,7 @@ public class JSON {
 		} else {
 			Class c = o.getClass();
 			
-			boolean access = invoker.tryAccess(c);
+			boolean access = tryAccess(c);
 			
 			TreeMap<String, Object> map = new TreeMap<String, Object>();
 			
@@ -833,8 +909,12 @@ public class JSON {
 			switch(c) {
 			case '\\':
 				if (point == 1) {
-					s.back();
-					sb.append(parseEscape(s));
+					if (start == '"') {
+						s.back();
+						sb.append(parseEscape(s));
+					} else {
+						sb.append(c);
+					}
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -1076,7 +1156,368 @@ public class JSON {
 	}
 	
 	protected Object convert(Object value, Class c, Type type) throws Exception {
-		return invoker.convert(value, c, type);
+		Object data = null;
+		
+		try {
+			if (c.isPrimitive()) {
+				if (c.equals(boolean.class)) {
+					if (value == null) {
+						data = false;
+					} else if (value instanceof Boolean) {
+						data = value;
+					} else if (value instanceof Number) {
+						data = !value.equals(0);
+					} else {
+						String s = value.toString();
+						if (s.length() == 0
+							|| s.equalsIgnoreCase("false")
+							|| s.equals("NaN")) {
+							data = false;
+						} else {
+							data = true;
+						}
+					}
+				} else if (c.equals(byte.class)) {
+					if (value == null) {
+						data = 0;
+					} else if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1 : 0;
+					} else if (value instanceof Number) {
+						data = ((Number)value).byteValue();
+					} else {
+						data = Byte.valueOf(value.toString());
+					}
+				} else if (c.equals(short.class)) {
+					if (value == null) {
+						data = 0;
+					} else if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1 : 0;
+					} else if (value instanceof Number) {
+						data = ((Number)value).shortValue();
+					} else {
+						data = Short.valueOf(value.toString());
+					}
+				} else if (c.equals(int.class)) {
+					if (value == null) {
+						data = 0;
+					} else if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1 : 0;
+					} else if (value instanceof Number) {
+						data = ((Number)value).intValue();
+					} else {
+						data = Integer.valueOf(value.toString());
+					}
+				} else if (c.equals(long.class)) {
+					if (value == null) {
+						data = 0l;
+					} else if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1l : 0l;
+					} else if (value instanceof Number) {
+						data = ((Number)value).longValue();
+					} else {
+						data = Long.valueOf(value.toString());
+					}
+				} else if (c.equals(float.class)) {
+					if (value == null) {
+						data = 0.0f;
+					} else if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
+					} else if (value instanceof Number) {
+						data = ((Number)value).floatValue();
+					} else {
+						data = Float.valueOf(value.toString());
+					}
+				} else if (c.equals(double.class)) {
+					if (value == null) {
+						data = 0.0;
+					} else if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
+					} else if (value instanceof Number) {
+						data = ((Number)value).doubleValue();
+					} else {
+						data = Double.valueOf(value.toString());
+					}
+				} else if (c.equals(char.class)) {
+					if (value == null) {
+						data = '\u0000';
+					} else if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? '1' : '0';
+					} else if (value instanceof Character) {
+						data = value;
+					} else if (value instanceof Number) {
+						data = (char)((Number)value).intValue();
+					} else {
+						String s = value.toString();
+						data = (s.length() > 0) ? s.charAt(0) : '\u0000';
+					}
+				}
+			} else if (value != null) {
+				if (c.isAssignableFrom(value.getClass()) && c.equals(type)) {
+					data = value;
+				} else if (Boolean.class.equals(c)) {
+					if (value instanceof Number) {
+						data = !value.equals(0);
+					} else {
+						String s = value.toString();
+						if (s.length() == 0
+							|| s.equalsIgnoreCase("false")
+							|| s.equals("NaN")) {
+							data = false;
+						} else {
+							data = true;
+						}
+					}
+				} else if (Byte.class.equals(c)) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1 : 0;
+					} else if (value instanceof Number) {
+						data = ((Number)value).byteValue();
+					} else {
+						data = Byte.valueOf(value.toString());
+					}
+				} else if (Short.class.equals(c)) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1 : 0;
+					} else if (value instanceof Number) {
+						data = ((Number)value).shortValue();
+					} else {
+						data = Short.valueOf(value.toString());
+					}				
+				} else if (Integer.class.equals(c)) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1 : 0;
+					} else if (value instanceof Number) {
+						data = ((Number)value).intValue();
+					} else {
+						data = Integer.valueOf(value.toString());
+					}
+				} else if (Long.class.equals(c)) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1l : 0l;
+					} else if (value instanceof Number) {
+						data = ((Number)value).longValue();
+					} else {
+						data = Long.valueOf(value.toString());
+					}
+				} else if (Float.class.equals(c)) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
+					} else if (value instanceof Number) {
+						data = ((Number)value).floatValue();
+					} else {
+						data = Float.valueOf(value.toString());
+					}
+				} else if (Double.class.equals(c)) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
+					} else if (value instanceof Number) {
+						data = ((Number)value).doubleValue();
+					} else {
+						data = Double.valueOf(value.toString());
+					}
+				} else if (BigInteger.class.equals(c)) {				
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
+					} else if (value instanceof BigDecimal) {
+						data = ((BigDecimal)value).toBigInteger();
+					} else {
+						data = (new BigDecimal(value.toString())).toBigInteger();
+					}
+				} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
+					data = new BigDecimal(value.toString());
+				} else if (Character.class.equals(c)) {
+					if (value instanceof Boolean) {
+						data = (((Boolean)value).booleanValue()) ? '1' : '0';
+					} else if (value instanceof Number) {
+						data = (char)((Number)value).intValue();
+					} else {
+						String s = value.toString();
+						data = (s.length() > 0) ? s.charAt(0) : null;
+					}
+				} else if (CharSequence.class.isAssignableFrom(c)) {
+					data = value.toString();
+				} else if (Appendable.class.isAssignableFrom(c)) {
+					Appendable a = (Appendable)create(c);
+					data = a.append(value.toString());
+				} else if (Date.class.isAssignableFrom(c)) {
+					if (value instanceof Number) {
+						Date date = (Date)create(c);
+						date.setTime(((Number)value).longValue());
+						data = date;
+					} else {
+						DateFormat format = DateFormat.getDateTimeInstance();
+						Date date = (Date)create(c);
+						date.setTime(format.parse(value.toString()).getTime());
+						data = date;
+					}
+				} else if (Calendar.class.isAssignableFrom(c)) {
+					Calendar cal = (Calendar)create(c);
+					if (value instanceof Number) {
+						cal.setTimeInMillis(((Number)value).longValue());
+					} else {
+						DateFormat format = DateFormat.getDateTimeInstance();
+						try {
+							cal.setTime(format.parse(value.toString()));
+						} catch (Exception e) {
+							data = null;
+						}
+					}
+					data = cal;
+				} else if (Collection.class.isAssignableFrom(c)) {
+					Collection collection = (Collection)create(c);
+					if (type instanceof ParameterizedType) {
+						ParameterizedType pType = (ParameterizedType)type;
+						Type[] cTypes = pType.getActualTypeArguments();
+						Type cType = (cTypes != null && cTypes.length > 0) ? cTypes[0] : Object.class;
+						Class<?> cClasses = null;
+						if (cType instanceof ParameterizedType) {
+							cClasses = (Class)((ParameterizedType)cType).getRawType();
+						} else if (cType instanceof Class) {
+							cClasses = (Class)cType;
+						} else {
+							cClasses = Object.class;
+							cType = cClasses;
+						}
+						if (value instanceof Collection) {
+							for (Object o : (Collection)value) {
+								collection.add(convert(o, cClasses, cType));
+							}
+						} else {
+							collection.add(convert(value, cClasses, cType));
+						}
+					} else {
+						if (value instanceof Collection) {
+							collection.addAll((Collection)value);
+						} else {
+							collection.add(value);
+						}
+					}
+					data = collection;
+				} else if (c.isArray()) {
+					if (value instanceof Collection) {
+						Object array = Array.newInstance(c.getComponentType(), ((Collection)value).size());
+						int i = 0;
+						Class<?> cClass = c.getComponentType();
+						Type cType = (type instanceof GenericArrayType) ? 
+								((GenericArrayType)type).getGenericComponentType() : cClass;
+						
+						for (Object o : (Collection)value) {
+							Array.set(array, i++, convert(o, cClass, cType));
+						}
+						data = array;
+					} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
+						data = decodeBase64((CharSequence)value);
+					} else {
+						Object array = Array.newInstance(c.getComponentType(), 1);
+						Class<?> cClass = c.getComponentType();
+						Type cType = (type instanceof GenericArrayType) ? 
+								((GenericArrayType)type).getGenericComponentType() : cClass;
+						Array.set(array, 0, convert(value, c.getComponentType(), cType));
+						data = array;
+					}
+				} else if (Map.class.isAssignableFrom(c)) {
+					if (value instanceof Map) {
+						Map map = (Map)create(c);
+						if (type instanceof ParameterizedType) {
+							ParameterizedType pType = (ParameterizedType)type;
+							Type[] cTypes = pType.getActualTypeArguments();
+							Class<?>[] cClasses = new Class[2];
+							for (int i = 0; i < cClasses.length; i++) {
+								if (cTypes[i] instanceof ParameterizedType) {
+									cClasses[i] = (Class)((ParameterizedType)cTypes[i]).getRawType();
+								} else if (cTypes[i] instanceof Class) {
+									cClasses[i] = (Class)cTypes[i];
+								} else {
+									cClasses[i] = Object.class;
+									cTypes[i] = cClasses[i];
+								}
+							}
+							for (Object key : ((Map)value).keySet()) {
+								map.put(convert(key, cClasses[0], cTypes[0]),
+										convert(((Map)value).get(key), cClasses[1], cTypes[1]));
+							}
+						} else {
+							map.putAll((Map)value);
+						}
+						data = map;
+					}
+				} else if (Pattern.class.equals(c)) {
+					data = Pattern.compile(value.toString());
+				} else if (Locale.class.equals(c)) {
+					String[] s = null;
+					if (value instanceof Collection || value.getClass().isArray()) {
+						s = (String[])convert(value, String[].class, String[].class);
+					} else {
+						s = value.toString().split("\\p{Punct}");
+					}
+					
+					if (s.length == 0) {
+						data = null;
+					} else if (s.length == 1) {
+						data = new Locale(s[0]);
+					} else if (s.length == 2) {
+						data = new Locale(s[0], s[1]);
+					} else {
+						data = new Locale(s[0], s[1], s[2]);
+					}
+				} else if (Class.class.equals(c)) {
+					String s = value.toString();
+					if (s.equals("boolean")) {
+						data = boolean.class;
+					} else if (s.equals("byte")) {
+						data = byte.class;
+					} else if (s.equals("short")) {
+						data = short.class;
+					} else if (s.equals("int")) {
+						data = int.class;
+					} else if (s.equals("long")) {
+						data = long.class;
+					} else if (s.equals("float")) {
+						data = float.class;
+					} else if (s.equals("double")) {
+						data = double.class;
+					} else {
+						data = Class.forName(value.toString());
+					}
+				} else if (value instanceof Map) {
+					Object o = create(c);
+					if (o != null) {
+						Map<String, Object> props = getGetProperties(c);
+						
+						boolean access = tryAccess(c);
+						
+						Map map = (Map)value;
+						for (Object key : map.keySet()) {
+							Object target = props.get(toLowerCamel(key.toString()));
+							if (target == null) {
+								continue;
+							} else if (target instanceof Method) {
+								Method m = (Method)target;
+								try {
+									if (access) m.setAccessible(true);
+									m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+								} catch (Exception e) {
+									handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
+								}
+							} else if (target instanceof Field) {
+								Field f = (Field)target;
+								try {
+									if (access) f.setAccessible(true);
+									f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
+								} catch (Exception e) {
+									handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
+								}
+							}
+						}
+						data = o;
+					}
+				}
+			}
+		} catch (Exception e) {
+			handleConvertError(null, value, c, type, e);
+		}
+		
+		return data;
 	}
 	
 	protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
@@ -1092,11 +1533,96 @@ public class JSON {
 	 */
 	public Object invoke(Object o, String methodName, CharSequence json) throws Exception {
 		List values = (json != null) ? parseArray(new CharSequenceJSONSource(json), new StringBuilder()) : null;
-		return invoker.invoke(o, methodName, values);
+		return invokeDynamic(o, methodName, values);
 	}
 	
-	protected boolean limit(Method method) {
-		return invoker.limit(method);
+	Object invokeDynamic(Object o, String methodName, List values) throws Exception {
+		if (values == null) {
+			values = Collections.EMPTY_LIST;
+		}
+		
+		methodName = toLowerCamel(methodName);
+		
+		Class c = o.getClass();
+		Class target = c;
+		Method method = null;
+		loop: do {
+			for (Method m : target.getDeclaredMethods()) {
+				if (methodName.equals(m.getName())
+						&& !Modifier.isStatic(m.getModifiers())
+						&& Modifier.isPublic(m.getModifiers())) {
+					if (method == null && values.size() == m.getParameterTypes().length) {
+						method = m;
+						break loop;
+					}
+				}
+			}
+			
+			target = target.getSuperclass();
+		} while (method == null && target != null);
+		
+		if (method == null || limit(c, method)) {
+			throw new NoSuchMethodException();
+		}
+		
+		Class<?>[] paramTypes = method.getParameterTypes();
+		Object[] params = new Object[paramTypes.length];
+		for (int i = 0; i < params.length; i++) {
+			params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
+		}
+		
+		boolean access = (!Modifier.isPublic(c.getModifiers()) 
+				&& !Modifier.isPrivate(c.getModifiers())
+				&& this.context != null
+				&& c.getPackage().equals(this.context.getClass().getPackage()));
+		
+		if (access) method.setAccessible(true);
+		return method.invoke(o, params);
+	}
+	
+	protected boolean limit(Class c, Method method) {
+		return method.getDeclaringClass().equals(Object.class);
+	}
+	
+	protected Object create(Class c) throws Exception {
+		Object instance = null;
+		
+		if (c.isInterface()) {
+			if (SortedMap.class.equals(c)) {
+				instance = new TreeMap();
+			} else if (Map.class.equals(c)) {
+				instance = new LinkedHashMap();
+			} else if (SortedSet.class.equals(c)) {
+				instance = new TreeSet();
+			} else if (Set.class.equals(c)) {
+				instance = new LinkedHashSet();
+			} else if (List.class.equals(c)) {
+				instance = new ArrayList();
+			} else if (Collection.class.equals(c)) {
+				instance = new ArrayList();
+			} else if (Appendable.class.equals(c)) {
+				instance = new StringBuilder();
+			}
+		} else if (Modifier.isAbstract(c.getModifiers())) {
+			if (Calendar.class.equals(c)) {
+				instance = Calendar.getInstance();
+			}
+		} else if (c.isMemberClass()) {
+			Class eClass = c.getEnclosingClass();
+			Constructor con = c.getDeclaredConstructor(eClass);
+			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
+				con.setAccessible(true);
+			}
+			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
+		} else {
+			Constructor con = c.getDeclaredConstructor((Class[])null);
+			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
+				con.setAccessible(true);
+			}
+			instance = con.newInstance((Object[])null);
+		}
+		
+		return instance;
 	}
 	
 	private static String getMessage(String id, Object... arguments) {
@@ -1225,5 +1751,185 @@ public class JSON {
 			}
 			return sb.toString();
 		}
+	}
+	
+	private boolean tryAccess(Class c) {
+		int modifier = c.getModifiers();
+		if (this.contextClass == null || Modifier.isPublic(modifier)) return false;
+		
+		if (Modifier.isPrivate(modifier)) {
+			return this.contextClass.equals(c.getEnclosingClass());
+		}
+		return c.getPackage().equals(this.contextClass.getPackage());
+	}
+	
+	private static String toLowerCamel(String name) {
+		if (RESERVED_WORDS.contains(name)) {
+			return name + "_";
+		}
+		
+		StringBuilder sb = new StringBuilder(name.length());
+		int i = 0;
+		boolean toUpperCase = false;
+		for (i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
+		}
+		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
+			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+		}
+		return sb.toString();
+	}
+	
+	
+	private static Map<String, Object> getGetProperties(Class c) {
+		Map<String, Object> props = new HashMap<String, Object>();
+		
+		for (Field f : c.getFields()) {
+			int modifiers = f.getModifiers();
+			if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
+				props.put(f.getName(), f);
+			}
+		}
+		
+		for (Method m : c.getMethods()) {
+			String name = m.getName();
+			if (!Modifier.isStatic(m.getModifiers())
+					&& name.startsWith("set")
+					&& name.length() > 3
+					&& Character.isUpperCase(name.charAt(3))
+					&& m.getParameterTypes().length == 1
+					&& m.getReturnType().equals(void.class)) {
+				
+				String key = null;
+				if (!(name.length() > 4 && Character.isUpperCase(name.charAt(4)))) {
+					char[] carray = name.toCharArray();
+					carray[3] = Character.toLowerCase(carray[3]);
+					key = new String(carray, 3, carray.length-3);
+				} else {
+					key = name.substring(3);
+				}
+				
+				props.put(key, m);
+			}
+		}
+		return props;
+	}
+	
+	private static final String BASE64_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	
+	private static String encodeBase64(byte[] data) {
+		if (data == null) return null;
+		
+		char[] buffer = new char[data.length / 3 * 4 + ((data.length % 3 == 0) ? 0 : 4)];
+		
+		int buf = 0;
+		for (int i = 0; i < data.length; i++) {
+			switch (i % 3) {
+				case 0 :
+					buffer[i / 3 * 4] = BASE64_MAP.charAt((data[i] & 0xFC) >> 2);
+					buf = (data[i] & 0x03) << 4;
+					if (i + 1 == data.length) {
+						buffer[i / 3 * 4 + 1] = BASE64_MAP.charAt(buf);
+						buffer[i / 3 * 4 + 2] = '=';
+						buffer[i / 3 * 4 + 3] = '=';
+					}
+					break;
+				case 1 :
+					buf += (data[i] & 0xF0) >> 4;
+					buffer[i / 3 * 4 + 1] = BASE64_MAP.charAt(buf);
+					buf = (data[i] & 0x0F) << 2;
+					if (i + 1 == data.length) {
+						buffer[i / 3 * 4 + 2] = BASE64_MAP.charAt(buf);
+						buffer[i / 3 * 4 + 3] = '=';
+					}
+					break;
+				case 2 :
+					buf += (data[i] & 0xC0) >> 6;
+					buffer[i / 3 * 4 + 2] = BASE64_MAP.charAt(buf);
+					buffer[i / 3 * 4 + 3] = BASE64_MAP.charAt(data[i] & 0x3F);
+					break;
+			}
+		}
+
+		return new String(buffer);
+	}
+	
+	private static byte[] decodeBase64(CharSequence cs) {
+		int addsize = 0;
+		int bufsize = 0;
+		
+		for (int i = 0; i < cs.length(); i++) {
+			char c = cs.charAt(i);
+			if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '+' || c == '/') {
+				bufsize++;
+			} else if (c == '=') {
+				if (i+1 < cs.length() && cs.charAt(i+1) == '=' && (bufsize+2) % 4 == 0) {
+					bufsize += 2;
+					addsize = -2;
+				} else if ((bufsize+1) % 4 == 0) {
+					bufsize += 1;
+					addsize = -1;
+				} else {
+					return null;
+				}
+				break;
+			}
+		}
+		
+		byte[] buffer = new byte[bufsize / 4 * 3 + addsize];
+		
+		int pos = 0;
+		for (int i = 0; i < cs.length(); i++) {
+			char c = cs.charAt(i);
+			
+			int data = 0;
+			if (c >= 'A' && c <= 'Z') {
+				data = c - 65;
+			} else if (c >= 'a' && c <= 'z') {
+				data = c - 97 + 26;
+			} else if (c >= '0' && c <= '9') {
+				data = c - 48 + 52;
+			} else if (c == '+') {
+				data = 62;
+			} else if (c == '/') {
+				data = 63;
+			} else if (c == '=') {
+				break;
+			} else {
+				continue;
+			}
+			
+			switch (pos % 4) {
+			case 0:
+				buffer[pos / 4 * 3] = (byte)(data << 2);
+				break;
+			case 1:
+				buffer[pos / 4 * 3] += (byte)(data >> 4);
+				if (pos / 4 * 3 + 1 < buffer.length) {
+					buffer[pos / 4 * 3 + 1] = (byte)((data & 0xF) << 4);
+				}
+				break;
+			case 2:
+				buffer[pos / 4 * 3 + 1] += (byte)(data >> 2);
+				if (pos / 4 * 3 + 2 < buffer.length) {
+					buffer[pos / 4 * 3 + 2] = (byte)((data & 0x3) << 6);
+				}
+				break;
+			case 3:
+				buffer[pos / 4 * 3 + 2] += (byte)data;
+				break;
+			}
+			pos++;
+		}
+		
+		return buffer;
 	}
 }

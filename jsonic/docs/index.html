@@ -265,7 +265,7 @@ href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された�
 <ul>
   <li>Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）およびシェルスクリプトスタイルの行コメント（#）をコメントとして認識します。</li>
   <li>ルート要素がobjectの場合、一番外側の'{'と'}'を省略することができます。</li>
-  <li>シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します。</li>
+  <li>シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します（ただし、シングルクォートで囲まれた場合はjavascriptと異なりエスケープを処理しません）。</li>
   <li>objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
   <li>objectにおいてキーに対する値がobjectの場合、':'を省略することができます。</li>
   <li>string中で改行やタブなどの制御文字を有効な文字として認識します。</li>
@@ -294,7 +294,7 @@ json<span class="em">.invoke(</span>target, "test", "[1, 2, 3]"<span class="em">
 <pre class="source">
 JSON json = new JSON() {
     <span class="comment">// methodの実行を制限する場合はtrue</span>
-    protected <span class="em">boolean limit(Method method)</span> {
+    protected <span class="em">boolean limit(Class c, Method method)</span> {
         <span class="comment">// デフォルトではObjectクラスのメソッドは実行しないように制限されています</span>
         super.limit(method);
     }
@@ -410,6 +410,8 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <li>JSONRPCFilterでencodingを指定できるようになりました。指定しない場合は、デフォルトでUT-8が使われます。</li>
 <li>Parse時にnullが入力された場合、NullPointerExceptionではなくIllegalArgumentExceptionをメッセージと共に投げるように修正しました。</li>
 <li>Parse時に値が指定されない場合、nullと認識するようにしました。</li>
+<li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
+<li>limitメソッドの引数に実行対象のクラスが渡るように変更しました。</li>
 </ul>
 
 <h3>2007/09/09 version 0.9.4</h3>
