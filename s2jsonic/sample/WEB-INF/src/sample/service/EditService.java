@@ -19,9 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EditService {
-	public Map get(Map params) throws Exception {
+	public Map find(Map params) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("url", "edit.json");
+		map.put("name", "edit");
 		
 		Map<String, Object> concatMethod = new HashMap<String, Object>();
 		concatMethod.put("name", "concat");

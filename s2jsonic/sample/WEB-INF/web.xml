@@ -38,8 +38,12 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				container: net.arnx.jsonic.servlet.seasar.S2Container
+				container: 'net.arnx.jsonic.servlet.seasar.S2Container'
 				debug: true
+				routes: {
+					'/(\w+)': 'sample.web.\1.service'
+					'/': 'sample.service'
+				}
 			</param-value>
 		</init-param>
 	</servlet>

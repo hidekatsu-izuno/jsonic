@@ -18,9 +18,9 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class CalcService {
-	public Map get(Map params) throws Exception {
+	public Map find(Map params) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("url", "calc.json");
+		map.put("name", "calc");
 		
 		Map<String, Object> plusMethod = new HashMap<String, Object>();
 		plusMethod.put("name", "plus");
