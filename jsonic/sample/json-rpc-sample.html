@@ -8,15 +8,17 @@
 	
 	function setup(value) {
 		var name = $('name');
-		name.options[name.options.length] = new Option(value.name, value.name);
-		ds[value.name] = value.methods;
+		for (var i = 0; i < value.length; i++) {
+			name.options[name.options.length] = new Option(value[i].name, value[i].name);
+			ds[value[i].name] = value[i].methods;
+		}
 	}
 	
 	function submit() {
 		var name = $('name').value;
 		var ajax = new Ajax.Updater(
 			{success: 'result'},
-			'rpc.json',
+			'basic/rpc.json',
 			{
 				method: 'POST',
 				postBody: Object.toJSON({
@@ -73,7 +75,6 @@ params: <input id="params" type="text" size="50" value=""/>
 
 <h2>result</h2>
 <pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
-<script type="text/javascript" src="calc.json?callback=setup"></script>
-<script type="text/javascript" src="edit.json?callback=setup"></script>
+<script type="text/javascript" src="rpc_info.json?callback=setup"></script>
 </body>
 </html>

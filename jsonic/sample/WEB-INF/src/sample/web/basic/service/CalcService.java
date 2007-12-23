@@ -1,5 +1,3 @@
-package sample.service;
-
 /*
  * Copyright 2007 Hidekatsu Izuno
  *
@@ -15,30 +13,9 @@ package sample.service;
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-
-import java.util.Map;
-import java.util.HashMap;
+package sample.web.basic.service;
 
 public class CalcService {
-	public Map find(Map params) throws Exception {
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("name", "calc");
-		
-		Map<String, Object> plusMethod = new HashMap<String, Object>();
-		plusMethod.put("name", "plus");
-		plusMethod.put("example", "[1, 2]");
-		plusMethod.put("code", this.getClass().getMethod("plus", new Class[] {int.class, int.class}));
-		
-		Map<String, Object> sumMethod = new HashMap<String, Object>();
-		sumMethod.put("name", "sum");
-		sumMethod.put("example", "[[1, 2, 3, 4, 5]]");
-		sumMethod.put("code", this.getClass().getMethod("sum", new Class[] {int[].class}));
-		
-		map.put("methods", new Map[] {plusMethod, sumMethod});
-		
-		return map;
-	}
-	
 	public int plus(int a, int b) {
 		return a + b;
 	}

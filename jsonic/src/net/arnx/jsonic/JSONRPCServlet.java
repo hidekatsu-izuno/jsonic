@@ -423,12 +423,12 @@ public class JSONRPCServlet extends HttpServlet {
 			char c = pathes[1].charAt(i);
 			if (isStart) {
 				className.append(Character.toUpperCase(c));
+				isStart = false;
 			} else if (c == ' ' || c == '_' || c == '-') {
 				isStart = true;
 			} else {
 				className.append(c);
 			}
-			isStart = false;
 		}
 		className.append(suffix);
 
