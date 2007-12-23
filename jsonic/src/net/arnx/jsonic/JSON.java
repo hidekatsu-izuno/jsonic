@@ -125,7 +125,7 @@ import java.text.ParseException;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 0.9.4
+ * @version 0.9.5
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -150,7 +150,7 @@ public class JSON {
 		this.prettyPrint = value;
 	}
 	
-	private int maxDepth = 255;
+	private int maxDepth = 32;
 	
 	/**
 	 * Sets maximum depth for the nest level.

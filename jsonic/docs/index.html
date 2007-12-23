@@ -325,7 +325,7 @@ public class EnclosingClass {
 <p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。
 しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため
 単純に入れ子の深さに制限を設けています。</p>
-<p>この最大深度は、デフォルトでは255に設定されていますが変更することも可能です。</p>
+<p>この最大深度は、デフォルトでは32に設定されていますが変更することも可能です。</p>
 <pre class="source">
 <span class="comment">// 5階層以下の情報は取得しない</span>
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
@@ -401,10 +401,10 @@ paramsや戻り値には任意のクラスを指定することもできます�
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2007/11/XX version 0.9.5</h3>
+<h3>2007/12/XX version 0.9.5</h3>
 <p>下記の機能追加とバグ修正が行われています。</p>
 <ul>
-<li>JSONRPCServletのconfigでencodingを指定できるようになりました。指定しない場合は、デフォルトでUT-8が使われます。</li>
+<li>maxDepthのデフォルト値を32階層に変更しました。</li>
 <li>Parse時にnullが入力された場合、NullPointerExceptionではなくIllegalArgumentExceptionをメッセージと共に投げるように修正しました。</li>
 <li>Parse時に値が指定されない場合、nullが指定されたものとして取り扱うよう変更しました。</li>
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
@@ -413,6 +413,8 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <li>Invoke時にMethodは存在するが引数の数が合わない場合には、IllegalArgumentExceptionを投げるように修正しました。</li>
 <li>Invoke時に投げられるNoSuchMethodExceptionのメッセージをわかりやすくしました。</li>
 <li>limitメソッドの引数に実行対象のクラスが渡るように変更しました。</li>
+<li>JSONRPCServletのconfigでencodingを指定できるようになりました。指定しない場合は、デフォルトでUT-8が使われます。</li>
+<li>各種JavaScriptライブラリのJSON対応が整ってきたため、JavaScript版のJSON.encode/JSON.decodeを削除しました。</li>
 </ul>
 
 <h3>2007/09/09 version 0.9.4</h3>
