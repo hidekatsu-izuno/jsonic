@@ -6,6 +6,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,12 @@ import static javax.servlet.http.HttpServletResponse.*;
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	private static final Pattern URL_PATTERN = Pattern.compile("^(/(?:[^/]+/)*)([^/.]+)((?:\\.[^/]+)+)?$");
+	
+	class Config {
+		public Class container;
+		public String encoding = "UTF-8";
+		public Map<String, String> routes;
+	}
 	
 	private Container container;
 	private Config config;
@@ -154,6 +162,12 @@ public class JSONRPCServlet extends HttpServlet {
 		} else {
 			doREST("DELETE", pathes, request, response);
 		}
+	}
+	
+	class Request {
+		public String method;
+		public List params;
+		public Object id;
 	}
 	
 	protected void doRPC(String[] pathes, HttpServletRequest request, HttpServletResponse response)
@@ -292,7 +306,7 @@ public class JSONRPCServlet extends HttpServlet {
 			List params = null;
 			if ("GET".equals(method)) {
 				params = new ArrayList();
-				params.add(request.getParameterMap());
+				params.add(getParameterMap(request));
 			} else {
 				Object contents = json.parse(request.getReader());
 				if (contents instanceof List) {
@@ -406,31 +420,35 @@ public class JSONRPCServlet extends HttpServlet {
 		return Class.forName(className.toString());
 	}
 	
+	private static final Pattern SPLIT_PATTERN = Pattern.compile("\\.");
+	private Map getParameterMap(HttpServletRequest request) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		
+		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
+			String name = e.nextElement();
+			String[] names = SPLIT_PATTERN.split(name);
+			String[] values = request.getParameterValues(name);
+			
+			Map<String, Object> current = map;
+			for (int i = 0; i < names.length-1; i++) {
+				Map target = (Map)current.get(names[i]);
+				if (target == null) {
+					target = new HashMap<String, Object>();
+					current.put(names[i], target);
+				}
+				current = target;
+			}
+			current.put(names[names.length-1], 
+					(values == null || values.length == 0) ? null :
+					(values.length == 1) ? values[0] : values);
+		}
+		
+		return map;
+	}
+	
 	@Override
 	public void destroy() {
 		container.destory();
 		super.destroy();
-	}
-	
-	class Config {
-		public Class container;
-		public String encoding = "UTF-8";
-		public Map<String, String> routes;
-	}
-	
-	class Request {
-		public String method;
-		public List params;
-		public Object id;
-	}
-	
-	class Error {
-		public int code;
-		public String message;
-		
-		public Error(int code, String message) {
-			this.code = code;
-			this.message = message;
-		}
 	}
 }
