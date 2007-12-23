@@ -29,8 +29,7 @@ public class JSONRPCServlet extends HttpServlet {
 	private Container container;
 	private Config config;
 	
-	private Map<Pattern, String> routesRPC = new LinkedHashMap<Pattern, String>();
-	private Map<Pattern, String> routesREST = new LinkedHashMap<Pattern, String>();
+	private Map<Pattern, String> routes = new LinkedHashMap<Pattern, String>();
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
@@ -52,8 +51,7 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		if (config.routes != null) {
 			for (Map.Entry<String, String> entry : config.routes.entrySet()) {
-				routesRPC.put(Pattern.compile("^" + entry.getKey() + "/$"), entry.getValue());
-				routesREST.put(Pattern.compile("^" + entry.getKey() + "/"), entry.getValue());
+				routes.put(Pattern.compile("^" + entry.getKey() + "/"), entry.getValue());
 			}
 		}
 		
@@ -78,12 +76,6 @@ public class JSONRPCServlet extends HttpServlet {
 			response.setCharacterEncoding(config.encoding);
 		}
 		
-		super.service(request, response);
-	}
-	
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
 		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
 		if (!m.matches()){
 			response.sendError(SC_NOT_FOUND);
@@ -92,6 +84,16 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
 		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
+		
+		request.setAttribute("pathes", pathes);
+		
+		super.service(request, response);
+	}
+	
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		String[] pathes = (String[])request.getAttribute("pathes");
 		
 		if ("rpc".equalsIgnoreCase(pathes[1])) {
 			response.addHeader("Allow", "POST");
@@ -105,16 +107,9 @@ public class JSONRPCServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
-		if (!m.matches()){
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
-
-		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
-		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
+		String[] pathes = (String[])request.getAttribute("pathes");
 		
-		if ("rpc".equalsIgnoreCase(m.group(2))) {
+		if ("rpc".equalsIgnoreCase(pathes[1])) {
 			doRPC(pathes, request, response);
 		} else {
 			String method = request.getParameter("_method");
@@ -128,14 +123,7 @@ public class JSONRPCServlet extends HttpServlet {
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
-		if (!m.matches()){
-			response.sendError(SC_NOT_FOUND);
-			return;
-		}
-		
-		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
-		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
+		String[] pathes = (String[])request.getAttribute("pathes");
 		
 		if ("rpc".equalsIgnoreCase(pathes[1])) {
 			response.addHeader("Allow", "POST");
@@ -149,14 +137,7 @@ public class JSONRPCServlet extends HttpServlet {
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
-		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
-		if (!m.matches()){
-			response.sendError(SC_NOT_FOUND);
-			return;
-		}
-		
-		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
-		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
+		String[] pathes = (String[])request.getAttribute("pathes");
 		
 		if ("rpc".equalsIgnoreCase(pathes[1])) {
 			response.addHeader("Allow", "POST");
@@ -172,36 +153,41 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		JSON json = new JSON(this);
 		
-		String rootPackage = null;
-		for (Map.Entry<Pattern, String> entry : routesRPC.entrySet()) {
-			Matcher m = entry.getKey().matcher(pathes[0]);
-			if (m.matches()) {
-				rootPackage = entry.getValue();
-				break;
-			}
-		}
-		if (rootPackage == null) {
-			response.sendError(SC_NOT_FOUND);
-			return;
-		}
-		
 		// request processing
 		Request req = null;
 		Object res = null;
 		Map<String, Object> error = null;
-		try {
-			Class c = null;
-			
-			Object component = container.getComponent(c);
-			if (component == null) {
-				response.sendError(SC_NOT_FOUND);
-				return;
-			}
-			
+		try {			
 			req = json.parse(request.getReader(), Request.class);
-			
-			json.setContext(component);
-			res = json.invokeDynamic(component, req.method, req.params);
+			if (req.method == null || req.params == null) {
+				error = new LinkedHashMap<String, Object>();
+				error.put("code", -32700);
+				error.put("message", "Invalid Request.");		
+			} else {
+				String[] targets = req.method.split("\\.");
+				if (targets.length != 2 || targets[0].length() == 0 || targets[1].length() == 0) {
+					error = new LinkedHashMap<String, Object>();
+					error.put("code", -32601);
+					error.put("message", "Method not found.");
+				} else {
+					pathes[1] = targets[0];
+					
+					Class c = getClassFromPath(pathes);
+					if (c == null) {
+						response.sendError(SC_NOT_FOUND);
+						return;
+					}
+					
+					Object component = container.getComponent(c);
+					if (component == null) {
+						response.sendError(SC_NOT_FOUND);
+						return;
+					}
+					
+					json.setContext(component);
+					res = json.invokeDynamic(component, targets[1], req.params);
+				}
+			}
 		} catch (ClassNotFoundException e) {
 			if (container.isDebugMode()) container.log(e.getMessage(), e);
 			response.sendError(SC_NOT_FOUND);
@@ -210,17 +196,17 @@ public class JSONRPCServlet extends HttpServlet {
 			if (container.isDebugMode()) container.log(e.getMessage(), e);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32700);
-			error.put("message", e.getMessage());
+			error.put("message", "Parse error.");
 		} catch (NoSuchMethodException e) {
 			if (container.isDebugMode()) container.log(e.getMessage(), e);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32601);
-			error.put("message", e.getMessage());
+			error.put("message", "Method not found.");
 		} catch (IllegalArgumentException e) {
 			if (container.isDebugMode()) container.log(e.getMessage(), e);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32602);
-			error.put("message", e.getMessage());
+			error.put("message", "Invalid params.");
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.log(cause.getMessage(), cause);
@@ -231,12 +217,12 @@ public class JSONRPCServlet extends HttpServlet {
 			container.log(e.getMessage(), e);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32603);
-			error.put("message", e.getMessage());
+			error.put("message", "Internal error.");
 		}
 		
 		// it's notification when id was null
 		if (req.id == null) {
-			response.setStatus(SC_NO_CONTENT);
+			response.setStatus(SC_ACCEPTED);
 			return;
 		}
 
@@ -366,7 +352,7 @@ public class JSONRPCServlet extends HttpServlet {
 		boolean find = false;
 		String prefix = "";
 		String suffix = "Service";
-		for (Map.Entry<Pattern, String> entry : routesREST.entrySet()) {
+		for (Map.Entry<Pattern, String> entry : routes.entrySet()) {
 			Matcher m = entry.getKey().matcher(pathes[0]);
 			if (m.find()) {
 				// package root
