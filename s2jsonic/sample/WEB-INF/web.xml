@@ -11,38 +11,10 @@
 		<filter-name>hotdeployfilter</filter-name>
 		<filter-class>org.seasar.framework.container.hotdeploy.HotdeployFilter</filter-class>
 	</filter>
-	
-	<filter>
-		<description>json-rpc sample</description>
-		<filter-name>json-rpc</filter-name>
-		<filter-class>net.arnx.jsonic.servlet.JSONRPCFilter</filter-class>
-		<init-param>
-			<param-name>container</param-name>
-			<param-value>net.arnx.jsonic.servlet.seasar.S2Container</param-value>
-		</init-param>
-		<init-param>
-			<param-name>config</param-name>
-			<param-value>
-			/*
-				debug: true
-				service {
-					rootPath: ''
-					suffix: 'Service'
-					extension: '.json'
-				}
-			*/
-			</param-value>
-		</init-param>
-	</filter>
 
 	<filter-mapping>
 		<filter-name>hotdeployfilter</filter-name>
 	    <url-pattern>/*</url-pattern>
-	</filter-mapping>
-
-	<filter-mapping>
-		<filter-name>json-rpc</filter-name>
-		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 	
 	<servlet>
@@ -58,9 +30,27 @@
 	    </init-param>
 	    <load-on-startup>1</load-on-startup>
 	</servlet>
+	
+	<servlet>
+		<description>json-rpc sample</description>
+		<servlet-name>json-rpc</servlet-name>
+		<servlet-class>net.arnx.jsonic.JSONRPCServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.servlet.seasar.S2Container
+				debug: true
+			</param-value>
+		</init-param>
+	</servlet>
 
 	<servlet-mapping>
 	    <servlet-name>s2servlet</servlet-name>
 	    <url-pattern>/s2servlet</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>json-rpc</servlet-name>
+		<url-pattern>*.json</url-pattern>
 	</servlet-mapping>
 </web-app>
