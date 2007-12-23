@@ -5,27 +5,24 @@
 <script type="text/javascript" src="prototype.js"></script>
 <script type="text/javascript">
 	var ds = [];
-	var state = [];
 	
 	function setup(value) {
-		var url = $('url');
-		url.options[url.options.length] = new Option(value.url, value.url);
-		ds[value.url] = value.methods;
-		state[value.url] = {state: null};
+		var name = $('name');
+		name.options[name.options.length] = new Option(value.name, value.name);
+		ds[value.name] = value.methods;
 	}
 	
 	function submit() {
-		var url = $('url').value;
+		var name = $('name').value;
 		var ajax = new Ajax.Updater(
 			{success: 'result'},
-			url,
+			'rpc.json',
 			{
 				method: 'POST',
 				postBody: Object.toJSON({
-					method: ds[url][$("method").value].name,
+					method: name + '.' + ds[name][$("method").value].name,
 					params: $('params').value.evalJSON(),
-					id: (new Date()).getTime(),
-					state: state[url]
+					id: (new Date()).getTime()
 				}),
 				onFailure: reportError
 			}
@@ -36,7 +33,7 @@
 		Element.update($("result"), "error!");
 	}
 	
-	function changeUrl(value) {
+	function changeName(value) {
 		var method = $('method');
 		var params = $('params');
 		method.options.length = 0;
@@ -49,14 +46,14 @@
 	}
 	
 	function changeMethod(value) {
-		var url = $('url')
+		var name = $('name')
 		var params = $('params');
-		params.value = ds[url.value][value].example.toString();
-		Element.update($('code'), ds[url.value][value].code);
+		params.value = ds[name.value][value].example.toString();
+		Element.update($('code'), ds[name.value][value].code);
 	}
 	
 	function init() {
-		changeUrl($('url').value);
+		changeName($('name').value);
 	}
 </script>
 </head>
@@ -65,7 +62,7 @@
 
 <h2>request</h2>
 <div style="font: 9pt monospace;">
-url: <select id="url" onchange="changeUrl(this.value)"></select>
+name: <select id="name" onchange="changeName(this.value)"></select>
 method: <select id="method" onchange="changeMethod(this.value)"></select>
 params: <input id="params" type="text" size="50" value=""/>
 <input type="button" value="send" onclick="submit()" />

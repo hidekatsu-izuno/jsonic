@@ -3,6 +3,7 @@ package net.arnx.jsonic;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -24,7 +25,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
-	private static final Pattern URL_PATTERN = Pattern.compile("^(/(?:[^/]+/)*)([^/]+)(\\.[^/]+)?$");
+	private static final Pattern URL_PATTERN = Pattern.compile("^(/(?:[^/]+/)*)([^/.]+)((?:\\.[^/]+)+)?$");
 	
 	private Container container;
 	private Config config;
@@ -39,8 +40,12 @@ public class JSONRPCServlet extends HttpServlet {
 		if (configText == null || configText.trim().length() == 0) {
 			configText = "{}";
 		}
-		
-		JSON json = new JSON();
+		 
+		JSON json = new JSON() {
+			protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
+				throw e;
+			}
+		};
 		
 		try {
 			json.setContext(this);
@@ -49,21 +54,24 @@ public class JSONRPCServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.routes != null) {
-			for (Map.Entry<String, String> entry : config.routes.entrySet()) {
-				routes.put(Pattern.compile("^" + entry.getKey() + "/"), entry.getValue());
-			}
-		}
-		
 		try {
-			Class containerClass = (config.container != null) ? 
-					Class.forName(config.container) : SimpleContainer.class;
+			if (config.container == null) config.container = SimpleContainer.class;
 			
-			json.setContext(containerClass);		
-			container = (Container)json.parse(configText, containerClass);
+			json.setContext(config.container);
+			container = (Container)json.parse(configText, config.container);
 			container.init(getServletContext());
 		} catch (Exception e) {
 			throw new ServletException(e);
+		}
+		
+		if (config.routes != null) {
+			for (Map.Entry<String, String> entry : config.routes.entrySet()) {
+				if (entry.getKey().startsWith("/")) {
+					routes.put(Pattern.compile(entry.getKey().equals("/") ? "^/" : "^" + entry.getKey() + "/"), entry.getValue());					
+				} else {
+					container.log("route starts with '/': " + entry.getKey());
+				}
+			}
 		}
 	}
 
@@ -236,7 +244,7 @@ public class JSONRPCServlet extends HttpServlet {
 			map.put("id", req.id);
 				
 			Writer writer = response.getWriter();
-			json.setPrettyPrint(!container.isDebugMode());
+			json.setPrettyPrint(container.isDebugMode());
 			
 			json.format(map, writer);
 		} catch (Exception e) {
@@ -334,7 +342,7 @@ public class JSONRPCServlet extends HttpServlet {
 		
 		try {
 			Writer writer = response.getWriter();
-			json.setPrettyPrint(!container.isDebugMode());
+			json.setPrettyPrint(container.isDebugMode());
 			
 			if (callback != null) writer.append(callback).append("(");
 			json.format(res, writer);
@@ -348,16 +356,17 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	protected Class getClassFromPath(String[] pathes) throws ClassNotFoundException {
 		StringBuffer className = new StringBuffer();
-	
-		boolean find = false;
+
 		String prefix = "";
 		String suffix = "Service";
 		for (Map.Entry<Pattern, String> entry : routes.entrySet()) {
 			Matcher m = entry.getKey().matcher(pathes[0]);
 			if (m.find()) {
+				className.setLength(0);
+				
 				// package root
 				m.appendReplacement(className, entry.getValue());
-				if (className.length() > 0 && className.charAt(className.length()-1) != '.') className.append('.');
+				if (className.length() > 0) className.append('.');
 				
 				// rest path
 				m.appendTail(className);
@@ -366,24 +375,23 @@ public class JSONRPCServlet extends HttpServlet {
 				char old = '.';
 				for (int i = 0; i < className.length(); i++) {
 					char c = className.charAt(i);
-					if (c == '/') {
+					if (c == '.' || c == '/') {
 						c = '.';
 					} else 	if ((old == '.') ? !Character.isJavaIdentifierStart(c) : !Character.isJavaIdentifierPart(c)) {
 						c = '_';
 					}
-					className.append(c);
+					className.setCharAt(i, c);
 					old = c;
 				}
-				find = true;
 				break;
 			}
 		}
-		if (!find) return null;
+		if (className.length() == 0) return null;
 		
-		className.append(suffix);
+		className.append(prefix);
 		boolean isStart = true;
 		for (int i = 0; i < pathes[1].length(); i++) {
-			char c = pathes[1].charAt(0);
+			char c = pathes[1].charAt(i);
 			if (isStart) {
 				className.append(Character.toUpperCase(c));
 			} else if (c == ' ' || c == '_' || c == '-') {
@@ -393,7 +401,7 @@ public class JSONRPCServlet extends HttpServlet {
 			}
 			isStart = false;
 		}
-		className.append(prefix);
+		className.append(suffix);
 
 		return Class.forName(className.toString());
 	}
@@ -405,7 +413,7 @@ public class JSONRPCServlet extends HttpServlet {
 	}
 	
 	class Config {
-		public String container;
+		public Class container;
 		public String encoding = "UTF-8";
 		public Map<String, String> routes;
 	}
