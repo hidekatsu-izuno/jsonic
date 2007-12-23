@@ -382,7 +382,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <pre class="source">
 &lt;filter&gt;
     &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
-    &lt;filter-class&gt;net.arnx.jsonic.servlet.JSONRPCFilter&lt;/filter-class&gt;
+    &lt;filter-class&gt;net.arnx.jsonic.JSONRPCFilter&lt;/filter-class&gt;
     &lt;init-param&gt;
         &lt;param-name&gt;container&lt;/param-name&gt;
         &lt;param-value&gt;(net.arnx.jsonic.servlet.Containerを実装したクラス)&lt;/param-value&gt;
@@ -391,8 +391,6 @@ paramsや戻り値には任意のクラスを指定することもできます�
 </pre>
 
 <p>JSONICでは、Seasar2に対応したContainerを用意しています。このContainerに差し替えると、Seasar2上で管理されるServiceクラスが自動的にJSON-RPCとしてアクセス可能になります。</p>
-
-<p>※version 0.9.4まではFilterではなくServletでしたが、同名の実ファイルが置かれた場合にはそちらを優先して表示することを可能なようにFilterに変更しました。</p>
 
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
@@ -406,10 +404,12 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <h3>2007/11/XX version 0.9.5</h3>
 <p>下記の機能追加とバグ修正が行われています。</p>
 <ul>
-<li>JSONRPCFilterでencodingを指定できるようになりました。指定しない場合は、デフォルトでUT-8が使われます。</li>
+<li>JSONRPCServletのconfigでencodingを指定できるようになりました。指定しない場合は、デフォルトでUT-8が使われます。</li>
 <li>Parse時にnullが入力された場合、NullPointerExceptionではなくIllegalArgumentExceptionをメッセージと共に投げるように修正しました。</li>
 <li>Parse時に値が指定されない場合、nullが指定されたものとして取り扱うよう変更しました。</li>
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
+<li>Invoke時にMethodは存在するが引数の数が合わない場合には、IllegalArgumentExceptionを投げるように修正しました。</li>
+<li>Invoke時に投げられるNoSuchMethodExceptionのメッセージをわかりやすくしました。</li>
 <li>limitメソッドの引数に実行対象のクラスが渡るように変更しました。</li>
 </ul>
 

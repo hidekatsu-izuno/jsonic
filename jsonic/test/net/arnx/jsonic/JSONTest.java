@@ -522,6 +522,26 @@ public class JSONTest {
 		
 		json.invoke(test, "setA", "[   \r\n    100]");
 		assertEquals(100, json.invoke(test, "getA", null));
+		
+		try {
+			json.invoke(test, "setABC", "[100]");
+			fail();
+		} catch (NoSuchMethodException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		} catch (Exception e) {
+			fail();
+		}
+		
+		try {
+			json.invoke(test, "setA", "[100, 100]");
+			fail();
+		} catch (IllegalArgumentException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		} catch (Exception e) {
+			fail();
+		}
 	}
 	
 	@Test

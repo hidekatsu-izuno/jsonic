@@ -1570,7 +1570,7 @@ public class JSON {
 			sb.append(json, 1, json.length()-1);
 			sb.append(')');
 			if (exists) {
-				throw new IllegalArgumentException(getMessage("json.invoke.IllegalArgumentException", sb.toString()));
+				throw new IllegalArgumentException(getMessage("json.invoke.IllegalArgumentError", sb.toString()));
 			} else {
 				throw new NoSuchMethodException(getMessage("json.invoke.NoSuchMethodError", sb.toString()));
 			}
