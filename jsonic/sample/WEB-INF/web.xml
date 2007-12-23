@@ -17,8 +17,8 @@
 				debug: true
 				encoding: 'UTF-8'
 				routes: {
-					'/(\w+)': 'sample.\1'
-					'/': 'sample'
+					'/(\w+)': 'sample.web.\1.service'
+					'/': 'sample.service'
 				}
 			</param-value>
 		</init-param>
