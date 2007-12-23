@@ -1426,7 +1426,7 @@ public class JSON {
 				} else if (value instanceof Map) {
 					Object o = create(c);
 					if (o != null) {
-						Map<String, Object> props = getGetProperties(c);
+						Map<String, Object> props = getSetProperties(c);
 						
 						boolean access = tryAccess(c);
 						
@@ -1435,12 +1435,10 @@ public class JSON {
 							Object target = props.get(key.toString());
 							if (target == null) {
 								target = props.get(toLowerCamel(key.toString()));
-							}
-							if (target == null) {
-								target = props.get(key.toString() + "_");
-							}
-							if (target == null) {
-								continue;
+								if (target == null) {
+									target = props.get(key.toString() + "_");
+									if (target == null) continue;
+								}
 							}
 							
 							if (target instanceof Method) {
@@ -1747,7 +1745,7 @@ public class JSON {
 	}
 	
 	
-	private static Map<String, Object> getGetProperties(Class c) {
+	private static Map<String, Object> getSetProperties(Class c) {
 		Map<String, Object> props = new HashMap<String, Object>();
 		
 		for (Field f : c.getFields()) {
