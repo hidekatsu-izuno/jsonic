@@ -1546,11 +1546,13 @@ public class JSON {
 		Class c = o.getClass();
 		Class target = c;
 		Method method = null;
+		boolean exists = false;
 		loop: do {
 			for (Method m : target.getDeclaredMethods()) {
 				if (methodName.equals(m.getName())
 						&& !Modifier.isStatic(m.getModifiers())
 						&& Modifier.isPublic(m.getModifiers())) {
+					exists = true;
 					if (method == null && values.size() == m.getParameterTypes().length) {
 						method = m;
 						break loop;
@@ -1562,7 +1564,16 @@ public class JSON {
 		} while (method == null && target != null);
 		
 		if (method == null || limit(c, method)) {
-			throw new NoSuchMethodException();
+			StringBuilder sb = new StringBuilder(c.getName());
+			sb.append('#').append(methodName).append('(');
+			String json = encode(values);
+			sb.append(json, 1, json.length()-1);
+			sb.append(')');
+			if (exists) {
+				throw new IllegalArgumentException(getMessage("json.invoke.IllegalArgumentException", sb.toString()));
+			} else {
+				throw new NoSuchMethodException(getMessage("json.invoke.NoSuchMethodError", sb.toString()));
+			}
 		}
 		
 		Class<?>[] paramTypes = method.getParameterTypes();

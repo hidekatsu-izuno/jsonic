@@ -1,18 +1,16 @@
 package net.arnx.jsonic;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -22,22 +20,17 @@ import javax.servlet.http.HttpServletResponse;
 import net.arnx.jsonic.container.Container;
 import net.arnx.jsonic.container.SimpleContainer;
 
+import static javax.servlet.http.HttpServletResponse.*;
+
 public class JSONRPCServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
+	private static final Pattern URL_PATTERN = Pattern.compile("^(/(?:[^/]+/)*)([^/]+)(\\.[^/]+)?$");
 	
-	private static Map<String, String> RESTFULL_METHODS = new HashMap<String, String>();
-	
-	static {
-		RESTFULL_METHODS.put("GET", "find");
-		RESTFULL_METHODS.put("POST", "create");
-		RESTFULL_METHODS.put("PUT", "update");
-		RESTFULL_METHODS.put("DELETE", "delete");
-	}
-
 	private Container container;
 	private Config config;
 	
-	private Map<Pattern, String> routes = new LinkedHashMap<Pattern, String>();
+	private Map<Pattern, String> routesRPC = new LinkedHashMap<Pattern, String>();
+	private Map<Pattern, String> routesREST = new LinkedHashMap<Pattern, String>();
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
@@ -57,9 +50,10 @@ public class JSONRPCServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.routes == null) {
+		if (config.routes != null) {
 			for (Map.Entry<String, String> entry : config.routes.entrySet()) {
-				routes.put(Pattern.compile("^" + entry.getKey()), entry.getValue());
+				routesRPC.put(Pattern.compile("^" + entry.getKey() + "/$"), entry.getValue());
+				routesREST.put(Pattern.compile("^" + entry.getKey() + "/"), entry.getValue());
 			}
 		}
 		
@@ -74,160 +68,348 @@ public class JSONRPCServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 	}
-	
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-	}
-	
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-	}
 
 	@Override
-	protected void doPut(HttpServletRequest request, HttpServletResponse response)
+	protected void service(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-	}
-	
-	@Override
-	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
-		throws ServletException, IOException {
-	}
-	
-	protected void process(HttpServletRequest request, HttpServletResponse response)
-		throws ServletException, IOException {
 		
 		if (config.encoding != null) {
 			request.setCharacterEncoding(config.encoding);
 			response.setCharacterEncoding(config.encoding);
 		}
-
-		String path = request.getRequestURI();
-		int start = (request.getContextPath().equals("/")) ? 0 : request.getContextPath().length();
-		int end = (path.length() > 1 && path.charAt(path.length()-1) == '/') ? path.length()-1 : path.length();
-		path = path.substring(start, end);
 		
-		// forward when no component or file existed
-		if (path.equals("/") ||  new File(getServletContext().getRealPath(path)).exists()) {
-			// TODO
+		super.service(request, response);
+	}
+	
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
+		if (!m.matches()){
+			response.sendError(SC_NOT_FOUND);
 			return;
 		}
 		
-		// forward when root path not found
-		String packageRoot = null;
-		for (Map.Entry<Pattern, String> entry : routes.entrySet()) {
-			Matcher m = entry.getKey().matcher(path);
-			if (m.find()) {
-				StringBuffer sb = new StringBuffer();
-				
-				// package root
-				m.appendReplacement(sb, entry.getValue());
-				packageRoot = sb.toString();
-				
-				// rest path
-				sb.setLength(0);
-				m.appendTail(sb);
-				path = (sb.length() > 0 && sb.charAt(0) == '/') ? sb.substring(1) : sb.toString();
-				break;
-			}
+		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
+		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
+		
+		if ("rpc".equalsIgnoreCase(pathes[1])) {
+			response.addHeader("Allow", "POST");
+			response.sendError(SC_METHOD_NOT_ALLOWED);
+			return;
+		} else {	
+			doREST("GET", pathes, request, response);
 		}
-		if (packageRoot == null || path.length() == 0) {
+	}
+	
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
+		if (!m.matches()){
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
+
+		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
+		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
 		
+		if ("rpc".equalsIgnoreCase(m.group(2))) {
+			doRPC(pathes, request, response);
+		} else {
+			String method = request.getParameter("_method");
+			if (method == null || !("GET".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method))) {
+				method = "POST";
+			}
+			doREST(method, pathes, request, response);
+		}
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
+		if (!m.matches()){
+			response.sendError(SC_NOT_FOUND);
+			return;
+		}
+		
+		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
+		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
+		
+		if ("rpc".equalsIgnoreCase(pathes[1])) {
+			response.addHeader("Allow", "POST");
+			response.sendError(SC_METHOD_NOT_ALLOWED);
+			return;
+		} else {
+			doREST("PUT", pathes, request, response);
+		}
+	}
+	
+	@Override
+	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
+		throws ServletException, IOException {
+		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
+		if (!m.matches()){
+			response.sendError(SC_NOT_FOUND);
+			return;
+		}
+		
+		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
+		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
+		
+		if ("rpc".equalsIgnoreCase(pathes[1])) {
+			response.addHeader("Allow", "POST");
+			response.sendError(SC_METHOD_NOT_ALLOWED);
+			return;
+		} else {
+			doREST("DELETE", pathes, request, response);
+		}
+	}
+	
+	protected void doRPC(String[] pathes, HttpServletRequest request, HttpServletResponse response)
+		throws ServletException, IOException {
 		
 		JSON json = new JSON(this);
 		
-		Object component = null;
-		String method = null;
-		List params = null;
-		
-		Object result = null;
-		Map error = null;
-		Object id = null;
+		String rootPackage = null;
+		for (Map.Entry<Pattern, String> entry : routesRPC.entrySet()) {
+			Matcher m = entry.getKey().matcher(pathes[0]);
+			if (m.matches()) {
+				rootPackage = entry.getValue();
+				break;
+			}
+		}
+		if (rootPackage == null) {
+			response.sendError(SC_NOT_FOUND);
+			return;
+		}
 		
 		// request processing
+		Request req = null;
+		Object res = null;
+		Map<String, Object> error = null;
 		try {
-			component = container.getComponent(path);
+			Class c = null;
+			
+			Object component = container.getComponent(c);
 			if (component == null) {
-				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				response.sendError(SC_NOT_FOUND);
 				return;
 			}
 			
-			if (request.getMethod().equals("GET")) {
+			req = json.parse(request.getReader(), Request.class);
+			
+			json.setContext(component);
+			res = json.invokeDynamic(component, req.method, req.params);
+		} catch (ClassNotFoundException e) {
+			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			response.sendError(SC_NOT_FOUND);
+			return;			
+		} catch (JSONParseException e) {
+			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			error = new LinkedHashMap<String, Object>();
+			error.put("code", -32700);
+			error.put("message", e.getMessage());
+		} catch (NoSuchMethodException e) {
+			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			error = new LinkedHashMap<String, Object>();
+			error.put("code", -32601);
+			error.put("message", e.getMessage());
+		} catch (IllegalArgumentException e) {
+			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			error = new LinkedHashMap<String, Object>();
+			error.put("code", -32602);
+			error.put("message", e.getMessage());
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause();
+			container.log(cause.getMessage(), cause);
+			error = new LinkedHashMap<String, Object>();
+			error.put("code", -32603);
+			error.put("message", cause.getMessage());
+		} catch (Exception e) {
+			container.log(e.getMessage(), e);
+			error = new LinkedHashMap<String, Object>();
+			error.put("code", -32603);
+			error.put("message", e.getMessage());
+		}
+		
+		// it's notification when id was null
+		if (req.id == null) {
+			response.setStatus(SC_NO_CONTENT);
+			return;
+		}
+
+		// response processing
+		response.setContentType("application/json");
+		
+		try {
+			Map<String, Object> map = new LinkedHashMap<String, Object>();
+			map.put("result", res);
+			map.put("error", error);
+			map.put("id", req.id);
+				
+			Writer writer = response.getWriter();
+			json.setPrettyPrint(!container.isDebugMode());
+			
+			json.format(map, writer);
+		} catch (Exception e) {
+			container.log(e.getMessage(), e);
+			response.sendError(SC_INTERNAL_SERVER_ERROR);
+			return;
+		}
+	}
+	
+	protected void doREST(String method, String[] pathes, HttpServletRequest request, HttpServletResponse response)
+		throws ServletException, IOException {
+		
+		String methodName = null;
+		String callback = null;
+		
+		if ("GET".equals(method)) {
+			methodName = "find";
+			callback = request.getParameter("callback");
+		} else if ("POST".equals(method)) {
+			methodName = "create";
+			response.setStatus(SC_CREATED);
+		} else if ("PUT".equals(method)) {
+			methodName = "update";
+		} else if ("DELETE".equals(method)) {
+			methodName = "delete";
+		}
+		
+		// request processing
+		JSON json = new JSON(this);
+		
+		Object res = null;
+		try {
+			Class c = getClassFromPath(pathes);
+			if (c == null) {
+				response.sendError(SC_NOT_FOUND);
+				return;				
+			}
+			
+			Object component = container.getComponent(c);
+			if (component == null) {
+				response.sendError(SC_NOT_FOUND);
+				return;
+			}
+			
+			List params = null;
+			if ("GET".equals(method)) {
 				params = new ArrayList();
 				params.add(request.getParameterMap());
-				method = request.getParameter("method");
-				if (method == null) method = RESTFULL_METHODS.get(request.getMethod());
 			} else {
-				Request req = json.parse(request.getReader(), Request.class);
-				method = req.method;
-				params = req.params;
-				id = req.id;
+				Object contents = json.parse(request.getReader());
+				if (contents instanceof List) {
+					params = (List)contents;
+				} else {
+					params = new ArrayList();
+					params.add(contents);
+				}
 			}
 			
 			json.setContext(component);
-			result = json.invokeDynamic(component, method, params);
+			res = json.invokeDynamic(component, methodName, params);
+		} catch (ClassNotFoundException e) {
+			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			response.sendError(SC_NOT_FOUND);
+			return;			
+		} catch (NoSuchMethodException e) {
+			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			response.sendError(SC_NOT_FOUND);
+			return;
+		} catch (IllegalArgumentException e) {
+			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			response.sendError(SC_BAD_REQUEST);
+			return;
 		} catch (JSONParseException e) {
 			if (container.isDebugMode()) container.log(e.getMessage(), e);
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-		} catch (NoSuchMethodException e) {
-			if (container.isDebugMode()) {
-				StringBuilder sb = new StringBuilder("missing method: ");
-				sb.append(component.getClass().getName()).append(".");
-				sb.append(method).append("(");
-				if (params != null) {
-					for (int i = 0; i < params.size(); i++) {
-						if (i != 0) sb.append(", ");
-						sb.append(params.get(i));
-					}
-				}
-				sb.append(")");
-				container.log(e.getMessage(), e);
-			}
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			response.sendError(SC_BAD_REQUEST);
 			return;
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.log(cause.getMessage(), cause);
-			
-			error = new LinkedHashMap<String, Object>();
-			error.put("name", "JSONError");
-			error.put("code", 100);
-			error.put("message", cause.getMessage());
+			response.sendError(SC_INTERNAL_SERVER_ERROR, cause.getMessage());
 		} catch (Exception e) {
 			container.log(e.getMessage(), e);
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.sendError(SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
 		
+		// primitive object can't convert JSON
+		if (res == null || res instanceof CharSequence || res instanceof Boolean || res instanceof Number || res instanceof Date) {
+			response.setStatus(SC_NO_CONTENT);
+			return;
+		}
+
 		// response processing
-		String callback = (request.getMethod().equals("GET")) ? request.getParameter("callback") : null;
 		response.setContentType((callback != null) ? "text/javascript" : "application/json");
 		
-		if (request.getMethod().equals("HEAD")) {
-			return;
-		}
-		
 		try {
-			Map<String, Object> res = new LinkedHashMap<String, Object>();
-			res.put("result", result);
-			res.put("error", error);
-			res.put("id", id);
-			
 			Writer writer = response.getWriter();
 			json.setPrettyPrint(!container.isDebugMode());
 			
 			if (callback != null) writer.append(callback).append("(");
-			json.format(result, writer);
+			json.format(res, writer);
 			if (callback != null) writer.append(");");
 		} catch (Exception e) {
 			container.log(e.getMessage(), e);
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.sendError(SC_INTERNAL_SERVER_ERROR);
 			return;
 		}		
+	}
+	
+	protected Class getClassFromPath(String[] pathes) throws ClassNotFoundException {
+		StringBuffer className = new StringBuffer();
+	
+		boolean find = false;
+		String prefix = "";
+		String suffix = "Service";
+		for (Map.Entry<Pattern, String> entry : routesREST.entrySet()) {
+			Matcher m = entry.getKey().matcher(pathes[0]);
+			if (m.find()) {
+				// package root
+				m.appendReplacement(className, entry.getValue());
+				if (className.length() > 0 && className.charAt(className.length()-1) != '.') className.append('.');
+				
+				// rest path
+				m.appendTail(className);
+				
+				// normalize
+				char old = '.';
+				for (int i = 0; i < className.length(); i++) {
+					char c = className.charAt(i);
+					if (c == '/') {
+						c = '.';
+					} else 	if ((old == '.') ? !Character.isJavaIdentifierStart(c) : !Character.isJavaIdentifierPart(c)) {
+						c = '_';
+					}
+					className.append(c);
+					old = c;
+				}
+				find = true;
+				break;
+			}
+		}
+		if (!find) return null;
+		
+		className.append(suffix);
+		boolean isStart = true;
+		for (int i = 0; i < pathes[1].length(); i++) {
+			char c = pathes[1].charAt(0);
+			if (isStart) {
+				className.append(Character.toUpperCase(c));
+			} else if (c == ' ' || c == '_' || c == '-') {
+				isStart = true;
+			} else {
+				className.append(c);
+			}
+			isStart = false;
+		}
+		className.append(prefix);
+
+		return Class.forName(className.toString());
 	}
 	
 	@Override
@@ -243,9 +425,18 @@ public class JSONRPCServlet extends HttpServlet {
 	}
 	
 	class Request {
-		public String version = "1.0";
 		public String method;
-		public List<Object> params;
+		public List params;
 		public Object id;
+	}
+	
+	class Error {
+		public int code;
+		public String message;
+		
+		public Error(int code, String message) {
+			this.code = code;
+			this.message = message;
+		}
 	}
 }

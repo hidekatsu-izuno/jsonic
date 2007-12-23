@@ -7,10 +7,10 @@
 	
 	<description>jsonic sample</description>
 	
-	<filter>
+	<servlet>
 		<description>json-rpc sample</description>
-		<filter-name>json-rpc</filter-name>
-		<filter-class>net.arnx.jsonic.servlet.JsonicFilter</filter-class>
+		<servlet-name>json-rpc</servlet-name>
+		<servlet-class>net.arnx.jsonic.JSONRPCServlet</servlet-class>
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
@@ -22,10 +22,10 @@
 				}
 			</param-value>
 		</init-param>
-	</filter>
+	</servlet>
 
-	<filter-mapping>
-		<filter-name>json-rpc</filter-name>
-		<url-pattern>/*</url-pattern>
-	</filter-mapping>
+	<servlet-mapping>
+		<servlet-name>json-rpc</servlet-name>
+		<url-pattern>*.json</url-pattern>
+	</servlet-mapping>
 </web-app>
