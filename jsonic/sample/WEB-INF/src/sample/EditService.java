@@ -1,4 +1,4 @@
-package sample.service;
+package sample;
 /*
  * Copyright 2007 Hidekatsu Izuno
  *
