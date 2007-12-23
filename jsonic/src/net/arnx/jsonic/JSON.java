@@ -31,7 +31,6 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.ResourceBundle;
 import java.util.Collection;
@@ -131,62 +130,7 @@ import java.text.ParseException;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked", "serial"})
-public class JSON {
-	private static final Set<String> RESERVED_WORDS = new HashSet<String>() {
-		{
-			add("abstract");
-			add("abstract");
-			add("boolean");
-			add("break");
-			add("byte");
-			add("case");
-			add("catch");
-			add("char");
-			add("class");
-			add("const");
-			add("continue");
-			add("default");
-			add("do");
-			add("double");
-			add("else");
-			add("extends");
-			add("final");
-			add("finally");
-			add("float");
-			add("for");
-			add("goto");
-			add("if");
-			add("implements");
-			add("import");
-			add("instanceof");
-			add("int");
-			add("interface");
-			add("long");
-			add("native");
-			add("new");
-			add("package");
-			add("private");
-			add("protected");
-			add("public");
-			add("return");
-			add("short");
-			add("static");
-			add("strictfp");
-			add("super");
-			add("switch");
-			add("synchronized");
-			add("this");
-			add("throw");
-			add("throws");
-			add("transient");
-			add("try");
-			add("void");
-			add("volatile");
-			add("while");
-			
-		}
-	};
-		
+public class JSON {		
 	public JSON() {
 		this(null);
 	}
@@ -1488,10 +1432,18 @@ public class JSON {
 						
 						Map map = (Map)value;
 						for (Object key : map.keySet()) {
-							Object target = props.get(toLowerCamel(key.toString()));
+							Object target = props.get(key.toString());
+							if (target == null) {
+								target = props.get(toLowerCamel(key.toString()));
+							}
+							if (target == null) {
+								target = props.get(key.toString() + "_");
+							}
 							if (target == null) {
 								continue;
-							} else if (target instanceof Method) {
+							}
+							
+							if (target instanceof Method) {
 								Method m = (Method)target;
 								try {
 									if (access) m.setAccessible(true);
@@ -1775,14 +1727,9 @@ public class JSON {
 	}
 	
 	private static String toLowerCamel(String name) {
-		if (RESERVED_WORDS.contains(name)) {
-			return name + "_";
-		}
-		
 		StringBuilder sb = new StringBuilder(name.length());
-		int i = 0;
 		boolean toUpperCase = false;
-		for (i = 0; i < name.length(); i++) {
+		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
 			if (c == ' ' || c == '_' || c == '-') {
 				toUpperCase = true;

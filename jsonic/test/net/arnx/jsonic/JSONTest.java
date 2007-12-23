@@ -116,7 +116,7 @@ public class JSONTest {
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null}", JSON.encode(test));
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class_\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"if\":null}", JSON.encode(test));
 	}
 
 	@Test
@@ -186,7 +186,7 @@ public class JSONTest {
 		test.d = new Date();
 		test.e = Locale.JAPAN;
 		test.setG(Pattern.compile("\\.*"));
-		test.setH(boolean.class);
+		test.class_ = boolean.class;
 		
 		String json = JSON.encode(test);
 		TestBean result = JSON.decode(json, TestBean.class);
@@ -200,9 +200,9 @@ public class JSONTest {
 		test.d = null;
 		test.e = Locale.JAPAN;
 		test.setG(Pattern.compile("\\.*"));
-		test.setH(Object.class);
+		test.class_ = Object.class;
 		
-		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\",\"h\":\"java.lang.Object\"}", TestBean.class));
+		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"class\":\"java.lang.Object\",\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\"}", TestBean.class));
 		
 		GenericsBean gb = new GenericsBean();
 		List<String> list2 = new ArrayList<String>();
@@ -606,9 +606,11 @@ class TestBean {
 	public Pattern getG() { return g; }
 	public void setG(Pattern g) { this.g = g; }
 
-	private Class h;
-	public Class getH() { return h; }
-	public void setH(Class h) { this.h = h; }
+	public Class class_;
+	
+	private String if_;
+	public String getIf() { return if_; }
+	public void setIf(String if_) { this.if_ = if_; }
 	
 	private int x = 10;
 	int y = 100;
@@ -616,17 +618,23 @@ class TestBean {
 	
 	@Override
 	public int hashCode() {
-		final int PRIME = 31;
+		final int prime = 31;
 		int result = 1;
-		result = PRIME * result + a;
-		result = PRIME * result + ((b == null) ? 0 : b.hashCode());
-		result = PRIME * result + (c ? 1231 : 1237);
-		result = PRIME * result + ((d == null) ? 0 : d.hashCode());
-		result = PRIME * result + ((e == null) ? 0 : e.hashCode());
-		result = PRIME * result + ((f == null) ? 0 : f.hashCode());
-		result = PRIME * result + ((h == null) ? 0 : h.hashCode());
+		result = prime * result + a;
+		result = prime * result + ((b == null) ? 0 : b.hashCode());
+		result = prime * result + (c ? 1231 : 1237);
+		result = prime * result + ((class_ == null) ? 0 : class_.hashCode());
+		result = prime * result + ((d == null) ? 0 : d.hashCode());
+		result = prime * result + ((e == null) ? 0 : e.hashCode());
+		result = prime * result + ((f == null) ? 0 : f.hashCode());
+		result = prime * result + ((g == null) ? 0 : g.pattern().hashCode());
+		result = prime * result + ((if_ == null) ? 0 : if_.hashCode());
+		result = prime * result + x;
+		result = prime * result + y;
+		result = prime * result + z;
 		return result;
 	}
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -645,6 +653,11 @@ class TestBean {
 			return false;
 		if (c != other.c)
 			return false;
+		if (class_ == null) {
+			if (other.class_ != null)
+				return false;
+		} else if (!class_.equals(other.class_))
+			return false;
 		if (d == null) {
 			if (other.d != null)
 				return false;
@@ -660,10 +673,21 @@ class TestBean {
 				return false;
 		} else if (!f.equals(other.f))
 			return false;
-		if (h == null) {
-			if (other.h != null)
+		if (g == null) {
+			if (other.g != null)
 				return false;
-		} else if (!h.equals(other.h))
+		} else if (!g.pattern().equals(other.g.pattern()))
+			return false;
+		if (if_ == null) {
+			if (other.if_ != null)
+				return false;
+		} else if (!if_.equals(other.if_))
+			return false;
+		if (x != other.x)
+			return false;
+		if (y != other.y)
+			return false;
+		if (z != other.z)
 			return false;
 		return true;
 	}

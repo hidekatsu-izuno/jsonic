@@ -408,6 +408,8 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <li>Parse時にnullが入力された場合、NullPointerExceptionではなくIllegalArgumentExceptionをメッセージと共に投げるように修正しました。</li>
 <li>Parse時に値が指定されない場合、nullが指定されたものとして取り扱うよう変更しました。</li>
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
+<li>ParseのJSON objectからJavaBeanへの変換時、名称が常にJavaBean規約に合うように変換をかけていたが、一旦そのままマッチさせ失敗したときのみ変換するように変更しました。</li>
+<li>ParseのJSON objectからJavaBeanへの変換時、Javaの予約語にも対応できるよう末尾に「_」の付いたプロパティでもマッチできるよう変更しました。</li>
 <li>Invoke時にMethodは存在するが引数の数が合わない場合には、IllegalArgumentExceptionを投げるように修正しました。</li>
 <li>Invoke時に投げられるNoSuchMethodExceptionのメッセージをわかりやすくしました。</li>
 <li>limitメソッドの引数に実行対象のクラスが渡るように変更しました。</li>
