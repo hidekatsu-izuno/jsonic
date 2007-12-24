@@ -29,6 +29,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -182,18 +183,18 @@ public class JSON {
 		}
 	}
 
-	private Locale[] locales;
+	private Locale locale;
 	
 	/**
-	 * Sets locales for conversion or message.
+	 * Sets locale for conversion or message.
 	 * 
-	 * @param locales
+	 * @param locale
 	 */
-	public void setLocales(Locale[] locales) {
-		if (locales.length == 0) {
-			throw new IllegalArgumentException(getMessage("json.EmptyArgumentError", "locales"));
+	public void setLocale(Locale locale) {
+		if (locale == null) {
+			throw new IllegalArgumentException(getMessage("json.NullArgumentError", "locale"));
 		}
-		this.locales = locales;
+		this.locale = locale;
 	}
 	
 	/**
@@ -1298,20 +1299,15 @@ public class JSON {
 						date.setTime(((Number)value).longValue());
 						data = date;
 					} else {
-						DateFormat format = DateFormat.getDateTimeInstance();
-						data = format.parse(value.toString());
+						data = parseDate(value.toString()).getTime();
 					}
 				} else if (Calendar.class.isAssignableFrom(c)) {
-					Calendar cal = (Calendar)create(c);
+					Calendar cal = null;
 					if (value instanceof Number) {
+						cal = (Calendar)create(c);
 						cal.setTimeInMillis(((Number)value).longValue());
 					} else {
-						DateFormat format = DateFormat.getDateTimeInstance();
-						try {
-							cal.setTime(format.parse(value.toString()));
-						} catch (Exception e) {
-							data = null;
-						}
+						cal = parseDate(value.toString());
 					}
 					data = cal;
 				} else if (Collection.class.isAssignableFrom(c)) {
@@ -1594,8 +1590,6 @@ public class JSON {
 	}
 	
 	private String getMessage(String id, Object... args) {
-		Locale locale = null;
-		if (locales != null && locales.length > 0) locale = locales[0];
 		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName(), locale);
 		return MessageFormat.format(bundle.getString(id), args);
@@ -1897,5 +1891,88 @@ public class JSON {
 		}
 		
 		return buffer;
+	}
+	
+	private static final Pattern TIMEZONE_PATTERN = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})");
+	private Calendar parseDate(String value) throws ParseException {
+		value = value.trim();
+		if (value.length() == 0) {
+			return null;
+		}
+		value = TIMEZONE_PATTERN.matcher(value).replaceFirst("GMT$1:$2");
+		
+		DateFormat format = null;
+		if (Character.isDigit(value.charAt(0))) {
+			StringBuilder sb = new StringBuilder(value.length() * 2);
+
+			String types = "yMdHmsSZ";
+			int pos = 0; // 0: year, 1:month, 2: day, 3: hour, 4: minute, 5: sec, 6:msec, 7: timezone
+			boolean before = true;
+			int count = 0;
+			for (int i = 0; i < value.length(); i++) {
+				char c = value.charAt(i);
+				if ((pos == 4 || pos == 5 || pos == 6) 
+						&& (c == '+' || c == '-')
+						&& (i + 1 < value.length())
+						&& (Character.isDigit(value.charAt(i+1)))) {
+					
+					if (!before) sb.append('\'');
+					pos = 7;
+					count = 0;
+					before = true;
+					continue;
+				} else if (pos == 7 && c == ':'
+						&& (i + 1 < value.length())
+						&& (Character.isDigit(value.charAt(i+1)))) {
+					value = value.substring(0, i) + value.substring(i+1);
+					continue;
+				}
+				
+				boolean digit = (Character.isDigit(c) && pos < 8);
+				if (before != digit) {
+					sb.append('\'');
+					if (digit) {
+						count = 0;
+						pos++;
+					}
+				}
+				
+				if (digit) {
+					char type = types.charAt(pos);
+					if (count == ((type == 'y' || type == 'S' || type == 'Z') ? 4 : 2)) {
+						count = 0;
+						pos++;
+						type = types.charAt(pos);
+					}
+					if (type != 'Z' || count == 0) sb.append(type);
+					count++;
+				} else {
+					sb.append((c == '\'') ? "''" : c);
+				}
+				before = digit;
+			}
+			if (!before) sb.append('\'');
+			
+			format = new SimpleDateFormat(sb.toString(), Locale.ENGLISH);
+		} else if (value.length() > 18) {
+			if (value.charAt(3) == ',') {
+				String pattern = "EEE, dd MMM yyyy HH:mm:ss Z";
+				format = new SimpleDateFormat(
+						(value.length() < pattern.length()) ? pattern.substring(0, value.length()) : pattern, Locale.ENGLISH);
+			} else if (value.charAt(13) == ':') {
+				format = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
+			} else if (value.charAt(18) == ':') {
+				String pattern = "EEE MMM dd yyyy HH:mm:ss Z";
+				format = new SimpleDateFormat(
+						(value.length() < pattern.length()) ? pattern.substring(0, value.length()) : pattern, Locale.ENGLISH);
+			} else {
+				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, locale);
+			}
+		} else {
+			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
+		}
+		
+		format.parse(value);
+		return format.getCalendar();
 	}
 }
