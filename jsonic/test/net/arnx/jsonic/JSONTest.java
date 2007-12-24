@@ -267,7 +267,7 @@ public class JSONTest {
 		try {
 			json.format(true, new StringBuilder());
 			fail();
-		} catch (Exception e) {
+		} catch (IllegalArgumentException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
@@ -276,7 +276,7 @@ public class JSONTest {
 		try {
 			assertEquals("true", json.format(true, new StringBuilder()).toString());
 			fail();
-		} catch (Exception e) {
+		} catch (IllegalArgumentException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
@@ -545,6 +545,13 @@ public class JSONTest {
 	}
 	
 	@Test
+	public void testConvert() throws Exception {
+		JSON json = new JSON();
+		assertEquals(Boolean.TRUE, json.convert(100, boolean.class, boolean.class));
+		assertEquals(toDate(2000, 12, 25, 0, 0, 0), json.convert("2000/12/25 00:00:00", Date.class, Date.class));
+	}
+	
+	@Test
 	public void testBase64() throws Exception {
 		JSON json = new JSON();
 		
@@ -558,6 +565,12 @@ public class JSONTest {
 			
 			assertEquals(toHexString(input[0]), toHexString(output[0]));
 		}
+	}
+	
+	private Date toDate(int year, int month, int date, int hour, int minute, int second) {
+		Calendar c = Calendar.getInstance();
+		c.set(year, month-1, date, hour, minute, second);
+		return c.getTime();
 	}
 	
 	private String toHexString(byte[] data) {

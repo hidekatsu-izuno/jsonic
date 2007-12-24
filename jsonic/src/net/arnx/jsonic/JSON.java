@@ -130,7 +130,7 @@ import java.text.ParseException;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked", "serial"})
-public class JSON {		
+public class JSON {
 	public JSON() {
 		this(null);
 	}
@@ -159,7 +159,7 @@ public class JSON {
 	 */
 	public void setMaxDepth(int value) {
 		if (value <= 0) {
-			throw new IllegalArgumentException("max depth should be larger than 0.");
+			throw new IllegalArgumentException(getMessage("json.EmptyArgumentError", "maxDepth", 0));
 		}
 		this.maxDepth = value;
 	}
@@ -180,6 +180,20 @@ public class JSON {
 			this.context = value;
 			this.contextClass = (value != null) ? value.getClass() : null;
 		}
+	}
+
+	private Locale[] locales;
+	
+	/**
+	 * Sets locales for conversion or message.
+	 * 
+	 * @param locales
+	 */
+	public void setLocales(Locale[] locales) {
+		if (locales.length == 0) {
+			throw new IllegalArgumentException(getMessage("json.EmptyArgumentError", "locales"));
+		}
+		this.locales = locales;
 	}
 	
 	/**
@@ -221,12 +235,7 @@ public class JSON {
 	 * @exception ParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(String source) throws JSONParseException {
-		Object value = null;
-		try {
-			value = (new JSON()).parse(new CharSequenceJSONSource(source));
-		} catch (IOException e) {
-			// never happen
-		}
+		Object value = (new JSON()).parse(source);
 		return value;
 	}
 	
@@ -240,7 +249,7 @@ public class JSON {
 	 */
 	public static <T> T decode(String source, Class<? extends T> c) throws Exception {
 		JSON json = new JSON(c);
-		return (T)json.convert(json.parse(new CharSequenceJSONSource(source)), c, c);
+		return json.parse(source, c);
 	}
 	
 	/**
@@ -254,7 +263,7 @@ public class JSON {
 	 */
 	public static <T> T decode(String source, Class<? extends T> c, Type t) throws Exception {
 		JSON json = new JSON(c);
-		return (T)json.convert(json.parse(new CharSequenceJSONSource(source)), c, t);
+		return json.parse(source, c, t);
 	}
 	
 	public String format(Object source) throws IOException {
@@ -1290,9 +1299,7 @@ public class JSON {
 						data = date;
 					} else {
 						DateFormat format = DateFormat.getDateTimeInstance();
-						Date date = (Date)create(c);
-						date.setTime(format.parse(value.toString()).getTime());
-						data = date;
+						data = format.parse(value.toString());
 					}
 				} else if (Calendar.class.isAssignableFrom(c)) {
 					Calendar cal = (Calendar)create(c);
@@ -1520,7 +1527,7 @@ public class JSON {
 			sb.append(json, 1, json.length()-1);
 			sb.append(')');
 			if (exists) {
-				throw new IllegalArgumentException(getMessage("json.invoke.IllegalArgumentError", sb.toString()));
+				throw new IllegalArgumentException(getMessage("json.invoke.MismatchParametersError", sb.toString()));
 			} else {
 				throw new NoSuchMethodException(getMessage("json.invoke.NoSuchMethodError", sb.toString()));
 			}
@@ -1586,9 +1593,12 @@ public class JSON {
 		return instance;
 	}
 	
-	private static String getMessage(String id, Object... arguments) {
-		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName());
-		return MessageFormat.format(bundle.getString(id), arguments);
+	private String getMessage(String id, Object... args) {
+		Locale locale = null;
+		if (locales != null && locales.length > 0) locale = locales[0];
+		if (locale == null) locale = Locale.getDefault();
+		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName(), locale);
+		return MessageFormat.format(bundle.getString(id), args);
 	}
 
 	static interface JSONSource {
@@ -1599,7 +1609,7 @@ public class JSON {
 		long getOffset();
 	}
 
-	private static class CharSequenceJSONSource implements JSONSource {
+	private class CharSequenceJSONSource implements JSONSource {
 		private int lines = 1;
 		private int columns = 1;
 		private int offset = 0;
@@ -1608,7 +1618,7 @@ public class JSON {
 		
 		public CharSequenceJSONSource(CharSequence cs) {
 			if (cs == null) {
-				throw new IllegalArgumentException(getMessage("json.parse.NullInputError"));
+				throw new IllegalArgumentException(getMessage("json.NullArgumentError", "input"));
 			}
 			this.cs = cs;
 		}
@@ -1649,7 +1659,7 @@ public class JSON {
 		}
 	}
 
-	private static class ReaderJSONSource implements JSONSource{
+	private class ReaderJSONSource implements JSONSource{
 		private long lines = 1l;
 		private long columns = 1l;
 		private long offset = 0;
@@ -1661,7 +1671,7 @@ public class JSON {
 		
 		public ReaderJSONSource(Reader reader) {
 			if (reader == null) {
-				throw new IllegalArgumentException(getMessage("json.parse.NullInputError"));
+				throw new IllegalArgumentException(getMessage("json.NullArgumentError", "input"));
 			}
 			this.reader = reader;
 		}
