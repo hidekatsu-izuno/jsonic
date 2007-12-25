@@ -44,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1294,22 +1295,23 @@ public class JSON {
 					Appendable a = (Appendable)create(c);
 					data = a.append(value.toString());
 				} else if (Date.class.isAssignableFrom(c)) {
+					Date date = (Date)create(c);
 					if (value instanceof Number) {
-						Date date = (Date)create(c);
 						date.setTime(((Number)value).longValue());
-						data = date;
 					} else {
-						data = parseDate(value.toString()).getTime();
+						date.setTime(parseDate(value.toString()));
 					}
+					data = date;
 				} else if (Calendar.class.isAssignableFrom(c)) {
-					Calendar cal = null;
+					Calendar cal = (Calendar)create(c);
 					if (value instanceof Number) {
-						cal = (Calendar)create(c);
 						cal.setTimeInMillis(((Number)value).longValue());
 					} else {
-						cal = parseDate(value.toString());
+						cal.setTimeInMillis(parseDate(value.toString()));
 					}
 					data = cal;
+				} else if (TimeZone.class.equals(c)) {
+					data = TimeZone.getTimeZone(value.toString());
 				} else if (Collection.class.isAssignableFrom(c)) {
 					Collection collection = (Collection)create(c);
 					if (type instanceof ParameterizedType) {
@@ -1578,12 +1580,18 @@ public class JSON {
 				con.setAccessible(true);
 			}
 			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
-		} else {
-			Constructor con = c.getDeclaredConstructor((Class[])null);
+		} else if (Date.class.isAssignableFrom(c)) {
+			Constructor con = c.getDeclaredConstructor(long.class);
 			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
 				con.setAccessible(true);
 			}
-			instance = con.newInstance((Object[])null);
+			instance = con.newInstance(0l);
+		} else {
+			Constructor con = c.getDeclaredConstructor();
+			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
+				con.setAccessible(true);
+			}
+			instance = con.newInstance();
 		}
 		
 		return instance;
@@ -1894,7 +1902,7 @@ public class JSON {
 	}
 	
 	private static final Pattern TIMEZONE_PATTERN = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})");
-	private Calendar parseDate(String value) throws ParseException {
+	private Long parseDate(String value) throws ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
@@ -1906,7 +1914,8 @@ public class JSON {
 			StringBuilder sb = new StringBuilder(value.length() * 2);
 
 			String types = "yMdHmsSZ";
-			int pos = 0; // 0: year, 1:month, 2: day, 3: hour, 4: minute, 5: sec, 6:msec, 7: timezone
+			// 0: year, 1:month, 2: day, 3: hour, 4: minute, 5: sec, 6:msec, 7: timezone
+			int pos = (value.length() > 2 && value.charAt(2) == ':') ? 3 : 0;
 			boolean before = true;
 			int count = 0;
 			for (int i = 0; i < value.length(); i++) {
@@ -1939,7 +1948,7 @@ public class JSON {
 				
 				if (digit) {
 					char type = types.charAt(pos);
-					if (count == ((type == 'y' || type == 'S' || type == 'Z') ? 4 : 2)) {
+					if (count == ((type == 'y' || type == 'Z') ? 4 : (type == 'S') ? 3 : 2)) {
 						count = 0;
 						pos++;
 						type = types.charAt(pos);
@@ -1972,7 +1981,6 @@ public class JSON {
 			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
 		}
 		
-		format.parse(value);
-		return format.getCalendar();
+		return format.parse(value).getTime();
 	}
 }
