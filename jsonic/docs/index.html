@@ -144,7 +144,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>その他のCollectionを継承する型</td><td>指定された型</td></tr>
 <tr><td>short[], byte[], int[], long[], float[], double[], Object[]</td><td>指定された型</td></tr>
 <tr><td>Locale</td><td>Locale（「言語コード」「国コード」「バリアントコード」からなる配列とみなし変換）</td></tr>
-<tr><td rowspan="12">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td rowspan="13">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
 <tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
 <tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
@@ -155,6 +155,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>Locale</td><td>Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換）</td></tr>
 <tr><td>Pattern</td><td>Pattern（文字列をパターンとみなし変換）</td></tr>
 <tr><td>Class</td><td>Class（文字列をClass.forNameを使い変換）</td></tr>
+<tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（"", "false", "NaN"の時false、その他の時true）</td></tr>
 <tr><td rowspan="4">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
@@ -191,7 +192,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 public class JSONConfigLoader {
     private Map&lt;String, Hoge&gt; config;
     
-    public Map load(Reader reader) throws ParseException, IOException {
+    public Map load(Reader reader) throws JSONParseException, IOException {
         JSON json = new JSON();
         
         <span class="comment">// これはコンパイルエラー</span>
@@ -296,7 +297,7 @@ JSON json = new JSON() {
     <span class="comment">// methodの実行を制限する場合はtrue</span>
     protected <span class="em">boolean limit(Class c, Method method)</span> {
         <span class="comment">// デフォルトではObjectクラスのメソッドは実行しないように制限されています</span>
-        super.limit(method);
+        super.limit(c, method);
     }
 };
 </pre>
@@ -331,37 +332,37 @@ public class EnclosingClass {
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
-<h3>JSON-RPC Filter</h3>
+<h3>JSON-RPC Servlet</h3>
 
 <h4>JSON-RPC 1.0</h4>
-<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCFilterを使うことでJSON-RPCを利用することが可能です。<br />
+<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です。<br />
 JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載するとpathに対し対応したclass nameのクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
 <pre class="source">
-&lt;filter&gt;
-    &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
-    &lt;filter-class&gt;net.arnx.jsonic.servlet.JSONRPCFilter&lt;/filter-class&gt;
+&lt;servlet&gt;
+    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
+    &lt;servlet-class&gt;net.arnx.jsonic.JSONRPCServlet&lt;/servlet-class&gt;
     &lt;init-param&gt;
         &lt;param-name&gt;config&lt;/param-name&gt;
         &lt;param-value&gt;
         	"debug": true
-            "mapping": {
-                "path" : "class name",
-                ...
-            }
+        	"routes": {
+        	    "path" : "class name",
+        	    ...
+        	}
         &lt;/param-value&gt;
     &lt;/init-param&gt;
-&lt;/filter&gt;
+&lt;/servlet&gt;
 
-&lt;filter-mapping&gt;
-    &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
+&lt;servlet-mapping&gt;
+    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
     &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;
-&lt;/filter-mapping&gt;
+&lt;/servlet-mapping&gt;
 </pre>
 
-<h4>JSONP</h4>
-<p>JSON-RPCで設定されたクラスに「public Object get(Map params)」のようなメソッドを定義すると、HTTPのGETメソッドで処理を呼び出すことができます。paramsには、HTTPパラメータで指定した値が入り、戻り値はJSONに変換されクライアントに返されます。<br />
+<h4>Restfull API &amp; JSONP</h4>
+<p>JSONRPCServletで設定されたクラスに「public Object find(Map params)」のようなメソッドを定義すると、HTTPのGETメソッドで処理を呼び出すことができます。paramsには、HTTPパラメータで指定した値が入り、戻り値はJSONに変換されクライアントに返されます。<br />
 paramsや戻り値には任意のクラスを指定することもできますが、JSONの制約上objectかarrayに変換される必要があります。</p>
-<p>getにより返されるJSONはJSONPに対応していますので、HTTPパラメータに「callback=call」と指定すると「call(...)」とメソッドを呼び出す形となって出力されます。<br />
+<p>HTTP GETにより返されるJSONはJSONPに対応していますので、HTTPパラメータに「callback=call」と指定すると「call(...)」とメソッドを呼び出す形となって出力されます。<br />
 例えば、HTML上に下記のように記載すれば、自動的にメソッドが呼び出され引数にサーバより返された値がcallの引数として設定されます。</p>
 
 <pre class="source">
@@ -377,20 +378,26 @@ paramsや戻り値には任意のクラスを指定することもできます�
 </pre>
 
 <h4>DI Container対応</h4>
-<p>JSONRPCFilterは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerで管理することが可能です。</p>
+<p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerで管理することが可能です。</p>
 
 <pre class="source">
-&lt;filter&gt;
-    &lt;filter-name&gt;JSON-RPC&lt;/filter-name&gt;
-    &lt;filter-class&gt;net.arnx.jsonic.JSONRPCFilter&lt;/filter-class&gt;
+&lt;servlet&gt;
+    &lt;servlet-name&gt;JSON-RPC&lt;/servlet-name&gt;
+    &lt;servlet-class&gt;net.arnx.jsonic.JSONRPCServlet&lt;/servlet-class&gt;
     &lt;init-param&gt;
-        &lt;param-name&gt;container&lt;/param-name&gt;
-        &lt;param-value&gt;(net.arnx.jsonic.servlet.Containerを実装したクラス)&lt;/param-value&gt;
+        &lt;param-name&gt;config&lt;/param-name&gt;
+        &lt;param-value&
+        	"container": (net.arnx.jsonic.container.Containerを実装したクラス)
+        	
+        	/* Seasar2対応Container
+        	"container": "net.arnx.jsonic.container.S2Container"
+        	*/
+       &lt;/param-value&
     &lt;/init-param&gt;
-&lt;/filter&gt;
+&lt;/servlet&gt;
 </pre>
 
-<p>JSONICでは、Seasar2に対応したContainerを用意しています。このContainerに差し替えると、Seasar2上で管理されるServiceクラスが自動的にJSON-RPCとしてアクセス可能になります。</p>
+<p>JSONICでは、Seasar2に対応したContainerを用意しています。このContainerを利用すると、Seasar2上で管理されるServiceクラスが自動的にJSON-RPCとしてアクセス可能になります。</p>
 
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
