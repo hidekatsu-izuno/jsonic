@@ -405,6 +405,9 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <p>下記の機能追加とバグ修正が行われています。</p>
 <ul>
 <li>maxDepthのデフォルト値を32階層に変更しました。</li>
+<li>Parse時の日付変換ロジックを見直し、一般的にコンピュータが取り扱う日付フォーマットに対応しました。</li>
+<li>Parse時にjava.sql.Date/java.sql.Time/java.sql.Timestampの変換に対応しました。</li>
+<li>Parse時にjava.util.TimeZoneの変換に対応しました。</li>
 <li>Parse時にnullが入力された場合、NullPointerExceptionではなくIllegalArgumentExceptionをメッセージと共に投げるように修正しました。</li>
 <li>Parse時に値が指定されない場合、nullが指定されたものとして取り扱うよう変更しました。</li>
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
