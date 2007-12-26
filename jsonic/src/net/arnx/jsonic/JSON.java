@@ -161,7 +161,7 @@ public class JSON {
 	 */
 	public void setMaxDepth(int value) {
 		if (value <= 0) {
-			throw new IllegalArgumentException(getMessage("json.EmptyArgumentError", "maxDepth", 0));
+			throw new IllegalArgumentException(getMessage("json.TooSmallArgumentError", "maxDepth", 0));
 		}
 		this.maxDepth = value;
 	}
@@ -193,7 +193,7 @@ public class JSON {
 	 */
 	public void setLocale(Locale locale) {
 		if (locale == null) {
-			throw new IllegalArgumentException(getMessage("json.NullArgumentError", "locale"));
+			throw new NullPointerException();
 		}
 		this.locale = locale;
 	}
@@ -1620,7 +1620,7 @@ public class JSON {
 		
 		public CharSequenceJSONSource(CharSequence cs) {
 			if (cs == null) {
-				throw new IllegalArgumentException(getMessage("json.NullArgumentError", "input"));
+				throw new NullPointerException();
 			}
 			this.cs = cs;
 		}
@@ -1673,7 +1673,7 @@ public class JSON {
 		
 		public ReaderJSONSource(Reader reader) {
 			if (reader == null) {
-				throw new IllegalArgumentException(getMessage("json.NullArgumentError", "input"));
+				throw new NullPointerException();
 			}
 			this.reader = reader;
 		}
