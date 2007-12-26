@@ -26,6 +26,6 @@
 
 	<servlet-mapping>
 		<servlet-name>json-rpc</servlet-name>
-		<url-pattern>/jsonic/*</url-pattern>
+		<url-pattern>*.json</url-pattern>
 	</servlet-mapping>
 </web-app>
