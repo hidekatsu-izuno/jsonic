@@ -191,6 +191,11 @@ public class JSONRPCServlet extends HttpServlet {
 	protected void doRPC(String[] pathes, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
+		if (!".json".equalsIgnoreCase(pathes[2])) {
+			response.sendError(SC_NOT_FOUND);
+			return;			
+		}
+		
 		JSONInvoker json = new JSONInvoker(this);
 		
 		// request processing
@@ -288,6 +293,11 @@ public class JSONRPCServlet extends HttpServlet {
 	
 	protected void doREST(String method, String[] pathes, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
+		
+		if (!".json".equalsIgnoreCase(pathes[2])) {
+			response.sendError(SC_NOT_FOUND);
+			return;			
+		}
 		
 		String methodName = null;
 		String callback = null;
