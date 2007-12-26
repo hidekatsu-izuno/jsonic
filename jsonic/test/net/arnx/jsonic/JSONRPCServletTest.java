@@ -20,15 +20,37 @@ public class JSONRPCServletTest {
 		JSONRPCServlet servlet = new JSONRPCServlet();
 		
 		MockServletConfigImpl config = new MockServletConfigImpl();
+		config.setServletContext(context);
+		config.setInitParameter("config", ""
+				+ "debug: true\n"
+				+ "encoding: 'UTF-8'\n"
+				+ "routes: {\n"
+				+ "    '/(\\w+)': 'sample.\1'\n"
+				+ "    '/': 'sample'\n"
+				+ "}");
+		
 		servlet.init(config);
 		
-		MockHttpServletRequest request = context.createRequest("/sample/rpc.json");
+		MockHttpServletRequestImpl request = (MockHttpServletRequestImpl)context.createRequest("/sample/rpc.json");
+		MockHttpServletResponseImpl response = new MockHttpServletResponseImpl(request);
+		
+		// Method Allow Error
 		request.setMethod("GET");
-		MockHttpServletResponse response = new MockHttpServletResponseImpl(request);
 		servlet.service(request, response);
+		assertEquals(HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());
+
+		request.setMethod("PUT");		
+		servlet.service(request, response);
+		assertEquals(HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());
+
+		request.setMethod("DELETE");		
+		servlet.service(request, response);
+		assertEquals(HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());
+
+		request.setMethod("POST");
+		servlet.service(request, response);
+		assertEquals(HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());	
 		
 		servlet.destroy();
-		
-		assertEquals(HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());
 	}
 }

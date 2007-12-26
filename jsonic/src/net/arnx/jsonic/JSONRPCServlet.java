@@ -204,7 +204,7 @@ public class JSONRPCServlet extends HttpServlet {
 		Map<String, Object> error = null;
 		try {			
 			req = json.parse(request.getReader(), Request.class);
-			if (req.method == null || req.params == null) {
+			if (req == null || req.method == null || req.params == null) {
 				error = new LinkedHashMap<String, Object>();
 				error.put("code", -32700);
 				error.put("message", "Invalid Request.");		
@@ -266,7 +266,7 @@ public class JSONRPCServlet extends HttpServlet {
 		}
 		
 		// it's notification when id was null
-		if (req.id == null) {
+		if (req != null && req.id == null) {
 			response.setStatus(SC_ACCEPTED);
 			return;
 		}
