@@ -276,7 +276,7 @@ public class JSON {
 		return format(source, ap, 0);
 	}
 	
-	Appendable format(Object o, Appendable ap, int level) throws IOException {
+	private Appendable format(Object o, Appendable ap, int level) throws IOException {
 		if (level > this.maxDepth) {
 			o = null;
 		}
