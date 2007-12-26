@@ -19,46 +19,22 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import sample.web.basic.service.*;
 
 public class RpcInfoService {
-	static Map<Integer, RpcInfo> rpcList = new LinkedHashMap<Integer, RpcInfo>();
+	static List<Class> rpcList = new ArrayList<Class>();
 	static {
-		rpcList.put(rpcList.size(), new RpcInfo(rpcList.size(), CalcService.class));
-		rpcList.put(rpcList.size(), new RpcInfo(rpcList.size(), EditService.class));
+		rpcList.add(CalcService.class);
+		rpcList.add(EditService.class);
 	}
 	
-	static class RpcInfo {
-		public Integer id;
-		public Class class_;
-		
-		public RpcInfo(Integer id, Class class_) {
-			this.id = id;
-			this.class_ = class_;
-		}
-
-		@Override
-		public int hashCode() {
-			return class_.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			final RpcInfo other = (RpcInfo) obj;
-			return id.equals(other.id);
-		}
-	}
-	
-	public List find(RpcInfo info) {
+	public List find() {
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		
-		for (RpcInfo ri : rpcList.values()) {
-			Class c = ri.class_;
-			
+		for (Class c : rpcList) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("name", toComponentName(c.getName()));
 			
@@ -78,32 +54,6 @@ public class RpcInfoService {
 		}
 		
 		return list;
-	}
-	
-	public void create(RpcInfo info) {
-		if (info == null || rpcList.containsKey(info.id)) {
-			throw new IllegalArgumentException();
-		}
-
-		info.id = rpcList.size();
-		rpcList.put(rpcList.size(), info);
-	}
-	
-	public void update(RpcInfo info) {
-		if (info == null || !rpcList.containsKey(info.id)) {
-			throw new IllegalArgumentException();
-		}
-		
-		RpcInfo ri = rpcList.get(info.id);
-		ri.class_ = info.class_;
-	}
-	
-	public void delete(RpcInfo info) {
-		if (info == null || !rpcList.containsKey(info.id)) {
-			throw new IllegalArgumentException();
-		}
-		
-		rpcList.remove(info);
 	}
 	
 	private String toComponentName(String name) {
@@ -134,7 +84,7 @@ public class RpcInfoService {
 					|| c.equals(Byte.class) || c.equals(Short.class) || c.equals(Integer.class) || c.equals(Long.class)
 					|| c.equals(BigInteger.class)) {
 				sb.append("100");
-			} else if (c.isAssignableFrom(Number.class)) {
+			} else if (Number.class.isAssignableFrom(c)) {
 				sb.append("33.3");
 			} else if (CharSequence.class.isAssignableFrom(c)) {
 				sb.append("\"abc\"");

@@ -485,29 +485,21 @@ public class JSONRPCServlet extends HttpServlet {
 			Class c = o.getClass();
 			Class target = c;
 			Method method = null;
-			Method sub = null;
 			boolean exists = false;
-			loop: do {
-				for (Method m : target.getDeclaredMethods()) {
-					if (methodName.equals(m.getName())
-							&& !Modifier.isStatic(m.getModifiers())
-							&& Modifier.isPublic(m.getModifiers())) {
-						exists = true;
-						if (method == null && values.size() == m.getParameterTypes().length) {
-							method = m;
-							break loop;
-						}
-						
-						if (vlength && sub == null && m.getParameterTypes().length == 0) {
-							sub = method;
-						}
-					}
+			for (Method m : target.getMethods()) {
+				if (!methodName.equals(m.getName()) || Modifier.isStatic(m.getModifiers())) {
+					continue;
 				}
-				
-				target = target.getSuperclass();
-			} while (method == null && target != null);
-			
-			if (method == null) method = sub;
+
+				int length = m.getParameterTypes().length;
+				if (values.size() == length) {
+					method = m;
+					break; 
+				} else if (length == 0) {
+					method = m;
+				}				
+				exists = true;
+			}
 			
 			if (method == null || limit(c, method)) {
 				StringBuilder sb = new StringBuilder(c.getName());
