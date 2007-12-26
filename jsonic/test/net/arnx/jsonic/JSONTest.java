@@ -297,14 +297,14 @@ public class JSONTest {
 	@Test
 	@SuppressWarnings({ "unchecked", "serial" })
 	public void testParse() throws Exception {
-		Locale.setDefault(Locale.ENGLISH);
+		Locale.setDefault(Locale.JAPANESE);
 		JSON json = new JSON(this);
 		
 		try {
 			CharSequence cs = null;
 			assertEquals(null, json.parse(cs));
 			fail();
-		} catch (IllegalArgumentException e) {
+		} catch (NullPointerException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
@@ -313,7 +313,7 @@ public class JSONTest {
 			Reader reader = null;
 			assertEquals(null, json.parse(reader));
 			fail();
-		} catch (IllegalArgumentException e) {
+		} catch (NullPointerException e) {
 			System.out.println(e);
 			assertNotNull(e);			
 		}
