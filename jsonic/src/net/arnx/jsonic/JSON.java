@@ -18,6 +18,7 @@ package net.arnx.jsonic;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
@@ -30,7 +31,6 @@ import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.ResourceBundle;
@@ -141,7 +141,7 @@ public class JSON {
 		setContext(context);
 	}
 	
-	private boolean prettyPrint = false;
+	boolean prettyPrint = false;
 	
 	/**
 	 * Output json string is to human-readable format.
@@ -152,7 +152,7 @@ public class JSON {
 		this.prettyPrint = value;
 	}
 	
-	private int maxDepth = 32;
+	int maxDepth = 32;
 	
 	/**
 	 * Sets maximum depth for the nest level.
@@ -166,8 +166,8 @@ public class JSON {
 		this.maxDepth = value;
 	}
 	
-	private Class contextClass = null;
-	private Object context = null;
+	Class contextClass = null;
+	Object context = null;
 	
 	/**
 	 * Sets context for inner class.
@@ -184,7 +184,7 @@ public class JSON {
 		}
 	}
 
-	private Locale locale;
+	Locale locale;
 	
 	/**
 	 * Sets locale for conversion or message.
@@ -276,7 +276,7 @@ public class JSON {
 		return format(source, ap, 0);
 	}
 	
-	private Appendable format(Object o, Appendable ap, int level) throws IOException {
+	Appendable format(Object o, Appendable ap, int level) throws IOException {
 		if (level > this.maxDepth) {
 			o = null;
 		}
@@ -1479,77 +1479,6 @@ public class JSON {
 		// no handle
 	}
 	
-	/**
-	 * Invokes the targeted method for the specified object, with the specified json parameters.
-	 * 
-	 * @param o the object the underlying method is invoked from
-	 * @param methodName the invoked method name
-	 * @param json the parameters used for the method call. json should be array, or appended '[' and ']'.
-	 */
-	public Object invoke(Object o, String methodName, CharSequence json) throws Exception {
-		List values = (json != null) ? parseArray(new CharSequenceJSONSource(json), new StringBuilder()) : null;
-		return invokeDynamic(o, methodName, values);
-	}
-	
-	Object invokeDynamic(Object o, String methodName, List values) throws Exception {
-		if (values == null) {
-			values = Collections.EMPTY_LIST;
-		}
-		
-		methodName = toLowerCamel(methodName);
-		
-		Class c = o.getClass();
-		Class target = c;
-		Method method = null;
-		boolean exists = false;
-		loop: do {
-			for (Method m : target.getDeclaredMethods()) {
-				if (methodName.equals(m.getName())
-						&& !Modifier.isStatic(m.getModifiers())
-						&& Modifier.isPublic(m.getModifiers())) {
-					exists = true;
-					if (method == null && values.size() == m.getParameterTypes().length) {
-						method = m;
-						break loop;
-					}
-				}
-			}
-			
-			target = target.getSuperclass();
-		} while (method == null && target != null);
-		
-		if (method == null || limit(c, method)) {
-			StringBuilder sb = new StringBuilder(c.getName());
-			sb.append('#').append(methodName).append('(');
-			String json = encode(values);
-			sb.append(json, 1, json.length()-1);
-			sb.append(')');
-			if (exists) {
-				throw new IllegalArgumentException(getMessage("json.invoke.MismatchParametersError", sb.toString()));
-			} else {
-				throw new NoSuchMethodException(getMessage("json.invoke.NoSuchMethodError", sb.toString()));
-			}
-		}
-		
-		Class<?>[] paramTypes = method.getParameterTypes();
-		Object[] params = new Object[paramTypes.length];
-		for (int i = 0; i < params.length; i++) {
-			params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
-		}
-		
-		boolean access = (!Modifier.isPublic(c.getModifiers()) 
-				&& !Modifier.isPrivate(c.getModifiers())
-				&& this.context != null
-				&& c.getPackage().equals(this.context.getClass().getPackage()));
-		
-		if (access) method.setAccessible(true);
-		return method.invoke(o, params);
-	}
-	
-	protected boolean limit(Class c, Method method) {
-		return method.getDeclaringClass().equals(Object.class);
-	}
-	
 	protected Object create(Class c) throws Exception {
 		Object instance = null;
 		
@@ -1576,34 +1505,28 @@ public class JSON {
 		} else if (c.isMemberClass()) {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
-			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
-				con.setAccessible(true);
-			}
+			tryAccess(c, con);
 			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
 		} else if (Date.class.isAssignableFrom(c)) {
 			Constructor con = c.getDeclaredConstructor(long.class);
-			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
-				con.setAccessible(true);
-			}
+			tryAccess(c, con);
 			instance = con.newInstance(0l);
 		} else {
 			Constructor con = c.getDeclaredConstructor();
-			if (!Modifier.isPublic(con.getModifiers()) && tryAccess(c)) {
-				con.setAccessible(true);
-			}
+			tryAccess(c, con);
 			instance = con.newInstance();
 		}
 		
 		return instance;
 	}
 	
-	private String getMessage(String id, Object... args) {
+	String getMessage(String id, Object... args) {
 		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName(), locale);
 		return MessageFormat.format(bundle.getString(id), args);
 	}
 
-	static interface JSONSource {
+	interface JSONSource {
 		int next() throws IOException;
 		void back();
 		long getLineNumber();
@@ -1611,7 +1534,7 @@ public class JSON {
 		long getOffset();
 	}
 
-	private class CharSequenceJSONSource implements JSONSource {
+	class CharSequenceJSONSource implements JSONSource {
 		private int lines = 1;
 		private int columns = 1;
 		private int offset = 0;
@@ -1661,7 +1584,7 @@ public class JSON {
 		}
 	}
 
-	private class ReaderJSONSource implements JSONSource{
+	class ReaderJSONSource implements JSONSource{
 		private long lines = 1l;
 		private long columns = 1l;
 		private long offset = 0;
@@ -1726,17 +1649,25 @@ public class JSON {
 		}
 	}
 	
-	private boolean tryAccess(Class c) {
-		int modifier = c.getModifiers();
-		if (this.contextClass == null || Modifier.isPublic(modifier)) return false;
+	boolean tryAccess(Class c) {
+		boolean access = false;
 		
-		if (Modifier.isPrivate(modifier)) {
-			return this.contextClass.equals(c.getEnclosingClass());
+		int modifier = c.getModifiers();
+		if (this.contextClass != null && !Modifier.isPublic(modifier)) {
+			if (Modifier.isPrivate(modifier)) {
+				access = this.contextClass.equals(c.getEnclosingClass());
+			} else {
+				access = c.getPackage().equals(this.contextClass.getPackage());
+			}
 		}
-		return c.getPackage().equals(this.contextClass.getPackage());
+		return access;
 	}
 	
-	private static String toLowerCamel(String name) {
+	void tryAccess(Class c, AccessibleObject accessible) {		
+		if (tryAccess(c)) accessible.setAccessible(true);
+	}
+	
+	static String toLowerCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = false;
 		for (int i = 0; i < name.length(); i++) {

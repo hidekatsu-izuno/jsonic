@@ -1,22 +1,64 @@
+/*
+ * Copyright 2007 Hidekatsu Izuno
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+ * either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 package sample.service;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import sample.web.basic.service.*;
+
 public class RpcInfoService {
-	public List find(Map params) {
-		Class[] classes = new Class[] {
-				sample.web.basic.service.CalcService.class,
-				sample.web.basic.service.EditService.class
-			};
+	static Map<Integer, RpcInfo> rpcList = new LinkedHashMap<Integer, RpcInfo>();
+	static {
+		rpcList.put(rpcList.size(), new RpcInfo(rpcList.size(), CalcService.class));
+		rpcList.put(rpcList.size(), new RpcInfo(rpcList.size(), EditService.class));
+	}
+	
+	static class RpcInfo {
+		public Integer id;
+		public Class class_;
 		
+		public RpcInfo(Integer id, Class class_) {
+			this.id = id;
+			this.class_ = class_;
+		}
+
+		@Override
+		public int hashCode() {
+			return class_.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			final RpcInfo other = (RpcInfo) obj;
+			return id.equals(other.id);
+		}
+	}
+	
+	public List find(RpcInfo info) {
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		
-		for (Class c : classes) {
+		for (RpcInfo ri : rpcList.values()) {
+			Class c = ri.class_;
+			
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("name", toComponentName(c.getName()));
 			
@@ -36,6 +78,32 @@ public class RpcInfoService {
 		}
 		
 		return list;
+	}
+	
+	public void create(RpcInfo info) {
+		if (info == null || rpcList.containsKey(info.id)) {
+			throw new IllegalArgumentException();
+		}
+
+		info.id = rpcList.size();
+		rpcList.put(rpcList.size(), info);
+	}
+	
+	public void update(RpcInfo info) {
+		if (info == null || !rpcList.containsKey(info.id)) {
+			throw new IllegalArgumentException();
+		}
+		
+		RpcInfo ri = rpcList.get(info.id);
+		ri.class_ = info.class_;
+	}
+	
+	public void delete(RpcInfo info) {
+		if (info == null || !rpcList.containsKey(info.id)) {
+			throw new IllegalArgumentException();
+		}
+		
+		rpcList.remove(info);
 	}
 	
 	private String toComponentName(String name) {

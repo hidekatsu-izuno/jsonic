@@ -18,8 +18,11 @@ package net.arnx.jsonic;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -188,7 +191,7 @@ public class JSONRPCServlet extends HttpServlet {
 	protected void doRPC(String[] pathes, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		JSON json = new JSON(this);
+		JSONInvoker json = new JSONInvoker(this);
 		
 		// request processing
 		Request req = null;
@@ -222,7 +225,7 @@ public class JSONRPCServlet extends HttpServlet {
 					}
 					
 					json.setContext(component);
-					res = json.invokeDynamic(component, targets[1], req.params);
+					res = json.invoke(component, targets[1], req.params, false);
 				}
 			}
 		} catch (ClassNotFoundException e) {
@@ -302,7 +305,7 @@ public class JSONRPCServlet extends HttpServlet {
 		}
 		
 		// request processing
-		JSON json = new JSON(this);
+		JSONInvoker json = new JSONInvoker(this);
 		
 		Object res = null;
 		try {
@@ -333,7 +336,7 @@ public class JSONRPCServlet extends HttpServlet {
 			}
 			
 			json.setContext(component);
-			res = json.invokeDynamic(component, methodName, params);
+			res = json.invoke(component, methodName, params, true);
 		} catch (ClassNotFoundException e) {
 			if (container.isDebugMode()) container.log(e.getMessage(), e);
 			response.sendError(SC_NOT_FOUND);
@@ -465,5 +468,73 @@ public class JSONRPCServlet extends HttpServlet {
 	public void destroy() {
 		container.destory();
 		super.destroy();
+	}
+	
+	class JSONInvoker extends JSON {
+		public JSONInvoker(Object context) {
+			super(context);
+		}
+		
+		public Object invoke(Object o, String methodName, List values, boolean vlength) throws Exception {
+			if (values == null) {
+				values = Collections.EMPTY_LIST;
+			}
+			
+			methodName = toLowerCamel(methodName);
+			
+			Class c = o.getClass();
+			Class target = c;
+			Method method = null;
+			Method sub = null;
+			boolean exists = false;
+			loop: do {
+				for (Method m : target.getDeclaredMethods()) {
+					if (methodName.equals(m.getName())
+							&& !Modifier.isStatic(m.getModifiers())
+							&& Modifier.isPublic(m.getModifiers())) {
+						exists = true;
+						if (method == null && values.size() == m.getParameterTypes().length) {
+							method = m;
+							break loop;
+						}
+						
+						if (vlength && sub == null && m.getParameterTypes().length == 0) {
+							sub = method;
+						}
+					}
+				}
+				
+				target = target.getSuperclass();
+			} while (method == null && target != null);
+			
+			if (method == null) method = sub;
+			
+			if (method == null || limit(c, method)) {
+				StringBuilder sb = new StringBuilder(c.getName());
+				sb.append('#').append(methodName).append('(');
+				String json = encode(values);
+				sb.append(json, 1, json.length()-1);
+				sb.append(')');
+				if (exists) {
+					throw new IllegalArgumentException(getMessage("json.invoke.MismatchParametersError", sb.toString()));
+				} else {
+					throw new NoSuchMethodException(getMessage("json.invoke.NoSuchMethodError", sb.toString()));
+				}
+			}
+			
+			Class<?>[] paramTypes = method.getParameterTypes();
+			Object[] params = new Object[paramTypes.length];
+			for (int i = 0; i < params.length; i++) {
+				params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
+			}
+
+			tryAccess(c, method);
+			
+			return method.invoke(o, params);
+		}
+		
+		public boolean limit(Class c, Method method) {
+			return method.getDeclaringClass().equals(Object.class);
+		}
 	}
 }

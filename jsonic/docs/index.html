@@ -285,23 +285,6 @@ database {
 </pre>
 <p>※version 0.9.3まであった拡張モードは0.9.4以降では廃止されました。</p>
 
-<h4 id="invoke">■ invoke <span class="subtitle">- JSONを使ったメソッドの実行</span></h4>
-<p>JSONでRPC(Remote Procedure Call)を行おうと考えた場合、servletなどから送られてくるパラメータを上手い具合にメソッドの引数に引き渡す必要があります。JSONICでは、簡単にメソッドを実行できるようinvokeメソッドを用意しました。</p>
-<pre class="source">
-<span class="comment">// target.test(1, 2, 3)を実行します（引き渡すJSONはarrayでなければなりません）</span>
-json<span class="em">.invoke(</span>target, "test", "[1, 2, 3]"<span class="em">)</span>;
-</pre>
-<p>この時、あるメソッドは実行させたくない場合があります。その際にはlimitメソッドをオーバーライドすることで実行対象のメソッドを制限することができます。デフォルトではObjectクラスのメソッドを実行しないよう制限がかけられていますが、アノテーションが設定されているメソッドのみ実行するといった制限をかけることも容易に実現できます。</p>
-<pre class="source">
-JSON json = new JSON() {
-    <span class="comment">// methodの実行を制限する場合はtrue</span>
-    protected <span class="em">boolean limit(Class c, Method method)</span> {
-        <span class="comment">// デフォルトではObjectクラスのメソッドは実行しないように制限されています</span>
-        super.limit(c, method);
-    }
-};
-</pre>
-
 <h4 id="innerclass">■ コンテキストの指定 <span class="subtitle">- 内部クラスを利用したデコード</span></h4>
 <p>decode/parseメソッドの引数にClassオブジェクトを指定するということは、指定されたクラス通常publicでなければならないことを意味します。
 しかし、JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
@@ -409,7 +392,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <h2 id="releasenote">リリースノート</h2>
 
 <h3>2007/12/XX version 0.9.5</h3>
-<p>下記の機能追加とバグ修正が行われています。</p>
+<p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
 <li>maxDepthのデフォルト値を32階層に変更しました。</li>
 <li>Parse時の日付変換ロジックを見直し、一般的にコンピュータが取り扱う日付フォーマットに対応しました。</li>
@@ -420,9 +403,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、名称が常にJavaBean規約に合うように変換をかけていたが、一旦そのままマッチさせ失敗したときのみ変換するように変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、Javaの予約語にも対応できるよう末尾に「_」の付いたプロパティでもマッチできるよう変更しました。</li>
-<li>Invoke時にMethodは存在するが引数の数が合わない場合には、IllegalArgumentExceptionを投げるように修正しました。</li>
-<li>Invoke時に投げられるNoSuchMethodExceptionのメッセージをわかりやすくしました。</li>
-<li>limitメソッドの引数に実行対象のクラスが渡るように変更しました。</li>
+<li>ありがたみが薄いためinvokeメソッドを廃止しました。</li>
 <li>JSONRPCServletのconfigでencodingを指定できるようになりました。指定しない場合は、デフォルトでUT-8が使われます。</li>
 <li>各種JavaScriptライブラリのJSON対応が整ってきたため、JavaScript版のJSON.encode/JSON.decodeを削除しました。</li>
 </ul>
