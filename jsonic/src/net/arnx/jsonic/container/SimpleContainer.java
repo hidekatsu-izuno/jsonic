@@ -19,11 +19,11 @@ public class SimpleContainer implements Container {
 		return c.newInstance();
 	}
 
-	public void log(String message) {
+	public void debug(String message) {
 		context.log(message);
 	}
 	
-	public void log(String message, Throwable e) {
+	public void error(String message, Throwable e) {
 		context.log(message, e);
 	}
 

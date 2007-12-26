@@ -95,7 +95,7 @@ public class JSONRPCServlet extends HttpServlet {
 				if (entry.getKey().startsWith("/")) {
 					routes.put(Pattern.compile(entry.getKey().equals("/") ? "^/" : "^" + entry.getKey() + "/"), entry.getValue());					
 				} else {
-					container.log("route starts with '/': " + entry.getKey());
+					container.debug("route needs to start with '/': " + entry.getKey());
 				}
 			}
 		}
@@ -229,32 +229,32 @@ public class JSONRPCServlet extends HttpServlet {
 				}
 			}
 		} catch (ClassNotFoundException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			return;			
 		} catch (JSONParseException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32700);
 			error.put("message", "Parse error.");
 		} catch (NoSuchMethodException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32601);
 			error.put("message", "Method not found.");
 		} catch (IllegalArgumentException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32602);
 			error.put("message", "Invalid params.");
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.log(cause.getMessage(), cause);
+			container.error(cause.getMessage(), cause);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32603);
 			error.put("message", cause.getMessage());
 		} catch (Exception e) {
-			container.log(e.getMessage(), e);
+			container.error(e.getMessage(), e);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32603);
 			error.put("message", "Internal error.");
@@ -280,7 +280,7 @@ public class JSONRPCServlet extends HttpServlet {
 			
 			json.format(map, writer);
 		} catch (Exception e) {
-			container.log(e.getMessage(), e);
+			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
@@ -338,27 +338,27 @@ public class JSONRPCServlet extends HttpServlet {
 			json.setContext(component);
 			res = json.invoke(component, methodName, params, true);
 		} catch (ClassNotFoundException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			return;			
 		} catch (NoSuchMethodException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			return;
 		} catch (IllegalArgumentException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;
 		} catch (JSONParseException e) {
-			if (container.isDebugMode()) container.log(e.getMessage(), e);
+			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.log(cause.getMessage(), cause);
+			container.error(cause.getMessage(), cause);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, cause.getMessage());
 		} catch (Exception e) {
-			container.log(e.getMessage(), e);
+			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
@@ -380,7 +380,7 @@ public class JSONRPCServlet extends HttpServlet {
 			json.format(res, writer);
 			if (callback != null) writer.append(");");
 		} catch (Exception e) {
-			container.log(e.getMessage(), e);
+			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR);
 			return;
 		}		

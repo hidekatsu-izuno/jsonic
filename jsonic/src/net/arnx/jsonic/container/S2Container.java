@@ -25,11 +25,11 @@ public class S2Container implements Container {
 		return (debug != null) ? debug : Env.UT.equals(Env.getValue());
 	}
 
-	public void log(String message) {
-		logger.warn(message);
+	public void debug(String message) {
+		logger.debug(message);
 	}
 
-	public void log(String message, Throwable e) {
+	public void error(String message, Throwable e) {
 		logger.error(message, e);
 	}
 	

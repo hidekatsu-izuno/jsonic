@@ -6,7 +6,7 @@ public interface Container {
 	void init(ServletContext context);
 	boolean isDebugMode();
 	Object getComponent(Class c) throws Exception;
-	void log(String message);
-	void log(String message, Throwable e);
+	void debug(String message);
+	void error(String message, Throwable e);
 	void destory();
 }
