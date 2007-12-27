@@ -48,6 +48,7 @@ public class JSONRPCServletTest {
 		assertEquals(HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());
 
 		request.setMethod("POST");
+		requset.setBody();
 		servlet.service(request, response);
 		assertEquals(HttpServletResponse.SC_METHOD_NOT_ALLOWED, response.getStatus());	
 		

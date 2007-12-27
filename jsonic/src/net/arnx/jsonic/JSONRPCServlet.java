@@ -529,8 +529,6 @@ public class JSONRPCServlet extends HttpServlet {
 			for (int i = 0; i < params.length; i++) {
 				params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
 			}
-
-			tryAccess(c, method);
 			
 			return method.invoke(o, params);
 		}

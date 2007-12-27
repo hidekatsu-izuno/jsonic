@@ -18,7 +18,6 @@ package net.arnx.jsonic;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
@@ -1505,16 +1504,24 @@ public class JSON {
 		} else if (c.isMemberClass()) {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
-			tryAccess(c, con);
+			if(tryAccess(c)) con.setAccessible(true);
 			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
-		} else if (Date.class.isAssignableFrom(c)) {
-			Constructor con = c.getDeclaredConstructor(long.class);
-			tryAccess(c, con);
-			instance = con.newInstance(0l);
 		} else {
-			Constructor con = c.getDeclaredConstructor();
-			tryAccess(c, con);
-			instance = con.newInstance();
+			if (Date.class.isAssignableFrom(c)) {
+				try {
+					Constructor con = c.getDeclaredConstructor(long.class);
+					if(tryAccess(c)) con.setAccessible(true);
+					instance = con.newInstance(0l);
+				} catch (NoSuchMethodException e) {
+					// no handle
+				}
+			}
+			
+			if (instance == null) {
+				Constructor con = c.getDeclaredConstructor();
+				if(tryAccess(c)) con.setAccessible(true);
+				instance = con.newInstance();
+			}
 		}
 		
 		return instance;
@@ -1650,21 +1657,14 @@ public class JSON {
 	}
 	
 	boolean tryAccess(Class c) {
-		boolean access = false;
-		
 		int modifier = c.getModifiers();
 		if (this.contextClass != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
-				access = this.contextClass.equals(c.getEnclosingClass());
-			} else {
-				access = c.getPackage().equals(this.contextClass.getPackage());
+				return this.contextClass.equals(c.getEnclosingClass());
 			}
+			return c.getPackage().equals(this.contextClass.getPackage());
 		}
-		return access;
-	}
-	
-	void tryAccess(Class c, AccessibleObject accessible) {		
-		if (tryAccess(c)) accessible.setAccessible(true);
+		return false;
 	}
 	
 	static String toLowerCamel(String name) {
