@@ -233,7 +233,7 @@ public class JSON {
 	 * 
 	 * @param source a json string to decode
 	 * @return a decoded object
-	 * @exception ParseException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(String source) throws JSONParseException {
 		Object value = (new JSON()).parse(source);
@@ -246,7 +246,7 @@ public class JSON {
 	 * @param source a json string to decode
 	 * @param c class for converting
 	 * @return a decoded object
-	 * @exception ParseException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c) throws Exception {
 		JSON json = new JSON(c);
@@ -260,7 +260,7 @@ public class JSON {
 	 * @param c class for converting
 	 * @param t type specified generics parameters
 	 * @return a decoded object
-	 * @exception ParseException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c, Type t) throws Exception {
 		JSON json = new JSON(c);
@@ -271,26 +271,45 @@ public class JSON {
 		if (path == null || path.equals("")) return o;
 		
 		Object current = o;
-		int last = 0;
 		try {
+			int last = 0;
 			boolean isArray = false;
 			for (int i = 0; i <= path.length(); i++) {
-				char c = (i < path.length()) ? path.charAt(i) : '.';
+				char c = (i == path.length()) ? '.' : path.charAt(i);
 				String key = null;
 				switch (c) {
 				case '[':
 					isArray = true;
 				case '.':
-					key = path.substring(last, i);
-					if (current instanceof Map) {
-						current = ((Map)current).get(key);
-					} else {
-						
+					if (path.charAt(i-1) != ']') {
+						key = path.substring(last, i);
+						if (current instanceof Map) {
+							current = ((Map)current).get(key);
+						} else {
+							
+						}
 					}
 					last = i;
 					break;
 				case ']':
 					if (!isArray) return null;
+					key = path.substring(last, i);
+					if (key.charAt(0) == '\'') {
+						if (current instanceof Map) {
+							current = ((Map)current).get(key.substring(1, key.length()-1));
+						} else {
+							
+						}
+					} else {
+						int pos = Integer.parseInt(key);
+						if (current instanceof List) {
+							current = ((List)current).get(pos);
+						} else if (current.getClass().isArray()) {
+							current = Array.get(current, pos);
+						} else {
+							return null;
+						}
+					} 
 					break;
 				}
 			}
