@@ -267,6 +267,39 @@ public class JSON {
 		return json.parse(source, c, t);
 	}
 	
+	public static Object get(Object o, String path) {
+		if (path == null || path.equals("")) return o;
+		
+		Object current = o;
+		int last = 0;
+		try {
+			boolean isArray = false;
+			for (int i = 0; i <= path.length(); i++) {
+				char c = (i < path.length()) ? path.charAt(i) : '.';
+				String key = null;
+				switch (c) {
+				case '[':
+					isArray = true;
+				case '.':
+					key = path.substring(last, i);
+					if (current instanceof Map) {
+						current = ((Map)current).get(key);
+					} else {
+						
+					}
+					last = i;
+					break;
+				case ']':
+					if (!isArray) return null;
+					break;
+				}
+			}
+		} catch (Exception e) {
+			return null;
+		}
+		return current;
+	}
+	
 	public String format(Object source) throws IOException {
 		return format(source, new StringBuilder(1000)).toString();
 	}

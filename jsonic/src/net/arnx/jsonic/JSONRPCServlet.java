@@ -278,7 +278,7 @@ public class JSONRPCServlet extends HttpServlet {
 			Map<String, Object> map = new LinkedHashMap<String, Object>();
 			map.put("result", res);
 			map.put("error", error);
-			map.put("id", req.id);
+			map.put("id", (req != null) ? req.id : null);
 				
 			Writer writer = response.getWriter();
 			json.setPrettyPrint(container.isDebugMode());
