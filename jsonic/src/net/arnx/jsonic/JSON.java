@@ -1832,13 +1832,14 @@ public class JSON {
 		return buffer;
 	}
 	
-	private static final Pattern TIMEZONE_PATTERN = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})");
 	private Long parseDate(String value) throws ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
 		}
-		value = TIMEZONE_PATTERN.matcher(value).replaceFirst("GMT$1:$2");
+		value = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})")
+			.matcher(value)
+			.replaceFirst("GMT$1:$2");
 		
 		DateFormat format = null;
 		if (Character.isDigit(value.charAt(0))) {

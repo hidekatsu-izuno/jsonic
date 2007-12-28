@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+	
+	<description>jsonic test</description>
+	
+	<servlet>
+		<description>json-rpc test</description>
+		<servlet-name>json-rpc</servlet-name>
+		<servlet-class>net.arnx.jsonic.JSONRPCServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				debug: true
+				encoding: 'UTF-8'
+				routes: {
+					'/(\w+)': 'sample.web.$1.service'
+					'/': 'sample.service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>json-rpc</servlet-name>
+		<url-pattern>*.json</url-pattern>
+	</servlet-mapping>
+</web-app>
