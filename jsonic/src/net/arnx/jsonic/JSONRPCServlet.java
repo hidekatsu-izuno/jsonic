@@ -207,7 +207,7 @@ public class JSONRPCServlet extends HttpServlet {
 			if (req == null || req.method == null || req.params == null) {
 				error = new LinkedHashMap<String, Object>();
 				error.put("code", -32700);
-				error.put("message", "Invalid Request.");		
+				error.put("message", "Invalid Request.");	
 			} else {
 				String[] targets = req.method.split("\\.");
 				if (targets.length != 2 || targets[0].length() == 0 || targets[1].length() == 0) {

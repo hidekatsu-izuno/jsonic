@@ -131,7 +131,7 @@ import java.text.ParseException;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked", "serial"})
-public class JSON {
+public class JSON {	
 	public JSON() {
 		this(null);
 	}
@@ -286,7 +286,8 @@ public class JSON {
 						if (current instanceof Map) {
 							current = ((Map)current).get(key);
 						} else {
-							
+							// TODO
+							return null;
 						}
 					}
 					last = i;
@@ -298,7 +299,7 @@ public class JSON {
 						if (current instanceof Map) {
 							current = ((Map)current).get(key.substring(1, key.length()-1));
 						} else {
-							
+							// TODO
 						}
 					} else {
 						int pos = Integer.parseInt(key);
