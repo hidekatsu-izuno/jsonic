@@ -25,7 +25,6 @@ public class JSONRPCServletTest {
 				JSON.decode(client.getResponseContent()));
 		client.clear();
 
-
 		client.setRequestMethod("POST");
 		client.setRequestContent("{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
 		client.connect();
