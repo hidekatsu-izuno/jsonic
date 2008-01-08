@@ -120,7 +120,7 @@ public class JSONTest {
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class_\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"if\":null}", JSON.encode(test));
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class_\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(test));
 	}
 
 	@Test
@@ -190,6 +190,7 @@ public class JSONTest {
 		test.d = new Date();
 		test.e = Locale.JAPAN;
 		test.setG(Pattern.compile("\\.*"));
+		test.setH(TimeZone.getTimeZone("JST"));
 		test.class_ = boolean.class;
 		
 		String json = JSON.encode(test);
@@ -204,9 +205,10 @@ public class JSONTest {
 		test.d = null;
 		test.e = Locale.JAPAN;
 		test.setG(Pattern.compile("\\.*"));
+		test.setH(TimeZone.getTimeZone("Asia/Tokyo"));
 		test.class_ = Object.class;
 		
-		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"class\":\"java.lang.Object\",\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\"}", TestBean.class));
+		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"class\":\"java.lang.Object\",\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\",\"h\":\"Asia/Tokyo\"}", TestBean.class));
 		
 		GenericsBean gb = new GenericsBean();
 		List<String> list2 = new ArrayList<String>();
@@ -638,6 +640,10 @@ class TestBean {
 	private Pattern g;
 	public Pattern getG() { return g; }
 	public void setG(Pattern g) { this.g = g; }
+	
+	private TimeZone h;
+	public TimeZone getH() { return h; }
+	public void setH(TimeZone h) { this.h = h; }
 
 	public Class class_;
 	
@@ -661,6 +667,7 @@ class TestBean {
 		result = prime * result + ((e == null) ? 0 : e.hashCode());
 		result = prime * result + ((f == null) ? 0 : f.hashCode());
 		result = prime * result + ((g == null) ? 0 : g.pattern().hashCode());
+		result = prime * result + ((h == null) ? 0 : h.hashCode());
 		result = prime * result + ((if_ == null) ? 0 : if_.hashCode());
 		result = prime * result + x;
 		result = prime * result + y;
@@ -710,6 +717,11 @@ class TestBean {
 			if (other.g != null)
 				return false;
 		} else if (!g.pattern().equals(other.g.pattern()))
+			return false;
+		if (h == null) {
+			if (other.h != null)
+				return false;
+		} else if (!h.equals(other.h))
 			return false;
 		if (if_ == null) {
 			if (other.if_ != null)

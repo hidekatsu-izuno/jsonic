@@ -93,10 +93,11 @@ import java.text.ParseException;
  * <tr><td>java.lang.Object[]</td><td rowspan="3">array</td></tr>
  * <tr><td>java.util.Collection</td></tr>
  * <tr><td>boolean[], short[], int[], long[], float[], double[]</td></tr>
- * <tr><td>java.lang.CharSequence</td><td rowspan="7">string</td></tr>
+ * <tr><td>java.lang.CharSequence</td><td rowspan="8">string</td></tr>
  * <tr><td>char[]</td></tr>
  * <tr><td>java.lang.Character</td></tr>
  * <tr><td>char</td></tr>
+ * <tr><td>java.util.TimeZone</td></tr>
  * <tr><td>java.util.regex.Pattern</td></tr>
  * <tr><td>java.lang.reflect.Type</td></tr>
  * <tr><td>java.lang.reflect.Member</td></tr>
@@ -267,59 +268,6 @@ public class JSON {
 		return json.parse(source, c, t);
 	}
 	
-	public static Object get(Object o, String path) {
-		if (path == null || path.equals("")) return o;
-		
-		Object current = o;
-		try {
-			int last = 0;
-			boolean isArray = false;
-			for (int i = 0; i <= path.length(); i++) {
-				char c = (i == path.length()) ? '.' : path.charAt(i);
-				String key = null;
-				switch (c) {
-				case '[':
-					isArray = true;
-				case '.':
-					if (path.charAt(i-1) != ']') {
-						key = path.substring(last, i);
-						if (current instanceof Map) {
-							current = ((Map)current).get(key);
-						} else {
-							// TODO
-							return null;
-						}
-					}
-					last = i;
-					break;
-				case ']':
-					if (!isArray) return null;
-					key = path.substring(last, i);
-					if (key.charAt(0) == '\'') {
-						if (current instanceof Map) {
-							current = ((Map)current).get(key.substring(1, key.length()-1));
-						} else {
-							// TODO
-						}
-					} else {
-						int pos = Integer.parseInt(key);
-						if (current instanceof List) {
-							current = ((List)current).get(pos);
-						} else if (current.getClass().isArray()) {
-							current = Array.get(current, pos);
-						} else {
-							return null;
-						}
-					} 
-					break;
-				}
-			}
-		} catch (Exception e) {
-			return null;
-		}
-		return current;
-	}
-	
 	public String format(Object source) throws IOException {
 		return format(source, new StringBuilder(1000)).toString();
 	}
@@ -347,6 +295,8 @@ public class JSON {
 			o = Arrays.asList((Object[])o);
 		} else if (o instanceof Pattern) {
 			o = ((Pattern)o).pattern();
+		} else if (o instanceof TimeZone) {
+			o = ((TimeZone)o).getID();
 		} else if (o instanceof Date) {
 			o = ((Date)o).getTime();
 		} else if (o instanceof Calendar) {
