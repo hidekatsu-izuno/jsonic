@@ -63,9 +63,7 @@ public class JSONRPCServlet extends HttpServlet {
 		super.init(servletConfig);
 		
 		String configText = servletConfig.getInitParameter("config");
-		if (configText == null || configText.trim().length() == 0) {
-			configText = "{}";
-		}
+		if (configText == null) configText = "";
 		 
 		JSON json = new JSON() {
 			protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
@@ -205,15 +203,14 @@ public class JSONRPCServlet extends HttpServlet {
 		try {			
 			req = json.parse(request.getReader(), Request.class);
 			if (req == null || req.method == null || req.params == null) {
+				response.setStatus(SC_BAD_REQUEST);
 				error = new LinkedHashMap<String, Object>();
 				error.put("code", -32700);
 				error.put("message", "Invalid Request.");	
 			} else {
 				String[] targets = req.method.split("\\.");
 				if (targets.length != 2 || targets[0].length() == 0 || targets[1].length() == 0) {
-					error = new LinkedHashMap<String, Object>();
-					error.put("code", -32601);
-					error.put("message", "Method not found.");
+					throw new NoSuchMethodException(req.method);
 				} else {
 					pathes[1] = targets[0];
 					
@@ -225,8 +222,7 @@ public class JSONRPCServlet extends HttpServlet {
 					
 					Object component = container.getComponent(c);
 					if (component == null) {
-						response.sendError(SC_NOT_FOUND);
-						return;
+						throw new NoSuchMethodException(req.method);
 					}
 					
 					json.setContext(component);
@@ -235,38 +231,45 @@ public class JSONRPCServlet extends HttpServlet {
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_NOT_FOUND);
-			return;			
+			response.setStatus(SC_BAD_REQUEST);
+			error = new LinkedHashMap<String, Object>();
+			error.put("code", -32601);
+			error.put("message", "Method not found.");
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
+			response.setStatus(SC_BAD_REQUEST);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32700);
 			error.put("message", "Parse error.");
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
+			response.setStatus(SC_BAD_REQUEST);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32601);
 			error.put("message", "Method not found.");
 		} catch (IllegalArgumentException e) {
 			container.debug(e.getMessage());
+			response.setStatus(SC_BAD_REQUEST);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32602);
 			error.put("message", "Invalid params.");
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
+			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32603);
 			error.put("message", cause.getMessage());
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
+			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32603);
 			error.put("message", "Internal error.");
 		}
 		
 		// it's notification when id was null
-		if (req != null && req.id == null) {
+		if (req.method != null && req.params != null && req.id == null) {
 			response.setStatus(SC_ACCEPTED);
 			return;
 		}

@@ -1,65 +1,49 @@
 package net.arnx.jsonic;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 import org.junit.*;
 
 import static org.junit.Assert.*;
-import static java.net.HttpURLConnection.*;
+import static javax.servlet.http.HttpServletResponse.*;
 
 public class JSONRPCServletTest {
 	
 	@Test
 	public void testRPC() throws Exception {
-		URL url = new URL("http://localhost:8080/sample/rpc.json");
-		
-		HttpURLConnection con = null;
+		HttpClient client = new HttpClient("http://localhost:8080/sample/basic/rpc.json");
 		
 		// GET
-		con = (HttpURLConnection)url.openConnection();
-		con.setRequestMethod("GET");
-		con.connect();
-		assertEquals(HTTP_BAD_METHOD, con.getResponseCode());
-		con.disconnect();
+		client.setRequestMethod("GET");
+		client.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, client.getResponseCode());
+		client.clear();
 		
 		// POST
-		con = (HttpURLConnection)url.openConnection();
-		con.setRequestMethod("POST");
-		con.connect();
-		assertEquals(HTTP_ACCEPTED, con.getResponseCode());
-		assertEquals("{\"result\":null,\"error\":-32700,\"id\":null}", toString(con.getInputStream()));
-		con.disconnect();
+		client.setRequestMethod("POST");
+		client.connect();
+		assertEquals(SC_BAD_REQUEST, client.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32700,\"message\":\"Invalid Request.\"},\"id\":null}"), 
+				JSON.decode(client.getResponseContent()));
+		client.clear();
+
+
+		client.setRequestMethod("POST");
+		client.setRequestContent("{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
+		client.connect();
+		assertEquals(SC_OK, client.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":3,\"error\":null,\"id\":1}"), 
+				JSON.decode(client.getResponseContent()));	
+		client.clear();
 		
 		// PUT
-		con = (HttpURLConnection)url.openConnection();
-		con.setRequestMethod("PUT");
-		con.connect();
-		assertEquals(HTTP_BAD_METHOD, con.getResponseCode());
-		con.disconnect();
+		client.setRequestMethod("PUT");
+		client.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, client.getResponseCode());
+		client.clear();
 		
 		// DELETE
-		con = (HttpURLConnection)url.openConnection();
-		con.setRequestMethod("DELETE");
-		con.connect();
-		assertEquals(HTTP_BAD_METHOD, con.getResponseCode());
-		con.disconnect();
-	}
-	
-	private String toString(InputStream in) throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-		
-		StringBuffer sb = new StringBuffer();
-		String line = null;
-		while ((line = reader.readLine()) != null) {
-			sb.append(line);
-		}
-		reader.close();
-		
-		return sb.toString();
+		client.setRequestMethod("DELETE");
+		client.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, client.getResponseCode());
+		client.clear();
 	}
 }
