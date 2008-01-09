@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import sample.web.basic.service.*;
+import sample.web.rpc.service.*;
 
 public class RpcInfoService {
 	static List<Class> rpcList = new ArrayList<Class>();

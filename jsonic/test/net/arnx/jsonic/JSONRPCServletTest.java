@@ -9,7 +9,7 @@ public class JSONRPCServletTest {
 	
 	@Test
 	public void testRPC() throws Exception {
-		HttpClient client = new HttpClient("http://localhost:8080/sample/basic/rpc.json");
+		HttpClient client = new HttpClient("http://localhost:8080/sample/rpc/rpc.json");
 		
 		// GET
 		client.setRequestMethod("GET");

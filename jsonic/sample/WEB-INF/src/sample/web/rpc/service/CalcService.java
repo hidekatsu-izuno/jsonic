@@ -13,15 +13,18 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package sample.web.basic.service;
+package sample.web.rpc.service;
 
-public class EditService {
-	
-	public String concat(String a, String b) {
+public class CalcService {
+	public int plus(int a, int b) {
 		return a + b;
 	}
 	
-	public String[] split(String a, String b) {
-		return a.split(b);
+	public int sum(int[] a) {
+		int result = 0;
+		for (int n : a) {
+			result += n;
+		}
+		return result;
 	}
 }
