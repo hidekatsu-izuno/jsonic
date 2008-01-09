@@ -317,6 +317,8 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 
 <h3>JSON-RPC Servlet</h3>
 
+<p>JSONICには、JSON-RPC1.0とRestfull APIの2 wayによるWeb Service機能が用意されています。</p>
+
 <h4>JSON-RPC 1.0</h4>
 <p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です。<br />
 JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載するとpathに対し対応したclass nameのクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
@@ -329,7 +331,7 @@ JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載�
         &lt;param-value&gt;
         	"debug": true
         	"routes": {
-        	    "path" : "class name",
+        	    "path" : "root package name",
         	    ...
         	}
         &lt;/param-value&gt;
