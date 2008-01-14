@@ -396,12 +396,13 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
 <li>maxDepthのデフォルト値を32階層に変更しました。</li>
+<li>Parse時に入力として空文字列（コメント含む）が指定された場合、nullを返すようにしました。</li>
 <li>Parse時の日付変換ロジックを見直し、一般的にコンピュータが取り扱う日付フォーマットに対応しました。</li>
 <li>Parse時にjava.sql.Date/java.sql.Time/java.sql.Timestampへの変換に対応しました。</li>
 <li>Parse時にjava.util.TimeZoneの変換に対応しました。</li>
 <li>Parse時に値が指定されない場合、nullが指定されたものとして取り扱うよう変更しました。</li>
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
-<li>ParseのJSON objectからJavaBeanへの変換時、名称が常にJavaBean規約に合うように変換をかけていたが、一旦そのままマッチさせ失敗したときのみ変換するように変更しました。</li>
+<li>ParseのJSON objectからJavaBeanへの変換時、名称が常にJavaBean規約に合うように変換していましたが、マッチに失敗した場合のみ変換するように変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、Javaの予約語にも対応できるよう末尾に「_」の付いたプロパティでもマッチできるよう変更しました。</li>
 <li>JSONRPCServletのContainerを簡単に差し替えられるようにするとともに、Seasar2用コンテナを用意しました。</li>
 <li>JSONRPCServletのconfigでencodingを指定できるようになりました。指定しない場合は、デフォルトでUT-8が使われます。</li>
