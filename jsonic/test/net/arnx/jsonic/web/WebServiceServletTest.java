@@ -91,7 +91,7 @@ public class WebServiceServletTest {
 		List<Map<String, Object>> content = null;
 		
 		// POST
-		client.setURL("http://localhost:8080/sample/rest/memo.json");
+		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=POST");
 		client.setRequestMethod("POST");
 		client.setRequestContent("{title:\"title\",text:\"text\"}");
 		client.connect();
