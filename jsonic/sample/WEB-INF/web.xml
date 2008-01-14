@@ -8,7 +8,7 @@
 	<description>jsonic sample</description>
 	
 	<servlet>
-		<description>json-ws sample</description>
+		<description>JSON-WebService</description>
 		<servlet-name>json-ws</servlet-name>
 		<servlet-class>net.arnx.jsonic.web.WebServiceServlet</servlet-class>
 		<init-param>

@@ -32,8 +32,8 @@
 	</servlet>
 	
 	<servlet>
-		<description>json-rpc sample</description>
-		<servlet-name>json-rpc</servlet-name>
+		<description>JSON-WebService</description>
+		<servlet-name>json-ws</servlet-name>
 		<servlet-class>net.arnx.jsonic.web.WebServiceServlet</servlet-class>
 		<init-param>
 			<param-name>config</param-name>
