@@ -1,5 +1,8 @@
 package net.arnx.jsonic.web;
 
+import java.util.List;
+import java.util.Map;
+
 import net.arnx.jsonic.*;
 
 import org.junit.*;
@@ -51,29 +54,34 @@ public class WebServiceServletTest {
 	@Test
 	public void testREST() throws Exception {
 		HttpClient client = new HttpClient("http://localhost:8080/sample/rest/memo.json");
+		List<Map<String, Object>> content = null;
+		
+		// POST
+		client.setRequestMethod("POST");
+		client.setRequestContent("{title:\"title\",text:\"text\"}");
+		client.connect();
+		assertEquals(SC_CREATED, client.getResponseCode());
+		client.clear();
 		
 		// GET
 		client.setRequestMethod("GET");
 		client.connect();
 		assertEquals(SC_OK, client.getResponseCode());
-		client.clear();
-		
-		// POST
-		client.setRequestMethod("POST");
-		client.connect();
-		assertEquals(SC_OK, client.getResponseCode());
+		content = (List<Map<String, Object>>)JSON.decode(client.getResponseContent());
 		client.clear();
 		
 		// PUT
 		client.setRequestMethod("PUT");
+		client.setRequestContent("{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
 		client.connect();
-		assertEquals(SC_OK, client.getResponseCode());
+		assertEquals(SC_NO_CONTENT, client.getResponseCode());
 		client.clear();
 		
 		// DELETE
 		client.setRequestMethod("DELETE");
+		client.setRequestContent("{id:" + content.get(0).get("id") + "}");
 		client.connect();
-		assertEquals(SC_OK, client.getResponseCode());
+		assertEquals(SC_NO_CONTENT, client.getResponseCode());
 		client.clear();
 	}
 }

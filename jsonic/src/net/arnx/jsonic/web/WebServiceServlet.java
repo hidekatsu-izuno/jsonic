@@ -23,7 +23,6 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -269,7 +268,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// it's notification when id was null
-		if (req.method != null && req.params != null && req.id == null) {
+		if (req != null && req.method != null && req.params != null && req.id == null) {
 			response.setStatus(SC_ACCEPTED);
 			return;
 		}
@@ -309,13 +308,16 @@ public class WebServiceServlet extends HttpServlet {
 		if ("GET".equals(method)) {
 			methodName = "find";
 			callback = request.getParameter("callback");
+			response.setStatus(SC_OK);
 		} else if ("POST".equals(method)) {
 			methodName = "create";
 			response.setStatus(SC_CREATED);
 		} else if ("PUT".equals(method)) {
 			methodName = "update";
+			response.setStatus(SC_NO_CONTENT);
 		} else if ("DELETE".equals(method)) {
 			methodName = "delete";
+			response.setStatus(SC_NO_CONTENT);
 		}
 		
 		// request processing
@@ -377,9 +379,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		// primitive object can't convert JSON
-		if (res == null || res instanceof CharSequence || res instanceof Boolean || res instanceof Number || res instanceof Date) {
-			response.setStatus(SC_NO_CONTENT);
+		if (!"GET".equals(method)) {
 			return;
 		}
 
