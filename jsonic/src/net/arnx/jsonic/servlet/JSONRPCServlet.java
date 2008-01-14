@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package net.arnx.jsonic;
+package net.arnx.jsonic.servlet;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -38,8 +38,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.arnx.jsonic.container.Container;
-import net.arnx.jsonic.container.SimpleContainer;
+import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
@@ -522,9 +522,9 @@ public class JSONRPCServlet extends HttpServlet {
 				sb.append(json, 1, json.length()-1);
 				sb.append(')');
 				if (exists) {
-					throw new IllegalArgumentException(getMessage("json.invoke.MismatchParametersError", sb.toString()));
+					throw new IllegalArgumentException("mismatch parameters: " + sb.toString());
 				} else {
-					throw new NoSuchMethodException(getMessage("json.invoke.NoSuchMethodError", sb.toString()));
+					throw new NoSuchMethodException("method missing: " + sb.toString());
 				}
 			}
 			
@@ -540,5 +540,25 @@ public class JSONRPCServlet extends HttpServlet {
 		public boolean limit(Class c, Method method) {
 			return method.getDeclaringClass().equals(Object.class);
 		}
+	}
+	
+	private static String toLowerCamel(String name) {
+		StringBuilder sb = new StringBuilder(name.length());
+		boolean toUpperCase = false;
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
+		}
+		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
+			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+		}
+		return sb.toString();
 	}
 }

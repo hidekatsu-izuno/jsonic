@@ -1670,7 +1670,7 @@ public class JSON {
 		return false;
 	}
 	
-	static String toLowerCamel(String name) {
+	private static String toLowerCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = false;
 		for (int i = 0; i < name.length(); i++) {
@@ -1689,7 +1689,6 @@ public class JSON {
 		}
 		return sb.toString();
 	}
-	
 	
 	private static Map<String, Object> getSetProperties(Class c) {
 		Map<String, Object> props = new HashMap<String, Object>();

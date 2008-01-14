@@ -1,4 +1,4 @@
-package net.arnx.jsonic.container;
+package net.arnx.jsonic.servlet;
 
 import javax.servlet.ServletContext;
 
