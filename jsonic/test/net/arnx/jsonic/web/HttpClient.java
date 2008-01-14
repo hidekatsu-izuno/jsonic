@@ -1,4 +1,4 @@
-package net.arnx.jsonic;
+package net.arnx.jsonic.web;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

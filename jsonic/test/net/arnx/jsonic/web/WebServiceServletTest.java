@@ -1,11 +1,13 @@
-package net.arnx.jsonic;
+package net.arnx.jsonic.web;
+
+import net.arnx.jsonic.*;
 
 import org.junit.*;
 
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
 
-public class JSONRPCServletTest {
+public class WebServiceServletTest {
 	
 	@Test
 	public void testRPC() throws Exception {
@@ -43,6 +45,35 @@ public class JSONRPCServletTest {
 		client.setRequestMethod("DELETE");
 		client.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, client.getResponseCode());
+		client.clear();
+	}
+	
+	@Test
+	public void testREST() throws Exception {
+		HttpClient client = new HttpClient("http://localhost:8080/sample/rest/memo.json");
+		
+		// GET
+		client.setRequestMethod("GET");
+		client.connect();
+		assertEquals(SC_OK, client.getResponseCode());
+		client.clear();
+		
+		// POST
+		client.setRequestMethod("POST");
+		client.connect();
+		assertEquals(SC_OK, client.getResponseCode());
+		client.clear();
+		
+		// PUT
+		client.setRequestMethod("PUT");
+		client.connect();
+		assertEquals(SC_OK, client.getResponseCode());
+		client.clear();
+		
+		// DELETE
+		client.setRequestMethod("DELETE");
+		client.connect();
+		assertEquals(SC_OK, client.getResponseCode());
 		client.clear();
 	}
 }

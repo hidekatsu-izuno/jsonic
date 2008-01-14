@@ -623,10 +623,6 @@ public class JSON {
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
-		if (o == null) {
-			o = new LinkedHashMap<String, Object>();
-		}
-		
 		return o;
 	}	
 	
