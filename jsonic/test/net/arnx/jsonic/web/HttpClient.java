@@ -85,7 +85,7 @@ public class HttpClient {
 			StringBuilder sb = new StringBuilder();
 			sb.append(method).append(' ');
 			sb.append(uri.getRawPath());
-			if (uri.getRawQuery() != null) sb.append(uri.getRawQuery());
+			if (uri.getRawQuery() != null) sb.append('?').append(uri.getRawQuery());
 			sb.append(" HTTP/1.0\r\n");
 			for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
 				sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");

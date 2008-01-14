@@ -84,4 +84,42 @@ public class WebServiceServletTest {
 		assertEquals(SC_NO_CONTENT, client.getResponseCode());
 		client.clear();
 	}
+	
+	@Test
+	public void testRESTWithMethod() throws Exception {
+		HttpClient client = new HttpClient();
+		List<Map<String, Object>> content = null;
+		
+		// POST
+		client.setURL("http://localhost:8080/sample/rest/memo.json");
+		client.setRequestMethod("POST");
+		client.setRequestContent("{title:\"title\",text:\"text\"}");
+		client.connect();
+		assertEquals(SC_CREATED, client.getResponseCode());
+		client.clear();
+		
+		// GET
+		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=GET");
+		client.setRequestMethod("POST");
+		client.connect();
+		assertEquals(SC_OK, client.getResponseCode());
+		content = (List<Map<String, Object>>)JSON.decode(client.getResponseContent());
+		client.clear();
+		
+		// PUT
+		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=PUT");
+		client.setRequestMethod("POST");
+		client.setRequestContent("{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
+		client.connect();
+		assertEquals(SC_NO_CONTENT, client.getResponseCode());
+		client.clear();
+		
+		// DELETE
+		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=DELETE");
+		client.setRequestMethod("POST");
+		client.setRequestContent("{id:" + content.get(0).get("id") + "}");
+		client.connect();
+		assertEquals(SC_NO_CONTENT, client.getResponseCode());
+		client.clear();
+	}
 }
