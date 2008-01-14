@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class MemoService {
+	
+	// it's incorrect program for sample. you should use RDBMS.
 	private static int count = 1;
 	private static Map<Integer, Memo> list = new LinkedHashMap<Integer, Memo>();
 	
