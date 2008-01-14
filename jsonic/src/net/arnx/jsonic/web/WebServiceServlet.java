@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package net.arnx.jsonic.webservice;
+package net.arnx.jsonic.web;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -43,7 +43,7 @@ import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
-public class JSONRPCServlet extends HttpServlet {
+public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	private static final Pattern URL_PATTERN = Pattern.compile("^(/(?:[^/]+/)*)([^/.]+)((?:\\.[^/]+)+)?$");
 	
