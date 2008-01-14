@@ -305,6 +305,7 @@ public class JSONRPCServlet extends HttpServlet {
 		String methodName = null;
 		String callback = null;
 		
+		method = method.toUpperCase();
 		if ("GET".equals(method)) {
 			methodName = "find";
 			callback = request.getParameter("callback");
