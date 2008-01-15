@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Hidekatsu Izuno
+ * Copyright 2007-2008 Hidekatsu Izuno
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,13 +73,12 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			json.setContext(this);
 			config = json.parse(configText, Config.class);
-		} catch (Exception e) {
-			throw new ServletException(e);
-		}
-		
-		try {
+			if (config == null) {
+				configText = "{}";
+				config = new Config();
+			}
 			if (config.container == null) config.container = SimpleContainer.class;
-			
+
 			json.setContext(config.container);
 			container = (Container)json.parse(configText, config.container);
 			container.init(getServletContext());
@@ -87,7 +86,7 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.routes != null) {
+		if (config.routes == null) {
 			for (Map.Entry<String, String> entry : config.routes.entrySet()) {
 				if (entry.getKey().startsWith("/")) {
 					routes.put(Pattern.compile(entry.getKey().equals("/") ? "^/" : "^" + entry.getKey() + "/"), entry.getValue());					
