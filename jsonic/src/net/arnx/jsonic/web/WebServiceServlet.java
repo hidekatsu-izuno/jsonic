@@ -23,6 +23,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -86,12 +87,12 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.routes == null) {
+		if (config.routes != null) {
 			for (Map.Entry<String, String> entry : config.routes.entrySet()) {
 				if (entry.getKey().startsWith("/")) {
 					routes.put(Pattern.compile(entry.getKey().equals("/") ? "^/" : "^" + entry.getKey() + "/"), entry.getValue());					
 				} else {
-					container.debug("route needs to start with '/': " + entry.getKey());
+					container.debug("route should start with '/': " + entry.getKey());
 				}
 			}
 		}
@@ -143,9 +144,7 @@ public class WebServiceServlet extends HttpServlet {
 			doRPC(pathes, request, response);
 		} else {
 			String method = request.getParameter("_method");
-			if (method == null || !("GET".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method))) {
-				method = "POST";
-			}
+			if (method == null) method = "POST";
 			doREST(method, pathes, request, response);
 		}
 	}
@@ -300,23 +299,21 @@ public class WebServiceServlet extends HttpServlet {
 			return;			
 		}
 		
-		String methodName = null;
+		String methodName = method;
+		int status = SC_OK;
 		String callback = null;
 		
 		method = method.toUpperCase();
 		if ("GET".equals(method)) {
 			methodName = "find";
 			callback = request.getParameter("callback");
-			response.setStatus(SC_OK);
 		} else if ("POST".equals(method)) {
 			methodName = "create";
-			response.setStatus(SC_CREATED);
+			status = SC_CREATED;
 		} else if ("PUT".equals(method)) {
 			methodName = "update";
-			response.setStatus(SC_NO_CONTENT);
 		} else if ("DELETE".equals(method)) {
 			methodName = "delete";
-			response.setStatus(SC_NO_CONTENT);
 		}
 		
 		// request processing
@@ -344,9 +341,13 @@ public class WebServiceServlet extends HttpServlet {
 				Object contents = json.parse(request.getReader());
 				if (contents instanceof List) {
 					params = (List)contents;
-				} else {
+				} else if (contents instanceof Map) {
+					((Map)contents).putAll(getParameterMap(request));
 					params = new ArrayList();
 					params.add(contents);
+				} else {
+					params = new ArrayList();
+					params.add(getParameterMap(request));
 				}
 			}
 			
@@ -378,7 +379,13 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		if (!"GET".equals(method)) {
+		if (res == null 
+				|| res instanceof CharSequence 
+				|| res instanceof Boolean 
+				|| res instanceof Number 
+				|| res instanceof Date) {
+			if (status != SC_CREATED) status = SC_NO_CONTENT;
+			response.setStatus(status);
 			return;
 		}
 
