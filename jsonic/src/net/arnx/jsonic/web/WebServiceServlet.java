@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -379,11 +380,25 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		if (res == null 
-				|| res instanceof CharSequence 
+		if (res instanceof CharSequence) {
+			String forward = res.toString();
+			if (forward.length() > 1 && forward.charAt(0) == '/') {
+				forward = request.getContextPath() + forward;
+			}
+			
+			if (forward.endsWith("redirect=true")) {
+				response.sendRedirect(forward.substring(0, 
+						forward.length() - "&redirect=true".length()));
+			} else {
+				RequestDispatcher dispatcher = request.getRequestDispatcher(forward);
+				dispatcher.forward(request, response);
+			}
+			return;
+		} else if (res == null 
 				|| res instanceof Boolean 
 				|| res instanceof Number 
 				|| res instanceof Date) {
+			
 			if (status != SC_CREATED) status = SC_NO_CONTENT;
 			response.setStatus(status);
 			return;
