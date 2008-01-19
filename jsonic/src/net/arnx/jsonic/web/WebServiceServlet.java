@@ -47,6 +47,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	private static final Pattern URL_PATTERN = Pattern.compile("^(/(?:[^/]+/)*)([^/.]+)((?:\\.[^/]+)+)?$");
+	private static final Pattern REDIRECT_PATTERN = Pattern.compile("[&?]redirect=true$");
 	
 	class Config {
 		public Class container;
@@ -381,22 +382,32 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		if (res instanceof CharSequence) {
+			// when result is string, forward or redirect.
+			
 			String forward = res.toString();
 			if (forward.length() > 1 && forward.charAt(0) == '/') {
 				forward = request.getContextPath() + forward;
 			}
 			
-			if (forward.endsWith("redirect=true")) {
-				response.sendRedirect(forward.substring(0, 
-						forward.length() - "&redirect=true".length()));
+			Matcher m = REDIRECT_PATTERN.matcher(forward);
+			if (m.matches()) {
+				response.sendRedirect(forward.substring(0, m.start()));
 			} else {
 				RequestDispatcher dispatcher = request.getRequestDispatcher(forward);
 				dispatcher.forward(request, response);
 			}
 			return;
+		} else if (res instanceof Number) {
+			// when result is number, send
+			status = ((Number)res).intValue();
+			if (status / 100 == 2) {
+				response.setStatus(status);
+			} else {
+				response.sendError(status);
+			}
+			return;
 		} else if (res == null 
 				|| res instanceof Boolean 
-				|| res instanceof Number 
 				|| res instanceof Date) {
 			
 			if (status != SC_CREATED) status = SC_NO_CONTENT;
