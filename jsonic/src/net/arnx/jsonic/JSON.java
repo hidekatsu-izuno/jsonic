@@ -623,7 +623,7 @@ public class JSON {
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
-		return o;
+		return (o == null) ? new LinkedHashMap() : o;
 	}	
 	
 	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {

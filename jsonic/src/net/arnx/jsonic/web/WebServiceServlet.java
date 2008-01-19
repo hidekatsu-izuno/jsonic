@@ -76,10 +76,6 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			json.setContext(this);
 			config = json.parse(configText, Config.class);
-			if (config == null) {
-				configText = "{}";
-				config = new Config();
-			}
 			if (config.container == null) config.container = SimpleContainer.class;
 
 			json.setContext(config.container);
