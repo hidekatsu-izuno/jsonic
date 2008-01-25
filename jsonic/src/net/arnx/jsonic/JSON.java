@@ -145,6 +145,7 @@ public class JSON {
 	
 	/**
 	 * Output json string is to human-readable format.
+	 * default value is 32.
 	 * 
 	 * @param value true to format human-readable, false to shorten.
 	 */
@@ -237,8 +238,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(String source) throws JSONParseException {
-		Object value = (new JSON()).parse(source);
-		return value;
+		return (new JSON()).parse(source);
 	}
 	
 	/**
@@ -250,8 +250,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c) throws Exception {
-		JSON json = new JSON(c);
-		return json.parse(source, c);
+		return (new JSON(c)).parse(source, c);
 	}
 	
 	/**
@@ -264,8 +263,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c, Type t) throws Exception {
-		JSON json = new JSON(c);
-		return json.parse(source, c, t);
+		return (new JSON(c)).parse(source, c, t);
 	}
 	
 	public String format(Object source) throws IOException {
@@ -503,9 +501,8 @@ public class JSON {
 	
 	private Appendable formatMap(Map map, Object o, Appendable ap, int level) throws IOException {
 		ap.append('{');
-		Map.Entry entry = null;
 		for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
-			entry = (Map.Entry)i.next();
+			Map.Entry entry = (Map.Entry)i.next();
 			if (this.prettyPrint) {
 				ap.append('\n');
 				for (int j = 0; j < level+1; j++) ap.append('\t');
@@ -1111,365 +1108,360 @@ public class JSON {
 	protected Object convert(Object value, Class c, Type type) throws Exception {
 		Object data = null;
 		
-		try {
-			if (c.isPrimitive()) {
-				if (c.equals(boolean.class)) {
-					if (value == null) {
+		if (c.isPrimitive()) {
+			if (c.equals(boolean.class)) {
+				if (value == null) {
+					data = false;
+				} else if (value instanceof Boolean) {
+					data = value;
+				} else if (value instanceof Number) {
+					data = !value.equals(0);
+				} else {
+					String s = value.toString();
+					if (s.length() == 0
+						|| s.equalsIgnoreCase("false")
+						|| s.equals("NaN")) {
 						data = false;
-					} else if (value instanceof Boolean) {
-						data = value;
-					} else if (value instanceof Number) {
-						data = !value.equals(0);
 					} else {
-						String s = value.toString();
-						if (s.length() == 0
-							|| s.equalsIgnoreCase("false")
-							|| s.equals("NaN")) {
-							data = false;
-						} else {
-							data = true;
-						}
-					}
-				} else if (c.equals(byte.class)) {
-					if (value == null) {
-						data = 0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).byteValue();
-					} else {
-						data = Byte.valueOf(value.toString());
-					}
-				} else if (c.equals(short.class)) {
-					if (value == null) {
-						data = 0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).shortValue();
-					} else {
-						data = Short.valueOf(value.toString());
-					}
-				} else if (c.equals(int.class)) {
-					if (value == null) {
-						data = 0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).intValue();
-					} else {
-						data = Integer.valueOf(value.toString());
-					}
-				} else if (c.equals(long.class)) {
-					if (value == null) {
-						data = 0l;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1l : 0l;
-					} else if (value instanceof Number) {
-						data = ((Number)value).longValue();
-					} else {
-						data = Long.valueOf(value.toString());
-					}
-				} else if (c.equals(float.class)) {
-					if (value == null) {
-						data = 0.0f;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).floatValue();
-					} else {
-						data = Float.valueOf(value.toString());
-					}
-				} else if (c.equals(double.class)) {
-					if (value == null) {
-						data = 0.0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).doubleValue();
-					} else {
-						data = Double.valueOf(value.toString());
-					}
-				} else if (c.equals(char.class)) {
-					if (value == null) {
-						data = '\u0000';
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? '1' : '0';
-					} else if (value instanceof Character) {
-						data = value;
-					} else if (value instanceof Number) {
-						data = (char)((Number)value).intValue();
-					} else {
-						String s = value.toString();
-						data = (s.length() > 0) ? s.charAt(0) : '\u0000';
+						data = true;
 					}
 				}
-			} else if (value != null) {
-				if (c.isAssignableFrom(value.getClass()) && c.equals(type)) {
+			} else if (c.equals(byte.class)) {
+				if (value == null) {
+					data = 0;
+				} else if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).byteValue();
+				} else {
+					data = Byte.valueOf(value.toString());
+				}
+			} else if (c.equals(short.class)) {
+				if (value == null) {
+					data = 0;
+				} else if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).shortValue();
+				} else {
+					data = Short.valueOf(value.toString());
+				}
+			} else if (c.equals(int.class)) {
+				if (value == null) {
+					data = 0;
+				} else if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).intValue();
+				} else {
+					data = Integer.valueOf(value.toString());
+				}
+			} else if (c.equals(long.class)) {
+				if (value == null) {
+					data = 0l;
+				} else if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1l : 0l;
+				} else if (value instanceof Number) {
+					data = ((Number)value).longValue();
+				} else {
+					data = Long.valueOf(value.toString());
+				}
+			} else if (c.equals(float.class)) {
+				if (value == null) {
+					data = 0.0f;
+				} else if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
+				} else if (value instanceof Number) {
+					data = ((Number)value).floatValue();
+				} else {
+					data = Float.valueOf(value.toString());
+				}
+			} else if (c.equals(double.class)) {
+				if (value == null) {
+					data = 0.0;
+				} else if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
+				} else if (value instanceof Number) {
+					data = ((Number)value).doubleValue();
+				} else {
+					data = Double.valueOf(value.toString());
+				}
+			} else if (c.equals(char.class)) {
+				if (value == null) {
+					data = '\u0000';
+				} else if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? '1' : '0';
+				} else if (value instanceof Character) {
 					data = value;
-				} else if (Boolean.class.equals(c)) {
-					if (value instanceof Number) {
-						data = !value.equals(0);
+				} else if (value instanceof Number) {
+					data = (char)((Number)value).intValue();
+				} else {
+					String s = value.toString();
+					data = (s.length() > 0) ? s.charAt(0) : '\u0000';
+				}
+			}
+		} else if (value != null) {
+			if (c.isAssignableFrom(value.getClass()) && c.equals(type)) {
+				data = value;
+			} else if (Boolean.class.equals(c)) {
+				if (value instanceof Number) {
+					data = !value.equals(0);
+				} else {
+					String s = value.toString();
+					if (s.length() == 0
+						|| s.equalsIgnoreCase("false")
+						|| s.equals("NaN")) {
+						data = false;
 					} else {
-						String s = value.toString();
-						if (s.length() == 0
-							|| s.equalsIgnoreCase("false")
-							|| s.equals("NaN")) {
-							data = false;
-						} else {
-							data = true;
+						data = true;
+					}
+				}
+			} else if (Byte.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).byteValue();
+				} else {
+					data = Byte.valueOf(value.toString());
+				}
+			} else if (Short.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).shortValue();
+				} else {
+					data = Short.valueOf(value.toString());
+				}				
+			} else if (Integer.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).intValue();
+				} else {
+					data = Integer.valueOf(value.toString());
+				}
+			} else if (Long.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1l : 0l;
+				} else if (value instanceof Number) {
+					data = ((Number)value).longValue();
+				} else {
+					data = Long.valueOf(value.toString());
+				}
+			} else if (Float.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
+				} else if (value instanceof Number) {
+					data = ((Number)value).floatValue();
+				} else {
+					data = Float.valueOf(value.toString());
+				}
+			} else if (Double.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
+				} else if (value instanceof Number) {
+					data = ((Number)value).doubleValue();
+				} else {
+					data = Double.valueOf(value.toString());
+				}
+			} else if (BigInteger.class.equals(c)) {				
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
+				} else if (value instanceof BigDecimal) {
+					data = ((BigDecimal)value).toBigInteger();
+				} else {
+					data = (new BigDecimal(value.toString())).toBigInteger();
+				}
+			} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
+				data = new BigDecimal(value.toString());
+			} else if (Character.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? '1' : '0';
+				} else if (value instanceof Number) {
+					data = (char)((Number)value).intValue();
+				} else {
+					String s = value.toString();
+					data = (s.length() > 0) ? s.charAt(0) : null;
+				}
+			} else if (CharSequence.class.isAssignableFrom(c)) {
+				data = value.toString();
+			} else if (Appendable.class.isAssignableFrom(c)) {
+				Appendable a = (Appendable)create(c);
+				data = a.append(value.toString());
+			} else if (Date.class.isAssignableFrom(c)) {
+				Date date = (Date)create(c);
+				if (value instanceof Number) {
+					date.setTime(((Number)value).longValue());
+				} else {
+					date.setTime(parseDate(value.toString()));
+				}
+				data = date;
+			} else if (Calendar.class.isAssignableFrom(c)) {
+				Calendar cal = (Calendar)create(c);
+				if (value instanceof Number) {
+					cal.setTimeInMillis(((Number)value).longValue());
+				} else {
+					cal.setTimeInMillis(parseDate(value.toString()));
+				}
+				data = cal;
+			} else if (TimeZone.class.equals(c)) {
+				data = TimeZone.getTimeZone(value.toString());
+			} else if (Collection.class.isAssignableFrom(c)) {
+				Collection collection = (Collection)create(c);
+				if (type instanceof ParameterizedType) {
+					ParameterizedType pType = (ParameterizedType)type;
+					Type[] cTypes = pType.getActualTypeArguments();
+					Type cType = (cTypes != null && cTypes.length > 0) ? cTypes[0] : Object.class;
+					Class<?> cClasses = null;
+					if (cType instanceof ParameterizedType) {
+						cClasses = (Class)((ParameterizedType)cType).getRawType();
+					} else if (cType instanceof Class) {
+						cClasses = (Class)cType;
+					} else {
+						cClasses = Object.class;
+						cType = cClasses;
+					}
+					if (value instanceof Collection) {
+						for (Object o : (Collection)value) {
+							collection.add(convert(o, cClasses, cType));
 						}
-					}
-				} else if (Byte.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).byteValue();
 					} else {
-						data = Byte.valueOf(value.toString());
+						collection.add(convert(value, cClasses, cType));
 					}
-				} else if (Short.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).shortValue();
+				} else {
+					if (value instanceof Collection) {
+						collection.addAll((Collection)value);
 					} else {
-						data = Short.valueOf(value.toString());
-					}				
-				} else if (Integer.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).intValue();
-					} else {
-						data = Integer.valueOf(value.toString());
+						collection.add(value);
 					}
-				} else if (Long.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1l : 0l;
-					} else if (value instanceof Number) {
-						data = ((Number)value).longValue();
-					} else {
-						data = Long.valueOf(value.toString());
+				}
+				data = collection;
+			} else if (c.isArray()) {
+				if (value instanceof Collection) {
+					Object array = Array.newInstance(c.getComponentType(), ((Collection)value).size());
+					int i = 0;
+					Class<?> cClass = c.getComponentType();
+					Type cType = (type instanceof GenericArrayType) ? 
+							((GenericArrayType)type).getGenericComponentType() : cClass;
+					
+					for (Object o : (Collection)value) {
+						Array.set(array, i++, convert(o, cClass, cType));
 					}
-				} else if (Float.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).floatValue();
-					} else {
-						data = Float.valueOf(value.toString());
-					}
-				} else if (Double.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).doubleValue();
-					} else {
-						data = Double.valueOf(value.toString());
-					}
-				} else if (BigInteger.class.equals(c)) {				
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
-					} else if (value instanceof BigDecimal) {
-						data = ((BigDecimal)value).toBigInteger();
-					} else {
-						data = (new BigDecimal(value.toString())).toBigInteger();
-					}
-				} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
-					data = new BigDecimal(value.toString());
-				} else if (Character.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? '1' : '0';
-					} else if (value instanceof Number) {
-						data = (char)((Number)value).intValue();
-					} else {
-						String s = value.toString();
-						data = (s.length() > 0) ? s.charAt(0) : null;
-					}
-				} else if (CharSequence.class.isAssignableFrom(c)) {
-					data = value.toString();
-				} else if (Appendable.class.isAssignableFrom(c)) {
-					Appendable a = (Appendable)create(c);
-					data = a.append(value.toString());
-				} else if (Date.class.isAssignableFrom(c)) {
-					Date date = (Date)create(c);
-					if (value instanceof Number) {
-						date.setTime(((Number)value).longValue());
-					} else {
-						date.setTime(parseDate(value.toString()));
-					}
-					data = date;
-				} else if (Calendar.class.isAssignableFrom(c)) {
-					Calendar cal = (Calendar)create(c);
-					if (value instanceof Number) {
-						cal.setTimeInMillis(((Number)value).longValue());
-					} else {
-						cal.setTimeInMillis(parseDate(value.toString()));
-					}
-					data = cal;
-				} else if (TimeZone.class.equals(c)) {
-					data = TimeZone.getTimeZone(value.toString());
-				} else if (Collection.class.isAssignableFrom(c)) {
-					Collection collection = (Collection)create(c);
+					data = array;
+				} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
+					data = decodeBase64((CharSequence)value);
+				} else {
+					Object array = Array.newInstance(c.getComponentType(), 1);
+					Class<?> cClass = c.getComponentType();
+					Type cType = (type instanceof GenericArrayType) ? 
+							((GenericArrayType)type).getGenericComponentType() : cClass;
+					Array.set(array, 0, convert(value, c.getComponentType(), cType));
+					data = array;
+				}
+			} else if (Map.class.isAssignableFrom(c)) {
+				if (value instanceof Map) {
+					Map map = (Map)create(c);
 					if (type instanceof ParameterizedType) {
 						ParameterizedType pType = (ParameterizedType)type;
 						Type[] cTypes = pType.getActualTypeArguments();
-						Type cType = (cTypes != null && cTypes.length > 0) ? cTypes[0] : Object.class;
-						Class<?> cClasses = null;
-						if (cType instanceof ParameterizedType) {
-							cClasses = (Class)((ParameterizedType)cType).getRawType();
-						} else if (cType instanceof Class) {
-							cClasses = (Class)cType;
-						} else {
-							cClasses = Object.class;
-							cType = cClasses;
-						}
-						if (value instanceof Collection) {
-							for (Object o : (Collection)value) {
-								collection.add(convert(o, cClasses, cType));
+						Class<?>[] cClasses = new Class[2];
+						for (int i = 0; i < cClasses.length; i++) {
+							if (cTypes[i] instanceof ParameterizedType) {
+								cClasses[i] = (Class)((ParameterizedType)cTypes[i]).getRawType();
+							} else if (cTypes[i] instanceof Class) {
+								cClasses[i] = (Class)cTypes[i];
+							} else {
+								cClasses[i] = Object.class;
+								cTypes[i] = cClasses[i];
 							}
-						} else {
-							collection.add(convert(value, cClasses, cType));
+						}
+						for (Object key : ((Map)value).keySet()) {
+							map.put(convert(key, cClasses[0], cTypes[0]),
+									convert(((Map)value).get(key), cClasses[1], cTypes[1]));
 						}
 					} else {
-						if (value instanceof Collection) {
-							collection.addAll((Collection)value);
-						} else {
-							collection.add(value);
-						}
+						map.putAll((Map)value);
 					}
-					data = collection;
-				} else if (c.isArray()) {
-					if (value instanceof Collection) {
-						Object array = Array.newInstance(c.getComponentType(), ((Collection)value).size());
-						int i = 0;
-						Class<?> cClass = c.getComponentType();
-						Type cType = (type instanceof GenericArrayType) ? 
-								((GenericArrayType)type).getGenericComponentType() : cClass;
-						
-						for (Object o : (Collection)value) {
-							Array.set(array, i++, convert(o, cClass, cType));
-						}
-						data = array;
-					} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
-						data = decodeBase64((CharSequence)value);
-					} else {
-						Object array = Array.newInstance(c.getComponentType(), 1);
-						Class<?> cClass = c.getComponentType();
-						Type cType = (type instanceof GenericArrayType) ? 
-								((GenericArrayType)type).getGenericComponentType() : cClass;
-						Array.set(array, 0, convert(value, c.getComponentType(), cType));
-						data = array;
-					}
-				} else if (Map.class.isAssignableFrom(c)) {
-					if (value instanceof Map) {
-						Map map = (Map)create(c);
-						if (type instanceof ParameterizedType) {
-							ParameterizedType pType = (ParameterizedType)type;
-							Type[] cTypes = pType.getActualTypeArguments();
-							Class<?>[] cClasses = new Class[2];
-							for (int i = 0; i < cClasses.length; i++) {
-								if (cTypes[i] instanceof ParameterizedType) {
-									cClasses[i] = (Class)((ParameterizedType)cTypes[i]).getRawType();
-								} else if (cTypes[i] instanceof Class) {
-									cClasses[i] = (Class)cTypes[i];
-								} else {
-									cClasses[i] = Object.class;
-									cTypes[i] = cClasses[i];
-								}
-							}
-							for (Object key : ((Map)value).keySet()) {
-								map.put(convert(key, cClasses[0], cTypes[0]),
-										convert(((Map)value).get(key), cClasses[1], cTypes[1]));
-							}
-						} else {
-							map.putAll((Map)value);
-						}
-						data = map;
-					}
-				} else if (Pattern.class.equals(c)) {
-					data = Pattern.compile(value.toString());
-				} else if (Locale.class.equals(c)) {
-					String[] s = null;
-					if (value instanceof Collection || value.getClass().isArray()) {
-						s = (String[])convert(value, String[].class, String[].class);
-					} else {
-						s = value.toString().split("\\p{Punct}");
-					}
+					data = map;
+				}
+			} else if (Pattern.class.equals(c)) {
+				data = Pattern.compile(value.toString());
+			} else if (Locale.class.equals(c)) {
+				String[] s = null;
+				if (value instanceof Collection || value.getClass().isArray()) {
+					s = (String[])convert(value, String[].class, String[].class);
+				} else {
+					s = value.toString().split("\\p{Punct}");
+				}
+				
+				if (s.length == 0) {
+					data = null;
+				} else if (s.length == 1) {
+					data = new Locale(s[0]);
+				} else if (s.length == 2) {
+					data = new Locale(s[0], s[1]);
+				} else {
+					data = new Locale(s[0], s[1], s[2]);
+				}
+			} else if (Class.class.equals(c)) {
+				String s = value.toString();
+				if (s.equals("boolean")) {
+					data = boolean.class;
+				} else if (s.equals("byte")) {
+					data = byte.class;
+				} else if (s.equals("short")) {
+					data = short.class;
+				} else if (s.equals("int")) {
+					data = int.class;
+				} else if (s.equals("long")) {
+					data = long.class;
+				} else if (s.equals("float")) {
+					data = float.class;
+				} else if (s.equals("double")) {
+					data = double.class;
+				} else {
+					data = Class.forName(value.toString());
+				}
+			} else if (value instanceof Map) {
+				Object o = create(c);
+				if (o != null) {
+					Map<String, Object> props = getSetProperties(c);
 					
-					if (s.length == 0) {
-						data = null;
-					} else if (s.length == 1) {
-						data = new Locale(s[0]);
-					} else if (s.length == 2) {
-						data = new Locale(s[0], s[1]);
-					} else {
-						data = new Locale(s[0], s[1], s[2]);
-					}
-				} else if (Class.class.equals(c)) {
-					String s = value.toString();
-					if (s.equals("boolean")) {
-						data = boolean.class;
-					} else if (s.equals("byte")) {
-						data = byte.class;
-					} else if (s.equals("short")) {
-						data = short.class;
-					} else if (s.equals("int")) {
-						data = int.class;
-					} else if (s.equals("long")) {
-						data = long.class;
-					} else if (s.equals("float")) {
-						data = float.class;
-					} else if (s.equals("double")) {
-						data = double.class;
-					} else {
-						data = Class.forName(value.toString());
-					}
-				} else if (value instanceof Map) {
-					Object o = create(c);
-					if (o != null) {
-						Map<String, Object> props = getSetProperties(c);
-						
-						boolean access = tryAccess(c);
-						
-						Map map = (Map)value;
-						for (Object key : map.keySet()) {
-							Object target = props.get(key.toString());
+					boolean access = tryAccess(c);
+					
+					Map map = (Map)value;
+					for (Object key : map.keySet()) {
+						Object target = props.get(key.toString());
+						if (target == null) {
+							target = props.get(toLowerCamel(key.toString()));
 							if (target == null) {
-								target = props.get(toLowerCamel(key.toString()));
-								if (target == null) {
-									target = props.get(key.toString() + "_");
-									if (target == null) continue;
-								}
-							}
-							
-							if (target instanceof Method) {
-								Method m = (Method)target;
-								try {
-									if (access) m.setAccessible(true);
-									m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
-								} catch (Exception e) {
-									handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
-								}
-							} else if (target instanceof Field) {
-								Field f = (Field)target;
-								try {
-									if (access) f.setAccessible(true);
-									f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
-								} catch (Exception e) {
-									handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
-								}
+								target = props.get(key.toString() + "_");
+								if (target == null) continue;
 							}
 						}
-						data = o;
+						
+						if (target instanceof Method) {
+							Method m = (Method)target;
+							try {
+								if (access) m.setAccessible(true);
+								m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+							} catch (Exception e) {
+								handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
+							}
+						} else if (target instanceof Field) {
+							Field f = (Field)target;
+							try {
+								if (access) f.setAccessible(true);
+								f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
+							} catch (Exception e) {
+								handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
+							}
+						}
 					}
+					data = o;
 				}
 			}
-		} catch (Exception e) {
-			handleConvertError(null, value, c, type, e);
 		}
-		
 		return data;
 	}
 	
