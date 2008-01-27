@@ -404,9 +404,17 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、名称が常にJavaBean規約に合うように変換していましたが、マッチに失敗した場合のみ変換するように変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、Javaの予約語にも対応できるよう末尾に「_」の付いたプロパティでもマッチできるよう変更しました。</li>
+<li>ParseのConvert時に発生したExceptionをhandleConvertErrorからthrowした際二回handleされてしまう問題を解決しました。</li>
 <li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
 <li>ありがたみが薄いためinvokeメソッドを廃止しました。</li>
 <li>各種JavaScriptライブラリのJSON対応が整ってきたため、JavaScript版のJSON.encode/JSON.decodeを削除しました。</li>
+</ul>
+
+<h3>2008/01/25 version 0.9.4.1</h3>
+<p>パッケージミスと記載ミスの修正のみおこなわれています。</p>
+<ul>
+<li>net/arnx/jsonic/JSON.propertiesおよびnet/arnx/jsonic/JSON_ja.propertiesが配布用のjarファイルに含まれていない問題を修正しました。</li>
+<li>net.arnx.jsonic.JSONクラスのコメントがParseExceptionを出力すると書かれていましたが、正しくはJSONParseExceptionですので記載を修正しました。</li>
 </ul>
 
 <h3>2007/09/09 version 0.9.4</h3>
