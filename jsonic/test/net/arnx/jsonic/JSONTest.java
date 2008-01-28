@@ -611,7 +611,7 @@ public class JSONTest {
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertEquals(1, count[0]);			
+			assertEquals(2, count[0]);			
 		}
 	}
 	
