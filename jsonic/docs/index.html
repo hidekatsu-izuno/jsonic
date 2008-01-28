@@ -187,7 +187,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 </ul>
 
 <h4 id="io">■ Reader/InputStreamによるparse</h4>
-<p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しかできませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを取得することができます。</p>
+<p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しかできませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを読み込むことができます。</p>
 <pre class="source">
 <span class="comment">// ReaderからのJSONの読み込み</span>
 Hoge hoge = (new JSON()).parse(new FileReader("sample.json"), Hoge.class);
