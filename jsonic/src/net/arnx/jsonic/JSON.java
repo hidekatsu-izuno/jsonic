@@ -1359,7 +1359,7 @@ public class JSON {
 					if (value instanceof Number) {
 						date.setTime(((Number)value).longValue());
 					} else {
-						date.setTime(parseDate(value.toString()));
+						date.setTime(convertDate(value.toString()));
 					}
 					data = date;
 				} else if (Calendar.class.isAssignableFrom(c)) {
@@ -1367,7 +1367,7 @@ public class JSON {
 					if (value instanceof Number) {
 						cal.setTimeInMillis(((Number)value).longValue());
 					} else {
-						cal.setTimeInMillis(parseDate(value.toString()));
+						cal.setTimeInMillis(convertDate(value.toString()));
 					}
 					data = cal;
 				} else if (TimeZone.class.equals(c)) {
@@ -1581,13 +1581,7 @@ public class JSON {
 		return instance;
 	}
 	
-	String getMessage(String id, Object... args) {
-		if (locale == null) locale = Locale.getDefault();
-		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName(), locale);
-		return MessageFormat.format(bundle.getString(id), args);
-	}
-	
-	boolean tryAccess(Class c) {
+	private boolean tryAccess(Class c) {
 		int modifier = c.getModifiers();
 		if (this.contextClass != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
@@ -1596,6 +1590,12 @@ public class JSON {
 			return c.getPackage().equals(this.contextClass.getPackage());
 		}
 		return false;
+	}
+	
+	private String getMessage(String id, Object... args) {
+		if (locale == null) locale = Locale.getDefault();
+		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName(), locale);
+		return MessageFormat.format(bundle.getString(id), args);
 	}
 	
 	private static String toLowerCamel(String name) {
@@ -1762,7 +1762,7 @@ public class JSON {
 		return buffer;
 	}
 	
-	private Long parseDate(String value) throws ParseException {
+	private Long convertDate(String value) throws ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
@@ -1844,9 +1844,7 @@ public class JSON {
 		}
 		
 		return format.parse(value).getTime();
-	}
-	
-	
+	}	
 }
 
 interface JSONSource {
