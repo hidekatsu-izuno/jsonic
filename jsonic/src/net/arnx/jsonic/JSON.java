@@ -569,11 +569,11 @@ public class JSON {
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c, 0);
+		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c, Type t) throws Exception {
-		return (T)convert(parse(new CharSequenceJSONSource(s)), c, t, 0);
+		return (T)convert(parse(new CharSequenceJSONSource(s)), c, t);
 	}
 	
 	public Object parse(InputStream in) throws IOException, JSONParseException {
@@ -583,12 +583,12 @@ public class JSON {
 	
 	public <T> T parse(InputStream in, Class<? extends T> c) throws Exception {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
-		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, c, 0);
+		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, c);
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c, Type t) throws Exception {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
-		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, t, 0);
+		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, t);
 	}
 	
 	public Object parse(Reader reader) throws IOException, JSONParseException {
@@ -596,11 +596,11 @@ public class JSON {
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, c, 0);
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t) throws Exception {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, t, 0);
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
 	private Object parse(JSONSource s) throws IOException, JSONParseException {
@@ -1161,7 +1161,7 @@ public class JSON {
 		return encoding;
 	}
 	
-	protected Object convert(Object value, Class c, Type type, int level) throws Exception {
+	protected Object convert(Object value, Class c, Type type) throws Exception {
 		Object data = null;
 		boolean handleError = false;
 		
@@ -1385,10 +1385,10 @@ public class JSON {
 						}
 						if (value instanceof Collection) {
 							for (Object o : (Collection)value) {
-								collection.add(convert(o, cClasses, cType, level+1));
+								collection.add(convert(o, cClasses, cType));
 							}
 						} else {
-							collection.add(convert(value, cClasses, cType, level+1));
+							collection.add(convert(value, cClasses, cType));
 						}
 					} else {
 						if (value instanceof Collection) {
@@ -1407,7 +1407,7 @@ public class JSON {
 								((GenericArrayType)type).getGenericComponentType() : cClass;
 						
 						for (Object o : (Collection)value) {
-							Array.set(array, i++, convert(o, cClass, cType, level+1));
+							Array.set(array, i++, convert(o, cClass, cType));
 						}
 						data = array;
 					} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
@@ -1417,7 +1417,7 @@ public class JSON {
 						Class<?> cClass = c.getComponentType();
 						Type cType = (type instanceof GenericArrayType) ? 
 								((GenericArrayType)type).getGenericComponentType() : cClass;
-						Array.set(array, 0, convert(value, c.getComponentType(), cType, level+1));
+						Array.set(array, 0, convert(value, c.getComponentType(), cType));
 						data = array;
 					}
 				} else if (Map.class.isAssignableFrom(c)) {
@@ -1438,8 +1438,8 @@ public class JSON {
 								}
 							}
 							for (Object key : ((Map)value).keySet()) {
-								map.put(convert(key, cClasses[0], cTypes[0], level),
-										convert(((Map)value).get(key), cClasses[1], cTypes[1], level+1));
+								map.put(convert(key, cClasses[0], cTypes[0]),
+										convert(((Map)value).get(key), cClasses[1], cTypes[1]));
 							}
 						} else {
 							map.putAll((Map)value);
@@ -1451,7 +1451,7 @@ public class JSON {
 				} else if (Locale.class.equals(c)) {
 					String[] s = null;
 					if (value instanceof Collection || value.getClass().isArray()) {
-						s = (String[])convert(value, String[].class, String[].class, level);
+						s = (String[])convert(value, String[].class, String[].class);
 					} else {
 						s = value.toString().split("\\p{Punct}");
 					}
@@ -1506,7 +1506,7 @@ public class JSON {
 								Method m = (Method)target;
 								try {
 									if (access) m.setAccessible(true);
-									m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], level+1));
+									m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 								} catch (Exception e) {
 									handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
 									handleError = true;
@@ -1515,7 +1515,7 @@ public class JSON {
 								Field f = (Field)target;
 								try {
 									if (access) f.setAccessible(true);
-									f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType(), level+1));
+									f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
 								} catch (Exception e) {
 									handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
 									handleError = true;
