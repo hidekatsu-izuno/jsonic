@@ -156,7 +156,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>Pattern</td><td>Pattern（文字列をパターンとみなし変換）</td></tr>
 <tr><td>Class</td><td>Class（文字列をClass.forNameを使い変換）</td></tr>
 <tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
-<tr><td>boolean, Boolean</td><td>指定された型（"", "false", "NaN"の時false、その他の時true）</td></tr>
+<tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
 <tr><td rowspan="4">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
 <tr><td>Dateを継承する型,<br />Calendarを継承する型</td><td>指定された型（数値を1970年からのミリ秒とみなし変換）</td></tr>
@@ -237,8 +237,8 @@ JSON json = new JSON() {
     }
     
     <span class="comment">// 値valueを型cに変換します（Generics型の場合にはtypeに対象の型が入ります）</span>
-    protected <span class="em">Object convert(Object value, Class c, Type type)</span> {
-        return super.convert(value, c, type);
+    protected <span class="em">Object convert(Object key, Object value, Class c, Type type)</span> {
+        return super.convert(key, value, c, type);
     }
 };
 </pre>
@@ -255,7 +255,7 @@ JSON json = new JSON() {
     protected <span class="em">void handleConvertError(String key, Object value, Class c,
         Type type, Exception e) throws Exception</span> {
         <span class="comment">// デフォルトでは何もしません</span>
-        return super.handleConvertError(e);
+        throw e;
     }
 };
 </pre>
@@ -393,20 +393,21 @@ paramsや戻り値には任意のクラスを指定することもできます�
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2007/12/XX version 0.9.5</h3>
+<h3>2008/01/28 version 0.9.5</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
 <li>maxDepthのデフォルト値を32階層に変更しました。</li>
+<li>InputStreamによるParseを実装しました。文字コードは、UTF-8, UTF-16BE, UTF-16LE, UTF-32BE, UTF-32LEから自動判別されます。</li>
+<li>Parse時にBOMが見つかった場合、無視するようにしました。</li>
 <li>Parse時の日付変換ロジックを見直し、一般的にコンピュータが取り扱う日付フォーマットに対応しました。</li>
-<li>Parse時にjava.sql.Date/java.sql.Time/java.sql.Timestampへの変換に対応しました。</li>
-<li>Parse時にjava.util.TimeZoneの変換に対応しました。</li>
-<li>Parse時に値が指定されない場合、nullが指定されたものとして取り扱うよう変更しました。</li>
+<li>Parse時にjava.sql.Date/java.sql.Time/java.sql.Timestamp/java.util.TimeZoneへの変換に対応しました。</li>
+<li>Parse時に値が指定されない場合、nullが指定されたものとして取り扱うよう変更しました（ただし、カンマの省略はできません）。</li>
 <li>Parse時に「'」で囲まれた文字列はエスケープ処理しないよう変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、名称が常にJavaBean規約に合うように変換していましたが、マッチに失敗した場合のみ変換するように変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、Javaの予約語にも対応できるよう末尾に「_」の付いたプロパティでもマッチできるよう変更しました。</li>
-<li>ParseのConvert時に発生したExceptionをhandleConvertErrorからthrowした際二回handleされてしまう問題を解決しました。</li>
+<li>convertメソッドの引数にkey値を追加しました。</li>
 <li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
-<li>ありがたみが薄いためinvokeメソッドを廃止しました。</li>
+<li>余り役に立たないためinvokeメソッドは廃止しました。</li>
 <li>各種JavaScriptライブラリのJSON対応が整ってきたため、JavaScript版のJSON.encode/JSON.decodeを削除しました。</li>
 </ul>
 
