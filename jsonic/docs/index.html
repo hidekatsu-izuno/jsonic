@@ -66,7 +66,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 </pre>
 
 <h2 id="download">ダウンロード</h2>
-<p>JSONICの現時点での最新バージョンは0.9.5です。</p>
+<p>JSONICの現時点での最新バージョンは0.9.6です。</p>
 <p><a href="http://sourceforge.jp/projects/jsonic/files/">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Javaバージョン5.0以上が必要です。</p>
 
 <h2 id="usage">使い方</h2>
@@ -178,13 +178,26 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <h3>高度な使い方</h3>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
+<li><a href="#io">Reader/InputStreamによるparse</a></li>
 <li><a href="#generics">総称型を指定してのdecode/parse</a></li>
 <li><a href="#extends">継承による機能拡張</a></li>
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
-<li><a href="#invoke">JSONを使ったメソッドの実行</a></li>
 <li><a href="#innerclass">内部クラスを利用したデコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
 </ul>
+
+<h4 id="io">■ Reader/InputStreamによるparse</h4>
+<p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しかできませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを取得することができます。</p>
+<pre class="source">
+<span class="comment">// ReaderからのJSONの読み込み</span>
+Hoge hoge = (new JSON()).parse(new FileReader("sample.json"), Hoge.class);
+
+<span class="comment">// InputStreamからのJSONの読み込み（ファイルはUnicodeである必要があります<sup>(※4)</sup>）</span>
+Hoge hoge = (new JSON()).parse(new FileInputStream("sample.json"), Hoge.class);
+</pre>
+<div class="caption">
+(※4) UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別します。<br />
+</div>
 
 <h4 id="generics">■ 総称型を指定してのdecode/parse</h4>
 <p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
@@ -318,7 +331,7 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <h3>JSON Web Service Servlet</h3>
 
 <p>JSONICには、JSON-RPC1.0とRestfull APIの2 wayによるWeb Service機能が用意されています。</p>
-<p>※version 0.9.4まであったJSONRPCServletは0.9.5以降net.arnx.jsonic.web.WebServiceServletに置き換えられました。。</p>
+<p>※version 0.9.5まであったJSONRPCServletは0.9.6以降net.arnx.jsonic.web.WebServiceServletに置き換えられました。。</p>
 
 <h4>JSON-RPC 1.0</h4>
 <p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です。<br />
@@ -393,6 +406,12 @@ paramsや戻り値には任意のクラスを指定することもできます�
 
 <h2 id="releasenote">リリースノート</h2>
 
+<h3>2008/02/01 version 0.9.6</h3>
+<p>下記の機能追加・変更とバグ修正が行われています。</p>
+<ul>
+<li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
+</ul>
+
 <h3>2008/01/28 version 0.9.5</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
@@ -406,7 +425,6 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <li>ParseのJSON objectからJavaBeanへの変換時、名称が常にJavaBean規約に合うように変換していましたが、マッチに失敗した場合のみ変換するように変更しました。</li>
 <li>ParseのJSON objectからJavaBeanへの変換時、Javaの予約語にも対応できるよう末尾に「_」の付いたプロパティでもマッチできるよう変更しました。</li>
 <li>convertメソッドの引数にkey値を追加しました。</li>
-<li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
 <li>余り役に立たないためinvokeメソッドは廃止しました。</li>
 <li>各種JavaScriptライブラリのJSON対応が整ってきたため、JavaScript版のJSON.encode/JSON.decodeを削除しました。</li>
 </ul>
