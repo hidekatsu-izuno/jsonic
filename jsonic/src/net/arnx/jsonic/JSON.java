@@ -15,6 +15,9 @@
  */
 package net.arnx.jsonic;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
@@ -565,20 +568,35 @@ public class JSON {
 		return value;
 	}
 	
-	public Object parse(Reader reader) throws IOException, JSONParseException {
-		return parse(new ReaderJSONSource(reader));
-	}
-	
 	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
 		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c, 0);
 	}
 	
-	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, c, 0);
-	}
-	
 	public <T> T parse(CharSequence s, Class<? extends T> c, Type t) throws Exception {
 		return (T)convert(parse(new CharSequenceJSONSource(s)), c, t, 0);
+	}
+	
+	public Object parse(InputStream in) throws IOException, JSONParseException {
+		if (!in.markSupported()) in = new BufferedInputStream(in);
+		return parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in))));
+	}
+	
+	public <T> T parse(InputStream in, Class<? extends T> c) throws Exception {
+		if (!in.markSupported()) in = new BufferedInputStream(in);
+		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, c, 0);
+	}
+	
+	public <T> T parse(InputStream in, Class<? extends T> c, Type t) throws Exception {
+		if (!in.markSupported()) in = new BufferedInputStream(in);
+		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, t, 0);
+	}
+	
+	public Object parse(Reader reader) throws IOException, JSONParseException {
+		return parse(new ReaderJSONSource(reader));
+	}
+	
+	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, c, 0);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t) throws Exception {
@@ -640,6 +658,7 @@ public class JSON {
 				}
 			case ' ':
 			case '\t':
+			case 0xFEFF: // BOM
 				break;
 			case '{':
 				if (point == 0) {
@@ -763,6 +782,7 @@ public class JSON {
 				}
 			case ' ':
 			case '\t':
+			case 0xFEFF: // BOM
 				break;
 			case '[':
 				if (point == 0) {
@@ -857,6 +877,8 @@ public class JSON {
 		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
+			case 0xFEFF: // BOM
+				break;
 			case '\\':
 				if (point == 1) {
 					if (start == '"') {
@@ -901,6 +923,8 @@ public class JSON {
 		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
+			case 0xFEFF: // BOM
+				break;
 			case '\\':
 				s.back();
 				c = parseEscape(s);
@@ -927,6 +951,8 @@ public class JSON {
 		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
+			case 0xFEFF: // BOM
+				break;
 			case '+':
 				if (point == 7) {
 					sb.append(c);
@@ -998,6 +1024,8 @@ public class JSON {
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
+			if (c == 0xFEFF) continue; // BOM
+			
 			if (point == 0) {
 				if (c == '\\') {
 					point = 1;
@@ -1060,6 +1088,8 @@ public class JSON {
 		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
 			switch(c) {
+			case 0xFEFF:
+				break;
 			case '/':
 				if (point == 0) {
 					point = 1;
@@ -1105,8 +1135,35 @@ public class JSON {
 		}	
 	}
 	
+	private String determineEncoding(InputStream in) throws IOException {
+		in.mark(4);
+		byte[] check = new byte[4];
+		int size = in.read(check);
+		String encoding = "UTF-8";
+		if (size == 2) {
+			if ((check[0] == 0 && check[1] != 0) || (check[0] == 0xFE && check[1] == 0xFF)) {
+				encoding = "UTF-16BE";
+			} else if ((check[0] != 0 && check[1] == 0) || (check[0] == 0xFF && check[1] == 0xFE)) {
+				encoding = "UTF-16LE";
+			}
+		} else if (size == 4) {
+			if ((check[0] == 0 && check[1] == 0)) {
+				encoding = "UTF-32BE";
+			} else if ((check[2] == 0 && check[3] == 0)) {
+				encoding = "UTF-32LE";
+			} else if ((check[0] == 0 && check[1] != 0) || (check[0] == 0xFE && check[1] == 0xFF)) {
+				encoding = "UTF-16BE";
+			} else if ((check[0] != 0 && check[1] == 0) || (check[0] == 0xFF && check[1] == 0xFE)) {
+				encoding = "UTF-16LE";
+			}
+		}
+		in.reset();
+		return encoding;
+	}
+	
 	protected Object convert(Object value, Class c, Type type, int level) throws Exception {
 		Object data = null;
+		boolean handleError = false;
 		
 		try {
 			if (c.isPrimitive()) {
@@ -1121,6 +1178,8 @@ public class JSON {
 						String s = value.toString();
 						if (s.length() == 0
 							|| s.equalsIgnoreCase("false")
+							|| s.equalsIgnoreCase("no")
+							|| s.equalsIgnoreCase("off")
 							|| s.equals("NaN")) {
 							data = false;
 						} else {
@@ -1211,6 +1270,8 @@ public class JSON {
 						String s = value.toString();
 						if (s.length() == 0
 							|| s.equalsIgnoreCase("false")
+							|| s.equalsIgnoreCase("no")
+							|| s.equalsIgnoreCase("off")
 							|| s.equals("NaN")) {
 							data = false;
 						} else {
@@ -1448,6 +1509,7 @@ public class JSON {
 									m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], level+1));
 								} catch (Exception e) {
 									handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
+									handleError = true;
 								}
 							} else if (target instanceof Field) {
 								Field f = (Field)target;
@@ -1456,6 +1518,7 @@ public class JSON {
 									f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType(), level+1));
 								} catch (Exception e) {
 									handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
+									handleError = true;
 								}
 							}
 						}
@@ -1464,11 +1527,8 @@ public class JSON {
 				}
 			}
 		} catch (Exception e) {
-			if (level == 0) {
-				handleConvertError(null, value, c, type, e);
-			} else {
-				throw e;
-			}
+			if (handleError) throw e;
+			handleConvertError(null, value, c, type, e);
 		}
 		return data;
 	}
