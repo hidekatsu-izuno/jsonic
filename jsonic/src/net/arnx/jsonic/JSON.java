@@ -569,11 +569,11 @@ public class JSON {
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
+		return (T)convert(null, parse(new CharSequenceJSONSource(s)), c, c);
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c, Type t) throws Exception {
-		return (T)convert(parse(new CharSequenceJSONSource(s)), c, t);
+		return (T)convert(null, parse(new CharSequenceJSONSource(s)), c, t);
 	}
 	
 	public Object parse(InputStream in) throws IOException, JSONParseException {
@@ -583,12 +583,12 @@ public class JSON {
 	
 	public <T> T parse(InputStream in, Class<? extends T> c) throws Exception {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
-		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, c);
+		return (T)convert(null, parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, c);
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c, Type t) throws Exception {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
-		return (T)convert(parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, t);
+		return (T)convert(null, parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, t);
 	}
 	
 	public Object parse(Reader reader) throws IOException, JSONParseException {
@@ -596,11 +596,11 @@ public class JSON {
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
+		return (T)convert(null, parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t) throws Exception {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
+		return (T)convert(null, parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
 	private Object parse(JSONSource s) throws IOException, JSONParseException {
@@ -616,6 +616,7 @@ public class JSON {
 			case '\n':
 			case ' ':
 			case '\t':
+			case 0xFEFF: // BOM
 				break;
 			case '[':
 				if (o == null) {
@@ -1141,19 +1142,23 @@ public class JSON {
 		int size = in.read(check);
 		String encoding = "UTF-8";
 		if (size == 2) {
-			if ((check[0] == 0 && check[1] != 0) || (check[0] == 0xFE && check[1] == 0xFF)) {
+			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
+					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
 				encoding = "UTF-16BE";
-			} else if ((check[0] != 0 && check[1] == 0) || (check[0] == 0xFF && check[1] == 0xFE)) {
+			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
+					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
 				encoding = "UTF-16LE";
 			}
 		} else if (size == 4) {
-			if ((check[0] == 0 && check[1] == 0)) {
+			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) == 0x00)) {
 				encoding = "UTF-32BE";
-			} else if ((check[2] == 0 && check[3] == 0)) {
+			} else if (((check[2] & 0xFF) == 0x00 && (check[3] & 0xFF) == 0x00)) {
 				encoding = "UTF-32LE";
-			} else if ((check[0] == 0 && check[1] != 0) || (check[0] == 0xFE && check[1] == 0xFF)) {
+			} else if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
+					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
 				encoding = "UTF-16BE";
-			} else if ((check[0] != 0 && check[1] == 0) || (check[0] == 0xFF && check[1] == 0xFE)) {
+			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
+					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
 				encoding = "UTF-16LE";
 			}
 		}
@@ -1161,9 +1166,8 @@ public class JSON {
 		return encoding;
 	}
 	
-	protected Object convert(Object value, Class c, Type type) throws Exception {
+	protected Object convert(Object key, Object value, Class c, Type type) throws Exception {
 		Object data = null;
-		boolean handleError = false;
 		
 		try {
 			if (c.isPrimitive()) {
@@ -1384,11 +1388,12 @@ public class JSON {
 							cType = cClasses;
 						}
 						if (value instanceof Collection) {
+							int i = 0;
 							for (Object o : (Collection)value) {
-								collection.add(convert(o, cClasses, cType));
+								collection.add(convert(i++, o, cClasses, cType));
 							}
 						} else {
-							collection.add(convert(value, cClasses, cType));
+							collection.add(convert(0, value, cClasses, cType));
 						}
 					} else {
 						if (value instanceof Collection) {
@@ -1407,7 +1412,7 @@ public class JSON {
 								((GenericArrayType)type).getGenericComponentType() : cClass;
 						
 						for (Object o : (Collection)value) {
-							Array.set(array, i++, convert(o, cClass, cType));
+							Array.set(array, i, convert(i++, o, cClass, cType));
 						}
 						data = array;
 					} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
@@ -1417,7 +1422,7 @@ public class JSON {
 						Class<?> cClass = c.getComponentType();
 						Type cType = (type instanceof GenericArrayType) ? 
 								((GenericArrayType)type).getGenericComponentType() : cClass;
-						Array.set(array, 0, convert(value, c.getComponentType(), cType));
+						Array.set(array, 0, convert(0, value, c.getComponentType(), cType));
 						data = array;
 					}
 				} else if (Map.class.isAssignableFrom(c)) {
@@ -1437,9 +1442,9 @@ public class JSON {
 									cTypes[i] = cClasses[i];
 								}
 							}
-							for (Object key : ((Map)value).keySet()) {
-								map.put(convert(key, cClasses[0], cTypes[0]),
-										convert(((Map)value).get(key), cClasses[1], cTypes[1]));
+							for (Map.Entry entry : (Set<Map.Entry>)((Map)value).entrySet()) {
+								String mKey = entry.getKey().toString();
+								map.put(mKey, convert(mKey, entry.getValue(), cClasses[1], cTypes[1]));
 							}
 						} else {
 							map.putAll((Map)value);
@@ -1451,7 +1456,7 @@ public class JSON {
 				} else if (Locale.class.equals(c)) {
 					String[] s = null;
 					if (value instanceof Collection || value.getClass().isArray()) {
-						s = (String[])convert(value, String[].class, String[].class);
+						s = (String[])convert(key, value, String[].class, String[].class);
 					} else {
 						s = value.toString().split("\\p{Punct}");
 					}
@@ -1492,34 +1497,25 @@ public class JSON {
 						boolean access = tryAccess(c);
 						
 						Map map = (Map)value;
-						for (Object key : map.keySet()) {
-							Object target = props.get(key.toString());
+						for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
+							String mKey = entry.getKey().toString();
+							Object target = props.get(mKey);
 							if (target == null) {
-								target = props.get(toLowerCamel(key.toString()));
+								target = props.get(toLowerCamel(mKey));
 								if (target == null) {
-									target = props.get(key.toString() + "_");
+									target = props.get(mKey + "_");
 									if (target == null) continue;
 								}
 							}
 							
 							if (target instanceof Method) {
 								Method m = (Method)target;
-								try {
-									if (access) m.setAccessible(true);
-									m.invoke(o, convert(map.get(key.toString()), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
-								} catch (Exception e) {
-									handleConvertError(key.toString(), map.get(key), m.getParameterTypes()[0], m.getGenericParameterTypes()[0], e);
-									handleError = true;
-								}
+								if (access) m.setAccessible(true);
+								m.invoke(o, convert(mKey, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 							} else if (target instanceof Field) {
 								Field f = (Field)target;
-								try {
-									if (access) f.setAccessible(true);
-									f.set(o, convert(map.get(key.toString()), f.getType(), f.getGenericType()));
-								} catch (Exception e) {
-									handleConvertError(key.toString(), map.get(key), f.getType(), f.getGenericType(), e);
-									handleError = true;
-								}
+								if (access) f.setAccessible(true);
+								f.set(o, convert(mKey, entry.getValue(), f.getType(), f.getGenericType()));
 							}
 						}
 						data = o;
@@ -1527,13 +1523,12 @@ public class JSON {
 				}
 			}
 		} catch (Exception e) {
-			if (handleError) throw e;
-			handleConvertError(null, value, c, type, e);
+			handleConvertError(key, value, c, type, e);
 		}
 		return data;
 	}
 	
-	protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
+	protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
 		// no handle
 	}
 	
@@ -1560,11 +1555,11 @@ public class JSON {
 			if (Calendar.class.equals(c)) {
 				instance = Calendar.getInstance();
 			}
-		} else if (c.isMemberClass()) {
+		} else if (c.isMemberClass() || c.isAnonymousClass()) {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
 			if(tryAccess(c)) con.setAccessible(true);
-			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
+			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : new Object[0]);
 		} else {
 			if (Date.class.isAssignableFrom(c)) {
 				try {
@@ -1590,129 +1585,6 @@ public class JSON {
 		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle(JSON.class.getName(), locale);
 		return MessageFormat.format(bundle.getString(id), args);
-	}
-
-	interface JSONSource {
-		int next() throws IOException;
-		void back();
-		long getLineNumber();
-		long getColumnNumber();
-		long getOffset();
-	}
-
-	class CharSequenceJSONSource implements JSONSource {
-		private int lines = 1;
-		private int columns = 1;
-		private int offset = 0;
-		
-		private CharSequence cs;
-		
-		public CharSequenceJSONSource(CharSequence cs) {
-			if (cs == null) {
-				throw new NullPointerException();
-			}
-			this.cs = cs;
-		}
-		
-		public int next() {
-			if (offset < cs.length()) {
-				char c = cs.charAt(offset++);
-				if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
-					lines++;
-					columns = 0;
-				} else {
-					columns++;
-				}
-				return c;
-			}
-			return -1;
-		}
-		
-		public void back() {
-			offset--;
-			columns--;
-		}
-		
-		public long getLineNumber() {
-			return lines;
-		}
-		
-		public long getColumnNumber() {
-			return columns;
-		}
-		
-		public long getOffset() {
-			return offset;
-		}
-		
-		public String toString() {
-			return cs.subSequence(offset-columns+1, offset).toString();
-		}
-	}
-
-	class ReaderJSONSource implements JSONSource{
-		private long lines = 1l;
-		private long columns = 1l;
-		private long offset = 0;
-
-		private Reader reader;
-		private char[] buf = new char[256];
-		private int start = 0;
-		private int end = 0;
-		
-		public ReaderJSONSource(Reader reader) {
-			if (reader == null) {
-				throw new NullPointerException();
-			}
-			this.reader = reader;
-		}
-		
-		public int next() throws IOException {
-			if (start == end) {
-				int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
-				if (size != -1) {
-					end = (end + size) % buf.length;
-				} else {
-					return -1;
-				}
-			}
-			char c = buf[start];
-			if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
-				lines++;
-				columns = 0;
-			} else {
-				columns++;
-			}
-			offset++;
-			start = (start+1) % buf.length;
-			return c;
-		}
-		
-		public void back() {
-			columns--;
-			start = (start+buf.length-1) % buf.length;
-		}
-		
-		public long getLineNumber() {
-			return lines;
-		}
-		
-		public long getColumnNumber() {
-			return columns;
-		}
-		
-		public long getOffset() {
-			return offset;
-		}
-		
-		public String toString() {
-			StringBuffer sb = new StringBuffer();
-			int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
-			for (int i = maxlength; i >= 0; i--) {
-				sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
-			}
-			return sb.toString();
-		}
 	}
 	
 	boolean tryAccess(Class c) {
@@ -1972,5 +1844,130 @@ public class JSON {
 		}
 		
 		return format.parse(value).getTime();
+	}
+	
+	
+}
+
+interface JSONSource {
+	int next() throws IOException;
+	void back();
+	long getLineNumber();
+	long getColumnNumber();
+	long getOffset();
+}
+
+class CharSequenceJSONSource implements JSONSource {
+	private int lines = 1;
+	private int columns = 1;
+	private int offset = 0;
+	
+	private CharSequence cs;
+	
+	public CharSequenceJSONSource(CharSequence cs) {
+		if (cs == null) {
+			throw new NullPointerException();
+		}
+		this.cs = cs;
+	}
+	
+	public int next() {
+		if (offset < cs.length()) {
+			char c = cs.charAt(offset++);
+			if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
+				lines++;
+				columns = 0;
+			} else {
+				columns++;
+			}
+			return c;
+		}
+		return -1;
+	}
+	
+	public void back() {
+		offset--;
+		columns--;
+	}
+	
+	public long getLineNumber() {
+		return lines;
+	}
+	
+	public long getColumnNumber() {
+		return columns;
+	}
+	
+	public long getOffset() {
+		return offset;
+	}
+	
+	public String toString() {
+		return cs.subSequence(offset-columns+1, offset).toString();
+	}
+}
+
+class ReaderJSONSource implements JSONSource{
+	private long lines = 1l;
+	private long columns = 1l;
+	private long offset = 0;
+
+	private Reader reader;
+	private char[] buf = new char[256];
+	private int start = 0;
+	private int end = 0;
+	
+	public ReaderJSONSource(Reader reader) {
+		if (reader == null) {
+			throw new NullPointerException();
+		}
+		this.reader = reader;
+	}
+	
+	public int next() throws IOException {
+		if (start == end) {
+			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
+			if (size != -1) {
+				end = (end + size) % buf.length;
+			} else {
+				return -1;
+			}
+		}
+		char c = buf[start];
+		if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
+			lines++;
+			columns = 0;
+		} else {
+			columns++;
+		}
+		offset++;
+		start = (start+1) % buf.length;
+		return c;
+	}
+	
+	public void back() {
+		columns--;
+		start = (start+buf.length-1) % buf.length;
+	}
+	
+	public long getLineNumber() {
+		return lines;
+	}
+	
+	public long getColumnNumber() {
+		return columns;
+	}
+	
+	public long getOffset() {
+		return offset;
+	}
+	
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
+		for (int i = maxlength; i >= 0; i--) {
+			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
+		}
+		return sb.toString();
 	}
 }
