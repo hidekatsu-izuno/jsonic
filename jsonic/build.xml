@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <project name="jsonic" basedir="." default="dist">
-	<property name="version" value="0.9.5" />
+	<property name="version" value="0.9.6" />
 
 	<property name="src" location="src" />
 	<property name="lib" location="lib" />
@@ -47,12 +47,12 @@
 		</zip>
 		<delete includeemptydirs="on">
 			<fileset dir="${build}" />
+			<fileset dir="docs/api" />
 			<fileset file="jsonic-${version}.jar" />
 		</delete>
 	</target>
 	
 	<target name="clean">
-		<delete dir="docs/api" />
 		<delete file="jsonic-${version}.zip" />
 	</target>
 </project>
