@@ -516,6 +516,21 @@ public class JSONTest {
 		};
 		assertEquals(map3, json.parse("# database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
 				+ " xxxx // you need to replace your password.\n}\n/* {\"database\": {\"description\": \"ms sql server\", \"user\": \"sa\", \"password\": \"xxxx\"}} */\n"));
+
+		List list2 = new ArrayList();
+		list2.add("あいうえお");
+		
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE.json")));
+		
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE_BOM.json")));
 	}
 
 	@Test

@@ -58,6 +58,7 @@ public class WebServiceServletTest {
 		
 		// POST
 		client.setRequestMethod("POST");
+		client.setRequestHeader("Content-type", "application/json");
 		client.setRequestContent("{title:\"title\",text:\"text\"}");
 		client.connect();
 		assertEquals(SC_CREATED, client.getResponseCode());
@@ -72,6 +73,7 @@ public class WebServiceServletTest {
 		
 		// PUT
 		client.setRequestMethod("PUT");
+		client.setRequestHeader("Content-type", "application/json");
 		client.setRequestContent("{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
 		client.connect();
 		assertEquals(SC_NO_CONTENT, client.getResponseCode());
@@ -79,6 +81,7 @@ public class WebServiceServletTest {
 		
 		// DELETE
 		client.setRequestMethod("DELETE");
+		client.setRequestHeader("Content-type", "application/json");
 		client.setRequestContent("{id:" + content.get(0).get("id") + "}");
 		client.connect();
 		assertEquals(SC_NO_CONTENT, client.getResponseCode());
@@ -93,6 +96,7 @@ public class WebServiceServletTest {
 		// POST
 		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=POST");
 		client.setRequestMethod("POST");
+		client.setRequestHeader("Content-type", "application/json");
 		client.setRequestContent("{title:\"title\",text:\"text\"}");
 		client.connect();
 		assertEquals(SC_CREATED, client.getResponseCode());
@@ -101,6 +105,7 @@ public class WebServiceServletTest {
 		// GET
 		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=GET");
 		client.setRequestMethod("POST");
+		client.setRequestHeader("Content-type", "application/json");
 		client.connect();
 		assertEquals(SC_OK, client.getResponseCode());
 		content = (List<Map<String, Object>>)JSON.decode(client.getResponseContent());
@@ -109,6 +114,7 @@ public class WebServiceServletTest {
 		// PUT
 		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=PUT");
 		client.setRequestMethod("POST");
+		client.setRequestHeader("Content-type", "application/json");
 		client.setRequestContent("{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
 		client.connect();
 		assertEquals(SC_NO_CONTENT, client.getResponseCode());
@@ -117,6 +123,7 @@ public class WebServiceServletTest {
 		// DELETE
 		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=DELETE");
 		client.setRequestMethod("POST");
+		client.setRequestHeader("Content-type", "application/json");
 		client.setRequestContent("{id:" + content.get(0).get("id") + "}");
 		client.connect();
 		assertEquals(SC_NO_CONTENT, client.getResponseCode());
