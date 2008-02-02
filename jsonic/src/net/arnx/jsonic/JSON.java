@@ -80,9 +80,9 @@ import java.text.ParseException;
  * json.setPrettyPrint(true);
  * String pretty = json.format(o);
  * 
- * // invokes method by a json array.
- * JSON json = new JSON();
- * Object result = json.invoke(data, "method", "[true, 1]");
+ * //uses Reader/InputStream
+ * Bar bar = (new JSON()).parse(new FileInputStream("bar.json"), Bar.class);
+ * Bar bar = (new JSON()).parse(new FileReader("bar.json"), Bar.class);
  * </pre>
  * 
  * <h4>Summary of encoding rules for java type into json type</h4>
@@ -92,7 +92,7 @@ import java.text.ParseException;
  * 	<th bgcolor="#CCCCFF" align="left">json type</th>
  * </tr>
  * <tr><td>java.util.Map</td><td rowspan="2">object</td></tr>
- * <tr><td>java.lang.Serializable (public property or field)</td></tr>
+ * <tr><td>java.lang.Object (public property or field)</td></tr>
  * <tr><td>java.lang.Object[]</td><td rowspan="3">array</td></tr>
  * <tr><td>java.util.Collection</td></tr>
  * <tr><td>boolean[], short[], int[], long[], float[], double[]</td></tr>
@@ -134,7 +134,7 @@ import java.text.ParseException;
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
-@SuppressWarnings({"unchecked", "serial"})
+@SuppressWarnings({"unchecked"})
 public class JSON {	
 	public JSON() {
 		this(null);
@@ -148,7 +148,6 @@ public class JSON {
 	
 	/**
 	 * Output json string is to human-readable format.
-	 * default value is 32.
 	 * 
 	 * @param value true to format human-readable, false to shorten.
 	 */
@@ -160,6 +159,7 @@ public class JSON {
 	
 	/**
 	 * Sets maximum depth for the nest level.
+	 * default value is 32.
 	 * 
 	 * @param value maximum depth for the nest level.
 	 */
@@ -1288,7 +1288,8 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).byteValue();
 					} else {
-						data = Byte.valueOf(value.toString());
+						String str = value.toString().trim();
+						if (str.length() > 0) data = Byte.valueOf(str);
 					}
 				} else if (Short.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1296,7 +1297,8 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).shortValue();
 					} else {
-						data = Short.valueOf(value.toString());
+						String str = value.toString().trim();
+						if (str.length() > 0) data = Short.valueOf(str);
 					}				
 				} else if (Integer.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1304,7 +1306,8 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).intValue();
 					} else {
-						data = Integer.valueOf(value.toString());
+						String str = value.toString().trim();
+						if (str.length() > 0) data = Integer.valueOf(str);
 					}
 				} else if (Long.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1312,7 +1315,8 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).longValue();
 					} else {
-						data = Long.valueOf(value.toString());
+						String str = value.toString().trim();
+						if (str.length() > 0) data = Long.valueOf(str);
 					}
 				} else if (Float.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1320,7 +1324,8 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).floatValue();
 					} else {
-						data = Float.valueOf(value.toString());
+						String str = value.toString().trim();
+						if (str.length() > 0) data = Float.valueOf(str);
 					}
 				} else if (Double.class.equals(c)) {
 					if (value instanceof Boolean) {
@@ -1328,7 +1333,8 @@ public class JSON {
 					} else if (value instanceof Number) {
 						data = ((Number)value).doubleValue();
 					} else {
-						data = Double.valueOf(value.toString());
+						String str = value.toString().trim();
+						if (str.length() > 0) data = Double.valueOf(str);
 					}
 				} else if (BigInteger.class.equals(c)) {				
 					if (value instanceof Boolean) {
@@ -1336,10 +1342,12 @@ public class JSON {
 					} else if (value instanceof BigDecimal) {
 						data = ((BigDecimal)value).toBigInteger();
 					} else {
-						data = (new BigDecimal(value.toString())).toBigInteger();
+						String str = value.toString().trim();
+						if (str.length() > 0) data = (new BigDecimal(str)).toBigInteger();
 					}
 				} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
-					data = new BigDecimal(value.toString());
+					String str = value.toString().trim();
+					if (str.length() > 0) data = new BigDecimal(str);
 				} else if (Character.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? '1' : '0';
@@ -1359,7 +1367,12 @@ public class JSON {
 					if (value instanceof Number) {
 						date.setTime(((Number)value).longValue());
 					} else {
-						date.setTime(convertDate(value.toString()));
+						String str = value.toString().trim();
+						if (str.length() > 0) {
+							date.setTime(convertDate(str));
+						} else {
+							date = null;
+						}
 					}
 					data = date;
 				} else if (Calendar.class.isAssignableFrom(c)) {
@@ -1367,11 +1380,16 @@ public class JSON {
 					if (value instanceof Number) {
 						cal.setTimeInMillis(((Number)value).longValue());
 					} else {
-						cal.setTimeInMillis(convertDate(value.toString()));
+						String str = value.toString().trim();
+						if (str.length() > 0) {
+							cal.setTimeInMillis(convertDate(str));
+						} else {
+							cal = null;
+						}
 					}
 					data = cal;
 				} else if (TimeZone.class.equals(c)) {
-					data = TimeZone.getTimeZone(value.toString());
+					data = TimeZone.getTimeZone(value.toString().trim());
 				} else if (Collection.class.isAssignableFrom(c)) {
 					Collection collection = (Collection)create(c);
 					if (type instanceof ParameterizedType) {
