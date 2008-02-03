@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
@@ -1492,13 +1493,13 @@ public class JSON {
 								}
 							}
 							
+							if (access) ((AccessibleObject)target).setAccessible(true);
+							
 							if (target instanceof Method) {
 								Method m = (Method)target;
-								if (access) m.setAccessible(true);
-								m.invoke(o, convert(mKey, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
-							} else if (target instanceof Field) {
+								((Method)target).invoke(o, convert(mKey, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+							} else {
 								Field f = (Field)target;
-								if (access) f.setAccessible(true);
 								f.set(o, convert(mKey, entry.getValue(), f.getType(), f.getGenericType()));
 							}
 						}
