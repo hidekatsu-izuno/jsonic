@@ -54,6 +54,7 @@ public class WebServiceServlet extends HttpServlet {
 		public Class container;
 		public String encoding = "UTF-8";
 		public Map<String, String> mappings;
+		public Map<String, Pattern> requirements;
 	}
 	
 	private Container container;
@@ -86,9 +87,13 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
+		if (config.requirements == null) config.requirements = new HashMap<String, Pattern>();
+		config.requirements.put("package", Pattern.compile(".+"));
+		config.requirements.put(null, Pattern.compile("[^/]+"));
+		
 		if (config.mappings != null) {
 			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
-				mappings.add(new RouteMapping(entry.getKey(), entry.getValue()));
+				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.requirements));
 			}
 		}
 	}
@@ -496,13 +501,16 @@ class RouteMapping {
 	private List<String> names;
 	private String target;
 	
-	public RouteMapping(String path, String target) {
+	public RouteMapping(String path, String target, Map<String, Pattern> requirements) {
 		this.names = new ArrayList<String>();
 		StringBuffer sb = new StringBuffer("^\\Q");
 		Matcher m = PLACE_PATTERN.matcher(path);
 		while (m.find()) {
-			names.add(m.group(1));
-			m.appendReplacement(sb, "\\E(.+)\\Q");
+			String name = m.group(1);
+			names.add(name);
+			Pattern p = requirements.get(name);
+			if (p == null) p = requirements.get(null);
+			m.appendReplacement(sb, "\\E(" + p.pattern().replace("(", "(?:") + ")\\Q");
 		}
 		m.appendTail(sb);
 		sb.append("\\E$");

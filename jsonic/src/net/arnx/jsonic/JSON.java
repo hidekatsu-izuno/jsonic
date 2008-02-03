@@ -1577,7 +1577,7 @@ public class JSON {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
 			if(tryAccess(c)) con.setAccessible(true);
-			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : new Object[0]);
+			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
 		} else {
 			if (Date.class.isAssignableFrom(c)) {
 				try {

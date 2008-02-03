@@ -21,7 +21,7 @@ public class JSONTest {
 	@SuppressWarnings("unused")
 	public void testDecodeInnerClass() throws Exception {
 		JSON json = new JSON(this) {
-			protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
+			protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
 				throw e;
 			}
 		};
@@ -32,11 +32,12 @@ public class JSONTest {
 		
 		assertEquals(new PrivateInnerHoge(), json.parse("{\"a\":100}", PrivateInnerHoge.class));
 		
+		json.setContext(null);
 		try {
-			json.setContext(null);
-			assertEquals(new InnerHoge(), json.parse("{\"a\":100}", InnerHoge.class));
+			json.parse("{\"a\":100}", InnerHoge.class);
 			fail();
 		} catch (Exception e) {
+			e.printStackTrace();
 			assertNotNull(e);
 		}
 		

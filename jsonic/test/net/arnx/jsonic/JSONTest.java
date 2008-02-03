@@ -545,7 +545,26 @@ public class JSONTest {
 				throw e;
 			}
 		};
+		
+		// boolean
 		assertEquals(Boolean.TRUE, json.convert(null, 100, boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, 0, boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "off", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "no", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "NaN", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "false", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, null, boolean.class, boolean.class));
+		
+		// Boolean
+		assertEquals(Boolean.TRUE, json.convert(null, 100, Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, 0, Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "off", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "no", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "NaN", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "false", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, "", Boolean.class, Boolean.class));
+		assertEquals(null, json.convert(null, null, Boolean.class, Boolean.class));
 		
 		// Date
 		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert(null, "1", Date.class, Date.class));
