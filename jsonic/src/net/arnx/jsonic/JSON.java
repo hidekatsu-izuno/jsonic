@@ -435,67 +435,29 @@ public class JSON {
 		} else {
 			Class c = o.getClass();
 			
+			Map<String, Member> props = getProperties(c, false);
 			boolean access = tryAccess(c);
 			
-			TreeMap<String, Object> map = new TreeMap<String, Object>();
+			Map<String, Object> map = new TreeMap<String, Object>();
 			
-			Field[] fields = c.getFields();
-			for (Field f : fields) {
-				if (!Modifier.isStatic(f.getModifiers())
-						&& Modifier.isPublic(f.getModifiers())
-						&& !Modifier.isTransient(f.getModifiers())) {
-					try {
+			for (Map.Entry<String, Member> entry : props.entrySet()) {
+				Object value = null;
+				try {
+					if (entry.getValue() instanceof Method) {
+						Method m = (Method)entry.getValue();
+						if (access) m.setAccessible(true);
+						value = m.invoke(o);
+					} else {
+						Field f = (Field)entry.getValue();
 						if (access) f.setAccessible(true);
-						Object value =  f.get(o);
-						
-						if (value != o) {
-							map.put(f.getName(), value);
-						}
-					} catch (Exception e) {
-						// no handle
+						value =  f.get(o);
 					}
+					map.put(entry.getKey(), value);
+				} catch (Exception e) {
+					// no handle
 				}
 			}
 
-			Method[] methods = c.getMethods();
-			for (Method m : methods) {
-				String name = m.getName();
-				if (!Modifier.isStatic(m.getModifiers())
-						&& !name.equals("getClass")
-						&& ((name.startsWith("get") 
-								&& name.length() > 3 
-								&& Character.isUpperCase(name.charAt(3)) 
-								&& !m.getReturnType().equals(void.class))
-							|| 
-							((name.startsWith("is") 
-								&& name.length() > 2 
-								&& Character.isUpperCase(name.charAt(2))
-								&& m.getReturnType().equals(boolean.class))))
-						&& m.getParameterTypes().length == 0
-						) {
-					try {
-						if (access) m.setAccessible(true);
-						Object value = m.invoke(o, (Object[])null);
-						
-						if (value != o) {
-							String key = null;
-							int prefix = name.startsWith("get") ? 3 : 2;
-							if (!(name.length() > prefix+1 && Character.isUpperCase(name.charAt(prefix+1)))) {
-								char[] carray = name.toCharArray();
-								carray[prefix] = Character.toLowerCase(carray[prefix]);
-								key = new String(carray, prefix, carray.length-prefix);
-							} else {
-								key = name.substring(prefix);
-							}
-							
-							map.put(key, value);
-						}
-					} catch (Exception e) {
-						// no handle
-					}
-				}
-			}
-			
 			formatMap(map, o, ap, level);
 		}
 		
@@ -510,15 +472,15 @@ public class JSON {
 		ap.append('{');
 		for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
 			Map.Entry entry = (Map.Entry)i.next();
+			if (entry.getValue() == o) continue; 
+			
 			if (this.prettyPrint) {
 				ap.append('\n');
 				for (int j = 0; j < level+1; j++) ap.append('\t');
 			}
 			formatString((String)entry.getKey(), ap).append(':');
 			if (this.prettyPrint) ap.append(' ');
-			Object item = entry.getValue();
-			if (item == o) item = null;
-			format(item, ap, level+1);
+			format(entry.getValue(), ap, level+1);
 			if (i.hasNext()) ap.append(',');
 		}
 		if (this.prettyPrint && !map.isEmpty()) {
@@ -1514,14 +1476,14 @@ public class JSON {
 				} else if (value instanceof Map) {
 					Object o = create(c);
 					if (o != null) {
-						Map<String, Object> props = getSetProperties(c);
+						Map<String, Member> props = getProperties(c, true);
 						
 						boolean access = tryAccess(c);
 						
 						Map map = (Map)value;
 						for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
 							String mKey = entry.getKey().toString();
-							Object target = props.get(mKey);
+							Member target = props.get(mKey);
 							if (target == null) {
 								target = props.get(toLowerCamel(mKey));
 								if (target == null) {
@@ -1548,6 +1510,14 @@ public class JSON {
 			handleConvertError(key, value, c, type, e);
 		}
 		return data;
+	}
+	
+	protected boolean ignore(Class target, Member member) {
+		int modifiers = member.getModifiers();
+		if (Modifier.isStatic(modifiers)) return true;
+		if (Modifier.isTransient(modifiers)) return true;
+		if (member.getDeclaringClass().equals(Object.class)) return true;
+		return false;
 	}
 	
 	protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
@@ -1640,37 +1610,55 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private static Map<String, Object> getSetProperties(Class c) {
-		Map<String, Object> props = new HashMap<String, Object>();
+	private Map<String, Member> getProperties(Class c, boolean isSetter) {
+		Map<String, Member> props = new HashMap<String, Member>();
 		
 		for (Field f : c.getFields()) {
-			int modifiers = f.getModifiers();
-			if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
-				props.put(f.getName(), f);
-			}
+			if (ignore(c, f)) continue;
+			
+			props.put(f.getName(), f);
 		}
 		
 		for (Method m : c.getMethods()) {
+			if (ignore(c, m)) continue;
+
 			String name = m.getName();
-			if (!Modifier.isStatic(m.getModifiers())
-					&& name.startsWith("set")
+			int start = 0;
+			if (isSetter) {
+				if (name.startsWith("set") 
 					&& name.length() > 3
 					&& Character.isUpperCase(name.charAt(3))
 					&& m.getParameterTypes().length == 1
 					&& m.getReturnType().equals(void.class)) {
-				
-				String key = null;
-				if (!(name.length() > 4 && Character.isUpperCase(name.charAt(4)))) {
-					char[] carray = name.toCharArray();
-					carray[3] = Character.toLowerCase(carray[3]);
-					key = new String(carray, 3, carray.length-3);
+					start = 3;
 				} else {
-					key = name.substring(3);
+					continue;
 				}
-				
-				props.put(key, m);
+			} else {
+				if (name.startsWith("get")
+					&& name.length() > 3
+					&& Character.isUpperCase(name.charAt(3))
+					&& m.getParameterTypes().length == 0
+					&& !m.getReturnType().equals(void.class)) {
+					start = 3;
+				} else if (name.startsWith("is")
+					&& name.length() > 2
+					&& Character.isUpperCase(name.charAt(2))
+					&& m.getParameterTypes().length == 0
+					&& m.getReturnType().equals(boolean.class)) {
+					start = 2;
+				} else {
+					continue;
+				}
 			}
+			
+			char[] cs = name.toCharArray();
+			if (cs.length < start+2 || Character.isLowerCase(cs[start+1])) {
+				cs[start] = Character.toLowerCase(cs[start]);
+			}
+			props.put(new String(cs, start, cs.length-start), m);
 		}
+		
 		return props;
 	}
 	

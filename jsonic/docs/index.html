@@ -253,6 +253,12 @@ JSON json = new JSON() {
     protected <span class="em">Object convert(Object key, Object value, Class c, Type type)</span> {
         return super.convert(key, value, c, type);
     }
+    
+    <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
+    protected <span class="em">boolean ignore(Class c, Member m)</span> {
+    	// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言されたメンバの場合、trueを返します。
+        return ignore(c, m);
+    }    
 };
 </pre>
 
@@ -409,6 +415,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 <h3>2008/02/01 version 0.9.6</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
+<li>Parse/Format時にJavaBeansのプロパティの扱いを制御できるよう、ignoreメソッドを追加しました。</li>
 <li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
 </ul>
 
