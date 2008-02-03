@@ -16,19 +16,9 @@
 			<param-value>
 				debug: true
 				encoding: 'UTF-8'
-				mapping: {
-					'/rpc.json': {
-						mode: 'rpc'
-						component: 'sample.web.${package}.service.${class}Service'
-					}
-					'/{package}/{class}.json': {
-						mode: 'rest'
-						component: 'sample.web.${package}.service.${class}Service'
-					}
-					'/{class}.json': {
-						mode: 'rest'
-						component: 'sample.service.${class}Service'
-					}
+				mappings: {
+					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
+					'/[class].[ext]': 'sample.service.${class}Service'
 				}
 			</param-value>
 		</init-param>

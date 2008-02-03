@@ -130,7 +130,7 @@ import java.text.ParseException;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 0.9.5
+ * @version 0.9.6
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */

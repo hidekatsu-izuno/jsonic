@@ -15,7 +15,11 @@
  */
 package net.arnx.jsonic.web;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -32,7 +36,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -46,19 +49,17 @@ import static javax.servlet.http.HttpServletResponse.*;
 
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
-	private static final Pattern URL_PATTERN = Pattern.compile("^(/(?:[^/]+/)*)([^/.]+)((?:\\.[^/]+)+)?$");
-	private static final Pattern REDIRECT_PATTERN = Pattern.compile("[&?]redirect=true$");
 	
 	class Config {
 		public Class container;
 		public String encoding = "UTF-8";
-		public Map<String, String> routes;
+		public Map<String, String> mappings;
 	}
 	
 	private Container container;
 	private Config config;
 	
-	private Map<Pattern, String> routes = new LinkedHashMap<Pattern, String>();
+	private List<RouteMapping> mappings = new ArrayList<RouteMapping>();
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
@@ -68,7 +69,7 @@ public class WebServiceServlet extends HttpServlet {
 		if (configText == null) configText = "";
 		 
 		JSON json = new JSON() {
-			protected void handleConvertError(String key, Object value, Class c, Type type, Exception e) throws Exception {
+			protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
 				throw e;
 			}
 		};
@@ -85,19 +86,14 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.routes != null) {
-			for (Map.Entry<String, String> entry : config.routes.entrySet()) {
-				if (entry.getKey().startsWith("/")) {
-					routes.put(Pattern.compile(entry.getKey().equals("/") ? "^/" : "^" + entry.getKey() + "/"), entry.getValue());					
-				} else {
-					container.debug("route should start with '/': " + entry.getKey());
-				}
+		if (config.mappings != null) {
+			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
+				mappings.add(new RouteMapping(entry.getKey(), entry.getValue()));
 			}
 		}
 	}
 
-	@Override
-	protected void service(HttpServletRequest request, HttpServletResponse response)
+	protected Route preprocess(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		
 		if (config.encoding != null) {
@@ -105,73 +101,93 @@ public class WebServiceServlet extends HttpServlet {
 			response.setCharacterEncoding(config.encoding);
 		}
 		
-		Matcher m = URL_PATTERN.matcher(request.getRequestURI());
-		if (!m.matches()){
-			response.sendError(SC_NOT_FOUND);
-			return;
+		String uri = (request.getContextPath().equals("/")) ?
+				request.getRequestURI() : 
+				request.getRequestURI().substring(request.getContextPath().length());
+		
+		File file = new File(getServletContext().getRealPath(uri));
+		if (file.exists()) {
+			OutputStream out = response.getOutputStream();
+			InputStream in = new FileInputStream(file);
+			try {
+				byte[] buffer = new byte[1024];
+				int count = 0;
+				while ((count = in.read(buffer)) > 0) {
+					out.write(buffer, 0, count);
+				}
+			} finally {
+				if (in != null) in.close();
+			}
+			return null;
 		}
 		
-		String[] pathes = new String[] {m.group(1), m.group(2), m.group(3)};
-		pathes[0] = (request.getContextPath().equals("/")) ? pathes[0] : pathes[0].substring(request.getContextPath().length());
-		
-		request.setAttribute("pathes", pathes);
-		
-		super.service(request, response);
+		for (RouteMapping m : mappings) {
+			Route route = m.matches(request.getMethod(), uri);
+			if (route != null) return route;
+		}
+		response.sendError(SC_NOT_FOUND);
+		return null;
 	}
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		String[] pathes = (String[])request.getAttribute("pathes");
+			throws ServletException, IOException {		
+		Route route = preprocess(request, response);
 		
-		if ("rpc".equalsIgnoreCase(pathes[1])) {
+		if (route == null) {
+			return;
+		} else if ("rpc".equals(route.get("class"))) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED);
 			return;
-		} else {	
-			doREST("GET", pathes, request, response);
+		} else {
+			doREST(route, request, response);
 		}
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		String[] pathes = (String[])request.getAttribute("pathes");
+		Route route = preprocess(request, response);
 		
-		if ("rpc".equalsIgnoreCase(pathes[1])) {
-			doRPC(pathes, request, response);
+		if (route == null) {
+			return;
+		} else if ("rpc".equals(route.get("class"))) {
+			doRPC(route, request, response);
 		} else {
 			String method = request.getParameter("_method");
-			if (method == null) method = "POST";
-			doREST(method, pathes, request, response);
+			if (method != null) route.setMethod(method);
+			doREST(route, request, response);
 		}
 	}
 
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		String[] pathes = (String[])request.getAttribute("pathes");
+		Route route = preprocess(request, response);
 		
-		if ("rpc".equalsIgnoreCase(pathes[1])) {
+		if (route == null) {
+			return;
+		} else if ("rpc".equals(route.get("class"))) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED);
-			return;
 		} else {
-			doREST("PUT", pathes, request, response);
+			doREST(route, request, response);
 		}
 	}
 	
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
-		String[] pathes = (String[])request.getAttribute("pathes");
+		Route route = preprocess(request, response);
 		
-		if ("rpc".equalsIgnoreCase(pathes[1])) {
+		if (route == null) {
+			return;
+		} else if ("rpc".equals(route.get("class"))) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED);
-			return;
 		} else {
-			doREST("DELETE", pathes, request, response);
+			doREST(route, request, response);
 		}
 	}
 	
@@ -181,13 +197,8 @@ public class WebServiceServlet extends HttpServlet {
 		public Object id;
 	}
 	
-	protected void doRPC(String[] pathes, HttpServletRequest request, HttpServletResponse response)
+	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
-		
-		if (!".json".equalsIgnoreCase(pathes[2])) {
-			response.sendError(SC_NOT_FOUND);
-			return;			
-		}
 		
 		JSONInvoker json = new JSONInvoker(this);
 		
@@ -203,25 +214,18 @@ public class WebServiceServlet extends HttpServlet {
 				error.put("code", -32700);
 				error.put("message", "Invalid Request.");	
 			} else {
-				String[] targets = req.method.split("\\.");
-				if (targets.length != 2 || targets[0].length() == 0 || targets[1].length() == 0) {
+				int delimiter = req.method.lastIndexOf('.');
+				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
 					throw new NoSuchMethodException(req.method);
 				} else {
-					pathes[1] = targets[0];
-					
-					Class c = getClassFromPath(pathes);
-					if (c == null) {
-						response.sendError(SC_NOT_FOUND);
-						return;
-					}
-					
-					Object component = container.getComponent(c);
+					route.put("class", req.method.substring(0, delimiter));
+					Object component = container.getComponent(route.getComponentClass());
 					if (component == null) {
 						throw new NoSuchMethodException(req.method);
 					}
 					
 					json.setContext(component);
-					res = json.invoke(component, targets[1], req.params, false);
+					res = json.invoke(component, req.method.substring(delimiter+1), req.params);
 				}
 			}
 		} catch (ClassNotFoundException e) {
@@ -289,28 +293,22 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	protected void doREST(String method, String[] pathes, HttpServletRequest request, HttpServletResponse response)
+	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		if (!".json".equalsIgnoreCase(pathes[2])) {
-			response.sendError(SC_NOT_FOUND);
-			return;			
-		}
-		
-		String methodName = method;
+		String methodName = route.getMethod();
 		int status = SC_OK;
 		String callback = null;
 		
-		method = method.toUpperCase();
-		if ("GET".equals(method)) {
+		if ("get".equals(route.getMethod())) {
 			methodName = "find";
 			callback = request.getParameter("callback");
-		} else if ("POST".equals(method)) {
+		} else if ("post".equals(route.getMethod())) {
 			methodName = "create";
 			status = SC_CREATED;
-		} else if ("PUT".equals(method)) {
+		} else if ("put".equals(route.getMethod())) {
 			methodName = "update";
-		} else if ("DELETE".equals(method)) {
+		} else if ("delte".equals(route.getMethod())) {
 			methodName = "delete";
 		}
 		
@@ -319,38 +317,32 @@ public class WebServiceServlet extends HttpServlet {
 		
 		Object res = null;
 		try {
-			Class c = getClassFromPath(pathes);
-			if (c == null) {
-				response.sendError(SC_NOT_FOUND);
-				return;				
-			}
-			
-			Object component = container.getComponent(c);
+			Object component = container.getComponent(route.getComponentClass());
 			if (component == null) {
 				response.sendError(SC_NOT_FOUND);
 				return;
 			}
 			
 			List params = null;
-			if ("GET".equals(method)) {
+			if ("get".equals(route.getMethod())) {
 				params = new ArrayList();
-				params.add(getParameterMap(request));
+				Map contents = getParameterMap(request);
+				contents.putAll(route);
+				params.add(contents);
 			} else {
-				Object contents = json.parse(request.getReader());
-				if (contents instanceof List) {
-					params = (List)contents;
-				} else if (contents instanceof Map) {
-					((Map)contents).putAll(getParameterMap(request));
+				Object o = json.parse(request.getReader());
+				if (o instanceof List) {
+					params = (List)o;
+				} else {
+					Map contents = (Map)o;
+					contents.putAll(getParameterMap(request));
+					contents.putAll(route);
 					params = new ArrayList();
 					params.add(contents);
-				} else {
-					params = new ArrayList();
-					params.add(getParameterMap(request));
 				}
 			}
-			
 			json.setContext(component);
-			res = json.invoke(component, methodName, params, true);
+			res = json.invoke(component, methodName, params);
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
@@ -377,116 +369,36 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		if (res instanceof CharSequence) {
-			// when result is string, forward or redirect.
-			
-			String forward = res.toString();
-			if (forward.length() > 1 && forward.charAt(0) == '/') {
-				forward = request.getContextPath() + forward;
-			}
-			
-			Matcher m = REDIRECT_PATTERN.matcher(forward);
-			if (m.matches()) {
-				response.sendRedirect(forward.substring(0, m.start()));
-			} else {
-				RequestDispatcher dispatcher = request.getRequestDispatcher(forward);
-				dispatcher.forward(request, response);
-			}
-			return;
-		} else if (res instanceof Number) {
-			// when result is number, send
-			status = ((Number)res).intValue();
-			if (status / 100 == 2) {
+		try {		
+			if (res == null
+					|| res instanceof CharSequence
+					|| res instanceof Boolean
+					|| res instanceof Number
+					|| res instanceof Date) {
+				if (status != SC_CREATED) status = SC_NO_CONTENT;
 				response.setStatus(status);
 			} else {
-				response.sendError(status);
+				response.setContentType((callback != null) ? "text/javascript" : "application/json");
+			
+				Writer writer = response.getWriter();
+				json.setPrettyPrint(container.isDebugMode());
+				
+				if (callback != null) writer.append(callback).append("(");
+				json.format(res, writer);
+				if (callback != null) writer.append(");");
 			}
-			return;
-		} else if (res == null 
-				|| res instanceof Boolean 
-				|| res instanceof Date) {
-			
-			if (status != SC_CREATED) status = SC_NO_CONTENT;
-			response.setStatus(status);
-			return;
-		}
-
-		// response processing
-		response.setContentType((callback != null) ? "text/javascript" : "application/json");
-		
-		try {
-			Writer writer = response.getWriter();
-			json.setPrettyPrint(container.isDebugMode());
-			
-			if (callback != null) writer.append(callback).append("(");
-			json.format(res, writer);
-			if (callback != null) writer.append(");");
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR);
-			return;
 		}		
 	}
 	
-	protected Class getClassFromPath(String[] pathes) throws ClassNotFoundException {
-		StringBuffer className = new StringBuffer();
-
-		String prefix = "";
-		String suffix = "Service";
-		for (Map.Entry<Pattern, String> entry : routes.entrySet()) {
-			Matcher m = entry.getKey().matcher(pathes[0]);
-			if (m.find()) {
-				className.setLength(0);
-				
-				// package root
-				m.appendReplacement(className, entry.getValue());
-				if (className.length() > 0) className.append('.');
-				
-				// rest path
-				m.appendTail(className);
-				
-				// normalize
-				char old = '.';
-				for (int i = 0; i < className.length(); i++) {
-					char c = className.charAt(i);
-					if (c == '.' || c == '/') {
-						c = '.';
-					} else 	if ((old == '.') ? !Character.isJavaIdentifierStart(c) : !Character.isJavaIdentifierPart(c)) {
-						c = '_';
-					}
-					className.setCharAt(i, c);
-					old = c;
-				}
-				break;
-			}
-		}
-		if (className.length() == 0) return null;
-		
-		className.append(prefix);
-		boolean isStart = true;
-		for (int i = 0; i < pathes[1].length(); i++) {
-			char c = pathes[1].charAt(i);
-			if (isStart) {
-				className.append(Character.toUpperCase(c));
-				isStart = false;
-			} else if (c == ' ' || c == '_' || c == '-') {
-				isStart = true;
-			} else {
-				className.append(c);
-			}
-		}
-		className.append(suffix);
-
-		return Class.forName(className.toString());
-	}
-	
-	private static final Pattern SPLIT_PATTERN = Pattern.compile("\\.");
 	private Map getParameterMap(HttpServletRequest request) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		
 		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
 			String name = e.nextElement();
-			String[] names = SPLIT_PATTERN.split(name);
+			String[] names = name.split("\\.");
 			String[] values = request.getParameterValues(name);
 			
 			Map<String, Object> current = map;
@@ -517,7 +429,7 @@ public class WebServiceServlet extends HttpServlet {
 			super(context);
 		}
 		
-		public Object invoke(Object o, String methodName, List values, boolean vlength) throws Exception {
+		public Object invoke(Object o, String methodName, List values) throws Exception {
 			if (values == null) {
 				values = Collections.EMPTY_LIST;
 			}
@@ -525,22 +437,12 @@ public class WebServiceServlet extends HttpServlet {
 			methodName = toLowerCamel(methodName);
 			
 			Class c = o.getClass();
-			Class target = c;
 			Method method = null;
-			boolean exists = false;
-			for (Method m : target.getMethods()) {
+			for (Method m : c.getMethods()) {
 				if (!methodName.equals(m.getName()) || Modifier.isStatic(m.getModifiers())) {
 					continue;
 				}
-
-				int length = m.getParameterTypes().length;
-				if (values.size() == length) {
-					method = m;
-					break; 
-				} else if (length == 0) {
-					method = m;
-				}				
-				exists = true;
+				method = m;				
 			}
 			
 			if (method == null || limit(c, method)) {
@@ -549,25 +451,21 @@ public class WebServiceServlet extends HttpServlet {
 				String json = encode(values);
 				sb.append(json, 1, json.length()-1);
 				sb.append(')');
-				if (exists) {
-					throw new IllegalArgumentException("mismatch parameters: " + sb.toString());
-				} else {
-					throw new NoSuchMethodException("method missing: " + sb.toString());
-				}
+				throw new NoSuchMethodException("method missing: " + sb.toString());
 			}
 			
 			Class<?>[] paramTypes = method.getParameterTypes();
-			Object[] params = new Object[paramTypes.length];
+			Object[] params = new Object[Math.min(paramTypes.length, values.size())];
 			for (int i = 0; i < params.length; i++) {
-				params[i] = convert(values.get(i), paramTypes[i], paramTypes[i]);
+				params[i] = convert(null, values.get(i), paramTypes[i], paramTypes[i]);
 			}
 			
 			return method.invoke(o, params);
 		}
-		
-		public boolean limit(Class c, Method method) {
-			return method.getDeclaringClass().equals(Object.class);
-		}
+	}
+	
+	protected boolean limit(Class c, Method method) {
+		return method.getDeclaringClass().equals(Object.class);
 	}
 	
 	private static String toLowerCamel(String name) {
@@ -586,6 +484,97 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+		}
+		return sb.toString();
+	}
+}
+	
+class RouteMapping {
+	private static final Pattern PLACE_PATTERN = Pattern.compile("\\[(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\]");
+	
+	private Pattern pattern;
+	private List<String> names;
+	private String target;
+	
+	public RouteMapping(String path, String target) {
+		this.names = new ArrayList<String>();
+		StringBuffer sb = new StringBuffer("^\\Q");
+		Matcher m = PLACE_PATTERN.matcher(path);
+		while (m.find()) {
+			names.add(m.group(1));
+			m.appendReplacement(sb, "\\E(.+)\\Q");
+		}
+		m.appendTail(sb);
+		sb.append("\\E$");
+		this.pattern = Pattern.compile(sb.toString());
+		this.target = target;
+	}
+	
+	public Route matches(String method, String path) {
+		Matcher m = pattern.matcher(path);
+		if (m.matches()) {
+			Route route = new Route(method, target);
+			for (int i = 0; i < names.size(); i++) {
+				route.put(names.get(i), m.group(i+1));
+			}
+			return route;
+		}
+		return null;
+	}
+}
+
+class Route extends HashMap<String, String> {
+	private static final long serialVersionUID = 9001379442185239302L;
+	
+	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
+	private String target;
+	private String method;
+	
+	public Route(String method, String target) {
+		this.method = method.toLowerCase();
+		this.target = target;
+	}
+	
+	public void setMethod(String method) {
+		this.method = method.toLowerCase();
+	}
+	
+	public String getMethod() {
+		return method;
+	}
+	
+	public Class getComponentClass() throws ClassNotFoundException {
+		Matcher m = REPLACE_PATTERN.matcher(target);
+		StringBuffer sb = new StringBuffer();
+		while (m.find()) {
+			String key = m.group(1);
+			String value = remove(key);
+			if (value == null) {
+				value = "";
+			} else if (key.equals("class")) {
+				value = toUpperCamel(value);
+			} else if (key.equals("package")) {
+				value = value.replace('/', '.');
+			}
+			m.appendReplacement(sb, value);
+		}
+		m.appendTail(sb);
+		return Class.forName(sb.toString());
+	}
+	
+	private String toUpperCamel(String name) {
+		StringBuilder sb = new StringBuilder(name.length());
+		boolean toUpperCase = true;
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
 		}
 		return sb.toString();
 	}
