@@ -58,6 +58,13 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
 
+import org.w3c.dom.CharacterData;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as 
  * defined by RFC 4627.</p>
@@ -317,6 +324,44 @@ public class JSON {
 				}
 			} else {
 				o = null;
+			}
+		} else if (o instanceof Node) {
+			Element elem = null;
+			if (o instanceof Document) {
+				elem = ((Document)o).getDocumentElement();
+			} else if (o instanceof Element) {
+				elem = (Element)o;
+			}
+			
+			if (elem != null) {
+				Map<String, Object> map = new LinkedHashMap<String, Object>();
+				map.put("tagName", elem.getTagName());
+				if (elem.hasAttributes()) {
+					NamedNodeMap nmap = elem.getAttributes();
+					for (int i = 0; i < nmap.getLength(); i++) {
+						Node node = nmap.item(i);
+						if (node.getNodeType() == Node.ATTRIBUTE_NODE) {
+							map.put("@" + node.getNodeName(), node.getNodeValue());
+						}
+					}
+				}
+				if (elem.hasChildNodes()) {
+					NodeList nlist = elem.getChildNodes();
+					List childNodes = new ArrayList(nlist.getLength());
+					for (int i = 0; i < nlist.getLength(); i++) {
+						Node node = nlist.item(i);
+						if (node.getNodeType() == Node.ELEMENT_NODE) {
+							childNodes.add((Element)node);
+						} else if (node.getNodeType() == Node.TEXT_NODE
+								|| node.getNodeType() == Node.CDATA_SECTION_NODE) {
+							childNodes.add(((CharacterData)node).getData());
+						}
+					}
+					if (!childNodes.isEmpty()) {
+						map.put("childNodes", childNodes);
+					}
+				}
+				o = map;
 			}
 		}
 		

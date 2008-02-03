@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<html lang="ja" xmlns:hoge="aaa">
+<head>
+	<title>タイトル</title>
+</head>
+<body>
+	本文
+	<p>サンプル1</p>
+	<p>サンプル2</p>
+	本文
+	<hoge:p hoge:x="aaa">サンプル3</hoge:p>
+</body>
+</html>

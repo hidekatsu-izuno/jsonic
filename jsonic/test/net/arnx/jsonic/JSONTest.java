@@ -20,9 +20,12 @@ import java.util.Random;
 import java.util.regex.Pattern;
 import java.io.*;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import net.arnx.jsonic.JSON;
 
 import org.junit.Test;
+import org.w3c.dom.Document;
 
 public class JSONTest {
 
@@ -121,6 +124,12 @@ public class JSONTest {
 		test.setA(100);
 		test.e = Locale.ENGLISH;
 		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class_\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(test));
+
+		Document doc = DocumentBuilderFactory
+			.newInstance()
+			.newDocumentBuilder()
+			.parse(this.getClass().getResourceAsStream("Sample.xml"));
+		assertEquals("{\"tagName\":\"html\",\"@lang\":\"ja\",\"@xmlns:hoge\":\"aaa\",\"childNodes\":[\"\\n\",{\"tagName\":\"head\",\"childNodes\":[\"\\n\\t\",{\"tagName\":\"title\",\"childNodes\":[\"タイトル\"]},\"\\n\"]},\"\\n\",{\"tagName\":\"body\",\"childNodes\":[\"\\n\\t本文\\n\\t\",{\"tagName\":\"p\",\"childNodes\":[\"サンプル1\"]},\"\\n\\t\",{\"tagName\":\"p\",\"childNodes\":[\"サンプル2\"]},\"\\n\\t本文\\n\\t\",{\"tagName\":\"hoge:p\",\"@hoge:x\":\"aaa\",\"childNodes\":[\"サンプル3\"]},\"\\n\"]},\"\\n\"]}", JSON.encode(doc));
 	}
 
 	@Test
