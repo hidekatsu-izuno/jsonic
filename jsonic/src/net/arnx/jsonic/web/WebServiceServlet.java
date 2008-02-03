@@ -141,7 +141,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (route == null) {
 			return;
-		} else if ("rpc".equals(route.get("class"))) {
+		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED);
 			return;
@@ -157,7 +157,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (route == null) {
 			return;
-		} else if ("rpc".equals(route.get("class"))) {
+		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			doRPC(route, request, response);
 		} else {
 			String method = request.getParameter("_method");
@@ -173,7 +173,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (route == null) {
 			return;
-		} else if ("rpc".equals(route.get("class"))) {
+		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED);
 		} else {
@@ -188,7 +188,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (route == null) {
 			return;
-		} else if ("rpc".equals(route.get("class"))) {
+		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED);
 		} else {

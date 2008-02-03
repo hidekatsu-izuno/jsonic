@@ -40,9 +40,9 @@
 			<param-value>
 				container: 'net.arnx.jsonic.web.S2Container'
 				debug: true
-				routes: {
-					'/(\w+)': 'sample.web.\1.service'
-					'/': 'sample.service'
+				mappings: {
+					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
+					'/[class].[ext]': 'sample.service.${class}Service'
 				}
 			</param-value>
 		</init-param>

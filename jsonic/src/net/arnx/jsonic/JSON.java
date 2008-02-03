@@ -253,7 +253,9 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c) throws Exception {
-		return (new JSON(c)).parse(source, c);
+		Class context = c.getEnclosingClass();
+		if (context == null) context = c;
+		return (new JSON(context)).parse(source, c);
 	}
 	
 	/**
@@ -266,7 +268,9 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c, Type t) throws Exception {
-		return (new JSON(c)).parse(source, c, t);
+		Class context = c.getEnclosingClass();
+		if (context == null) context = c;
+		return (new JSON(context)).parse(source, c, t);
 	}
 	
 	public String format(Object source) throws IOException {
