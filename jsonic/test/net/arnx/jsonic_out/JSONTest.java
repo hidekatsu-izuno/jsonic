@@ -36,8 +36,7 @@ public class JSONTest {
 		try {
 			json.parse("{\"a\":100}", InnerHoge.class);
 			fail();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IllegalAccessException e) {
 			assertNotNull(e);
 		}
 		

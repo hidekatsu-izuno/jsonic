@@ -88,8 +88,8 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		if (config.requirements == null) config.requirements = new HashMap<String, Pattern>();
-		config.requirements.put("package", Pattern.compile(".+"));
-		config.requirements.put(null, Pattern.compile("[^/]+"));
+		if (!config.requirements.containsKey("package")) config.requirements.put("package", Pattern.compile(".+"));
+		if (!config.requirements.containsKey(null)) config.requirements.put(null, Pattern.compile("[^/]+"));
 		
 		if (config.mappings != null) {
 			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
@@ -510,7 +510,7 @@ class RouteMapping {
 			names.add(name);
 			Pattern p = requirements.get(name);
 			if (p == null) p = requirements.get(null);
-			m.appendReplacement(sb, "\\E(" + p.pattern().replace("(", "(?:") + ")\\Q");
+			m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:") + ")\\\\Q");
 		}
 		m.appendTail(sb);
 		sb.append("\\E$");
