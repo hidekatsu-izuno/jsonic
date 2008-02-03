@@ -357,9 +357,7 @@ public class JSON {
 							childNodes.add(((CharacterData)node).getData());
 						}
 					}
-					if (!childNodes.isEmpty()) {
-						map.put("childNodes", childNodes);
-					}
+					map.put("childNodes", childNodes);
 				}
 				o = map;
 			}
