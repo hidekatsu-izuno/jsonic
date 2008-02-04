@@ -18,7 +18,7 @@
 			srcdir="${src}" destdir="${build}">
 			<classpath>
 				<pathelement location="${lib}/servlet-api.jar"/>
-				<pathelement location="${lib}/servlet-api.jar"/>
+				<pathelement location="${lib}/s2-framework-2.4.19.jar"/>
 			</classpath>
 		</javac>
 		
@@ -42,7 +42,6 @@
 			<zipfileset dir="sample" prefix="jsonic-${version}/sample" />
 			<zipfileset dir="." includes="jsonic-${version}.jar" prefix="jsonic-${version}/sample/WEB-INF/lib" />
 			<zipfileset dir="." includes="jsonic-${version}.jar" prefix="jsonic-${version}" />
-			<zipfileset dir="${lib}" prefix="jsonic-${version}/lib" />
 			<zipfileset dir="." includes="build.xml" prefix="jsonic-${version}" />
 			<zipfileset dir="." includes="LICENSE.txt" prefix="jsonic-${version}" />
 		</zip>
