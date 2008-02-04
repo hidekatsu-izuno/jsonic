@@ -304,7 +304,7 @@ database {
 }
 /* equals to {"database": {"description": "ms sql server\n\tconnecter settings", "user": "sa", "password": "xxxx"}} */
 </pre>
-<p>※version 0.9.3まであった拡張モードは0.9.4以降では廃止されました。</p>
+<p>※version 0.9.3まであった拡張モードは0.9.4以降廃止されました。</p>
 
 <h4 id="innerclass">■ コンテキストの指定 <span class="subtitle">- 内部クラスを利用したデコード</span></h4>
 <p>decode/parseメソッドの引数にClassオブジェクトを指定するということは、指定されたクラス通常publicでなければならないことを意味します。
@@ -338,12 +338,11 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 
 <h3>JSON Web Service Servlet</h3>
 
-<p>JSONICには、JSON-RPC1.0とRestfull APIの2 wayによるWeb Service機能が用意されています。</p>
-<p>※version 0.9.5まであったJSONRPCServletは0.9.6以降net.arnx.jsonic.web.WebServiceServletに置き換えられました。。</p>
+<p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
+<p>※JSONRPCServletは0.9.6以降net.arnx.jsonic.web.WebServiceServletに置き換えられました。</p>
 
-<h4>JSON-RPC 1.0</h4>
-<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSONRPCServletを使うことでJSON-RPCを利用することが可能です。<br />
-JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載するとpathに対し対応したclass nameのクラスのメソッドが呼び出されます。詳しい使い方は付属のサンプルをご覧ください。</p>
+<h4>■ 設定方法</h4>
+<p>JSON Web Service Servletの設定は簡単です。web.xmlにWebServiceServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
 <pre class="source">
 &lt;servlet&gt;
     &lt;servlet-name&gt;json-ws&lt;/servlet-name&gt;
@@ -351,11 +350,14 @@ JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載�
     &lt;init-param&gt;
         &lt;param-name&gt;config&lt;/param-name&gt;
         &lt;param-value&gt;
-        	"debug": true
-        	"routes": {
-        	    "path" : "root package name",
-        	    ...
-        	}
+        {
+            "debug": true,
+            "encoding": "UTF-8",
+            "mappings": {
+                "/[package]/[class].[ext]": "sample.web.${package}.service.${class}Service",
+                "/[class].[ext]": "sample.${class}Service"
+            }
+        }
         &lt;/param-value&gt;
     &lt;/init-param&gt;
 &lt;/servlet&gt;
@@ -365,13 +367,67 @@ JSON-RPCを利用する場合は、web.xmlに下記のような設定を記載�
     &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;
 &lt;/servlet-mapping&gt;
 </pre>
+<p>configで設定できる値は次の通りです。</p>
+<table summary="Config設定">
+<tr><th>キー</th><th>値型</th><th>説明</th></tr>
+<tr><td>container</td><td>net.arnx.jsonic.web.Container</td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、net.arnx.jsonic.web.SimpleContainerです。</td></tr>
+<tr><td>debug</td><td>boolean</td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
+<tr><td>encoding</td><td>java.lang.String</td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
+<tr><td>mappings</td><td>java.util.Map&lt;String, String&gt;</td><td>URLパスとクラスのマッピングを行います。
+パス中の[<i>name</i>]で囲まれた部分はクラス名の${<i>name</i>}に置換されます<sup>(※5)</sup>。
+なお、RESTモードの場合、利用されなかった変数はメッセージボディとして送られてきたJSON objectの値として設定されメソッドに引き渡されます（RPCモードの場合は設定されません）。</td></tr>
+<tr><td>requirements</td><td>java.util.Map&lt;String, Pattern&gt;</td><td>mappings中の変数に対する正規表現を設定します。設定されない変数は[^/]+が設定されたものと扱われます。</td></tr>
+</table>
+<div class="caption">
+(※5) 変数名のうち、classとpackageだけは特殊な扱いがされます。class変数中の文字列はUpperCamelに変換されます。
+また、package変数中に「/」が出てきた場合は「.」に変換されます。
+</div>
 
-<h4>Restfull API &amp; JSONP</h4>
-<p>JSONRPCServletで設定されたクラスに「public Object find(Map params)」のようなメソッドを定義すると、HTTPのGETメソッドで処理を呼び出すことができます。paramsには、HTTPパラメータで指定した値が入り、戻り値はJSONに変換されクライアントに返されます。<br />
-paramsや戻り値には任意のクラスを指定することもできますが、JSONの制約上objectかarrayに変換される必要があります。</p>
-<p>HTTP GETにより返されるJSONはJSONPに対応していますので、HTTPパラメータに「callback=call」と指定すると「call(...)」とメソッドを呼び出す形となって出力されます。<br />
-例えば、HTML上に下記のように記載すれば、自動的にメソッドが呼び出され引数にサーバより返された値がcallの引数として設定されます。</p>
+<h4>■ RPCモード</h4>
+<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSON Web Service Servletでは、class変数の値が"rpc"であった場合、RPCモードとなります。</p>
 
+<p>RPCモードでは、対象のパスに対し次のようなJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
+<pre class="source">
+{
+    "method": "[class].[method]",
+    "params": [ arg1, arg2, ... ],
+    "id": request_id
+}
+</pre>
+<p>例えば、mappingsに "/[package]/[class].[ext]": "boo.${package}.${class}Service" という指定があった場合に /foo/woo/rpc.jsonというパスに対し次のJSONがPOSTされると、boo.foo.woo.CalcServiceクラスのint plus(int a, int b)のようなメソッドが呼び出されます。</p>
+<pre class="source">
+{
+    "method": "calc.plus",
+    "params": [1,2],
+    "id": 1
+}
+</pre>
+<p>この時、レスポンスボディとしては次のような結果が返されます。</p>
+<pre class="source">
+{
+	"result": 3,
+	"error": null,
+	"id": 1
+}
+</pre>
+
+<h4>■ RESTモード</h4>
+<p>class変数の値が"rpc"以外の場合はRESTモードとなります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※6)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※7)</sup>。</p>
+<table summary="REST Method マッピング">
+<tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
+<tr><td>GET</td><td>find</td><td>リクエストパラメータを「.」で区切り階層構造に変換し設定。</td></tr>
+<tr><td>POST</td><td>create</td><td>メッセージボディのJSONを変換し設定</td></tr>
+<tr><td>PUT</td><td>update</td><td>メッセージボディのJSONを変換し設定</td></tr>
+<tr><td>DELETE</td><td>delete</td><td>メッセージボディのJSONを変換し設定</td></tr>
+</table>
+<p>なお、メッセージボディがJSON objectの場合、その値はリクエストパラメータ、パス変数の順で上書きされます。JSON arrayの場合は上書きされずに最後尾に追加されます。</p>
+<div class="caption">
+(※6) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、リクエストパラメータに「_method=メソッド名」を指定することもできます。<br />
+(※7) JSONはルート要素としてobjectかarrayしか取れないため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTとして空のメッセージボディを持つレスポンスが返されます。
+</div>
+
+<h4>■ JSONP</h4>
+<p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
 <pre class="source">
 &lt;script type="text/javascript" &gt;
     function call(value) {
@@ -384,7 +440,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
 
-<h4>DI Container対応</h4>
+<h4>■ DI Container対応</h4>
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
 
 <pre class="source">
@@ -403,7 +459,7 @@ paramsや戻り値には任意のクラスを指定することもできます�
 &lt;/servlet&gt;
 </pre>
 
-<p>JSONICでは、Seasar2に対応したContainerを用意しています。このContainerを利用すると、Seasar2上で管理されるServiceクラスが自動的にWebServiceとしてアクセス可能になります。</p>
+<p>JSONICでは、Seasar2に対応したContainerを標準添付しています。このContainerを利用すると、Seasar2上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>

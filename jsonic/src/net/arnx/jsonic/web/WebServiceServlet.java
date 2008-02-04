@@ -338,6 +338,9 @@ public class WebServiceServlet extends HttpServlet {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
 					params = (List)o;
+					Map contents = getParameterMap(request);
+					contents.putAll(route);
+					params.add(contents);
 				} else {
 					Map contents = (Map)o;
 					contents.putAll(getParameterMap(request));
