@@ -18,6 +18,7 @@
 			srcdir="${src}" destdir="${build}">
 			<classpath>
 				<pathelement location="${lib}/servlet-api.jar"/>
+				<pathelement location="${lib}/servlet-api.jar"/>
 			</classpath>
 		</javac>
 		

@@ -5,10 +5,8 @@
 	<classpathentry kind="src" output="sample/WEB-INF/classes" path="sample/WEB-INF/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/servlet-api.jar"/>
-	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jasper-runtime.jar"/>
-	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
 	<classpathentry kind="lib" path="lib/s2-framework-2.4.19.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-api.jar"/>
 	<classpathentry kind="src" output="work" path="work"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
