@@ -338,12 +338,14 @@ public class JSON {
 				map.put("tagName", elem.getTagName());
 				if (elem.hasAttributes()) {
 					NamedNodeMap nmap = elem.getAttributes();
+					Map<String, String> attrs = new LinkedHashMap<String, String>();
 					for (int i = 0; i < nmap.getLength(); i++) {
 						Node node = nmap.item(i);
 						if (node.getNodeType() == Node.ATTRIBUTE_NODE) {
-							map.put("@" + node.getNodeName(), node.getNodeValue());
+							attrs.put(node.getNodeName(), node.getNodeValue());
 						}
 					}
+					map.put("attributes", attrs);
 				}
 				if (elem.hasChildNodes()) {
 					NodeList nlist = elem.getChildNodes();
