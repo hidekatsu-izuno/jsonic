@@ -86,6 +86,14 @@ public class WebServiceServletTest {
 		client.connect();
 		assertEquals(SC_NO_CONTENT, client.getResponseCode());
 		client.clear();
+		
+		// POST
+		client.setRequestMethod("POST");
+		client.setRequestHeader("Content-type", "application/json");
+		client.setRequestContent("[title:\"title\",text:\"text\"]");
+		client.connect();
+		assertEquals(SC_BAD_REQUEST, client.getResponseCode());
+		client.clear();
 	}
 	
 	@Test

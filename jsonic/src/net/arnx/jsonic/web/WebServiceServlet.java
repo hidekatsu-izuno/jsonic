@@ -341,12 +341,14 @@ public class WebServiceServlet extends HttpServlet {
 					Map contents = getParameterMap(request);
 					contents.putAll(route);
 					params.add(contents);
-				} else {
+				} else if (o instanceof Map) {
 					Map contents = (Map)o;
 					contents.putAll(getParameterMap(request));
 					contents.putAll(route);
 					params = new ArrayList();
 					params.add(contents);
+				} else {
+					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
 			}
 			json.setContext(component);
