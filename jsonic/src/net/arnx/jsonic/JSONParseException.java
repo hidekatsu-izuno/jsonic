@@ -1,6 +1,6 @@
 package net.arnx.jsonic;
 
-public class JSONParseException extends Exception {
+public class JSONParseException extends JSONException {
 	private static final long serialVersionUID = -8323989588488596436L;
 	
 	private JSONSource s;

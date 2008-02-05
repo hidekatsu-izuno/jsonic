@@ -90,7 +90,7 @@ public class WebServiceServletTest {
 		// POST
 		client.setRequestMethod("POST");
 		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("[title:\"title\",text:\"text\"]");
+		client.setRequestContent("[\"title\", \"text\"]");
 		client.connect();
 		assertEquals(SC_BAD_REQUEST, client.getResponseCode());
 		client.clear();
