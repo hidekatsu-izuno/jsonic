@@ -259,8 +259,10 @@ public class JSON {
 	 * @param c class for converting
 	 * @return a decoded object
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
-	public static <T> T decode(String source, Class<? extends T> c) throws Exception {
+	public static <T> T decode(String source, Class<? extends T> c) 
+		throws JSONParseException, JSONConvertException {
 		Class context = c.getEnclosingClass();
 		if (context == null) context = c;
 		return (new JSON(context)).parse(source, c);
@@ -274,8 +276,10 @@ public class JSON {
 	 * @param t type specified generics parameters
 	 * @return a decoded object
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
-	public static <T> T decode(String source, Class<? extends T> c, Type t) throws Exception {
+	public static <T> T decode(String source, Class<? extends T> c, Type t)
+	throws JSONParseException, JSONConvertException {
 		Class context = c.getEnclosingClass();
 		if (context == null) context = c;
 		return (new JSON(context)).parse(source, c, t);
@@ -580,12 +584,26 @@ public class JSON {
 		return value;
 	}
 	
-	public <T> T parse(CharSequence s, Class<? extends T> c) throws Exception {
-		return (T)convert(null, parse(new CharSequenceJSONSource(s)), c, c);
+	public <T> T parse(CharSequence s, Class<? extends T> c)
+		throws JSONParseException, JSONConvertException {
+		T value = null;
+		try {
+			value = (T)convert(null, parse(new CharSequenceJSONSource(s)), c, c);
+		} catch (IOException e) {
+			// never occur
+		}
+		return value;
 	}
 	
-	public <T> T parse(CharSequence s, Class<? extends T> c, Type t) throws Exception {
-		return (T)convert(null, parse(new CharSequenceJSONSource(s)), c, t);
+	public <T> T parse(CharSequence s, Class<? extends T> c, Type t)
+		throws JSONParseException, JSONConvertException {
+		T value = null;
+		try {
+			value =  (T)convert(null, parse(new CharSequenceJSONSource(s)), c, t);
+		} catch (IOException e) {
+			// never occur
+		}
+		return value;			
 	}
 	
 	public Object parse(InputStream in) throws IOException, JSONParseException {
@@ -593,12 +611,14 @@ public class JSON {
 		return parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in))));
 	}
 	
-	public <T> T parse(InputStream in, Class<? extends T> c) throws Exception {
+	public <T> T parse(InputStream in, Class<? extends T> c)
+		throws IOException, JSONParseException, JSONConvertException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		return (T)convert(null, parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, c);
 	}
 	
-	public <T> T parse(InputStream in, Class<? extends T> c, Type t) throws Exception {
+	public <T> T parse(InputStream in, Class<? extends T> c, Type t)
+		throws IOException, JSONParseException, JSONConvertException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		return (T)convert(null, parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, t);
 	}
@@ -607,11 +627,13 @@ public class JSON {
 		return parse(new ReaderJSONSource(reader));
 	}
 	
-	public <T> T parse(Reader reader, Class<? extends T> c) throws Exception {
+	public <T> T parse(Reader reader, Class<? extends T> c) 
+		throws IOException, JSONParseException, JSONConvertException {
 		return (T)convert(null, parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
-	public <T> T parse(Reader reader, Class<? extends T> c, Type t) throws Exception {
+	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
+		throws IOException, JSONParseException, JSONConvertException {
 		return (T)convert(null, parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
@@ -1178,7 +1200,7 @@ public class JSON {
 		return encoding;
 	}
 	
-	protected Object convert(Object key, Object value, Class c, Type type) throws Exception {
+	protected Object convert(Object key, Object value, Class c, Type type) throws JSONConvertException {
 		Object data = null;
 		
 		try {
@@ -1552,9 +1574,12 @@ public class JSON {
 					}
 				}
 			}
+		} catch (JSONConvertException e) {
+			throw e;
 		} catch (Exception e) {
 			handleConvertError(key, value, c, type, e);
 		}
+		
 		return data;
 	}
 	
@@ -1566,7 +1591,7 @@ public class JSON {
 		return false;
 	}
 	
-	protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
+	protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws JSONConvertException {
 		// no handle
 	}
 	

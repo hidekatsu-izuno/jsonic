@@ -549,9 +549,9 @@ public class JSONTest {
 		count[0] = 0;
 		
 		JSON json = new JSON() {
-			protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
+			protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws JSONConvertException {
 				count[0]++;
-				throw e;
+				throw new JSONConvertException(e);
 			}
 		};
 		
