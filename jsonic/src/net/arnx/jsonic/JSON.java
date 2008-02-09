@@ -1578,7 +1578,7 @@ public class JSON {
 			if (data == null && (c.isPrimitive() || value != null)) {
 				if (!handleConvertError(key, value, c, type, null)) {
 					key = (key == null) ? "/" : "/" + key;
-					throw new JSONConvertException(getMessage("json.convert.ConversionError", key, type, value));
+					throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, key));
 				}
 			}
 		} catch (JSONConvertException e) {
@@ -1586,7 +1586,7 @@ public class JSON {
 		} catch (Exception e) {
 			if (!handleConvertError(key, value, c, type, e)) {
 				key = (key == null) ? "/" : "/" + key;
-				throw new JSONConvertException(getMessage("json.convert.ConversionError", key, type, value), e);
+				throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, key), e);
 			}
 		}
 		
