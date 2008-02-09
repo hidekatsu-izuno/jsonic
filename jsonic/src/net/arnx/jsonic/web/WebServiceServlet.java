@@ -192,10 +192,20 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	class Request {
+	class RpcRequest {
 		public String method;
 		public List params;
 		public Object id;
+	}
+	
+	class RpcError {
+		public int code;
+		public String message;
+		
+		public RpcError(int code, String message) {
+			this.code = code;
+			this.message = message;
+		}
 	}
 	
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
@@ -204,16 +214,14 @@ public class WebServiceServlet extends HttpServlet {
 		JSONInvoker json = new JSONInvoker(this);
 		
 		// request processing
-		Request req = null;
-		Object res = null;
-		Map<String, Object> error = null;
+		RpcRequest req = null;
+		Object result = null;
+		RpcError error = null;
 		try {			
-			req = json.parse(request.getReader(), Request.class);
+			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
 				response.setStatus(SC_BAD_REQUEST);
-				error = new LinkedHashMap<String, Object>();
-				error.put("code", -32700);
-				error.put("message", "Invalid Request.");	
+				error = new RpcError(-32700, "Invalid Request.");
 			} else {
 				int delimiter = req.method.lastIndexOf('.');
 				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
@@ -226,52 +234,38 @@ public class WebServiceServlet extends HttpServlet {
 					}
 					
 					json.setContext(component);
-					res = json.invoke(component, req.method.substring(delimiter+1), req.params);
+					result = json.invoke(component, req.method.substring(delimiter+1), req.params);
 				}
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
-			error = new LinkedHashMap<String, Object>();
-			error.put("code", -32601);
-			error.put("message", "Method not found.");
+			error = new RpcError(-32601, "Method not found.");
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
-			error = new LinkedHashMap<String, Object>();
-			error.put("code", -32700);
-			error.put("message", "Parse error.");
+			error = new RpcError(-32700, "Parse error.");
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
-			error = new LinkedHashMap<String, Object>();
-			error.put("code", -32602);
-			error.put("message", "Method not found.");
+			error = new RpcError(-32602, "Invalid params.");
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
-			error = new LinkedHashMap<String, Object>();
-			error.put("code", -32601);
-			error.put("message", "Method not found.");
+			error = new RpcError(-32601, "Method not found.");
 		} catch (IllegalArgumentException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
-			error = new LinkedHashMap<String, Object>();
-			error.put("code", -32602);
-			error.put("message", "Invalid params.");
+			error = new RpcError(-32602, "Invalid params.");
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
 			response.setStatus(SC_INTERNAL_SERVER_ERROR);
-			error = new LinkedHashMap<String, Object>();
-			error.put("code", -32603);
-			error.put("message", cause.getMessage());
+			error = new RpcError(-32603, cause.getMessage());
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.setStatus(SC_INTERNAL_SERVER_ERROR);
-			error = new LinkedHashMap<String, Object>();
-			error.put("code", -32603);
-			error.put("message", "Internal error.");
+			error = new RpcError(-32603, "Internal error.");
 		}
 		
 		// it's notification when id was null
@@ -283,19 +277,23 @@ public class WebServiceServlet extends HttpServlet {
 		// response processing
 		response.setContentType("application/json");
 		
-		try {
-			Map<String, Object> map = new LinkedHashMap<String, Object>();
-			map.put("result", res);
-			map.put("error", error);
-			map.put("id", (req != null) ? req.id : null);
-				
+		Map<String, Object> res = new LinkedHashMap<String, Object>();
+		res.put("result", result);
+		res.put("error", error);
+		res.put("id", (req != null) ? req.id : null);
+
+		try {	
 			Writer writer = response.getWriter();
 			json.setPrettyPrint(container.isDebugMode());
 			
-			json.format(map, writer);
+			json.format(res, writer);
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR);
+			response.setStatus(SC_INTERNAL_SERVER_ERROR);
+			res.clear();
+			res.put("result", null);
+			res.put("error", new RpcError(-32603, "Internal error."));
+			res.put("id", (req != null) ? req.id : null);
 			return;
 		}
 	}
