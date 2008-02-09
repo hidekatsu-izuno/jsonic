@@ -14,11 +14,11 @@
 	.menu { color: white; background: gray; padding: 0px 16px; }
 	.menu a { color: white; }
 	.main { padding: 5px 16px; width: 600px; line-height: 1.5; }
-	h2 { font: bold 12pt sans-serif; color: #666666; margin: 20px 0px 10px 0px;
-		border-left: 5px solid #6699FF; padding: 0px 5px; }
-	h3 { font: bold 11pt sans-serif; }
+	h2 { font: bold 12pt sans-serif; color: #666666; margin: 30px 0px 10px 0px;
+		border-left: 10px solid #6699FF; border-bottom: 1px solid #6699FF; padding: 0px 5px; }
+	h3 { font: bold 11pt sans-serif; border-bottom: 1px solid gray; margin: 30px 0px 12px 0px; }
 	h3 .subtitle { font: 9pt sans-serif; }
-	h4 { font: bold 10pt sans-serif; }
+	h4 { font: bold 10pt sans-serif;  margin: 20px 0px 10px 0px; }
 	h4 .subtitle { font: 9pt sans-serif; }
 	a { color: darkblue; }
 	p { margin: 0px 0px 1em 0px; padding: 0px; }
@@ -415,8 +415,16 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <table summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code<th>JSON error</th></tr>
 <tr>
-<td>methodで指定したクラス/メソッドが見つからない</td>
+<td>JSONリクエストがJSON-RPCのリクエストとして不正</td>
 <td>400&nbsp;Bad&nbsp;request</td>
+<td><pre style="margin:0;">{
+  "code": -32600,
+  "message": "Invalid Request."
+}</pre></td>
+</tr>
+<tr>
+<td>methodで指定したクラス/メソッドが見つからない</td>
+<td>404&nbsp;Not&nbsp;found</td>
 <td><pre style="margin:0;">{
   "code": -32601,
   "message": "Method not found."
@@ -451,13 +459,13 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 
 
 <h4>■ RESTモード</h4>
-<p>class変数の値が"rpc"以外の場合はRESTモードとなります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※6)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※7)</sup>。</p>
+<p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※6)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※7)</sup>。</p>
 <table summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
-<tr><td>GET</td><td>find</td><td>リクエストパラメータを「.」で区切り階層構造に変換し設定。</td></tr>
-<tr><td>POST</td><td>create</td><td>メッセージボディのJSONを変換し設定</td></tr>
-<tr><td>PUT</td><td>update</td><td>メッセージボディのJSONを変換し設定</td></tr>
-<tr><td>DELETE</td><td>delete</td><td>メッセージボディのJSONを変換し設定</td></tr>
+<tr><td>GET</td><td>find</td><td>URLのQueryを「.」で区切られた階層構造とみなし引数の型に従い変換し設定</td></tr>
+<tr><td>POST</td><td>create</td><td>メッセージボディのJSONを引数の型に従い変換し設定</td></tr>
+<tr><td>PUT</td><td>update</td><td>メッセージボディのJSONを引数の型に従い変換し設定</td></tr>
+<tr><td>DELETE</td><td>delete</td><td>メッセージボディのJSONを引数の型に従い変換し設定</td></tr>
 </table>
 <p>なお、メッセージボディがJSON objectの場合、その値はリクエストパラメータ、パス変数の順で上書きされます。JSON arrayの場合は上書きされずに最後尾に追加されます。</p>
 <div class="caption">
@@ -516,7 +524,7 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <li>Parse/Format時にJavaBeansのプロパティの扱いを制御できるよう、ignoreメソッドを追加しました。</li>
 <li>変換に失敗した際には、デフォルトでJSONConvertExceptionを投げるよう変更しました。この動作は、handleConvertExceptionをoverrideすることで変更できます。</li>
 <li>handleConvertErrorの定義を変更しbooleanの戻り値により処理を継続するか否かを変更するようにしました。</li>
-<li>JSONParseExceptionがRuntimeExceptionを継承するように変更しました。</li>
+<li>JSONParseExceptionをRuntimeExceptionを継承するように変更しました。</li>
 <li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
 </ul>
 

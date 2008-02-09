@@ -221,7 +221,7 @@ public class WebServiceServlet extends HttpServlet {
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
 				response.setStatus(SC_BAD_REQUEST);
-				error = new RpcError(-32700, "Invalid Request.");
+				error = new RpcError(-32600, "Invalid Request.");
 			} else {
 				int delimiter = req.method.lastIndexOf('.');
 				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
@@ -239,11 +239,11 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
+			response.sendError(SC_NOT_FOUND);
 			error = new RpcError(-32601, "Method not found.");
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
+			response.sendError(SC_NOT_FOUND);
 			error = new RpcError(-32601, "Method not found.");
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
@@ -363,18 +363,22 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			return;
-		} catch (IllegalArgumentException e) {
+		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;
-		} catch (JSONParseException e) {
+		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
-			response.sendError(SC_INTERNAL_SERVER_ERROR, cause.getMessage());
+			if (cause instanceof IllegalArgumentException) {
+				response.sendError(SC_BAD_REQUEST, cause.getMessage());
+			} else {
+				response.sendError(SC_INTERNAL_SERVER_ERROR, cause.getMessage());
+			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR);
