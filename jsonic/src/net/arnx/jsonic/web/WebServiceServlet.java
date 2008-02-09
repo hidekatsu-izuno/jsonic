@@ -24,7 +24,6 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -43,7 +42,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSON;
-import net.arnx.jsonic.JSONConvertException;
 import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -70,11 +68,7 @@ public class WebServiceServlet extends HttpServlet {
 		String configText = servletConfig.getInitParameter("config");
 		if (configText == null) configText = "";
 		 
-		JSON json = new JSON() {
-			protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws JSONConvertException {
-				throw new JSONConvertException(e);
-			}
-		};
+		JSON json = new JSON();
 		
 		try {
 			json.setContext(this);

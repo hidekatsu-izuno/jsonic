@@ -2,7 +2,6 @@ package net.arnx.jsonic_out;
 
 import static org.junit.Assert.*;
 
-import java.lang.reflect.Type;
 import org.junit.Test;
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONConvertException;
@@ -21,11 +20,7 @@ public class JSONTest {
 	@Test
 	@SuppressWarnings("unused")
 	public void testDecodeInnerClass() throws Exception {
-		JSON json = new JSON(this) {
-			protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws JSONConvertException {
-				throw new JSONConvertException(e);
-			}
-		};
+		JSON json = new JSON(this);
 		
 		assertEquals(new Hoge(), json.parse("{\"a\":100}", Hoge.class));
 
@@ -38,7 +33,7 @@ public class JSONTest {
 			json.parse("{\"a\":100}", InnerHoge.class);
 			fail();
 		} catch (JSONConvertException e) {
-			assertEquals(IllegalArgumentException.class, e.getCause().getClass());
+			assertEquals(IllegalAccessException.class, e.getCause().getClass());
 		}
 		
 		assertEquals(new InnerHoge(), JSON.decode("{\"a\":100}", InnerHoge.class));

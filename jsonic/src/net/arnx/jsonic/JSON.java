@@ -1574,10 +1574,18 @@ public class JSON {
 					}
 				}
 			}
+			
+			if (data == null && (c.isPrimitive() || value != null)) {
+				if (!handleConvertError(key, value, c, type, null)) {
+					throw new JSONConvertException("");
+				}
+			}
 		} catch (JSONConvertException e) {
 			throw e;
 		} catch (Exception e) {
-			handleConvertError(key, value, c, type, e);
+			if (!handleConvertError(key, value, c, type, e)) {
+				throw new JSONConvertException(e);
+			}
 		}
 		
 		return data;
@@ -1591,8 +1599,8 @@ public class JSON {
 		return false;
 	}
 	
-	protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws JSONConvertException {
-		// no handle
+	protected boolean handleConvertError(Object key, Object value, Class c, Type type, Exception e) {
+		return true;
 	}
 	
 	protected Object create(Class c) throws Exception {

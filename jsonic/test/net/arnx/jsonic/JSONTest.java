@@ -549,9 +549,9 @@ public class JSONTest {
 		count[0] = 0;
 		
 		JSON json = new JSON() {
-			protected void handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws JSONConvertException {
+			protected boolean handleConvertError(Object key, Object value, Class c, Type type, Exception e) {
 				count[0]++;
-				throw new JSONConvertException(e);
+				return false;
 			}
 		};
 		
@@ -639,7 +639,7 @@ public class JSONTest {
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertEquals(2, count[0]);			
+			assertEquals(1, count[0]);			
 		}
 	}
 	
