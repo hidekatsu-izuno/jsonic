@@ -477,6 +477,7 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <li>Parse/Format時にJavaBeansのプロパティの扱いを制御できるよう、ignoreメソッドを追加しました。</li>
 <li>変換に失敗した際には、デフォルトでJSONConvertExceptionを投げるよう変更しました。この動作は、handleConvertExceptionをoverrideすることで変更できます。</li>
 <li>handleConvertErrorの定義を変更しbooleanの戻り値により処理を継続するか否かを変更するようにしました。</li>
+<li>JSONParseExceptionがRuntimeExceptionを継承するように変更しました。</li>
 <li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
 </ul>
 

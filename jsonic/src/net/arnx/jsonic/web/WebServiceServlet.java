@@ -42,6 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.JSONConvertException;
 import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -240,6 +241,12 @@ public class WebServiceServlet extends HttpServlet {
 			error = new LinkedHashMap<String, Object>();
 			error.put("code", -32700);
 			error.put("message", "Parse error.");
+		} catch (JSONConvertException e) {
+			container.debug(e.getMessage());
+			response.setStatus(SC_BAD_REQUEST);
+			error = new LinkedHashMap<String, Object>();
+			error.put("code", -32602);
+			error.put("message", "Method not found.");
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
