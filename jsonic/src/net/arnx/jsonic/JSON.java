@@ -1577,6 +1577,7 @@ public class JSON {
 			
 			if (data == null && (c.isPrimitive() || value != null)) {
 				if (!handleConvertError(key, value, c, type, null)) {
+					key = (key == null) ? "/" : "/" + key;
 					throw new JSONConvertException(getMessage("json.convert.ConversionError", key, type, value));
 				}
 			}
@@ -1584,6 +1585,7 @@ public class JSON {
 			throw e;
 		} catch (Exception e) {
 			if (!handleConvertError(key, value, c, type, e)) {
+				key = (key == null) ? "/" : "/" + key;
 				throw new JSONConvertException(getMessage("json.convert.ConversionError", key, type, value), e);
 			}
 		}
@@ -1610,7 +1612,7 @@ public class JSON {
 	 * @return If the handleError method returns false, it throws JSONConvertException. else it continues the process.
 	 */
 	protected boolean handleConvertError(Object key, Object value, Class c, Type type, Exception e) {
-		return true;
+		return false;
 	}
 	
 	protected Object create(Class c) throws Exception {
