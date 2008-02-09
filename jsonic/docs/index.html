@@ -273,10 +273,10 @@ JSON json = new JSON() {
     // c: 指定された型
     // type: Genericsの指定型
     // e: 発生した例外</span>
-    protected <span class="em">void handleConvertError(String key, Object value, Class c,
-        Type type, Exception e) throws Exception</span> {
-        <span class="comment">// デフォルトでは何もしません</span>
-        throw e;
+    protected <span class="em">boolean handleConvertError(String key, Object value, Class c,
+        Type type, Exception e)</span> {
+        <span class="comment">// true: 処理を継続、false: JSONConvertExceptionをthrowして処理を中断します。</span>
+        return true;
     }
 };
 </pre>
@@ -476,6 +476,7 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <li>Formatにてorg.w3c.dom.Document/ElementオブジェクトからJSONへの変換に対応しました。</li>
 <li>Parse/Format時にJavaBeansのプロパティの扱いを制御できるよう、ignoreメソッドを追加しました。</li>
 <li>変換に失敗した際には、デフォルトでJSONConvertExceptionを投げるよう変更しました。この動作は、handleConvertExceptionをoverrideすることで変更できます。</li>
+<li>handleConvertErrorの定義を変更しbooleanの戻り値により処理を継続するか否かを変更するようにしました。</li>
 <li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
 </ul>
 

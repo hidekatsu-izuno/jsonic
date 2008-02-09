@@ -1599,6 +1599,16 @@ public class JSON {
 		return false;
 	}
 	
+	/**
+	 * Catches the convertion error occured in convert method.
+	 * 
+	 * @param key key name
+	 * @param value The converting object.
+	 * @param c The converting class
+	 * @param type The converting generics type
+	 * @param e The exception object throwed by converting.
+	 * @return If the handleError method returns false, it throws JSONConvertException. else it continues the process.
+	 */
 	protected boolean handleConvertError(Object key, Object value, Class c, Type type, Exception e) {
 		return true;
 	}
