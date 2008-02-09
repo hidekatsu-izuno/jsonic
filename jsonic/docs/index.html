@@ -112,6 +112,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>boolean, Boolean</td><td>true/false</td></tr>
 <tr><td>null</td><td>null</td></tr>
 </table>
+<p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
 <div class="caption">
 (※1) 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
 (※2) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
@@ -177,7 +178,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較し、次に末尾に「_」を付けて比較します（これは、予約語に対応するためです）。
 </div>
 
-<h3>高度な使い方</h3>
+<h3 id="advanced_use">高度な使い方</h3>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
 <li><a href="#io">Reader/InputStreamによるparse</a></li>
@@ -186,6 +187,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="#innerclass">内部クラスを利用したデコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
+<li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 </ul>
 
 <h4 id="io">■ Reader/InputStreamによるparse</h4>
@@ -336,8 +338,37 @@ public class EnclosingClass {
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
-<h3>JSON Web Service Servlet</h3>
+<h4 id="xmltojson">■ XMLからJSONへの変換</h4>
+<p>JSONICでは、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。
+方法は、通常と同じようにencode/formatの引数にorg.w3c.dom.Document/Elementのインスタンスを設定するだけです。</p>
+<pre class="source">
+Document doc = builder.parse(new File("sample.xml"));
+String xmljson = JSON.encode(doc);
+</pre>
+<p>例えば、下記のXMLの場合</p>
+<pre class="source">
+&lt;feed xmlns="http://www.w3.org/2005/Atom"&gt;
+  &lt;title&gt;Feed Title&lt;/title&gt;
+  &lt;entry&gt;
+    &lt;title&gt;Entry Title&lt;/title&gt;
+  &lt;/entry&gt;
+&lt;/feed&gt;
+</pre>
+<p>次のようなJSONが生成されます（実際にはタグ間の空白文字もTextNodeとして出力されます）。</p>
+<pre class="source">
+{ "tagName": "feed", "attributes": {
+    "xmlns": "http://www.w3.org/2005/Atom"
+  },
+  "childNodes": [
+    { "tagName": "title", "childNodes": [ "Feed Title" ] },
+    { "tagName": "entry", "childNodes": [
+        { "tagName": "title", "childNodes": [ "Entry Title" ] }
+    ]}
+  ]
+}
+</pre>
 
+<h3>JSON Web Service Servlet</h3>
 <p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
 <p>※JSONRPCServletは0.9.6以降net.arnx.jsonic.web.WebServiceServletに置き換えられました。</p>
 
