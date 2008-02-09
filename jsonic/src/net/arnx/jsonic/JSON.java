@@ -1577,14 +1577,14 @@ public class JSON {
 			
 			if (data == null && (c.isPrimitive() || value != null)) {
 				if (!handleConvertError(key, value, c, type, null)) {
-					throw new JSONConvertException(getMessage("json.convert.ConversionError", key, value, type));
+					throw new JSONConvertException(getMessage("json.convert.ConversionError", key, type, value));
 				}
 			}
 		} catch (JSONConvertException e) {
 			throw e;
 		} catch (Exception e) {
 			if (!handleConvertError(key, value, c, type, e)) {
-				throw new JSONConvertException(getMessage("json.convert.ConversionError", key, value, type), e);
+				throw new JSONConvertException(getMessage("json.convert.ConversionError", key, type, value), e);
 			}
 		}
 		
