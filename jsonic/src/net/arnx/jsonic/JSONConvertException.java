@@ -10,4 +10,8 @@ public class JSONConvertException extends Exception {
 	public JSONConvertException(Throwable cause) {
 		super(cause);
 	}
+	
+	public JSONConvertException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

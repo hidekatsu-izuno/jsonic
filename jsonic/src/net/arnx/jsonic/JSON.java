@@ -1577,14 +1577,14 @@ public class JSON {
 			
 			if (data == null && (c.isPrimitive() || value != null)) {
 				if (!handleConvertError(key, value, c, type, null)) {
-					throw new JSONConvertException("");
+					throw new JSONConvertException(getMessage("json.convert.ConversionError", key, value, type));
 				}
 			}
 		} catch (JSONConvertException e) {
 			throw e;
 		} catch (Exception e) {
 			if (!handleConvertError(key, value, c, type, e)) {
-				throw new JSONConvertException(e);
+				throw new JSONConvertException(getMessage("json.convert.ConversionError", key, value, type), e);
 			}
 		}
 		
@@ -1600,7 +1600,7 @@ public class JSON {
 	}
 	
 	/**
-	 * Catches the convertion error occured in convert method.
+	 * Catching the error occured in convert method.
 	 * 
 	 * @param key key name
 	 * @param value The converting object.
