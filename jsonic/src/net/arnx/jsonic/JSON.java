@@ -614,13 +614,13 @@ public class JSON {
 	public <T> T parse(InputStream in, Class<? extends T> c)
 		throws IOException, JSONParseException, JSONConvertException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
-		return (T)convert(null, parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, c);
+		return (T)parse(new InputStreamReader(in, determineEncoding(in)), c);
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c, Type t)
 		throws IOException, JSONParseException, JSONConvertException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
-		return (T)convert(null, parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in)))), c, t);
+		return (T)parse(new InputStreamReader(in, determineEncoding(in)), c, t);
 	}
 	
 	public Object parse(Reader reader) throws IOException, JSONParseException {
@@ -1577,16 +1577,17 @@ public class JSON {
 			
 			if (data == null && (c.isPrimitive() || value != null)) {
 				if (!handleConvertError(key, value, c, type, null)) {
-					key = (key == null) ? "/" : "/" + key;
-					throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, key));
+					key = (key != null) ? "{0}." + key :
+						(key instanceof Integer) ? "{0}[" + key + "]" : "{0}";
+					throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, "{0}"), key);
 				}
 			}
 		} catch (JSONConvertException e) {
+			e.push(key);
 			throw e;
 		} catch (Exception e) {
 			if (!handleConvertError(key, value, c, type, e)) {
-				key = (key == null) ? "/" : "/" + key;
-				throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, key), e);
+				throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, "{0}"), e, key);
 			}
 		}
 		
