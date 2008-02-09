@@ -54,7 +54,7 @@ public class WebServiceServlet extends HttpServlet {
 		public Class container;
 		public String encoding = "UTF-8";
 		public Map<String, String> mappings;
-		public Map<String, Pattern> requirements;
+		public Map<String, Pattern> definitions;
 	}
 	
 	private Container container;
@@ -83,13 +83,13 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.requirements == null) config.requirements = new HashMap<String, Pattern>();
-		if (!config.requirements.containsKey("package")) config.requirements.put("package", Pattern.compile(".+"));
-		if (!config.requirements.containsKey(null)) config.requirements.put(null, Pattern.compile("[^/]+"));
+		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
+		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
+		if (!config.definitions.containsKey(null)) config.definitions.put(null, Pattern.compile("[^/]+"));
 		
 		if (config.mappings != null) {
 			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
-				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.requirements));
+				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
 			}
 		}
 	}
@@ -241,6 +241,10 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
 			error = new RpcError(-32601, "Method not found.");
+		} catch (NoSuchMethodException e) {
+			container.debug(e.getMessage());
+			response.setStatus(SC_BAD_REQUEST);
+			error = new RpcError(-32601, "Method not found.");
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
@@ -249,19 +253,16 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
 			error = new RpcError(-32602, "Invalid params.");
-		} catch (NoSuchMethodException e) {
-			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
-			error = new RpcError(-32601, "Method not found.");
-		} catch (IllegalArgumentException e) {
-			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
-			error = new RpcError(-32602, "Invalid params.");
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
-			response.setStatus(SC_INTERNAL_SERVER_ERROR);
-			error = new RpcError(-32603, cause.getMessage());
+			if (cause instanceof IllegalArgumentException) {
+				response.setStatus(SC_BAD_REQUEST);
+				error = new RpcError(-32602, "Invalid params.");
+			} else {
+				response.setStatus(SC_INTERNAL_SERVER_ERROR);
+				error = new RpcError(-32603, cause.getMessage());
+			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.setStatus(SC_INTERNAL_SERVER_ERROR);
@@ -282,10 +283,10 @@ public class WebServiceServlet extends HttpServlet {
 		res.put("error", error);
 		res.put("id", (req != null) ? req.id : null);
 
+		Writer writer = response.getWriter();
+
 		try {	
-			Writer writer = response.getWriter();
 			json.setPrettyPrint(container.isDebugMode());
-			
 			json.format(res, writer);
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
@@ -294,6 +295,7 @@ public class WebServiceServlet extends HttpServlet {
 			res.put("result", null);
 			res.put("error", new RpcError(-32603, "Internal error."));
 			res.put("id", (req != null) ? req.id : null);
+			json.format(res, writer);
 			return;
 		}
 	}
@@ -506,15 +508,15 @@ class RouteMapping {
 	private List<String> names;
 	private String target;
 	
-	public RouteMapping(String path, String target, Map<String, Pattern> requirements) {
+	public RouteMapping(String path, String target, Map<String, Pattern> definitions) {
 		this.names = new ArrayList<String>();
 		StringBuffer sb = new StringBuffer("^\\Q");
 		Matcher m = PLACE_PATTERN.matcher(path);
 		while (m.find()) {
 			String name = m.group(1);
 			names.add(name);
-			Pattern p = requirements.get(name);
-			if (p == null) p = requirements.get(null);
+			Pattern p = definitions.get(name);
+			if (p == null) p = definitions.get(null);
 			m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:") + ")\\\\Q");
 		}
 		m.appendTail(sb);
