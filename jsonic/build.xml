@@ -24,7 +24,8 @@
 		
 		<javadoc sourcepath="${src}" destdir="docs/api"
 			encoding="UTF-8" charset="UTF-8" docencoding="UTF-8"
-			author="true">
+			author="true" locale="en_US">
+			<link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
 			<classpath>
 				<pathelement location="${lib}/servlet-api.jar"/>
 			</classpath>
