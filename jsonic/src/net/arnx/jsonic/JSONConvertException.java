@@ -8,14 +8,12 @@ public class JSONConvertException extends RuntimeException {
 	private static final long serialVersionUID = -6173125387096087580L;
 	private List<String> keys = new ArrayList<String>();
 	
-	JSONConvertException(String message, Object key) {
+	JSONConvertException(String message) {
 		super(message);
-		push(key);
 	}
 	
-	JSONConvertException(String message, Throwable cause, Object key) {
+	JSONConvertException(String message, Throwable cause) {
 		super(message, cause);
-		push(key);
 	}
 	
 	void push(Object key) {

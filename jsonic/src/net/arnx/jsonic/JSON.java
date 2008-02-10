@@ -1202,6 +1202,7 @@ public class JSON {
 		
 	protected Object convert(Object key, Object value, Class c, Type type) throws JSONConvertException {
 		Object data = null;
+		Exception exception = null;
 		
 		try {
 			if (c.isPrimitive()) {
@@ -1574,20 +1575,20 @@ public class JSON {
 					}
 				}
 			}
-			
-			if (data == null && (c.isPrimitive() || value != null)) {
-				if (!handleConvertError(key, value, c, type, null)) {
-					key = (key != null) ? "{0}." + key :
-						(key instanceof Integer) ? "{0}[" + key + "]" : "{0}";
-					throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, "{0}"), key);
-				}
-			}
 		} catch (JSONConvertException e) {
 			e.push(key);
 			throw e;
 		} catch (Exception e) {
-			if (!handleConvertError(key, value, c, type, e)) {
-				throw new JSONConvertException(getMessage("json.convert.ConversionError", value, type, "{0}"), e, key);
+			exception = e;
+		}
+		
+		if (data == null && (c.isPrimitive() || value != null)) {
+			try {
+				data = handleConvertError(key, value, c, type, exception);
+			} catch (Exception e) {
+				JSONConvertException jce = new JSONConvertException(getMessage("json.convert.ConversionError", value, type, "{0}"), e);
+				jce.push(key);
+				throw jce;
 			}
 		}
 		
@@ -1609,11 +1610,12 @@ public class JSON {
 	 * @param value The converting object.
 	 * @param c The converting class
 	 * @param type The converting generics type
-	 * @param e The exception object throwed by converting.
-	 * @return If the handleError method returns false, it throws JSONConvertException. else it continues the process.
+	 * @param e The exception object throwed when converting.
+	 * @return the converted value.
+	 * @exception Exception if value falis to convert.
 	 */
-	protected boolean handleConvertError(Object key, Object value, Class c, Type type, Exception e) {
-		return false;
+	protected Object handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
+		throw (e == null) ? new UnsupportedOperationException() : e;
 	}
 	
 	protected Object create(Class c) throws Exception {
