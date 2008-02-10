@@ -26,7 +26,7 @@ public class WebServiceServletTest {
 		client.setRequestMethod("POST");
 		client.connect();
 		assertEquals(SC_BAD_REQUEST, client.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32700,\"message\":\"Invalid Request.\"},\"id\":null}"), 
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\"},\"id\":null}"), 
 				JSON.decode(client.getResponseContent()));
 		client.clear();
 
