@@ -118,7 +118,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 (※2) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
 </div>
 <p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
-<p>なお、JSONのルートはobjectかarrayでなければなりません。このため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合、エラーになります。</p>
+<p>なお、JSONはobjectかarrayで始まる必要があるため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合エラーとなります。</p>
 
 <h4>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h4>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
@@ -644,6 +644,6 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>今まで日記上でほそぼそと公開していたSimple JSON Class for Javaを仕様などを整理し名前も新たに0.9にリバージョンして公開（機能面での変更はありませんが、微妙に変換ルールや仕様を調整してあります）。</p>
 </div>
 
-<div class="copyright">Copyright (C) 2007 Hidekatsu Izuno All right reserved.</div>
+<div class="copyright">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>
 </body>
 </html>
