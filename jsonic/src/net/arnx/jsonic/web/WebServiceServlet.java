@@ -124,7 +124,10 @@ public class WebServiceServlet extends HttpServlet {
 		
 		for (RouteMapping m : mappings) {
 			Route route = m.matches(request.getMethod(), uri);
-			if (route != null) return route;
+			if (route != null) {
+				container.debug("route found: " + request.getMethod() + " " + uri);
+				return route;
+			}
 		}
 		response.sendError(SC_NOT_FOUND);
 		return null;
@@ -256,7 +259,10 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
-			if (cause instanceof IllegalArgumentException) {
+			if (cause instanceof UnsupportedOperationException) {
+				response.sendError(SC_NOT_FOUND);
+				error = new RpcError(-32601, "Method not found.");				
+			} else if (cause instanceof IllegalArgumentException) {
 				response.setStatus(SC_BAD_REQUEST);
 				error = new RpcError(-32602, "Invalid params.");
 			} else {
@@ -374,7 +380,9 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
-			if (cause instanceof IllegalArgumentException) {
+			if (cause instanceof UnsupportedOperationException) {
+				response.sendError(SC_NOT_FOUND);				
+			} else if (cause instanceof IllegalArgumentException) {
 				response.sendError(SC_BAD_REQUEST, cause.getMessage());
 			} else {
 				response.sendError(SC_INTERNAL_SERVER_ERROR, cause.getMessage());

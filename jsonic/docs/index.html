@@ -453,7 +453,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 }</pre></td>
 </tr>
 <tr>
-<td>methodで指定したクラス/メソッドが見つからない</td>
+<td>methodで指定したクラス/メソッドが見つからない<sup>(※6)</sup></td>
 <td>404&nbsp;Not&nbsp;found</td>
 <td><pre style="margin:0;">{
   "code": -32601,
@@ -461,7 +461,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 }</pre></td>
 </tr>
 <tr>
-<td>paramsが不適切</td>
+<td>paramsが不適切<sup>(※7)</sup></td>
 <td>400&nbsp;Bad&nbsp;request</td>
 <td><pre style="margin:0;">{
   "code": -32602,
@@ -486,7 +486,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 }</pre></td>
 </tr>
 </table>
-
+<div class="caption">(※6) クラス/メソッドが見つからなかった時だけでなく、メソッドからUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※7) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
 <h4>■ RESTモード</h4>
 <p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※6)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※7)</sup>。</p>
@@ -507,11 +508,11 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <table summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
 <tr>
-<td>クラス/メソッドが見つからない</td>
+<td>クラス/メソッドが見つからない<sup>(※8)</sup></td>
 <td>404&nbsp;Not&nbsp;found</td>
 </tr>
 <tr>
-<td>送信されたJSONの解析/変換に失敗した</td>
+<td>送信されたJSONの解析/変換に失敗した<sup>(※9)</sup></td>
 <td>400&nbsp;Bad&nbsp;request</td>
 </tr>
 <tr>
@@ -519,6 +520,9 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
 </tr>
 </table>
+<div class="caption">(※8) クラス/メソッドが見つからなかった時だけでなく、メソッドからUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※9) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
+
 
 <h4>■ JSONP</h4>
 <p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
