@@ -1200,7 +1200,7 @@ public class JSON {
 		return encoding;
 	}
 		
-	protected Object convert(Object key, Object value, Class c, Type type) throws JSONConvertException {
+	protected <T> T convert(Object key, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
 		Object data = null;
 		Exception exception = null;
 		
@@ -1592,7 +1592,7 @@ public class JSON {
 			}
 		}
 		
-		return data;
+		return (T)data;
 	}
 	
 	protected boolean ignore(Class target, Member member) {
@@ -1614,7 +1614,7 @@ public class JSON {
 	 * @return the converted value.
 	 * @exception Exception if value falis to convert.
 	 */
-	protected Object handleConversionFailure(Object key, Object value, Class c, Type type, Exception e) throws Exception {
+	protected <T> T handleConversionFailure(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
 		throw (e == null) ? new UnsupportedOperationException() : e;
 	}
 	

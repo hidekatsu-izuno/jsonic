@@ -258,7 +258,7 @@ JSON json = new JSON() {
   protected <span class="em">Object handleConversionFailure(Object key, Object value, Class c, Type type, Exception e)</span> throws Exception {
     <span class="comment">// JSON arrrayをjava.awt.Pointに変換する例です。</span>
     if (c == Point.class && value instanceof List) {
-      return new Point(convert(key, ((List)value).get(0), int.class, int.class), convert(key, ((List)value).get(1), int.class, int.class));
+      return new Point(convert(0, ((List)value).get(0), int.class, int.class), convert(1, ((List)value).get(1), int.class, int.class));
     }
     
     <span class="comment">// デフォルトでは、引数の例外を投げます（eがnullの場合は、UnsupportedOperationExceptionが投げられます）。</span>
