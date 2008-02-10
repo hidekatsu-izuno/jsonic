@@ -182,52 +182,19 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <h3 id="advanced_use">高度な使い方</h3>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
+<li><a href="#extends">継承による機能拡張</a></li>
 <li><a href="#io">Reader/InputStreamによるparse</a></li>
 <li><a href="#generics">総称型を指定してのdecode/parse</a></li>
-<li><a href="#extends">継承による機能拡張</a></li>
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="#innerclass">内部クラスを利用したデコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 </ul>
 
-<h4 id="io">■ Reader/InputStreamによるparse</h4>
-<p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しかできませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを読み込むことができます。</p>
-<pre class="source">
-<span class="comment">// ReaderからのJSONの読み込み</span>
-Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileReader("sample.json"), Hoge.class<span class="em">)</span>;
-
-<span class="comment">// InputStreamからのJSONの読み込み（ファイルはUnicodeである必要があります<sup>(※4)</sup>）</span>
-Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileInputStream("sample.json"), Hoge.class<span class="em">)</span>;
-</pre>
-<div class="caption">
-(※4) UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別します。<br />
-</div>
-
-<h4 id="generics">■ 総称型を指定してのdecode/parse</h4>
-<p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
-<pre class="source">
-public class JSONConfigLoader {
-  private Map&lt;String, Hoge&gt; config;
-  
-  public Map load(Reader reader) throws JSONParseException, IOException {
-    JSON json = new JSON();
-    
-    <span class="comment">// これはコンパイルエラー</span>
-    config = json.<span class="em">parse(</span>reader, Map&lt;String, Hoge&gt;.class<span class="em">)</span>;
-    
-    <span class="comment">// これならOK</span>
-    config = json.<span class="em">parse(</span>reader,
-        Map.class,
-        getClass().getField("config").getGenericType()<span class="em">)</span>;
-        
-    return config;
-  }
-}
-</pre>
 
 <h4 id="extends">■ 継承による機能拡張</h4>
-<p>JSONICは、フレームワークでの利用を考慮しインスタンスを生成したり、継承して拡張することができるように設計してあります。</p>
+<p>JSONICは、フレームワークでの利用を考慮しインスタンスを生成したり、継承して拡張することができるように設計してあります。
+なお、インスタンスを生成して利用する場合は、encode/decodeメソッドの代わりにformat/parseメソッドを利用します。</p>
 <pre class="source">
 <span class="comment">// インスタンスを生成します</span>
 <span class="em">JSON</span> json = new <span class="em">JSON()</span>;
@@ -246,7 +213,7 @@ Map map = (Map)json<span class="em">.parse(</span>text<span class="em">)</span>;
 Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">)</span>;
 </pre>
 
-<p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を行うためにオーバーライド可能な次のメソッドが用意されています。</p>
+<p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を追加するために次のようなオーバーライド可能なメソッドが用意されています。</p>
 <pre class="source">
 JSON json = new JSON() {
   <span class="comment">// 型cに対するインスタンスを生成します</span>
@@ -279,6 +246,41 @@ JSON json = new JSON() {
 };
 </pre>
 <p>※version 0.9.5までは、変換方法の拡張はconvertメソッドで行っていましたが、0.9.6以降はhandleConversionFailureで行う必要があります。</p>
+
+<h4 id="io">■ Reader/InputStreamによるparse</h4>
+<p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しか対応できませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを読み込むことができます。</p>
+<pre class="source">
+<span class="comment">// ReaderからのJSONの読み込み</span>
+Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileReader("sample.json"), Hoge.class<span class="em">)</span>;
+
+<span class="comment">// InputStreamからのJSONの読み込み（ファイルはUnicodeである必要があります<sup>(※4)</sup>）</span>
+Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileInputStream("sample.json"), Hoge.class<span class="em">)</span>;
+</pre>
+<div class="caption">
+(※4) UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別します。<br />
+</div>
+
+<h4 id="generics">■ 総称型を指定してのdecode/parse</h4>
+<p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
+<pre class="source">
+public class JSONConfigLoader {
+  private Map&lt;String, Hoge&gt; config;
+  
+  public Map load(Reader reader) throws JSONParseException, IOException {
+    JSON json = new JSON();
+    
+    <span class="comment">// これはコンパイルエラー</span>
+    config = json.<span class="em">parse(</span>reader, Map&lt;String, Hoge&gt;.class<span class="em">)</span>;
+    
+    <span class="comment">// これならOK</span>
+    config = json.<span class="em">parse(</span>reader,
+        Map.class,
+        getClass().getField("config").getGenericType()<span class="em">)</span>;
+        
+    return config;
+  }
+}
+</pre>
 
 <h4 id="liberalparsing">■ 柔軟な読み込み <span class="subtitle">- 妥当でないJSONのデコード</span></h4>
 <p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、妥当でないJSONであっても読み込みが可能なように作成されています。<a 
