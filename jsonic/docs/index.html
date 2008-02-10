@@ -25,6 +25,7 @@
 	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
 	.comment { color: #0066FF; }
 	.em { font-weight: bold; color: #000099; }
+	.elem { font-weight: bold; color: #000099; }
 	table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
 		margin: 0px 0px 1em 0px; }
 	th { background-color: silver; border: 1px solid gray; }
@@ -194,10 +195,10 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しかできませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを読み込むことができます。</p>
 <pre class="source">
 <span class="comment">// ReaderからのJSONの読み込み</span>
-Hoge hoge = (new JSON()).parse(new FileReader("sample.json"), Hoge.class);
+Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileReader("sample.json"), Hoge.class<span class="em">)</span>;
 
 <span class="comment">// InputStreamからのJSONの読み込み（ファイルはUnicodeである必要があります<sup>(※4)</sup>）</span>
-Hoge hoge = (new JSON()).parse(new FileInputStream("sample.json"), Hoge.class);
+Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileInputStream("sample.json"), Hoge.class<span class="em">)</span>;
 </pre>
 <div class="caption">
 (※4) UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別します。<br />
@@ -213,12 +214,12 @@ public class JSONConfigLoader {
     JSON json = new JSON();
     
     <span class="comment">// これはコンパイルエラー</span>
-    config = json.parse(reader, Map&lt;String, Hoge&gt;.class);
+    config = json.<span class="em">parse(</span>reader, Map&lt;String, Hoge&gt;.class<span class="em">)</span>;
     
     <span class="comment">// これならOK</span>
-    config = json.parse(reader,
+    config = json.<span class="em">parse(</span>reader,
         Map.class,
-        getClass().getField("config").getGenericType());
+        getClass().getField("config").getGenericType()<span class="em">)</span>;
         
     return config;
   }
@@ -255,10 +256,15 @@ JSON json = new JSON() {
   
   <span class="comment">// 変換に失敗した時に呼び出されます。戻り値に変換後の値が返された場合、処理は継続されます。
   // 逆に例外が投げられた場合、処理は停止しJSONConvertExceptionが例外をラップし呼び出し元に通知します。</span>
-  protected <span class="em">&lt;T&gt; T handleConversionFailure(Object key, Object value, Class&lt;? extends T&gt; c, Type type, Exception e)</span> throws Exception {
+  protected <span class="em">&lt;T&gt; T handleConversionFailure(Object key, Object value,
+    Class&lt;? extends T&gt; c, Type type, Exception e)</span> throws Exception {
+    
     <span class="comment">// JSON arrrayをjava.awt.Pointに変換する例です。</span>
     if (c == Point.class && value instanceof List) {
-      return (T)new Point(convert(0, ((List)value).get(0), int.class, int.class), convert(1, ((List)value).get(1), int.class, int.class));
+      return (T)new Point(
+      	convert(0, ((List)value).get(0), int.class, int.class), 
+      	convert(1, ((List)value).get(1), int.class, int.class)
+      );
     }
     
     <span class="comment">// デフォルトでは、引数の例外を投げます（eがnullの場合は、UnsupportedOperationExceptionが投げられます）。</span>
@@ -268,7 +274,7 @@ JSON json = new JSON() {
   <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
   protected <span class="em">boolean ignore(Class c, Member m)</span> {
     <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言されたメンバの場合、trueを返します。</span>
-    return ignore(c, m);
+    return super.ignore(c, m);
   }    
 };
 </pre>
@@ -334,16 +340,16 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 方法は、通常と同じようにencode/formatの引数にorg.w3c.dom.Document/Elementのインスタンスを設定するだけです。</p>
 <pre class="source">
 Document doc = builder.parse(new File("sample.xml"));
-String xmljson = JSON.encode(doc);
+String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span>;
 </pre>
 <p>例えば、下記のXMLの場合</p>
 <pre class="source">
-&lt;feed xmlns="http://www.w3.org/2005/Atom"&gt;
-  &lt;title&gt;Feed Title&lt;/title&gt;
-  &lt;entry&gt;
-    &lt;title&gt;Entry Title&lt;/title&gt;
-  &lt;/entry&gt;
-&lt;/feed&gt;
+<span class="elem">&lt;feed xmlns="</span>http://www.w3.org/2005/Atom<span class="elem">"&gt;</span>
+  <span class="elem">&lt;title&gt;</span>Feed Title<span class="elem">&lt;/title&gt;</span>
+  <span class="elem">&lt;entry&gt;</span>
+    <span class="elem">&lt;title&gt;</span>Entry Title<span class="elem">&lt;/title&gt;</span>
+  <span class="elem">&lt;/entry&gt;</span>
+<span class="elem">&lt;/feed&gt;</span>
 </pre>
 <p>次のようなJSONが生成されます（実際にはタグ間の空白文字もTextNodeとして出力されます）。</p>
 <pre class="source">
@@ -366,12 +372,12 @@ String xmljson = JSON.encode(doc);
 <h4>■ 設定方法</h4>
 <p>JSON Web Service Servletの設定は簡単です。web.xmlにWebServiceServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
 <pre class="source">
-&lt;servlet&gt;
-  &lt;servlet-name&gt;json-ws&lt;/servlet-name&gt;
-  &lt;servlet-class&gt;net.arnx.jsonic.web.WebServiceServlet&lt;/servlet-class&gt;
-  &lt;init-param&gt;
-    &lt;param-name&gt;config&lt;/param-name&gt;
-    &lt;param-value&gt;
+<span class="elem">&lt;servlet&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>json-ws<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.WebServiceServlet<span class="elem">&lt;/servlet-class&gt;</span>
+  <span class="elem">&lt;init-param&gt;</span>
+    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+    <span class="elem">&lt;param-value&gt;</span>
     {
       "debug": true,
       "encoding": "UTF-8",
@@ -380,14 +386,14 @@ String xmljson = JSON.encode(doc);
         "/[class].[ext]": "sample.${class}Service"
       }
     }
-    &lt;/param-value&gt;
-  &lt;/init-param&gt;
-&lt;/servlet&gt;
+    <span class="elem">&lt;/param-value&gt;</span>
+  <span class="elem">&lt;/init-param&gt;</span>
+<span class="elem">&lt;/servlet&gt;</span>
 
-&lt;servlet-mapping&gt;
-  &lt;servlet-name&gt;json-ws&lt;/servlet-name&gt;
-  &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;
-&lt;/servlet-mapping&gt;
+<span class="elem">&lt;servlet-mapping&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>json-ws<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
+<span class="elem">&lt;/servlet-mapping&gt;</span>
 </pre>
 <p>configで設定できる値は次の通りです。</p>
 <table summary="Config設定">
@@ -530,19 +536,19 @@ String xmljson = JSON.encode(doc);
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
 
 <pre class="source">
-&lt;servlet&gt;
-  &lt;servlet-name&gt;JSON-WebService&lt;/servlet-name&gt;
-  &lt;servlet-class&gt;net.arnx.jsonic.web.WebServiceServlet&lt;/servlet-class&gt;
-  &lt;init-param&gt;
-    &lt;param-name&gt;config&lt;/param-name&gt;
-    &lt;param-value&
+<span class="elem">&lt;servlet&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>JSON-WebService<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.WebServiceServlet<span class="elem">&lt;/servlet-class&gt;</span>
+  <span class="elem">&lt;init-param&gt;</span>
+    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+    <span class="elem">&lt;param-value&gt;</span>
       // "container": (net.arnx.jsonic.web.Containerを実装したクラス)
       // Seasar2対応Container
       "container": "net.arnx.jsonic.web.S2Container"
       ...
-    &lt;/param-value&
-  &lt;/init-param&gt;
-&lt;/servlet&gt;
+    <span class="elem">&lt;/param-value&gt;</span>
+  <span class="elem">&lt;/init-param&gt;</span>
+<span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
 <p>JSONICでは、Seasar2に対応したContainerを標準添付しています。このContainerを利用すると、Seasar2上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>

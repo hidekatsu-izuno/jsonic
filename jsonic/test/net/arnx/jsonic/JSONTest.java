@@ -685,7 +685,7 @@ public class JSONTest {
 			protected <T> T handleConversionFailure(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
 				if (c == Point.class && value instanceof List) {
 					return (T)new Point(convert(0, ((List)value).get(0), int.class, int.class), convert(1, ((List)value).get(1), int.class, int.class));
-					}
+				}
 				return super.handleConversionFailure(key, value, c, type, e);
 			}
 		};
