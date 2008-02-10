@@ -11,9 +11,10 @@
 	.title { font: bold 20pt sans-serif; color: #6699FF; margin: 10px 5px 5px 5px; }
 	.title a { color: #6699FF; text-decoration: none; }
 	h1 .subtitle { font: italic 12pt sans-serif; color: gray; }
-	.menu { color: white; background: gray; padding: 0px 16px; }
-	.menu a { color: white; }
-	.main { padding: 5px 16px; width: 600px; line-height: 1.5; }
+	.bar { color: white; background: gray; padding: 1px 5px; }
+	.menu { position: absolute; top: 70px; left: 0px; padding: 10px; width: 160px; background: white; }
+	.menu ul { margin: 0px; padding: 0px 0px 0px 16px; }
+	.main { margin-left: 160px; padding: 5px 16px; width: 600px; line-height: 1.5; border-left: 1px solid silver; }
 	h2 { font: bold 12pt sans-serif; color: #666666; margin: 30px 0px 10px 0px;
 		border-left: 10px solid #6699FF; border-bottom: 1px solid #6699FF; padding: 0px 5px; }
 	h3 { font: bold 11pt sans-serif; border-bottom: 1px solid gray; margin: 30px 0px 12px 0px; }
@@ -23,8 +24,8 @@
 	a { color: darkblue; }
 	p { margin: 0px 0px 1em 0px; padding: 0px; }
 	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
-	.comment { color: #0066FF; }
-	.em { font-weight: bold; color: #000099; }
+	.comment { color: #0066FF; font-family: monospace; }
+	.em { font-weight: bold; color: #000099; font-family: monospace; }
 	.elem { font-weight: bold; color: #000099; }
 	table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
 		margin: 0px 0px 1em 0px; }
@@ -36,20 +37,24 @@
 </style>
 </head>
 <body>
-<a href="http://sourceforge.jp/" style="position:absolute; top: 7px; left: 504px;"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" border="0" alt="SourceForge.jp"></a>
+<a href="http://sourceforge.jp/" style="position:absolute; top: 7px; left: 664px;"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" border="0" alt="SourceForge.jp"></a>
 <h1 class="title"><a href="">JSONIC</a> <span class="subtitle">- simple json encoder/decoder for java</span></h1>
-<div class="menu" style="clear: both;">
-	<a href="#introduction">JSONICとは</a>
-	&nbsp;&nbsp;|&nbsp;&nbsp;
-	<a href="#download">ダウンロード</a>
-	&nbsp;&nbsp;|&nbsp;&nbsp;
-	<a href="#usage">使い方</a>
-	&nbsp;&nbsp;|&nbsp;&nbsp;
-	<a href="api/index.html">Javadoc</a>
-	&nbsp;&nbsp;|&nbsp;&nbsp;
-	<a href="#license">ライセンス</a>
-	&nbsp;&nbsp;|&nbsp;&nbsp;
-	<a href="#releasenote">リリースノート</a>
+<div class="bar">[MENU] >>></div>
+<div class="menu">
+<ul>
+	<li><a href="#introduction">JSONICとは</a></li>
+	<li><a href="#download">ダウンロード</a></li>
+	<li><a href="#usage">使い方</a>
+		<ul>
+			<li><a href="#usage_basic">基本的な使い方</a></li>
+			<li><a href="#usage_advanced">高度な使い方</a></li>
+			<li><a href="#webservice">JSON Web Service Servlet</a></li>
+		</ul>
+	</li>
+	<li><a href="api/index.html">Javadoc</a></li>
+	<li><a href="#license">ライセンス</a></li>
+	<li><a href="#releasenote">リリースノート</a></li>
+</ul>
 </div>
 <div class="main">
 <h2 id="introduction">JSONICとは</h2>
@@ -72,7 +77,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 
 <h2 id="usage">使い方</h2>
 
-<h3>基本的な使い方</h3>
+<h3 id="usage_basic">基本的な使い方</h3>
 
 <p>通常の用途では、二つの静的メソッドencode/decodeだけ利用すれば事足ります。</p>
 <h4>■ encodeメソッド <span class="subtitle">- POJOからJSONへの変換</span></h4>
@@ -179,7 +184,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較し、次に末尾に「_」を付けて比較します（これは、予約語に対応するためです）。
 </div>
 
-<h3 id="advanced_use">高度な使い方</h3>
+<h3 id="usage_advanced">高度な使い方</h3>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
 <li><a href="#extends">継承による機能拡張</a></li>
@@ -221,8 +226,9 @@ JSON json = new JSON() {
     return super.create(c);
   }
   
-  <span class="comment">// 変換に失敗した時に呼び出されます。戻り値に変換後の値が返された場合、処理は継続されます。
-  // 逆に例外が投げられた場合、処理は停止しJSONConvertExceptionが例外をラップし呼び出し元に通知します。</span>
+  <span class="comment">// 変換に失敗した時に呼び出されます。戻り値に変換後の値が返された場合、処理は継続され
+  // ます。逆に例外が投げられた場合、処理は停止しJSONConvertExceptionが例外をラップし
+  // 呼び出し元に通知します。</span>
   protected <span class="em">&lt;T&gt; T handleConversionFailure(Object key, Object value,
     Class&lt;? extends T&gt; c, Type type, Exception e)</span> throws Exception {
     
@@ -234,13 +240,15 @@ JSON json = new JSON() {
       );
     }
     
-    <span class="comment">// デフォルトでは、引数に指定された例外を投げます（eがnullの場合は、UnsupportedOperationExceptionが投げられます）。</span>
+    <span class="comment">// デフォルトでは、引数に指定された例外を投げます（eがnullの場合は、
+    // UnsupportedOperationExceptionが投げられます）。</span>
     return super.handleConversionFailure(key, value, c, type, e);
   }
     
   <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
   protected <span class="em">boolean ignore(Class c, Member m)</span> {
-    <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言されたメンバの場合、trueを返します。</span>
+    <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言された
+    // メンバの場合、trueを返します。</span>
     return super.ignore(c, m);
   }    
 };
@@ -303,7 +311,12 @@ database {
   user: sa
   password: xxxx // you need to replace your password.
 }
-/* equals to {"database": {"description": "ms sql server\n\tconnecter settings", "user": "sa", "password": "xxxx"}} */
+
+/* 
+  equals to {"database": {
+     "description": "ms sql server\n\tconnecter settings",
+     "user": "sa", "password": "xxxx"}}
+*/
 </pre>
 <p>※version 0.9.3まであった拡張モードは0.9.4以降廃止されました。</p>
 
@@ -367,7 +380,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 }
 </pre>
 
-<h3>JSON Web Service Servlet</h3>
+<h3 id="webservice">JSON Web Service Servlet</h3>
 <p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
 <p>※JSONRPCServletは0.9.6以降net.arnx.jsonic.web.WebServiceServletに置き換えられました。</p>
 
