@@ -501,7 +501,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>なお、メッセージボディがJSON objectの場合、その値はリクエストパラメータ、パス変数の順で上書きされます。JSON arrayの場合は上書きされずに最後尾に追加されます。</p>
 <div class="caption">
 (※6) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、リクエストパラメータに「_method=メソッド名」を指定することもできます。<br />
-(※7) JSONはルート要素としてobjectかarrayしか取れないため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTとして空のメッセージボディを持つレスポンスが返されます。
+(※7) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。
 </div>
 
 <p>RESTモードでエラーが発生した場合にはHTTP Status Codeにてクライアントに通知されます。</p>
