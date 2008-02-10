@@ -576,7 +576,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>今まで変換機能を拡張する場合にはconvertを継承するようにしていましたが、handleConversionFailureの継承により行うよう変更しました。</li>
 <li>変換に失敗した際には、デフォルトでJSONConvertExceptionを投げるよう変更しました。この動作は、handleConversionFailureをoverrideすることで変更できます。</li>
 <li>JSONParseExceptionをRuntimeExceptionを継承するように変更しました。</li>
-<li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
+<li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました（Seasar2用コンテナも標準サポートしました）。</li>
 </ul>
 
 <h3>2008/01/28 version 0.9.5</h3>
