@@ -112,12 +112,12 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>boolean, Boolean</td><td>true/false</td></tr>
 <tr><td>null</td><td>null</td></tr>
 </table>
-<p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
 <div class="caption">
 (※1) 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
 (※2) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
 </div>
-<p>なお、JSONのルートはobjectかarrayでなければなりません。このため、直接、intやStringのインスタンスをencodeメソッドの引数にしてもエラーとなり変換できません。</p>
+<p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
+<p>なお、JSONのルートはobjectかarrayでなければなりません。このため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合、エラーになります。</p>
 
 <h4>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h4>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
@@ -207,21 +207,21 @@ Hoge hoge = (new JSON()).parse(new FileInputStream("sample.json"), Hoge.class);
 <p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
 <pre class="source">
 public class JSONConfigLoader {
-    private Map&lt;String, Hoge&gt; config;
+  private Map&lt;String, Hoge&gt; config;
+  
+  public Map load(Reader reader) throws JSONParseException, IOException {
+    JSON json = new JSON();
     
-    public Map load(Reader reader) throws JSONParseException, IOException {
-        JSON json = new JSON();
+    <span class="comment">// これはコンパイルエラー</span>
+    config = json.parse(reader, Map&lt;String, Hoge&gt;.class);
+    
+    <span class="comment">// これならOK</span>
+    config = json.parse(reader,
+        Map.class,
+        getClass().getField("config").getGenericType());
         
-        <span class="comment">// これはコンパイルエラー</span>
-        config = json.parse(reader, Map&lt;String, Hoge&gt;.class);
-        
-        <span class="comment">// これならOK</span>
-        config = json.parse(reader,
-            Map.class,
-            getClass().getField("config").getGenericType());
-            
-        return config;
-    }
+    return config;
+  }
 }
 </pre>
 
@@ -248,38 +248,40 @@ Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">
 <p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を行うためにオーバーライド可能な次のメソッドが用意されています。</p>
 <pre class="source">
 JSON json = new JSON() {
-    <span class="comment">// 型cに対するインスタンスを生成します</span>
-    protected <span class="em">Object create(Class c)</span> {
-        return super.create(c);
-    }
+  <span class="comment">// 型cに対するインスタンスを生成します</span>
+  protected <span class="em">Object create(Class c)</span> {
+    return super.create(c);
+  }
+  
+  <span class="comment">// 値valueを型cに変換します（Generics型の場合にはtypeに対象の型が入ります）</span>
+  protected <span class="em">Object convert(Object key, Object value, Class c, Type type)</span> 
+    throws JSONConvertException {
     
-    <span class="comment">// 値valueを型cに変換します（Generics型の場合にはtypeに対象の型が入ります）</span>
-    protected <span class="em">Object convert(Object key, Object value, Class c, Type type)</span> {
-        return super.convert(key, value, c, type);
-    }
+    return super.convert(key, value, c, type);
+  }
     
-    <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
-    protected <span class="em">boolean ignore(Class c, Member m)</span> {
-    	// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言されたメンバの場合、trueを返します。
-        return ignore(c, m);
-    }    
+  <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
+  protected <span class="em">boolean ignore(Class c, Member m)</span> {
+    // デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言されたメンバの場合、trueを返します。
+    return ignore(c, m);
+  }    
 };
 </pre>
 
 <p>また、変換エラーを捕捉するために次のメソッドがオーバーライド可能な形で用意されています。</p>
 <pre class="source">
 JSON json = new JSON() {
-    <span class="comment">// JSONからPOJOの変換時にエラーが起こった場合に呼ばれます
-    // key: JavaBeansのproperty/field名
-    // value: 変換前の値
-    // c: 指定された型
-    // type: Genericsの指定型
-    // e: 発生した例外</span>
-    protected <span class="em">boolean handleConvertError(String key, Object value, Class c,
-        Type type, Exception e)</span> {
-        <span class="comment">// true: 処理を継続、false: JSONConvertExceptionをthrowして処理を中断します。</span>
-        return true;
-    }
+  <span class="comment">// JSONからPOJOの変換時にエラーが起こった場合に呼ばれます
+  // key: JavaBeansのproperty/field名
+  // value: 変換前の値
+  // c: 指定された型
+  // type: Genericsの指定型
+  // e: 発生した例外</span>
+  protected <span class="em">boolean handleConvertError(String key, Object value, Class c,
+    Type type, Exception e)</span> {
+    <span class="comment">// true: 処理を継続、false: JSONConvertExceptionをthrowして処理を中断します。</span>
+    return true;
+  }
 };
 </pre>
 
@@ -314,17 +316,17 @@ database {
 JSONICでは、decodeメソッドやparseメソッドの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。</p>
 <pre class="source">
 public class EnclosingClass {
-    public void decode() {
-        JSON json = <span class="em">new JSON(this)</span>; <span class="comment">// このクラスのコンテキストで動作</span>
-        json.<span class="em">setContext(this)</span>; // <span class="comment">setContextを使って指定することも可能です</span>
-        InnerClass ic = json.parse("{\"a\": 100}", InnerClass.class);
-        
-        System.out.println("ic.a = " + ic.a); <span class="comment">// ic.a = 100</span>
-    }
+  public void decode() {
+    JSON json = <span class="em">new JSON(this)</span>; <span class="comment">// このクラスのコンテキストで動作</span>
+    json.<span class="em">setContext(this)</span>; // <span class="comment">setContextを使って指定することも可能です</span>
+    InnerClass ic = json.parse("{\"a\": 100}", InnerClass.class);
     
-    class InnerClass {
-        public int a = 0;
-    }
+    System.out.println("ic.a = " + ic.a); <span class="comment">// ic.a = 100</span>
+  }
+  
+  class InnerClass {
+    public int a = 0;
+  }
 }
 </pre>
 
@@ -376,26 +378,26 @@ String xmljson = JSON.encode(doc);
 <p>JSON Web Service Servletの設定は簡単です。web.xmlにWebServiceServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
 <pre class="source">
 &lt;servlet&gt;
-    &lt;servlet-name&gt;json-ws&lt;/servlet-name&gt;
-    &lt;servlet-class&gt;net.arnx.jsonic.web.WebServiceServlet&lt;/servlet-class&gt;
-    &lt;init-param&gt;
-        &lt;param-name&gt;config&lt;/param-name&gt;
-        &lt;param-value&gt;
-        {
-            "debug": true,
-            "encoding": "UTF-8",
-            "mappings": {
-                "/[package]/[class].[ext]": "sample.web.${package}.service.${class}Service",
-                "/[class].[ext]": "sample.${class}Service"
-            }
-        }
-        &lt;/param-value&gt;
-    &lt;/init-param&gt;
+  &lt;servlet-name&gt;json-ws&lt;/servlet-name&gt;
+  &lt;servlet-class&gt;net.arnx.jsonic.web.WebServiceServlet&lt;/servlet-class&gt;
+  &lt;init-param&gt;
+    &lt;param-name&gt;config&lt;/param-name&gt;
+    &lt;param-value&gt;
+    {
+      "debug": true,
+      "encoding": "UTF-8",
+      "mappings": {
+        "/[package]/[class].[ext]": "sample.web.${package}.service.${class}Service",
+        "/[class].[ext]": "sample.${class}Service"
+      }
+    }
+    &lt;/param-value&gt;
+  &lt;/init-param&gt;
 &lt;/servlet&gt;
 
 &lt;servlet-mapping&gt;
-    &lt;servlet-name&gt;json-ws&lt;/servlet-name&gt;
-    &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;
+  &lt;servlet-name&gt;json-ws&lt;/servlet-name&gt;
+  &lt;url-pattern&gt;*.json&lt;/url-pattern&gt;
 &lt;/servlet-mapping&gt;
 </pre>
 <p>configで設定できる値は次の通りです。</p>
@@ -420,31 +422,31 @@ String xmljson = JSON.encode(doc);
 <p>RPCモードでは、対象のパスに対し次のようなJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
 <pre class="source">
 {
-    "method": "[class].[method]",
-    "params": [ arg1, arg2, ... ],
-    "id": request_id
+  "method": "[class].[method]",
+  "params": [ arg1, arg2, ... ],
+  "id": request_id
 }
 </pre>
 <p>例えば、mappingsに "/[package]/[class].[ext]": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/rpc.jsonというパスに次のJSONがPOSTすると、boo.foo.woo.CalcServiceクラスのint plus(int a, int b)のようなメソッドが呼び出されます。</p>
 <pre class="source">
 {
-    "method": "calc.plus",
-    "params": [1,2],
-    "id": 1
+  "method": "calc.plus",
+  "params": [1,2],
+  "id": 1
 }
 </pre>
 <p>この時、レスポンスボディとしては次のような結果が返されます。</p>
 <pre class="source">
 {
-    "result": 3,
-    "error": null,
-    "id": 1
+  "result": 3,
+  "error": null,
+  "id": 1
 }
 </pre>
 
 <p>RPCモードでエラーが発生した場合にはHTTP Status Codeとレスポンスボディの両方でクライアントに通知されます。</p>
 <table summary="RPC エラー一覧">
-<tr><th>エラー内容</th><th>HTTP Status Code<th>JSON error</th></tr>
+<tr><th>エラー内容</th><th>HTTP Status Code</th><th>JSON error</th></tr>
 <tr>
 <td>JSONリクエストがJSON-RPCのリクエストとして不正</td>
 <td>400&nbsp;Bad&nbsp;request</td>
@@ -504,13 +506,30 @@ String xmljson = JSON.encode(doc);
 (※7) JSONはルート要素としてobjectかarrayしか取れないため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTとして空のメッセージボディを持つレスポンスが返されます。
 </div>
 
+<p>RESTモードでエラーが発生した場合にはHTTP Status Codeにてクライアントに通知されます。</p>
+<table summary="RPC エラー一覧">
+<tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
+<tr>
+<td>クラス/メソッドが見つからない</td>
+<td>404&nbsp;Not&nbsp;found</td>
+</tr>
+<tr>
+<td>送信されたJSONの解析/変換に失敗した</td>
+<td>400&nbsp;Bad&nbsp;request</td>
+</tr>
+<tr>
+<td>その他のエラー</td>
+<td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
+</tr>
+</table>
+
 <h4>■ JSONP</h4>
 <p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
 <pre class="source">
 &lt;script type="text/javascript" &gt;
-    function call(value) {
-        alert(value);
-    }
+  function call(value) {
+    alert(value);
+  }
 &lt;/script&gt;
 
 ...
@@ -523,17 +542,17 @@ String xmljson = JSON.encode(doc);
 
 <pre class="source">
 &lt;servlet&gt;
-    &lt;servlet-name&gt;JSON-WebService&lt;/servlet-name&gt;
-    &lt;servlet-class&gt;net.arnx.jsonic.web.WebServiceServlet&lt;/servlet-class&gt;
-    &lt;init-param&gt;
-        &lt;param-name&gt;config&lt;/param-name&gt;
-        &lt;param-value&
-        	// "container": (net.arnx.jsonic.web.Containerを実装したクラス)
-        	// Seasar2対応Container
-        	"container": "net.arnx.jsonic.web.S2Container"
-        	...
-       &lt;/param-value&
-    &lt;/init-param&gt;
+  &lt;servlet-name&gt;JSON-WebService&lt;/servlet-name&gt;
+  &lt;servlet-class&gt;net.arnx.jsonic.web.WebServiceServlet&lt;/servlet-class&gt;
+  &lt;init-param&gt;
+    &lt;param-name&gt;config&lt;/param-name&gt;
+    &lt;param-value&
+      // "container": (net.arnx.jsonic.web.Containerを実装したクラス)
+      // Seasar2対応Container
+      "container": "net.arnx.jsonic.web.S2Container"
+      ...
+    &lt;/param-value&
+  &lt;/init-param&gt;
 &lt;/servlet&gt;
 </pre>
 

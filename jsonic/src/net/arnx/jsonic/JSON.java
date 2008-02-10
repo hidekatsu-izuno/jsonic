@@ -1199,7 +1199,7 @@ public class JSON {
 		in.reset();
 		return encoding;
 	}
-	
+		
 	protected Object convert(Object key, Object value, Class c, Type type) throws JSONConvertException {
 		Object data = null;
 		

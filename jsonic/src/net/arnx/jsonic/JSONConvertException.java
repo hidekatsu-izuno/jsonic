@@ -20,7 +20,7 @@ public class JSONConvertException extends RuntimeException {
 	
 	void push(Object key) {
 		if (key == null) {
-			keys.add("root");
+			keys.add("$");
 		} else if (key instanceof Number) {
 			keys.add("[" + key + "]");
 		} else {
@@ -32,7 +32,7 @@ public class JSONConvertException extends RuntimeException {
 	public String getMessage() {
 		StringBuilder key = new StringBuilder();
 		for (int i = 0; i < keys.size(); i++) {
-			key.append(keys.get(keys.size()-i));
+			key.append(keys.get(keys.size()-i-1));
 		}
 		return MessageFormat.format(super.getMessage(), key.toString());
 	}
