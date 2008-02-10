@@ -1584,7 +1584,7 @@ public class JSON {
 		
 		if (data == null && (c.isPrimitive() || value != null)) {
 			try {
-				data = handleConvertError(key, value, c, type, exception);
+				data = handleConversionFailure(key, value, c, type, exception);
 			} catch (Exception e) {
 				JSONConvertException jce = new JSONConvertException(getMessage("json.convert.ConversionError", value, type, "{0}"), e);
 				jce.push(key);
@@ -1604,7 +1604,7 @@ public class JSON {
 	}
 	
 	/**
-	 * Catching the error occured in convert method.
+	 * Handles the conversion failure.
 	 * 
 	 * @param key key name
 	 * @param value The converting object.
@@ -1614,7 +1614,7 @@ public class JSON {
 	 * @return the converted value.
 	 * @exception Exception if value falis to convert.
 	 */
-	protected Object handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
+	protected Object handleConversionFailure(Object key, Object value, Class c, Type type, Exception e) throws Exception {
 		throw (e == null) ? new UnsupportedOperationException() : e;
 	}
 	

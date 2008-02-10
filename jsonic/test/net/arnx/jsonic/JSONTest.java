@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
+import java.awt.Point;
 import java.io.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -549,7 +550,7 @@ public class JSONTest {
 		count[0] = 0;
 		
 		JSON json = new JSON() {
-			protected Object handleConvertError(Object key, Object value, Class c, Type type, Exception e) throws Exception {
+			protected Object handleConversionFailure(Object key, Object value, Class c, Type type, Exception e) throws Exception {
 				count[0]++;
 				throw e;
 			}
@@ -676,6 +677,18 @@ public class JSONTest {
 			sb.append(" ");
 		}
 		return sb.toString();
+	}
+	
+	@Test
+	public void testHandleConvertError() throws Exception {
+		JSON json = new JSON() {
+			protected Object handleConversionFailure(Object key, Object value, Class c, Type type, Exception e) throws Exception {
+				if (Point.class.isAssignableFrom(c)) return new Point(50, 50);
+				return super.handleConversionFailure(key, value, c, type, e);
+			}
+		};
+		
+		assertEquals(new Point(50, 50), json.parse("[50, 50]", Point.class));
 	}
 	
 	@Test

@@ -253,37 +253,26 @@ JSON json = new JSON() {
     return super.create(c);
   }
   
-  <span class="comment">// 値valueを型cに変換します（Generics型の場合にはtypeに対象の型が入ります）</span>
-  protected <span class="em">Object convert(Object key, Object value, Class c, Type type)</span> 
-    throws JSONConvertException {
+  <span class="comment">// 変換に失敗した時に呼び出されます。戻り値に変換後の値が返された場合、処理は継続されます。
+  // 逆に例外が投げられた場合、処理は停止しJSONConvertExceptionが例外をラップし呼び出し元に通知します。</span>
+  protected <span class="em">Object handleConversionFailure(Object key, Object value, Class c, Type type, Exception e)</span> throws Exception {
+    <span class="comment">// JSON arrrayをjava.awt.Pointに変換する例です。</span>
+    if (c == Point.class && value instanceof List) {
+      return new Point(convert(key, ((List)value).get(0), int.class, int.class), convert(key, ((List)value).get(1), int.class, int.class));
+    }
     
-    return super.convert(key, value, c, type);
+    <span class="comment">// デフォルトでは、引数の例外を投げます（eがnullの場合は、UnsupportedOperationExceptionが投げられます）。</span>
+    return super.handleConversionFailure(key, value, c, type, e);
   }
     
   <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
   protected <span class="em">boolean ignore(Class c, Member m)</span> {
-    // デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言されたメンバの場合、trueを返します。
+    <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言されたメンバの場合、trueを返します。</span>
     return ignore(c, m);
   }    
 };
 </pre>
-
-<p>また、変換エラーを捕捉するために次のメソッドがオーバーライド可能な形で用意されています。</p>
-<pre class="source">
-JSON json = new JSON() {
-  <span class="comment">// JSONからPOJOの変換時にエラーが起こった場合に呼ばれます
-  // key: JavaBeansのproperty/field名
-  // value: 変換前の値
-  // c: 指定された型
-  // type: Genericsの指定型
-  // e: 発生した例外</span>
-  protected <span class="em">boolean handleConvertError(String key, Object value, Class c,
-    Type type, Exception e)</span> {
-    <span class="comment">// true: 処理を継続、false: JSONConvertExceptionをthrowして処理を中断します。</span>
-    return true;
-  }
-};
-</pre>
+<p>※version 0.9.5までは、変換方法の拡張はconvertメソッドで行っていましたが、0.9.6以降はhandleConversionFailureで行う必要があります。</p>
 
 <h4 id="liberalparsing">■ 柔軟な読み込み <span class="subtitle">- 妥当でないJSONのデコード</span></h4>
 <p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、妥当でないJSONであっても読み込みが可能なように作成されています。<a 
@@ -572,8 +561,8 @@ String xmljson = JSON.encode(doc);
 <ul>
 <li>Formatにてorg.w3c.dom.Document/ElementオブジェクトからJSONへの変換に対応しました。</li>
 <li>Parse/Format時にJavaBeansのプロパティの扱いを制御できるよう、ignoreメソッドを追加しました。</li>
-<li>変換に失敗した際には、デフォルトでJSONConvertExceptionを投げるよう変更しました。この動作は、handleConvertExceptionをoverrideすることで変更できます。</li>
-<li>handleConvertErrorの定義を変更しbooleanの戻り値により処理を継続するか否かを変更するようにしました。</li>
+<li>今まで変換機能を拡張する場合にはconvertを継承するようにしていましたが、handleConversionFailureの継承により行うよう変更しました。</li>
+<li>変換に失敗した際には、デフォルトでJSONConvertExceptionを投げるよう変更しました。この動作は、handleConversionFailureをoverrideすることで変更できます。</li>
 <li>JSONParseExceptionをRuntimeExceptionを継承するように変更しました。</li>
 <li>JSONRPCServletを機能強化しnet.arnx.jsonic.web.WebServiceServletとして再リリースしました。</li>
 </ul>
