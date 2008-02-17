@@ -47,7 +47,6 @@ import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
-@SuppressWarnings("unchecked")
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
@@ -551,7 +550,6 @@ class RouteMapping {
 	}
 }
 
-@SuppressWarnings("unchecked")
 class Route extends HashMap<String, String> {
 	private static final long serialVersionUID = 9001379442185239302L;
 	
