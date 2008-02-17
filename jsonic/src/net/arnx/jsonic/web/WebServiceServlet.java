@@ -51,7 +51,7 @@ public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
 	class Config {
-		public Class container;
+		public Class<? extends Container> container;
 		public String encoding = "UTF-8";
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
@@ -306,6 +306,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
@@ -336,24 +337,24 @@ public class WebServiceServlet extends HttpServlet {
 				return;
 			}
 			
-			List params = null;
+			List<Object> params = null;
 			if ("get".equals(route.getMethod())) {
-				params = new ArrayList();
-				Map contents = getParameterMap(request);
+				params = new ArrayList<Object>();
+				Map<String, Object> contents = getParameterMap(request);
 				contents.putAll(route);
 				params.add(contents);
 			} else {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
 					params = (List)o;
-					Map contents = getParameterMap(request);
+					Map<String, Object> contents = getParameterMap(request);
 					contents.putAll(route);
 					params.add(contents);
 				} else if (o instanceof Map) {
-					Map contents = (Map)o;
+					Map<String, Object> contents = (Map)o;
 					contents.putAll(getParameterMap(request));
 					contents.putAll(route);
-					params = new ArrayList();
+					params = new ArrayList<Object>();
 					params.add(contents);
 				} else {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
@@ -417,7 +418,8 @@ public class WebServiceServlet extends HttpServlet {
 		}		
 	}
 	
-	private Map getParameterMap(HttpServletRequest request) {
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> getParameterMap(HttpServletRequest request) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		
 		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
@@ -427,7 +429,7 @@ public class WebServiceServlet extends HttpServlet {
 			
 			Map<String, Object> current = map;
 			for (int i = 0; i < names.length-1; i++) {
-				Map target = (Map)current.get(names[i]);
+				Map<String, Object> target = (Map<String, Object>)current.get(names[i]);
 				if (target == null) {
 					target = new HashMap<String, Object>();
 					current.put(names[i], target);
@@ -570,7 +572,7 @@ class Route extends HashMap<String, String> {
 		return method;
 	}
 	
-	public Class getComponentClass() throws ClassNotFoundException {
+	public Class<? extends Object> getComponentClass() throws ClassNotFoundException {
 		Matcher m = REPLACE_PATTERN.matcher(target);
 		StringBuffer sb = new StringBuffer();
 		while (m.find()) {
