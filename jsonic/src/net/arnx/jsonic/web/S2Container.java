@@ -14,9 +14,10 @@ public class S2Container implements Container {
 	
 	public void init(ServletContext context) {
 	}
-
-	public Object getComponent(Class c) throws Exception {
-		return SingletonS2ContainerFactory
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getComponent(Class<? extends T> c) throws Exception {
+		return (T)SingletonS2ContainerFactory
 			.getContainer()
 			.getComponent(c);
 	}

@@ -15,7 +15,7 @@ public class SimpleContainer implements Container {
 		return debug;
 	}
 
-	public Object getComponent(Class c) throws Exception {
+	public <T> T getComponent(Class<? extends T> c) throws Exception {
 		return c.newInstance();
 	}
 
