@@ -413,8 +413,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>configで設定できる値は次の通りです。</p>
 <table summary="Config設定">
 <tr><th>キー</th><th>値型</th><th>説明</th></tr>
-<tr><td>container</td><td>net.arnx.jsonic.web.Container</td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、net.arnx.jsonic.web.SimpleContainerです。</td></tr>
-<tr><td>debug</td><td>boolean</td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
+<tr><td>container</td><td>net.arnx.jsonic.web.Container</td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、net.arnx.jsonic.web.Containerです。</td></tr>
+<tr><td>debug</td><td>Boolean</td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
 <tr><td>encoding</td><td>java.lang.String</td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
 <tr><td>mappings</td><td>java.util.Map&lt;String, String&gt;</td><td>URLパスとクラスのマッピングを行います。
 パス中の[<i>name</i>]で囲まれた部分はクラス名の${<i>name</i>}に置換されます<sup>(※5)</sup>。
