@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -74,7 +73,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			json.setContext(this);
 			config = json.parse(configText, Config.class);
-			if (config.container == null) config.container = SimpleContainer.class;
+			if (config.container == null) config.container = Container.class;
 
 			json.setContext(config.container);
 			container = (Container)json.parse(configText, config.container);
@@ -455,43 +454,20 @@ public class WebServiceServlet extends HttpServlet {
 			super(context);
 		}
 		
-		public Object invoke(Object o, String methodName, List values) throws Exception {
-			if (values == null) {
-				values = Collections.EMPTY_LIST;
+		public Object invoke(Object o, String methodName, List args) throws Exception {
+			if (args == null) {
+				args = Collections.EMPTY_LIST;
 			}
 			
-			methodName = toLowerCamel(methodName);
-			
-			Class c = o.getClass();
-			Method method = null;
-			for (Method m : c.getMethods()) {
-				if (!methodName.equals(m.getName()) || Modifier.isStatic(m.getModifiers())) {
-					continue;
-				}
-				method = m;				
-			}
-			
-			if (method == null || limit(c, method)) {
-				StringBuilder sb = new StringBuilder(c.getName());
-				sb.append('#').append(methodName).append('(');
-				String json = encode(values);
-				sb.append(json, 1, json.length()-1);
-				sb.append(')');
-				throw new NoSuchMethodException("method missing: " + sb.toString());
-			}
-			
+			Method method = container.findMethod(o, toLowerCamel(methodName), args);
 			Class<?>[] paramTypes = method.getParameterTypes();
-			Object[] params = new Object[Math.min(paramTypes.length, values.size())];
+			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
 			for (int i = 0; i < params.length; i++) {
-				params[i] = convert(null, values.get(i), paramTypes[i], paramTypes[i]);
+				params[i] = convert(null, args.get(i), paramTypes[i], paramTypes[i]);
 			}
 			
 			return method.invoke(o, params);
 		}
-	}
-	
-	protected boolean limit(Class c, Method method) {
-		return method.getDeclaringClass().equals(Object.class);
 	}
 	
 	private static String toLowerCamel(String name) {
