@@ -8,6 +8,7 @@ import org.seasar.framework.log.Logger;
 public class S2Container extends Container {
 	private Logger logger = Logger.getLogger(S2Container.class);
 	
+	@Override
 	public <T> T getComponent(Class<? extends T> c) throws Exception {
 		return (T)SingletonS2ContainerFactory
 			.getContainer()
