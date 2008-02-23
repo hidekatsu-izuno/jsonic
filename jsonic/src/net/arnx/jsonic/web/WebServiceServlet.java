@@ -462,8 +462,9 @@ public class WebServiceServlet extends HttpServlet {
 			Method method = container.findMethod(o, toLowerCamel(methodName), args);
 			Class<?>[] paramTypes = method.getParameterTypes();
 			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
+			List<Object> list = new ArrayList<Object>();
 			for (int i = 0; i < params.length; i++) {
-				params[i] = convert(new ArrayList(), args.get(i), paramTypes[i], paramTypes[i]);
+				params[i] = convert(list, args.get(i), paramTypes[i], paramTypes[i]);
 			}
 			
 			return method.invoke(o, params);
