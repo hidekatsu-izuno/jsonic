@@ -303,9 +303,7 @@ public class JSON {
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		ap = format(source, ap, 0);
-		clear();
-		return ap;
+		return format(source, ap, 0);
 	}
 	
 	private Appendable format(Object o, Appendable ap, int level) throws IOException {
@@ -600,7 +598,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value = (T)convert(new ArrayList(), parse(new CharSequenceJSONSource(s)), c, c);
+			value = (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -611,7 +609,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value =  (T)convert(new ArrayList(), parse(new CharSequenceJSONSource(s)), c, t);
+			value =  (T)convert(parse(new CharSequenceJSONSource(s)), c, t);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -641,12 +639,12 @@ public class JSON {
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convert(new ArrayList(), parse(new ReaderJSONSource(reader)), c, c);
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convert(new ArrayList(), parse(new ReaderJSONSource(reader)), c, t);
+		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
 	private Object parse(JSONSource s) throws IOException, JSONParseException {
@@ -683,7 +681,7 @@ public class JSON {
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
-		clear();
+		
 		return (o == null) ? new LinkedHashMap() : o;
 	}	
 	
@@ -1210,8 +1208,20 @@ public class JSON {
 		in.reset();
 		return encoding;
 	}
+	
+	private <T> T convert(Object value, Class<? extends T> c, Type type) throws JSONConvertException {
+		ConversionState keys = new ConversionState();
 		
-	protected <T> T convert(List<Object> keys, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
+		try {
+			return convert(keys, value, c, type);
+		} catch (Exception e) {
+			throw new JSONConvertException(getMessage("json.convert.ConversionError", 
+					(value instanceof String) ? "\"" + value + "\"" : value, 
+					type, keys), e);
+		}
+	}
+		
+	protected <T> T convert(List<Object> keys, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
 		try {
@@ -1628,20 +1638,13 @@ public class JSON {
 					throw new UnsupportedOperationException();
 				}
 			}
-		} catch (JSONConvertException e) {
-			throw e;
 		} catch (Exception e) {
-			try {
+			ConversionState state = (ConversionState)keys;
+			if (state.exception == e) {
+				throw e;
+			} else {
+				state.exception = e;
 				data = handleConversionFailure(keys, value, c, type, e);
-			} catch (Exception e2) {
-				StringBuilder sb = new StringBuilder("$root");
-				for (Object key : keys) {
-					sb.append('.').append(key);
-				}
-				throw new JSONConvertException(
-						getMessage("json.convert.ConversionError", 
-								(value instanceof String) ? "\"" + value + "\"" : value, 
-								type, sb.toString()), e2);
 			}
 		}
 		
@@ -2002,9 +2005,6 @@ public class JSON {
 		
 		return format.parse(value).getTime();
 	}
-	
-	private void clear() {
-	}
 }
 
 interface JSONSource {
@@ -2125,6 +2125,19 @@ class ReaderJSONSource implements JSONSource{
 		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
 		for (int i = maxlength; i >= 0; i--) {
 			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
+		}
+		return sb.toString();
+	}
+}
+
+class ConversionState extends ArrayList<Object> {
+	private static final long serialVersionUID = 1L;
+	public Exception exception;
+	
+	public String toString() {
+		StringBuilder sb = new StringBuilder("$root");
+		for (Object key : this) {
+			sb.append('.').append(key);
 		}
 		return sb.toString();
 	}
