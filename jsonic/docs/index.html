@@ -581,6 +581,14 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 
 <h2 id="releasenote">リリースノート</h2>
 
+<h3>2008/02/XX version 0.9.7</h3>
+<p>下記の機能追加・変更とバグ修正が行われています。</p>
+<ul>
+<li>MapのFormat時にkeyがStringでない場合ClassCastExceptionが発生していた問題を修正しました。</li>
+<li>Parse時にJSON arrayからMapへの変換に対応しました。</li>
+<li>Parse時にMapのキー値に対する変換が行われず常にStringに変換されていた問題を修正しました。</li>
+</ul>
+
 <h3>2008/02/18 version 0.9.6</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>

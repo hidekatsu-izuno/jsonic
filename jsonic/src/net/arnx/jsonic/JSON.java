@@ -143,7 +143,20 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked"})
-public class JSON {	
+public class JSON {
+	private static ThreadLocal<StringBuilder> cache = new ThreadLocal<StringBuilder>() {
+		protected StringBuilder initialValue() {
+			return new StringBuilder(1000);
+		}
+		
+		public StringBuilder get() {
+			StringBuilder sb = super.get();
+			sb.setLength(0);
+			return sb;
+		}
+	};
+
+	
 	public JSON() {
 		this(null);
 	}
@@ -233,7 +246,7 @@ public class JSON {
 		JSON json = new JSON(source);
 		json.setPrettyPrint(prettyPrint);
 		try {
-			value = json.format(source, new StringBuilder()).toString();
+			value = json.format(source, cache.get()).toString();
 		} catch (IOException e) {
 			// never happen
 		}
@@ -286,11 +299,13 @@ public class JSON {
 	}
 	
 	public String format(Object source) throws IOException {
-		return format(source, new StringBuilder(1000)).toString();
+		return format(source, cache.get()).toString();
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		return format(source, ap, 0);
+		ap = format(source, ap, 0);
+		clear();
+		return ap;
 	}
 	
 	private Appendable format(Object o, Appendable ap, int level) throws IOException {
@@ -511,10 +526,7 @@ public class JSON {
 			formatMap(map, o, ap, level);
 		}
 		
-		if (ap instanceof Flushable) {
-			((Flushable)ap).flush();
-		}
-		
+		if (ap instanceof Flushable) ((Flushable)ap).flush();
 		return ap;
 	}
 	
@@ -528,7 +540,7 @@ public class JSON {
 				ap.append('\n');
 				for (int j = 0; j < level+1; j++) ap.append('\t');
 			}
-			formatString((String)entry.getKey(), ap).append(':');
+			formatString(entry.getKey().toString(), ap).append(':');
 			if (this.prettyPrint) ap.append(' ');
 			format(entry.getValue(), ap, level+1);
 			if (i.hasNext()) ap.append(',');
@@ -588,7 +600,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value = (T)convert(null, parse(new CharSequenceJSONSource(s)), c, c);
+			value = (T)convert(new ArrayList(), parse(new CharSequenceJSONSource(s)), c, c);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -599,7 +611,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value =  (T)convert(null, parse(new CharSequenceJSONSource(s)), c, t);
+			value =  (T)convert(new ArrayList(), parse(new CharSequenceJSONSource(s)), c, t);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -629,17 +641,15 @@ public class JSON {
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convert(null, parse(new ReaderJSONSource(reader)), c, c);
+		return (T)convert(new ArrayList(), parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convert(null, parse(new ReaderJSONSource(reader)), c, t);
+		return (T)convert(new ArrayList(), parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
 	private Object parse(JSONSource s) throws IOException, JSONParseException {
-		StringBuilder sb = new StringBuilder(1000);
-		
 		Object o = null;
 
 		int n = -1;
@@ -655,7 +665,7 @@ public class JSON {
 			case '[':
 				if (o == null) {
 					s.back();
-					o = parseArray(s, sb, 0);
+					o = parseArray(s, 0);
 					break;
 				}
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -667,16 +677,17 @@ public class JSON {
 			default:
 				if (o == null) {
 					s.back();
-					o = parseObject(s, sb, 0);
+					o = parseObject(s, 0);
 					break;
 				}
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
+		clear();
 		return (o == null) ? new LinkedHashMap() : o;
 	}	
 	
-	private Map<String, Object> parseObject(JSONSource s, StringBuilder sb, int level) throws IOException, JSONParseException {
+	private Map<String, Object> parseObject(JSONSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		String key = null;
@@ -701,7 +712,7 @@ public class JSON {
 					point = 1;
 				} else if (point == 2 || point == 3){
 					s.back();
-					map.put(key, parseObject(s, sb, level+1));
+					map.put(key, parseObject(s, level+1));
 					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -740,11 +751,11 @@ public class JSON {
 					point = 1;
 				} else if (point == 1 || point == 6) {
 					s.back();
-					key = parseString(s, sb);
+					key = parseString(s);
 					point = 2;
 				} else if (point == 3) {
 					s.back();
-					map.put(key, parseString(s, sb));
+					map.put(key, parseString(s));
 					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -753,7 +764,7 @@ public class JSON {
 			case '[':
 				if (point == 3) {
 					s.back();
-					map.put(key, parseArray(s, sb, level+1));
+					map.put(key, parseArray(s, level+1));
 					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -770,15 +781,15 @@ public class JSON {
 					point = 1;
 				} else if (point == 1 || point == 6) {
 					s.back();
-					key = parseLiteral(s, sb);
+					key = parseLiteral(s);
 					point = 2;
 				} else if (point == 3) {
 					if ((c == '-') || (c >= '0' && c <= '9')) {
 						s.back();
-						map.put(key, parseNumber(s, sb));
+						map.put(key, parseNumber(s));
 					} else {
 						s.back();
-						String literal = parseLiteral(s, sb);
+						String literal = parseLiteral(s);
 						if (literal.equals("null")) {
 							map.put(key, null);
 						} else if (literal.equals("true")) {
@@ -802,7 +813,7 @@ public class JSON {
 		return map;
 	}
 	
-	private List<Object> parseArray(JSONSource s, StringBuilder sb, int level) throws IOException, JSONParseException {
+	private List<Object> parseArray(JSONSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
@@ -824,7 +835,7 @@ public class JSON {
 					point = 1;
 				} else if (point == 1 || point == 3) {
 					s.back();
-					list.add(parseArray(s, sb, level+1));
+					list.add(parseArray(s, level+1));
 					point = 2;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -851,7 +862,7 @@ public class JSON {
 			case '{':
 				if (point == 1 || point == 3){
 					s.back();
-					list.add(parseObject(s, sb, level+1));
+					list.add(parseObject(s, level+1));
 					point = 2;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -861,7 +872,7 @@ public class JSON {
 			case '"':
 				if (point == 1 || point == 3) {
 					s.back();
-					list.add(parseString(s, sb));
+					list.add(parseString(s));
 					point = 2;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -876,10 +887,10 @@ public class JSON {
 				if (point == 1 || point == 3) {
 					if ((c == '-') || (c >= '0' && c <= '9')) {
 						s.back();
-						list.add(parseNumber(s, sb));
+						list.add(parseNumber(s));
 					} else {
 						s.back();
-						String literal = parseLiteral(s, sb);
+						String literal = parseLiteral(s);
 						if (literal.equals("null")) {
 							list.add(null);
 						} else if (literal.equals("true")) {
@@ -903,9 +914,9 @@ public class JSON {
 		return list;
 	}
 	
-	private String parseString(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
+	private String parseString(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		sb.setLength(0);
+		StringBuilder sb = cache.get();
 		char start = '\0';
 		
 		int n = -1;
@@ -950,9 +961,9 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private String parseLiteral(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
+	private String parseLiteral(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		sb.setLength(0);
+		StringBuilder sb = cache.get();
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -978,9 +989,9 @@ public class JSON {
 		return sb.toString();
 	}	
 	
-	private Number parseNumber(JSONSource s, StringBuilder sb) throws IOException, JSONParseException {
+	private Number parseNumber(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
-		sb.setLength(0);
+		StringBuilder sb = cache.get();
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1200,9 +1211,8 @@ public class JSON {
 		return encoding;
 	}
 		
-	protected <T> T convert(Object key, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
+	protected <T> T convert(List<Object> keys, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
 		Object data = null;
-		Exception exception = null;
 		
 		try {
 			if (c.isPrimitive()) {
@@ -1216,13 +1226,14 @@ public class JSON {
 					} else {
 						String s = value.toString();
 						if (s.length() == 0
+							|| s.equalsIgnoreCase("f")
 							|| s.equalsIgnoreCase("false")
 							|| s.equalsIgnoreCase("no")
 							|| s.equalsIgnoreCase("off")
 							|| s.equals("NaN")) {
 							data = false;
-						} else {
-							data = true;
+						} else  {
+							data = true;								
 						}
 					}
 				} else if (c.equals(byte.class)) {
@@ -1308,6 +1319,7 @@ public class JSON {
 					} else {
 						String s = value.toString();
 						if (s.length() == 0
+							|| s.equalsIgnoreCase("f")
 							|| s.equalsIgnoreCase("false")
 							|| s.equalsIgnoreCase("no")
 							|| s.equalsIgnoreCase("off")
@@ -1398,31 +1410,31 @@ public class JSON {
 					Appendable a = (Appendable)create(c);
 					data = a.append(value.toString());
 				} else if (Date.class.isAssignableFrom(c)) {
-					Date date = (Date)create(c);
 					if (value instanceof Number) {
+						Date date = (Date)create(c);
 						date.setTime(((Number)value).longValue());
+						data = date;
 					} else {
 						String str = value.toString().trim();
 						if (str.length() > 0) {
+							Date date = (Date)create(c);
 							date.setTime(convertDate(str));
-						} else {
-							date = null;
+							data = date;
 						}
 					}
-					data = date;
 				} else if (Calendar.class.isAssignableFrom(c)) {
-					Calendar cal = (Calendar)create(c);
 					if (value instanceof Number) {
+						Calendar cal = (Calendar)create(c);
 						cal.setTimeInMillis(((Number)value).longValue());
+						data = cal;
 					} else {
 						String str = value.toString().trim();
 						if (str.length() > 0) {
+							Calendar cal = (Calendar)create(c);
 							cal.setTimeInMillis(convertDate(str));
-						} else {
-							cal = null;
+							data = cal;
 						}
 					}
-					data = cal;
 				} else if (TimeZone.class.equals(c)) {
 					data = TimeZone.getTimeZone(value.toString().trim());
 				} else if (Collection.class.isAssignableFrom(c)) {
@@ -1443,10 +1455,15 @@ public class JSON {
 						if (value instanceof Collection) {
 							int i = 0;
 							for (Object o : (Collection)value) {
-								collection.add(convert(i++, o, cClasses, cType));
+								keys.add((Object)i);
+								collection.add(convert(keys, o, cClasses, cType));
+								i++;
+								keys.remove(keys.size()-1);
 							}
 						} else {
-							collection.add(convert(0, value, cClasses, cType));
+							keys.add((Object)0);
+							collection.add(convert(keys, value, cClasses, cType));
+							keys.remove(keys.size()-1);
 						}
 					} else {
 						if (value instanceof Collection) {
@@ -1465,7 +1482,9 @@ public class JSON {
 								((GenericArrayType)type).getGenericComponentType() : cClass;
 						
 						for (Object o : (Collection)value) {
-							Array.set(array, i, convert(i++, o, cClass, cType));
+							keys.add((Object)i);
+							Array.set(array, i++, convert(keys, o, cClass, cType));
+							keys.remove(keys.size()-1);
 						}
 						data = array;
 					} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
@@ -1475,53 +1494,83 @@ public class JSON {
 						Class<?> cClass = c.getComponentType();
 						Type cType = (type instanceof GenericArrayType) ? 
 								((GenericArrayType)type).getGenericComponentType() : cClass;
-						Array.set(array, 0, convert(0, value, c.getComponentType(), cType));
+						keys.add((Object)0);
+						Array.set(array, 0, convert(keys, value, c.getComponentType(), cType));
+						keys.remove(keys.size()-1);
 						data = array;
 					}
 				} else if (Map.class.isAssignableFrom(c)) {
-					if (value instanceof Map) {
-						Map map = (Map)create(c);
-						if (type instanceof ParameterizedType) {
-							ParameterizedType pType = (ParameterizedType)type;
-							Type[] cTypes = pType.getActualTypeArguments();
-							Class<?>[] cClasses = new Class[2];
-							for (int i = 0; i < cClasses.length; i++) {
-								if (cTypes[i] instanceof ParameterizedType) {
-									cClasses[i] = (Class)((ParameterizedType)cTypes[i]).getRawType();
-								} else if (cTypes[i] instanceof Class) {
-									cClasses[i] = (Class)cTypes[i];
-								} else {
-									cClasses[i] = Object.class;
-									cTypes[i] = cClasses[i];
-								}
+					Map map = (Map)create(c);
+					if (type instanceof ParameterizedType) {
+						ParameterizedType pType = (ParameterizedType)type;
+						Type[] cTypes = pType.getActualTypeArguments();
+						Class<?>[] cClasses = new Class[2];
+						for (int i = 0; i < cClasses.length; i++) {
+							if (cTypes[i] instanceof ParameterizedType) {
+								cClasses[i] = (Class)((ParameterizedType)cTypes[i]).getRawType();
+							} else if (cTypes[i] instanceof Class) {
+								cClasses[i] = (Class)cTypes[i];
+							} else {
+								cClasses[i] = Object.class;
+								cTypes[i] = cClasses[i];
 							}
+						}
+						
+						if (value instanceof Map) {
 							for (Map.Entry entry : (Set<Map.Entry>)((Map)value).entrySet()) {
-								String mKey = entry.getKey().toString();
-								map.put(mKey, convert(mKey, entry.getValue(), cClasses[1], cTypes[1]));
+								Object key = convert(keys, entry.getKey(), cClasses[0], cTypes[0]);
+								keys.add(key);
+								map.put(key, convert(keys, entry.getValue(), cClasses[1], cTypes[1]));
+								keys.remove(keys.size()-1);
+							}
+						} else if (value instanceof Collection) {
+							int i = 0;
+							for (Object o : (Collection)value) {
+								Object key = convert(keys, i, cClasses[0], cTypes[0]);
+								keys.add(key);
+								map.put(key, convert(keys, o, cClasses[1], cTypes[1]));
+								i++;
+								keys.remove(keys.size()-1);
 							}
 						} else {
-							map.putAll((Map)value);
+							throw new UnsupportedOperationException();
 						}
-						data = map;
+					} else {
+						if (value instanceof Map) {
+							map.putAll((Map)value);
+						} else if (value instanceof Collection) {
+							int i = 0;
+							for (Object o : (Collection)value) {
+								map.put(i++, o);
+							}
+						} else {
+							throw new UnsupportedOperationException();
+						}
 					}
+					data = map;
 				} else if (Pattern.class.equals(c)) {
 					data = Pattern.compile(value.toString());
 				} else if (Locale.class.equals(c)) {
-					String[] s = null;
-					if (value instanceof Collection || value.getClass().isArray()) {
-						s = (String[])convert(key, value, String[].class, String[].class);
+					Object[] array = null;
+					if (value instanceof Collection) {
+						Collection collection = (Collection)value;
+						array = collection.toArray(new Object[collection.size()]);
+					} else if (value.getClass().isArray()) {
+						int length = Array.getLength(value);
+						array = new Object[length];
+						for (int i = 0; i < length; i++) {
+							array[i] = Array.get(value, i);
+						}
 					} else {
-						s = value.toString().split("\\p{Punct}");
+						array = value.toString().split("\\p{Punct}");
 					}
 					
-					if (s.length == 0) {
-						data = null;
-					} else if (s.length == 1) {
-						data = new Locale(s[0]);
-					} else if (s.length == 2) {
-						data = new Locale(s[0], s[1]);
-					} else {
-						data = new Locale(s[0], s[1], s[2]);
+					if (array.length == 1) {
+						data = new Locale(array[0].toString());
+					} else if (array.length == 2) {
+						data = new Locale(array[0].toString(), array[1].toString());
+					} else if (array.length > 2) {
+						data = new Locale(array[0].toString(), array[1].toString(), array[2].toString());
 					}
 				} else if (Class.class.equals(c)) {
 					String s = value.toString();
@@ -1551,44 +1600,48 @@ public class JSON {
 						
 						Map map = (Map)value;
 						for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
-							String mKey = entry.getKey().toString();
-							Member target = props.get(mKey);
+							String key = entry.getKey().toString();
+							Member target = props.get(key);
 							if (target == null) {
-								target = props.get(toLowerCamel(mKey));
+								target = props.get(toLowerCamel(key));
 								if (target == null) {
-									target = props.get(mKey + "_");
+									target = props.get(key + "_");
 									if (target == null) continue;
 								}
 							}
 							
 							if (access) ((AccessibleObject)target).setAccessible(true);
 							
+							keys.add(key);
 							if (target instanceof Method) {
 								Method m = (Method)target;
-								((Method)target).invoke(o, convert(mKey, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+								((Method)target).invoke(o, convert(keys, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 							} else {
 								Field f = (Field)target;
-								f.set(o, convert(mKey, entry.getValue(), f.getType(), f.getGenericType()));
+								f.set(o, convert(keys, entry.getValue(), f.getType(), f.getGenericType()));
 							}
+							keys.remove(keys.size()-1);
 						}
 						data = o;
 					}
+				} else {
+					throw new UnsupportedOperationException();
 				}
 			}
 		} catch (JSONConvertException e) {
-			e.push(key);
 			throw e;
 		} catch (Exception e) {
-			exception = e;
-		}
-		
-		if (data == null && (c.isPrimitive() || value != null)) {
 			try {
-				data = handleConversionFailure(key, value, c, type, exception);
-			} catch (Exception e) {
-				JSONConvertException jce = new JSONConvertException(getMessage("json.convert.ConversionError", value, type, "{0}"), e);
-				jce.push(key);
-				throw jce;
+				data = handleConversionFailure(keys, value, c, type, e);
+			} catch (Exception e2) {
+				StringBuilder sb = new StringBuilder("$root");
+				for (Object key : keys) {
+					sb.append('.').append(key);
+				}
+				throw new JSONConvertException(
+						getMessage("json.convert.ConversionError", 
+								(value instanceof String) ? "\"" + value + "\"" : value, 
+								type, sb.toString()), e2);
 			}
 		}
 		
@@ -1606,16 +1659,16 @@ public class JSON {
 	/**
 	 * Handles the conversion failure.
 	 * 
-	 * @param key key name
+	 * @param keys key's list
 	 * @param value The converting object.
 	 * @param c The converting class
 	 * @param type The converting generics type
 	 * @param e The exception object throwed when converting.
 	 * @return the converted value.
-	 * @exception Exception if value falis to convert.
+	 * @exception the exception caused when value falis to convert.
 	 */
-	protected <T> T handleConversionFailure(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
-		throw (e == null) ? new UnsupportedOperationException() : e;
+	protected <T> T handleConversionFailure(List<Object> keys, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
+		throw e;
 	}
 	
 	protected Object create(Class c) throws Exception {
@@ -1948,7 +2001,10 @@ public class JSON {
 		}
 		
 		return format.parse(value).getTime();
-	}	
+	}
+	
+	private void clear() {
+	}
 }
 
 interface JSONSource {
