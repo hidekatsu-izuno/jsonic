@@ -561,81 +561,82 @@ public class JSONTest {
 		
 		JSON json = new JSON() {
 			@Override
-			protected Object handleConversionFailure(List keys, Object value, Class c, Type type, Exception e) throws Exception {
+			protected <T> T handleConversionException(List<Object> keys, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
 				count[0]++;
 				throw e;
 			}
 		};
 		
 		// boolean
-		assertEquals(Boolean.TRUE, json.convert(new ArrayList(), 100, boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), 0, boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "off", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "no", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "NaN", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "false", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), null, boolean.class, boolean.class));
+		assertEquals(Boolean.TRUE, json.convert(100, boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(0, boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("f", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("off", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("no", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("NaN", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("false", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("", boolean.class, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, boolean.class, boolean.class));
 		
 		// Boolean
-		assertEquals(Boolean.TRUE, json.convert(new ArrayList(), 100, Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), 0, Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "off", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "no", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "NaN", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "false", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convert(new ArrayList(), "", Boolean.class, Boolean.class));
-		assertNull(json.convert(new ArrayList(), null, Boolean.class, Boolean.class));
+		assertEquals(Boolean.TRUE, json.convert(100, Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(0, Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("off", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("no", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("NaN", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("false", Boolean.class, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("", Boolean.class, Boolean.class));
+		assertNull(json.convert(null, Boolean.class, Boolean.class));
 		
 		// Date
-		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "1", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "00", Date.class, Date.class));
-		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "001", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "2000", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "200001", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "20000101", Date.class, Date.class));
+		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert("1", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("00", Date.class, Date.class));
+		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert("001", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("200001", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("20000101", Date.class, Date.class));
 		
-		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert(new ArrayList(), "2000010112", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert(new ArrayList(), "200001011205", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert(new ArrayList(), "20000101120506", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert(new ArrayList(), "20000101120506+0900", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("2000010112", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("200001011205", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101120506", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101120506+0900", Date.class, Date.class));
 		
-		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert(new ArrayList(), "20000101T12", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert(new ArrayList(), "20000101T1205", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert(new ArrayList(), "20000101T120506", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert(new ArrayList(), "20000101T120506+0900", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("20000101T12", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("20000101T1205", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101T120506", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101T120506+0900", Date.class, Date.class));
 		
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "2000-01", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "2000-01-01", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert(new ArrayList(), "2000-01-01T12", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert(new ArrayList(), "2000-01-01T12:05", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert(new ArrayList(), "2000-01-01T12:05+09:00", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert(new ArrayList(), "2000-01-01T12:05:06", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert(new ArrayList(), "2000-01-01T12:05:06+09:00", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convert(new ArrayList(), "2000-01-01T12:05:06.100", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convert(new ArrayList(), "2000-01-01T12:05:06.100+09:00", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "2000年1月1日", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert(new ArrayList(), "2000年1月1日(月)", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000-01", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000-01-01", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("2000-01-01T12", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("2000-01-01T12:05", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("2000-01-01T12:05+09:00", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("2000-01-01T12:05:06", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("2000-01-01T12:05:06+09:00", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convert("2000-01-01T12:05:06.100", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convert("2000-01-01T12:05:06.100+09:00", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000年1月1日", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000年1月1日(月)", Date.class, Date.class));
 		
-		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert(new ArrayList(), "Mon Dec 24 2007 20:13:15", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert(new ArrayList(), "Mon Dec 24 2007 20:13:15 GMT+0900", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert(new ArrayList(), "Mon, 24 Dec 2007 11:13:15 GMT", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert(new ArrayList(), "Mon Dec 24 20:13:54 UTC+0900 2007", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert(new ArrayList(), "Mon, 24 Dec 2007 11:13:54 UTC", Date.class, Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon Dec 24 2007 20:13:15", Date.class, Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon Dec 24 2007 20:13:15 GMT+0900", Date.class, Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon, 24 Dec 2007 11:13:15 GMT", Date.class, Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert("Mon Dec 24 20:13:54 UTC+0900 2007", Date.class, Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert("Mon, 24 Dec 2007 11:13:54 UTC", Date.class, Date.class));
 
 		long t = toDate(2007, 12, 24, 20, 13, 15, 0).getTime();
-		assertEquals(new java.sql.Date(t), json.convert(new ArrayList(), "Mon Dec 24 2007 20:13:15", java.sql.Date.class, java.sql.Date.class));
-		assertEquals(new Timestamp(t), json.convert(new ArrayList(), "Mon Dec 24 2007 20:13:15", Timestamp.class, Timestamp.class));
+		assertEquals(new java.sql.Date(t), json.convert("Mon Dec 24 2007 20:13:15", java.sql.Date.class, java.sql.Date.class));
+		assertEquals(new Timestamp(t), json.convert("Mon Dec 24 2007 20:13:15", Timestamp.class, Timestamp.class));
 		t = toDate(1970, 1, 1, 20, 13, 15, 0).getTime();
-		assertEquals(new Time(t), json.convert(new ArrayList(), "20:13:15", Time.class, Time.class));
-		assertEquals(TimeZone.getTimeZone("JST"), json.convert(new ArrayList(), "JST", TimeZone.class, TimeZone.class));
+		assertEquals(new Time(t), json.convert("20:13:15", Time.class, Time.class));
+		assertEquals(TimeZone.getTimeZone("JST"), json.convert("JST", TimeZone.class, TimeZone.class));
 		
 		try {
-			json.convert(new ArrayList(), "aaa", int.class, int.class);
+			json.convert("aaa", int.class, int.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertEquals(1, count[0]);			
+			assertEquals(1, count[0]);	
 		}
 		
 		count[0] = 0;
@@ -647,7 +648,7 @@ public class JSONTest {
 			json.setContext(this);
 			Map map = new LinkedHashMap();
 			map.put("aaa", "aaa");
-			json.convert(new ArrayList(), map, test.getClass(), test.getClass());
+			json.convert(map, test.getClass(), test.getClass());
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -690,14 +691,16 @@ public class JSONTest {
 	}
 	
 	@Test
+	@SuppressWarnings("unchecked")
 	public void testHandleConvertError() throws Exception {
 		JSON json = new JSON() {
-			protected <T> T handleConversionFailure(List<Object> keys, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
+			@Override
+			protected <T> T handleConversionException(List<Object> keys, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
 				if (c == Point.class && value instanceof List) {
 					return (T)new Point(Integer.parseInt(((List)value).get(0).toString()), 
 							Integer.parseInt(((List)value).get(1).toString()));
 				}
-				return super.handleConversionFailure(keys, value, c, type, e);
+				return super.handleConversionException(keys, value, c, type, e);
 			}
 		};
 		
@@ -714,7 +717,7 @@ public class JSONTest {
 	}
 }
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unchecked","unused"})
 class TestBean {
 	private int a;
 	public void setA(int a) { this.a = a; }

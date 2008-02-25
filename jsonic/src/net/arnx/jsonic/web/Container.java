@@ -25,8 +25,8 @@ public class Container {
 		return c.newInstance();
 	}
 	
-	public Method findMethod(Object target, String name, List args) throws NoSuchMethodException {
-		Class c = target.getClass();
+	public Method findMethod(Object target, String name, List<Object> args) throws NoSuchMethodException {
+		Class<?> c = target.getClass();
 		Method method = null;
 		for (Method m : c.getMethods()) {
 			if (!name.equals(m.getName()) || Modifier.isStatic(m.getModifiers())) {
@@ -47,7 +47,7 @@ public class Container {
 		return method;
 	}
 	
-	protected boolean limit(Class c, Method method) {
+	protected boolean limit(Class<?> c, Method method) {
 		return method.getDeclaringClass().equals(Object.class);
 	}
 

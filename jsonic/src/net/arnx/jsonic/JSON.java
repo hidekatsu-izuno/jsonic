@@ -191,7 +191,7 @@ public class JSON {
 		this.maxDepth = value;
 	}
 	
-	Class contextClass = null;
+	Class<?> contextClass = null;
 	Object context = null;
 	
 	/**
@@ -200,9 +200,9 @@ public class JSON {
 	 * @param value context object or class
 	 */
 	public void setContext(Object value) {
-		if (value instanceof Class) {
+		if (value instanceof Class<?>) {
 			this.context = null;
-			this.contextClass = (Class)value;
+			this.contextClass = (Class<?>)value;
 		} else {
 			this.context = value;
 			this.contextClass = (value != null) ? value.getClass() : null;
@@ -276,7 +276,7 @@ public class JSON {
 	 */
 	public static <T> T decode(String source, Class<? extends T> c) 
 		throws JSONParseException, JSONConvertException {
-		Class context = c.getEnclosingClass();
+		Class<?> context = c.getEnclosingClass();
 		if (context == null) context = c;
 		return (new JSON(context)).parse(source, c);
 	}
@@ -293,7 +293,7 @@ public class JSON {
 	 */
 	public static <T> T decode(String source, Class<? extends T> c, Type t)
 	throws JSONParseException, JSONConvertException {
-		Class context = c.getEnclosingClass();
+		Class<?> context = c.getEnclosingClass();
 		if (context == null) context = c;
 		return (new JSON(context)).parse(source, c, t);
 	}
@@ -366,7 +366,7 @@ public class JSON {
 				}
 				if (elem.hasChildNodes()) {
 					NodeList nlist = elem.getChildNodes();
-					List childNodes = new ArrayList(nlist.getLength());
+					List<Object> childNodes = new ArrayList<Object>(nlist.getLength());
 					for (int i = 0; i < nlist.getLength(); i++) {
 						Node node = nlist.item(i);
 						if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -478,7 +478,7 @@ public class JSON {
 		} else if (o instanceof Collection) {
 			Collection collection = (Collection)o;
 			ap.append('[');
-			for (Iterator i = collection.iterator(); i.hasNext(); ) {
+			for (Iterator<?> i = collection.iterator(); i.hasNext(); ) {
 				Object item = i.next();
 				if (this.prettyPrint) {
 					ap.append('\n');
@@ -493,10 +493,10 @@ public class JSON {
 				for (int j = 0; j < level; j++) ap.append('\t');
 			}
 			ap.append(']');
-		} else if (o instanceof Map) {
-			formatMap((Map)o, o, ap, level);
+		} else if (o instanceof Map<?,?>) {
+			formatMap((Map<?,?>)o, o, ap, level);
 		} else {
-			Class c = o.getClass();
+			Class<?> c = o.getClass();
 			
 			Map<String, Member> props = getProperties(c, false);
 			boolean access = tryAccess(c);
@@ -530,7 +530,7 @@ public class JSON {
 	
 	private Appendable formatMap(Map map, Object o, Appendable ap, int level) throws IOException {
 		ap.append('{');
-		for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
+		for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 			Map.Entry entry = (Map.Entry)i.next();
 			if (entry.getValue() == o) continue; 
 			
@@ -682,7 +682,7 @@ public class JSON {
 			}
 		}
 		
-		return (o == null) ? new LinkedHashMap() : o;
+		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
 	private Map<String, Object> parseObject(JSONSource s, int level) throws IOException, JSONParseException {
@@ -1209,8 +1209,8 @@ public class JSON {
 		return encoding;
 	}
 	
-	private <T> T convert(Object value, Class<? extends T> c, Type type) throws JSONConvertException {
-		ConversionState keys = new ConversionState();
+	protected <T> T convert(Object value, Class<? extends T> c, Type type) throws JSONConvertException {
+		ConvertState keys = new ConvertState();
 		
 		try {
 			return convert(keys, value, c, type);
@@ -1220,8 +1220,9 @@ public class JSON {
 					type, keys), e);
 		}
 	}
-		
+	
 	protected <T> T convert(List<Object> keys, Object value, Class<? extends T> c, Type type) throws Exception {
+		ConvertState state = (ConvertState)keys;
 		Object data = null;
 		
 		try {
@@ -1448,34 +1449,41 @@ public class JSON {
 				} else if (TimeZone.class.equals(c)) {
 					data = TimeZone.getTimeZone(value.toString().trim());
 				} else if (Collection.class.isAssignableFrom(c)) {
-					Collection collection = (Collection)create(c);
+					Collection collection = null;
 					if (type instanceof ParameterizedType) {
 						ParameterizedType pType = (ParameterizedType)type;
 						Type[] cTypes = pType.getActualTypeArguments();
 						Type cType = (cTypes != null && cTypes.length > 0) ? cTypes[0] : Object.class;
 						Class<?> cClasses = null;
 						if (cType instanceof ParameterizedType) {
-							cClasses = (Class)((ParameterizedType)cType).getRawType();
+							cClasses = (Class<?>)((ParameterizedType)cType).getRawType();
 						} else if (cType instanceof Class) {
-							cClasses = (Class)cType;
+							cClasses = (Class<?>)cType;
 						} else {
 							cClasses = Object.class;
 							cType = cClasses;
 						}
 						if (value instanceof Collection) {
-							int i = 0;
-							for (Object o : (Collection)value) {
-								keys.add((Object)i);
-								collection.add(convert(keys, o, cClasses, cType));
-								i++;
-								keys.remove(keys.size()-1);
+							if (Object.class.equals(cClasses)) {
+								collection = (Collection)value;
+							} else {
+								collection = (Collection)create(c);
+								int i = 0;
+								for (Object o : (Collection)value) {
+									keys.add((Object)i);
+									collection.add(convert(keys, o, cClasses, cType));
+									i++;
+									keys.remove(keys.size()-1);
+								}
 							}
 						} else {
+							collection = (Collection)create(c);
 							keys.add((Object)0);
 							collection.add(convert(keys, value, cClasses, cType));
 							keys.remove(keys.size()-1);
 						}
 					} else {
+						collection = (Collection)create(c);
 						if (value instanceof Collection) {
 							collection.addAll((Collection)value);
 						} else {
@@ -1510,7 +1518,7 @@ public class JSON {
 						data = array;
 					}
 				} else if (Map.class.isAssignableFrom(c)) {
-					Map map = (Map)create(c);
+					Map map = null;
 					if (type instanceof ParameterizedType) {
 						ParameterizedType pType = (ParameterizedType)type;
 						Type[] cTypes = pType.getActualTypeArguments();
@@ -1527,13 +1535,20 @@ public class JSON {
 						}
 						
 						if (value instanceof Map) {
-							for (Map.Entry entry : (Set<Map.Entry>)((Map)value).entrySet()) {
-								Object key = convert(keys, entry.getKey(), cClasses[0], cTypes[0]);
-								keys.add(key);
-								map.put(key, convert(keys, entry.getValue(), cClasses[1], cTypes[1]));
-								keys.remove(keys.size()-1);
+							if ((Object.class.equals(cClasses[0]) || String.class.equals(cClasses[0]))
+									&& Object.class.equals(cClasses[1])) {
+								map = (Map)value;
+							} else {
+								map = (Map)create(c);
+								for (Map.Entry entry : (Set<Map.Entry>)((Map)value).entrySet()) {
+									Object key = convert(keys, entry.getKey(), cClasses[0], cTypes[0]);
+									keys.add(key);
+									map.put(key, convert(keys, entry.getValue(), cClasses[1], cTypes[1]));
+									keys.remove(keys.size()-1);
+								}
 							}
 						} else if (value instanceof Collection) {
+							map = (Map)create(c);
 							int i = 0;
 							for (Object o : (Collection)value) {
 								Object key = convert(keys, i, cClasses[0], cTypes[0]);
@@ -1546,6 +1561,7 @@ public class JSON {
 							throw new UnsupportedOperationException();
 						}
 					} else {
+						map = (Map)create(c);
 						if (value instanceof Map) {
 							map.putAll((Map)value);
 						} else if (value instanceof Collection) {
@@ -1639,19 +1655,18 @@ public class JSON {
 				}
 			}
 		} catch (Exception e) {
-			ConversionState state = (ConversionState)keys;
 			if (state.exception == e) {
 				throw e;
 			} else {
 				state.exception = e;
-				data = handleConversionFailure(keys, value, c, type, e);
+				data = handleConversionException(keys, value, c, type, e);
 			}
 		}
 		
 		return (T)data;
 	}
 	
-	protected boolean ignore(Class target, Member member) {
+	protected boolean ignore(Class<?> target, Member member) {
 		int modifiers = member.getModifiers();
 		if (Modifier.isStatic(modifiers)) return true;
 		if (Modifier.isTransient(modifiers)) return true;
@@ -1670,11 +1685,11 @@ public class JSON {
 	 * @return the converted value.
 	 * @exception the exception caused when value falis to convert.
 	 */
-	protected <T> T handleConversionFailure(List<Object> keys, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
+	protected <T> T handleConversionException(List<Object> keys, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
 		throw e;
 	}
 	
-	protected Object create(Class c) throws Exception {
+	protected Object create(Class<?> c) throws Exception {
 		Object instance = null;
 		
 		if (c.isInterface()) {
@@ -1723,7 +1738,7 @@ public class JSON {
 		return instance;
 	}
 	
-	private boolean tryAccess(Class c) {
+	private boolean tryAccess(Class<?> c) {
 		int modifier = c.getModifiers();
 		if (this.contextClass != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
@@ -1760,7 +1775,7 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private Map<String, Member> getProperties(Class c, boolean isSetter) {
+	private Map<String, Member> getProperties(Class<?> c, boolean isSetter) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
 		for (Field f : c.getFields()) {
@@ -2130,9 +2145,9 @@ class ReaderJSONSource implements JSONSource{
 	}
 }
 
-class ConversionState extends ArrayList<Object> {
+class ConvertState extends ArrayList<Object> {
 	private static final long serialVersionUID = 1L;
-	public Exception exception;
+	Exception exception;
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder("$root");

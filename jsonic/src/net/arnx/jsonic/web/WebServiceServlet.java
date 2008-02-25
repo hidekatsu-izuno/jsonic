@@ -46,6 +46,7 @@ import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
+@SuppressWarnings("unchecked")
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
@@ -454,7 +455,7 @@ public class WebServiceServlet extends HttpServlet {
 			super(context);
 		}
 		
-		public Object invoke(Object o, String methodName, List args) throws Exception {
+		public Object invoke(Object o, String methodName, List<Object> args) throws Exception {
 			if (args == null) {
 				args = Collections.EMPTY_LIST;
 			}
@@ -462,9 +463,8 @@ public class WebServiceServlet extends HttpServlet {
 			Method method = container.findMethod(o, toLowerCamel(methodName), args);
 			Class<?>[] paramTypes = method.getParameterTypes();
 			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
-			List<Object> list = new ArrayList<Object>();
 			for (int i = 0; i < params.length; i++) {
-				params[i] = convert(list, args.get(i), paramTypes[i], paramTypes[i]);
+				params[i] = convert(args.get(i), paramTypes[i], paramTypes[i]);
 			}
 			
 			return method.invoke(o, params);
