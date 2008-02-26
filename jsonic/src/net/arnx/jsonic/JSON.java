@@ -138,12 +138,12 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 0.9.6
+ * @version 0.9.7
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked"})
-public class JSON {
+public class JSON {	
 	private static ThreadLocal<StringBuilder> cache = new ThreadLocal<StringBuilder>() {
 		protected StringBuilder initialValue() {
 			return new StringBuilder(1000);
@@ -598,7 +598,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value = (T)convert(parse(new CharSequenceJSONSource(s)), c, c);
+			value = (T)convertChild(null, parse(new CharSequenceJSONSource(s)), c, c);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -609,7 +609,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value =  (T)convert(parse(new CharSequenceJSONSource(s)), c, t);
+			value =  (T)convertChild(null, parse(new CharSequenceJSONSource(s)), c, t);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -639,12 +639,12 @@ public class JSON {
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, c);
+		return (T)convertChild(null, parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convert(parse(new ReaderJSONSource(reader)), c, t);
+		return (T)convertChild(null, parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
 	private Object parse(JSONSource s) throws IOException, JSONParseException {
@@ -1209,122 +1209,174 @@ public class JSON {
 		return encoding;
 	}
 	
-	protected <T> T convert(Object value, Class<? extends T> c, Type type) throws JSONConvertException {
-		ConvertState keys = new ConvertState();
+	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
+		Object result = null;
 		
 		try {
-			return convert(keys, value, c, type);
+			result = convert(key, value, c, type);
+		} catch (JSONConvertException e) {
+			throw e;
 		} catch (Exception e) {
-			throw new JSONConvertException(getMessage("json.convert.ConversionError", 
-					(value instanceof String) ? "\"" + value + "\"" : value, 
-					type, keys), e);
+			try {
+				result = handleConversionException(key, value, c, type, e);
+			} catch (Exception e2) {
+				throw new JSONConvertException(getMessage("json.convert.ConversionError", 
+						(value instanceof String) ? "\"" + value + "\"" : value, 
+						type, (key != null) ? key : ""), e2);
+			}
 		}
+
+		return (T)result;
 	}
 	
-	protected <T> T convert(List<Object> keys, Object value, Class<? extends T> c, Type type) throws Exception {
-		ConvertState state = (ConvertState)keys;
+	protected <T> T convert(Object key, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
 		try {
-			if (c.isPrimitive()) {
-				if (c.equals(boolean.class)) {
-					if (value == null) {
+			if (value == null) {
+				if (c.isPrimitive()) {
+					if (c.equals(boolean.class)) {
 						data = false;
-					} else if (value instanceof Boolean) {
-						data = value;
-					} else if (value instanceof Number) {
-						data = !value.equals(0);
-					} else {
-						String s = value.toString();
-						if (s.length() == 0
-							|| s.equalsIgnoreCase("f")
-							|| s.equalsIgnoreCase("false")
-							|| s.equalsIgnoreCase("no")
-							|| s.equalsIgnoreCase("off")
-							|| s.equals("NaN")) {
-							data = false;
-						} else  {
-							data = true;								
-						}
-					}
-				} else if (c.equals(byte.class)) {
-					if (value == null) {
+					} else if (c.equals(byte.class)) {
+						data = (byte)0;
+					} else if (c.equals(short.class)) {
+						data = (short)0;
+					} else if (c.equals(int.class)) {
 						data = 0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).byteValue();
-					} else {
-						data = Byte.valueOf(value.toString());
-					}
-				} else if (c.equals(short.class)) {
-					if (value == null) {
-						data = 0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).shortValue();
-					} else {
-						data = Short.valueOf(value.toString());
-					}
-				} else if (c.equals(int.class)) {
-					if (value == null) {
-						data = 0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).intValue();
-					} else {
-						data = Integer.valueOf(value.toString());
-					}
-				} else if (c.equals(long.class)) {
-					if (value == null) {
+					} else if (c.equals(long.class)) {
 						data = 0l;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1l : 0l;
-					} else if (value instanceof Number) {
-						data = ((Number)value).longValue();
-					} else {
-						data = Long.valueOf(value.toString());
-					}
-				} else if (c.equals(float.class)) {
-					if (value == null) {
+					} else if (c.equals(float.class)) {
 						data = 0.0f;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).floatValue();
-					} else {
-						data = Float.valueOf(value.toString());
-					}
-				} else if (c.equals(double.class)) {
-					if (value == null) {
+					} else if (c.equals(double.class)) {
 						data = 0.0;
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).doubleValue();
-					} else {
-						data = Double.valueOf(value.toString());
-					}
-				} else if (c.equals(char.class)) {
-					if (value == null) {
-						data = '\u0000';
-					} else if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? '1' : '0';
-					} else if (value instanceof Character) {
-						data = value;
-					} else if (value instanceof Number) {
-						data = (char)((Number)value).intValue();
-					} else {
-						String s = value.toString();
-						data = (s.length() > 0) ? s.charAt(0) : '\u0000';
+					} else if (c.equals(char.class)) {
+						data = '\0';
 					}
 				}
-			} else if (value != null) {
-				if (c.isAssignableFrom(value.getClass()) && c.equals(type)) {
-					data = value;
-				} else if (Boolean.class.equals(c)) {
+			} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
+				data = value;
+			} else if (value instanceof Map) {
+				Map src = (Map)value;
+				if (Map.class.isAssignableFrom(c)) {
+					Map map = null;
+					if (type instanceof ParameterizedType) {
+						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+						Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+						Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
+						Class<?> pc0 = getRawType(pt0);
+						Class<?> pc1 = getRawType(pt1);
+						
+						if ((Object.class.equals(pc0) || String.class.equals(pc0))
+								&& Object.class.equals(pc1)) {
+							map = (Map)value;
+						} else {
+							map = (Map)create(c);
+							for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
+								map.put(convertChild(key, entry.getKey(), pc0, pt0), 
+										convertChild(entry.getKey(), entry.getValue(), pc1, pt1));
+							}
+						}
+					} else {
+						map = (Map)create(c);
+						map.putAll(src);
+					}
+					data = map;
+				} else {
+					Object o = create(c);
+					if (o != null) {
+						Map<String, Member> props = getProperties(c, true);
+						
+						boolean access = tryAccess(c);
+						
+						for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
+							String name = entry.getKey().toString();
+							Member target = props.get(name);
+							if (target == null) {
+								target = props.get(toLowerCamel(name));
+								if (target == null) {
+									target = props.get(name + "_");
+									if (target == null) continue;
+								}
+							}
+							
+							if (access) ((AccessibleObject)target).setAccessible(true);
+							
+							if (target instanceof Method) {
+								Method m = (Method)target;
+								m.invoke(o, convertChild(name, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+							} else {
+								Field f = (Field)target;
+								f.set(o, convertChild(name, entry.getValue(), f.getType(), f.getGenericType()));
+							}
+						}
+						data = o;
+					} else {
+						throw new UnsupportedOperationException();
+					}
+				}
+			} else if (value instanceof List) {
+				List src = (List)value;
+				if (Collection.class.isAssignableFrom(c)) {
+					Collection collection = null;
+					if (type instanceof ParameterizedType) {
+						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+						Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+						Class<?> pc = getRawType(pt);
+						
+						if (Object.class.equals(pc)) {
+							collection = src;
+						} else {
+							collection = (Collection)create(c);
+							for (int i = 0; i < src.size(); i++) {
+								collection.add(convertChild(i, src.get(i), pc, pt));
+							}
+						}
+					} else {
+						collection = (Collection)create(c);
+						collection.addAll(src);
+					}
+					data = collection;
+				} else if (c.isArray()) {
+					Object array = Array.newInstance(c.getComponentType(), src.size());
+					Class<?> pc = c.getComponentType();
+					Type pt = (type instanceof GenericArrayType) ? 
+							((GenericArrayType)type).getGenericComponentType() : pc;
+					
+					for (int i = 0; i < src.size(); i++) {
+						Array.set(array, i, convertChild(i, src.get(i), pc, pt));
+					}
+					data = array;
+				} else if (Map.class.isAssignableFrom(c)) {
+					Map map = (Map)create(c);
+					if (type instanceof ParameterizedType) {
+						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+						Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+						Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
+						Class<?> pc0 = getRawType(pt0);
+						Class<?> pc1 = getRawType(pt1);
+
+						for (int i = 0; i < src.size(); i++) {
+							map.put(convertChild(key, i, pc0, pt0), convertChild(i, src.get(i), pc1, pt1));
+						}
+					} else {
+						for (int i = 0; i < src.size(); i++) {
+							map.put(i, src.get(i));
+						}
+					}
+					data = map;
+				} else if (Locale.class.equals(c)) {
+					if (src.size() == 1) {
+						data = new Locale(src.get(0).toString());
+					} else if (src.size() == 2) {
+						data = new Locale(src.get(0).toString(), src.get(1).toString());
+					} else if (src.size() > 2) {
+						data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
+					}
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			} else {
+				if (boolean.class.equals(c) || Boolean.class.equals(c)) {
 					if (value instanceof Number) {
 						data = !value.equals(0);
 					} else {
@@ -1340,59 +1392,83 @@ public class JSON {
 							data = true;
 						}
 					}
-				} else if (Byte.class.equals(c)) {
+				} else if (byte.class.equals(c) || Byte.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? 1 : 0;
 					} else if (value instanceof Number) {
 						data = ((Number)value).byteValue();
 					} else {
 						String str = value.toString().trim();
-						if (str.length() > 0) data = Byte.valueOf(str);
+						if (str.length() > 0) {
+							data = Byte.valueOf(str);
+						} else if (c.isPrimitive()) {
+							data = (byte)0;
+						}
 					}
-				} else if (Short.class.equals(c)) {
+				} else if (short.class.equals(c) || Short.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? 1 : 0;
 					} else if (value instanceof Number) {
 						data = ((Number)value).shortValue();
 					} else {
 						String str = value.toString().trim();
-						if (str.length() > 0) data = Short.valueOf(str);
+						if (str.length() > 0) {
+							data = Short.valueOf(str);
+						} else if (c.isPrimitive()) {
+							data = (short)0;
+						}
 					}				
-				} else if (Integer.class.equals(c)) {
+				} else if (int.class.equals(c) || Integer.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? 1 : 0;
 					} else if (value instanceof Number) {
 						data = ((Number)value).intValue();
 					} else {
 						String str = value.toString().trim();
-						if (str.length() > 0) data = Integer.valueOf(str);
+						if (str.length() > 0) {
+							data = Integer.valueOf(str);
+						} else if (c.isPrimitive()) {
+							data = 0;
+						}						
 					}
-				} else if (Long.class.equals(c)) {
+				} else if (long.class.equals(c) || Long.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? 1l : 0l;
 					} else if (value instanceof Number) {
 						data = ((Number)value).longValue();
 					} else {
 						String str = value.toString().trim();
-						if (str.length() > 0) data = Long.valueOf(str);
+						if (str.length() > 0) {
+							data = Long.valueOf(str);
+						} else if (c.isPrimitive()) {
+							data = 0l;
+						}						
 					}
-				} else if (Float.class.equals(c)) {
+				} else if (float.class.equals(c) || Float.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
 					} else if (value instanceof Number) {
 						data = ((Number)value).floatValue();
 					} else {
 						String str = value.toString().trim();
-						if (str.length() > 0) data = Float.valueOf(str);
+						if (str.length() > 0) {
+							data = Float.valueOf(str);
+						} else if (c.isPrimitive()) {
+							data = 0.0f;
+						}						
 					}
-				} else if (Double.class.equals(c)) {
+				} else if (double.class.equals(c) || Double.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
 					} else if (value instanceof Number) {
 						data = ((Number)value).doubleValue();
 					} else {
 						String str = value.toString().trim();
-						if (str.length() > 0) data = Double.valueOf(str);
+						if (str.length() > 0) {
+							data = Double.valueOf(str);
+						} else if (c.isPrimitive()) {
+							data = 0.0;
+						}						
 					}
 				} else if (BigInteger.class.equals(c)) {				
 					if (value instanceof Boolean) {
@@ -1406,20 +1482,26 @@ public class JSON {
 				} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
 					String str = value.toString().trim();
 					if (str.length() > 0) data = new BigDecimal(str);
-				} else if (Character.class.equals(c)) {
+				} else if (char.class.equals(c) || Character.class.equals(c)) {
 					if (value instanceof Boolean) {
 						data = (((Boolean)value).booleanValue()) ? '1' : '0';
 					} else if (value instanceof Number) {
 						data = (char)((Number)value).intValue();
 					} else {
 						String s = value.toString();
-						data = (s.length() > 0) ? s.charAt(0) : null;
+						if (s.length() > 0) {
+							data = s.charAt(0);
+						} else if (c.isPrimitive()) {
+							data = '\0';
+						}						
 					}
 				} else if (CharSequence.class.isAssignableFrom(c)) {
 					data = value.toString();
 				} else if (Appendable.class.isAssignableFrom(c)) {
 					Appendable a = (Appendable)create(c);
 					data = a.append(value.toString());
+				} else if (Pattern.class.equals(c)) {
+					data = Pattern.compile(value.toString());
 				} else if (Date.class.isAssignableFrom(c)) {
 					if (value instanceof Number) {
 						Date date = (Date)create(c);
@@ -1448,155 +1530,15 @@ public class JSON {
 					}
 				} else if (TimeZone.class.equals(c)) {
 					data = TimeZone.getTimeZone(value.toString().trim());
-				} else if (Collection.class.isAssignableFrom(c)) {
-					Collection collection = null;
-					if (type instanceof ParameterizedType) {
-						ParameterizedType pType = (ParameterizedType)type;
-						Type[] cTypes = pType.getActualTypeArguments();
-						Type cType = (cTypes != null && cTypes.length > 0) ? cTypes[0] : Object.class;
-						Class<?> cClasses = null;
-						if (cType instanceof ParameterizedType) {
-							cClasses = (Class<?>)((ParameterizedType)cType).getRawType();
-						} else if (cType instanceof Class) {
-							cClasses = (Class<?>)cType;
-						} else {
-							cClasses = Object.class;
-							cType = cClasses;
-						}
-						if (value instanceof Collection) {
-							if (Object.class.equals(cClasses)) {
-								collection = (Collection)value;
-							} else {
-								collection = (Collection)create(c);
-								int i = 0;
-								for (Object o : (Collection)value) {
-									keys.add((Object)i);
-									collection.add(convert(keys, o, cClasses, cType));
-									i++;
-									keys.remove(keys.size()-1);
-								}
-							}
-						} else {
-							collection = (Collection)create(c);
-							keys.add((Object)0);
-							collection.add(convert(keys, value, cClasses, cType));
-							keys.remove(keys.size()-1);
-						}
-					} else {
-						collection = (Collection)create(c);
-						if (value instanceof Collection) {
-							collection.addAll((Collection)value);
-						} else {
-							collection.add(value);
-						}
-					}
-					data = collection;
-				} else if (c.isArray()) {
-					if (value instanceof Collection) {
-						Object array = Array.newInstance(c.getComponentType(), ((Collection)value).size());
-						int i = 0;
-						Class<?> cClass = c.getComponentType();
-						Type cType = (type instanceof GenericArrayType) ? 
-								((GenericArrayType)type).getGenericComponentType() : cClass;
-						
-						for (Object o : (Collection)value) {
-							keys.add((Object)i);
-							Array.set(array, i++, convert(keys, o, cClass, cType));
-							keys.remove(keys.size()-1);
-						}
-						data = array;
-					} else if (value instanceof CharSequence && byte.class.equals(c.getComponentType())) {
-						data = decodeBase64((CharSequence)value);
-					} else {
-						Object array = Array.newInstance(c.getComponentType(), 1);
-						Class<?> cClass = c.getComponentType();
-						Type cType = (type instanceof GenericArrayType) ? 
-								((GenericArrayType)type).getGenericComponentType() : cClass;
-						keys.add((Object)0);
-						Array.set(array, 0, convert(keys, value, c.getComponentType(), cType));
-						keys.remove(keys.size()-1);
-						data = array;
-					}
-				} else if (Map.class.isAssignableFrom(c)) {
-					Map map = null;
-					if (type instanceof ParameterizedType) {
-						ParameterizedType pType = (ParameterizedType)type;
-						Type[] cTypes = pType.getActualTypeArguments();
-						Class<?>[] cClasses = new Class[2];
-						for (int i = 0; i < cClasses.length; i++) {
-							if (cTypes[i] instanceof ParameterizedType) {
-								cClasses[i] = (Class)((ParameterizedType)cTypes[i]).getRawType();
-							} else if (cTypes[i] instanceof Class) {
-								cClasses[i] = (Class)cTypes[i];
-							} else {
-								cClasses[i] = Object.class;
-								cTypes[i] = cClasses[i];
-							}
-						}
-						
-						if (value instanceof Map) {
-							if ((Object.class.equals(cClasses[0]) || String.class.equals(cClasses[0]))
-									&& Object.class.equals(cClasses[1])) {
-								map = (Map)value;
-							} else {
-								map = (Map)create(c);
-								for (Map.Entry entry : (Set<Map.Entry>)((Map)value).entrySet()) {
-									Object key = convert(keys, entry.getKey(), cClasses[0], cTypes[0]);
-									keys.add(key);
-									map.put(key, convert(keys, entry.getValue(), cClasses[1], cTypes[1]));
-									keys.remove(keys.size()-1);
-								}
-							}
-						} else if (value instanceof Collection) {
-							map = (Map)create(c);
-							int i = 0;
-							for (Object o : (Collection)value) {
-								Object key = convert(keys, i, cClasses[0], cTypes[0]);
-								keys.add(key);
-								map.put(key, convert(keys, o, cClasses[1], cTypes[1]));
-								i++;
-								keys.remove(keys.size()-1);
-							}
-						} else {
-							throw new UnsupportedOperationException();
-						}
-					} else {
-						map = (Map)create(c);
-						if (value instanceof Map) {
-							map.putAll((Map)value);
-						} else if (value instanceof Collection) {
-							int i = 0;
-							for (Object o : (Collection)value) {
-								map.put(i++, o);
-							}
-						} else {
-							throw new UnsupportedOperationException();
-						}
-					}
-					data = map;
-				} else if (Pattern.class.equals(c)) {
-					data = Pattern.compile(value.toString());
 				} else if (Locale.class.equals(c)) {
-					Object[] array = null;
-					if (value instanceof Collection) {
-						Collection collection = (Collection)value;
-						array = collection.toArray(new Object[collection.size()]);
-					} else if (value.getClass().isArray()) {
-						int length = Array.getLength(value);
-						array = new Object[length];
-						for (int i = 0; i < length; i++) {
-							array[i] = Array.get(value, i);
-						}
-					} else {
-						array = value.toString().split("\\p{Punct}");
-					}
+					String[] array = value.toString().split("\\p{Punct}");
 					
 					if (array.length == 1) {
-						data = new Locale(array[0].toString());
+						data = new Locale(array[0]);
 					} else if (array.length == 2) {
-						data = new Locale(array[0].toString(), array[1].toString());
+						data = new Locale(array[0], array[1]);
 					} else if (array.length > 2) {
-						data = new Locale(array[0].toString(), array[1].toString(), array[2].toString());
+						data = new Locale(array[0], array[1], array[2]);
 					}
 				} else if (Class.class.equals(c)) {
 					String s = value.toString();
@@ -1617,53 +1559,49 @@ public class JSON {
 					} else {
 						data = Class.forName(value.toString());
 					}
-				} else if (value instanceof Map) {
-					Object o = create(c);
-					if (o != null) {
-						Map<String, Member> props = getProperties(c, true);
-						
-						boolean access = tryAccess(c);
-						
-						Map map = (Map)value;
-						for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
-							String key = entry.getKey().toString();
-							Member target = props.get(key);
-							if (target == null) {
-								target = props.get(toLowerCamel(key));
-								if (target == null) {
-									target = props.get(key + "_");
-									if (target == null) continue;
-								}
-							}
-							
-							if (access) ((AccessibleObject)target).setAccessible(true);
-							
-							keys.add(key);
-							if (target instanceof Method) {
-								Method m = (Method)target;
-								((Method)target).invoke(o, convert(keys, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
-							} else {
-								Field f = (Field)target;
-								f.set(o, convert(keys, entry.getValue(), f.getType(), f.getGenericType()));
-							}
-							keys.remove(keys.size()-1);
-						}
-						data = o;
+				} else if (Collection.class.isAssignableFrom(c)) {
+					Collection collection = (Collection)create(c);
+					if (type instanceof ParameterizedType) {
+						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+						Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+						Class<?> pc = getRawType(pt);
+
+						collection.add(convertChild(0, value, pc, pt));
+					} else {
+						collection.add(value);
+					}
+					data = collection;
+				} else if (c.isArray()) {
+					if (value instanceof String && byte.class.equals(c.getComponentType())) {
+						data = decodeBase64((String)value);
+					} else {
+						Object array = Array.newInstance(c.getComponentType(), 1);
+						Class<?> pc = c.getComponentType();
+						Type pt = (type instanceof GenericArrayType) ? 
+								((GenericArrayType)type).getGenericComponentType() : pc;
+								
+						Array.set(array, 0, convertChild(0, value, pc, pt));
+						data = array;
 					}
 				} else {
 					throw new UnsupportedOperationException();
 				}
 			}
-		} catch (Exception e) {
-			if (state.exception == e) {
-				throw e;
-			} else {
-				state.exception = e;
-				data = handleConversionException(keys, value, c, type, e);
-			}
+		} catch (JSONConvertException e) {
+			throw e;
 		}
 		
 		return (T)data;
+	}
+	
+	private Class<?> getRawType(Type t) {
+		if (t instanceof ParameterizedType) {
+			return (Class<?>)((ParameterizedType)t).getRawType();
+		} else if (t instanceof Class) {
+			return (Class<?>)t;
+		} else {
+			return Object.class;
+		}		
 	}
 	
 	protected boolean ignore(Class<?> target, Member member) {
@@ -1677,7 +1615,7 @@ public class JSON {
 	/**
 	 * Handles the conversion failure.
 	 * 
-	 * @param keys key's list
+	 * @param key key value
 	 * @param value The converting object.
 	 * @param c The converting class
 	 * @param type The converting generics type
@@ -1685,7 +1623,7 @@ public class JSON {
 	 * @return the converted value.
 	 * @exception the exception caused when value falis to convert.
 	 */
-	protected <T> T handleConversionException(List<Object> keys, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
+	protected <T> T handleConversionException(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
 		throw e;
 	}
 	
@@ -2140,19 +2078,6 @@ class ReaderJSONSource implements JSONSource{
 		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
 		for (int i = maxlength; i >= 0; i--) {
 			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
-		}
-		return sb.toString();
-	}
-}
-
-class ConvertState extends ArrayList<Object> {
-	private static final long serialVersionUID = 1L;
-	Exception exception;
-	
-	public String toString() {
-		StringBuilder sb = new StringBuilder("$root");
-		for (Object key : this) {
-			sb.append('.').append(key);
 		}
 		return sb.toString();
 	}

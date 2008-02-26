@@ -3,19 +3,19 @@ package net.arnx.jsonic;
 public class JSONConvertException extends RuntimeException {
 	private static final long serialVersionUID = -6173125387096087580L;
 
-	public JSONConvertException() {
+	JSONConvertException() {
 		super();
 	}
 	
-	public JSONConvertException(String message) {
+	JSONConvertException(String message) {
 		super(message);
 	}
 	
-	public JSONConvertException(Throwable cause) {
+	JSONConvertException(Throwable cause) {
 		super(cause);
 	}
 	
-	public JSONConvertException(String message, Throwable cause) {
+	JSONConvertException(String message, Throwable cause) {
 		super(message, cause);
 	}
 }
