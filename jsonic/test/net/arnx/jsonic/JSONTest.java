@@ -1065,7 +1065,9 @@ class InheritedBean {
 }
 
 class SuperLinkedHashMap extends LinkedHashMap {
+	private static final long serialVersionUID = 1L;
 }
 
 class SuperArrayList extends ArrayList {
+	private static final long serialVersionUID = 1L;
 }
