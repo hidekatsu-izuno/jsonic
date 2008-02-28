@@ -343,7 +343,7 @@ public class EnclosingClass {
 <h4 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h4>
 <p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。
 しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため
-単純に入れ子の深さに制限を設けています。</p>
+単純に入れ子の深さに制限を設けています。なお、最大深度の設定はdecode/parse時にも有効ですので深すぎるデータの取得も避けることが可能となります。</p>
 <p>この最大深度は、デフォルトでは32に設定されていますが変更することも可能です。</p>
 <pre class="source">
 <span class="comment">// 5階層以下の情報は取得しない</span>
@@ -587,6 +587,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>MapのFormat時にkeyがStringでない場合ClassCastExceptionが発生していた問題を修正しました。</li>
 <li>Parse時にJSON arrayからMapへの変換に対応しました。</li>
 <li>Parse時にMapのキー値に対する変換が行われず常にStringに変換されていた問題を修正しました。</li>
+<li>Parse時にJSON arrayやJSON objectから文字列への変換を行わないように変更しました。</li>
+<li>Parse時にもsetMaxDepthで指定された階層以下のデータを無視するようになりました。</li>
 </ul>
 
 <h3>2008/02/18 version 0.9.6</h3>
