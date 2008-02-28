@@ -663,7 +663,7 @@ public class JSON {
 			case '[':
 				if (o == null) {
 					s.back();
-					o = parseArray(s, 0);
+					o = parseArray(s, 1);
 					break;
 				}
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -675,7 +675,7 @@ public class JSON {
 			default:
 				if (o == null) {
 					s.back();
-					o = parseObject(s, 0);
+					o = parseObject(s, 1);
 					break;
 				}
 				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -710,7 +710,8 @@ public class JSON {
 					point = 1;
 				} else if (point == 2 || point == 3){
 					s.back();
-					map.put(key, parseObject(s, level+1));
+					Object value = parseObject(s, level+1);
+					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -725,7 +726,7 @@ public class JSON {
 				break;
 			case ',':
 				if (point == 3) {
-					map.put(key, null);
+					if (level < this.maxDepth) map.put(key, null);
 					point = 1;
 				} else if (point == 5 || point == 6) {
 					point = 1;
@@ -736,7 +737,7 @@ public class JSON {
 			case '}':
 				if (start == '{' && (point == 1 || point == 3 || point == 5 || point == 6)) {
 					if (point == 3) {
-						map.put(key, null);
+						if (level < this.maxDepth) map.put(key, null);
 					}
 					break loop;
 				} else {
@@ -753,7 +754,8 @@ public class JSON {
 					point = 2;
 				} else if (point == 3) {
 					s.back();
-					map.put(key, parseString(s));
+					String value = parseString(s);
+					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -762,7 +764,8 @@ public class JSON {
 			case '[':
 				if (point == 3) {
 					s.back();
-					map.put(key, parseArray(s, level+1));
+					List value = parseArray(s, level+1);
+					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -784,7 +787,8 @@ public class JSON {
 				} else if (point == 3) {
 					if ((c == '-') || (c >= '0' && c <= '9')) {
 						s.back();
-						map.put(key, parseNumber(s));
+						Number value = parseNumber(s);
+						if (level < this.maxDepth) map.put(key, value);
 					} else {
 						s.back();
 						String literal = parseLiteral(s);
@@ -833,7 +837,8 @@ public class JSON {
 					point = 1;
 				} else if (point == 1 || point == 3) {
 					s.back();
-					list.add(parseArray(s, level+1));
+					List<Object> value = parseArray(s, level+1);
+					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -841,7 +846,7 @@ public class JSON {
 				break;
 			case ',':
 				if (point == 1) {
-					list.add(null);
+					if (level < this.maxDepth) list.add(null);
 				} else if (point == 2 || point == 3) {
 					point = 1;
 				} else {
@@ -850,7 +855,7 @@ public class JSON {
 				break;
 			case ']':
 				if (point == 1) {
-					if (!list.isEmpty()) list.add(null);
+					if (!list.isEmpty() && level < this.maxDepth) list.add(null);
 					break loop;					
 				} else if (point == 2 || point == 3) {
 					break loop;
@@ -860,7 +865,8 @@ public class JSON {
 			case '{':
 				if (point == 1 || point == 3){
 					s.back();
-					list.add(parseObject(s, level+1));
+					Map<String, Object> value = parseObject(s, level+1);
+					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -870,7 +876,8 @@ public class JSON {
 			case '"':
 				if (point == 1 || point == 3) {
 					s.back();
-					list.add(parseString(s));
+					String value = parseString(s);
+					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
 					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -885,18 +892,21 @@ public class JSON {
 				if (point == 1 || point == 3) {
 					if ((c == '-') || (c >= '0' && c <= '9')) {
 						s.back();
-						list.add(parseNumber(s));
+						Number value = parseNumber(s);
+						if (level < this.maxDepth) list.add(value);
 					} else {
 						s.back();
 						String literal = parseLiteral(s);
-						if (literal.equals("null")) {
-							list.add(null);
-						} else if (literal.equals("true")) {
-							list.add(Boolean.TRUE);
-						} else if (literal.equals("false")) {
-							list.add(Boolean.FALSE);
-						} else {
-							list.add(literal);
+						if (level < this.maxDepth) {
+							if (literal.equals("null")) {
+								list.add(null);
+							} else if (literal.equals("true")) {
+								list.add(Boolean.TRUE);
+							} else if (literal.equals("false")) {
+								list.add(Boolean.FALSE);
+							} else {
+								list.add(literal);
+							}
 						}
 					}
 					point = 2;

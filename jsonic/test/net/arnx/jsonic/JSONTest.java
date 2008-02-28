@@ -520,6 +520,34 @@ public class JSONTest {
 			}
 		};
 		
+		Map map4 = new LinkedHashMap();
+		
+		json.setMaxDepth(1);
+		assertEquals(map4, json.parse("{'1': '1'}"));
+
+		json.setMaxDepth(2);
+		map4.put("1", "1");
+		assertEquals(map4, json.parse("{'1': '1'}"));
+		
+		List map4_2 = new ArrayList();
+		map4.put("2", map4_2);
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2']}"));
+		
+		json.setMaxDepth(3);
+		map4_2.add("2");
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2']}"));
+		
+		Map map4_3 = new LinkedHashMap();
+		List map4_3_1 = new ArrayList();
+		map4_3.put("3_1", map4_3_1);
+		map4.put("3", map4_3);
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2'], '3': {'3_1': ['3']}}"));
+
+		json.setMaxDepth(4);
+		map4_3_1.add("3");
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2'], '3': {'3_1': ['3']}}"));
+		
+		json.setMaxDepth(32);
 		assertEquals(map2, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
 		//assertEquals(map, json.parse("emap:{}\n\n map: {string: \n int:}, elist:[]\nlist: [,string, ]"));
 		
