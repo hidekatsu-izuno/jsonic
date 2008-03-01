@@ -15,13 +15,10 @@
  */
 package net.arnx.jsonic;
 
-import java.io.BufferedInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
@@ -523,21 +520,21 @@ public class JSON extends Converter {
 	}
 
 	public Object parse(CharSequence cs) throws ParseException {
-		return parse(new CharSequenceJSONSource(cs));
+		return parse(new CharSequenceParserSource(cs));
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c)
 		throws ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new CharSequenceJSONSource(s)), c, c);
+		return (T)convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, c);
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c, Type t)
 		throws ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new CharSequenceJSONSource(s)), c, t);
+		return (T)convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, t);
 	}
 	
 	public Object parse(InputStream in) throws ParseException {
-		return parse(new ReaderJSONSource(in));
+		return parse(new ReaderParserSource(in));
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c)
@@ -551,20 +548,20 @@ public class JSON extends Converter {
 	}
 	
 	public Object parse(Reader reader) throws IOException, ParseException {
-		return parse(new ReaderJSONSource(reader));
+		return parse(new ReaderParserSource(reader));
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
 		throws IOException, ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new ReaderJSONSource(reader)), c, c);
+		return (T)convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
 		throws IOException, ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new ReaderJSONSource(reader)), c, t);
+		return (T)convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, t);
 	}
 	
-	private Object parse(JSONSource s) throws ParseException {
+	private Object parse(ParserSource s) throws ParseException {
 		Object o = null;
 
 		int n = -1;
@@ -602,7 +599,7 @@ public class JSON extends Converter {
 		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
-	private Map<String, Object> parseObject(JSONSource s, int level) throws ParseException {
+	private Map<String, Object> parseObject(ParserSource s, int level) throws ParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		String key = null;
@@ -732,7 +729,7 @@ public class JSON extends Converter {
 		return map;
 	}
 	
-	private List<Object> parseArray(JSONSource s, int level) throws ParseException {
+	private List<Object> parseArray(ParserSource s, int level) throws ParseException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
@@ -839,7 +836,7 @@ public class JSON extends Converter {
 		return list;
 	}
 	
-	private String parseString(JSONSource s) throws ParseException {
+	private String parseString(ParserSource s) throws ParseException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilder sb = s.getCachedBuilder();
 		char start = '\0';
@@ -886,7 +883,7 @@ public class JSON extends Converter {
 		return sb.toString();
 	}
 	
-	private String parseLiteral(JSONSource s) throws ParseException {
+	private String parseLiteral(ParserSource s) throws ParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 		
@@ -914,7 +911,7 @@ public class JSON extends Converter {
 		return sb.toString();
 	}	
 	
-	private Number parseNumber(JSONSource s) throws ParseException {
+	private Number parseNumber(ParserSource s) throws ParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 		StringBuilder sb = s.getCachedBuilder();
 		
@@ -988,7 +985,7 @@ public class JSON extends Converter {
 		return new BigDecimal(sb.toString());
 	}
 	
-	private char parseEscape(JSONSource s) throws ParseException {
+	private char parseEscape(ParserSource s) throws ParseException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -1052,7 +1049,7 @@ public class JSON extends Converter {
 		return escape;
 	}
 	
-	private void skipComment(JSONSource s) throws ParseException {
+	private void skipComment(ParserSource s) throws ParseException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -1104,188 +1101,5 @@ public class JSON extends Converter {
 				}
 			}
 		}	
-	}
-}
-
-interface JSONSource {
-	int next();
-	void back();
-	long getLineNumber();
-	long getColumnNumber();
-	long getOffset();
-	StringBuilder getCachedBuilder();
-}
-
-class CharSequenceJSONSource implements JSONSource {
-	private int lines = 1;
-	private int columns = 1;
-	private int offset = 0;
-	
-	private CharSequence cs;
-	private StringBuilder cache = new StringBuilder(1000);
-	
-	public CharSequenceJSONSource(CharSequence cs) {
-		if (cs == null) {
-			throw new NullPointerException();
-		}
-		this.cs = cs;
-	}
-	
-	public int next() {
-		if (offset < cs.length()) {
-			char c = cs.charAt(offset++);
-			if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
-				lines++;
-				columns = 0;
-			} else {
-				columns++;
-			}
-			return c;
-		}
-		return -1;
-	}
-	
-	public void back() {
-		offset--;
-		columns--;
-	}
-	
-	public long getLineNumber() {
-		return lines;
-	}
-	
-	public long getColumnNumber() {
-		return columns;
-	}
-	
-	public long getOffset() {
-		return offset;
-	}
-	
-	public StringBuilder getCachedBuilder() {
-		cache.setLength(0);
-		return cache;
-	}
-	
-	public String toString() {
-		return cs.subSequence(offset-columns+1, offset).toString();
-	}
-}
-
-class ReaderJSONSource implements JSONSource{
-	private long lines = 1l;
-	private long columns = 1l;
-	private long offset = 0;
-
-	private Reader reader;
-	private char[] buf = new char[256];
-	private int start = 0;
-	private int end = 0;
-	private StringBuilder cache = new StringBuilder(1000);
-	
-	public ReaderJSONSource(InputStream in) {
-		if (!in.markSupported()) in = new BufferedInputStream(in);
-		try {
-			this.reader = new InputStreamReader(in, determineEncoding(in));
-		} catch (UnsupportedEncodingException e) {
-			throw new ParseException(e, this);
-		}
-	}
-	
-	public ReaderJSONSource(Reader reader) {
-		if (reader == null) {
-			throw new NullPointerException();
-		}
-		this.reader = reader;
-	}
-	
-	public int next() {
-		try {
-			if (start == end) {
-				int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
-				if (size != -1) {
-					end = (end + size) % buf.length;
-				} else {
-					return -1;
-				}
-			}
-			char c = buf[start];
-			if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
-				lines++;
-				columns = 0;
-			} else {
-				columns++;
-			}
-			offset++;
-			start = (start+1) % buf.length;
-			return c;
-		} catch (IOException e) {
-			throw new ParseException(e, this);
-		}
-	}
-	
-	public void back() {
-		columns--;
-		start = (start+buf.length-1) % buf.length;
-	}
-	
-	public long getLineNumber() {
-		return lines;
-	}
-	
-	public long getColumnNumber() {
-		return columns;
-	}
-	
-	public long getOffset() {
-		return offset;
-	}
-	
-	public StringBuilder getCachedBuilder() {
-		cache.setLength(0);
-		return cache;
-	}
-	
-	private String determineEncoding(InputStream in) {
-		String encoding = "UTF-8";
-		try {
-			in.mark(4);
-			byte[] check = new byte[4];
-			int size = in.read(check);
-			if (size == 2) {
-				if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
-						|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
-					encoding = "UTF-16BE";
-				} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
-						|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
-					encoding = "UTF-16LE";
-				}
-			} else if (size == 4) {
-				if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) == 0x00)) {
-					encoding = "UTF-32BE";
-				} else if (((check[2] & 0xFF) == 0x00 && (check[3] & 0xFF) == 0x00)) {
-					encoding = "UTF-32LE";
-				} else if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
-						|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
-					encoding = "UTF-16BE";
-				} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
-						|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
-					encoding = "UTF-16LE";
-				}
-			}
-			in.reset();
-		} catch (IOException e) {
-			throw new ParseException(e, this);
-		}
-		return encoding;
-	}
-	
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
-		for (int i = maxlength; i >= 0; i--) {
-			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
-		}
-		return sb.toString();
 	}
 }
