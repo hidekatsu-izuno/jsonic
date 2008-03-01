@@ -144,6 +144,7 @@ import org.w3c.dom.NodeList;
  */
 @SuppressWarnings({"unchecked"})
 public class JSON {
+	private static final Character ROOT_KEY = '$';
 	
 	public JSON() {
 		this(null);
@@ -586,7 +587,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value = (T)convertChild(null, parse(new CharSequenceJSONSource(s)), c, c);
+			value = (T)convertChild(ROOT_KEY, parse(new CharSequenceJSONSource(s)), c, c);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -597,7 +598,7 @@ public class JSON {
 		throws JSONParseException, JSONConvertException {
 		T value = null;
 		try {
-			value =  (T)convertChild(null, parse(new CharSequenceJSONSource(s)), c, t);
+			value =  (T)convertChild(ROOT_KEY, parse(new CharSequenceJSONSource(s)), c, t);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -627,12 +628,12 @@ public class JSON {
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convertChild(null, parse(new ReaderJSONSource(reader)), c, c);
+		return (T)convertChild(ROOT_KEY, parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
 		throws IOException, JSONParseException, JSONConvertException {
-		return (T)convertChild(null, parse(new ReaderJSONSource(reader)), c, t);
+		return (T)convertChild(ROOT_KEY, parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
 	private Object parse(JSONSource s) throws IOException, JSONParseException {
@@ -1213,6 +1214,7 @@ public class JSON {
 		try {
 			result = convert(key, value, c, type);
 		} catch (JSONConvertException e) {
+			e.add(key);
 			throw e;
 		} catch (Exception e) {
 			try {
@@ -1220,7 +1222,7 @@ public class JSON {
 			} catch (Exception e2) {
 				throw new JSONConvertException(getMessage("json.convert.ConversionError", 
 						(value instanceof String) ? "\"" + value + "\"" : value, 
-						type, (key != null) ? key : ""), e2);
+						type), key, e2);
 			}
 		}
 
