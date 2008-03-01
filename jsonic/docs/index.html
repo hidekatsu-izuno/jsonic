@@ -596,6 +596,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>Parse時にMapのキー値に対する変換が行われず常にStringに変換されていた問題を修正しました。</li>
 <li>Parse時にJSON arrayやJSON objectから文字列への変換を行わないように変更しました。</li>
 <li>Parse時にもsetMaxDepthで指定された階層以下のデータを無視するようになりました。</li>
+<li>Parse時に発生するIOExceptionはParseExceptionでラップし非検査例外となるようにしました。</li>
 <li>変換機能関連のメソッドをConverterクラスとして独立させました。</li>
 <li>変換機能の拡張をconvertメソッドでも可能なように戻しました。handleConversionFailureによる拡張も引き続き可能です。</li>
 <li>JSONParseException/JSONConvertExceptionの名称をParseException/ConvertExceptionに変更しました。</li>
