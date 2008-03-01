@@ -35,6 +35,7 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.ResourceBundle;
 import java.util.Collection;
@@ -144,6 +145,18 @@ import org.w3c.dom.NodeList;
 @SuppressWarnings({"unchecked"})
 public class JSON {
 	private static final Character ROOT_KEY = '$';
+	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
+	
+	static {
+		PRIMITIVE_MAP.put(boolean.class, false);
+		PRIMITIVE_MAP.put(byte.class, (byte)0);
+		PRIMITIVE_MAP.put(short.class, (short)0);
+		PRIMITIVE_MAP.put(int.class, 0);
+		PRIMITIVE_MAP.put(long.class, 0l);
+		PRIMITIVE_MAP.put(float.class, 0.0f);
+		PRIMITIVE_MAP.put(double.class, 0.0);
+		PRIMITIVE_MAP.put(char.class, '\0');
+	}
 	
 	public JSON() {
 		this(null);
@@ -1209,15 +1222,16 @@ public class JSON {
 	
 	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws ConvertException {
 		Object result = null;
+		Class cast = (c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c;
 		
 		try {
-			result = convert(key, value, c, type);
+			result = cast.cast(convert(key, value, c, type));
 		} catch (ConvertException e) {
 			e.add(key);
 			throw e;
 		} catch (Exception e) {
 			try {
-				result = handleConversionFailure(key, value, c, type, e);
+				result = cast.cast(handleConversionFailure(key, value, c, type, e));
 			} catch (Exception e2) {
 				throw new ConvertException(getMessage("json.convert.ConversionError", 
 						(value instanceof String) ? "\"" + value + "\"" : value, 
@@ -1245,23 +1259,7 @@ public class JSON {
 		try {
 			if (value == null) {
 				if (c.isPrimitive()) {
-					if (c.equals(boolean.class)) {
-						data = false;
-					} else if (c.equals(byte.class)) {
-						data = (byte)0;
-					} else if (c.equals(short.class)) {
-						data = (short)0;
-					} else if (c.equals(int.class)) {
-						data = 0;
-					} else if (c.equals(long.class)) {
-						data = 0l;
-					} else if (c.equals(float.class)) {
-						data = 0.0f;
-					} else if (c.equals(double.class)) {
-						data = 0.0;
-					} else if (c.equals(char.class)) {
-						data = '\0';
-					}
+					data = PRIMITIVE_MAP.get(c);
 				}
 			} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
 				data = value;

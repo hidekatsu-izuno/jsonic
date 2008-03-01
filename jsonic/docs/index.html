@@ -229,22 +229,29 @@ JSON json = new JSON() {
   <span class="comment">// 変換に失敗した時に呼び出されます。戻り値に変換後の値が返された場合、処理は継続され
   // ます。逆に例外が投げられた場合、処理は停止しJSONConvertExceptionが例外をラップし
   // 呼び出し元に通知します。</span>
-  protected <span class="em">&lt;T&gt; T handleConversionFailure(Object key, Object value,
-    Class&lt;? extends T&gt; c, Type type, Exception e)</span> throws Exception {
+  protected <span class="em">&lt;T&gt; T convert(Object key, Object value,
+    Class&lt;? extends T&gt; c, Type type)</span> throws Exception {
     
-    <span class="comment">// JSON arrrayをjava.awt.Pointに変換する例です。</span>
+    <span class="comment">// JSON arrrayをjava.awt.Pointに変換する例です。
+    // さらに下の階層を変換する場合はconvertChildメソッドを呼び出してください。</span>
     if (c == Point.class && value instanceof List) {
       return (T)new Point(
-      	convert(0, ((List)value).get(0), int.class, int.class), 
-      	convert(1, ((List)value).get(1), int.class, int.class)
+      	convertChild(0, ((List)value).get(0), int.class, int.class), 
+      	convertChild(1, ((List)value).get(1), int.class, int.class)
       );
     }
-    
-    <span class="comment">// デフォルトでは、引数に指定された例外を投げます（eがnullの場合は、
-    // UnsupportedOperationExceptionが投げられます）。</span>
-    return super.handleConversionFailure(key, value, c, type, e);
+    return super.convert(key, value, c, type);
   }
-    
+  
+  <span class="comment">// 変換に失敗した時に呼び出されます。戻り値に変換後の値が返された場合、処理は継続され
+  // ます。逆に例外が投げられた場合、処理は停止しJSONConvertExceptionが例外をラップし
+  // 呼び出し元に通知します。</span>
+  protected <span class="em">&lt;T&gt; T handleConversionFailure(Object key, Object value,
+    Class&lt;? extends T&gt; c, Type type, Exception e)</span> throws Exception {
+    // デフォルトでは例外がそのまま投げられます。
+    throw e;
+  }
+      
   <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
   protected <span class="em">boolean ignore(Class c, Member m)</span> {
     <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言された
@@ -589,6 +596,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>Parse時にMapのキー値に対する変換が行われず常にStringに変換されていた問題を修正しました。</li>
 <li>Parse時にJSON arrayやJSON objectから文字列への変換を行わないように変更しました。</li>
 <li>Parse時にもsetMaxDepthで指定された階層以下のデータを無視するようになりました。</li>
+<li>変換機能の拡張をconvertメソッドで行うよう戻しました。ただしhandleConversionFailureによる拡張も引き続き可能です。</li>
+<li>JSONParseException/JSONConvertExceptionの名称をParseException/ConvertExceptionに変更しました。</li>
 </ul>
 
 <h3>2008/02/18 version 0.9.6</h3>
