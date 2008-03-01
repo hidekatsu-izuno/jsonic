@@ -1216,7 +1216,7 @@ public class JSON {
 			throw e;
 		} catch (Exception e) {
 			try {
-				result = handleConversionException(key, value, c, type, e);
+				result = handleConversionFailure(key, value, c, type, e);
 			} catch (Exception e2) {
 				throw new JSONConvertException(getMessage("json.convert.ConversionError", 
 						(value instanceof String) ? "\"" + value + "\"" : value, 
@@ -1227,6 +1227,16 @@ public class JSON {
 		return (T)result;
 	}
 	
+	/**
+	 * Converts JSON object to Java Objects.
+	 * 
+	 * @param key property key object. If the parent is a array, it is Integer. otherwise it is String. 
+	 * @param value object(LinkedHashMap), array(ArrayList), number(BigDecimal), string(String), true/false(Boolean) or null
+	 * @param c class for converting
+	 * @param type generics type for converting. type equals to c if not generics.
+	 * @return a converted object
+	 * @throws Exception 
+	 */
 	protected <T> T convert(Object key, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
@@ -1621,7 +1631,7 @@ public class JSON {
 	 * @return the converted value.
 	 * @exception the exception caused when value falis to convert.
 	 */
-	protected <T> T handleConversionException(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
+	protected <T> T handleConversionFailure(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
 		throw e;
 	}
 	
