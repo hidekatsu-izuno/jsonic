@@ -591,6 +591,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <h3>2008/03/XX version 0.9.7</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
+<li>JSONParseException/JSONConvertExceptionの名称をParseException/ConvertExceptionに変更しました。</li>
 <li>MapのFormat時にkeyがStringでない場合ClassCastExceptionが発生し変換に失敗する問題を修正しました。</li>
 <li>Parse時にJSON arrayからMapへの変換に対応しました。</li>
 <li>Parse時にMapのキー値に対する変換が行われず常にStringに変換されていた問題を修正しました。</li>
@@ -599,7 +600,6 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>Parse時に発生するIOExceptionはParseExceptionでラップし非検査例外となるようにしました。</li>
 <li>変換機能関連のメソッドをConverterクラスとして独立させました。</li>
 <li>変換機能の拡張をconvertメソッドでも可能なように戻しました。handleConversionFailureによる拡張も引き続き可能です。</li>
-<li>JSONParseException/JSONConvertExceptionの名称をParseException/ConvertExceptionに変更しました。</li>
 </ul>
 
 <h3>2008/02/18 version 0.9.6</h3>
