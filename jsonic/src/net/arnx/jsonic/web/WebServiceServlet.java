@@ -41,8 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSON;
-import net.arnx.jsonic.JSONConvertException;
-import net.arnx.jsonic.JSONParseException;
+import net.arnx.jsonic.ConvertException;
+import net.arnx.jsonic.ParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
@@ -249,11 +249,11 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			error = new RpcError(-32601, "Method not found.");
-		} catch (JSONParseException e) {
+		} catch (ParseException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
 			error = new RpcError(-32700, "Parse error.");
-		} catch (JSONConvertException e) {
+		} catch (ConvertException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
 			error = new RpcError(-32602, "Invalid params.");
@@ -371,11 +371,11 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			return;
-		} catch (JSONParseException e) {
+		} catch (ParseException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;
-		} catch (JSONConvertException e) {
+		} catch (ConvertException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;

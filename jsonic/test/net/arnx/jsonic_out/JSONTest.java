@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 import net.arnx.jsonic.JSON;
-import net.arnx.jsonic.JSONConvertException;
+import net.arnx.jsonic.ConvertException;
 
 public class JSONTest {
 	
@@ -32,7 +32,7 @@ public class JSONTest {
 		try {
 			json.parse("{\"a\":100}", InnerHoge.class);
 			fail();
-		} catch (JSONConvertException e) {
+		} catch (ConvertException e) {
 			assertEquals(IllegalAccessException.class, e.getCause().getClass());
 		}
 		

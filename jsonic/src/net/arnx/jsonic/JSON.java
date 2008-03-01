@@ -56,7 +56,6 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.ParseException;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -248,9 +247,9 @@ public class JSON {
 	 * 
 	 * @param source a json string to decode
 	 * @return a decoded object
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 * @exception ParseException if the beginning of the specified string cannot be parsed.
 	 */
-	public static Object decode(String source) throws JSONParseException {
+	public static Object decode(String source) throws ParseException {
 		return (new JSON()).parse(source);
 	}
 	
@@ -260,11 +259,11 @@ public class JSON {
 	 * @param source a json string to decode
 	 * @param c class for converting
 	 * @return a decoded object
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
+	 * @exception ParseException if the beginning of the specified string cannot be parsed.
+	 * @exception ConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c) 
-		throws JSONParseException, JSONConvertException {
+		throws ParseException, ConvertException {
 		Class<?> context = c.getEnclosingClass();
 		if (context == null) context = c;
 		return (new JSON(context)).parse(source, c);
@@ -277,11 +276,11 @@ public class JSON {
 	 * @param c class for converting
 	 * @param t type specified generics parameters
 	 * @return a decoded object
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
+	 * @exception ParseException if the beginning of the specified string cannot be parsed.
+	 * @exception ConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c, Type t)
-	throws JSONParseException, JSONConvertException {
+	throws ParseException, ConvertException {
 		Class<?> context = c.getEnclosingClass();
 		if (context == null) context = c;
 		return (new JSON(context)).parse(source, c, t);
@@ -573,7 +572,7 @@ public class JSON {
 		return ap;
 	}
 
-	public Object parse(CharSequence cs) throws JSONParseException {
+	public Object parse(CharSequence cs) throws ParseException {
 		Object value = null;
 		try {
 			value = parse(new CharSequenceJSONSource(cs));
@@ -584,7 +583,7 @@ public class JSON {
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c)
-		throws JSONParseException, JSONConvertException {
+		throws ParseException, ConvertException {
 		T value = null;
 		try {
 			value = (T)convertChild(ROOT_KEY, parse(new CharSequenceJSONSource(s)), c, c);
@@ -595,7 +594,7 @@ public class JSON {
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c, Type t)
-		throws JSONParseException, JSONConvertException {
+		throws ParseException, ConvertException {
 		T value = null;
 		try {
 			value =  (T)convertChild(ROOT_KEY, parse(new CharSequenceJSONSource(s)), c, t);
@@ -605,38 +604,38 @@ public class JSON {
 		return value;			
 	}
 	
-	public Object parse(InputStream in) throws IOException, JSONParseException {
+	public Object parse(InputStream in) throws IOException, ParseException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		return parse(new ReaderJSONSource(new InputStreamReader(in, determineEncoding(in))));
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c)
-		throws IOException, JSONParseException, JSONConvertException {
+		throws IOException, ParseException, ConvertException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		return (T)parse(new InputStreamReader(in, determineEncoding(in)), c);
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c, Type t)
-		throws IOException, JSONParseException, JSONConvertException {
+		throws IOException, ParseException, ConvertException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		return (T)parse(new InputStreamReader(in, determineEncoding(in)), c, t);
 	}
 	
-	public Object parse(Reader reader) throws IOException, JSONParseException {
+	public Object parse(Reader reader) throws IOException, ParseException {
 		return parse(new ReaderJSONSource(reader));
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
-		throws IOException, JSONParseException, JSONConvertException {
+		throws IOException, ParseException, ConvertException {
 		return (T)convertChild(ROOT_KEY, parse(new ReaderJSONSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
-		throws IOException, JSONParseException, JSONConvertException {
+		throws IOException, ParseException, ConvertException {
 		return (T)convertChild(ROOT_KEY, parse(new ReaderJSONSource(reader)), c, t);
 	}
 	
-	private Object parse(JSONSource s) throws IOException, JSONParseException {
+	private Object parse(JSONSource s) throws IOException, ParseException {
 		Object o = null;
 
 		int n = -1;
@@ -655,7 +654,7 @@ public class JSON {
 					o = parseArray(s, 1);
 					break;
 				}
-				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+				throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			case '/':
 			case '#':
 				s.back();
@@ -667,14 +666,14 @@ public class JSON {
 					o = parseObject(s, 1);
 					break;
 				}
-				throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+				throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
 		
 		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
-	private Map<String, Object> parseObject(JSONSource s, int level) throws IOException, JSONParseException {
+	private Map<String, Object> parseObject(JSONSource s, int level) throws IOException, ParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		String key = null;
@@ -703,14 +702,14 @@ public class JSON {
 					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case ':':
 				if (point == 2) {
 					point = 3;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case ',':
@@ -720,7 +719,7 @@ public class JSON {
 				} else if (point == 5 || point == 6) {
 					point = 1;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '}':
@@ -730,7 +729,7 @@ public class JSON {
 					}
 					break loop;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			case '\'':
 			case '"':
@@ -747,7 +746,7 @@ public class JSON {
 					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '[':
@@ -757,7 +756,7 @@ public class JSON {
 					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '/':
@@ -793,18 +792,18 @@ public class JSON {
 					}
 					point = 5;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			}
 		}
 		
 		if ((n == -1) ? (start != '\0') : (n != '}')) {
-			throw new JSONParseException(getMessage("json.parse.ObjectNotClosedError"), s);
+			throw new ParseException(getMessage("json.parse.ObjectNotClosedError"), s);
 		}
 		return map;
 	}
 	
-	private List<Object> parseArray(JSONSource s, int level) throws IOException, JSONParseException {
+	private List<Object> parseArray(JSONSource s, int level) throws IOException, ParseException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
@@ -830,7 +829,7 @@ public class JSON {
 					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case ',':
@@ -839,7 +838,7 @@ public class JSON {
 				} else if (point == 2 || point == 3) {
 					point = 1;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case ']':
@@ -849,7 +848,7 @@ public class JSON {
 				} else if (point == 2 || point == 3) {
 					break loop;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			case '{':
 				if (point == 1 || point == 3){
@@ -858,7 +857,7 @@ public class JSON {
 					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '\'':
@@ -869,7 +868,7 @@ public class JSON {
 					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '/':
@@ -900,18 +899,18 @@ public class JSON {
 					}
 					point = 2;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			}
 		}
 		
 		if (n != ']') {
-			throw new JSONParseException(getMessage("json.parse.ArrayNotClosedError"), s);
+			throw new ParseException(getMessage("json.parse.ArrayNotClosedError"), s);
 		}
 		return list;
 	}
 	
-	private String parseString(JSONSource s) throws IOException, JSONParseException {
+	private String parseString(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilder sb = s.getCachedBuilder();
 		char start = '\0';
@@ -931,7 +930,7 @@ public class JSON {
 						sb.append(c);
 					}
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '\'':
@@ -947,18 +946,18 @@ public class JSON {
 				if (point == 1) {
 					sb.append(c);
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			}
 		}
 		
 		if (n == -1 && n != start) {
-			throw new JSONParseException(getMessage("json.parse.StringNotClosedError"), s);
+			throw new ParseException(getMessage("json.parse.StringNotClosedError"), s);
 		}
 		return sb.toString();
 	}
 	
-	private String parseLiteral(JSONSource s) throws IOException, JSONParseException {
+	private String parseLiteral(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 		
@@ -986,7 +985,7 @@ public class JSON {
 		return sb.toString();
 	}	
 	
-	private Number parseNumber(JSONSource s) throws IOException, JSONParseException {
+	private Number parseNumber(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 		StringBuilder sb = s.getCachedBuilder();
 		
@@ -1001,7 +1000,7 @@ public class JSON {
 					sb.append(c);
 					point = 8;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '-':
@@ -1012,7 +1011,7 @@ public class JSON {
 					sb.append(c);
 					point = 8;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '.':
@@ -1020,7 +1019,7 @@ public class JSON {
 					sb.append(c);
 					point = 4;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case 'e':
@@ -1029,7 +1028,7 @@ public class JSON {
 					sb.append(c);
 					point = 7;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			default:
@@ -1046,13 +1045,13 @@ public class JSON {
 						sb.append(c);
 						break loop;
 					} else {
-						throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+						throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
 				} else if (point == 2 || point == 3 || point == 5 || point == 6) {
 					s.back();
 					break loop;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			}
 		}
@@ -1060,7 +1059,7 @@ public class JSON {
 		return new BigDecimal(sb.toString());
 	}
 	
-	private char parseEscape(JSONSource s) throws IOException, JSONParseException {
+	private char parseEscape(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -1073,7 +1072,7 @@ public class JSON {
 				if (c == '\\') {
 					point = 1;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			} else if (point == 1) {
 				switch(c) {
@@ -1116,7 +1115,7 @@ public class JSON {
 						break loop;
 					}
 				} else {
-					throw new JSONParseException(getMessage("json.parse.IllegalUnicodeEscape", c), s);
+					throw new ParseException(getMessage("json.parse.IllegalUnicodeEscape", c), s);
 				}
 			}
 		}
@@ -1124,7 +1123,7 @@ public class JSON {
 		return escape;
 	}
 	
-	private void skipComment(JSONSource s) throws IOException, JSONParseException {
+	private void skipComment(JSONSource s) throws IOException, ParseException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -1141,7 +1140,7 @@ public class JSON {
 				} else if (point == 3) {
 					break loop;
 				} else if (!(point == 2 || point == 4)) {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '*':
@@ -1150,7 +1149,7 @@ public class JSON {
 				} else if (point == 2) {
 					point = 3;
 				} else if (!(point == 3 || point == 4)) {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '\n':
@@ -1160,7 +1159,7 @@ public class JSON {
 				} else if (point == 4) {
 					break loop;
 				} else {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			case '#':
@@ -1172,7 +1171,7 @@ public class JSON {
 				if (point == 3) {
 					point = 2;
 				} else if (!(point == 2 || point == 4)) {
-					throw new JSONParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					throw new ParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			}
 		}	
@@ -1208,19 +1207,19 @@ public class JSON {
 		return encoding;
 	}
 	
-	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
+	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws ConvertException {
 		Object result = null;
 		
 		try {
 			result = convert(key, value, c, type);
-		} catch (JSONConvertException e) {
+		} catch (ConvertException e) {
 			e.add(key);
 			throw e;
 		} catch (Exception e) {
 			try {
 				result = handleConversionFailure(key, value, c, type, e);
 			} catch (Exception e2) {
-				throw new JSONConvertException(getMessage("json.convert.ConversionError", 
+				throw new ConvertException(getMessage("json.convert.ConversionError", 
 						(value instanceof String) ? "\"" + value + "\"" : value, 
 						type), key, e2);
 			}
@@ -1230,14 +1229,15 @@ public class JSON {
 	}
 	
 	/**
-	 * Converts JSON object to Java Objects.
+	 * Converts JSON object to Java Objects. If you converts a lower level object in this method, 
+	 * you should call convertChild method.
 	 * 
 	 * @param key property key object. If the parent is a array, it is Integer. otherwise it is String. 
 	 * @param value object(LinkedHashMap), array(ArrayList), number(BigDecimal), string(String), true/false(Boolean) or null
 	 * @param c class for converting
 	 * @param type generics type for converting. type equals to c if not generics.
 	 * @return a converted object
-	 * @throws Exception 
+	 * @throws Exception if conversion failed.
 	 */
 	protected <T> T convert(Object key, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
@@ -1597,7 +1597,7 @@ public class JSON {
 					throw new UnsupportedOperationException();
 				}
 			}
-		} catch (JSONConvertException e) {
+		} catch (ConvertException e) {
 			throw e;
 		}
 		
@@ -1885,7 +1885,7 @@ public class JSON {
 		return buffer;
 	}
 	
-	private Long convertDate(String value) throws ParseException {
+	private Long convertDate(String value) throws java.text.ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;

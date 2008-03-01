@@ -3,11 +3,11 @@ package net.arnx.jsonic;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JSONConvertException extends RuntimeException {
+public class ConvertException extends RuntimeException {
 	private static final long serialVersionUID = -6173125387096087580L;
 	private List<Object> keys = new ArrayList<Object>();
 	
-	JSONConvertException(String message, Object key, Throwable cause) {
+	ConvertException(String message, Object key, Throwable cause) {
 		super(message, cause);
 		add(key);
 	}
