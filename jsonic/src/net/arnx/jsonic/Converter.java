@@ -125,11 +125,11 @@ public class Converter {
 	}
 	
 	/**
-	 * Converts JSON object to Java Objects. If you converts a lower level object in this method, 
+	 * Converts Map/List/Number/String/Boolean/null to other Java Objects. If you converts a lower level object in this method, 
 	 * you should call convertChild method.
 	 * 
 	 * @param key property key object. If the parent is a array, it is Integer. otherwise it is String. 
-	 * @param value object(LinkedHashMap), array(ArrayList), number(BigDecimal), string(String), true/false(Boolean) or null
+	 * @param value null or the instance of Map, List, Number, String or Boolean.
 	 * @param c class for converting
 	 * @param type generics type for converting. type equals to c if not generics.
 	 * @return a converted object
