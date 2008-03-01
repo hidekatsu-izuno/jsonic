@@ -94,7 +94,7 @@ public class Converter {
 			try {
 				result = cast.cast(handleConversionFailure(key, value, c, type, e));
 			} catch (Exception e2) {
-				throw new ConvertException(getMessage("json.convert.ConversionError", 
+				throw new ConvertException(getMessage("converter.convert.ConversionError", 
 						(value instanceof String) ? "\"" + value + "\"" : value, 
 						type), key, e2);
 			}
