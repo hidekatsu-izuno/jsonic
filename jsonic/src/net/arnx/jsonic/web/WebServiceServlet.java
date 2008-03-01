@@ -49,6 +49,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 @SuppressWarnings("unchecked")
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
+	private static final Character ROOT_KEY = '$';
 	
 	class Config {
 		public Class<? extends Container> container;
@@ -464,7 +465,7 @@ public class WebServiceServlet extends HttpServlet {
 			Class<?>[] paramTypes = method.getParameterTypes();
 			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
 			for (int i = 0; i < params.length; i++) {
-				params[i] = convertChild('$', args.get(i), paramTypes[i], paramTypes[i]);
+				params[i] = convertChild(ROOT_KEY, args.get(i), paramTypes[i], paramTypes[i]);
 			}
 			
 			return method.invoke(o, params);
