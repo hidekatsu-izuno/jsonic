@@ -143,19 +143,7 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked"})
-public class JSON {	
-	private static ThreadLocal<StringBuilder> cache = new ThreadLocal<StringBuilder>() {
-		protected StringBuilder initialValue() {
-			return new StringBuilder(1000);
-		}
-		
-		public StringBuilder get() {
-			StringBuilder sb = super.get();
-			sb.setLength(0);
-			return sb;
-		}
-	};
-
+public class JSON {
 	
 	public JSON() {
 		this(null);
@@ -246,7 +234,7 @@ public class JSON {
 		JSON json = new JSON(source);
 		json.setPrettyPrint(prettyPrint);
 		try {
-			value = json.format(source, cache.get()).toString();
+			value = json.format(source);
 		} catch (IOException e) {
 			// never happen
 		}
@@ -299,7 +287,7 @@ public class JSON {
 	}
 	
 	public String format(Object source) throws IOException {
-		return format(source, cache.get()).toString();
+		return format(source, new StringBuilder(1000)).toString();
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
@@ -924,7 +912,7 @@ public class JSON {
 	
 	private String parseString(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		StringBuilder sb = cache.get();
+		StringBuilder sb = s.getCachedBuilder();
 		char start = '\0';
 		
 		int n = -1;
@@ -971,7 +959,7 @@ public class JSON {
 	
 	private String parseLiteral(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilder sb = cache.get();
+		StringBuilder sb = s.getCachedBuilder();
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -999,7 +987,7 @@ public class JSON {
 	
 	private Number parseNumber(JSONSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
-		StringBuilder sb = cache.get();
+		StringBuilder sb = s.getCachedBuilder();
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1976,6 +1964,7 @@ interface JSONSource {
 	long getLineNumber();
 	long getColumnNumber();
 	long getOffset();
+	StringBuilder getCachedBuilder();
 }
 
 class CharSequenceJSONSource implements JSONSource {
@@ -1984,6 +1973,7 @@ class CharSequenceJSONSource implements JSONSource {
 	private int offset = 0;
 	
 	private CharSequence cs;
+	private StringBuilder cache = new StringBuilder(1000);
 	
 	public CharSequenceJSONSource(CharSequence cs) {
 		if (cs == null) {
@@ -2023,6 +2013,11 @@ class CharSequenceJSONSource implements JSONSource {
 		return offset;
 	}
 	
+	public StringBuilder getCachedBuilder() {
+		cache.setLength(0);
+		return cache;
+	}
+	
 	public String toString() {
 		return cs.subSequence(offset-columns+1, offset).toString();
 	}
@@ -2037,6 +2032,7 @@ class ReaderJSONSource implements JSONSource{
 	private char[] buf = new char[256];
 	private int start = 0;
 	private int end = 0;
+	private StringBuilder cache = new StringBuilder(1000);
 	
 	public ReaderJSONSource(Reader reader) {
 		if (reader == null) {
@@ -2081,6 +2077,11 @@ class ReaderJSONSource implements JSONSource{
 	
 	public long getOffset() {
 		return offset;
+	}
+	
+	public StringBuilder getCachedBuilder() {
+		cache.setLength(0);
+		return cache;
 	}
 	
 	public String toString() {
