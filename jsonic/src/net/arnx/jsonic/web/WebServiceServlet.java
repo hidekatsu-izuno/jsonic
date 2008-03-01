@@ -464,7 +464,7 @@ public class WebServiceServlet extends HttpServlet {
 			Class<?>[] paramTypes = method.getParameterTypes();
 			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
 			for (int i = 0; i < params.length; i++) {
-				params[i] = convertChild(null, args.get(i), paramTypes[i], paramTypes[i]);
+				params[i] = convertChild('$', args.get(i), paramTypes[i], paramTypes[i]);
 			}
 			
 			return method.invoke(o, params);
