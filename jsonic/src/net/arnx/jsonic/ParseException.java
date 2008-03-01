@@ -5,6 +5,11 @@ public class ParseException extends RuntimeException {
 	
 	private JSONSource s;
 	
+	ParseException(Throwable t, JSONSource s) {
+		super(t);
+		this.s = s;
+	}
+	
 	ParseException(String message, JSONSource s) {
 		super("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?");
 		this.s = s;

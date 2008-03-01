@@ -241,18 +241,10 @@ public class JSON {
 	 * @param prettyPrint output a json string with indent, space or break.
 	 * @return a json string
 	 */
-	public static String encode(Object source, boolean prettyPrint) {
-		String value = null;
-		
+	public static String encode(Object source, boolean prettyPrint) {		
 		JSON json = new JSON(source);
-		json.setPrettyPrint(prettyPrint);
-		try {
-			value = json.format(source);
-		} catch (IOException e) {
-			// never happen
-		}
-		
-		return value;
+		json.setPrettyPrint(prettyPrint);		
+		return json.format(source);
 	}
 	
 	/**
@@ -299,8 +291,14 @@ public class JSON {
 		return (new JSON(context)).parse(source, c, t);
 	}
 	
-	public String format(Object source) throws IOException {
-		return format(source, new StringBuilder(1000)).toString();
+	public String format(Object source) {
+		String text = null;
+		try {
+			text = format(source, new StringBuilder(1000)).toString();
+		} catch (IOException e) {
+			// no handle;
+		}
+		return text;
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
