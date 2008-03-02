@@ -15,7 +15,7 @@
  */
 package net.arnx.jsonic;
 
-public class Base64 {
+class Base64 {
 	private static final String BASE64_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	
 	public static String encode(byte[] data) {
