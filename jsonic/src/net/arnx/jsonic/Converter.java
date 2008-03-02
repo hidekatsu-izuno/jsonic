@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -56,7 +55,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-public class Converter {
+public abstract class Converter {
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
 	static {
@@ -70,8 +69,8 @@ public class Converter {
 		PRIMITIVE_MAP.put(char.class, '\0');
 	}
 	
-	Class<?> contextClass = null;
-	Object context = null;
+	private Class<?> contextClass = null;
+	private Object context = null;
 	
 	/**
 	 * Sets context for inner class.
@@ -174,22 +173,11 @@ public class Converter {
 				} else {
 					Object o = create(c);
 					if (o != null) {
-						Map<String, Member> props = getProperties(c, true);
-						
-						boolean access = tryAccess(c);
-						
+						Map<String, Member> props = getSetProperties(c);
 						for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
 							String name = entry.getKey().toString();
-							Member target = props.get(name);
-							if (target == null) {
-								target = props.get(toLowerCamel(name));
-								if (target == null) {
-									target = props.get(name + "_");
-									if (target == null) continue;
-								}
-							}
-							
-							if (access) ((AccessibleObject)target).setAccessible(true);
+							Member target = mapping(c, props, name);
+							if (target == null) continue;
 							
 							if (target instanceof Method) {
 								Method m = (Method)target;
@@ -562,7 +550,18 @@ public class Converter {
 		return instance;
 	}
 	
-	boolean tryAccess(Class<?> c) {
+	private Member mapping(Class c, Map<String, Member> props, String name) {
+		Member target = props.get(name);
+		if (target == null) {
+			target = props.get(toLowerCamel(name));
+			if (target == null) {
+				target = props.get(name + "_");
+			}
+		}
+		return target;
+	}
+	
+	private boolean tryAccess(Class<?> c) {
 		int modifier = c.getModifiers();
 		if (this.contextClass != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
@@ -594,19 +593,13 @@ public class Converter {
 	}
 	
 	protected Map<String, Member> getGetProperties(Class<?> c) {
-		return getProperties(c, false);
-	}
-	
-	protected Map<String, Member> getSetProperties(Class<?> c) {
-		return getProperties(c, true);
-	}
-	
-	private Map<String, Member> getProperties(Class<?> c, boolean isSetter) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
+		boolean access = tryAccess(c);
+
 		for (Field f : c.getFields()) {
 			if (ignore(c, f)) continue;
-			
+			if (access) f.setAccessible(true);
 			props.put(f.getName(), f);
 		}
 		
@@ -615,38 +608,64 @@ public class Converter {
 
 			String name = m.getName();
 			int start = 0;
-			if (isSetter) {
-				if (name.startsWith("set") 
-					&& name.length() > 3
-					&& Character.isUpperCase(name.charAt(3))
-					&& m.getParameterTypes().length == 1
-					&& m.getReturnType().equals(void.class)) {
-					start = 3;
-				} else {
-					continue;
-				}
+			if (name.startsWith("get")
+				&& name.length() > 3
+				&& Character.isUpperCase(name.charAt(3))
+				&& m.getParameterTypes().length == 0
+				&& !m.getReturnType().equals(void.class)) {
+				start = 3;
+			} else if (name.startsWith("is")
+				&& name.length() > 2
+				&& Character.isUpperCase(name.charAt(2))
+				&& m.getParameterTypes().length == 0
+				&& m.getReturnType().equals(boolean.class)) {
+				start = 2;
 			} else {
-				if (name.startsWith("get")
-					&& name.length() > 3
-					&& Character.isUpperCase(name.charAt(3))
-					&& m.getParameterTypes().length == 0
-					&& !m.getReturnType().equals(void.class)) {
-					start = 3;
-				} else if (name.startsWith("is")
-					&& name.length() > 2
-					&& Character.isUpperCase(name.charAt(2))
-					&& m.getParameterTypes().length == 0
-					&& m.getReturnType().equals(boolean.class)) {
-					start = 2;
-				} else {
-					continue;
-				}
+				continue;
 			}
 			
 			char[] cs = name.toCharArray();
 			if (cs.length < start+2 || Character.isLowerCase(cs[start+1])) {
 				cs[start] = Character.toLowerCase(cs[start]);
 			}
+			if (access) m.setAccessible(true);
+			props.put(new String(cs, start, cs.length-start), m);
+		}
+		
+		return props;
+	}
+	
+	protected Map<String, Member> getSetProperties(Class<?> c) {
+		Map<String, Member> props = new HashMap<String, Member>();
+		
+		boolean access = tryAccess(c);
+
+		for (Field f : c.getFields()) {
+			if (ignore(c, f)) continue;
+			if (access) f.setAccessible(true);
+			props.put(f.getName(), f);
+		}
+		
+		for (Method m : c.getMethods()) {
+			if (ignore(c, m)) continue;
+
+			String name = m.getName();
+			int start = 0;
+			if (name.startsWith("set") 
+				&& name.length() > 3
+				&& Character.isUpperCase(name.charAt(3))
+				&& m.getParameterTypes().length == 1
+				&& m.getReturnType().equals(void.class)) {
+				start = 3;
+			} else {
+				continue;
+			}
+			
+			char[] cs = name.toCharArray();
+			if (cs.length < start+2 || Character.isLowerCase(cs[start+1])) {
+				cs[start] = Character.toLowerCase(cs[start]);
+			}
+			if (access) m.setAccessible(true);
 			props.put(new String(cs, start, cs.length-start), m);
 		}
 		

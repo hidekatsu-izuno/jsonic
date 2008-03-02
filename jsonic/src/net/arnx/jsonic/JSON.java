@@ -433,21 +433,15 @@ public class JSON extends Converter {
 		} else {
 			Class<?> c = o.getClass();
 			
-			Map<String, Member> props = getGetProperties(c);
-			boolean access = tryAccess(c);
-			
 			Map<String, Object> map = new TreeMap<String, Object>();
-			
-			for (Map.Entry<String, Member> entry : props.entrySet()) {
+			for (Map.Entry<String, Member> entry : getGetProperties(c).entrySet()) {
 				Object value = null;
 				try {
 					if (entry.getValue() instanceof Method) {
 						Method m = (Method)entry.getValue();
-						if (access) m.setAccessible(true);
 						value = m.invoke(o);
 					} else {
 						Field f = (Field)entry.getValue();
-						if (access) f.setAccessible(true);
 						value =  f.get(o);
 					}
 					map.put(entry.getKey(), value);
