@@ -674,6 +674,26 @@ public class JSONTest {
 		assertEquals(new Time(t), json.convertChild('$', "20:13:15", Time.class, Time.class));
 		assertEquals(TimeZone.getTimeZone("JST"), json.convertChild('$', "JST", TimeZone.class, TimeZone.class));
 		
+		assertEquals(ExampleEnum.Example1, json.convertChild('$', "Example1", ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convertChild('$', 1, ExampleEnum.class, ExampleEnum.class));
+		
+		try {
+			json.convertChild('$', "Example5", ExampleEnum.class, ExampleEnum.class);
+			fail();		
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.convertChild('$', 5, ExampleEnum.class, ExampleEnum.class);
+			fail();		
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		count[0] = 0;
 		try {
 			json.convertChild('$', "aaa", int.class, int.class);
 			fail();
@@ -1088,4 +1108,8 @@ class SuperLinkedHashMap extends LinkedHashMap {
 
 class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
+}
+
+enum ExampleEnum {
+	Example0, Example1, Example2
 }

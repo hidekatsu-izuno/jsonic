@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -390,6 +391,20 @@ public class Converter {
 				} else if (Appendable.class.isAssignableFrom(c)) {
 					Appendable a = (Appendable)create(c);
 					data = a.append(value.toString());
+				} else if (Enum.class.isAssignableFrom(c)) {
+					if (value instanceof Number) {
+						int ordinal = ((Number)value).intValue();
+						EnumSet<? extends Enum> eset = EnumSet.allOf((Class<? extends Enum>)c);
+						for (Enum e : eset) {
+							if (e.ordinal() == ordinal) {
+								data = e;
+								break;
+							}
+						}
+						if (data == null) throw new IllegalArgumentException();
+					} else {
+						data = Enum.valueOf((Class<? extends Enum>)c, value.toString());
+					}
 				} else if (Pattern.class.equals(c)) {
 					data = Pattern.compile(value.toString());
 				} else if (Date.class.isAssignableFrom(c)) {
