@@ -676,15 +676,7 @@ public class JSONTest {
 		
 		assertEquals(ExampleEnum.Example1, json.convertChild('$', "Example1", ExampleEnum.class, ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convertChild('$', 1, ExampleEnum.class, ExampleEnum.class));
-		
-		try {
-			json.convertChild('$', "Example5", ExampleEnum.class, ExampleEnum.class);
-			fail();		
-		} catch (Exception e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
-		
+				
 		try {
 			json.convertChild('$', 5, ExampleEnum.class, ExampleEnum.class);
 			fail();		
