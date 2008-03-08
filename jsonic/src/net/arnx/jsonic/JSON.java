@@ -514,31 +514,49 @@ public class JSON extends Converter {
 	}
 
 	public Object parse(CharSequence cs) throws ParseException {
-		return parse(new CharSequenceParserSource(cs));
+		Object value = null;
+		try {
+			value = parse(new CharSequenceParserSource(cs));
+		} catch (IOException e) {
+			// never occure
+		}
+		return value; 
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c)
 		throws ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, c);
+		T value = null;
+		try {
+			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, c);
+		} catch (IOException e) {
+			// never occure
+		}
+		return value;
 	}
 	
 	public <T> T parse(CharSequence s, Class<? extends T> c, Type t)
 		throws ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, t);
+		T value = null;
+		try {
+			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, t);
+		} catch (IOException e) {
+			// never occure
+		}
+		return value;
 	}
 	
-	public Object parse(InputStream in) throws ParseException {
+	public Object parse(InputStream in) throws IOException, ParseException {
 		return parse(new ReaderParserSource(in));
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c)
 		throws ParseException, ConvertException {
-		return (T)parse(in, c);
+		return parse(in, c);
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c, Type t)
 		throws ParseException, ConvertException {
-		return (T)parse(in, c, t);
+		return parse(in, c, t);
 	}
 	
 	public Object parse(Reader reader) throws IOException, ParseException {
@@ -547,15 +565,15 @@ public class JSON extends Converter {
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
 		throws IOException, ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, c);
+		return convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
 		throws IOException, ParseException, ConvertException {
-		return (T)convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, t);
+		return convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, t);
 	}
 	
-	private Object parse(ParserSource s) throws ParseException {
+	private Object parse(ParserSource s) throws IOException, ParseException {
 		Object o = null;
 
 		int n = -1;
@@ -593,7 +611,7 @@ public class JSON extends Converter {
 		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
-	private Map<String, Object> parseObject(ParserSource s, int level) throws ParseException {
+	private Map<String, Object> parseObject(ParserSource s, int level) throws IOException, ParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		String key = null;
@@ -723,7 +741,7 @@ public class JSON extends Converter {
 		return map;
 	}
 	
-	private List<Object> parseArray(ParserSource s, int level) throws ParseException {
+	private List<Object> parseArray(ParserSource s, int level) throws IOException, ParseException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
 		
@@ -830,7 +848,7 @@ public class JSON extends Converter {
 		return list;
 	}
 	
-	private String parseString(ParserSource s) throws ParseException {
+	private String parseString(ParserSource s) throws IOException, ParseException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilder sb = s.getCachedBuilder();
 		char start = '\0';
@@ -877,7 +895,7 @@ public class JSON extends Converter {
 		return sb.toString();
 	}
 	
-	private String parseLiteral(ParserSource s) throws ParseException {
+	private String parseLiteral(ParserSource s) throws IOException, ParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 		
@@ -905,7 +923,7 @@ public class JSON extends Converter {
 		return sb.toString();
 	}	
 	
-	private Number parseNumber(ParserSource s) throws ParseException {
+	private Number parseNumber(ParserSource s) throws IOException, ParseException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 		StringBuilder sb = s.getCachedBuilder();
 		
@@ -979,7 +997,7 @@ public class JSON extends Converter {
 		return new BigDecimal(sb.toString());
 	}
 	
-	private char parseEscape(ParserSource s) throws ParseException {
+	private char parseEscape(ParserSource s) throws IOException, ParseException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -1043,7 +1061,7 @@ public class JSON extends Converter {
 		return escape;
 	}
 	
-	private void skipComment(ParserSource s) throws ParseException {
+	private void skipComment(ParserSource s) throws IOException, ParseException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
