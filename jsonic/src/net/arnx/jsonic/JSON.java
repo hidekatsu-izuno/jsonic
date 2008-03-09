@@ -542,22 +542,22 @@ public class JSON extends Converter {
 		return value; 
 	}
 	
-	public <T> T parse(CharSequence s, Class<? extends T> c)
-		throws JSONParseException, JSONConvertException {
+	public <T> T parse(CharSequence s, Class<? extends T> cls)
+		throws JSONParseException {
 		T value = null;
 		try {
-			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, c);
+			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), cls, cls);
 		} catch (IOException e) {
 			// never occure
 		}
 		return value;
 	}
 	
-	public <T> T parse(CharSequence s, Class<? extends T> c, Type t)
-		throws JSONParseException, JSONConvertException {
+	public <T> T parse(CharSequence s, Class<? extends T> cls, Type type)
+		throws JSONParseException {
 		T value = null;
 		try {
-			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, t);
+			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), cls, type);
 		} catch (IOException e) {
 			// never occure
 		}
@@ -568,28 +568,40 @@ public class JSON extends Converter {
 		return parse(new ReaderParserSource(in));
 	}
 	
-	public <T> T parse(InputStream in, Class<? extends T> c)
+	public <T> T parse(InputStream in, Class<? extends T> cls)
 		throws JSONParseException, JSONConvertException {
-		return parse(in, c);
+		return parse(in, cls);
 	}
 	
-	public <T> T parse(InputStream in, Class<? extends T> c, Type t)
+	public <T> T parse(InputStream in, Class<? extends T> cls, Type type)
 		throws JSONParseException, JSONConvertException {
-		return parse(in, c, t);
+		return parse(in, cls, type);
 	}
 	
 	public Object parse(Reader reader) throws IOException, JSONParseException {
 		return parse(new ReaderParserSource(reader));
 	}
 	
-	public <T> T parse(Reader reader, Class<? extends T> c) 
-		throws IOException, JSONParseException, JSONConvertException {
-		return convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, c);
+	public <T> T parse(Reader reader, Class<? extends T> cls) 
+		throws IOException, JSONParseException {
+		return parse(new ReaderParserSource(reader), cls, cls);
 	}
 	
-	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
-		throws IOException, JSONParseException, JSONConvertException {
-		return convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, t);
+	public <T> T parse(Reader reader, Class<? extends T> cls, Type type)
+		throws IOException, JSONParseException {
+		return parse(new ReaderParserSource(reader), cls, type);
+	}
+	
+	private <T> T parse(ParserSource s, Class<? extends T> cls, Type type) 
+		throws IOException, JSONParseException {
+		T o = null;
+		try {
+			o = convertChild(ROOT_KEY, parse(s), cls, type);
+		} catch (JSONParseException e) {
+			e.s = s;
+			throw e;
+		}
+		return o;
 	}
 	
 	private Object parse(ParserSource s) throws IOException, JSONParseException {
