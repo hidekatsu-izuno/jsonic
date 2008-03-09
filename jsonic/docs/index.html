@@ -228,7 +228,7 @@ JSON json = new JSON() {
     return super.create(c);
   }
   
-  <span class="comment">// 変換方法をカスタマイズできます。例外が投げられた場合、処理は停止し
+  <span class="comment">// 引数で指定された内容に従い変換します。例外が投げられた場合、
   // JSONConvertExceptionでラップされ呼び出し元に通知されます。</span>
   protected <span class="em">&lt;T&gt; T convert(Object key, Object value,
     Class&lt;? extends T&gt; c, Type type)</span> throws Exception {
