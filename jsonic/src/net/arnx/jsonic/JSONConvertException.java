@@ -18,11 +18,11 @@ package net.arnx.jsonic;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConvertException extends RuntimeException {
+public class JSONConvertException extends RuntimeException {
 	private static final long serialVersionUID = -6173125387096087580L;
 	private List<Object> keys = new ArrayList<Object>();
 	
-	ConvertException(String message, Throwable cause) {
+	JSONConvertException(String message, Throwable cause) {
 		super(message, cause);
 	}
 	
