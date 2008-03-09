@@ -222,8 +222,7 @@ public class JSON extends Converter {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
-	public static <T> T decode(String source, Class<? extends T> c) 
-		throws JSONParseException, JSONConvertException {
+	public static <T> T decode(String source, Class<? extends T> c) throws JSONParseException {
 		Class<?> context = c.getEnclosingClass();
 		if (context == null) context = c;
 		return (new JSON(context)).parse(source, c);
