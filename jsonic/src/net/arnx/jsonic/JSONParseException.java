@@ -10,6 +10,10 @@ public class JSONParseException extends RuntimeException {
 		this.s = s;
 	}
 	
+	JSONParseException(String message, Throwable cause) {
+		super(message, cause);
+	}
+	
 	public long getLineNumber() {
 		return s.getLineNumber();
 	}

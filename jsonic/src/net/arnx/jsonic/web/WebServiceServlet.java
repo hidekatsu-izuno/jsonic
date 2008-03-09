@@ -249,14 +249,14 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			error = new RpcError(-32601, "Method not found.");
-		} catch (JSONParseException e) {
-			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
-			error = new RpcError(-32700, "Parse error.");
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
 			error = new RpcError(-32602, "Invalid params.");
+		} catch (JSONParseException e) {
+			container.debug(e.getMessage());
+			response.setStatus(SC_BAD_REQUEST);
+			error = new RpcError(-32700, "Parse error.");
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
@@ -371,11 +371,11 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
 			return;
-		} catch (JSONParseException e) {
+		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;
-		} catch (JSONConvertException e) {
+		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST);
 			return;
