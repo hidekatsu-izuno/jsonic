@@ -228,9 +228,8 @@ JSON json = new JSON() {
     return super.create(c);
   }
   
-  <span class="comment">// 変換に失敗した時に呼び出されます。戻り値に変換後の値が返された場合、処理は継続され
-  // ます。逆に例外が投げられた場合、処理は停止しJSONConvertExceptionが例外をラップし
-  // 呼び出し元に通知します。</span>
+  <span class="comment">// 変換方法をカスタマイズできます。例外が投げられた場合、処理は停止し
+  // JSONConvertExceptionでラップされ呼び出し元に通知されます。</span>
   protected <span class="em">&lt;T&gt; T convert(Object key, Object value,
     Class&lt;? extends T&gt; c, Type type)</span> throws Exception {
     
