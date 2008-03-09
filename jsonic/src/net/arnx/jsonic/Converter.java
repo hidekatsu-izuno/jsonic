@@ -568,7 +568,7 @@ public abstract class Converter {
 		return sb.toString();
 	}
 	
-	protected Map<String, Member> getGetProperties(Class<?> c) {
+	Map<String, Member> getGetProperties(Class<?> c) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
 		boolean access = tryAccess(c);
@@ -611,7 +611,7 @@ public abstract class Converter {
 		return props;
 	}
 	
-	protected Map<String, Member> getSetProperties(Class<?> c) {
+	Map<String, Member> getSetProperties(Class<?> c) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
 		boolean access = tryAccess(c);
