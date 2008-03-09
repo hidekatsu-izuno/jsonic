@@ -193,7 +193,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#io">Reader/InputStreamによるparse</a></li>
 <li><a href="#generics">総称型を指定してのdecode/parse</a></li>
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
-<li><a href="#innerclass">内部クラスを利用したデコード</a></li>
+<li><a href="#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 </ul>
@@ -320,16 +320,14 @@ database {
 </pre>
 <p>※version 0.9.3まであった拡張モードは0.9.4以降廃止されました。</p>
 
-<h4 id="innerclass">■ コンテキストの指定 <span class="subtitle">- 内部クラスを利用したデコード</span></h4>
-<p>decode/parseメソッドの引数にClassオブジェクトを指定するということは、指定されたクラス通常publicでなければならないことを意味します。
-しかし、JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
-JSONICでは、decodeメソッドやparseメソッドの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。</p>
+<h4 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h4>
+<p>JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
+JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。</p>
 <pre class="source">
 public class EnclosingClass {
   public void decode() {
-    JSON json = <span class="em">new JSON(this)</span>; <span class="comment">// このクラスのコンテキストで動作</span>
-    json.<span class="em">setContext(this)</span>; // <span class="comment">setContextを使って指定することも可能です</span>
-    InnerClass ic = json.parse("{\"a\": 100}", InnerClass.class);
+    JSON json = <span class="em">new JSON()</span>; 
+    InnerClass ic = json.parse("{\"a\": 100}", InnerClass.class); <span class="comment">// このクラスのコンテキストで動作</span>
     
     System.out.println("ic.a = " + ic.a); <span class="comment">// ic.a = 100</span>
   }
@@ -339,6 +337,8 @@ public class EnclosingClass {
   }
 }
 </pre>
+<p>※version 0.9.6まであったsetContextは0.9.7以降廃止されました。</p>
+
 
 <h4 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h4>
 <p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。
@@ -584,6 +584,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <h3>2008/03/02 version 0.9.7</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
+<li>setContextを廃止し、常に引数に指定したObject/Classのコンテキストで動作するように変更しました。</li>
 <li>JSONConvertExceptionがJSONParseExceptionを継承するようにしました。</li>
 <li>MapのFormat時にkeyがStringでない場合ClassCastExceptionが発生し変換に失敗する問題を修正しました。</li>
 <li>Parse時にJSON arrayからMapへの変換に対応しました。</li>

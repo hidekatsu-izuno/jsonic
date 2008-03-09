@@ -249,7 +249,9 @@ public class JSON extends Converter {
 	public Appendable format(Object source, Appendable ap) throws IOException {
 		Class context = source.getClass().getEnclosingClass();
 		setContext((context != null) ? context : source.getClass());
-		return format(source, ap, 0);
+		ap = format(source, ap, 0);
+		setContext(null);
+		return ap;
 	}
 	
 	private Appendable format(Object o, Appendable ap, int level) throws IOException {
@@ -594,6 +596,8 @@ public class JSON extends Converter {
 		} catch (JSONParseException e) {
 			e.s = s;
 			throw e;
+		} finally {
+			setContext(null);
 		}
 		return o;
 	}
