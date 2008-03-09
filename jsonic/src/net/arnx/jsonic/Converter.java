@@ -96,21 +96,22 @@ public abstract class Converter {
 	}
 	
 	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws ConvertException {
-		Object result = null;
+		T result = null;
 		Class cast = (c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c;
 		
 		try {
-			result = cast.cast(convert(key, value, c, type));
+			result = (T)cast.cast(convert(key, value, c, type));
 		} catch (ConvertException e) {
 			e.add(key);
 			throw e;
 		} catch (Exception e) {
-			throw new ConvertException(getMessage("converter.convert.ConversionError", 
-					(value instanceof String) ? "\"" + value + "\"" : value, 
-					type), key, e);
+			ConvertException ce = new ConvertException(getMessage("converter.convert.ConversionError", 
+					(value instanceof String) ? "\"" + value + "\"" : value, type), e);
+			ce.add(key);
+			throw ce;
 		}
 
-		return (T)result;
+		return result;
 	}
 	
 	/**

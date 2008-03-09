@@ -22,9 +22,8 @@ public class ConvertException extends RuntimeException {
 	private static final long serialVersionUID = -6173125387096087580L;
 	private List<Object> keys = new ArrayList<Object>();
 	
-	ConvertException(String message, Object key, Throwable cause) {
+	ConvertException(String message, Throwable cause) {
 		super(message, cause);
-		add(key);
 	}
 	
 	void add(Object key) {

@@ -2,7 +2,6 @@ package net.arnx.jsonic;
 
 import static org.junit.Assert.*;
 
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -18,7 +17,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
-import java.awt.Point;
 import java.io.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
