@@ -110,13 +110,9 @@ public abstract class Converter {
 			e.add(key);
 			throw e;
 		} catch (Exception e) {
-			try {
-				result = cast.cast(handleConversionFailure(key, value, c, type, e));
-			} catch (Exception e2) {
-				throw new ConvertException(getMessage("converter.convert.ConversionError", 
-						(value instanceof String) ? "\"" + value + "\"" : value, 
-						type), key, e2);
-			}
+			throw new ConvertException(getMessage("converter.convert.ConversionError", 
+					(value instanceof String) ? "\"" + value + "\"" : value, 
+					type), key, e);
 		}
 
 		return (T)result;
@@ -483,21 +479,6 @@ public abstract class Converter {
 		if (Modifier.isTransient(modifiers)) return true;
 		if (member.getDeclaringClass().equals(Object.class)) return true;
 		return false;
-	}
-	
-	/**
-	 * Handles the conversion failure.
-	 * 
-	 * @param key key value
-	 * @param value The converting object.
-	 * @param c The converting class
-	 * @param type The converting generics type
-	 * @param e The exception object throwed when converting.
-	 * @return the converted value.
-	 * @exception the exception caused when value falis to convert.
-	 */
-	protected <T> T handleConversionFailure(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
-		throw e;
 	}
 	
 	protected Object create(Class<?> c) throws Exception {

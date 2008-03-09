@@ -599,16 +599,7 @@ public class JSONTest {
 	@Test
 	@SuppressWarnings({ "unchecked", "serial", "unused" })
 	public void testConvert() throws Exception {
-		final int[] count = new int[1];
-		count[0] = 0;
-		
-		JSON json = new JSON() {
-			@Override
-			protected <T> T handleConversionFailure(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
-				count[0]++;
-				throw e;
-			}
-		};
+		JSON json = new JSON();
 		
 		// boolean
 		assertEquals(Boolean.TRUE, json.convertChild(null, 100, boolean.class, boolean.class));
@@ -685,16 +676,14 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
-		count[0] = 0;
 		try {
 			json.convertChild('$', "aaa", int.class, int.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertEquals(1, count[0]);	
+			assertNotNull(e);
 		}
 		
-		count[0] = 0;
 		try {
 			Object test = new Object() {
 				public int aaa;
@@ -707,10 +696,9 @@ public class JSONTest {
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertEquals(1, count[0]);			
+			assertNotNull(e);
 		}
 		
-		count[0] = 0;
 		try {
 			Object test = new Object() {
 				public int[] aaa;
@@ -725,7 +713,7 @@ public class JSONTest {
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertEquals(1, count[0]);			
+			assertNotNull(e);
 		}
 	}
 	
@@ -761,23 +749,6 @@ public class JSONTest {
 			sb.append(" ");
 		}
 		return sb.toString();
-	}
-	
-	@Test
-	@SuppressWarnings("unchecked")
-	public void testHandleConvertError() throws Exception {
-		JSON json = new JSON() {
-			@Override
-			protected <T> T handleConversionFailure(Object key, Object value, Class<? extends T> c, Type type, Exception e) throws Exception {
-				if (c == Point.class && value instanceof List) {
-					return (T)new Point(Integer.parseInt(((List)value).get(0).toString()), 
-							Integer.parseInt(((List)value).get(1).toString()));
-				}
-				return super.handleConversionFailure(key, value, c, type, e);
-			}
-		};
-		
-		assertEquals(new Point(50, 50), json.parse("[50, 50]", Point.class));
 	}
 	
 	@Test
