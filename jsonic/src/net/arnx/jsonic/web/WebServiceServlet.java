@@ -73,11 +73,9 @@ public class WebServiceServlet extends HttpServlet {
 		JSON json = new JSON();
 		
 		try {
-			json.setContext(this);
 			config = json.parse(configText, Config.class);
 			if (config.container == null) config.container = Container.class;
 
-			json.setContext(config.container);
 			container = (Container)json.parse(configText, config.container);
 			container.init(getServletContext());
 		} catch (Exception e) {
@@ -215,7 +213,7 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		JSONInvoker json = new JSONInvoker(this);
+		JSONInvoker json = new JSONInvoker();
 		
 		// request processing
 		RpcRequest req = null;
@@ -237,7 +235,6 @@ public class WebServiceServlet extends HttpServlet {
 						throw new NoSuchMethodException(req.method);
 					}
 					
-					json.setContext(component);
 					result = json.invoke(component, req.method.substring(delimiter+1), req.params);
 				}
 			}
@@ -328,7 +325,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// request processing
-		JSONInvoker json = new JSONInvoker(this);
+		JSONInvoker json = new JSONInvoker();
 		
 		Object res = null;
 		try {
@@ -361,7 +358,6 @@ public class WebServiceServlet extends HttpServlet {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
 			}
-			json.setContext(component);
 			res = json.invoke(component, methodName, params);
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
@@ -452,10 +448,6 @@ public class WebServiceServlet extends HttpServlet {
 	}
 	
 	class JSONInvoker extends JSON {
-		public JSONInvoker(Object context) {
-			super(context);
-		}
-		
 		public Object invoke(Object o, String methodName, List<Object> args) throws Exception {
 			if (args == null) {
 				args = Collections.EMPTY_LIST;

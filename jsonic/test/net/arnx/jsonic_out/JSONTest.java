@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 import net.arnx.jsonic.JSON;
-import net.arnx.jsonic.JSONConvertException;
 
 public class JSONTest {
 	
@@ -20,21 +19,13 @@ public class JSONTest {
 	@Test
 	@SuppressWarnings("unused")
 	public void testDecodeInnerClass() throws Exception {
-		JSON json = new JSON(this);
+		JSON json = new JSON();
 		
 		assertEquals(new Hoge(), json.parse("{\"a\":100}", Hoge.class));
 
 		assertEquals(new InnerHoge(), json.parse("{\"a\":100}", InnerHoge.class));
 		
 		assertEquals(new PrivateInnerHoge(), json.parse("{\"a\":100}", PrivateInnerHoge.class));
-		
-		json.setContext(null);
-		try {
-			json.parse("{\"a\":100}", InnerHoge.class);
-			fail();
-		} catch (JSONConvertException e) {
-			assertEquals(IllegalAccessException.class, e.getCause().getClass());
-		}
 		
 		assertEquals(new InnerHoge(), JSON.decode("{\"a\":100}", InnerHoge.class));
 	}

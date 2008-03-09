@@ -318,7 +318,7 @@ public class JSONTest {
 	@SuppressWarnings({ "unchecked", "serial" })
 	public void testParse() throws Exception {
 		Locale.setDefault(Locale.JAPANESE);
-		JSON json = new JSON(this);
+		JSON json = new JSON();
 		
 		try {
 			CharSequence cs = null;
@@ -687,7 +687,6 @@ public class JSONTest {
 				public int aaa;
 			};
 			
-			json.setContext(this);
 			Map map = new LinkedHashMap();
 			map.put("aaa", "aaa");
 			json.convertChild('$', map, test.getClass(), test.getClass());
@@ -702,7 +701,6 @@ public class JSONTest {
 				public int[] aaa;
 			};
 			
-			json.setContext(this);
 			Map map = new LinkedHashMap();
 			ArrayList list = new ArrayList();
 			list.add("aaa");

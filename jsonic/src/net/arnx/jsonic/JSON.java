@@ -146,11 +146,6 @@ public class JSON extends Converter {
 	private static final Character ROOT_KEY = '$';
 	
 	public JSON() {
-		this(null);
-	}
-	
-	public JSON(Object context) {
-		setContext(context);
 	}
 	
 	boolean prettyPrint = false;
@@ -197,7 +192,7 @@ public class JSON extends Converter {
 	 * @return a json string
 	 */
 	public static String encode(Object source, boolean prettyPrint) {		
-		JSON json = new JSON(source);
+		JSON json = new JSON();
 		json.setPrettyPrint(prettyPrint);		
 		return json.format(source);
 	}
@@ -223,9 +218,7 @@ public class JSON extends Converter {
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static <T> T decode(String source, Class<? extends T> c) throws JSONParseException {
-		Class<?> context = c.getEnclosingClass();
-		if (context == null) context = c;
-		return (new JSON(context)).parse(source, c);
+		return new JSON().parse(source, c);
 	}
 	
 	/**
@@ -240,9 +233,7 @@ public class JSON extends Converter {
 	 */
 	public static <T> T decode(String source, Class<? extends T> c, Type t)
 	throws JSONParseException, JSONConvertException {
-		Class<?> context = c.getEnclosingClass();
-		if (context == null) context = c;
-		return (new JSON(context)).parse(source, c, t);
+		return new JSON().parse(source, c, t);
 	}
 	
 	public String format(Object source) {
@@ -256,6 +247,8 @@ public class JSON extends Converter {
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
+		Class context = source.getClass().getEnclosingClass();
+		setContext((context != null) ? context : source.getClass());
 		return format(source, ap, 0);
 	}
 	
@@ -545,7 +538,7 @@ public class JSON extends Converter {
 		throws JSONParseException {
 		T value = null;
 		try {
-			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), cls, cls);
+			value = parse(new CharSequenceParserSource(s), cls, cls);
 		} catch (IOException e) {
 			// never occure
 		}
@@ -556,7 +549,7 @@ public class JSON extends Converter {
 		throws JSONParseException {
 		T value = null;
 		try {
-			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), cls, type);
+			value = parse(new CharSequenceParserSource(s), cls, type);
 		} catch (IOException e) {
 			// never occure
 		}
@@ -595,6 +588,8 @@ public class JSON extends Converter {
 		throws IOException, JSONParseException {
 		T o = null;
 		try {
+			Class context = cls.getEnclosingClass();
+			setContext((context != null) ? context : cls);
 			o = convertChild(ROOT_KEY, parse(s), cls, type);
 		} catch (JSONParseException e) {
 			e.s = s;
@@ -1334,22 +1329,15 @@ abstract class Converter {
 		PRIMITIVE_MAP.put(char.class, '\0');
 	}
 	
-	private Class<?> contextClass = null;
-	private Object context = null;
+	private Class<?> context = null;
 	
 	/**
 	 * Sets context for inner class.
 	 * 
 	 * @param value context object or class
 	 */
-	public void setContext(Object value) {
-		if (value instanceof Class<?>) {
-			this.context = null;
-			this.contextClass = (Class<?>)value;
-		} else {
-			this.context = value;
-			this.contextClass = (value != null) ? value.getClass() : null;
-		}
+	void setContext(Class<?> cls) {
+		this.context = cls;
 	}
 
 	Locale locale;
@@ -1775,7 +1763,7 @@ abstract class Converter {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
 			if(tryAccess(c)) con.setAccessible(true);
-			instance = con.newInstance((eClass.equals(this.contextClass)) ? this.context : null);
+			instance = con.newInstance((Object)null);
 		} else {
 			if (Date.class.isAssignableFrom(c)) {
 				try {
@@ -1810,11 +1798,11 @@ abstract class Converter {
 	
 	private boolean tryAccess(Class<?> c) {
 		int modifier = c.getModifiers();
-		if (this.contextClass != null && !Modifier.isPublic(modifier)) {
+		if (this.context != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
-				return this.contextClass.equals(c.getEnclosingClass());
+				return this.context.equals(c.getEnclosingClass());
 			}
-			return c.getPackage().equals(this.contextClass.getPackage());
+			return c.getPackage().equals(this.context.getPackage());
 		}
 		return false;
 	}
