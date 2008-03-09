@@ -116,7 +116,7 @@ public abstract class Converter {
 	
 	/**
 	 * Converts Map/List/Number/String/Boolean/null to other Java Objects. If you converts a lower level object in this method, 
-	 * you should call convertChild method.
+	 * You should call convertChild method.
 	 * 
 	 * @param key property key object. If the parent is a array, it is Integer. otherwise it is String. 
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
