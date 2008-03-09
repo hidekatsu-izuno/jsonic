@@ -1,16 +1,9 @@
 package net.arnx.jsonic;
 
-import java.io.IOException;
-
 public class JSONParseException extends RuntimeException {
 	private static final long serialVersionUID = -8323989588488596436L;
 	
 	private ParserSource s;
-	
-	JSONParseException(IOException e, ParserSource s) {
-		super("IOError: " + e.getMessage(), e);
-		this.s = s;
-	}
 	
 	JSONParseException(String message, ParserSource s) {
 		super("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?");
