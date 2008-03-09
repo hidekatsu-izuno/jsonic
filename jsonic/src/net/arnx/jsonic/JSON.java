@@ -535,7 +535,7 @@ public class JSON extends Converter {
 	public Object parse(CharSequence cs) throws ParseException {
 		Object value = null;
 		try {
-			value = parse(new CharSequenceParserSource(cs), Object.class, Object.class);
+			value = parse(new CharSequenceParserSource(cs));
 		} catch (IOException e) {
 			// never occure
 		}
@@ -546,7 +546,7 @@ public class JSON extends Converter {
 		throws ParseException, ConvertException {
 		T value = null;
 		try {
-			value = parse(new CharSequenceParserSource(s), c, c);
+			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, c);
 		} catch (IOException e) {
 			// never occure
 		}
@@ -557,7 +557,7 @@ public class JSON extends Converter {
 		throws ParseException, ConvertException {
 		T value = null;
 		try {
-			value = parse(new CharSequenceParserSource(s), c, t);
+			value = convertChild(ROOT_KEY, parse(new CharSequenceParserSource(s)), c, t);
 		} catch (IOException e) {
 			// never occure
 		}
@@ -565,7 +565,7 @@ public class JSON extends Converter {
 	}
 	
 	public Object parse(InputStream in) throws IOException, ParseException {
-		return parse(new ReaderParserSource(in), Object.class, Object.class);
+		return parse(new ReaderParserSource(in));
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> c)
@@ -579,20 +579,20 @@ public class JSON extends Converter {
 	}
 	
 	public Object parse(Reader reader) throws IOException, ParseException {
-		return parse(new ReaderParserSource(reader), Object.class, Object.class);
+		return parse(new ReaderParserSource(reader));
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c) 
 		throws IOException, ParseException, ConvertException {
-		return parse(new ReaderParserSource(reader), c, c);
+		return convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, c);
 	}
 	
 	public <T> T parse(Reader reader, Class<? extends T> c, Type t)
 		throws IOException, ParseException, ConvertException {
-		return parse(new ReaderParserSource(reader), c, t);
+		return convertChild(ROOT_KEY, parse(new ReaderParserSource(reader)), c, t);
 	}
 	
-	private <T> T parse(ParserSource s, Class<? extends T> cls, Type type) throws IOException, ParseException {
+	private Object parse(ParserSource s) throws IOException, ParseException {
 		Object o = null;
 
 		int n = -1;
@@ -627,8 +627,7 @@ public class JSON extends Converter {
 			}
 		}
 		
-		if (o == null) o = new LinkedHashMap<String, Object>();
-		return convertChild(ROOT_KEY, o, cls, type);
+		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
 	private Map<String, Object> parseObject(ParserSource s, int level) throws IOException, ParseException {
