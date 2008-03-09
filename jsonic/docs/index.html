@@ -223,10 +223,6 @@ Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">
 <p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を追加するために次のようなオーバーライド可能なメソッドが用意されています。</p>
 <pre class="source">
 JSON json = new JSON() {
-  <span class="comment">// 型cに対するインスタンスを生成します</span>
-  protected <span class="em">Object create(Class c)</span> {
-    return super.create(c);
-  }
   
   <span class="comment">// 引数で指定された内容に従い変換します。例外が投げられた場合、
   // JSONConvertExceptionでラップされ呼び出し元に通知されます。</span>
@@ -242,6 +238,11 @@ JSON json = new JSON() {
       );
     }
     return super.convert(key, value, c, type);
+  }
+  
+  <span class="comment">// 型cに対するインスタンスを生成します</span>
+  protected <span class="em">Object create(Class c)</span> {
+    return super.create(c);
   }
       
   <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
