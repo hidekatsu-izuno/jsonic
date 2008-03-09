@@ -669,7 +669,7 @@ public class JSONTest {
 		try {
 			json.convertChild('$', 5, ExampleEnum.class, ExampleEnum.class);
 			fail();		
-		} catch (Exception e) {
+		} catch (JSONConvertException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}

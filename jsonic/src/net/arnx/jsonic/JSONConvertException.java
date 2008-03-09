@@ -14,6 +14,10 @@ public class JSONConvertException extends JSONParseException {
 	void add(Object key) {
 		keys.add(key);
 	}
+	
+	void setParserSource(ParserSource s) {
+		this.s = s;
+	}
 
 	@Override
 	public String getMessage() {
