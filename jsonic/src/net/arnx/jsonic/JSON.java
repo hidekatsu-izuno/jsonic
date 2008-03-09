@@ -1320,6 +1320,7 @@ class ReaderParserSource implements ParserSource {
 	}
 }
 
+@SuppressWarnings({"unchecked"})
 abstract class Converter {
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
