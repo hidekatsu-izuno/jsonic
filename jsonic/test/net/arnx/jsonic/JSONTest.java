@@ -768,6 +768,8 @@ public class JSONTest {
 	public List<List>[] t7;
 	public List<List>[][] t8;
 	
+	public List<Integer> tx;
+	
 	@Test
 	public void testGetRawType() throws Exception {
 		List<List<Object>> xt1 = new ArrayList<List<Object>>();
@@ -792,6 +794,33 @@ public class JSONTest {
 		assertEquals(List[].class, getRawType.invoke(null, this.getClass().getField("t6").getGenericType()));
 		assertEquals(List[].class, getRawType.invoke(null, this.getClass().getField("t7").getGenericType()));
 		assertEquals(List[][].class, getRawType.invoke(null, this.getClass().getField("t8").getGenericType()));
+		
+		List<BigDecimal> listA = new ArrayList<BigDecimal>();
+		listA.add(new BigDecimal("1"));
+		listA.add(new BigDecimal("2"));
+		listA.add(new BigDecimal("3"));
+		listA.add(new BigDecimal("4"));
+		listA.add(new BigDecimal("5"));
+		
+		List<Integer> listB = new ArrayList<Integer>();
+		listB.add(1);
+		listB.add(2);
+		listB.add(3);
+		listB.add(4);
+		listB.add(5);
+		
+		assertEquals(listA, JSON.decode("[1,2,3,4,5]", this.getClass().getField("tx").getType()));
+		assertEquals(listB, JSON.decode("[1,2,3,4,5]", this.getClass().getField("tx").getGenericType()));
+		
+		JSON json = new JSON();
+		assertEquals(listA, json.parse("[1,2,3,4,5]", this.getClass().getField("tx").getType()));
+		assertEquals(listB, json.parse("[1,2,3,4,5]", this.getClass().getField("tx").getGenericType()));
+
+		assertEquals(listA, json.parse(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getType()));
+		assertEquals(listB, json.parse(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getGenericType()));
+
+		assertEquals(listA, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
+		assertEquals(listB, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
 	}
 }
 
