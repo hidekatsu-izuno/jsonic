@@ -322,7 +322,8 @@ database {
 
 <h4 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h4>
 <p>JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
-JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。</p>
+JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。<br />
+ただし、内部クラスのインスタンスを生成する際、包む側のインスタンスはセットされないのでご注意ください。。</p>
 <pre class="source">
 public class EnclosingClass {
   public void decode() {
@@ -334,6 +335,10 @@ public class EnclosingClass {
   
   class InnerClass {
     public int a = 0;
+    
+    public void accessEnclosingClass() {
+      decode(); <span class="comment">// 実行時にNullPointerExceptionが発生</span>
+    }
   }
 }
 </pre>
