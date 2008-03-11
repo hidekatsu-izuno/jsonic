@@ -9,8 +9,7 @@ public class JSONTest {
 	
 	@Test
 	@SuppressWarnings("unused")
-	public void testEncodeInnerClass() throws Exception {
-		
+	public void testEncodeInnerClass() throws Exception {		
 		assertEquals("{\"a\":100}", JSON.encode((new Object() {
 			public int a = 100;
 		})));
@@ -53,6 +52,10 @@ public class JSONTest {
 			if (a != other.a)
 				return false;
 			return true;
+		}
+		
+		public class InnerInnerHoge {
+			
 		}
 	}
 	
