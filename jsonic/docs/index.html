@@ -253,7 +253,6 @@ JSON json = new JSON() {
   }    
 };
 </pre>
-<p>※version 0.9.5までは、変換方法の拡張はconvertメソッドで行っていましたが、0.9.6以降はhandleConversionFailureで行う必要があります。</p>
 
 <h4 id="io">■ Reader/InputStreamによるparse</h4>
 <p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しか対応できませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを読み込むことができます。</p>
@@ -321,9 +320,8 @@ database {
 
 <h4 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h4>
 <p>JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
-JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一のパッケージのクラスを自動的にアクセス可能に変更します。<br />
-ただし、この場合、内部クラスのインスタンスを生成する際、包含するクラスのインスタンスはセットされません。
-包含するクラスのインスタンスを設定する場合は、setContextを利用ください。</p>
+JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一パッケージの内部クラスや無名クラスを自動的にアクセス可能に変更します。<br />
+ただし、この場合に生成された内部クラスのインスタンスには包含するクラスのインスタンスがセットされていない状態になります。内部クラスから包含するクラスのインスタンスにアクセスしたい場合や引数に指定したクラス以外のコンテキストで実行したい場合は、setContextを利用して明示的に指定してください。</p>
 <pre class="source">
 public class EnclosingClass {
   public void decode() {
