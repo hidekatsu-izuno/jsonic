@@ -1193,7 +1193,7 @@ public class JSON {
 		return MessageFormat.format(bundle.getString(id), args);
 	}
 	
-	public Object convert(Object value, Type type) throws JSONConvertException {
+	public final Object convert(Object value, Type type) throws JSONConvertException {
 		Class<?> cls = getRawType(type);
 		if (context != null) scope = context.getClass();
 		if (scope == null) scope = cls.getEnclosingClass();
@@ -1201,6 +1201,16 @@ public class JSON {
 		return convertChild(ROOT_KEY, value, cls, type);
 	}
 	
+	/**
+	 * If you converts a lower level object in this method, You should call this method.
+	 * 
+	 * @param key property key object. If the parent is a array, it is Integer. otherwise it is String. 
+	 * @param value null or the instance of Map, List, Number, String or Boolean.
+	 * @param c class for converting
+	 * @param type generics type for converting. type equals to c if not generics.
+	 * @return a converted object
+	 * @throws JSONConvertException if conversion failed.
+	 */
 	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
 		T result = null;
 		Class cast = (c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c;
