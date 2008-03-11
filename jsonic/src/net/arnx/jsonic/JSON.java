@@ -143,11 +143,51 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked"})
-public class JSON extends Converter {	
+public class JSON {
+	private static final Character ROOT_KEY = '$';
+	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
+	
+	static {
+		PRIMITIVE_MAP.put(boolean.class, false);
+		PRIMITIVE_MAP.put(byte.class, (byte)0);
+		PRIMITIVE_MAP.put(short.class, (short)0);
+		PRIMITIVE_MAP.put(int.class, 0);
+		PRIMITIVE_MAP.put(long.class, 0l);
+		PRIMITIVE_MAP.put(float.class, 0.0f);
+		PRIMITIVE_MAP.put(double.class, 0.0);
+		PRIMITIVE_MAP.put(char.class, '\0');
+	}
+
 	public JSON() {
 	}
 	
-	boolean prettyPrint = false;
+	private Class<?> scope = null;	
+	private Object context = null;
+	
+	/**
+	 * Sets context for inner class.
+	 * 
+	 * @param value context object
+	 */
+	public void setContext(Object value) {
+		this.context = value;
+	}
+
+	private Locale locale;
+	
+	/**
+	 * Sets locale for conversion or message.
+	 * 
+	 * @param locale
+	 */
+	public void setLocale(Locale locale) {
+		if (locale == null) {
+			throw new NullPointerException();
+		}
+		this.locale = locale;
+	}
+	
+	private boolean prettyPrint = false;
 	
 	/**
 	 * Output json string is to human-readable format.
@@ -158,7 +198,7 @@ public class JSON extends Converter {
 		this.prettyPrint = value;
 	}
 	
-	int maxDepth = 32;
+	private int maxDepth = 32;
 	
 	/**
 	 * Sets maximum depth for the nest level.
@@ -229,9 +269,8 @@ public class JSON extends Converter {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
-	public static Object decode(String source, Type t)
-	throws JSONParseException {
-		return new JSON().parse(source, t);
+	public static Object decode(String source, Type type) throws JSONParseException {
+		return new JSON().parse(source, type);
 	}
 	
 	public String format(Object source) {
@@ -1141,231 +1180,6 @@ public class JSON extends Converter {
 		return MessageFormat.format(bundle.getString(id), args);
 	}
 	
-	@Override
-	void clear() {
-		super.clear();
-	}
-}
-
-interface ParserSource {
-	int next() throws IOException;
-	void back();
-	long getLineNumber();
-	long getColumnNumber();
-	long getOffset();
-	StringBuilder getCachedBuilder();
-}
-
-class CharSequenceParserSource implements ParserSource {
-	private int lines = 1;
-	private int columns = 1;
-	private int offset = 0;
-	
-	private CharSequence cs;
-	private StringBuilder cache = new StringBuilder(1000);
-	
-	public CharSequenceParserSource(CharSequence cs) {
-		if (cs == null) {
-			throw new NullPointerException();
-		}
-		this.cs = cs;
-	}
-	
-	public int next() {
-		if (offset < cs.length()) {
-			char c = cs.charAt(offset++);
-			if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
-				lines++;
-				columns = 0;
-			} else {
-				columns++;
-			}
-			return c;
-		}
-		return -1;
-	}
-	
-	public void back() {
-		offset--;
-		columns--;
-	}
-	
-	public long getLineNumber() {
-		return lines;
-	}
-	
-	public long getColumnNumber() {
-		return columns;
-	}
-	
-	public long getOffset() {
-		return offset;
-	}
-	
-	public StringBuilder getCachedBuilder() {
-		cache.setLength(0);
-		return cache;
-	}
-	
-	public String toString() {
-		return cs.subSequence(offset-columns+1, offset).toString();
-	}
-}
-
-class ReaderParserSource implements ParserSource {
-	private long lines = 1l;
-	private long columns = 1l;
-	private long offset = 0;
-
-	private Reader reader;
-	private char[] buf = new char[256];
-	private int start = 0;
-	private int end = 0;
-	private StringBuilder cache = new StringBuilder(1000);
-	
-	public ReaderParserSource(InputStream in) throws IOException {
-		if (!in.markSupported()) in = new BufferedInputStream(in);
-		this.reader = new InputStreamReader(in, determineEncoding(in));
-	}
-	
-	public ReaderParserSource(Reader reader) {
-		if (reader == null) {
-			throw new NullPointerException();
-		}
-		this.reader = reader;
-	}
-	
-	public int next() throws IOException {
-		if (start == end) {
-			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
-			if (size != -1) {
-				end = (end + size) % buf.length;
-			} else {
-				return -1;
-			}
-		}
-		char c = buf[start];
-		if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
-			lines++;
-			columns = 0;
-		} else {
-			columns++;
-		}
-		offset++;
-		start = (start+1) % buf.length;
-		return c;
-	}
-	
-	public void back() {
-		columns--;
-		start = (start+buf.length-1) % buf.length;
-	}
-	
-	public long getLineNumber() {
-		return lines;
-	}
-	
-	public long getColumnNumber() {
-		return columns;
-	}
-	
-	public long getOffset() {
-		return offset;
-	}
-	
-	public StringBuilder getCachedBuilder() {
-		cache.setLength(0);
-		return cache;
-	}
-	
-	private String determineEncoding(InputStream in) throws IOException {
-		String encoding = "UTF-8";
-
-		in.mark(4);
-		byte[] check = new byte[4];
-		int size = in.read(check);
-		if (size == 2) {
-			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
-					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
-				encoding = "UTF-16BE";
-			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
-					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
-				encoding = "UTF-16LE";
-			}
-		} else if (size == 4) {
-			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) == 0x00)) {
-				encoding = "UTF-32BE";
-			} else if (((check[2] & 0xFF) == 0x00 && (check[3] & 0xFF) == 0x00)) {
-				encoding = "UTF-32LE";
-			} else if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
-					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
-				encoding = "UTF-16BE";
-			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
-					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
-				encoding = "UTF-16LE";
-			}
-		}
-		in.reset();
-		
-		return encoding;
-	}
-	
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
-		for (int i = maxlength; i >= 0; i--) {
-			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
-		}
-		return sb.toString();
-	}
-}
-
-@SuppressWarnings({"unchecked"})
-abstract class Converter {
-	private static final Character ROOT_KEY = '$';
-	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
-	
-	static {
-		PRIMITIVE_MAP.put(boolean.class, false);
-		PRIMITIVE_MAP.put(byte.class, (byte)0);
-		PRIMITIVE_MAP.put(short.class, (short)0);
-		PRIMITIVE_MAP.put(int.class, 0);
-		PRIMITIVE_MAP.put(long.class, 0l);
-		PRIMITIVE_MAP.put(float.class, 0.0f);
-		PRIMITIVE_MAP.put(double.class, 0.0);
-		PRIMITIVE_MAP.put(char.class, '\0');
-	}
-	
-	Class<?> scope = null;	
-	Object context = null;
-	
-	/**
-	 * Sets context for inner class.
-	 * 
-	 * @param value context object
-	 */
-	public void setContext(Object value) {
-		this.context = value;
-	}
-
-	Locale locale;
-	
-	/**
-	 * Sets locale for conversion or message.
-	 * 
-	 * @param locale
-	 */
-	public void setLocale(Locale locale) {
-		if (locale == null) {
-			throw new NullPointerException();
-		}
-		this.locale = locale;
-	}
-	
-	public <T> T convert(Object value, Class<? extends T> cls) throws JSONConvertException {
-		return (T)convert(value, (Type)cls);
-	}
-	
 	public Object convert(Object value, Type type) throws JSONConvertException {
 		Class<?> cls = getRawType(type);
 		if (context != null) scope = context.getClass();
@@ -1847,7 +1661,7 @@ abstract class Converter {
 		return sb.toString();
 	}
 	
-	Map<String, Member> getGetProperties(Class<?> c) {
+	private Map<String, Member> getGetProperties(Class<?> c) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
 		boolean access = tryAccess(c);
@@ -1890,7 +1704,7 @@ abstract class Converter {
 		return props;
 	}
 	
-	Map<String, Member> getSetProperties(Class<?> c) {
+	private Map<String, Member> getSetProperties(Class<?> c) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
 		boolean access = tryAccess(c);
@@ -1927,7 +1741,7 @@ abstract class Converter {
 		return props;
 	}
 	
-	public static Class<?> getRawType(Type t) {
+	private static Class<?> getRawType(Type t) {
 		if (t instanceof Class) {
 			return (Class<?>)t;
 		}else if (t instanceof ParameterizedType) {
@@ -2032,14 +1846,181 @@ abstract class Converter {
 		return format.parse(value).getTime();
 	}
 	
-	private String getMessage(String id, Object... args) {
-		if (locale == null) locale = Locale.getDefault();
-		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
-		return MessageFormat.format(bundle.getString(id), args);
-	}
-	
 	void clear() {
 		this.scope = null;
+	}
+}
+
+interface ParserSource {
+	int next() throws IOException;
+	void back();
+	long getLineNumber();
+	long getColumnNumber();
+	long getOffset();
+	StringBuilder getCachedBuilder();
+}
+
+class CharSequenceParserSource implements ParserSource {
+	private int lines = 1;
+	private int columns = 1;
+	private int offset = 0;
+	
+	private CharSequence cs;
+	private StringBuilder cache = new StringBuilder(1000);
+	
+	public CharSequenceParserSource(CharSequence cs) {
+		if (cs == null) {
+			throw new NullPointerException();
+		}
+		this.cs = cs;
+	}
+	
+	public int next() {
+		if (offset < cs.length()) {
+			char c = cs.charAt(offset++);
+			if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
+				lines++;
+				columns = 0;
+			} else {
+				columns++;
+			}
+			return c;
+		}
+		return -1;
+	}
+	
+	public void back() {
+		offset--;
+		columns--;
+	}
+	
+	public long getLineNumber() {
+		return lines;
+	}
+	
+	public long getColumnNumber() {
+		return columns;
+	}
+	
+	public long getOffset() {
+		return offset;
+	}
+	
+	public StringBuilder getCachedBuilder() {
+		cache.setLength(0);
+		return cache;
+	}
+	
+	public String toString() {
+		return cs.subSequence(offset-columns+1, offset).toString();
+	}
+}
+
+class ReaderParserSource implements ParserSource {
+	private long lines = 1l;
+	private long columns = 1l;
+	private long offset = 0;
+
+	private Reader reader;
+	private char[] buf = new char[256];
+	private int start = 0;
+	private int end = 0;
+	private StringBuilder cache = new StringBuilder(1000);
+	
+	public ReaderParserSource(InputStream in) throws IOException {
+		if (!in.markSupported()) in = new BufferedInputStream(in);
+		this.reader = new InputStreamReader(in, determineEncoding(in));
+	}
+	
+	public ReaderParserSource(Reader reader) {
+		if (reader == null) {
+			throw new NullPointerException();
+		}
+		this.reader = reader;
+	}
+	
+	public int next() throws IOException {
+		if (start == end) {
+			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
+			if (size != -1) {
+				end = (end + size) % buf.length;
+			} else {
+				return -1;
+			}
+		}
+		char c = buf[start];
+		if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
+			lines++;
+			columns = 0;
+		} else {
+			columns++;
+		}
+		offset++;
+		start = (start+1) % buf.length;
+		return c;
+	}
+	
+	public void back() {
+		columns--;
+		start = (start+buf.length-1) % buf.length;
+	}
+	
+	public long getLineNumber() {
+		return lines;
+	}
+	
+	public long getColumnNumber() {
+		return columns;
+	}
+	
+	public long getOffset() {
+		return offset;
+	}
+	
+	public StringBuilder getCachedBuilder() {
+		cache.setLength(0);
+		return cache;
+	}
+	
+	private String determineEncoding(InputStream in) throws IOException {
+		String encoding = "UTF-8";
+
+		in.mark(4);
+		byte[] check = new byte[4];
+		int size = in.read(check);
+		if (size == 2) {
+			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
+					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
+				encoding = "UTF-16BE";
+			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
+					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
+				encoding = "UTF-16LE";
+			}
+		} else if (size == 4) {
+			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) == 0x00)) {
+				encoding = "UTF-32BE";
+			} else if (((check[2] & 0xFF) == 0x00 && (check[3] & 0xFF) == 0x00)) {
+				encoding = "UTF-32LE";
+			} else if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
+					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
+				encoding = "UTF-16BE";
+			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
+					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
+				encoding = "UTF-16LE";
+			}
+		}
+		in.reset();
+		
+		return encoding;
+	}
+	
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
+		for (int i = maxlength; i >= 0; i--) {
+			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
+		}
+		return sb.toString();
 	}
 }
 
