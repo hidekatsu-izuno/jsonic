@@ -143,9 +143,7 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 @SuppressWarnings({"unchecked"})
-public class JSON extends Converter {
-	private static final Character ROOT_KEY = '$';
-	
+public class JSON extends Converter {	
 	public JSON() {
 	}
 	
@@ -537,13 +535,7 @@ public class JSON extends Converter {
 	
 	public <T> T parse(CharSequence s, Class<? extends T> cls)
 		throws JSONParseException {
-		T value = null;
-		try {
-			value = (T)parse(new CharSequenceParserSource(s), cls);
-		} catch (IOException e) {
-			// never occure
-		}
-		return value;
+		return (T)parse(s, (Type)cls);
 	}
 	
 	public Object parse(CharSequence s, Type type)
@@ -562,13 +554,13 @@ public class JSON extends Converter {
 	}
 	
 	public <T> T parse(InputStream in, Class<? extends T> cls)
-		throws JSONParseException, JSONConvertException {
-		return (T)parse(in, cls);
+		throws IOException, JSONParseException, JSONConvertException {
+		return (T)parse(in, (Type)cls);
 	}
 	
 	public Object parse(InputStream in, Type type)
-		throws JSONParseException, JSONConvertException {
-		return parse(in, type);
+		throws IOException, JSONParseException, JSONConvertException {
+		return parse(new ReaderParserSource(in), type);
 	}
 	
 	public Object parse(Reader reader) throws IOException, JSONParseException {
@@ -577,7 +569,7 @@ public class JSON extends Converter {
 	
 	public <T> T parse(Reader reader, Class<? extends T> cls) 
 		throws IOException, JSONParseException {
-		return (T)parse(new ReaderParserSource(reader), cls);
+		return (T)parse(reader, (Type)cls);
 	}
 	
 	public Object parse(Reader reader, Type type)
@@ -587,13 +579,9 @@ public class JSON extends Converter {
 	
 	private Object parse(ParserSource s, Type type) 
 		throws IOException, JSONParseException {
-		Class<?> cls = Converter.getRawType(type);
 		Object o = null;
 		try {
-			if (context != null) scope = context.getClass();
-			if (scope == null) scope = cls.getEnclosingClass();
-			if (scope == null) scope = cls;
-			o = convertChild(ROOT_KEY, parse(s), cls, type);
+			o = convert(parse(s), type);
 		} catch (JSONParseException e) {
 			e.s = s;
 			throw e;
@@ -1144,6 +1132,17 @@ public class JSON extends Converter {
 			}
 		}	
 	}
+	
+	private String getMessage(String id, Object... args) {
+		if (locale == null) locale = Locale.getDefault();
+		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
+		return MessageFormat.format(bundle.getString(id), args);
+	}
+	
+	@Override
+	void clear() {
+		super.clear();
+	}
 }
 
 interface ParserSource {
@@ -1321,6 +1320,7 @@ class ReaderParserSource implements ParserSource {
 
 @SuppressWarnings({"unchecked"})
 abstract class Converter {
+	private static final Character ROOT_KEY = '$';
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
 	static {
@@ -1358,6 +1358,18 @@ abstract class Converter {
 			throw new NullPointerException();
 		}
 		this.locale = locale;
+	}
+	
+	public <T> T convert(Object value, Class<? extends T> cls) throws JSONConvertException {
+		return (T)convert(value, (Type)cls);
+	}
+	
+	public Object convert(Object value, Type type) throws JSONConvertException {
+		Class<?> cls = getRawType(type);
+		if (context != null) scope = context.getClass();
+		if (scope == null) scope = cls.getEnclosingClass();
+		if (scope == null) scope = cls;
+		return convertChild(ROOT_KEY, value, cls, type);
 	}
 	
 	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
@@ -1913,19 +1925,25 @@ abstract class Converter {
 		return props;
 	}
 	
-	static Class<?> getRawType(Type t) {
-		if (t instanceof ParameterizedType) {
+	public static Class<?> getRawType(Type t) {
+		if (t instanceof Class) {
+			return (Class<?>)t;
+		}else if (t instanceof ParameterizedType) {
 			return (Class<?>)((ParameterizedType)t).getRawType();
 		} else if (t instanceof GenericArrayType) {
-			return getRawType(((GenericArrayType)t).getGenericComponentType());
+			Class cls = null;
+			try {
+				cls = Array.newInstance(getRawType(((GenericArrayType)t).getGenericComponentType()), 0).getClass();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			return cls;
 		} else if (t instanceof WildcardType) {
 			Type[] types = ((WildcardType)t).getUpperBounds();
 			return (types.length > 0) ? getRawType(types[0]) : Object.class;
-		} else if (t instanceof Class) {
-			return (Class<?>)t;
 		} else {
 			return Object.class;
-		}		
+		}
 	}
 	
 	private Long convertDate(String value) throws java.text.ParseException {
@@ -2012,7 +2030,7 @@ abstract class Converter {
 		return format.parse(value).getTime();
 	}
 	
-	String getMessage(String id, Object... args) {
+	private String getMessage(String id, Object... args) {
 		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);

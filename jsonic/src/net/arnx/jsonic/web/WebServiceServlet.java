@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -49,7 +50,6 @@ import static javax.servlet.http.HttpServletResponse.*;
 @SuppressWarnings("unchecked")
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
-	private static final Character ROOT_KEY = '$';
 	
 	class Config {
 		public Class<? extends Container> container;
@@ -454,10 +454,11 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			Method method = container.findMethod(o, toLowerCamel(methodName), args);
-			Class<?>[] paramTypes = method.getParameterTypes();
+			Type[] paramTypes = method.getGenericParameterTypes();
 			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
 			for (int i = 0; i < params.length; i++) {
-				params[i] = convertChild(ROOT_KEY, args.get(i), paramTypes[i], paramTypes[i]);
+				setContext(o);
+				params[i] = convert(args.get(i), paramTypes[i]);
 			}
 			
 			return method.invoke(o, params);
