@@ -251,20 +251,20 @@ public class JSON {
 	 * Decodes a json string into a typed object.
 	 * 
 	 * @param source a json string to decode
-	 * @param c class for converting
+	 * @param cls class for converting
 	 * @return a decoded object
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
-	public static <T> T decode(String source, Class<? extends T> c) throws JSONParseException {
-		return new JSON().parse(source, c);
+	public static <T> T decode(String source, Class<? extends T> cls) throws JSONParseException {
+		return new JSON().parse(source, cls);
 	}
 	
 	/**
 	 * Decodes a json string into a typed object.
 	 * 
 	 * @param source a json string to decode
-	 * @param t type specified generics parameters
+	 * @param type type specified generics parameters
 	 * @return a decoded object
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
@@ -273,6 +273,12 @@ public class JSON {
 		return new JSON().parse(source, type);
 	}
 	
+	/**
+	 * Format a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @return a json string
+	 */
 	public String format(Object source) {
 		String text = null;
 		try {
@@ -283,6 +289,13 @@ public class JSON {
 		return text;
 	}
 	
+	/**
+	 * Format a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param ap a destination. ex: StringBuilder, Writer, ...
+	 * @return a json string
+	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
 		if (context != null) scope = context.getClass();
 		if (scope == null) scope = source.getClass().getEnclosingClass();
