@@ -247,10 +247,9 @@ public class JSON extends Converter {
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		Class context = source.getClass().getEnclosingClass();
-		setContext((context != null) ? context : source.getClass());
+		setScope(source.getClass());
 		ap = format(source, ap, 0);
-		setContext(null);
+		clear();
 		return ap;
 	}
 	
@@ -590,14 +589,15 @@ public class JSON extends Converter {
 		throws IOException, JSONParseException {
 		T o = null;
 		try {
-			Class context = cls.getEnclosingClass();
-			setContext((context != null) ? context : cls);
+			if (getContext() != null) setScope(getContext().getClass());
+			if (getScope() == null) setScope(cls.getEnclosingClass());
+			if (getScope() == null) setScope(cls);
 			o = convertChild(ROOT_KEY, parse(s), cls, type);
 		} catch (JSONParseException e) {
 			e.s = s;
 			throw e;
 		} finally {
-			setContext(null);
+			clear();
 		}
 		return o;
 	}
@@ -1333,15 +1333,29 @@ abstract class Converter {
 		PRIMITIVE_MAP.put(char.class, '\0');
 	}
 	
-	private Class<?> context = null;
+	private Class<?> scope = null;
+	
+	void setScope(Class<?> scope) {
+		this.scope = scope;
+	}
+	
+	Class<?> getScope() {
+		return this.scope;
+	}
+	
+	private Object context = null;
 	
 	/**
 	 * Sets context for inner class.
 	 * 
-	 * @param value context object or class
+	 * @param value context object
 	 */
-	void setContext(Class<?> cls) {
-		this.context = cls;
+	public void setContext(Object value) {
+		this.context = value;
+	}
+	
+	Object getContext() {
+		return this.context;
 	}
 
 	Locale locale;
@@ -1802,11 +1816,11 @@ abstract class Converter {
 	
 	private boolean tryAccess(Class<?> c) {
 		int modifier = c.getModifiers();
-		if (this.context != null && !Modifier.isPublic(modifier)) {
+		if (this.scope != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
-				return this.context.equals(c.getEnclosingClass());
+				return this.scope.equals(c.getEnclosingClass());
 			}
-			return c.getPackage().equals(this.context.getPackage());
+			return c.getPackage().equals(this.scope.getPackage());
 		}
 		return false;
 	}
@@ -2009,6 +2023,10 @@ abstract class Converter {
 		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);
+	}
+	
+	void clear() {
+		this.scope = null;
 	}
 }
 
