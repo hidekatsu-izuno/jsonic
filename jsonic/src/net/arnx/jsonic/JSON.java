@@ -161,8 +161,8 @@ public class JSON {
 	public JSON() {
 	}
 	
-	private Class<?> scope = null;	
 	private Object context = null;
+	private transient Class<?> scope = null;
 	
 	/**
 	 * Sets context for inner class.
