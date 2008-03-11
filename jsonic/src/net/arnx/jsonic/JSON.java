@@ -245,7 +245,9 @@ public class JSON extends Converter {
 	}
 	
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		scope = source.getClass();
+		if (context != null) scope = context.getClass();
+		if (scope == null) scope = source.getClass().getEnclosingClass();
+		if (scope == null) scope = source.getClass();
 		ap = format(source, ap, 0);
 		clear();
 		return ap;
@@ -1816,11 +1818,11 @@ abstract class Converter {
 	
 	private boolean tryAccess(Class<?> c) {
 		int modifier = c.getModifiers();
-		if (this.scope != null && !Modifier.isPublic(modifier)) {
+		if (scope != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
-				return this.scope.equals(c.getEnclosingClass());
+				return scope.equals(c.getEnclosingClass());
 			}
-			return c.getPackage().equals(this.scope.getPackage());
+			return c.getPackage().equals(scope.getPackage());
 		}
 		return false;
 	}

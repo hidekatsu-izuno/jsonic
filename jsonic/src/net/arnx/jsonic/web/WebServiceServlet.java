@@ -200,15 +200,6 @@ public class WebServiceServlet extends HttpServlet {
 		public Object id;
 	}
 	
-	class RpcError {
-		public int code;
-		public String message;
-		
-		public RpcError(int code, String message) {
-			this.code = code;
-			this.message = message;
-		}
-	}
 	
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
@@ -218,12 +209,16 @@ public class WebServiceServlet extends HttpServlet {
 		// request processing
 		RpcRequest req = null;
 		Object result = null;
-		RpcError error = null;
+		
+		int errorCode = 0;
+		String errorMessage = null;
+		
 		try {			
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
 				response.setStatus(SC_BAD_REQUEST);
-				error = new RpcError(-32600, "Invalid Request.");
+				errorCode = -32600;
+				errorMessage = "Invalid Request.";
 			} else {
 				int delimiter = req.method.lastIndexOf('.');
 				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
@@ -235,42 +230,51 @@ public class WebServiceServlet extends HttpServlet {
 						throw new NoSuchMethodException(req.method);
 					}
 					
+					json.setContext(component);
 					result = json.invoke(component, req.method.substring(delimiter+1), req.params);
 				}
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
-			error = new RpcError(-32601, "Method not found.");
+			errorCode = -32601;
+			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND);
-			error = new RpcError(-32601, "Method not found.");
+			errorCode = -32601;
+			errorMessage = "Method not found.";
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
-			error = new RpcError(-32602, "Invalid params.");
+			errorCode = -32602;
+			errorMessage = "Invalid params.";
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
 			response.setStatus(SC_BAD_REQUEST);
-			error = new RpcError(-32700, "Parse error.");
+			errorCode = -32700;
+			errorMessage = "Parse error.";
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
 			if (cause instanceof UnsupportedOperationException) {
 				response.sendError(SC_NOT_FOUND);
-				error = new RpcError(-32601, "Method not found.");				
+				errorCode = -32601;
+				errorMessage = "Method not found.";
 			} else if (cause instanceof IllegalArgumentException) {
 				response.setStatus(SC_BAD_REQUEST);
-				error = new RpcError(-32602, "Invalid params.");
+				errorCode = -32602;
+				errorMessage = "Invalid params.";
 			} else {
 				response.setStatus(SC_INTERNAL_SERVER_ERROR);
-				error = new RpcError(-32603, cause.getMessage());
+				errorCode = -32603;
+				errorMessage = cause.getMessage();
 			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.setStatus(SC_INTERNAL_SERVER_ERROR);
-			error = new RpcError(-32603, "Internal error.");
+			errorCode = -32603;
+			errorMessage = "Internal error.";
 		}
 		
 		// it's notification when id was null
@@ -284,12 +288,20 @@ public class WebServiceServlet extends HttpServlet {
 		
 		Map<String, Object> res = new LinkedHashMap<String, Object>();
 		res.put("result", result);
-		res.put("error", error);
+		if (errorCode == 0) {
+			res.put("error", null);
+		} else {
+			Map<String, Object> error = new LinkedHashMap<String, Object>();
+			error.put("code", errorCode);
+			error.put("message", errorMessage);
+			res.put("error", error);
+		}
 		res.put("id", (req != null) ? req.id : null);
 
 		Writer writer = response.getWriter();
 
-		try {	
+		try {
+			json.setContext(result);
 			json.setPrettyPrint(container.isDebugMode());
 			json.format(res, writer);
 		} catch (Exception e) {
@@ -297,7 +309,10 @@ public class WebServiceServlet extends HttpServlet {
 			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			res.clear();
 			res.put("result", null);
-			res.put("error", new RpcError(-32603, "Internal error."));
+			Map<String, Object> error = new LinkedHashMap<String, Object>();
+			error.put("code", -32603);
+			error.put("message", "Internal error.");
+			res.put("error", error);
 			res.put("id", (req != null) ? req.id : null);
 			json.format(res, writer);
 			return;
@@ -358,6 +373,7 @@ public class WebServiceServlet extends HttpServlet {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
 			}
+			json.setContext(component);
 			res = json.invoke(component, methodName, params);
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
@@ -457,7 +473,6 @@ public class WebServiceServlet extends HttpServlet {
 			Type[] paramTypes = method.getGenericParameterTypes();
 			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
 			for (int i = 0; i < params.length; i++) {
-				setContext(o);
 				params[i] = convert(args.get(i), paramTypes[i]);
 			}
 			
