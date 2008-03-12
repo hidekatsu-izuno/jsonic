@@ -636,8 +636,8 @@ public class JSON {
 		Object o = null;
 		try {
 			o = convert(parse(s), type);
-		} catch (JSONParseException e) {
-			e.s = s;
+		} catch (JSONConvertException e) {
+			e.setParserSource(s);
 			throw e;
 		} finally {
 			clear();
