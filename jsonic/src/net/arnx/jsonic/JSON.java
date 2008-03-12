@@ -162,7 +162,6 @@ public class JSON {
 	}
 	
 	private Object context = null;
-	private transient Class<?> scope = null;
 	
 	/**
 	 * Sets context for inner class.
@@ -300,8 +299,11 @@ public class JSON {
 		if (context != null) scope = context.getClass();
 		if (scope == null) scope = source.getClass().getEnclosingClass();
 		if (scope == null) scope = source.getClass();
-		ap = format(source, ap, 0);
-		clear();
+		try {
+			ap = format(source, ap, 0);
+		} finally {
+			clear();
+		}
 		return ap;
 	}
 	
@@ -635,7 +637,11 @@ public class JSON {
 		throws IOException, JSONParseException {
 		Object o = null;
 		try {
-			o = convert(parse(s), type);
+			Class<?> cls = getRawType(type);
+			if (context != null) scope = context.getClass();
+			if (scope == null) scope = cls.getEnclosingClass();
+			if (scope == null) scope = cls;
+			o = convertChild(ROOT_KEY, parse(s), cls, type);
 		} finally {
 			clear();
 		}
@@ -1871,7 +1877,9 @@ public class JSON {
 		return format.parse(value).getTime();
 	}
 	
-	void clear() {
+	private transient Class<?> scope = null;
+	
+	private void clear() {
 		this.scope = null;
 	}
 }
