@@ -2,12 +2,16 @@ package net.arnx.jsonic;
 
 public class JSONParseException extends RuntimeException {
 	private static final long serialVersionUID = -8323989588488596436L;
+
+	private long lineNumber = -1l;
+	private long columnNumber = -1l;
+	private long offset = -1l;
 	
-	ParserSource s;
-	
-	JSONParseException(String message, ParserSource s) {
-		super("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?");
-		this.s = s;
+	JSONParseException(String message, long lineNumber, long columnNumber, long offset) {
+		super(message);
+		this.lineNumber = lineNumber;
+		this.columnNumber = columnNumber;
+		this.offset = offset;
 	}
 	
 	JSONParseException(String message, Throwable cause) {
@@ -15,14 +19,14 @@ public class JSONParseException extends RuntimeException {
 	}
 	
 	public long getLineNumber() {
-		return s.getLineNumber();
+		return lineNumber;
 	}
 	
 	public long getColumnNumber() {
-		return s.getColumnNumber();
+		return columnNumber;
 	}
 	
 	public long getErrorOffset() {
-		return s.getOffset();
+		return offset;
 	}
 }
