@@ -27,6 +27,20 @@ public class JSONTest {
 		assertEquals(new PrivateInnerHoge(), json.parse("{\"a\":100}", PrivateInnerHoge.class));
 		
 		assertEquals(new InnerHoge(), JSON.decode("{\"a\":100}", InnerHoge.class));
+		
+		
+		InnerHoge hoge = null;
+		try {
+			hoge = json.parse("{\"a\":100}", InnerHoge.class);
+			hoge.accessEnclosingClass();
+			fail();
+		} catch (Exception e) {
+			assertNotNull(e);
+		}
+		
+		json.setContext(this);
+		hoge = json.parse("{\"a\":100}", InnerHoge.class);
+		hoge.accessEnclosingClass();
 	}
 	
 	class InnerHoge {
@@ -56,6 +70,10 @@ public class JSONTest {
 		
 		public class InnerInnerHoge {
 			
+		}
+		
+		public void accessEnclosingClass() {
+			JSONTest.this.toString();
 		}
 	}
 	
