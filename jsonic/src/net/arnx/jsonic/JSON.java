@@ -1252,342 +1252,338 @@ public class JSON {
 	protected <T> T convert(Object key, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
-		try {
-			if (value == null) {
-				if (c.isPrimitive()) {
-					data = PRIMITIVE_MAP.get(c);
-				}
-			} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
-				data = value;
-			} else if (value instanceof Map) {
-				Map src = (Map)value;
-				if (Map.class.isAssignableFrom(c)) {
-					Map map = null;
-					if (type instanceof ParameterizedType) {
-						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-						Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-						Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-						Class<?> pc0 = getRawType(pt0);
-						Class<?> pc1 = getRawType(pt1);
-						
-						if ((Object.class.equals(pc0) || String.class.equals(pc0))
-								&& Object.class.equals(pc1)) {
-							map = (Map)value;
-						} else {
-							map = (Map)create(c);
-							for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
-								map.put(convertChild(key, entry.getKey(), pc0, pt0), 
-										convertChild(entry.getKey(), entry.getValue(), pc1, pt1));
-							}
-						}
+		if (value == null) {
+			if (c.isPrimitive()) {
+				data = PRIMITIVE_MAP.get(c);
+			}
+		} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
+			data = value;
+		} else if (value instanceof Map) {
+			Map src = (Map)value;
+			if (Map.class.isAssignableFrom(c)) {
+				Map map = null;
+				if (type instanceof ParameterizedType) {
+					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
+					Class<?> pc0 = getRawType(pt0);
+					Class<?> pc1 = getRawType(pt1);
+					
+					if ((Object.class.equals(pc0) || String.class.equals(pc0))
+							&& Object.class.equals(pc1)) {
+						map = (Map)value;
 					} else {
 						map = (Map)create(c);
-						map.putAll(src);
-					}
-					data = map;
-				} else {
-					Object o = create(c);
-					if (o != null) {
-						Map<String, Member> props = getSetProperties(c);
 						for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
-							String name = entry.getKey().toString();
-							Member target = mapping(c, props, name);
-							if (target == null) continue;
-							
-							if (target instanceof Method) {
-								Method m = (Method)target;
-								m.invoke(o, convertChild(name, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
-							} else {
-								Field f = (Field)target;
-								f.set(o, convertChild(name, entry.getValue(), f.getType(), f.getGenericType()));
-							}
+							map.put(convertChild(key, entry.getKey(), pc0, pt0), 
+									convertChild(entry.getKey(), entry.getValue(), pc1, pt1));
 						}
-						data = o;
-					} else {
-						throw new UnsupportedOperationException();
-					}
-				}
-			} else if (value instanceof List) {
-				List src = (List)value;
-				if (Collection.class.isAssignableFrom(c)) {
-					Collection collection = null;
-					if (type instanceof ParameterizedType) {
-						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-						Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-						Class<?> pc = getRawType(pt);
-						
-						if (Object.class.equals(pc)) {
-							collection = src;
-						} else {
-							collection = (Collection)create(c);
-							for (int i = 0; i < src.size(); i++) {
-								collection.add(convertChild(i, src.get(i), pc, pt));
-							}
-						}
-					} else {
-						collection = (Collection)create(c);
-						collection.addAll(src);
-					}
-					data = collection;
-				} else if (c.isArray()) {
-					Object array = Array.newInstance(c.getComponentType(), src.size());
-					Class<?> pc = c.getComponentType();
-					Type pt = (type instanceof GenericArrayType) ? 
-							((GenericArrayType)type).getGenericComponentType() : pc;
-					
-					for (int i = 0; i < src.size(); i++) {
-						Array.set(array, i, convertChild(i, src.get(i), pc, pt));
-					}
-					data = array;
-				} else if (Map.class.isAssignableFrom(c)) {
-					Map map = (Map)create(c);
-					if (type instanceof ParameterizedType) {
-						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-						Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-						Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-						Class<?> pc0 = getRawType(pt0);
-						Class<?> pc1 = getRawType(pt1);
-
-						for (int i = 0; i < src.size(); i++) {
-							map.put(convertChild(key, i, pc0, pt0), convertChild(i, src.get(i), pc1, pt1));
-						}
-					} else {
-						for (int i = 0; i < src.size(); i++) {
-							map.put(i, src.get(i));
-						}
-					}
-					data = map;
-				} else if (Locale.class.equals(c)) {
-					if (src.size() == 1) {
-						data = new Locale(src.get(0).toString());
-					} else if (src.size() == 2) {
-						data = new Locale(src.get(0).toString(), src.get(1).toString());
-					} else if (src.size() > 2) {
-						data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
 					}
 				} else {
-					throw new UnsupportedOperationException();
+					map = (Map)create(c);
+					map.putAll(src);
 				}
+				data = map;
 			} else {
-				if (boolean.class.equals(c) || Boolean.class.equals(c)) {
-					if (value instanceof Number) {
-						data = !value.equals(0);
-					} else {
-						String s = value.toString();
-						if (s.length() == 0
-							|| s.equalsIgnoreCase("f")
-							|| s.equalsIgnoreCase("false")
-							|| s.equalsIgnoreCase("no")
-							|| s.equalsIgnoreCase("off")
-							|| s.equals("NaN")) {
-							data = false;
+				Object o = create(c);
+				if (o != null) {
+					Map<String, Member> props = getSetProperties(c);
+					for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
+						String name = entry.getKey().toString();
+						Member target = mapping(c, props, name);
+						if (target == null) continue;
+						
+						if (target instanceof Method) {
+							Method m = (Method)target;
+							m.invoke(o, convertChild(name, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 						} else {
-							data = true;
+							Field f = (Field)target;
+							f.set(o, convertChild(name, entry.getValue(), f.getType(), f.getGenericType()));
 						}
 					}
-				} else if (byte.class.equals(c) || Byte.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).byteValue();
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							data = Byte.valueOf(str);
-						} else if (c.isPrimitive()) {
-							data = (byte)0;
-						}
-					}
-				} else if (short.class.equals(c) || Short.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).shortValue();
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							data = Short.valueOf(str);
-						} else if (c.isPrimitive()) {
-							data = (short)0;
-						}
-					}				
-				} else if (int.class.equals(c) || Integer.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1 : 0;
-					} else if (value instanceof Number) {
-						data = ((Number)value).intValue();
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							data = Integer.valueOf(str);
-						} else if (c.isPrimitive()) {
-							data = 0;
-						}						
-					}
-				} else if (long.class.equals(c) || Long.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1l : 0l;
-					} else if (value instanceof Number) {
-						data = ((Number)value).longValue();
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							data = Long.valueOf(str);
-						} else if (c.isPrimitive()) {
-							data = 0l;
-						}						
-					}
-				} else if (float.class.equals(c) || Float.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).floatValue();
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							data = Float.valueOf(str);
-						} else if (c.isPrimitive()) {
-							data = 0.0f;
-						}						
-					}
-				} else if (double.class.equals(c) || Double.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
-					} else if (value instanceof Number) {
-						data = ((Number)value).doubleValue();
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							data = Double.valueOf(str);
-						} else if (c.isPrimitive()) {
-							data = 0.0;
-						}						
-					}
-				} else if (BigInteger.class.equals(c)) {				
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
-					} else if (value instanceof BigDecimal) {
-						data = ((BigDecimal)value).toBigInteger();
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) data = (new BigDecimal(str)).toBigInteger();
-					}
-				} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
-					String str = value.toString().trim();
-					if (str.length() > 0) data = new BigDecimal(str);
-				} else if (char.class.equals(c) || Character.class.equals(c)) {
-					if (value instanceof Boolean) {
-						data = (((Boolean)value).booleanValue()) ? '1' : '0';
-					} else if (value instanceof Number) {
-						data = (char)((Number)value).intValue();
-					} else {
-						String s = value.toString();
-						if (s.length() > 0) {
-							data = s.charAt(0);
-						} else if (c.isPrimitive()) {
-							data = '\0';
-						}						
-					}
-				} else if (CharSequence.class.isAssignableFrom(c)) {
-					data = value.toString();
-				} else if (Appendable.class.isAssignableFrom(c)) {
-					Appendable a = (Appendable)create(c);
-					data = a.append(value.toString());
-				} else if (Enum.class.isAssignableFrom(c)) {
-					if (value instanceof Number) {
-						data = c.getEnumConstants()[((Number)value).intValue()];
-					} else {
-						data = Enum.valueOf((Class<? extends Enum>)c, value.toString());
-					}
-				} else if (Pattern.class.equals(c)) {
-					data = Pattern.compile(value.toString());
-				} else if (Date.class.isAssignableFrom(c)) {
-					if (value instanceof Number) {
-						Date date = (Date)create(c);
-						date.setTime(((Number)value).longValue());
-						data = date;
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							Date date = (Date)create(c);
-							date.setTime(convertDate(str));
-							data = date;
-						}
-					}
-				} else if (Calendar.class.isAssignableFrom(c)) {
-					if (value instanceof Number) {
-						Calendar cal = (Calendar)create(c);
-						cal.setTimeInMillis(((Number)value).longValue());
-						data = cal;
-					} else {
-						String str = value.toString().trim();
-						if (str.length() > 0) {
-							Calendar cal = (Calendar)create(c);
-							cal.setTimeInMillis(convertDate(str));
-							data = cal;
-						}
-					}
-				} else if (TimeZone.class.equals(c)) {
-					data = TimeZone.getTimeZone(value.toString().trim());
-				} else if (Locale.class.equals(c)) {
-					String[] array = value.toString().split("\\p{Punct}");
-					
-					if (array.length == 1) {
-						data = new Locale(array[0]);
-					} else if (array.length == 2) {
-						data = new Locale(array[0], array[1]);
-					} else if (array.length > 2) {
-						data = new Locale(array[0], array[1], array[2]);
-					}
-				} else if (Class.class.equals(c)) {
-					String s = value.toString();
-					if (s.equals("boolean")) {
-						data = boolean.class;
-					} else if (s.equals("byte")) {
-						data = byte.class;
-					} else if (s.equals("short")) {
-						data = short.class;
-					} else if (s.equals("int")) {
-						data = int.class;
-					} else if (s.equals("long")) {
-						data = long.class;
-					} else if (s.equals("float")) {
-						data = float.class;
-					} else if (s.equals("double")) {
-						data = double.class;
-					} else {
-						data = Class.forName(value.toString());
-					}
-				} else if (Collection.class.isAssignableFrom(c)) {
-					Collection collection = (Collection)create(c);
-					if (type instanceof ParameterizedType) {
-						Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-						Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-						Class<?> pc = getRawType(pt);
-
-						collection.add(convertChild(0, value, pc, pt));
-					} else {
-						collection.add(value);
-					}
-					data = collection;
-				} else if (c.isArray()) {
-					if (value instanceof String && byte.class.equals(c.getComponentType())) {
-						data = Base64.decode((String)value);
-					} else {
-						Object array = Array.newInstance(c.getComponentType(), 1);
-						Class<?> pc = c.getComponentType();
-						Type pt = (type instanceof GenericArrayType) ? 
-								((GenericArrayType)type).getGenericComponentType() : pc;
-								
-						Array.set(array, 0, convertChild(0, value, pc, pt));
-						data = array;
-					}
+					data = o;
 				} else {
 					throw new UnsupportedOperationException();
 				}
 			}
-		} catch (JSONConvertException e) {
-			throw e;
+		} else if (value instanceof List) {
+			List src = (List)value;
+			if (Collection.class.isAssignableFrom(c)) {
+				Collection collection = null;
+				if (type instanceof ParameterizedType) {
+					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+					Class<?> pc = getRawType(pt);
+					
+					if (Object.class.equals(pc)) {
+						collection = src;
+					} else {
+						collection = (Collection)create(c);
+						for (int i = 0; i < src.size(); i++) {
+							collection.add(convertChild(i, src.get(i), pc, pt));
+						}
+					}
+				} else {
+					collection = (Collection)create(c);
+					collection.addAll(src);
+				}
+				data = collection;
+			} else if (c.isArray()) {
+				Object array = Array.newInstance(c.getComponentType(), src.size());
+				Class<?> pc = c.getComponentType();
+				Type pt = (type instanceof GenericArrayType) ? 
+						((GenericArrayType)type).getGenericComponentType() : pc;
+				
+				for (int i = 0; i < src.size(); i++) {
+					Array.set(array, i, convertChild(i, src.get(i), pc, pt));
+				}
+				data = array;
+			} else if (Map.class.isAssignableFrom(c)) {
+				Map map = (Map)create(c);
+				if (type instanceof ParameterizedType) {
+					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
+					Class<?> pc0 = getRawType(pt0);
+					Class<?> pc1 = getRawType(pt1);
+
+					for (int i = 0; i < src.size(); i++) {
+						map.put(convertChild(key, i, pc0, pt0), convertChild(i, src.get(i), pc1, pt1));
+					}
+				} else {
+					for (int i = 0; i < src.size(); i++) {
+						map.put(i, src.get(i));
+					}
+				}
+				data = map;
+			} else if (Locale.class.equals(c)) {
+				if (src.size() == 1) {
+					data = new Locale(src.get(0).toString());
+				} else if (src.size() == 2) {
+					data = new Locale(src.get(0).toString(), src.get(1).toString());
+				} else if (src.size() > 2) {
+					data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
+				}
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		} else {
+			if (boolean.class.equals(c) || Boolean.class.equals(c)) {
+				if (value instanceof Number) {
+					data = !value.equals(0);
+				} else {
+					String s = value.toString();
+					if (s.length() == 0
+						|| s.equalsIgnoreCase("f")
+						|| s.equalsIgnoreCase("false")
+						|| s.equalsIgnoreCase("no")
+						|| s.equalsIgnoreCase("off")
+						|| s.equals("NaN")) {
+						data = false;
+					} else {
+						data = true;
+					}
+				}
+			} else if (byte.class.equals(c) || Byte.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).byteValue();
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						data = Byte.valueOf(str);
+					} else if (c.isPrimitive()) {
+						data = (byte)0;
+					}
+				}
+			} else if (short.class.equals(c) || Short.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).shortValue();
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						data = Short.valueOf(str);
+					} else if (c.isPrimitive()) {
+						data = (short)0;
+					}
+				}				
+			} else if (int.class.equals(c) || Integer.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1 : 0;
+				} else if (value instanceof Number) {
+					data = ((Number)value).intValue();
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						data = Integer.valueOf(str);
+					} else if (c.isPrimitive()) {
+						data = 0;
+					}						
+				}
+			} else if (long.class.equals(c) || Long.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1l : 0l;
+				} else if (value instanceof Number) {
+					data = ((Number)value).longValue();
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						data = Long.valueOf(str);
+					} else if (c.isPrimitive()) {
+						data = 0l;
+					}						
+				}
+			} else if (float.class.equals(c) || Float.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
+				} else if (value instanceof Number) {
+					data = ((Number)value).floatValue();
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						data = Float.valueOf(str);
+					} else if (c.isPrimitive()) {
+						data = 0.0f;
+					}						
+				}
+			} else if (double.class.equals(c) || Double.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
+				} else if (value instanceof Number) {
+					data = ((Number)value).doubleValue();
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						data = Double.valueOf(str);
+					} else if (c.isPrimitive()) {
+						data = 0.0;
+					}						
+				}
+			} else if (BigInteger.class.equals(c)) {				
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
+				} else if (value instanceof BigDecimal) {
+					data = ((BigDecimal)value).toBigInteger();
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) data = (new BigDecimal(str)).toBigInteger();
+				}
+			} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
+				String str = value.toString().trim();
+				if (str.length() > 0) data = new BigDecimal(str);
+			} else if (char.class.equals(c) || Character.class.equals(c)) {
+				if (value instanceof Boolean) {
+					data = (((Boolean)value).booleanValue()) ? '1' : '0';
+				} else if (value instanceof Number) {
+					data = (char)((Number)value).intValue();
+				} else {
+					String s = value.toString();
+					if (s.length() > 0) {
+						data = s.charAt(0);
+					} else if (c.isPrimitive()) {
+						data = '\0';
+					}						
+				}
+			} else if (CharSequence.class.isAssignableFrom(c)) {
+				data = value.toString();
+			} else if (Appendable.class.isAssignableFrom(c)) {
+				Appendable a = (Appendable)create(c);
+				data = a.append(value.toString());
+			} else if (Enum.class.isAssignableFrom(c)) {
+				if (value instanceof Number) {
+					data = c.getEnumConstants()[((Number)value).intValue()];
+				} else {
+					data = Enum.valueOf((Class<? extends Enum>)c, value.toString());
+				}
+			} else if (Pattern.class.equals(c)) {
+				data = Pattern.compile(value.toString());
+			} else if (Date.class.isAssignableFrom(c)) {
+				if (value instanceof Number) {
+					Date date = (Date)create(c);
+					date.setTime(((Number)value).longValue());
+					data = date;
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						Date date = (Date)create(c);
+						date.setTime(convertDate(str));
+						data = date;
+					}
+				}
+			} else if (Calendar.class.isAssignableFrom(c)) {
+				if (value instanceof Number) {
+					Calendar cal = (Calendar)create(c);
+					cal.setTimeInMillis(((Number)value).longValue());
+					data = cal;
+				} else {
+					String str = value.toString().trim();
+					if (str.length() > 0) {
+						Calendar cal = (Calendar)create(c);
+						cal.setTimeInMillis(convertDate(str));
+						data = cal;
+					}
+				}
+			} else if (TimeZone.class.equals(c)) {
+				data = TimeZone.getTimeZone(value.toString().trim());
+			} else if (Locale.class.equals(c)) {
+				String[] array = value.toString().split("\\p{Punct}");
+				
+				if (array.length == 1) {
+					data = new Locale(array[0]);
+				} else if (array.length == 2) {
+					data = new Locale(array[0], array[1]);
+				} else if (array.length > 2) {
+					data = new Locale(array[0], array[1], array[2]);
+				}
+			} else if (Class.class.equals(c)) {
+				String s = value.toString();
+				if (s.equals("boolean")) {
+					data = boolean.class;
+				} else if (s.equals("byte")) {
+					data = byte.class;
+				} else if (s.equals("short")) {
+					data = short.class;
+				} else if (s.equals("int")) {
+					data = int.class;
+				} else if (s.equals("long")) {
+					data = long.class;
+				} else if (s.equals("float")) {
+					data = float.class;
+				} else if (s.equals("double")) {
+					data = double.class;
+				} else {
+					data = Class.forName(value.toString());
+				}
+			} else if (Collection.class.isAssignableFrom(c)) {
+				Collection collection = (Collection)create(c);
+				if (type instanceof ParameterizedType) {
+					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+					Class<?> pc = getRawType(pt);
+
+					collection.add(convertChild(0, value, pc, pt));
+				} else {
+					collection.add(value);
+				}
+				data = collection;
+			} else if (c.isArray()) {
+				if (value instanceof String && byte.class.equals(c.getComponentType())) {
+					data = Base64.decode((String)value);
+				} else {
+					Object array = Array.newInstance(c.getComponentType(), 1);
+					Class<?> pc = c.getComponentType();
+					Type pt = (type instanceof GenericArrayType) ? 
+							((GenericArrayType)type).getGenericComponentType() : pc;
+							
+					Array.set(array, 0, convertChild(0, value, pc, pt));
+					data = array;
+				}
+			} else {
+				throw new UnsupportedOperationException();
+			}
 		}
 		
 		return (T)data;

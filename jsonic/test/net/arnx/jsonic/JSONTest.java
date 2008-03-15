@@ -755,7 +755,11 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		long start = System.currentTimeMillis();
-		json.parse(new InputStreamReader(this.getClass().getResourceAsStream("KEN_ALL.json"), "UTF-8"));
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL.json"));
+		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL.json"), String[][].class);
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 	}
 	
