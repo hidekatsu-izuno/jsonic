@@ -1624,7 +1624,11 @@ public class JSON {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
 			if(tryAccess(c)) con.setAccessible(true);
-			instance = con.newInstance((Object)null);
+			if (context != null && eClass.isAssignableFrom(context.getClass())) {
+				instance = con.newInstance(context);
+			} else {
+				instance = con.newInstance((Object)null);
+			}
 		} else {
 			if (Date.class.isAssignableFrom(c)) {
 				try {

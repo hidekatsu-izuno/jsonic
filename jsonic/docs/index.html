@@ -332,7 +332,8 @@ public class EnclosingClass {
     
     ic.accessEnclosingClass(); <span class="comment">// 実行時にNullPointerExceptionが発生</span>
     
-    ic = json.parse("{\"a\": 100}", new InnerClass()); <span class="comment">// iインスタンスに対して設定</span>
+    json.setContext(this);  <span class="comment">// コンテキストを設定</span>
+    ic = json.parse("{\"a\": 100}", InnerClass.class);
     
     ic.accessEnclosingClass(); <span class="comment">// 正常に動作</span>
   }
