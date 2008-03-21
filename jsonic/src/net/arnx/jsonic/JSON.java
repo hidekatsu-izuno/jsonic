@@ -302,7 +302,7 @@ public class JSON {
 		try {
 			ap = format(source, ap, 0);
 		} finally {
-			clear();
+			scope = null;
 		}
 		return ap;
 	}
@@ -635,17 +635,7 @@ public class JSON {
 	
 	private Object parse(ParserSource s, Type type) 
 		throws IOException, JSONParseException {
-		Object o = null;
-		try {
-			Class<?> cls = getRawType(type);
-			if (context != null) scope = context.getClass();
-			if (scope == null) scope = cls.getEnclosingClass();
-			if (scope == null) scope = cls;
-			o = convertChild(ROOT_KEY, parse(s), cls, type);
-		} finally {
-			clear();
-		}
-		return o;
+		return convert(parse(s), type);
 	}
 	
 	private Object parse(ParserSource s) throws IOException, JSONParseException {
@@ -1206,7 +1196,13 @@ public class JSON {
 		if (context != null) scope = context.getClass();
 		if (scope == null) scope = cls.getEnclosingClass();
 		if (scope == null) scope = cls;
-		return convertChild(ROOT_KEY, value, cls, type);
+		Object result = null;
+		try {
+			result = convertChild(ROOT_KEY, value, cls, type);
+		} finally {
+			scope = null;
+		}
+		return result;
 	}
 	
 	/**
@@ -1878,10 +1874,6 @@ public class JSON {
 	}
 	
 	private transient Class<?> scope = null;
-	
-	private void clear() {
-		this.scope = null;
-	}
 }
 
 interface ParserSource {
