@@ -115,6 +115,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※2)</sup></td></tr>
 <tr><td>Number</td></tr>
 <tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
+<tr><td>Enum</td><td>number (ordinalにより変換)</td></tr>
 <tr><td>boolean, Boolean</td><td>true/false</td></tr>
 <tr><td>null</td><td>null</td></tr>
 </table>
@@ -603,7 +604,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>Parse時にもsetMaxDepthで指定された階層以下のデータを無視するようになりました。</li>
 <li>変換機能の拡張をconvertメソッドでも可能なように戻しました。</li>
 <li>handleConvertFailuerによる継続処理のカスタマイズはニーズが低そうなので廃止しました。変換機能の拡張にはconvertメソッドを使用してください。</li>
-<li>JSON string, JSON numberから列挙型（Enum）への変換に対応しました。</li>
+<li>Parse時のJSON string, JSON numberから列挙型（Enum）への変換およびFormat時のEnumの変換に対応しました。</li>
 <li>仕様変更の影響を緩和するためnet.arnx.jsonic.web.Containerをinterfaceからclassに変更し、S2ContainerがContainerを継承するようにしました。</li>
 </ul>
 

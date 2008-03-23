@@ -317,6 +317,8 @@ public class JSON {
 			o = ((Class)o).getName();
 		} else if (o instanceof Character || o instanceof Type || o instanceof Member) {
 			o = o.toString();
+		} else if (o instanceof Enum) {
+			o = ((Enum)o).ordinal();
 		} else if (o instanceof char[]) {
 			o = new String((char[])o);
 		} else if (o instanceof byte[]) {

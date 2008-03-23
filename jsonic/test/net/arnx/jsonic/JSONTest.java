@@ -50,8 +50,9 @@ public class JSONTest {
 		list.add(new int[] {});
 		list.add(Pattern.compile("\\.*"));
 		list.add(boolean.class);
+		list.add(ExampleEnum.Example0);
 		
-		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\"]", JSON.encode(list));
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",0]", JSON.encode(list));
 		
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
