@@ -1385,8 +1385,8 @@ public class JSON {
 			} else if (byte.class.equals(c) || Byte.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1 : 0;
-				} else if (value instanceof Number) {
-					data = ((Number)value).byteValue();
+				} else if (value instanceof BigDecimal) {
+					data = ((BigDecimal)value).byteValueExact();
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
@@ -1398,8 +1398,8 @@ public class JSON {
 			} else if (short.class.equals(c) || Short.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1 : 0;
-				} else if (value instanceof Number) {
-					data = ((Number)value).shortValue();
+				} else if (value instanceof BigDecimal) {
+					data = ((BigDecimal)value).shortValueExact();
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
@@ -1411,8 +1411,8 @@ public class JSON {
 			} else if (int.class.equals(c) || Integer.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1 : 0;
-				} else if (value instanceof Number) {
-					data = ((Number)value).intValue();
+				} else if (value instanceof BigDecimal) {
+					data = ((BigDecimal)value).intValueExact();
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
@@ -1424,8 +1424,8 @@ public class JSON {
 			} else if (long.class.equals(c) || Long.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1l : 0l;
-				} else if (value instanceof Number) {
-					data = ((Number)value).longValue();
+				} else if (value instanceof BigDecimal) {
+					data = ((BigDecimal)value).longValueExact();
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
