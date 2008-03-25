@@ -604,25 +604,51 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		// boolean
-		assertEquals(Boolean.TRUE, json.convertChild(null, 100, boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, 0, boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "f", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "off", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "no", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "NaN", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "false", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "", boolean.class, boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, null, boolean.class, boolean.class));
+		assertEquals(Boolean.TRUE, json.convert(100, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(0, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("f", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("off", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("no", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("NaN", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("false", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, boolean.class));
 		
 		// Boolean
-		assertEquals(Boolean.TRUE, json.convertChild(null, 100, Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, 0, Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "off", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "no", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "NaN", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "false", Boolean.class, Boolean.class));
-		assertEquals(Boolean.FALSE, json.convertChild(null, "", Boolean.class, Boolean.class));
-		assertNull(json.convertChild(null, null, Boolean.class, Boolean.class));
+		assertEquals(Boolean.TRUE, json.convert(100, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(0, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("off", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("no", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("NaN", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("false", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("", Boolean.class));
+		assertNull(json.convert(null, Boolean.class));
+		
+		// int
+		assertEquals(0, json.convert(null, int.class));
+		assertEquals(100, json.convert(new BigDecimal("100"), int.class));
+		assertEquals(100, json.convert(new BigDecimal("100.00"), int.class));
+		assertEquals(100, json.convert("100", int.class));
+		try {
+			json.convert(new BigDecimal("100.01"), int.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// Integer
+		assertEquals(null, json.convert(null, Integer.class));
+		assertEquals(100, json.convert(new BigDecimal("100"), int.class));
+		assertEquals(100, json.convert(new BigDecimal("100.00"), Integer.class));
+		assertEquals(100, json.convert("100", Integer.class));
+		try {
+			json.convert(new BigDecimal("100.01"), Integer.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 		
 		// Date
 		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convertChild('$', "1", Date.class, Date.class));
