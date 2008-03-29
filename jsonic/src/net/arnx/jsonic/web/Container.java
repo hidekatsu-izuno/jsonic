@@ -22,7 +22,9 @@ public class Container {
 	}
 
 	public <T> T getComponent(Class<? extends T> c) throws Exception {
-		return c.newInstance();
+		T o = c.newInstance();
+		
+		return o;
 	}
 	
 	public Method findMethod(Object target, String name, List<Object> args) throws NoSuchMethodException {
