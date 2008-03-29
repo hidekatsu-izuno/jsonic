@@ -22,12 +22,14 @@ import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
@@ -60,7 +62,7 @@ public class GatewayFilter implements Filter {
 			Object value = entry.getValue();
 			
 			if (value instanceof Map) {
-				locations.put(Pattern.compile(key), (Config)json.convert(value, Config.class));
+				locations.put(Pattern.compile("^" + key + "$"), (Config)json.convert(value, Config.class));
 			} else {
 				base.put(key, value);
 			}
@@ -86,10 +88,12 @@ public class GatewayFilter implements Filter {
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
 		
+		Matcher matcher = null;
 		Config config = null;
 		for (Map.Entry<Pattern, Config> entry : locations.entrySet()) {
 			Pattern pattern = entry.getKey();
-			if (pattern != null && pattern.matcher(uri).matches()) {
+			if (pattern != null) {
+				matcher = pattern.matcher(uri);
 				config = entry.getValue();
 				break;
 			}
@@ -103,6 +107,7 @@ public class GatewayFilter implements Filter {
 			if (config.forward == null) config.forward = base.forward;
 		}
 		
+		boolean forward = false;
 		if (config != null) {
 			// set character encoding
 			if (config.encoding != null) {
@@ -133,9 +138,17 @@ public class GatewayFilter implements Filter {
 					request.setAttribute(GZIPResponse.class.getName(), response);
 				}
 			}
+			
+			if (config.forward != null) {
+				forward = true;
+				RequestDispatcher dispatcher = request.getRequestDispatcher(matcher.replaceAll(config.forward));
+				dispatcher.forward(request, response);
+			}
 		}
 		
-		chain.doFilter(request, response);
+		if (!forward) {
+			chain.doFilter(request, response);
+		}
 		
 		GZIPResponse gresponse = (GZIPResponse)request.getAttribute(GZIPResponse.class.getName());
 		if (gresponse != null) gresponse.close();
