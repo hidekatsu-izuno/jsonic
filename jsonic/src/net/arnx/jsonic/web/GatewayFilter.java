@@ -44,7 +44,7 @@ public class GatewayFilter implements Filter {
 	
 	class Config {
 		public String encoding = null;
-		public boolean compression = false;
+		public Boolean compression = false;
 	}
 	
 	@Override
@@ -85,7 +85,7 @@ public class GatewayFilter implements Filter {
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
 		
-		Config config = locations.get(null);
+		Config config = null;
 		for (Map.Entry<Pattern, Config> entry : locations.entrySet()) {
 			Pattern pattern = entry.getKey();
 			if (pattern != null && pattern.matcher(uri).matches()) {
@@ -93,14 +93,23 @@ public class GatewayFilter implements Filter {
 				break;
 			}
 		}
+		if (config == null) {
+			config = locations.get(null);
+		} else {
+			Config base = locations.get(null);
+			if (config.encoding == null) config.encoding = base.encoding;
+			if (config.compression == null) config.compression = base.compression;
+		}
 		
 		if (config != null) {
+			// set character encoding
 			if (config.encoding != null) {
 				request.setCharacterEncoding(config.encoding);
 				response.setCharacterEncoding(config.encoding);
 			}
 			
-			if (config.compression) {
+			// set gzip filter
+			if (config.compression != null && config.compression) {
 				Enumeration<String> e = request.getHeaders("Accept-Encoding");
 				while (e.hasMoreElements()) {
 					String header = e.nextElement();
