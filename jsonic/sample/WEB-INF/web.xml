@@ -13,6 +13,7 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
+				encoding: 'UTF-8'
 				compression: true
 			</param-value>
 		</init-param>

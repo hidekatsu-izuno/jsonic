@@ -43,7 +43,7 @@ public class GatewayFilter implements Filter {
 	private Map<Pattern, Config> locations = new LinkedHashMap<Pattern, Config>();
 	
 	class Config {
-		public String encoding = "UTF-8";
+		public String encoding = null;
 		public boolean compression = false;
 	}
 	
