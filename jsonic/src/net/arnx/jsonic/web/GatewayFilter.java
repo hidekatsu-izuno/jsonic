@@ -94,8 +94,12 @@ public class GatewayFilter implements Filter {
 			Pattern pattern = entry.getKey();
 			if (pattern != null) {
 				matcher = pattern.matcher(uri);
-				config = entry.getValue();
-				break;
+				if (matcher.matches()) {
+					config = entry.getValue();
+					break;
+				} else {
+					matcher = null;
+				}
 			}
 		}
 		if (config == null) {

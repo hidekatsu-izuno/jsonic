@@ -17,7 +17,7 @@
 				compression: true
 				
 				'/forward/(.+)': {
-					forward: '/sample/$1'
+					forward: '/$1'
 					auth: 'sample.service.LoginService'
 				}
 			</param-value>
