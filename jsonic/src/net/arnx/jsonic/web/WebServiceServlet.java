@@ -204,6 +204,8 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
+		container.start(request, response);
+		
 		JSONInvoker json = new JSONInvoker();
 		
 		// request processing
@@ -275,6 +277,8 @@ public class WebServiceServlet extends HttpServlet {
 			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			errorCode = -32603;
 			errorMessage = "Internal error.";
+		} finally {
+			container.end();
 		}
 		
 		// it's notification when id was null
@@ -322,6 +326,8 @@ public class WebServiceServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
+		
+		container.start(request, response);
 		
 		String methodName = route.getMethod();
 		int status = SC_OK;
@@ -405,6 +411,8 @@ public class WebServiceServlet extends HttpServlet {
 			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR);
 			return;
+		} finally {
+			container.end();
 		}
 		
 		try {		
