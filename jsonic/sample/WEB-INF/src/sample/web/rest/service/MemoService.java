@@ -54,7 +54,9 @@ public class MemoService {
 	}
 }
 
-class Memo {
+class Memo implements java.io.Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	public Integer id;
 	public String title;
 	public String text;
