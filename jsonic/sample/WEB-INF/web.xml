@@ -16,7 +16,8 @@
 				encoding: 'UTF-8'
 				compression: true
 				
-				'/sample': {
+				'/forward/(.+)': {
+					forward: '/sample/$1'
 					auth: 'sample.service.LoginService'
 				}
 			</param-value>

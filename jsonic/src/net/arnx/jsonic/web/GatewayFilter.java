@@ -45,6 +45,7 @@ public class GatewayFilter implements Filter {
 	class Config {
 		public String encoding = null;
 		public Boolean compression = false;
+		public String forward = null;
 	}
 	
 	@Override
@@ -99,6 +100,7 @@ public class GatewayFilter implements Filter {
 			Config base = locations.get(null);
 			if (config.encoding == null) config.encoding = base.encoding;
 			if (config.compression == null) config.compression = base.compression;
+			if (config.forward == null) config.forward = base.forward;
 		}
 		
 		if (config != null) {
@@ -110,31 +112,33 @@ public class GatewayFilter implements Filter {
 			
 			// set gzip filter
 			if (config.compression != null && config.compression) {
-				Enumeration<String> e = request.getHeaders("Accept-Encoding");
-				while (e.hasMoreElements()) {
-					String header = e.nextElement();
-					boolean compression = false;
-					if (header.indexOf("x-gzip") != -1) {
-						compression = true;
-						response.addHeader("Content-Encoding", "x-gzip");
-					} else if (header.indexOf("gzip") != -1) {
-						compression = true;
-						response.addHeader("Content-Encoding", "gzip");
+				if (request.getAttribute(GZIPResponse.class.getName()) == null) {
+					Enumeration<String> e = request.getHeaders("Accept-Encoding");
+					while (e.hasMoreElements()) {
+						String header = e.nextElement();
+						boolean compression = false;
+						if (header.indexOf("x-gzip") != -1) {
+							compression = true;
+							response.addHeader("Content-Encoding", "x-gzip");
+						} else if (header.indexOf("gzip") != -1) {
+							compression = true;
+							response.addHeader("Content-Encoding", "gzip");
+						}
+						
+						if (compression) {
+							response = new GZIPResponse(response);
+							break;						
+						}
 					}
-					
-					if (compression) {
-						response = new GZIPResponseWrapper(response);
-						break;						
-					}
+					request.setAttribute(GZIPResponse.class.getName(), response);
 				}
 			}
 		}
 		
 		chain.doFilter(request, response);
 		
-		if (response instanceof GZIPResponseWrapper) {
-			((GZIPResponseWrapper)response).close();
-		}
+		GZIPResponse gresponse = (GZIPResponse)request.getAttribute(GZIPResponse.class.getName());
+		if (gresponse != null) gresponse.close();
 	}
 	
 	@Override
@@ -142,11 +146,11 @@ public class GatewayFilter implements Filter {
 		locations = null;
 	}
 	
-	class GZIPResponseWrapper extends HttpServletResponseWrapper {
+	class GZIPResponse extends HttpServletResponseWrapper {
 		private ServletOutputStream out = null;
 		private PrintWriter writer = null;
 		
-		public GZIPResponseWrapper(HttpServletResponse response) {
+		public GZIPResponse(HttpServletResponse response) {
 			super(response);
 		}
 		
@@ -154,7 +158,7 @@ public class GatewayFilter implements Filter {
 		public ServletOutputStream getOutputStream() throws IOException {
 			if (out == null) {
 				out = new ServletOutputStream() {
-					private GZIPOutputStream cout = new GZIPOutputStream(GZIPResponseWrapper.super.getOutputStream());
+					private GZIPOutputStream cout = new GZIPOutputStream(GZIPResponse.super.getOutputStream());
 					
 					@Override
 					public void write(byte[] b, int off, int len) throws IOException {
