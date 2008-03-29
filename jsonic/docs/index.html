@@ -590,6 +590,15 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 
 <h2 id="releasenote">リリースノート</h2>
 
+<h3>2008/03/02 version 0.9.8</h3>
+<p>下記の機能追加・変更とバグ修正が行われています。</p>
+<ul>
+<li>Convertにて整数値への変換の際、intValue()などを使用していたが、intValueExact()を使用するように変更した。</li>
+<li>net.arnx.jsonic.web.Container使用時、application, request, response, sessionというフィールドがある場合、それぞれServletContext, HttpServletRequest, HttpServletResponse, HttpSessionをセットするようにしました。</li>
+<li>文字コード設定、GZip圧縮を簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
+<li>WebServiceServletにてServiceが呼び出された最初と最後にそれぞれinit()メソッドとdestroy()メソッドが呼ばれるようにしました。</li>
+</ul>
+
 <h3>2008/03/02 version 0.9.7</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>

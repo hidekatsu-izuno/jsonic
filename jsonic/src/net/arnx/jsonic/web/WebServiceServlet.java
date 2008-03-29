@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -477,14 +478,43 @@ public class WebServiceServlet extends HttpServlet {
 				args = Collections.EMPTY_LIST;
 			}
 			
-			Method method = container.findMethod(o, toLowerCamel(methodName), args);
+			methodName = toLowerCamel(methodName);
+			
+			Class<?> c = o.getClass();
+			
+			Method init = null;
+			Method method = null;
+			Method destroy = null;
+			for (Method m : c.getMethods()) {
+				if (m.getName().equals("init") && m.getParameterTypes().length == 0) {
+					init = m;
+				} else if (m.getName().equals("destroy") && m.getParameterTypes().length == 0) {
+					destroy = m;
+				} else if (m.getName().equals(methodName) && !Modifier.isStatic(m.getModifiers())) {
+					method = m;
+				}
+			}
+			
+			if (method == null || container.limit(c, method)) {
+				StringBuilder sb = new StringBuilder(c.getName());
+				sb.append('#').append(methodName).append('(');
+				String json = JSON.encode(args);
+				sb.append(json, 1, json.length()-1);
+				sb.append(')');
+				throw new NoSuchMethodException("method missing: " + sb.toString());
+			}
+			
 			Type[] paramTypes = method.getGenericParameterTypes();
 			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
 			for (int i = 0; i < params.length; i++) {
 				params[i] = convert(args.get(i), paramTypes[i]);
 			}
 			
-			return method.invoke(o, params);
+			if (init != null) init.invoke(o);
+			Object ret = method.invoke(o, params);
+			if (destroy != null) destroy.invoke(o);
+			
+			return ret;
 		}
 	}
 	
