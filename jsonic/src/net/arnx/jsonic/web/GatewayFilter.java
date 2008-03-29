@@ -18,6 +18,8 @@ package net.arnx.jsonic.web;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -145,8 +147,19 @@ public class GatewayFilter implements Filter {
 			
 			if (config.forward != null) {
 				forward = true;
-				RequestDispatcher dispatcher = request.getRequestDispatcher(matcher.replaceAll(config.forward));
-				dispatcher.forward(request, response);
+				URI dest = null;
+				try {
+					dest = new URI(matcher.replaceAll(config.forward));
+				} catch (URISyntaxException e) {
+					throw new ServletException(e);
+				}
+				
+				if (dest.isAbsolute()) {
+					// import
+				} else {
+					RequestDispatcher dispatcher = request.getRequestDispatcher(dest.toString());
+					dispatcher.forward(request, response);
+				}
 			}
 		}
 		
