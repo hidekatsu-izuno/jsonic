@@ -103,17 +103,29 @@ public class GatewayFilter implements Filter {
 			if (config.compression) {
 				Enumeration<String> e = request.getHeaders("Accept-Encoding");
 				while (e.hasMoreElements()) {
-					String encoding = e.nextElement();
-					if (encoding.indexOf("gzip") > 0) {
+					String header = e.nextElement();
+					boolean compression = false;
+					if (header.indexOf("x-gzip") != -1) {
+						compression = true;
+						response.addHeader("Content-Encoding", "x-gzip");
+					} else if (header.indexOf("gzip") != -1) {
+						compression = true;
 						response.addHeader("Content-Encoding", "gzip");
-						response = new GZIPResponseWrapper(response, response.getCharacterEncoding());
-						break;
+					}
+					
+					if (compression) {
+						response = new GZIPResponseWrapper(response);
+						break;						
 					}
 				}
 			}
 		}
 		
 		chain.doFilter(request, response);
+		
+		if (response instanceof GZIPResponseWrapper) {
+			((GZIPResponseWrapper)response).close();
+		}
 	}
 	
 	@Override
@@ -124,42 +136,40 @@ public class GatewayFilter implements Filter {
 	class GZIPResponseWrapper extends HttpServletResponseWrapper {
 		private ServletOutputStream out = null;
 		private PrintWriter writer = null;
-		private String encoding = null;
 		
-		public GZIPResponseWrapper(HttpServletResponse response, String encoding) {
+		public GZIPResponseWrapper(HttpServletResponse response) {
 			super(response);
-			this.encoding = encoding;
 		}
 		
 		@Override
 		public ServletOutputStream getOutputStream() throws IOException {
-			if (out != null) {
+			if (out == null) {
 				out = new ServletOutputStream() {
-					private GZIPOutputStream out = new GZIPOutputStream(GZIPResponseWrapper.super.getOutputStream());
+					private GZIPOutputStream cout = new GZIPOutputStream(GZIPResponseWrapper.super.getOutputStream());
 					
 					@Override
 					public void write(byte[] b, int off, int len) throws IOException {
-						out.write(b, off, len);
+						cout.write(b, off, len);
 					}
 					
 					@Override
 					public void write(byte[] b) throws IOException {
-						out.write(b);
+						cout.write(b);
 					}
 
 					@Override
 					public void write(int b) throws IOException {
-						out.write(b);
+						cout.write(b);
 					}
 					
 					@Override
 					public void flush() throws IOException {
-						out.flush();
+						cout.flush();
 					}
 					
 					@Override
 					public void close() throws IOException {
-						out.close();
+						cout.close();
 					}
 				};
 			}
@@ -168,14 +178,20 @@ public class GatewayFilter implements Filter {
 		
 		@Override
 		public PrintWriter getWriter() throws IOException {
-			if (writer != null) {
-				if (encoding != null) {
-					writer = new PrintWriter(new OutputStreamWriter(out, encoding));
-				} else {
-					writer = new PrintWriter(out);
-				}
+			if (writer == null) {
+				writer = new PrintWriter(new OutputStreamWriter(getOutputStream(), getCharacterEncoding()));
 			}
 			return writer;
+		}
+		
+		public void close() throws IOException {
+			if (writer != null) {
+				writer.flush();
+				writer.close();
+			} else if (out != null) {
+				out.flush();
+				out.close();
+			}
 		}
 	}
 }
