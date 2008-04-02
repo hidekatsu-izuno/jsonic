@@ -253,7 +253,6 @@ public class GatewayFilter implements Filter {
 						char[] cbuf = new char[1024];
 						try {
 							while ((length = reader.read(cbuf)) != -1) {
-								System.out.println(new String(cbuf, 0, length));
 								if (length > 0) writer.write(cbuf, 0, length);
 							}
 						} finally {
