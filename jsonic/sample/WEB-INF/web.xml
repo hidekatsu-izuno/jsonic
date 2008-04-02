@@ -16,12 +16,8 @@
 				encoding: 'UTF-8'
 				compression: true
 				
-				'/forward/([^.]+)': {
+				'/forward/[^.]+': {
 					forward: '/$1.json'
-				}
-				
-				'/tunnel/(.*)': {
-					forward: 'http://www.asahi-net.or.jp/~KI4s-NKMR/$1'
 				}
 			</param-value>
 		</init-param>
@@ -40,6 +36,7 @@
 			<param-name>config</param-name>
 			<param-value>
 				debug: true
+				authenticate: 'sample.service.LoginService'
 				mappings: {
 					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
 					'/[class].[ext]': 'sample.service.${class}Service'

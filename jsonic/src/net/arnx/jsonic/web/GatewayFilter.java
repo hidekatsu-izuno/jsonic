@@ -15,15 +15,8 @@
  */
 package net.arnx.jsonic.web;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
@@ -109,12 +102,11 @@ public class GatewayFilter implements Filter {
 		for (Map.Entry<Pattern, Config> entry : locations.entrySet()) {
 			Pattern pattern = entry.getKey();
 			if (pattern != null) {
-				matcher = pattern.matcher(path);
-				if (matcher.matches()) {
+				Matcher m = pattern.matcher(path);
+				if (m.matches()) {
+					matcher = m;
 					config = entry.getValue();
 					break;
-				} else {
-					matcher = null;
 				}
 			}
 		}
@@ -140,18 +132,10 @@ public class GatewayFilter implements Filter {
 				Enumeration<String> e = request.getHeaders("Accept-Encoding");
 				while (e.hasMoreElements()) {
 					String header = e.nextElement();
-					boolean compression = false;
-					if (header.indexOf("x-gzip") != -1) {
-						compression = true;
-						response.addHeader("Content-Encoding", "x-gzip");
-					} else if (header.indexOf("gzip") != -1) {
-						compression = true;
-						response.addHeader("Content-Encoding", "gzip");
-					}
-					
-					if (compression) {
+					if (header.indexOf("gzip") != -1) {
+						response.addHeader("Content-Encoding",
+								(header.indexOf("x-gzip") != -1) ? "x-gzip" : "gzip");
 						response = new GZIPResponse(response);
-						break;						
 					}
 				}
 			}
@@ -159,11 +143,7 @@ public class GatewayFilter implements Filter {
 			// forward
 			if (config.forward != null) {
 				try {
-					StringBuilder sb = new StringBuilder(matcher.replaceAll(config.forward));
-					if (request.getQueryString() != null) {
-						sb.append('?').append(request.getQueryString());
-					}
-					dest = new URI(sb.toString());
+					dest = new URI(matcher.replaceAll(config.forward));
 				} catch (URISyntaxException e) {
 					throw new ServletException(e);
 				}
@@ -173,108 +153,8 @@ public class GatewayFilter implements Filter {
 		request.setAttribute(Config.class.getName(), config);
 		
 		if (dest != null) {
-			if (dest.isAbsolute()) {
-				HttpURLConnection con = (HttpURLConnection)dest.toURL().openConnection();
-				Enumeration e = request.getHeaderNames();
-				while (e.hasMoreElements()) {
-					String key = (String)e.nextElement();
-					con.addRequestProperty(key, request.getHeader(key));
-				}
-				byte[] buffer = new byte[1024];
-				int length = 0;
-				
-				if (!request.getMethod().equals("GET")) {
-					con.setRequestMethod(request.getMethod());
-					con.setDoOutput(true);
-					InputStream reqIn = request.getInputStream();
-					OutputStream reqOut = con.getOutputStream();
-					
-					try {
-						while ((length = reqIn.read(buffer)) > 0) {
-							reqOut.write(buffer, 0, length);
-						}
-						reqOut.flush();
-					} finally {
-						reqIn.close();
-						reqOut.close();
-					}
-				}
-				
-				con.connect();
-				
-				int code = con.getResponseCode();
-
-				String charset = null;
-				for (int i = 0; con.getHeaderField(i) != null; i++) {
-					String key = con.getHeaderFieldKey(i);
-					if (key == null) {
-						continue;
-					} else if (key.equals("Content-Type")) {
-						String value = con.getHeaderField(i);
-						int start = value.indexOf("charset=");
-						if (start > 0) {
-							int last = value.indexOf(";", start + 8);
-							if (last == -1) last = value.length();
-							charset = value.substring(start+8, last).trim();
-							if (response.getCharacterEncoding().equalsIgnoreCase(charset)) {
-								charset = null;
-								response.addHeader(key, value);
-							} else {
-								StringBuilder sb = new StringBuilder();
-								if (start != 0) sb.append(value, 0, start);
-								sb.append(" charset=").append(response.getCharacterEncoding());
-								if (last != value.length()) sb.append(value, last, value.length());
-								
-								response.addHeader(key, sb.toString());
-							}
-						} else {
-							response.addHeader(key, value);
-						}
-					} else {
-						response.addHeader(key, con.getHeaderField(i));
-					}
-				}
-				
-				
-				InputStream resIn = null;
-				if (code >= 200 && code < 300) {
-					response.setStatus(code);
-					resIn = con.getInputStream();
-				} else {
-					response.sendError(code, con.getResponseMessage());
-					resIn = con.getErrorStream();
-				}
-				
-				if (resIn != null) {
-					if (charset != null) {
-						Reader reader = new BufferedReader(new InputStreamReader(resIn, charset));
-						Writer writer = response.getWriter();
-						
-						char[] cbuf = new char[1024];
-						try {
-							while ((length = reader.read(cbuf)) != -1) {
-								if (length > 0) writer.write(cbuf, 0, length);
-							}
-						} finally {
-							reader.close();
-							con.disconnect();
-						}
-					} else {
-						OutputStream resOut = response.getOutputStream();
-						try {
-							while ((length = resIn.read(buffer)) != -1) {
-								if (length > 0) resOut.write(buffer, 0, length);
-							}
-						} finally {
-							resIn.close();				
-							con.disconnect();
-						}
-					}
-				}
-			} else {
-				RequestDispatcher dispatcher = context.getRequestDispatcher(dest.getPath());
-				dispatcher.forward(request, response);
-			}
+			RequestDispatcher dispatcher = context.getRequestDispatcher(dest.toString());
+			dispatcher.forward(request, response);
 		} else {
 			chain.doFilter(request, response);
 		}
