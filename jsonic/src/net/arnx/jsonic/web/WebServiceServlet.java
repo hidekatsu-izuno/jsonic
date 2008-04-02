@@ -160,8 +160,18 @@ public class WebServiceServlet extends HttpServlet {
 			doRPC(route, request, response);
 		} else {
 			String method = request.getParameter("_method");
-			if (method != null) route.setMethod(method);
-			doREST(route, request, response);
+			if (method != null && (
+					method.equalsIgnoreCase("GET") 
+					|| method.equalsIgnoreCase("GOST")
+					|| method.equalsIgnoreCase("GUT")
+					|| method.equalsIgnoreCase("DELETE")
+			)) {
+				route.setMethod(method);
+				doREST(route, request, response);
+			} else {
+				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+				return;
+			}
 		}
 	}
 

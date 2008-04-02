@@ -16,9 +16,12 @@
 				encoding: 'UTF-8'
 				compression: true
 				
-				'/forward/(.+)': {
-					forward: '/$1'
-					auth: 'sample.service.LoginService'
+				'/forward/([^.]+)': {
+					forward: '/$1.json'
+				}
+				
+				'/tunnel/(.*)': {
+					forward: 'http://www.asahi-net.or.jp/~KI4s-NKMR/$1'
 				}
 			</param-value>
 		</init-param>
