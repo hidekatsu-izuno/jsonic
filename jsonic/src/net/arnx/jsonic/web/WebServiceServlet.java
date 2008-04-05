@@ -211,7 +211,6 @@ public class WebServiceServlet extends HttpServlet {
 		public Object id;
 	}
 	
-	
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 				

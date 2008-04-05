@@ -36,7 +36,6 @@
 			<param-name>config</param-name>
 			<param-value>
 				debug: true
-				authenticate: 'sample.service.LoginService'
 				mappings: {
 					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
 					'/[class].[ext]': 'sample.service.${class}Service'
