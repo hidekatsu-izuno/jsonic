@@ -768,6 +768,9 @@ public class JSON {
 			case '#':
 				s.back();
 				skipComment(s);
+				if (point == 5) {
+					point = 6;
+				}
 				break;
 			default:
 				if (point == 0) {
@@ -880,6 +883,9 @@ public class JSON {
 			case '#':
 				s.back();
 				skipComment(s);
+				if (point == 2) {
+					point = 3;
+				}
 				break;
 			default:
 				if (point == 1 || point == 3) {

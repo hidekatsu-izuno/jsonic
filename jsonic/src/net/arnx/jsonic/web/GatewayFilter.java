@@ -16,6 +16,7 @@
 package net.arnx.jsonic.web;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -156,6 +157,7 @@ public class GatewayFilter implements Filter {
 					response.addHeader("Content-Encoding",
 							(header.indexOf("x-gzip") != -1) ? "x-gzip" : "gzip");
 					response = new GZIPResponse(response);
+					break;
 				}
 			}
 		}
@@ -229,6 +231,14 @@ public class GatewayFilter implements Filter {
 				};
 			}
 			return out;
+		}
+		
+		@Override
+		public PrintWriter getWriter() throws IOException {
+			if (writer == null) {
+				writer = new PrintWriter(new OutputStreamWriter(getOutputStream(), getCharacterEncoding()));
+			}
+			return writer;
 		}
 
 		public void close() throws IOException {

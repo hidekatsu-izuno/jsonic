@@ -160,12 +160,11 @@ public class WebServiceServlet extends HttpServlet {
 			doRPC(route, request, response);
 		} else {
 			String method = request.getParameter("_method");
-			if (method != null && (
-					method.equalsIgnoreCase("GET") 
-					|| method.equalsIgnoreCase("GOST")
-					|| method.equalsIgnoreCase("GUT")
-					|| method.equalsIgnoreCase("DELETE")
-			)) {
+			if (method == null) method = request.getMethod();
+			if (method.equalsIgnoreCase("GET") 
+				|| method.equalsIgnoreCase("POST")
+				|| method.equalsIgnoreCase("PUT")
+				|| method.equalsIgnoreCase("DELETE")) {
 				route.setMethod(method);
 				doREST(route, request, response);
 			} else {

@@ -18,18 +18,18 @@
 				
 				'/forward/[^.]+': {
 					forward: '/$1.json'  // forward target
-					access: ['admin']    // role array
+					//access: ['admin']    // role array
 					locale: 'ja-JP'      // set response locale
 				}
 			</param-value>
 		</init-param>
 	</filter>
-
+	
 	<filter-mapping>
 		<filter-name>Gateway Filter</filter-name>
 	    <url-pattern>/*</url-pattern>
 	</filter-mapping>
- 	
+
 	<servlet>
 		<description>JSON-WebService</description>
 		<servlet-name>json-ws</servlet-name>

@@ -1,6 +1,7 @@
 package sample.web.rest.service;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -8,7 +9,7 @@ public class MemoService {
 	
 	// it's incorrect use. you shoud use RDBMS.
 	private static int count = 0;
-	private static Map<Integer, Memo> list = new LinkedHashMap<Integer, Memo>();
+	private static Map<Integer, Memo> list = Collections.synchronizedMap(new LinkedHashMap<Integer, Memo>());
 	
 	public void init() {
 	}
