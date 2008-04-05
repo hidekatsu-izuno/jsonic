@@ -51,6 +51,7 @@ public class GatewayFilter implements Filter {
 		public String encoding = null;
 		public Boolean compression = false;
 		public String forward = null;
+		public Set<String> access = null;
 	}
 	
 	@Override
@@ -124,6 +125,21 @@ public class GatewayFilter implements Filter {
 		
 		URI dest = null;
 		if (config != null) {
+			// access check
+			if (config.access != null) {
+				boolean access = false;
+				for (String role : config.access) {
+					if (role == null || request.isUserInRole(role)) {
+						access = true;
+						break;
+					}
+				}
+				if (!access) {
+					response.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
+			}
+			
 			// set character encoding
 			if (config.encoding != null) {
 				request.setCharacterEncoding(config.encoding);

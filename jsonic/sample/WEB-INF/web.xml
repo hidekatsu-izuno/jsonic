@@ -18,6 +18,7 @@
 				
 				'/forward/[^.]+': {
 					forward: '/$1.json'
+					access: ['admin']
 				}
 			</param-value>
 		</init-param>
