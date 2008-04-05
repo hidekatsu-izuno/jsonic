@@ -100,6 +100,11 @@ public class WebServiceServlet extends HttpServlet {
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
 		
+		if (request.getCharacterEncoding() == null) {
+			request.setCharacterEncoding("UTF-8");
+			response.setCharacterEncoding("UTF-8");
+		}
+		
 		File file = new File(getServletContext().getRealPath(uri));
 		if (file.exists()) {
 			OutputStream out = response.getOutputStream();

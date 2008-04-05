@@ -581,10 +581,12 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
+<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>に対応したContainerを標準添付しています。このContainerを利用すると、Seasar2上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+
 <h4>■ Gateway Filter</h4>
 <p>JSONICでは、JSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
-
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>に対応したContainerを標準添付しています。このContainerを利用すると、Seasar2上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+<pre class="source">
+</pre>
 
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
@@ -600,7 +602,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <ul>
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()を使用するように変更しました。</li>
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
-<li>WebServiceServletにてJSONからJavaへの変換時HttpServletRequest.getLocale()の値を設定するようにしました。</li>
+<li>WebServiceServletにてJSONからJavaへの変換時HttpServletRequest#getLocale()の値を設定するようにしました。</li>
+<li>WebServiceServletにて行っていたencodingの設定をGatewayFilterに移動させました。HttpServletRequest#getCharacterEncoding()の値がnullの場合のみUTF-8が設定されます。</li>
 <li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後に呼び出すようにしました。</li>
 </ul>
 
