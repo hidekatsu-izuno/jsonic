@@ -13,13 +13,13 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				encoding: 'UTF-8'
-				compression: true
+				encoding: 'UTF-8'        // request/response encoding setting
+				compression: true        // gzip compression setting
 				
 				'/forward/[^.]+': {
-					forward: '/$1.json'
-					access: ['admin']
-					locale: 'ja-JP' // set response locale
+					forward: '/$1.json'  // forward target
+					access: ['admin']    // role array
+					locale: 'ja-JP'      // set response locale
 				}
 			</param-value>
 		</init-param>

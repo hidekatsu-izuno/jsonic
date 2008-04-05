@@ -67,18 +67,23 @@ public class GatewayFilter implements Filter {
 		if (configText == null) configText = "";
 
 		Map map = json.parse(configText, Map.class);
-		Map base = new LinkedHashMap();
+		Config base = (Config)json.convert(map, Config.class);
 		for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
 			String key = entry.getKey().toString();
 			Object value = entry.getValue();
 			
 			if (key.startsWith("/") && value instanceof Map) {
-				locations.put(Pattern.compile("^" + key + "$"), (Config)json.convert(value, Config.class));
-			} else {
-				base.put(key, value);
+				Config config = (Config)json.convert(value, Config.class);
+				if (config.encoding == null) config.encoding = base.encoding;
+				if (config.compression == null) config.compression = base.compression;
+				if (config.forward == null) config.forward = base.forward;
+				if (config.access == null) config.access = base.access;
+				if (config.locale == null) config.locale = base.locale;
+				
+				locations.put(Pattern.compile("^" + key + "$"), config);
 			}
 		}
-		locations.put(null, (Config)json.convert(base, Config.class));
+		locations.put(Pattern.compile(".*"), base);
 	}
 
 	@Override
@@ -88,7 +93,7 @@ public class GatewayFilter implements Filter {
 		if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
 			doFilter((HttpServletRequest)request, (HttpServletResponse)response, chain);
 		} else {
-			throw new UnsupportedOperationException();
+			chain.doFilter(request, response);
 		}
 	}
 	
@@ -107,72 +112,60 @@ public class GatewayFilter implements Filter {
 		Config config = null;
 		for (Map.Entry<Pattern, Config> entry : locations.entrySet()) {
 			Pattern pattern = entry.getKey();
-			if (pattern != null) {
-				Matcher m = pattern.matcher(path);
-				if (m.matches()) {
-					matcher = m;
-					config = entry.getValue();
-					break;
-				}
+			Matcher m = pattern.matcher(path);
+			if (m.matches()) {
+				matcher = m;
+				config = entry.getValue();
+				break;
 			}
-		}
-		if (config == null) {
-			config = locations.get(null);
-		} else {
-			Config base = locations.get(null);
-			if (config.encoding == null) config.encoding = base.encoding;
-			if (config.compression == null) config.compression = base.compression;
-			if (config.forward == null) config.forward = base.forward;
 		}
 		
 		URI dest = null;
-		if (config != null) {
-			// access check
-			if (config.access != null) {
-				boolean access = false;
-				for (String role : config.access) {
-					if (role == null || request.isUserInRole(role)) {
-						access = true;
-						break;
-					}
-				}
-				if (!access) {
-					response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
-					return;
+		// access check
+		if (config.access != null) {
+			boolean access = false;
+			for (String role : config.access) {
+				if (role == null || request.isUserInRole(role)) {
+					access = true;
+					break;
 				}
 			}
-			
-			// set character encoding
-			if (config.encoding != null) {
-				request.setCharacterEncoding(config.encoding);
-				response.setCharacterEncoding(config.encoding);
+			if (!access) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+				return;
 			}
-			
-			// set response locale
-			if (config.locale != null) {
-				response.setLocale(config.locale);
-			}
-			
-			// set gzip filter
-			if (config.compression != null && config.compression) {
-				Enumeration<String> e = request.getHeaders("Accept-Encoding");
-				while (e.hasMoreElements()) {
-					String header = e.nextElement();
-					if (header.indexOf("gzip") != -1) {
-						response.addHeader("Content-Encoding",
-								(header.indexOf("x-gzip") != -1) ? "x-gzip" : "gzip");
-						response = new GZIPResponse(response);
-					}
+		}
+		
+		// set character encoding
+		if (config.encoding != null) {
+			request.setCharacterEncoding(config.encoding);
+			response.setCharacterEncoding(config.encoding);
+		}
+		
+		// set response locale
+		if (config.locale != null) {
+			response.setLocale(config.locale);
+		}
+		
+		// set gzip filter
+		if (config.compression != null && config.compression) {
+			Enumeration<String> e = request.getHeaders("Accept-Encoding");
+			while (e.hasMoreElements()) {
+				String header = e.nextElement();
+				if (header.indexOf("gzip") != -1) {
+					response.addHeader("Content-Encoding",
+							(header.indexOf("x-gzip") != -1) ? "x-gzip" : "gzip");
+					response = new GZIPResponse(response);
 				}
 			}
-			
-			// forward
-			if (config.forward != null) {
-				try {
-					dest = new URI(matcher.replaceAll(config.forward));
-				} catch (URISyntaxException e) {
-					throw new ServletException(e);
-				}
+		}
+		
+		// forward
+		if (config.forward != null) {
+			try {
+				dest = new URI(matcher.replaceAll(config.forward));
+			} catch (URISyntaxException e) {
+				throw new ServletException(e);
 			}
 		}
 		
