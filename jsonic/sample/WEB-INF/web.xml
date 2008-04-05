@@ -13,14 +13,21 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				encoding: 'UTF-8'        // request/response encoding setting
-				compression: true        // gzip compression setting
-				cache: false             // cache setting
+				expiration: false          // cache control setting
+				locale: 'ja-JP'            // set response locale
 				
-				'/forward/[^.]+': {
-					forward: '/$1.json'  // forward target
-					//access: ['admin']    // role array
-					locale: 'ja-JP'      // set response locale
+				'.+\.json': {
+					encoding: 'UTF-8'      // request/response encoding setting
+					expiration: true
+					compression: true      // gzip compression setting
+				}
+				
+				'/forward/([^.]+)': {
+					encoding: 'SHIFT_JIS'
+					expiration: true
+					forward: '/$1.json'    // forward target
+					access: ['admin']      // role array
+					locale: 'en'
 				}
 			</param-value>
 		</init-param>

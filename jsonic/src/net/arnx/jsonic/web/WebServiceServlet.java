@@ -54,8 +54,6 @@ public class WebServiceServlet extends HttpServlet {
 	
 	class Config {
 		public Class<? extends Container> container;
-		public String encoding = "UTF-8";
-		public boolean expiration = true;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -98,17 +96,6 @@ public class WebServiceServlet extends HttpServlet {
 	protected Route preprocess(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		
-		if (config.encoding != null) {
-			request.setCharacterEncoding(config.encoding);
-			response.setCharacterEncoding(config.encoding);
-		}
-		
-		if (config.expiration) {
-			response.setHeader("Cache-Control","no-cache");
-			response.setHeader("Pragma","no-cache");
-			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
-		}
-		
 		String uri = (request.getContextPath().equals("/")) ?
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
@@ -136,7 +123,7 @@ public class WebServiceServlet extends HttpServlet {
 				return route;
 			}
 		}
-		response.sendError(SC_NOT_FOUND);
+		response.sendError(SC_NOT_FOUND, "Not Found");
 		return null;
 	}
 	
@@ -149,7 +136,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED);
+			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowd");
 			return;
 		} else {
 			doREST(route, request, response);
@@ -175,7 +162,7 @@ public class WebServiceServlet extends HttpServlet {
 				route.setMethod(method);
 				doREST(route, request, response);
 			} else {
-				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
 				return;
 			}
 		}
@@ -190,7 +177,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED);
+			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
 		} else {
 			doREST(route, request, response);
 		}
@@ -205,7 +192,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED);
+			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
 		} else {
 			doREST(route, request, response);
 		}
@@ -233,7 +220,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {			
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
-				response.setStatus(SC_BAD_REQUEST);
+				response.sendError(SC_BAD_REQUEST, "Bad Request");
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
 			} else {
@@ -253,43 +240,43 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_NOT_FOUND);
+			response.sendError(SC_NOT_FOUND, "Not Found");
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_NOT_FOUND);
+			response.sendError(SC_NOT_FOUND, "Not Found");
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
+			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			errorCode = -32602;
 			errorMessage = "Invalid params.";
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
+			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			errorCode = -32700;
 			errorMessage = "Parse error.";
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
 			if (cause instanceof UnsupportedOperationException) {
-				response.sendError(SC_NOT_FOUND);
+				response.sendError(SC_NOT_FOUND, "Not Found");
 				errorCode = -32601;
 				errorMessage = "Method not found.";
 			} else if (cause instanceof IllegalArgumentException) {
-				response.setStatus(SC_BAD_REQUEST);
+				response.sendError(SC_BAD_REQUEST, "Bad Request");
 				errorCode = -32602;
 				errorMessage = "Invalid params.";
 			} else {
-				response.setStatus(SC_INTERNAL_SERVER_ERROR);
+				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 				errorCode = -32603;
 				errorMessage = cause.getMessage();
 			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.setStatus(SC_INTERNAL_SERVER_ERROR);
+			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			errorCode = -32603;
 			errorMessage = "Internal error.";
 		}
@@ -323,7 +310,7 @@ public class WebServiceServlet extends HttpServlet {
 			json.format(res, writer);
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.setStatus(SC_INTERNAL_SERVER_ERROR);
+			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			res.clear();
 			res.put("result", null);
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
@@ -364,7 +351,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			Object component = container.getComponent(route.getComponentClass());
 			if (component == null) {
-				response.sendError(SC_NOT_FOUND);
+				response.sendError(SC_NOT_FOUND, "Not Found");
 				return;
 			}
 			
@@ -395,15 +382,15 @@ public class WebServiceServlet extends HttpServlet {
 			res = json.invoke(component, methodName, params);
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_NOT_FOUND);
+			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;			
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_NOT_FOUND);
+			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_BAD_REQUEST);
+			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			return;
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
@@ -413,7 +400,7 @@ public class WebServiceServlet extends HttpServlet {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
 			if (cause instanceof UnsupportedOperationException) {
-				response.sendError(SC_NOT_FOUND);				
+				response.sendError(SC_NOT_FOUND, "Not Found");				
 			} else if (cause instanceof IllegalArgumentException) {
 				response.sendError(SC_BAD_REQUEST, cause.getMessage());
 			} else {
@@ -421,7 +408,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR);
+			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}
 		
@@ -445,7 +432,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR);
+			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 		}		
 	}
 	

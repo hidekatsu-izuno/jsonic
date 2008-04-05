@@ -18,6 +18,7 @@ package net.arnx.jsonic.web;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
@@ -69,20 +70,24 @@ public class GatewayFilter implements Filter {
 		if (configText == null) configText = "";
 
 		Map map = json.parse(configText, Map.class);
-		Config base = (Config)json.convert(map, Config.class);
+		
+		Map<String, Object> baseMap = new LinkedHashMap<String, Object>();
+		for (Field field : Config.class.getFields()) {
+			baseMap.put(field.getName(), map.get(field.getName()));
+		}
+		
+		Config base = (Config)json.convert(baseMap, Config.class);
 		for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
-			String key = entry.getKey().toString();
-			Object value = entry.getValue();
-			
-			if (key.startsWith("/") && value instanceof Map) {
-				Config config = (Config)json.convert(value, Config.class);
-				if (config.encoding == null) config.encoding = base.encoding;
-				if (config.compression == null) config.compression = base.compression;
-				if (config.forward == null) config.forward = base.forward;
-				if (config.access == null) config.access = base.access;
-				if (config.locale == null) config.locale = base.locale;
+			if (!baseMap.containsKey(entry.getKey()) && entry.getValue() instanceof Map) {
+				Map valueMap = (Map)entry.getValue();
+				for (Map.Entry<String, Object> baseEntry : baseMap.entrySet()) {
+					if (valueMap.get(baseEntry.getKey()) == null) {
+						valueMap.put(baseEntry.getKey(), baseEntry.getValue());
+					}
+				}
 				
-				locations.put(Pattern.compile("^" + key + "$"), config);
+				locations.put(Pattern.compile("^" + entry.getKey() + "$"), 
+						(Config)json.convert(valueMap, Config.class));
 			}
 		}
 		locations.put(Pattern.compile(".*"), base);
