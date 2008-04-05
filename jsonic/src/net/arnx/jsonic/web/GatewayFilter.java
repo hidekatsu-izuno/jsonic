@@ -52,6 +52,7 @@ public class GatewayFilter implements Filter {
 	class Config {
 		public String encoding = null;
 		public Boolean compression = false;
+		public Boolean expiration = false;
 		public String forward = null;
 		public Set<String> access = null;
 		public Locale locale = null;
@@ -148,13 +149,20 @@ public class GatewayFilter implements Filter {
 			response.setLocale(config.locale);
 		}
 		
+		// set no-cache
+		if (config.expiration != null && config.expiration) {
+			response.setHeader("Cache-Control","no-cache");
+			response.setHeader("Pragma","no-cache");
+			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
+		}
+		
 		// set gzip filter
 		if (config.compression != null && config.compression) {
 			Enumeration<String> e = request.getHeaders("Accept-Encoding");
 			while (e.hasMoreElements()) {
 				String header = e.nextElement();
 				if (header.indexOf("gzip") != -1) {
-					response.addHeader("Content-Encoding",
+					response.setHeader("Content-Encoding",
 							(header.indexOf("x-gzip") != -1) ? "x-gzip" : "gzip");
 					response = new GZIPResponse(response);
 					break;

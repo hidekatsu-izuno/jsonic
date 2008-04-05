@@ -405,6 +405,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
     {
       "debug": true,
       "encoding": "UTF-8",
+      "expiration": true,
       "mappings": {
         "/[package]/[class].[ext]": "sample.web.${package}.service.${class}Service",
         "/[class].[ext]": "sample.${class}Service"
@@ -425,6 +426,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><td>container</td><td>net.arnx.jsonic.web.Container</td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、net.arnx.jsonic.web.Containerです。</td></tr>
 <tr><td>debug</td><td>Boolean</td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
 <tr><td>encoding</td><td>java.lang.String</td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
+<tr><td>expiration</td><td>boolean</td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT)。デフォルトはtrueです。</td></tr>
 <tr><td>mappings</td><td>java.util.Map&lt;String, String&gt;</td><td>URLパスとクラスのマッピングを行います。
 パス中の[<i>name</i>]で囲まれた部分はクラス名の${<i>name</i>}に置換されます<sup>(※5)</sup>。
 なお、RESTモードの場合、利用されなかった変数はメッセージボディとして送られてきたJSON objectの値として設定されメソッドに引き渡されます（RPCモードの場合は設定されません）。</td></tr>

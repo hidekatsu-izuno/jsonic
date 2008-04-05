@@ -55,6 +55,7 @@ public class WebServiceServlet extends HttpServlet {
 	class Config {
 		public Class<? extends Container> container;
 		public String encoding = "UTF-8";
+		public boolean expiration = true;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -100,6 +101,12 @@ public class WebServiceServlet extends HttpServlet {
 		if (config.encoding != null) {
 			request.setCharacterEncoding(config.encoding);
 			response.setCharacterEncoding(config.encoding);
+		}
+		
+		if (config.expiration) {
+			response.setHeader("Cache-Control","no-cache");
+			response.setHeader("Pragma","no-cache");
+			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
 		}
 		
 		String uri = (request.getContextPath().equals("/")) ?

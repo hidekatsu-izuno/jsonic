@@ -15,6 +15,7 @@
 			<param-value>
 				encoding: 'UTF-8'        // request/response encoding setting
 				compression: true        // gzip compression setting
+				cache: false             // cache setting
 				
 				'/forward/[^.]+': {
 					forward: '/$1.json'  // forward target
