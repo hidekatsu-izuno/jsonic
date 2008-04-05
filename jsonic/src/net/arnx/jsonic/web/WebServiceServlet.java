@@ -487,11 +487,15 @@ public class WebServiceServlet extends HttpServlet {
 			Method method = null;
 			Method destroy = null;
 			for (Method m : c.getMethods()) {
+				if (Modifier.isStatic(m.getModifiers())) {
+					continue;
+				}
+				
 				if (m.getName().equals("init") && m.getParameterTypes().length == 0) {
 					init = m;
 				} else if (m.getName().equals("destroy") && m.getParameterTypes().length == 0) {
 					destroy = m;
-				} else if (m.getName().equals(methodName) && !Modifier.isStatic(m.getModifiers())) {
+				} else if (m.getName().equals(methodName)) {
 					method = m;
 				}
 			}

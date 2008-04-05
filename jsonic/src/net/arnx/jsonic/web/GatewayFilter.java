@@ -59,8 +59,11 @@ public class GatewayFilter implements Filter {
 		
 		JSON json = new JSON();
 		json.setContext(this);
-		
-		Map map = json.parse(filterConfig.getInitParameter("config"), Map.class);
+
+		String configText = filterConfig.getInitParameter("config");
+		if (configText == null) configText = "";
+
+		Map map = json.parse(configText, Map.class);
 		Map base = new LinkedHashMap();
 		for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
 			String key = entry.getKey().toString();
