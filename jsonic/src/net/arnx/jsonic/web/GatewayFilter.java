@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -52,6 +53,7 @@ public class GatewayFilter implements Filter {
 		public Boolean compression = false;
 		public String forward = null;
 		public Set<String> access = null;
+		public Locale locale = null;
 	}
 	
 	@Override
@@ -135,7 +137,7 @@ public class GatewayFilter implements Filter {
 					}
 				}
 				if (!access) {
-					response.sendError(HttpServletResponse.SC_FORBIDDEN);
+					response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
 					return;
 				}
 			}
@@ -144,6 +146,11 @@ public class GatewayFilter implements Filter {
 			if (config.encoding != null) {
 				request.setCharacterEncoding(config.encoding);
 				response.setCharacterEncoding(config.encoding);
+			}
+			
+			// set response locale
+			if (config.locale != null) {
+				response.setLocale(config.locale);
 			}
 			
 			// set gzip filter
