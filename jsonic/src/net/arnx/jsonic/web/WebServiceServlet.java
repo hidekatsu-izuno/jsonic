@@ -215,6 +215,9 @@ public class WebServiceServlet extends HttpServlet {
 		throws ServletException, IOException {
 				
 		JSONInvoker json = new JSONInvoker();
+		if (response.getLocale() != null) {
+			json.setLocale(response.getLocale());
+		}
 		
 		// request processing
 		RpcRequest req = null;
@@ -351,6 +354,9 @@ public class WebServiceServlet extends HttpServlet {
 		
 		// request processing
 		JSONInvoker json = new JSONInvoker();
+		if (response.getLocale() != null) {
+			json.setLocale(response.getLocale());
+		}
 		
 		Object res = null;
 		try {
