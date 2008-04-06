@@ -72,89 +72,121 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testREST() throws Exception {
-		HttpClient client = new HttpClient("http://localhost:8080/sample/rest/memo.json");
+		String url = "http://localhost:8080/sample/rest/memo";
+		HttpURLConnection con = null;
+		
 		List<Map<String, Object>> content = null;
 		
 		// POST
-		client.setRequestMethod("POST");
-		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("{title:\"title\",text:\"text\"}");
-		client.connect();
-		assertEquals(SC_CREATED, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-type", "application/json");
+		write(con.getOutputStream(), "{title:\"title\",text:\"text\"}");
+		con.connect();
+		assertEquals(SC_CREATED, con.getResponseCode());
+		con.disconnect();
 		
 		// GET
-		client.setRequestMethod("GET");
-		client.connect();
-		assertEquals(SC_OK, client.getResponseCode());
-		content = (List<Map<String, Object>>)JSON.decode(client.getResponseContent());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con.setRequestMethod("GET");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		content = (List<Map<String, Object>>)JSON.decode(read(con.getInputStream()));
+		con.disconnect();
 		
 		// PUT
-		client.setRequestMethod("PUT");
-		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
-		client.connect();
-		assertEquals(SC_NO_CONTENT, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("PUT");
+		con.setRequestProperty("Content-type", "application/json");
+		write(con.getOutputStream(), "{title:\"title\",text:\"text\"}");
+		con.connect();
+		assertEquals(SC_NO_CONTENT, con.getResponseCode());
+		con.disconnect();
 		
 		// DELETE
-		client.setRequestMethod("DELETE");
-		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("{id:" + content.get(0).get("id") + "}");
-		client.connect();
-		assertEquals(SC_NO_CONTENT, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con.setRequestMethod("DELETE");
+		con.setRequestProperty("Content-type", "application/json");
+		con.connect();
+		assertEquals(SC_NO_CONTENT, con.getResponseCode());
+		con.disconnect();
+		
+		// DELETE
+		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con.setRequestMethod("DELETE");
+		con.setRequestProperty("Content-type", "application/json");
+		con.connect();
+		assertEquals(SC_NOT_FOUND, con.getResponseCode());
+		con.disconnect();
 		
 		// POST
-		client.setRequestMethod("POST");
-		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("[\"title\", \"text\"]");
-		client.connect();
-		assertEquals(SC_BAD_REQUEST, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-type", "application/json");
+		write(con.getOutputStream(), "[\"title\", \"text\"]");
+		con.connect();
+		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
+		con.disconnect();
 	}
 	
 	@Test
 	public void testRESTWithMethod() throws Exception {
-		HttpClient client = new HttpClient();
+		String url = "http://localhost:8080/sample/rest/memo.json";
+		HttpURLConnection con = null;
+		
 		List<Map<String, Object>> content = null;
 		
 		// POST
-		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=POST");
-		client.setRequestMethod("POST");
-		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("{title:\"title\",text:\"text\"}");
-		client.connect();
-		assertEquals(SC_CREATED, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-type", "application/json");
+		write(con.getOutputStream(), "{title:\"title\",text:\"text\"}");
+		con.connect();
+		assertEquals(SC_CREATED, con.getResponseCode());
+		con.disconnect();
 		
 		// GET
-		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=GET");
-		client.setRequestMethod("POST");
-		client.setRequestHeader("Content-type", "application/json");
-		client.connect();
-		assertEquals(SC_OK, client.getResponseCode());
-		content = (List<Map<String, Object>>)JSON.decode(client.getResponseContent());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + "?_method=GET").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		content = (List<Map<String, Object>>)JSON.decode(read(con.getInputStream()));
+		con.disconnect();
 		
 		// PUT
-		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=PUT");
-		client.setRequestMethod("POST");
-		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
-		client.connect();
-		assertEquals(SC_NO_CONTENT, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + "?_method=PUT").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-type", "application/json");
+		write(con.getOutputStream(), "{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
+		con.connect();
+		assertEquals(SC_NO_CONTENT, con.getResponseCode());
+		con.disconnect();
 		
 		// DELETE
-		client.setURL("http://localhost:8080/sample/rest/memo.json?_method=DELETE");
-		client.setRequestMethod("POST");
-		client.setRequestHeader("Content-type", "application/json");
-		client.setRequestContent("{id:" + content.get(0).get("id") + "}");
-		client.connect();
-		assertEquals(SC_NO_CONTENT, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)new URL(url + "?_method=DELETE").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-type", "application/json");
+		write(con.getOutputStream(), "{id:" + content.get(0).get("id") + "}");
+		con.connect();
+		assertEquals(SC_NO_CONTENT, con.getResponseCode());
+		con.disconnect();
+		
+		// POST
+		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-type", "application/json");
+		write(con.getOutputStream(), "[\"title\", \"text\"]");
+		con.connect();
+		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
+		con.disconnect();
 	}
 	
 	private static void write(OutputStream out, String text) throws IOException {

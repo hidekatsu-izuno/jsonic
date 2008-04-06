@@ -510,7 +510,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 }</pre></td>
 </tr>
 </table>
-<div class="caption">(※6) クラス/メソッドが見つからなかった時だけでなく、メソッドからUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※6) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
 <div class="caption">(※7) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
 <h4>■ RESTモード</h4>
@@ -544,7 +544,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
 </tr>
 </table>
-<div class="caption">(※8) クラス/メソッドが見つからなかった時だけでなく、メソッドからUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※8) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
 <div class="caption">(※9) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
 
@@ -650,6 +650,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>
 <li>WebServiceServletにキャッシュコントロールに関するヘッダを出力する機能を追加しました。</li>
 <li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後でそれぞれのメソッドを呼び出すようにしました。</li>
+<li>WebServiceServletにてUnsupportedOperationExceptionだけでなくIllegalStateExceptionが投げられた時も404 Not Foundとなるように変更しました。</li>
 </ul>
 
 <h3>2008/03/02 version 0.9.7</h3>

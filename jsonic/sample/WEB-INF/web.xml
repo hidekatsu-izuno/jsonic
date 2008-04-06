@@ -47,6 +47,7 @@
 			<param-value>
 				debug: true
 				mappings: {
+					'/[package]/[class]/[id].[ext]': 'sample.web.${package}.service.${class}Service'
 					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
 					'/[class].[ext]': 'sample.service.${class}Service'
 				}

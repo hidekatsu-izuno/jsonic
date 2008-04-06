@@ -288,7 +288,8 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
-			if (cause instanceof UnsupportedOperationException) {
+			if (cause instanceof IllegalStateException
+				|| cause instanceof UnsupportedOperationException) {
 				response.setStatus(SC_NOT_FOUND);
 				errorCode = -32601;
 				errorMessage = "Method not found.";
@@ -426,13 +427,15 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
-			if (cause instanceof UnsupportedOperationException) {
+			if (cause instanceof IllegalStateException
+				|| cause instanceof UnsupportedOperationException) {
 				response.sendError(SC_NOT_FOUND, "Not Found");				
 			} else if (cause instanceof IllegalArgumentException) {
 				response.sendError(SC_BAD_REQUEST, cause.getMessage());
 			} else {
 				response.sendError(SC_INTERNAL_SERVER_ERROR, cause.getMessage());
 			}
+			return;
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
@@ -460,6 +463,7 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+			return;
 		}		
 	}
 	
