@@ -133,7 +133,7 @@ public class GatewayFilter implements Filter {
 		if (config.access != null) {
 			boolean access = false;
 			for (String role : config.access) {
-				if (role == null || request.isUserInRole(role)) {
+				if (request.isUserInRole(role)) {
 					access = true;
 					break;
 				}

@@ -54,6 +54,8 @@ public class WebServiceServlet extends HttpServlet {
 	
 	class Config {
 		public Class<? extends Container> container;
+		public String encoding = "UTF-8";
+		public Boolean expilation = true;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -100,9 +102,17 @@ public class WebServiceServlet extends HttpServlet {
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
 		
-		if (request.getCharacterEncoding() == null) {
-			request.setCharacterEncoding("UTF-8");
-			response.setCharacterEncoding("UTF-8");
+		// set encoding
+		if (config.encoding != null) {
+			request.setCharacterEncoding(config.encoding);
+			response.setCharacterEncoding(config.encoding);
+		}
+		
+		// set expilation
+		if (config.expilation != null && config.expilation) {
+			response.setHeader("Cache-Control","no-cache");
+			response.setHeader("Pragma","no-cache");
+			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
 		}
 		
 		File file = new File(getServletContext().getRealPath(uri));
