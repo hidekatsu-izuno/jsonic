@@ -61,17 +61,17 @@ function addRow() {
 }
 
 function updateRow(id) {
-	var request = new Ajax.Request('rest/memo.json?_method=put', {
+	var request = new Ajax.Request('rest/memo/'+id+'.json?_method=put', {
 		contentType: 'application/json',
-		postBody: Object.toJSON({id: id, title: $F('title' + id), text: $F('text' + id)}),
+		postBody: Object.toJSON({title: $F('title' + id), text: $F('text' + id)}),
 		onSuccess: show
 	});
 }
 
 function deleteRow(id) {
-	var request = new Ajax.Request('rest/memo.json?_method=delete', {
+	var request = new Ajax.Request('rest/memo/'+id+'.json?_method=delete', {
+		method: 'post',
 		contentType: 'application/json',
-		postBody: Object.toJSON({id: id}),
 		onSuccess: show
 	});
 }

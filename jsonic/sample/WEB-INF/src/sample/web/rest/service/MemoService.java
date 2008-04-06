@@ -24,7 +24,8 @@ public class MemoService {
 	}
 	
 	public void update(Memo memo) {
-		if (!list.containsKey(memo.id)) throw new IllegalStateException();
+		if (!list.containsKey(memo.id)) 
+			throw new IllegalStateException();
 
 		Memo target = list.get(memo.id);
 		target.title = memo.title;
@@ -32,7 +33,8 @@ public class MemoService {
 	}
 	
 	public void delete(Memo memo) {
-		if (!list.containsKey(memo.id)) throw new IllegalStateException();
+		if (!list.containsKey(memo.id)) 
+			throw new IllegalStateException();
 		
 		list.remove(memo.id);
 	}
