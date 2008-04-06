@@ -13,18 +13,18 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				expirer: false          // cache control setting
+				expire: false          // cache control setting
 				locale: 'ja-JP'            // set response locale
 				
 				'.+\.json': {
 					encoding: 'UTF-8'      // request/response encoding setting
-					expirer: true
+					expire: true
 					compression: true      // gzip compression setting
 				}
 				
 				'/ja/([^.]+)': {
 					encoding: 'SHIFT_JIS'
-					expirer: true
+					expire: true
 					forward: '/$1.json'    // forward target
 					access: ['admin']      // role array
 					locale: 'en'

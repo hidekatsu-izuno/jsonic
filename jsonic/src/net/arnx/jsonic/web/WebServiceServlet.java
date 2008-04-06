@@ -55,7 +55,7 @@ public class WebServiceServlet extends HttpServlet {
 	class Config {
 		public Class<? extends Container> container;
 		public String encoding;
-		public Boolean expirer;
+		public Boolean expire;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -103,16 +103,16 @@ public class WebServiceServlet extends HttpServlet {
 				request.getRequestURI().substring(request.getContextPath().length());
 				
 		String encoding = config.encoding;
-		Boolean expirer = config.expirer;
+		Boolean expire = config.expire;
 		
 		GatewayFilter.Config gconfig = (GatewayFilter.Config)request.getAttribute(GatewayFilter.GATEWAY_KEY);
 		if (gconfig != null) {
 			if (encoding == null) encoding = gconfig.encoding;
-			if (expirer == null) expirer = gconfig.expirer;
+			if (expire == null) expire = gconfig.expire;
 		}
 		
 		if (encoding == null) encoding = "UTF-8";
-		if (expirer == null) expirer = true;
+		if (expire == null) expire = true;
 		
 		// set encoding
 		if (encoding != null) {
@@ -121,7 +121,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// set expilation
-		if (expirer != null && expirer) {
+		if (expire != null && expire) {
 			response.setHeader("Cache-Control","no-cache");
 			response.setHeader("Pragma","no-cache");
 			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");

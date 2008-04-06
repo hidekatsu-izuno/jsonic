@@ -54,7 +54,7 @@ public class GatewayFilter implements Filter {
 	class Config {
 		public String encoding = null;
 		public Boolean compression = false;
-		public Boolean expirer = false;
+		public Boolean expire = false;
 		public String forward = null;
 		public Set<String> access = null;
 		public Locale locale = null;
@@ -156,7 +156,7 @@ public class GatewayFilter implements Filter {
 		}
 		
 		// set no-cache
-		if (config.expirer != null && config.expirer) {
+		if (config.expire != null && config.expire) {
 			response.setHeader("Cache-Control","no-cache");
 			response.setHeader("Pragma","no-cache");
 			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
