@@ -588,7 +588,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>最初にマッチしたパスの設定が使われますが、そこで設定が行われなわれていない場合、ルートの設定が初期値として利用されます。パスには正規表現が利用できます。</p>
 <pre class="source">
 </pre>
-<p>configで設定できる値は次の通りです。</p>
+<p>configで設定できる値は次の通りです。なお、これらの設定はフィルタの設定に関わらず一度だけしか適用されません。</p>
 <table summary="Config設定">
 <tr><th>キー</th><th>値型</th><th>説明</th></tr>
 <tr><td>encoding</td><td>java.lang.String</td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはnullです。</td></tr>
@@ -598,6 +598,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><td>access</td><td>java.util.Set&lt;String&gt;</td><td>アクセス可能なアプリケーションロールを配列で指定します。</td></tr>
 <tr><td>locale</td><td>java.util.Locale</td><td>Responseのロケールを設定します。</td></tr>
 </table>
+<p>なお、encodingとexpirationに関してはWebServiceServlet側にも同様の設定が用意されていますが、基本的にWebServiceServlet側の設定が優先されます。
+ただし、WebServiceServlet側が未設定の場合は、GatewayFilter側の設定が利用されます。</p>
 
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>

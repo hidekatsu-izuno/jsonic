@@ -46,7 +46,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import net.arnx.jsonic.JSON;
 
 public class GatewayFilter implements Filter {
-	public final String GATEWAY_KEY = Config.class.getName();
+	public static final String GATEWAY_KEY = Config.class.getName();
 	
 	private Map<Pattern, Config> locations = new LinkedHashMap<Pattern, Config>();
 	private ServletContext context;
