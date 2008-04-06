@@ -46,6 +46,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import net.arnx.jsonic.JSON;
 
 public class GatewayFilter implements Filter {
+	public final String GATEWAY_KEY = Config.class.getName();
 	
 	private Map<Pattern, Config> locations = new LinkedHashMap<Pattern, Config>();
 	private ServletContext context;
@@ -107,7 +108,7 @@ public class GatewayFilter implements Filter {
 	protected void doFilter(HttpServletRequest request, HttpServletResponse response, 
 			FilterChain chain) throws IOException, ServletException {
 		
-		if (request.getAttribute(Config.class.getName()) != null) {
+		if (request.getAttribute(GATEWAY_KEY) != null) {
 			chain.doFilter(request, response);
 		}
 		
@@ -184,7 +185,7 @@ public class GatewayFilter implements Filter {
 			}
 		}
 		
-		request.setAttribute(Config.class.getName(), config);
+		request.setAttribute(GATEWAY_KEY, config);
 		
 		if (dest != null) {
 			RequestDispatcher dispatcher = context.getRequestDispatcher(dest.toString());
