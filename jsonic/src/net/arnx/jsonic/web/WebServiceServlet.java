@@ -109,10 +109,10 @@ public class WebServiceServlet extends HttpServlet {
 		if (gconfig != null) {
 			if (encoding == null) encoding = gconfig.encoding;
 			if (expiration == null) expiration = gconfig.expiration;
-		} else {
-			if (encoding == null) encoding = "UTF-8";
-			if (expiration == null) expiration = true;
 		}
+		
+		if (encoding == null) encoding = "UTF-8";
+		if (expiration == null) expiration = true;
 		
 		// set encoding
 		if (encoding != null) {

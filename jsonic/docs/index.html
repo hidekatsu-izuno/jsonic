@@ -616,7 +616,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()を使用するように変更しました。</li>
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>
-<li>WebServiceServletにて行っていたencodingの設定をGatewayFilterに移動させ、HttpServletRequest#getCharacterEncoding()の値がnullの場合のみUTF-8が設定されます。</li>
+<li>WebServiceServletにキャッシュコントロールに関するヘッダを出力する機能を追加しました。</li>
 <li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後でそれぞれのメソッドを呼び出すようにしました。</li>
 </ul>
 
