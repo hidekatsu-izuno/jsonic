@@ -55,7 +55,7 @@ public class WebServiceServlet extends HttpServlet {
 	class Config {
 		public Class<? extends Container> container;
 		public String encoding;
-		public Boolean expiration;
+		public Boolean expirer;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -103,25 +103,25 @@ public class WebServiceServlet extends HttpServlet {
 				request.getRequestURI().substring(request.getContextPath().length());
 				
 		String encoding = config.encoding;
-		Boolean expiration = config.expiration;
+		Boolean expirer = config.expirer;
 		
 		GatewayFilter.Config gconfig = (GatewayFilter.Config)request.getAttribute(GatewayFilter.GATEWAY_KEY);
 		if (gconfig != null) {
 			if (encoding == null) encoding = gconfig.encoding;
-			if (expiration == null) expiration = gconfig.expiration;
+			if (expirer == null) expirer = gconfig.expirer;
 		}
 		
 		if (encoding == null) encoding = "UTF-8";
-		if (expiration == null) expiration = true;
+		if (expirer == null) expirer = true;
 		
 		// set encoding
 		if (encoding != null) {
-			request.setCharacterEncoding(config.encoding);
-			response.setCharacterEncoding(config.encoding);
+			request.setCharacterEncoding(encoding);
+			response.setCharacterEncoding(encoding);
 		}
 		
 		// set expilation
-		if (expiration != null && expiration) {
+		if (expirer != null && expirer) {
 			response.setHeader("Cache-Control","no-cache");
 			response.setHeader("Pragma","no-cache");
 			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
@@ -247,7 +247,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {			
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
-				response.sendError(SC_BAD_REQUEST, "Bad Request");
+				response.setStatus(SC_BAD_REQUEST);
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
 			} else {
@@ -267,43 +267,43 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_NOT_FOUND, "Not Found");
+			response.setStatus(SC_NOT_FOUND);
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_NOT_FOUND, "Not Found");
+			response.setStatus(SC_NOT_FOUND);
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_BAD_REQUEST, "Bad Request");
+			response.setStatus(SC_BAD_REQUEST);
 			errorCode = -32602;
 			errorMessage = "Invalid params.";
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_BAD_REQUEST, "Bad Request");
+			response.setStatus(SC_BAD_REQUEST);
 			errorCode = -32700;
 			errorMessage = "Parse error.";
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.error(cause.getMessage(), cause);
 			if (cause instanceof UnsupportedOperationException) {
-				response.sendError(SC_NOT_FOUND, "Not Found");
+				response.setStatus(SC_NOT_FOUND);
 				errorCode = -32601;
 				errorMessage = "Method not found.";
 			} else if (cause instanceof IllegalArgumentException) {
-				response.sendError(SC_BAD_REQUEST, "Bad Request");
+				response.setStatus(SC_BAD_REQUEST);
 				errorCode = -32602;
 				errorMessage = "Invalid params.";
 			} else {
-				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+				response.setStatus(SC_INTERNAL_SERVER_ERROR);
 				errorCode = -32603;
 				errorMessage = cause.getMessage();
 			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			errorCode = -32603;
 			errorMessage = "Internal error.";
 		}
@@ -337,7 +337,7 @@ public class WebServiceServlet extends HttpServlet {
 			json.format(res, writer);
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			res.clear();
 			res.put("result", null);
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
@@ -421,7 +421,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
-			response.sendError(SC_BAD_REQUEST);
+			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			return;
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();

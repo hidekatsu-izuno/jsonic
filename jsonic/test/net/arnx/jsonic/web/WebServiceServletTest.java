@@ -1,5 +1,14 @@
 package net.arnx.jsonic.web;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -14,41 +23,51 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRPC() throws Exception {
-		HttpClient client = new HttpClient("http://localhost:8080/sample/rpc/rpc.json");
+		URL url = new URL("http://localhost:8080/sample/rpc/rpc.json");
+		HttpURLConnection con = null;
 		
 		// GET
-		client.setRequestMethod("GET");
-		client.connect();
-		assertEquals(SC_METHOD_NOT_ALLOWED, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)url.openConnection();
+		con.setRequestMethod("GET");
+		con.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
+		con.disconnect();
 		
 		// POST
-		client.setRequestMethod("POST");
-		client.connect();
-		assertEquals(SC_BAD_REQUEST, client.getResponseCode());
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.connect();
+		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\"},\"id\":null}"), 
-				JSON.decode(client.getResponseContent()));
-		client.clear();
+				JSON.decode(read(con.getErrorStream())));
+		con.disconnect();
 
-		client.setRequestMethod("POST");
-		client.setRequestContent("{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
-		client.connect();
-		assertEquals(SC_OK, client.getResponseCode());
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		write(con.getOutputStream(), "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":3,\"error\":null,\"id\":1}"), 
-				JSON.decode(client.getResponseContent()));	
-		client.clear();
+				JSON.decode(read(con.getInputStream())));	
+		con.disconnect();
 		
 		// PUT
-		client.setRequestMethod("PUT");
-		client.connect();
-		assertEquals(SC_METHOD_NOT_ALLOWED, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("PUT");
+		con.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
+		con.disconnect();
 		
 		// DELETE
-		client.setRequestMethod("DELETE");
-		client.connect();
-		assertEquals(SC_METHOD_NOT_ALLOWED, client.getResponseCode());
-		client.clear();
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("DELETE");
+		con.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
+		con.disconnect();
 	}
 	
 	@Test
@@ -136,5 +155,24 @@ public class WebServiceServletTest {
 		client.connect();
 		assertEquals(SC_NO_CONTENT, client.getResponseCode());
 		client.clear();
+	}
+	
+	private static void write(OutputStream out, String text) throws IOException {
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+		writer.write(text);
+		writer.flush();
+		writer.close();
+	}
+	
+	private static String read(InputStream in) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+		StringBuilder sb = new StringBuilder();
+		char[] cb = new char[1024];
+		int length = 0; 
+		while ((length = reader.read(cb)) != -1) {
+			sb.append(cb, 0, length);
+		}
+		reader.close();
+		return sb.toString();
 	}
 }
