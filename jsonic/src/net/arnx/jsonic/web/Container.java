@@ -6,6 +6,8 @@ import javax.servlet.ServletContext;
 
 public class Container {
 	public Boolean debug = Boolean.FALSE;
+	public String init = "init";
+	public String destroy = "destroy";
 	
 	private ServletContext context;
 

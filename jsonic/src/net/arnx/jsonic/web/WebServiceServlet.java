@@ -517,9 +517,11 @@ public class WebServiceServlet extends HttpServlet {
 					continue;
 				}
 				
-				if (m.getName().equals("init") && m.getParameterTypes().length == 0) {
+				if (container.init != null
+					&& m.getName().equals(container.init) && m.getParameterTypes().length == 0) {
 					init = m;
-				} else if (m.getName().equals("destroy") && m.getParameterTypes().length == 0) {
+				} else if (container.destroy != null
+					&& m.getName().equals(container.destroy) && m.getParameterTypes().length == 0) {
 					destroy = m;
 				} else if (m.getName().equals(methodName)) {
 					method = m;
