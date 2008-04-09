@@ -1486,7 +1486,7 @@ public class JSON {
 						if (str.startsWith("0x", start)) {
 							start += 2;
 							num = Integer.parseInt(str.substring(start), 16);
-						} else if (str.startsWith("0", start)) {
+						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
 							start += 1;
 							num = Integer.parseInt(str.substring(start), 8);
 						} else {
@@ -1508,10 +1508,19 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
+						int start = 0;
 						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
-							data = Short.valueOf(str.substring(1));
+							start += 1;
+						}
+						
+						if (str.startsWith("0x", start)) {
+							start += 2;
+							data = (short)Integer.parseInt(str.substring(start), 16);
+						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
+							start += 1;
+							data = (short)Integer.parseInt(str.substring(start), 8);
 						} else {
-							data = Short.valueOf(str);
+							data = (short)Integer.parseInt(str.substring(start));
 						}
 					} else if (c.isPrimitive()) {
 						data = (short)0;
@@ -1527,10 +1536,19 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
+						int start = 0;
 						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
-							data = Integer.valueOf(str.substring(1));
+							start += 1;
+						}
+						
+						if (str.startsWith("0x", start)) {
+							start += 2;
+							data = Integer.parseInt(str.substring(start), 16);
+						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
+							start += 1;
+							data = Integer.parseInt(str.substring(start), 8);
 						} else {
-							data = Integer.valueOf(str);
+							data = Integer.parseInt(str.substring(start));
 						}
 					} else if (c.isPrimitive()) {
 						data = 0;
@@ -1546,10 +1564,19 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
+						int start = 0;
 						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
-							data = Long.valueOf(str.substring(1));
+							start += 1;
+						}
+						
+						if (str.startsWith("0x", start)) {
+							start += 2;
+							data = Long.parseLong(str.substring(start), 16);
+						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
+							start += 1;
+							data = Long.parseLong(str.substring(start), 8);
 						} else {
-							data = Long.valueOf(str);
+							data = Long.parseLong(str.substring(start));
 						}
 					} else if (c.isPrimitive()) {
 						data = 0l;

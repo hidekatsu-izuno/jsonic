@@ -649,6 +649,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>JSON.decode(Reader), JSON.decode(InputStream)などを追加しました。</li>
 <li>java.net.URL, java.net.URIの相互変換に対応しました。</li>
 <li>文字列からNumber型への変換時プラスから始まる場合はプラスを除去し変換するよう変更しました。</li>
+<li>0xから始まる文字列を16進数として、0から始まる文字列を8進数としてbyte/Byte型に変換するようにしました。</li>
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()を使用するように変更しました。</li>
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>
