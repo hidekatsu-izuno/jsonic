@@ -57,6 +57,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 
@@ -91,8 +92,8 @@ import org.w3c.dom.NodeList;
  * String pretty = json.format(o);
  * 
  * //uses Reader/InputStream
- * Bar bar = (new JSON()).parse(new FileInputStream("bar.json"), Bar.class);
- * Bar bar = (new JSON()).parse(new FileReader("bar.json"), Bar.class);
+ * Bar bar = JSON.decode(new FileInputStream("bar.json"), Bar.class);
+ * Bar bar = JSON.decode(new FileReader("bar.json"), Bar.class);
  * </pre>
  * 
  * <h4>Summary of encoding rules for java type into json type</h4>
@@ -106,7 +107,7 @@ import org.w3c.dom.NodeList;
  * <tr><td>java.lang.Object[]</td><td rowspan="3">array</td></tr>
  * <tr><td>java.util.Collection</td></tr>
  * <tr><td>boolean[], short[], int[], long[], float[], double[]</td></tr>
- * <tr><td>java.lang.CharSequence</td><td rowspan="8">string</td></tr>
+ * <tr><td>java.lang.CharSequence</td><td rowspan="10">string</td></tr>
  * <tr><td>char[]</td></tr>
  * <tr><td>java.lang.Character</td></tr>
  * <tr><td>char</td></tr>
@@ -114,6 +115,8 @@ import org.w3c.dom.NodeList;
  * <tr><td>java.util.regex.Pattern</td></tr>
  * <tr><td>java.lang.reflect.Type</td></tr>
  * <tr><td>java.lang.reflect.Member</td></tr>
+ * <tr><td>java.net.URI</td></tr>
+ * <tr><td>java.net.URL</td></tr>
  * <tr><td>byte[]</td><td>string (base64)</td></tr>
  * <tr><td>java.util.Locale</td><td>string (language-country)</td></tr>
  * <tr><td>java.lang.Number</td><td rowspan="2">number</td></tr>
@@ -413,6 +416,8 @@ public class JSON {
 			o = ((Date)o).getTime();
 		} else if (o instanceof Calendar) {
 			o = ((Calendar)o).getTimeInMillis();
+		} else if (o instanceof InetAddress) {
+			o = ((InetAddress)o).getHostAddress();
 		} else if (o instanceof Locale) {
 			Locale locale = (Locale)o;
 			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
@@ -1620,14 +1625,23 @@ public class JSON {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
 				} else if (value instanceof BigDecimal) {
-					data = ((BigDecimal)value).toBigInteger();
+					data = ((BigDecimal)value).toBigIntegerExact();
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
+						int start = 0;
 						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
-							data = (new BigDecimal(str.substring(1))).toBigInteger();
+							start += 1;
+						}
+						
+						if (str.startsWith("0x", start)) {
+							start += 2;
+							data = new BigInteger(str.substring(start), 16);
+						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
+							start += 1;
+							data = new BigInteger(str.substring(start), 8);
 						} else {
-							data = (new BigDecimal(str)).toBigInteger();
+							data = new BigInteger(str.substring(start));
 						}
 					}
 				}
@@ -1708,6 +1722,8 @@ public class JSON {
 				data = new URL(value.toString().trim());
 			} else if (URI.class.equals(c)) {
 				data = new URI(value.toString().trim());
+			} else if (InetAddress.class.equals(c)) {
+				data = InetAddress.getByName(value.toString().trim());
 			} else if (Class.class.equals(c)) {
 				String s = value.toString().trim();
 				if (s.equals("boolean")) {

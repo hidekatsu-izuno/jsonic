@@ -7,6 +7,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.sql.Time;
@@ -136,6 +137,12 @@ public class JSONTest {
 			.newDocumentBuilder()
 			.parse(this.getClass().getResourceAsStream("Sample.xml"));
 		assertEquals("{\"tagName\":\"html\",\"attributes\":{\"lang\":\"ja\",\"xmlns:hoge\":\"aaa\"},\"childNodes\":[\"\\n\",{\"tagName\":\"head\",\"childNodes\":[\"\\n\\t\",{\"tagName\":\"title\",\"childNodes\":[\"タイトル\"]},\"\\n\"]},\"\\n\",{\"tagName\":\"body\",\"childNodes\":[\"\\n\\t本文\\n\\t\",{\"tagName\":\"p\",\"childNodes\":[\"サンプル1\"]},\"\\n\\t\",{\"tagName\":\"p\",\"childNodes\":[\"サンプル2\"]},\"\\n\\t本文\\n\\t\",{\"tagName\":\"hoge:p\",\"attributes\":{\"hoge:x\":\"aaa\"},\"childNodes\":[\"サンプル3\"]},\"\\n\"]},\"\\n\"]}", JSON.encode(doc));
+
+		list = new ArrayList<Object>();
+		list.add(new URI("http://www.google.co.jp/"));
+		list.add(new URL("http://www.google.co.jp/"));
+		list.add(InetAddress.getByName("localhost"));
+		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\"]", JSON.encode(list));
 	}
 
 	@Test
@@ -820,8 +827,14 @@ public class JSONTest {
 		assertEquals(new BigInteger("100"), json.convert("100", BigInteger.class));
 		assertEquals(new BigInteger("100"), json.convert("+100", BigInteger.class));
 		assertEquals(new BigInteger("100"), json.convert("＋100", BigInteger.class));
+		assertEquals(new BigInteger("46"), json.convert("056", BigInteger.class));
+		assertEquals(new BigInteger("46"), json.convert("+056", BigInteger.class));
+		assertEquals(new BigInteger("46"), json.convert("＋056", BigInteger.class));
+		assertEquals(new BigInteger("FF", 16), json.convert("0xFF", BigInteger.class));
+		assertEquals(new BigInteger("FF", 16), json.convert("+0xFF", BigInteger.class));
+		assertEquals(new BigInteger("FF", 16), json.convert("＋0xFF", BigInteger.class));
 		try {
-			json.convert(new BigInteger("100.01"), BigInteger.class);
+			json.convert(new BigDecimal("100.01"), BigInteger.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -919,6 +932,10 @@ public class JSONTest {
 		
 		// URL
 		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));
+		
+		// InetAddress
+		assertEquals(InetAddress.getByName("localhost"), json.convert("localhost", InetAddress.class));
+		assertEquals(InetAddress.getByName("127.0.0.1"), json.convert("127.0.0.1", InetAddress.class));
 		
 		// object
 		try {
@@ -1037,6 +1054,12 @@ public class JSONTest {
 		
 		assertEquals(listA, JSON.decode("[1,2,3,4,5]", this.getClass().getField("tx").getType()));
 		assertEquals(listB, JSON.decode("[1,2,3,4,5]", this.getClass().getField("tx").getGenericType()));
+		
+		assertEquals(listA, JSON.decode(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getType()));
+		assertEquals(listB, JSON.decode(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getGenericType()));
+
+		assertEquals(listA, JSON.decode(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
+		assertEquals(listB, JSON.decode(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
 		
 		JSON json = new JSON();
 		assertEquals(listA, json.parse("[1,2,3,4,5]", this.getClass().getField("tx").getType()));

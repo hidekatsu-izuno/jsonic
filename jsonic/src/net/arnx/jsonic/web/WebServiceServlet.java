@@ -287,7 +287,7 @@ public class WebServiceServlet extends HttpServlet {
 			errorMessage = "Parse error.";
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.error(cause.getMessage(), cause);
+			container.debug(cause.toString());
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
 				response.setStatus(SC_NOT_FOUND);
@@ -426,7 +426,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.error(cause.getMessage(), cause);
+			container.debug(cause.toString());
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
 				response.sendError(SC_NOT_FOUND, "Not Found");				

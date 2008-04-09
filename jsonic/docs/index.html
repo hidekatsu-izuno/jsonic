@@ -109,9 +109,10 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>Collection</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
-<tr><td>TimeZone, Pattern, Type, Member</td></tr>
+<tr><td>TimeZone, Pattern, URL, URI, Type, Member</td></tr>
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コード)</td></tr>
+<tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※2)</sup></td></tr>
 <tr><td>Number</td></tr>
 <tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
@@ -152,7 +153,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>Map</td><td>インデックスの値をキーとするLinkedHashMap</td></tr>
 <tr><td>SortedMap</td><td>インデックスの値をキーとするTreeMap</td></tr>
 <tr><td>その他のMap派生型</td><td>インデックスの値をキーとする指定された型のMap</td></tr>
-<tr><td rowspan="15">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td rowspan="16">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
 <tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
 <tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
@@ -165,7 +166,8 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>Pattern</td><td>Pattern（文字列をパターンとみなし変換）</td></tr>
 <tr><td>Class</td><td>Class（文字列をClass.forNameを使い変換）</td></tr>
 <tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
-<tr><td>URI/URL</td><td>URI/URL（文字列をコンストラクタの引数に指定し変換）</td></tr>
+<tr><td>URI/URL</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
+<tr><td>InetAddress</td><td>InetAddress（文字列をInetAddress.getByNameで変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
 <tr><td rowspan="5">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
@@ -604,13 +606,13 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
         expire: true           <span class="comment">// クライアントキャッシュを無効化</span>
       }
       
-      <span class="comment">// 日本向け設定</span>
+      <span class="comment">// 例：日本向け設定</span>
       '/ja/([^.]+)': {
         forward: '/$1.json'     <span class="comment">// JSON Web Serviceに転送</span>
         encoding: 'SHIFT_JIS'
         expire: true
         locale: 'ja-JP'
-        access: ['japanese']    <span class="comment">// アクセス可能なロール</span>
+        access: ['jpuser']    <span class="comment">// アクセス可能なロール</span>
       }
     <span class="elem">&lt;/param-value&gt;</span>
   <span class="elem">&lt;/init-param&gt;</span>
@@ -647,16 +649,16 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
 <li>JSON.decode(Reader), JSON.decode(InputStream)などを追加しました。</li>
-<li>java.net.URL, java.net.URIの相互変換に対応しました。</li>
+<li>java.net.URL, java.net.URI, java.net.InetAddressの相互変換に対応しました。</li>
 <li>文字列からNumber型への変換時、プラスから始まる場合はプラスを除去し変換するよう変更しました。</li>
-<li>文字列からBigIntegerを除く整数型への変換時、0xから始まる文字列を16進数として、0から始まる文字列を8進数として扱うように変更しました。</li>
-<li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()を使用するように変更しました。</li>
+<li>文字列から整数型への変換時、0xから始まる文字列を16進数として、0から始まる文字列を8進数として扱うように変更しました。</li>
+<li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()などを使用するように変更しました。</li>
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>
 <li>WebServiceServletにキャッシュコントロールに関するヘッダを出力する機能を追加しました。</li>
 <li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後でそれぞれのメソッドを呼び出すようにしました。</li>
 <li>WebServiceServletにてUnsupportedOperationExceptionだけでなくIllegalStateExceptionが投げられた時も404 Not Foundとなるように変更しました。</li>
-<li>RESTのサンプルをよりRestfulにしました。</li>
+<li>RESTのサンプルをよりRestfulなものにしました。</li>
 </ul>
 
 <h3>2008/03/02 version 0.9.7</h3>
