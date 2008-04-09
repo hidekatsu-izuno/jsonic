@@ -57,6 +57,8 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -263,13 +265,89 @@ public class JSON {
 	 * Decodes a json string into a typed object.
 	 * 
 	 * @param source a json string to decode
-	 * @param type type specified generics parameters
+	 * @param type type for converting
 	 * @return a decoded object
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static Object decode(String source, Type type) throws JSONParseException {
 		return new JSON().parse(source, type);
+	}
+
+	/**
+	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * 
+	 * @param in a json stream to decode
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(InputStream in) throws IOException, JSONParseException {
+		return (new JSON()).parse(in);
+	}
+
+	/**
+	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * 
+	 * @param in a json stream to decode
+	 * @param cls class for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONParseException {
+		return (new JSON()).parse(in, cls);
+	}
+
+	/**
+	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * 
+	 * @param in a json stream to decode
+	 * @param type type for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(InputStream in, Type type) throws IOException, JSONParseException {
+		return (new JSON()).parse(in, type);
+	}
+	
+	/**
+	 * Decodes a json stream into a object.
+	 * 
+	 * @param reader a json stream to decode
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(Reader reader) throws IOException, JSONParseException {
+		return (new JSON()).parse(reader);
+	}
+
+	/**
+	 * Decodes a json stream into a object.
+	 * 
+	 * @param reader a json stream to decode
+	 * @param cls class for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONParseException {
+		return (new JSON()).parse(reader, cls);
+	}
+
+	/**
+	 * Decodes a json stream into a object.
+	 * 
+	 * @param reader a json stream to decode
+	 * @param type type for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(Reader reader, Type type) throws IOException, JSONParseException {
+		return (new JSON()).parse(reader, type);
 	}
 	
 	/**
@@ -315,7 +393,8 @@ public class JSON {
 		boolean escape = true;
 		if (o instanceof Class) {
 			o = ((Class)o).getName();
-		} else if (o instanceof Character || o instanceof Type || o instanceof Member) {
+		} else if (o instanceof Character || o instanceof Type || o instanceof Member
+				|| o instanceof URL || o instanceof URI) {
 			o = o.toString();
 		} else if (o instanceof Enum) {
 			o = ((Enum)o).ordinal();
@@ -1376,7 +1455,7 @@ public class JSON {
 				if (value instanceof Number) {
 					data = !value.equals(0);
 				} else {
-					String s = value.toString();
+					String s = value.toString().trim();
 					if (s.length() == 0
 						|| s.equalsIgnoreCase("f")
 						|| s.equalsIgnoreCase("false")
@@ -1398,7 +1477,11 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						data = Byte.valueOf(str);
+						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+							data = Byte.valueOf(str.substring(1));
+						} else {
+							data = Byte.valueOf(str);
+						}
 					} else if (c.isPrimitive()) {
 						data = (byte)0;
 					}
@@ -1413,7 +1496,11 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						data = Short.valueOf(str);
+						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+							data = Short.valueOf(str.substring(1));
+						} else {
+							data = Short.valueOf(str);
+						}
 					} else if (c.isPrimitive()) {
 						data = (short)0;
 					}
@@ -1428,7 +1515,11 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						data = Integer.valueOf(str);
+						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+							data = Integer.valueOf(str.substring(1));
+						} else {
+							data = Integer.valueOf(str);
+						}
 					} else if (c.isPrimitive()) {
 						data = 0;
 					}						
@@ -1443,7 +1534,11 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						data = Long.valueOf(str);
+						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+							data = Long.valueOf(str.substring(1));
+						} else {
+							data = Long.valueOf(str);
+						}
 					} else if (c.isPrimitive()) {
 						data = 0l;
 					}						
@@ -1456,7 +1551,11 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						data = Float.valueOf(str);
+						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+							data = Float.valueOf(str.substring(1));
+						} else {
+							data = Float.valueOf(str);
+						}
 					} else if (c.isPrimitive()) {
 						data = 0.0f;
 					}						
@@ -1469,7 +1568,11 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						data = Double.valueOf(str);
+						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+							data = Double.valueOf(str.substring(1));
+						} else {
+							data = Double.valueOf(str);
+						}
 					} else if (c.isPrimitive()) {
 						data = 0.0;
 					}						
@@ -1481,11 +1584,23 @@ public class JSON {
 					data = ((BigDecimal)value).toBigInteger();
 				} else {
 					String str = value.toString().trim();
-					if (str.length() > 0) data = (new BigDecimal(str)).toBigInteger();
+					if (str.length() > 0) {
+						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+							data = (new BigDecimal(str.substring(1))).toBigInteger();
+						} else {
+							data = (new BigDecimal(str)).toBigInteger();
+						}
+					}
 				}
 			} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
 				String str = value.toString().trim();
-				if (str.length() > 0) data = new BigDecimal(str);
+				if (str.length() > 0) {
+					if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						data = new BigDecimal(str.substring(1));
+					} else {
+						data = new BigDecimal(str);
+					}
+				}
 			} else if (char.class.equals(c) || Character.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? '1' : '0';
@@ -1508,7 +1623,7 @@ public class JSON {
 				if (value instanceof Number) {
 					data = c.getEnumConstants()[((Number)value).intValue()];
 				} else {
-					data = Enum.valueOf((Class<? extends Enum>)c, value.toString());
+					data = Enum.valueOf((Class<? extends Enum>)c, value.toString().trim());
 				}
 			} else if (Pattern.class.equals(c)) {
 				data = Pattern.compile(value.toString());
@@ -1550,8 +1665,12 @@ public class JSON {
 				} else if (array.length > 2) {
 					data = new Locale(array[0], array[1], array[2]);
 				}
+			} else if (URL.class.equals(c)) {
+				data = new URL(value.toString().trim());
+			} else if (URI.class.equals(c)) {
+				data = new URI(value.toString().trim());
 			} else if (Class.class.equals(c)) {
-				String s = value.toString();
+				String s = value.toString().trim();
 				if (s.equals("boolean")) {
 					data = boolean.class;
 				} else if (s.equals("byte")) {
