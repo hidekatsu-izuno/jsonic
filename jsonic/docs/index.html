@@ -585,7 +585,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>に対応したContainerを標準添付しています。このContainerを利用すると、Seasar2上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 
 <h4>■ Gateway Filter</h4>
-<p>JSONICでは、JSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
+<p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
 <p>最初にマッチしたパスの設定が使われますが、そこで設定が行われなわれていない場合、ルートの設定が初期値として利用されます。パスには正規表現が利用できます。</p>
 <pre class="source">
 <span class="elem">&lt;filter&gt;</span>
@@ -648,8 +648,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <ul>
 <li>JSON.decode(Reader), JSON.decode(InputStream)などを追加しました。</li>
 <li>java.net.URL, java.net.URIの相互変換に対応しました。</li>
-<li>文字列からNumber型への変換時プラスから始まる場合はプラスを除去し変換するよう変更しました。</li>
-<li>0xから始まる文字列を16進数として、0から始まる文字列を8進数としてbyte/Byte型に変換するようにしました。</li>
+<li>文字列からNumber型への変換時、プラスから始まる場合はプラスを除去し変換するよう変更しました。</li>
+<li>文字列からBigIntegerを除く整数型への変換時、0xから始まる文字列を16進数として、0から始まる文字列を8進数として扱うように変更しました。</li>
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()を使用するように変更しました。</li>
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>

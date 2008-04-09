@@ -87,8 +87,8 @@ public class GatewayFilter implements Filter {
 					}
 				}
 				
-				locations.put(Pattern.compile("^" + entry.getKey() + "$"), 
-						(Config)json.convert(valueMap, Config.class));
+				Config config = (Config)json.convert(valueMap, Config.class);
+				locations.put(Pattern.compile("^" + entry.getKey() + "$"), config);
 			}
 		}
 		locations.put(Pattern.compile(".*"), base);
