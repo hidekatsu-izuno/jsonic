@@ -6,6 +6,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -624,11 +627,76 @@ public class JSONTest {
 		assertEquals(Boolean.FALSE, json.convert("", Boolean.class));
 		assertNull(json.convert(null, Boolean.class));
 		
+		// byte
+		assertEquals((byte)0, json.convert(null, byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5"), byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5.00"), byte.class));
+		assertEquals((byte)0xFF, json.convert("0xFF", byte.class));
+		assertEquals((byte)0xFF, json.convert("+0xFF", byte.class));
+		assertEquals((byte)0xFF, json.convert("＋0xFF", byte.class));
+		try {
+			json.convert(new BigDecimal("5.01"), byte.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// Byte
+		assertEquals(null, json.convert(null, Byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5"), Byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5.00"), Byte.class));
+		assertEquals((byte)46, json.convert("056", Byte.class));
+		assertEquals((byte)46, json.convert("+056", Byte.class));
+		assertEquals((byte)46, json.convert("＋056", Byte.class));
+		assertEquals((byte)0xFF, json.convert("0xFF", Byte.class));
+		assertEquals((byte)0xFF, json.convert("+0xFF", Byte.class));
+		assertEquals((byte)0xFF, json.convert("＋0xFF", Byte.class));
+		try {
+			json.convert(new BigDecimal("5.01"), Byte.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// short
+		assertEquals((short)0, json.convert(null, short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100"), short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100.00"), short.class));
+		assertEquals((short)100, json.convert("100", short.class));
+		assertEquals((short)100, json.convert("+100", short.class));
+		assertEquals((short)100, json.convert("＋100", short.class));
+		try {
+			json.convert(new BigDecimal("100.01"), short.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// Short
+		assertEquals(null, json.convert(null, Short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100"), Short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100.00"), Short.class));
+		assertEquals((short)100, json.convert("100", Short.class));
+		assertEquals((short)100, json.convert("+100", Short.class));
+		assertEquals((short)100, json.convert("＋100", Short.class));
+		try {
+			json.convert(new BigDecimal("100.01"), Short.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
 		// int
 		assertEquals(0, json.convert(null, int.class));
 		assertEquals(100, json.convert(new BigDecimal("100"), int.class));
 		assertEquals(100, json.convert(new BigDecimal("100.00"), int.class));
 		assertEquals(100, json.convert("100", int.class));
+		assertEquals(100, json.convert("+100", int.class));
+		assertEquals(100, json.convert("＋100", int.class));
 		try {
 			json.convert(new BigDecimal("100.01"), int.class);
 			fail();
@@ -639,9 +707,11 @@ public class JSONTest {
 		
 		// Integer
 		assertEquals(null, json.convert(null, Integer.class));
-		assertEquals(100, json.convert(new BigDecimal("100"), int.class));
+		assertEquals(100, json.convert(new BigDecimal("100"), Integer.class));
 		assertEquals(100, json.convert(new BigDecimal("100.00"), Integer.class));
 		assertEquals(100, json.convert("100", Integer.class));
+		assertEquals(100, json.convert("+100", Integer.class));
+		assertEquals(100, json.convert("＋100", Integer.class));
 		try {
 			json.convert(new BigDecimal("100.01"), Integer.class);
 			fail();
@@ -649,6 +719,60 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
+		
+		// long
+		assertEquals(0l, json.convert(null, long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100"), long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100.00"), long.class));
+		assertEquals(100l, json.convert("100", long.class));
+		assertEquals(100l, json.convert("+100", long.class));
+		assertEquals(100l, json.convert("＋100", long.class));
+		try {
+			json.convert(new BigDecimal("100.01"), long.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// Long
+		assertEquals(null, json.convert(null, Long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100"), Long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100.00"), Long.class));
+		assertEquals(100l, json.convert("100", Long.class));
+		assertEquals(100l, json.convert("+100", Long.class));
+		assertEquals(100l, json.convert("＋100", Long.class));
+		try {
+			json.convert(new BigDecimal("100.01"), Long.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// BigInteger
+		assertEquals(null, json.convert(null, BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert(new BigDecimal("100"), BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert(new BigDecimal("100.00"), BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert("100", BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert("+100", BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert("＋100", BigInteger.class));
+		try {
+			json.convert(new BigInteger("100.01"), BigInteger.class);
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// BigDecimal
+		assertEquals(null, json.convert(null, BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100"), BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100.00"), BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert("100", BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert("+100", BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert("＋100", BigDecimal.class));
+		assertEquals(new BigDecimal("100.01"), json.convert("100.01", BigDecimal.class));
 		
 		// Date
 		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convertChild('$', "1", Date.class, Date.class));
@@ -726,6 +850,14 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
+		// URI
+		assertEquals(new URI("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URI.class));
+		assertEquals(new URI("/aaa/bbb.json"), json.convert("/aaa/bbb.json", URI.class));
+		
+		// URL
+		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));
+		
+		// object
 		try {
 			Object test = new Object() {
 				public int[] aaa;

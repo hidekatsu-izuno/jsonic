@@ -1475,13 +1475,25 @@ public class JSON {
 				} else if (value instanceof Number) {
 					data = ((Number)value).byteValue();
 				} else {
-					String str = value.toString().trim();
+					String str = value.toString().trim().toLowerCase();
 					if (str.length() > 0) {
+						int start = 0;
 						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
-							data = Byte.valueOf(str.substring(1));
-						} else {
-							data = Byte.valueOf(str);
+							start += 1;
 						}
+						
+						int num = 0;
+						if (str.startsWith("0x", start)) {
+							start += 2;
+							num = Integer.parseInt(str.substring(start), 16);
+						} else if (str.startsWith("0", start)) {
+							start += 1;
+							num = Integer.parseInt(str.substring(start), 8);
+						} else {
+							num = Integer.parseInt(str.substring(start));
+						}
+						
+						data = (byte)((num > 127) ? num-256 : num);
 					} else if (c.isPrimitive()) {
 						data = (byte)0;
 					}

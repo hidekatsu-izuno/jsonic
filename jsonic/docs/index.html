@@ -152,7 +152,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>Map</td><td>インデックスの値をキーとするLinkedHashMap</td></tr>
 <tr><td>SortedMap</td><td>インデックスの値をキーとするTreeMap</td></tr>
 <tr><td>その他のMap派生型</td><td>インデックスの値をキーとする指定された型のMap</td></tr>
-<tr><td rowspan="14">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td rowspan="15">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
 <tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
 <tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
@@ -165,6 +165,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>Pattern</td><td>Pattern（文字列をパターンとみなし変換）</td></tr>
 <tr><td>Class</td><td>Class（文字列をClass.forNameを使い変換）</td></tr>
 <tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
+<tr><td>URI/URL</td><td>URI/URL（文字列をコンストラクタの引数に指定し変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
 <tr><td rowspan="5">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
@@ -256,13 +257,13 @@ JSON json = new JSON() {
 </pre>
 
 <h4 id="io">■ Reader/InputStreamによるparse</h4>
-<p>staticメソッドのJSON.decodeでは文字列からPOJOへの変換しか対応できませんが、parseメソッドの場合にはjava.io.Readerやjava.io.InputStreamからJSONデータを読み込むことができます。</p>
+<p>decode/parseメソッドの引数にjava.io.Readerやjava.io.InputStreamを指定してJSONデータを読み込むことができます。</p>
 <pre class="source">
 <span class="comment">// ReaderからのJSONの読み込み</span>
-Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileReader("sample.json"), Hoge.class<span class="em">)</span>;
+Hoge hoge = JSON.<span class="em">parse(</span>new FileReader("sample.json"), Hoge.class<span class="em">)</span>;
 
 <span class="comment">// InputStreamからのJSONの読み込み（ファイルはUnicodeである必要があります<sup>(※4)</sup>）</span>
-Hoge hoge = (new JSON()).<span class="em">parse(</span>new FileInputStream("sample.json"), Hoge.class<span class="em">)</span>;
+Hoge hoge = JSON.<span class="em">parse(</span>new FileInputStream("sample.json"), Hoge.class<span class="em">)</span>;
 </pre>
 <div class="caption">
 (※4) UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別します。<br />
