@@ -3,8 +3,6 @@ package net.arnx.jsonic.web;
 import java.lang.reflect.Method;
 
 import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 public class Container {
 	public Boolean debug = Boolean.FALSE;
