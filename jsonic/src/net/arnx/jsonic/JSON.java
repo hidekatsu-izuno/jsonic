@@ -60,6 +60,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -421,8 +422,11 @@ public class JSON {
 		boolean escape = true;
 		if (o instanceof Class) {
 			o = ((Class)o).getName();
-		} else if (o instanceof Character || o instanceof Type || o instanceof Member
-				|| o instanceof URL || o instanceof URI) {
+		} else if (o instanceof Character
+				|| o instanceof Type
+				|| o instanceof Member
+				|| o instanceof URL
+				|| o instanceof URI) {
 			o = o.toString();
 		} else if (o instanceof Enum) {
 			o = ((Enum)o).ordinal();
@@ -443,6 +447,8 @@ public class JSON {
 			o = ((Calendar)o).getTimeInMillis();
 		} else if (o instanceof InetAddress) {
 			o = ((InetAddress)o).getHostAddress();
+		} else if (o instanceof Charset) {
+			o = ((Charset)o).name();
 		} else if (o instanceof Locale) {
 			Locale locale = (Locale)o;
 			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
@@ -1749,6 +1755,8 @@ public class JSON {
 				data = new URI(value.toString().trim());
 			} else if (InetAddress.class.equals(c)) {
 				data = InetAddress.getByName(value.toString().trim());
+			} else if (Charset.class.equals(c)) {
+				data = Charset.forName(value.toString().trim());
 			} else if (Class.class.equals(c)) {
 				String s = value.toString().trim();
 				if (s.equals("boolean")) {

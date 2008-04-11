@@ -109,7 +109,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>Collection</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
-<tr><td>TimeZone, Pattern, URL, URI, Type, Member</td></tr>
+<tr><td>TimeZone, Pattern, URL, URI, Type, Member, Charset</td></tr>
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コード)</td></tr>
 <tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
@@ -163,10 +163,10 @@ Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1,
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger, BigDecimal</td><td>指定された型（文字列を数値とみなし変換）</td></tr>
 <tr><td>byte[]</td><td>byte[]（文字列をBASE64とみなし変換）</td></tr>
 <tr><td>Locale</td><td>Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換）</td></tr>
-<tr><td>Pattern</td><td>Pattern（文字列をパターンとみなし変換）</td></tr>
-<tr><td>Class</td><td>Class（文字列をClass.forNameを使い変換）</td></tr>
+<tr><td>Pattern</td><td>Pattern（文字列をcompileにより変換）</td></tr>
+<tr><td>Class, Charset</td><td>指定された型（文字列をforNameにより変換）</td></tr>
 <tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
-<tr><td>URI/URL</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
+<tr><td>URI, URL</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
 <tr><td>InetAddress</td><td>InetAddress（文字列をInetAddress.getByNameで変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
 <tr><td rowspan="5">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
@@ -649,7 +649,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
 <li>JSON.decode(Reader), JSON.decode(InputStream)などを追加しました。</li>
-<li>java.net.URL, java.net.URI, java.net.InetAddressの相互変換に対応しました。</li>
+<li>java.net.URL, java.net.URI, java.net.InetAddress, java.nio.charset.Charsetの相互変換に対応しました。</li>
 <li>文字列からNumber型への変換時、プラスから始まる場合はプラスを除去し変換するよう変更しました。</li>
 <li>文字列から整数型への変換時、0xから始まる文字列を16進数として、0から始まる文字列を8進数として扱うように変更しました。</li>
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()などを使用するように変更しました。</li>

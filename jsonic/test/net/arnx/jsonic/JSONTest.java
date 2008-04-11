@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -142,7 +143,8 @@ public class JSONTest {
 		list.add(new URI("http://www.google.co.jp/"));
 		list.add(new URL("http://www.google.co.jp/"));
 		list.add(InetAddress.getByName("localhost"));
-		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\"]", JSON.encode(list));
+		list.add(Charset.forName("UTF-8"));
+		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list));
 	}
 
 	@Test
@@ -936,6 +938,9 @@ public class JSONTest {
 		// InetAddress
 		assertEquals(InetAddress.getByName("localhost"), json.convert("localhost", InetAddress.class));
 		assertEquals(InetAddress.getByName("127.0.0.1"), json.convert("127.0.0.1", InetAddress.class));
+		
+		// Charset
+		assertEquals(Charset.forName("UTF-8"), json.convert("UTF-8", Charset.class));		
 		
 		// object
 		try {

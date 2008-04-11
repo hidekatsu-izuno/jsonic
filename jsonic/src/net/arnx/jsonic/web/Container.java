@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import javax.servlet.ServletContext;
 
 public class Container {
-	public Boolean debug = Boolean.FALSE;
+	public Boolean debug = false;
 	public String init = "init";
 	public String destroy = "destroy";
 	
