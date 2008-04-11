@@ -1,4 +1,4 @@
-#Fri Feb 29 00:56:29 JST 2008
+#Fri Apr 11 23:15:59 JST 2008
 eclipse.preferences.version=1
 org.eclipse.jdt.core.compiler.problem.annotationSuperInterface=warning
 org.eclipse.jdt.core.compiler.problem.autoboxing=ignore
@@ -21,7 +21,7 @@ org.eclipse.jdt.core.compiler.problem.localVariableHiding=ignore
 org.eclipse.jdt.core.compiler.problem.methodWithConstructorName=warning
 org.eclipse.jdt.core.compiler.problem.missingDeprecatedAnnotation=ignore
 org.eclipse.jdt.core.compiler.problem.missingOverrideAnnotation=ignore
-org.eclipse.jdt.core.compiler.problem.missingSerialVersion=warning
+org.eclipse.jdt.core.compiler.problem.missingSerialVersion=ignore
 org.eclipse.jdt.core.compiler.problem.noEffectAssignment=warning
 org.eclipse.jdt.core.compiler.problem.noImplicitStringConversion=warning
 org.eclipse.jdt.core.compiler.problem.nonExternalizedStringLiteral=ignore
