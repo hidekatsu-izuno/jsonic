@@ -514,8 +514,8 @@ public class WebServiceServlet extends HttpServlet {
 			Method destroy = null;
 			
 			int count = 0;
-			if (container.init != null) count++;
-			if (container.destroy != null) count++;
+			if (container.init == null) count++;
+			if (container.destroy == null) count++;
 			for (Method m : c.getMethods()) {
 				if (Modifier.isStatic(m.getModifiers())) {
 					continue;
