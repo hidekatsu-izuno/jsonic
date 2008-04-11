@@ -239,6 +239,31 @@ public class JSON {
 		json.setPrettyPrint(prettyPrint);		
 		return json.format(source);
 	}
+
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param appendable a destination to output a json string.
+	 * @exception IOException if I/O Error occured.
+	 */
+	public static void encode(Object source, Appendable appendable) throws IOException {
+		(new JSON()).format(source, appendable);
+	}
+
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param appendable a destination to output a json string.
+	 * @param prettyPrint output a json string with indent, space or break.
+	 * @exception IOException if I/O Error occured.
+	 */
+	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException {
+		JSON json = new JSON();
+		json.setPrettyPrint(prettyPrint);		
+		json.format(source, appendable);
+	}
 	
 	/**
 	 * Decodes a json string into a object.
