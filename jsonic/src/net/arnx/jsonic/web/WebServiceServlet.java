@@ -512,20 +512,29 @@ public class WebServiceServlet extends HttpServlet {
 			Method init = null;
 			Method method = null;
 			Method destroy = null;
+			
+			int count = 0;
+			if (container.init != null) count++;
+			if (container.destroy != null) count++;
 			for (Method m : c.getMethods()) {
 				if (Modifier.isStatic(m.getModifiers())) {
 					continue;
-				}
+				}				
 				
 				if (container.init != null
 					&& m.getName().equals(container.init) && m.getParameterTypes().length == 0) {
 					init = m;
+					count++;
 				} else if (container.destroy != null
 					&& m.getName().equals(container.destroy) && m.getParameterTypes().length == 0) {
 					destroy = m;
+					count++;
 				} else if (m.getName().equals(methodName)) {
 					method = m;
+					count++;
 				}
+				
+				if (count > 3) break;
 			}
 			
 			if (method == null || container.limit(c, method)) {
