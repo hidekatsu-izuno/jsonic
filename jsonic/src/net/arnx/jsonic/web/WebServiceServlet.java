@@ -37,10 +37,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONConvertException;
@@ -234,7 +238,7 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 				
-		JSONInvoker json = new JSONInvoker();
+		JSONInvoker json = new JSONInvoker(request, response);
 		json.setLocale(request.getLocale());
 		
 		// request processing
@@ -372,7 +376,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// request processing
-		JSONInvoker json = new JSONInvoker();
+		JSONInvoker json = new JSONInvoker(request, response);
 		json.setLocale(request.getLocale());
 		
 		Object res = null;
@@ -500,6 +504,14 @@ public class WebServiceServlet extends HttpServlet {
 	}
 	
 	class JSONInvoker extends JSON {
+		private HttpServletRequest request;
+		private HttpServletResponse response;
+		
+		public JSONInvoker(HttpServletRequest request, HttpServletResponse response) {
+			this.request = request;
+			this.response = response;
+		}
+		
 		public Object invoke(Object o, String methodName, List<Object> args) throws Exception {
 			if (args == null) {
 				args = Collections.EMPTY_LIST;
@@ -521,12 +533,10 @@ public class WebServiceServlet extends HttpServlet {
 					continue;
 				}				
 				
-				if (container.init != null
-					&& m.getName().equals(container.init) && m.getParameterTypes().length == 0) {
+				if (container.init != null && m.getName().equals(container.init)) {
 					init = m;
 					count++;
-				} else if (container.destroy != null
-					&& m.getName().equals(container.destroy) && m.getParameterTypes().length == 0) {
+				} else if (container.destroy != null && m.getName().equals(container.destroy)) {
 					destroy = m;
 					count++;
 				} else if (m.getName().equals(methodName)) {
@@ -547,16 +557,58 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			Type[] paramTypes = method.getGenericParameterTypes();
-			Object[] params = new Object[Math.min(paramTypes.length, args.size())];
-			for (int i = 0; i < params.length; i++) {
+			Object[] params = new Object[paramTypes.length];
+			int length = Math.min(args.size(), params.length);
+			for (int i = 0; i < length ; i++) {
 				params[i] = convert(args.get(i), paramTypes[i]);
 			}
 			
-			if (init != null) init.invoke(o);
+			if (init != null) {
+				Class<?>[] sTypes = init.getParameterTypes();
+				if (sTypes.length > 0) {
+					Object[] sparams = new Object[sTypes.length];
+					for (int i = 0; i < sTypes.length; i++) {
+						sparams[i] = get(sTypes[i]);
+					}
+					init.invoke(o, sparams);
+				} else {
+					init.invoke(o);
+				}
+			}
+			
 			Object ret = method.invoke(o, params);
-			if (destroy != null) destroy.invoke(o);
+			
+			if (destroy != null) {
+				Class<?>[] sTypes = destroy.getParameterTypes();
+				if (sTypes.length > 0) {
+					Object[] sparams = new Object[sTypes.length];
+					for (int i = 0; i < sTypes.length; i++) {
+						sparams[i] = get(sTypes[i]);
+					}
+					destroy.invoke(o, sparams);
+				} else {
+					destroy.invoke(o);
+				}
+			}
 			
 			return ret;
+		}
+		
+		private Object get(Type t) {
+			Class c = (t instanceof Class) ? (Class)t : null;
+			
+			if (c != null) {
+				if (ServletRequest.class.equals(c) || HttpServletRequest.class.equals(c)) {
+					return request;
+				} else if (ServletResponse.class.equals(c) || HttpServletResponse.class.equals(c)) {
+					return response;
+				} else if (ServletContext.class.equals(c)) {
+					return getServletContext();
+				} else if (HttpSession.class.equals(c)) {
+					return request.getSession(true);
+				}
+			}
+			return null;
 		}
 	}
 	

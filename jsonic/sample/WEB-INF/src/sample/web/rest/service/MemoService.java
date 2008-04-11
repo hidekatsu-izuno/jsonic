@@ -5,13 +5,17 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 public class MemoService {
 	
 	// it's incorrect use. you shoud use RDBMS.
 	private static int count = 0;
 	private static Map<Integer, Memo> list = Collections.synchronizedMap(new LinkedHashMap<Integer, Memo>());
 	
-	public void init() {
+	public void init(HttpServletRequest request, HttpServletResponse response) {
+		response.setHeader("X-JSON", "[\"Helo. JSONIC!\"]");
 	}
 	
 	public Collection<Memo> find() {

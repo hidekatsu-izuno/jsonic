@@ -434,6 +434,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 パス中の[<i>name</i>]で囲まれた部分はクラス名の${<i>name</i>}に置換されます<sup>(※5)</sup>。
 なお、RESTモードの場合、利用されなかった変数はメッセージボディとして送られてきたJSON objectの値として設定されメソッドに引き渡されます（RPCモードの場合は設定されません）。</td></tr>
 <tr><td>definitions</td><td>java.util.Map&lt;String, Pattern&gt;</td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は[^/]+が設定されたものと扱われます。</td></tr>
+<tr><td>init</td><td>java.lang.String</td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは"init"です。</tr>
+<tr><td>destroy</td><td>java.lang.String</td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは"destroy"です。</tr>
 </table>
 <div class="caption">
 (※5) 変数名のうち、classとpackageだけは特殊な扱いがされます。class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
@@ -550,7 +552,6 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <div class="caption">(※8) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
 <div class="caption">(※9) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
-
 <h4>■ JSONP</h4>
 <p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
 <pre class="source">
@@ -564,6 +565,25 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
+
+<h4>■ 初期化/Servletパラメータへのアクセス</h4>
+<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※10)</sup>
+このとき引数にServletContext, HttpServletRequest, HttpServletResponse, HttpSessionを受け取れるように設定するとそれぞれのインスタンスが設定されます。<p>
+<pre class="source">
+public class HogeService {
+    public void init(HttpServletRequest request, HttpServletResponse response) {
+        <span class="comment">// 処理の前に呼び出されます。</span>
+		request.getInitParameter("test"); <span class="comment">// HttpServletRequest, HttpServletResponseにアクセス</span>
+    }
+    
+    ...
+    
+    public void destroy() {
+        <span class="comment">// 処理の後に呼び出されます。</span>
+    }
+}
+</pre>
+<div class="caption">(※10) メソッド名は設定で変更可能です。</div>
 
 <h4>■ DI Container対応</h4>
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
@@ -656,7 +676,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>
 <li>WebServiceServletにキャッシュコントロールに関するヘッダを出力する機能を追加しました。</li>
-<li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後でそれぞれのメソッドを呼び出すようにしました。</li>
+<li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後でそれぞれのメソッドを呼び出すようになりました。なおこの時、引数としてHttpServletRequestなどを受け取ることができます。</li>
 <li>WebServiceServletにてUnsupportedOperationExceptionだけでなくIllegalStateExceptionが投げられた時も404 Not Foundとなるように変更しました。</li>
 <li>RESTのサンプルをよりRestfulなものにしました。</li>
 </ul>
