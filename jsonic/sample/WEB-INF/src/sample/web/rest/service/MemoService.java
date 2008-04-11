@@ -19,6 +19,9 @@ public class MemoService {
 	}
 	
 	public void create(Memo memo) {
+		if (memo.id != null)
+			throw new IllegalArgumentException();
+		
 		memo.id = count++;
 		list.put(memo.id, memo);
 	}

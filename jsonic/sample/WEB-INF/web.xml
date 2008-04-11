@@ -6,37 +6,6 @@
 	version="2.4">
 	
 	<description>jsonic sample</description>
-	
-	<filter>
-		<filter-name>Gateway Filter</filter-name>
-		<filter-class>net.arnx.jsonic.web.GatewayFilter</filter-class>
-		<init-param>
-			<param-name>config</param-name>
-			<param-value>
-				expire: false          // cache control setting
-				locale: 'ja-JP'            // set response locale
-				
-				'.+\.json': {
-					encoding: 'UTF-8'      // request/response encoding setting
-					expire: true
-					compression: true      // gzip compression setting
-				}
-				
-				'/ja/([^.]+)': {
-					encoding: 'SHIFT_JIS'
-					expire: true
-					forward: '/$1.json'    // forward target
-					access: ['admin']      // role array
-					locale: 'en'
-				}
-			</param-value>
-		</init-param>
-	</filter>
-
-	<filter-mapping>
-		<filter-name>Gateway Filter</filter-name>
-	    <url-pattern>/*</url-pattern>
-	</filter-mapping>
  
 	<servlet>
 		<description>JSON-WebService</description>
