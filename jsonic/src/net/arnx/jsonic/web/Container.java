@@ -3,6 +3,8 @@ package net.arnx.jsonic.web;
 import java.lang.reflect.Method;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class Container {
 	public Boolean debug = Boolean.FALSE;
@@ -22,7 +24,7 @@ public class Container {
 	public <T> T getComponent(Class<? extends T> c) throws Exception {
 		return c.newInstance();
 	}
-		
+	
 	protected boolean limit(Class<?> c, Method method) {
 		return method.getDeclaringClass().equals(Object.class);
 	}
