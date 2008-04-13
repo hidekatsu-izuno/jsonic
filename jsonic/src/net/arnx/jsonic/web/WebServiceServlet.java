@@ -473,7 +473,7 @@ public class WebServiceServlet extends HttpServlet {
 	
 	@SuppressWarnings("unchecked")
 	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
-		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		
 		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
 			String name = e.nextElement();
@@ -489,7 +489,7 @@ public class WebServiceServlet extends HttpServlet {
 					Object target = current.get(key);
 					
 					if (target == null || !(target instanceof Map)) {
-						target = new HashMap<String, Object>();
+						target = new LinkedHashMap<String, Object>();
 						current.put(key, target);
 					}
 					current = (Map<String, Object>)target;

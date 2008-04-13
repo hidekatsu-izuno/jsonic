@@ -670,11 +670,12 @@ public class HogeService {
 <ul>
 <li>JSON.decode(Reader), JSON.decode(InputStream)などを追加しました。</li>
 <li>java.net.URL, java.net.URI, java.net.InetAddress, java.nio.charset.Charsetの相互変換に対応しました。</li>
-<li>WebServiceServletの変数定義のデフォルト正規表現を[^/]+から[^/()\[\]]+に変更しました。</li>
 <li>文字列からNumber型への変換時、プラスから始まる場合はプラスを除去し変換するよう変更しました。</li>
 <li>文字列から整数型への変換時、0xから始まる文字列を16進数として、0から始まる文字列を8進数として扱うように変更しました。</li>
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()などを使用するように変更しました。</li>
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
+<li>WebServiceServletの変数定義のデフォルト正規表現を[^/]+から[^/()\[\]]+に変更しました。</li>
+<li>GET時のパラメータを「aaa.bbb」だけでなく「aaa[bbb]」のような配列形式のアクセスでも認識できるようにしました。く</li>
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>
 <li>WebServiceServletにキャッシュコントロールに関するヘッダを出力する機能を追加しました。</li>
 <li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後でそれぞれのメソッドを呼び出すようになりました。なおこの時、引数としてHttpServletRequestなどを受け取ることができます。</li>
