@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -481,11 +480,12 @@ public class WebServiceServlet extends HttpServlet {
 			String[] values = request.getParameterValues(name);
 			
 			int start = 0;
+			char old = '\0';
 			Map<String, Object> current = map;
 			for (int i = 0; i < name.length(); i++) {
 				char c = name.charAt(i);
-				if (c == '.') {
-					String key = name.substring(start, i);
+				if (c == '.' || c == '[') {
+					String key = name.substring(start, (old == ']') ? i-1 : i);
 					Object target = current.get(key);
 					
 					if (target == null || !(target instanceof Map)) {
@@ -495,10 +495,20 @@ public class WebServiceServlet extends HttpServlet {
 					current = (Map<String, Object>)target;
 					start = i+1;
 				}
+				old = c;
 			}
-			current.put(name.substring(start),
-					(values == null || values.length == 0) ? null :
-					(values.length == 1) ? values[0] : Arrays.asList(values));
+			Object value = null;
+			if (values != null) {
+				if (values.length == 1) {
+					value = values[0];
+				} else {
+					List list = new ArrayList(values.length);
+					for (String str : values) list.add(str);
+					value = list;
+				}
+			}
+			
+			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), value);
 		}
 		
 		return map;

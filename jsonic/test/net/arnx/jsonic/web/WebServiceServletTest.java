@@ -227,7 +227,19 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
 		
 		v.put("..", new String[] {"aaa", "bbb"});
-		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
+		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}, aaa:{bbb:{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
+		
+		v.clear();
+		v.put("aaa[bbb]", new String[] {"aaa", "bbb"});
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
+
+		v.clear();
+		v.put("aaa[bbb].ccc", new String[] {"aaa", "bbb"});
+		assertEquals(JSON.decode("{aaa:{bbb:{ccc:['aaa', 'bbb']}}}"), m.invoke(null, request));
+
+		v.clear();
+		v.put("[aaa].bbb", new String[] {"aaa", "bbb"});
+		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), m.invoke(null, request));
 	}
 	
 	private static void write(OutputStream out, String text) throws IOException {
