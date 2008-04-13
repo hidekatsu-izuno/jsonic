@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -90,7 +91,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
-		if (!config.definitions.containsKey(null)) config.definitions.put(null, Pattern.compile("[^/]+"));
+		if (!config.definitions.containsKey(null)) config.definitions.put(null, Pattern.compile("[^/()\\[\\]]+"));
 		
 		if (config.mappings != null) {
 			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
@@ -472,26 +473,32 @@ public class WebServiceServlet extends HttpServlet {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private Map<String, Object> getParameterMap(HttpServletRequest request) {
+	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		
 		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
 			String name = e.nextElement();
-			String[] names = name.split("\\.");
 			String[] values = request.getParameterValues(name);
 			
+			int start = 0;
 			Map<String, Object> current = map;
-			for (int i = 0; i < names.length-1; i++) {
-				Map<String, Object> target = (Map<String, Object>)current.get(names[i]);
-				if (target == null) {
-					target = new HashMap<String, Object>();
-					current.put(names[i], target);
+			for (int i = 0; i < name.length(); i++) {
+				char c = name.charAt(i);
+				if (c == '.') {
+					String key = name.substring(start, i);
+					Object target = current.get(key);
+					
+					if (target == null || !(target instanceof Map)) {
+						target = new HashMap<String, Object>();
+						current.put(key, target);
+					}
+					current = (Map<String, Object>)target;
+					start = i+1;
 				}
-				current = target;
 			}
-			current.put(names[names.length-1], 
+			current.put(name.substring(start),
 					(values == null || values.length == 0) ? null :
-					(values.length == 1) ? values[0] : values);
+					(values.length == 1) ? values[0] : Arrays.asList(values));
 		}
 		
 		return map;

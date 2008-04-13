@@ -433,7 +433,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><td>mappings</td><td>java.util.Map&lt;String, String&gt;</td><td>URLパスとクラスのマッピングを行います。
 パス中の[<i>name</i>]で囲まれた部分はクラス名の${<i>name</i>}に置換されます<sup>(※5)</sup>。
 なお、RESTモードの場合、利用されなかった変数はメッセージボディとして送られてきたJSON objectの値として設定されメソッドに引き渡されます（RPCモードの場合は設定されません）。</td></tr>
-<tr><td>definitions</td><td>java.util.Map&lt;String, Pattern&gt;</td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は[^/]+が設定されたものと扱われます。</td></tr>
+<tr><td>definitions</td><td>java.util.Map&lt;String, Pattern&gt;</td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は[^/()\[\]]+が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td>java.lang.String</td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは"init"です。</tr>
 <tr><td>destroy</td><td>java.lang.String</td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは"destroy"です。</tr>
 </table>
@@ -670,6 +670,7 @@ public class HogeService {
 <ul>
 <li>JSON.decode(Reader), JSON.decode(InputStream)などを追加しました。</li>
 <li>java.net.URL, java.net.URI, java.net.InetAddress, java.nio.charset.Charsetの相互変換に対応しました。</li>
+<li>WebServiceServletの変数定義のデフォルト正規表現を[^/]+から[^/()\[\]]+に変更しました。</li>
 <li>文字列からNumber型への変換時、プラスから始まる場合はプラスを除去し変換するよう変更しました。</li>
 <li>文字列から整数型への変換時、0xから始まる文字列を16進数として、0から始まる文字列を8進数として扱うように変更しました。</li>
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()などを使用するように変更しました。</li>

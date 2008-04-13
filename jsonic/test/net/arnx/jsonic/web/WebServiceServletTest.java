@@ -7,14 +7,22 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import net.arnx.jsonic.*;
 
 import org.junit.*;
+import org.seasar.framework.mock.servlet.MockHttpServletRequest;
+import org.seasar.framework.mock.servlet.MockHttpServletRequestImpl;
+import org.seasar.framework.mock.servlet.MockServletContextImpl;
 
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
@@ -187,6 +195,39 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
+	}
+	
+	@Test
+	public void testGetParameterMap() throws Exception {
+		Method m = WebServiceServlet.class.getDeclaredMethod("getParameterMap", HttpServletRequest.class);
+		m.setAccessible(true);
+		
+		final Hashtable<String, String[]> v = new Hashtable<String, String[]>();
+		
+		MockHttpServletRequest request = new MockHttpServletRequestImpl(new MockServletContextImpl("/"), "/") {
+			@Override
+			public Enumeration getParameterNames() {
+				return v.keys();
+			}
+			
+			@Override
+			public String[] getParameterValues(String name) {
+				return v.get(name);
+			}
+		};
+		
+		v.put("aaa", new String[] {""});
+		assertEquals(JSON.decode("{aaa:''}"), m.invoke(null, request));
+		
+		v.put("aaa.bbb", new String[] {"aaa", "bbb"});
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
+		
+		v.clear();
+		v.put("aaa.bbb.", new String[] {"aaa", "bbb"});
+		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
+		
+		v.put("..", new String[] {"aaa", "bbb"});
+		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
 	}
 	
 	private static void write(OutputStream out, String text) throws IOException {
