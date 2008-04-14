@@ -90,7 +90,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
-		if (!config.definitions.containsKey(null)) config.definitions.put(null, Pattern.compile("[^/()\\[\\]]+"));
+		if (!config.definitions.containsKey(null)) config.definitions.put(null, Pattern.compile("[^/()]+"));
 		
 		if (config.mappings != null) {
 			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {

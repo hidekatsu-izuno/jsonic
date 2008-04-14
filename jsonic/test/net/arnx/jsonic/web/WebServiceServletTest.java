@@ -46,9 +46,9 @@ public class WebServiceServletTest {
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.connect();
-		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
+		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\"},\"id\":null}"), 
-				JSON.decode(read(con.getErrorStream())));
+				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 
 		con = (HttpURLConnection)url.openConnection();
@@ -58,7 +58,7 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":3,\"error\":null,\"id\":1}"), 
-				JSON.decode(read(con.getInputStream())));	
+				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
 		// PUT
