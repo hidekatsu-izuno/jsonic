@@ -251,7 +251,6 @@ public class WebServiceServlet extends HttpServlet {
 		try {			
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
-				response.setStatus(SC_BAD_REQUEST);
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
 			} else {
@@ -271,22 +270,18 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_NOT_FOUND);
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_NOT_FOUND);
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
 			errorCode = -32602;
 			errorMessage = "Invalid params.";
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
-			response.setStatus(SC_BAD_REQUEST);
 			errorCode = -32700;
 			errorMessage = "Parse error.";
 		} catch (InvocationTargetException e) {
@@ -294,21 +289,17 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(cause.toString());
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
-				response.setStatus(SC_NOT_FOUND);
 				errorCode = -32601;
 				errorMessage = "Method not found.";
 			} else if (cause instanceof IllegalArgumentException) {
-				response.setStatus(SC_BAD_REQUEST);
 				errorCode = -32602;
 				errorMessage = "Invalid params.";
 			} else {
-				response.setStatus(SC_INTERNAL_SERVER_ERROR);
 				errorCode = -32603;
 				errorMessage = cause.getMessage();
 			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			errorCode = -32603;
 			errorMessage = "Internal error.";
 		}
@@ -342,7 +333,6 @@ public class WebServiceServlet extends HttpServlet {
 			json.format(res, writer);
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
-			response.setStatus(SC_INTERNAL_SERVER_ERROR);
 			res.clear();
 			res.put("result", null);
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
