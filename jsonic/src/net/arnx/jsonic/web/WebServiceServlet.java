@@ -492,14 +492,14 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			Object value = null;
-			if (values != null) {
-				if (values.length == 1) {
-					value = values[0];
-				} else {
-					List list = new ArrayList(values.length);
-					for (String str : values) list.add(str);
-					value = list;
-				}
+			if (values != null || values.length == 0) {
+				value = null;
+			} else if (values.length == 1) {
+				value = values[0];
+			} else {
+				List list = new ArrayList(values.length);
+				for (String str : values) list.add(str);
+				value = list;
 			}
 			
 			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), value);
