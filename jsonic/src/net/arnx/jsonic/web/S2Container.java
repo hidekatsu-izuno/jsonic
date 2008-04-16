@@ -6,7 +6,7 @@ import org.seasar.framework.log.Logger;
 
 @SuppressWarnings("unchecked")
 public class S2Container extends Container {
-	private Logger logger = Logger.getLogger(S2Container.class);
+	private static Logger log = Logger.getLogger(S2Container.class);
 	
 	@Override
 	public <T> T getComponent(Class<? extends T> c) throws Exception {
@@ -22,11 +22,11 @@ public class S2Container extends Container {
 
 	@Override
 	public void debug(String message) {
-		logger.debug(message);
+		log.debug(message);
 	}
 
 	@Override
 	public void error(String message, Throwable e) {
-		logger.error(message, e);
+		log.error(message, e);
 	}
 }

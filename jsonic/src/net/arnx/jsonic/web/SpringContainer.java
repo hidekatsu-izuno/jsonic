@@ -10,7 +10,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 @SuppressWarnings("unchecked")
 public class SpringContainer extends Container {
-	private Log log = LogFactory.getLog(SpringContainer.class);
+	private static Log log = LogFactory.getLog(SpringContainer.class);
 	
 	private ApplicationContext appContext;
 	
