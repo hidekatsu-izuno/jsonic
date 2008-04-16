@@ -604,7 +604,7 @@ public class HogeService {
 <span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>に対応したContainerを標準添付しています。このContainerを利用すると、Seasar2上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>および<a href="http://www.springframework.org/">Spring Framework</a>に対応したContainerを標準添付しています。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 
 <h4>■ Gateway Filter</h4>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
@@ -681,6 +681,7 @@ public class HogeService {
 <li>WebServiceServletにキャッシュコントロールに関するヘッダを出力する機能を追加しました。</li>
 <li>WebServiceServletにて呼び出されたBeanにinit()、destroy()メソッドがある場合処理の前後でそれぞれのメソッドを呼び出すようになりました。なおこの時、引数としてHttpServletRequestなどを受け取ることができます。</li>
 <li>WebServiceServletにてUnsupportedOperationExceptionだけでなくIllegalStateExceptionが投げられた時も404 Not Foundとなるように変更しました。</li>
+<li>WebServiceServletにSpring Framework用コンテナ(net.arnx.jsonic.web.SpringContainer)を追加しました。</li>
 <li>RESTのサンプルをよりRestfulなものにしました。</li>
 </ul>
 
