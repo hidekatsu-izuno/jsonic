@@ -463,7 +463,7 @@ public class WebServiceServlet extends HttpServlet {
 	
 	@SuppressWarnings("unchecked")
 	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
-		Map<String, Object> map = new LinkedHashMap<String, Object>();
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		
 		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
 			String name = e.nextElement();
@@ -471,7 +471,7 @@ public class WebServiceServlet extends HttpServlet {
 			
 			int start = 0;
 			char old = '\0';
-			Map<String, Object> current = map;
+			Map<String, Object> current = result;
 			for (int i = 0; i < name.length(); i++) {
 				char c = name.charAt(i);
 				if (c == '.' || c == '[') {
@@ -479,16 +479,18 @@ public class WebServiceServlet extends HttpServlet {
 					Object target = current.get(key);
 					
 					if (!(target instanceof Map)) {
-						Object tmp = target;
-						target = new LinkedHashMap<String, Object>();
-						current.put(key, target);
-						if (tmp != null) current.put("", tmp);
+						Map<String, Object> map = new LinkedHashMap<String, Object>();
+						if (target != null) current.put("", target);
+						current.put(key, map);
+						current = map;
+					} else {
+						current = (Map<String, Object>)target;
 					}
-					current = (Map<String, Object>)target;
 					start = i+1;
 				}
 				old = c;
 			}
+			
 			Object value = null;
 			if (values != null) {
 				if (values.length == 1) {
@@ -503,7 +505,7 @@ public class WebServiceServlet extends HttpServlet {
 			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), value);
 		}
 		
-		return map;
+		return result;
 	}
 	
 	@Override
