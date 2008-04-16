@@ -478,9 +478,11 @@ public class WebServiceServlet extends HttpServlet {
 					String key = name.substring(start, (old == ']') ? i-1 : i);
 					Object target = current.get(key);
 					
-					if (target == null || !(target instanceof Map)) {
+					if (!(target instanceof Map)) {
+						Object tmp = target;
 						target = new LinkedHashMap<String, Object>();
 						current.put(key, target);
+						if (tmp != null) current.put("", tmp);
 					}
 					current = (Map<String, Object>)target;
 					start = i+1;
