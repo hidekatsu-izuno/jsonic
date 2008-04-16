@@ -220,7 +220,7 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{aaa:''}"), m.invoke(null, request));
 		
 		v.put("aaa.bbb", new String[] {"aaa", "bbb"});
-		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
+		assertEquals(JSON.decode("{aaa:{'':'', bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
 		
 		v.clear();
 		v.put("aaa.bbb.", new String[] {"aaa", "bbb"});

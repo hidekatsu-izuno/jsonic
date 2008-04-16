@@ -480,7 +480,7 @@ public class WebServiceServlet extends HttpServlet {
 					
 					if (!(target instanceof Map)) {
 						Map<String, Object> map = new LinkedHashMap<String, Object>();
-						if (target != null) current.put("", target);
+						if (target != null) map.put("", target);
 						current.put(key, map);
 						current = map;
 					} else {
@@ -492,7 +492,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			Object value = null;
-			if (values != null || values.length == 0) {
+			if (values == null || values.length == 0) {
 				value = null;
 			} else if (values.length == 1) {
 				value = values[0];
