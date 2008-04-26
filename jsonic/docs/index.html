@@ -675,7 +675,7 @@ public class HogeService {
 <li>Convertにて整数値への変換の際、intValue()などを使用していましたが範囲をはずれた値が入力された場合エラーにならないためintValueExact()などを使用するように変更しました。</li>
 <li>文字コード設定、GZip圧縮などを簡単に行えるnet.arnx.jsonic.web.GatewayFilterを追加しました。</li>
 <li>WebServiceServletの変数定義のデフォルト正規表現を[^/]+から[^/()]+に変更しました。</li>
-<li>WebServiceServletにてRPCモードにてエラーが発生した場合もXML-RPCに合わせて200 OKを返すようにしました。く</li>
+<li>WebServiceServletにてRPCモードにてエラーが発生した場合、XML-RPCと同じように200 OKを返すようにしました。く</li>
 <li>WebServiceServletにてGET時のパラメータを「aaa.bbb」だけでなく「aaa[bbb]」のような配列形式のアクセスでも認識できるようにしました。く</li>
 <li>WebServiceServletにて変換時に用いるJSON#setLocale(Locale locale)にHttpServletRequest#getLocale()の値を設定するようにしました。</li>
 <li>WebServiceServletにキャッシュコントロールに関するヘッダを出力する機能を追加しました。</li>
