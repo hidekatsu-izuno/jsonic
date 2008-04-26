@@ -611,6 +611,25 @@ public class JSON {
 				for (int j = 0; j < level; j++) ap.append('\t');
 			}
 			ap.append(']');
+		} else if (o instanceof Iterator) {
+			Iterator i = (Iterator)o;
+			ap.append('[');
+			boolean isEmpty = !i.hasNext();
+			while (i.hasNext()) {
+				Object item = i.next();
+				if (this.prettyPrint) {
+					ap.append('\n');
+					for (int j = 0; j < level+1; j++) ap.append('\t');
+				}
+				if (item == o) item = null;
+				format(item, ap, level+1);
+				if (i.hasNext()) ap.append(',');
+			}
+			if (this.prettyPrint && isEmpty) {
+				ap.append('\n');
+				for (int j = 0; j < level; j++) ap.append('\t');
+			}
+			ap.append(']');
 		} else if (o instanceof Map<?,?>) {
 			formatMap((Map<?,?>)o, o, ap, level);
 		} else {
