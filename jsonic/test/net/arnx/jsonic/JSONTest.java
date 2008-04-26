@@ -145,6 +145,7 @@ public class JSONTest {
 		list.add(InetAddress.getByName("localhost"));
 		list.add(Charset.forName("UTF-8"));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list));
+		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list.iterator()));
 	}
 
 	@Test

@@ -45,6 +45,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 import net.arnx.jsonic.JSON;
 
+@SuppressWarnings("unchecked")
 public class GatewayFilter implements Filter {
 	public static final String GATEWAY_KEY = Config.class.getName();
 	
