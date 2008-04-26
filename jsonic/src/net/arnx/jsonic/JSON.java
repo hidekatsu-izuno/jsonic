@@ -1514,7 +1514,7 @@ public class JSON {
 					String str = value.toString().trim().toLowerCase();
 					if (str.length() > 0) {
 						int start = 0;
-						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						if (str.charAt(0) == '+' || str.charAt(0) == '\uFF0B') {
 							start += 1;
 						}
 						
@@ -1545,7 +1545,7 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						int start = 0;
-						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						if (str.charAt(0) == '+') {
 							start += 1;
 						}
 						
@@ -1573,7 +1573,7 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						int start = 0;
-						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						if (str.charAt(0) == '+') {
 							start += 1;
 						}
 						
@@ -1601,7 +1601,7 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						int start = 0;
-						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						if (str.charAt(0) == '+') {
 							start += 1;
 						}
 						
@@ -1626,7 +1626,7 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						if (str.charAt(0) == '+') {
 							data = Float.valueOf(str.substring(1));
 						} else {
 							data = Float.valueOf(str);
@@ -1643,7 +1643,7 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						if (str.charAt(0) == '+') {
 							data = Double.valueOf(str.substring(1));
 						} else {
 							data = Double.valueOf(str);
@@ -1661,7 +1661,7 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						int start = 0;
-						if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+						if (str.charAt(0) == '+') {
 							start += 1;
 						}
 						
@@ -1679,7 +1679,7 @@ public class JSON {
 			} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
 				String str = value.toString().trim();
 				if (str.length() > 0) {
-					if (str.charAt(0) == '+' || str.charAt(0) == '＋') {
+					if (str.charAt(0) == '+') {
 						data = new BigDecimal(str.substring(1));
 					} else {
 						data = new BigDecimal(str);
