@@ -1514,17 +1514,13 @@ public class JSON {
 					String str = value.toString().trim().toLowerCase();
 					if (str.length() > 0) {
 						int start = 0;
-						if (str.charAt(0) == '+' || str.charAt(0) == '\uFF0B') {
-							start += 1;
+						if (str.charAt(0) == '+') {
+							start++;
 						}
 						
 						int num = 0;
 						if (str.startsWith("0x", start)) {
-							start += 2;
-							num = Integer.parseInt(str.substring(start), 16);
-						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
-							start += 1;
-							num = Integer.parseInt(str.substring(start), 8);
+							num = Integer.parseInt(str.substring(start+2), 16);
 						} else {
 							num = Integer.parseInt(str.substring(start));
 						}
@@ -1546,15 +1542,11 @@ public class JSON {
 					if (str.length() > 0) {
 						int start = 0;
 						if (str.charAt(0) == '+') {
-							start += 1;
+							start++;
 						}
 						
 						if (str.startsWith("0x", start)) {
-							start += 2;
-							data = (short)Integer.parseInt(str.substring(start), 16);
-						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
-							start += 1;
-							data = (short)Integer.parseInt(str.substring(start), 8);
+							data = (short)Integer.parseInt(str.substring(start+2), 16);
 						} else {
 							data = (short)Integer.parseInt(str.substring(start));
 						}
@@ -1574,15 +1566,11 @@ public class JSON {
 					if (str.length() > 0) {
 						int start = 0;
 						if (str.charAt(0) == '+') {
-							start += 1;
+							start++;
 						}
 						
 						if (str.startsWith("0x", start)) {
-							start += 2;
-							data = Integer.parseInt(str.substring(start), 16);
-						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
-							start += 1;
-							data = Integer.parseInt(str.substring(start), 8);
+							data = Integer.parseInt(str.substring(start+2), 16);
 						} else {
 							data = Integer.parseInt(str.substring(start));
 						}
@@ -1602,15 +1590,11 @@ public class JSON {
 					if (str.length() > 0) {
 						int start = 0;
 						if (str.charAt(0) == '+') {
-							start += 1;
+							start++;
 						}
 						
 						if (str.startsWith("0x", start)) {
-							start += 2;
-							data = Long.parseLong(str.substring(start), 16);
-						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
-							start += 1;
-							data = Long.parseLong(str.substring(start), 8);
+							data = Long.parseLong(str.substring(start+2), 16);
 						} else {
 							data = Long.parseLong(str.substring(start));
 						}
@@ -1662,15 +1646,11 @@ public class JSON {
 					if (str.length() > 0) {
 						int start = 0;
 						if (str.charAt(0) == '+') {
-							start += 1;
+							start++;
 						}
 						
 						if (str.startsWith("0x", start)) {
-							start += 2;
-							data = new BigInteger(str.substring(start), 16);
-						} else if (str.length() > start + 1 && str.startsWith("0", start)) {
-							start += 1;
-							data = new BigInteger(str.substring(start), 8);
+							data = new BigInteger(str.substring(start+2), 16);
 						} else {
 							data = new BigInteger(str.substring(start));
 						}
