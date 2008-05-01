@@ -596,7 +596,7 @@ public class JSON {
 			}
 			ap.append(']');
 		} else if (o instanceof Iterator) {
-			Iterator i = (Iterator)o;
+			Iterator<?> i = (Iterator<?>)o;
 			ap.append('[');
 			boolean isEmpty = !i.hasNext();
 			while (i.hasNext()) {
@@ -609,7 +609,7 @@ public class JSON {
 				format(item, ap, level+1);
 				if (i.hasNext()) ap.append(',');
 			}
-			if (this.prettyPrint && isEmpty) {
+			if (this.prettyPrint && !isEmpty) {
 				ap.append('\n');
 				for (int j = 0; j < level; j++) ap.append('\t');
 			}
