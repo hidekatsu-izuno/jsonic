@@ -435,8 +435,10 @@ public class JSON {
 		} else if (o instanceof byte[]) {
 			escape = false;
 			o = Base64.encode((byte[])o);
+		} else if (o instanceof Iterable) {
+			o = ((Iterable)o).iterator();
 		} else if (o instanceof Object[]) {
-			o = Arrays.asList((Object[])o);
+			o = Arrays.asList((Object[])o).iterator();
 		} else if (o instanceof Pattern) {
 			o = ((Pattern)o).pattern();
 		} else if (o instanceof TimeZone) {
@@ -591,24 +593,6 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 					}
 				}
-			}
-			ap.append(']');
-		} else if (o instanceof Collection) {
-			Collection collection = (Collection)o;
-			ap.append('[');
-			for (Iterator<?> i = collection.iterator(); i.hasNext(); ) {
-				Object item = i.next();
-				if (this.prettyPrint) {
-					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
-				}
-				if (item == o) item = null;
-				format(item, ap, level+1);
-				if (i.hasNext()) ap.append(',');
-			}
-			if (this.prettyPrint && !collection.isEmpty()) {
-				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
 			}
 			ap.append(']');
 		} else if (o instanceof Iterator) {
