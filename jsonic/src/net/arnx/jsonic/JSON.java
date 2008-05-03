@@ -35,6 +35,7 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
@@ -413,7 +414,7 @@ public class JSON {
 		}
 		return ap;
 	}
-	
+		
 	private Appendable format(Object o, Appendable ap, int level) throws IOException {
 		if (level > this.maxDepth) {
 			o = null;
@@ -608,6 +609,25 @@ public class JSON {
 				if (item == o) item = null;
 				format(item, ap, level+1);
 				if (i.hasNext()) ap.append(',');
+			}
+			if (this.prettyPrint && !isEmpty) {
+				ap.append('\n');
+				for (int j = 0; j < level; j++) ap.append('\t');
+			}
+			ap.append(']');
+		} else if (o instanceof Enumeration) {
+			Enumeration<?> e = (Enumeration<?>)o;
+			ap.append('[');
+			boolean isEmpty = !e.hasMoreElements();
+			while (e.hasMoreElements()) {
+				Object item = e.nextElement();
+				if (this.prettyPrint) {
+					ap.append('\n');
+					for (int j = 0; j < level+1; j++) ap.append('\t');
+				}
+				if (item == o) item = null;
+				format(item, ap, level+1);
+				if (e.hasMoreElements()) ap.append(',');
 			}
 			if (this.prettyPrint && !isEmpty) {
 				ap.append('\n');

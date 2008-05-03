@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Vector;
 import java.util.regex.Pattern;
 import java.io.*;
 
@@ -146,6 +147,9 @@ public class JSONTest {
 		list.add(Charset.forName("UTF-8"));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list.iterator()));
+
+		Vector v = new Vector(list);
+		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(v.elements()));
 	}
 
 	@Test

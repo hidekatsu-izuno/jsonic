@@ -105,8 +105,9 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
 <tr><td>Map</td><td rowspan="2">object</td></tr>
 <tr><td>Object<sup>(※1)</sup></td></tr>
-<tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="2">array</td></tr>
-<tr><td>Collection</td></tr>
+<tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="3">array</td></tr>
+<tr><td>Iterable (Collection, Listなど)</td></tr>
+<tr><td>Iterator, Enumeration</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
 <tr><td>TimeZone, Pattern, URL, URI, Type, Member, Charset</td></tr>
@@ -665,7 +666,13 @@ public class HogeService {
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/03/02 version 0.9.8</h3>
+<h3>2008/05/15 version 0.9.9</h3>
+<p>下記の機能追加・変更とバグ修正が行われています。</p>
+<ul>
+<li>Collectionだけでなく、Iterable, Iterator, EnumerationからJSON arrayへの変換に対応しました。</li>
+</ul>
+
+<h3>2008/04/27 version 0.9.8</h3>
 <p>下記の機能追加・変更とバグ修正が行われています。</p>
 <ul>
 <li>JSON.decode(Reader), JSON.decode(InputStream)などを追加しました。</li>
