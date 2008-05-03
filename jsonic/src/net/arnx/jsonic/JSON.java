@@ -136,7 +136,7 @@ import org.w3c.dom.NodeList;
  * 	<th bgcolor="#CCCCFF" align="left">json type</th>
  * 	<th bgcolor="#CCCCFF" align="left">java type</th>
  * </tr>
- * <tr><td>object</td><td>java.util.HashMap</td></tr>
+ * <tr><td>object</td><td>java.util.LinkedHashMap</td></tr>
  * <tr><td>array</td><td>java.util.ArrayList</td></tr>
  * <tr><td>string</td><td>java.lang.String</td></tr>
  * <tr><td>number</td><td>java.math.BigDecimal</td></tr>
@@ -145,7 +145,7 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 0.9.8
+ * @version 0.9.9
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -414,7 +414,7 @@ public class JSON {
 		}
 		return ap;
 	}
-		
+	
 	private Appendable format(Object o, Appendable ap, int level) throws IOException {
 		if (level > this.maxDepth) {
 			o = null;
