@@ -61,7 +61,6 @@ public class GatewayFilter implements Filter {
 		public Locale locale = null;
 	}
 	
-	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		this.context = filterConfig.getServletContext();
 		
@@ -95,7 +94,6 @@ public class GatewayFilter implements Filter {
 		locations.put(Pattern.compile(".*"), base);
 	}
 
-	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, 
 		FilterChain chain) throws IOException, ServletException {
 		
@@ -200,7 +198,6 @@ public class GatewayFilter implements Filter {
 		}
 	}
 	
-	@Override
 	public void destroy() {
 		locations = null;
 	}
