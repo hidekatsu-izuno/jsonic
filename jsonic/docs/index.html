@@ -10,7 +10,7 @@
 	.title a { color: #6699FF; text-decoration: none; }
 	.subtitle { font: italic 12pt sans-serif; color: gray;}
 	.bar { color: white; background: gray; padding: 0px 5px; }
-	.menu { padding: 8px; width: 140px; float: left;}
+	.menu { padding: 8px; width: 150px; float: left;}
 	.menu ul { margin: 0px; padding: 0px 0px 0px 16px; }
 	.main { margin-left: 160px; padding: 5px 16px; width: 600px; line-height: 1.5; border-left: 1px solid silver; float: clear; }
 	h2 { font: bold 12pt sans-serif; margin: 30px 0px 10px 0px; border: 1px solid #6699FF;
@@ -44,10 +44,10 @@
 		<ul>
 			<li><a href="#usage_basic">基本的な使い方</a></li>
 			<li><a href="#usage_advanced">高度な使い方</a></li>
-			<li><a href="#webservice">JSON Web Service Servlet</a></li>
+			<li><a href="#webservice">Web Service Servlet</a></li>
 		</ul>
 	</li>
-	<li><a href="api/index.html">Javadoc</a></li>
+	<li><a href="api/index.html">API Docs</a></li>
 	<li><a href="#license">ライセンス</a></li>
 	<li><a href="#releasenote">リリースノート</a></li>
 </ul>
@@ -568,15 +568,16 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 このとき引数にServletContext, HttpServletRequest, HttpServletResponse, HttpSessionを受け取れるように設定するとそれぞれのインスタンスが設定されます。<p>
 <pre class="source">
 public class HogeService {
+    <span class="comment">// 処理の前に呼び出されます。</span>
     public void init(HttpServletRequest request, HttpServletResponse response) {
-        <span class="comment">// 処理の前に呼び出されます。</span>
-        request.getInitParameter("test"); <span class="comment">// HttpServletRequest, HttpServletResponseにアクセス</span>
+        <span class="comment">// HttpServletRequest, HttpServletResponseにアクセス</span>
+        request.getInitParameter("test"); 
     }
     
     ...
     
+    <span class="comment">// 処理の後に呼び出されます。</span>
     public void destroy() {
-        <span class="comment">// 処理の後に呼び出されます。</span>
     }
 }
 </pre>
