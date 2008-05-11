@@ -149,7 +149,7 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings("unchecked")
 public class JSON {
 	private static final Character ROOT_KEY = '$';
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
@@ -166,6 +166,10 @@ public class JSON {
 	}
 
 	public JSON() {
+	}
+	
+	public JSON(int maxDepth) {
+		setMaxDepth(maxDepth);
 	}
 	
 	private Object context = null;
@@ -1371,7 +1375,7 @@ public class JSON {
 			e.add(key);
 			throw e;
 		} catch (Exception e) {
-			JSONConvertException ce = new JSONConvertException(getMessage("converter.convert.ConversionError", 
+			JSONConvertException ce = new JSONConvertException(getMessage("json.convert.ConversionError", 
 					(value instanceof String) ? "\"" + value + "\"" : value, type), e);
 			ce.add(key);
 			throw ce;
