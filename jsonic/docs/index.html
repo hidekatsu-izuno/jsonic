@@ -6,10 +6,10 @@
 <title>jsonic - simple json encoder/decoder for java</title>
 <style type="text/css">
 	body { margin: 0px; font: 10pt sans-serif; }
-	.title { font: bold 20pt sans-serif; color: #6699FF; margin: 10px 5px 5px 5px; line-height: 1.0;}
+	.title { font: bold 20pt sans-serif; color: #6699FF; margin: 10px 5px 5px 5px; line-height: 1.0; }
 	.title a { color: #6699FF; text-decoration: none; }
-	h1 .subtitle { font: italic 12pt sans-serif; color: gray;}
-	.bar { color: white; background: gray; padding: 1px 5px; }
+	.subtitle { font: italic 12pt sans-serif; color: gray;}
+	.bar { color: white; background: gray; padding: 0px 5px; }
 	.menu { padding: 8px; width: 140px; float: left;}
 	.menu ul { margin: 0px; padding: 0px 0px 0px 16px; }
 	.main { margin-left: 160px; padding: 5px 16px; width: 600px; line-height: 1.5; border-left: 1px solid silver; float: clear; }
@@ -25,17 +25,16 @@
 	.comment { color: #0066FF; font-family: monospace; }
 	.em { font-weight: bold; color: #000099; font-family: monospace; }
 	.elem { font-weight: bold; color: #000099; }
-	table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
+	.table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
 		margin: 0px 0px 1em 0px; }
-	th { background-color: silver; border: 1px solid gray; }
-	td { border: 1px solid gray; padding: 2px 2px;}
+	.table th { background-color: silver; border: 1px solid gray; }
+	.table td { border: 1px solid gray; padding: 2px 2px;}
 	sup { font-size: 8pt; }
 	.caption { font: 8pt sans-serif; margin: 10px; }
-	.copyright { color: white; background: gray; padding: 0px 16px; }
 </style>
 </head>
 <body>
-<h1 class="title"><a style="position:absolute; top: 7px; left: 10px;" href=""><img src="images/jsonic_logo.jpg" width="136" height="34" border="0" alt="jsonic" /></a> <span class="subtitle" style="position: relative; left: 150px;">- simple json encoder/decoder for java</span></h1>
+<h1 class="title"><a href=""><img src="images/jsonic_logo.jpg" width="136" height="34" border="0" alt="jsonic" style="vertical-align: -10px;" /></a> <span class="subtitle">- simple json encoder/decoder for java</span></h1>
 <div class="bar">[MENU] >>></div>
 <div class="menu">
 <ul>
@@ -55,11 +54,9 @@
 </div>
 <div class="main">
 
-<script src="http://sourceforge.jp/projects/jsonic/files/compact.js" type="text/javascript" charset="utf-8"></script>
-
-<h2 id="introduction">JSONICとは</h2>
+<h2 id="introduction" style="margin-top: 5px;">JSONICとは</h2>
 <p>JSONICは、Java用のシンプルかつ高機能なJSONエンコーダー/デコーダーライブラリです。<br />
-Java用のJSONライブラリは他にも複数ありますが、JSONICは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に従った正式なJSON形式でのデコード/エンコードを行いながらも、プログラミング言語に依存する情報をJSON内に含めることなくPOJO(Plain Old Java Object)と自然な変換を行える点に特徴があります。</p>
+Java用のJSONライブラリはすでに多数存在しますが、JSONICは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に従った正式なJSON形式でのデコード/エンコードを行いながらも、プログラミング言語に依存する情報をJSON内に含めることなくPOJO(Plain Old Java Object)と自然な変換を行える点に特徴があります。</p>
 <p>使い方も非常に簡単です。</p>
 <pre class="source">
 import net.arnx.jsonic.JSON;
@@ -73,6 +70,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 
 <h2 id="download">ダウンロード</h2>
 <p><a href="http://sourceforge.jp/projects/jsonic">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Javaバージョン5.0以上が必要です。</p>
+<script src="http://sourceforge.jp/projects/jsonic/files/compact.js" type="text/javascript" charset="utf-8"></script>
 
 <h2 id="usage">使い方</h2>
 
@@ -100,7 +98,7 @@ String text = <span class="em">JSON.encode(</span>hoge<span class="em">)</span>;
 String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>; 
 </pre>
 <p>POJOからJSONへの変換ルールは次の通りです。</p>
-<table summary="POJOからJSONへの変換ルール">
+<table class="table" summary="POJOからJSONへの変換ルール">
 <tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
 <tr><td>Map</td><td rowspan="2">object</td></tr>
 <tr><td>Object<sup>(※1)</sup></td></tr>
@@ -138,7 +136,7 @@ List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<sp
 Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1, 2, 3]}", Hoge.class<span class="em">)</span>;
 </pre>
 <p>JSONからPOJOへの変換ルールは次の通りです。</p>
-<table summary="JSONからPOJOへの変換ルール">
+<table class="table" summary="JSONからPOJOへの変換ルール">
 <tr><th style="width: 20%">変換元（JSON）</th><th style="width: 40%">指定された型</th><th style="width: 40%">変換先（Java）</th></tr>
 <tr><td rowspan="4">object</td><td>なし, Object, Map</td><td>LinkedHashMap</td></tr>
 <tr><td>SortedMap</td><td>TreeMap</td></tr>
@@ -423,7 +421,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <span class="elem">&lt;/servlet-mapping&gt;</span>
 </pre>
 <p>configで設定できる値は次の通りです。</p>
-<table summary="Config設定">
+<table class="table" summary="Config設定">
 <tr><th>キー</th><th>値型</th><th>説明</th></tr>
 <tr><td>container</td><td>net.arnx.jsonic.web.Container</td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、net.arnx.jsonic.web.Containerです。</td></tr>
 <tr><td>encoding</td><td>java.lang.String</td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
@@ -470,7 +468,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 </pre>
 
 <p>RPCモードでエラーが発生した場合にはレスポンスボディでクライアントに通知されます。ステータスコードは、エラーの有無に関わらず200 OKが返されます。</p>
-<table summary="RPC エラー一覧">
+<table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th><th>JSON error</th></tr>
 <tr>
 <td>JSONリクエストがJSON-RPCのリクエストとして不正</td>
@@ -519,7 +517,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 
 <h4>■ RESTモード</h4>
 <p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※6)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※7)</sup>。</p>
-<table summary="REST Method マッピング">
+<table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
 <tr><td>GET</td><td>find</td><td>URLのQueryを「.」で区切られた階層構造とみなし引数の型に従い変換し設定</td></tr>
 <tr><td>POST</td><td>create</td><td>メッセージボディのJSONを引数の型に従い変換し設定</td></tr>
@@ -533,7 +531,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 </div>
 
 <p>RESTモードでエラーが発生した場合にはHTTP Status Codeにてクライアントに通知されます。</p>
-<table summary="RPC エラー一覧">
+<table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
 <tr>
 <td>クラス/メソッドが見つからない<sup>(※8)</sup></td>
@@ -643,7 +641,7 @@ public class HogeService {
 <span class="elem">&lt;/filter-mapping&gt;</span>
 </pre>
 <p>configで設定できる値は次の通りです。なお、これらの設定はフィルタの設定に関わらず一度だけしか適用されません。</p>
-<table summary="Config設定">
+<table class="table" summary="Config設定">
 <tr><th>キー</th><th>値型</th><th>説明</th></tr>
 <tr><td>encoding</td><td>java.lang.String</td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはnullです。</td></tr>
 <tr><td>compression</td><td>java.lang.Boolean</td><td>クライアントからAccept-Encoding: gzip or x-gzipが送られる場合、ResponseをGZip圧縮します。</td></tr>
@@ -669,7 +667,7 @@ public class HogeService {
 <li>Collectionだけでなく、Iterable, Iterator, EnumerationからJSON arrayへの変換に対応しました。</li>
 </ul>
 </div>
-<div class="copyright">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>
+<div class="bar">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>
 <a href="http://sourceforge.jp/" style="position:absolute; top: 7px; left: 678px;"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" border="0" alt="SourceForge.jp" /></a>
 </body>
 </html>
