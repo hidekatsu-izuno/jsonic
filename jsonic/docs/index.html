@@ -570,7 +570,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 public class HogeService {
     public void init(HttpServletRequest request, HttpServletResponse response) {
         <span class="comment">// 処理の前に呼び出されます。</span>
-		request.getInitParameter("test"); <span class="comment">// HttpServletRequest, HttpServletResponseにアクセス</span>
+        request.getInitParameter("test"); <span class="comment">// HttpServletRequest, HttpServletResponseにアクセス</span>
     }
     
     ...
@@ -580,7 +580,7 @@ public class HogeService {
     }
 }
 </pre>
-<div class="caption">(※10) メソッド名は設定で変更可能です。</div>
+<div class="caption">(※10) 呼び出されるメソッド名は設定で変更可能です。</div>
 
 <h4>■ DI Container対応</h4>
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
