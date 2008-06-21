@@ -79,10 +79,10 @@ public class WebServiceServlet extends HttpServlet {
 		JSON json = new JSON();
 		
 		try {
-			config = json.parse(configText, Config.class);
+			config = json.load(configText).get(Config.class);
 			if (config.container == null) config.container = Container.class;
 
-			container = (Container)json.parse(configText, config.container);
+			container = (Container)json.load(configText).get(config.container);
 			container.init(getServletContext());
 		} catch (Exception e) {
 			throw new ServletException(e);
@@ -249,7 +249,7 @@ public class WebServiceServlet extends HttpServlet {
 		String errorMessage = null;
 		
 		try {			
-			req = json.parse(request.getReader(), RpcRequest.class);
+			req = json.load(request.getReader()).get(RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
@@ -329,8 +329,7 @@ public class WebServiceServlet extends HttpServlet {
 
 		try {
 			json.setContext(result);
-			json.setPrettyPrint(container.isDebugMode());
-			json.format(res, writer);
+			json.set(res).write(writer, container.isDebugMode());
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			res.clear();
@@ -340,7 +339,7 @@ public class WebServiceServlet extends HttpServlet {
 			error.put("message", "Internal error.");
 			res.put("error", error);
 			res.put("id", (req != null) ? req.id : null);
-			json.format(res, writer);
+			json.set(res).write(writer, container.isDebugMode());
 			return;
 		}
 	}
@@ -384,7 +383,7 @@ public class WebServiceServlet extends HttpServlet {
 				contents.putAll(route);
 				params.add(contents);
 			} else {
-				Object o = json.parse(request.getReader());
+				Object o = json.load(request.getReader()).get();
 				if (o instanceof List) {
 					params = (List)o;
 					Map<String, Object> contents = getParameterMap(request);
@@ -448,10 +447,9 @@ public class WebServiceServlet extends HttpServlet {
 				response.setContentType((callback != null) ? "text/javascript" : "application/json");
 			
 				Writer writer = response.getWriter();
-				json.setPrettyPrint(container.isDebugMode());
 				
 				if (callback != null) writer.append(callback).append("(");
-				json.format(res, writer);
+				json.set(res).write(writer, container.isDebugMode());
 				if (callback != null) writer.append(");");
 			}
 		} catch (Exception e) {
@@ -571,7 +569,7 @@ public class WebServiceServlet extends HttpServlet {
 			Object[] params = new Object[paramTypes.length];
 			int length = Math.min(args.size(), params.length);
 			for (int i = 0; i < length ; i++) {
-				params[i] = convert(args.get(i), paramTypes[i]);
+				params[i] = set(args.get(i)).get(paramTypes[i]);
 			}
 			
 			if (init != null) {
@@ -579,7 +577,7 @@ public class WebServiceServlet extends HttpServlet {
 				if (sTypes.length > 0) {
 					Object[] sparams = new Object[sTypes.length];
 					for (int i = 0; i < sTypes.length; i++) {
-						sparams[i] = get(sTypes[i]);
+						sparams[i] = getComponent(sTypes[i]);
 					}
 					init.invoke(o, sparams);
 				} else {
@@ -594,7 +592,7 @@ public class WebServiceServlet extends HttpServlet {
 				if (sTypes.length > 0) {
 					Object[] sparams = new Object[sTypes.length];
 					for (int i = 0; i < sTypes.length; i++) {
-						sparams[i] = get(sTypes[i]);
+						sparams[i] = getComponent(sTypes[i]);
 					}
 					destroy.invoke(o, sparams);
 				} else {
@@ -605,7 +603,7 @@ public class WebServiceServlet extends HttpServlet {
 			return ret;
 		}
 		
-		private Object get(Type t) {
+		private Object getComponent(Type t) {
 			Class c = (t instanceof Class) ? (Class)t : null;
 			
 			if (c != null) {
