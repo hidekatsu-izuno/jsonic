@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+	
+	<description>jsonic sample</description>
+	
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>/WEB-INF/applicationContext.xml</param-value>
+	</context-param>
+	
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+
+	<servlet>
+		<description>JSON-WebService</description>
+		<servlet-name>json-ws</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.WebServiceServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				debug: true
+				container: 'net.arnx.jsonic.web.SpringContainer'
+				mappings: {
+					'/[package]/[class]/[id].[ext]': 'sample.web.${package}.service.${class}Service'
+					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
+					'/[class].[ext]': 'sample.service.${class}Service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>json-ws</servlet-name>
+		<url-pattern>*.json</url-pattern>
+	</servlet-mapping>
+</web-app>
