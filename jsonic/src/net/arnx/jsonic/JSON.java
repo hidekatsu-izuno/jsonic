@@ -1037,7 +1037,7 @@ public class JSON {
 			}
 		}
 		
-		if (n == -1 && n != start) {
+		if (n == -1 || n != start) {
 			throw createParseException(getMessage("json.parse.StringNotClosedError"), s);
 		}
 		return sb.toString();
