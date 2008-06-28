@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:js="net.arnx.jsonic.web.mxml.*" layout="absolute" initialize="init()">
+	<mx:Label x="10" y="10" text="URL:" />
+	<mx:TextInput x="76" y="8" width="495" id="url2" text="http://localhost:8080/sample/rpc/rpc.json" />
+	<mx:Label x="10" y="36" text="オブジェクト:"/>
+	<mx:TextInput x="76" y="34" width="65" id="object" text="calc"/>
+	<mx:Label x="148" y="36" text="メソッド:"/>
+	<mx:TextInput x="195" y="34" width="67" id="method" text="plus"/>
+	<mx:Label x="270" y="36" text="パラメータ:"/>
+	<mx:TextInput x="331" y="34" width="184" id="params" text="[100,100]"/>
+	<mx:Button x="523" y="34" label="実行" click="execute()" />
+	<mx:Button x="523" y="62" label="評価" click="expression()" />
+	<mx:TextInput x="6" y="62" width="509" id="request"/>
+	<mx:TextArea height="468" id="result" y="92" width="565" x="6" />
+	
+	<js:WebService id="remote" fault="onFault(event)" endpoint="{url2.text}" source="{object.text}" makeObjectsBindable="false" showBusyCursor="true">
+		<js:Operation name="plus" result="onResult(event)" />
+	</js:WebService>
+	
+	<mx:Script>
+	<![CDATA[
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.events.ResultEvent;
+		import net.arnx.jsonic.JSON;
+
+		private function init():void {
+		}
+		
+		private function execute():void {
+			remote.plus.apply(null, JSON.decode(params.text));
+		}
+		
+		private function expression():void {
+			var o:Object = JSON.decode(request.text);
+			result.text = JSON.encode(o);
+		}
+	
+		private function onResult(event:ResultEvent):void {
+			result.text = JSON.encode(event.result);
+		}
+		
+		private function onFault(event:FaultEvent):void {
+			result.text = String(event.message);
+		}
+	]]>
+	</mx:Script>
+</mx:WindowedApplication>

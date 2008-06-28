@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+
+<componentPackage>
+    <component id="WebService" class="net.arnx.jsonic.web.mxml.WebService"/>
+    <component id="Operation" class="net.arnx.jsonic.web.mxml.Operation"/>
+</componentPackage>
