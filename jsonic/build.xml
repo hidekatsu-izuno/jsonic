@@ -15,8 +15,8 @@
 			<fileset dir="${build}" />
 			<fileset dir="docs/api" />
 			<fileset file="jsonic-${version}.jar" />
-			<fileset file="jsonic-${version}.swc"/>
 			<fileset file="jsonic-${version}.zip"/>
+			<fileset file="jsonic-${version}.swc"/>
 		</delete>
 	</target>
 	
@@ -25,6 +25,9 @@
 	</target>
 	
 	<target name="build" depends="build.java,build.as3">
+	</target>
+	
+	<target name="dist" depends="dist.java,dist.as3">
 	</target>
 	
 	<target name="build.java" depends="init">
@@ -46,6 +49,27 @@
 		</javadoc>
 	</target>
 	
+	<target name="dist.java" depends="build.java">
+		<jar destfile="jsonic-${version}.jar">
+			<fileset dir="${build}" includes="**/*.class" />
+			<fileset dir="${src}" excludes="**/*.java" />
+		</jar>
+		<zip destfile="jsonic-${version}.zip" update="on">
+			<zipfileset dir="${src}" prefix="jsonic-${version}/src/java"/>
+			<zipfileset dir="docs" prefix="jsonic-${version}/docs"/>
+			<zipfileset dir="sample" prefix="jsonic-${version}/sample"/>
+			<zipfileset dir="." includes="jsonic-${version}.jar" prefix="jsonic-${version}/sample/WEB-INF/lib"/>
+			<zipfileset dir="." includes="jsonic-${version}.jar" prefix="jsonic-${version}"/>
+			<zipfileset dir="." includes="build.xml" prefix="jsonic-${version}"/>
+			<zipfileset dir="." includes="LICENSE.txt" prefix="jsonic-${version}"/>
+		</zip>
+		<delete includeemptydirs="on">
+			<fileset dir="${build}" />
+			<fileset dir="docs/api" />
+			<fileset file="jsonic-${version}.jar" />
+		</delete>
+	</target>
+	
 	<target name="build.as3" depends="init">
 		<compc output="jsonic-${version}.swc">
 			<namespace uri="http://arnx.net/jsonic" manifest="${jsonic_as3.src}/manifest.xml"/>
@@ -56,28 +80,12 @@
 		</compc>
 	</target>
 	
-	<target name="dist" depends="build">
-		<jar destfile="jsonic-${version}.jar">
-			<fileset dir="${build}" includes="**/*.class" />
-			<fileset dir="${src}" excludes="**/*.java" />
-		</jar>
-		<zip destfile="jsonic-${version}.zip">
-			<zipfileset dir="${src}" prefix="jsonic-${version}/src/java"/>
-			<zipfileset dir="docs" prefix="jsonic-${version}/docs"/>
-			<zipfileset dir="sample" prefix="jsonic-${version}/sample"/>
-			<zipfileset dir="." includes="jsonic-${version}.jar" prefix="jsonic-${version}/sample/WEB-INF/lib"/>
-			<zipfileset dir="." includes="jsonic-${version}.jar" prefix="jsonic-${version}"/>
-			<zipfileset dir="." includes="build.xml" prefix="jsonic-${version}"/>
-			<zipfileset dir="." includes="LICENSE.txt" prefix="jsonic-${version}"/>
-			
-			<!-- jsonic_as3 files -->
+	<target name="dist.as3" depends="build.as3">
+		<zip destfile="jsonic-${version}.zip" update="on">
 			<zipfileset dir="${jsonic_as3.src}" prefix="jsonic-${version}/src/as3" />
 			<zipfileset dir="." includes="jsonic-${version}.swc" prefix="jsonic-${version}" />
 		</zip>
 		<delete includeemptydirs="on">
-			<fileset dir="${build}" />
-			<fileset dir="docs/api" />
-			<fileset file="jsonic-${version}.jar" />
 			<fileset file="jsonic-${version}.swc"/>
 		</delete>
 	</target>
