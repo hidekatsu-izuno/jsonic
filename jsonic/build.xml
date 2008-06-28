@@ -11,10 +11,8 @@
 	<property name="jsonic_as3.src" location="../jsonic_as3/src" />
 	
 	<target name="clean">
-		<delete includeemptydirs="on" failonerror="off">
-			<fileset dir="${tmp}" />
-			<fileset file="jsonic-${version}.zip" />
-		</delete>
+		<delete dir="${tmp}" failonerror="off" />
+		<delete file="jsonic-${version}.zip" failonerror="off" />
 	</target>
 	
 	<target name="init" depends="clean">
@@ -31,6 +29,7 @@
 			<zipfileset dir="." includes="build.xml" prefix="jsonic-${version}"/>
 			<zipfileset dir="." includes="LICENSE.txt" prefix="jsonic-${version}"/>
 		</zip>
+		<delete dir="${tmp}" />
 	</target>
 	
 	<target name="build.java" depends="init">
@@ -77,14 +76,10 @@
 			<accessible>true</accessible>
 		</compc>
 		
-		<exec executable="${FLEX_HOME}/bin/asdoc.exe" dir=".">
-			<arg line="-output ${tmp}/docs/as3/api"/>
-			<arg line="-source-path ${jsonic_as3.src}" />
-			<arg line="-namespace http://arnx.net/jsonic ${jsonic_as3.src}/manifest.xml" />
-			<arg line="-doc-classes net.arnx.jsonic.web.mxml.WebService" />
-			<arg line="-main-title 'JSONIC ASDoc'" />
-			<arg line="-window-title 'JSONIC ASDoc'" />
-			<arg line="-footer 'Copyright (C) 2008 Hidekatsu Izuno All right reserved.'" />
+		<exec executable="${FLEX_HOME}/bin/asdoc.exe" dir="." failonerror="on">
+			<arg line="-output '${tmp}/docs/as3/api'"/>
+			<arg line="-source-path '${jsonic_as3.src}'"/>
+			<arg line="-doc-sources '${jsonic_as3.src}'" />
 		</exec>
 	</target>
 	
