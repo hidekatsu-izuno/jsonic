@@ -1195,11 +1195,8 @@ public class JSON {
 					(c >= 'a' && c <= 'f') ? c-97+10 : -1;
 				if (hex != -1) {
 					escape |= (hex << ((5-point)*8));
-					if (point != 5) {
-						point++;
-					} else {
-						break loop;
-					}
+					if (point > 4) break loop;
+					point++;
 				} else {
 					throw createParseException(getMessage("json.parse.IllegalUnicodeEscape", c), s);
 				}
