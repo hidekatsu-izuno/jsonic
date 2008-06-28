@@ -145,6 +145,7 @@ package net.arnx.jsonic {
 			
 			return o;
 		}
+		
 		private function parseObject(s:IParserSource, level:int):Object {
 			var point:int = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 			var map:Object = {};
@@ -451,10 +452,10 @@ package net.arnx.jsonic {
 				case '\\':
 					s.back();
 					c = parseEscape(s);
-					if (point == 0 && /[a-zA-Z$_]/.Test(c)) {
+					if (point == 0 && /[a-zA-Z$_]/.test(c)) {
 						sb.writeUTFBytes(c);
 						point = 1;
-					} else if (point == 1 && /[a-zA-Z0-9$_]/.Test(c)){
+					} else if (point == 1 && /[a-zA-Z0-9$_]/.test(c)){
 						sb.writeUTFBytes(c);
 					} else {
 						s.back();
@@ -462,10 +463,10 @@ package net.arnx.jsonic {
 					}
 					break;
 				default:
-					if (point == 0 && /[a-zA-Z$_]/.Test(c)) {
+					if (point == 0 && /[a-zA-Z$_]/.test(c)) {
 						sb.writeUTFBytes(c);
 						point = 1;
-					} else if (point == 1 && /[a-zA-Z0-9$_]/.Test(c)){
+					} else if (point == 1 && /[a-zA-Z0-9$_]/.test(c)){
 						sb.writeUTFBytes(c);
 					} else {
 						s.back();
