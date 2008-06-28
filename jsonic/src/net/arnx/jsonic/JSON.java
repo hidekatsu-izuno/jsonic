@@ -410,7 +410,7 @@ public class JSON {
 	public String toString(boolean prettyPrint) {
 		StringBuilder sb = new StringBuilder(1000);
 		try {
-			format(root, sb, prettyPrint, 0).toString();
+			format(root, sb, prettyPrint, 0);
 		} catch (Exception e) {
 			// no handle
 		}
