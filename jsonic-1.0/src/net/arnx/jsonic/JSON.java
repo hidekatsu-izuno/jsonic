@@ -145,7 +145,7 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.0
+ * @version 1.0.1
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -638,55 +638,53 @@ public class JSON {
 				for (int j = 0; j < level; j++) ap.append('\t');
 			}
 			ap.append(']');
-		} else if (o instanceof Map<?,?>) {
-			formatMap((Map<?,?>)o, o, ap, level);
 		} else {
-			Class<?> c = o.getClass();
-			
-			Map<String, Object> map = new TreeMap<String, Object>();
-			for (Map.Entry<String, Member> entry : getGetProperties(c).entrySet()) {
-				Object value = null;
-				try {
-					if (entry.getValue() instanceof Method) {
-						Method m = (Method)entry.getValue();
-						value = m.invoke(o);
-					} else {
-						Field f = (Field)entry.getValue();
-						value =  f.get(o);
+			Map map = null;
+			if (o instanceof Map) {
+				map = (Map)o;
+			} else {
+				Class<?> c = o.getClass();
+				
+				map = new TreeMap();
+				for (Map.Entry<String, Member> entry : getGetProperties(c).entrySet()) {
+					Object value = null;
+					try {
+						if (entry.getValue() instanceof Method) {
+							Method m = (Method)entry.getValue();
+							value = m.invoke(o);
+						} else {
+							Field f = (Field)entry.getValue();
+							value =  f.get(o);
+						}
+						map.put(entry.getKey(), value);
+					} catch (Exception e) {
+						// no handle
 					}
-					map.put(entry.getKey(), value);
-				} catch (Exception e) {
-					// no handle
 				}
 			}
 
-			formatMap(map, o, ap, level);
+			ap.append('{');
+			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
+				Map.Entry entry = (Map.Entry)i.next();
+				if (entry.getValue() == o) continue; 
+				
+				if (this.prettyPrint) {
+					ap.append('\n');
+					for (int j = 0; j < level+1; j++) ap.append('\t');
+				}
+				formatString(entry.getKey().toString(), ap).append(':');
+				if (this.prettyPrint) ap.append(' ');
+				format(entry.getValue(), ap, level+1);
+				if (i.hasNext()) ap.append(',');
+			}
+			if (this.prettyPrint && !map.isEmpty()) {
+				ap.append('\n');
+				for (int j = 0; j < level; j++) ap.append('\t');
+			}
+			ap.append('}');
 		}
 		
 		if (ap instanceof Flushable) ((Flushable)ap).flush();
-		return ap;
-	}
-	
-	private Appendable formatMap(Map map, Object o, Appendable ap, int level) throws IOException {
-		ap.append('{');
-		for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
-			Map.Entry entry = (Map.Entry)i.next();
-			if (entry.getValue() == o) continue; 
-			
-			if (this.prettyPrint) {
-				ap.append('\n');
-				for (int j = 0; j < level+1; j++) ap.append('\t');
-			}
-			formatString(entry.getKey().toString(), ap).append(':');
-			if (this.prettyPrint) ap.append(' ');
-			format(entry.getValue(), ap, level+1);
-			if (i.hasNext()) ap.append(',');
-		}
-		if (this.prettyPrint && !map.isEmpty()) {
-			ap.append('\n');
-			for (int j = 0; j < level; j++) ap.append('\t');
-		}
-		ap.append('}');
 		return ap;
 	}
 	
@@ -1104,7 +1102,7 @@ public class JSON {
 			}
 		}
 		
-		if (n == -1 && n != start) {
+		if (n != start) {
 			throw createParseException(getMessage("json.parse.StringNotClosedError"), s);
 		}
 		return sb.toString();
