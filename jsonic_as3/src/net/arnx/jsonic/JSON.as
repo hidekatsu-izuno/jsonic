@@ -18,8 +18,11 @@ package net.arnx.jsonic {
 	import flash.utils.ByteArray;
 	
 	import mx.collections.ArrayCollection;
+	import mx.resources.IResourceManager;
+	import mx.resources.ResourceManager;
 	import mx.utils.StringUtil;
-
+	
+	[ResourceBundle("jsonic")]
 	public class JSON {
 		public static function encode(source:Object, prettyPrint:Boolean = false):String {
 			return new JSON().format(source, new ByteArray(), prettyPrint, 0).toString();
@@ -28,6 +31,8 @@ package net.arnx.jsonic {
 		public static function decode(source:String):Object {
 			return new JSON().parse(new StringParserSource(source));
 		}
+		
+		private var _resourceManager:IResourceManager = ResourceManager.getInstance();
 		
 		private var _maxDepth:int;
 		private var _root:Object;
@@ -684,22 +689,9 @@ package net.arnx.jsonic {
 		public function toString(prettyPrint:Boolean = false):String {
 			return format(_root, new ByteArray(), prettyPrint, 0).toString();
 		} 
-		
-		private static var messages:Object = {
-			'json.TooSmallArgumentError' : '{0} should be larger than {1}.',
-			'json.format.IllegalRootTypeError' : 'root object has to be encoded a object or array.',
-			'json.parse.ArrayNotClosedError' : 'array is not closed.',
-			'json.parse.IllegalRootTypeError' : 'a JSON text must start with a object or array.',
-			'json.parse.IllegalUnicodeEscape' : 'illegal unicode escape: {0}',
-			'json.parse.ObjectNotClosedError' : 'object is not closed.',
-			'json.parse.StringNotClosedError' : 'string is not closed.',
-			'json.parse.UnexpectedChar' : 'unexpected char: {0}',
-			'json.parse.UnrecognizedLiteral' : 'unrecognized literal: {0}',
-			'json.convert.ConversionError' : 'fails to convert {0} to {1}: '
-		};
 	
 		private function getMessage(id:String, ... args:Array):String {
-			return StringUtil.substitute(String(messages[id]), args[0], args[1], args[2]);
+			return _resourceManager.getString("jsonic", id, args);
 		}
 		
 		private static function tabs(array:ByteArray, count:int):void {
