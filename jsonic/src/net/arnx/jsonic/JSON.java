@@ -2054,9 +2054,7 @@ class CharSequenceParserSource implements ParserSource {
 	private StringBuilder cache = new StringBuilder(1000);
 	
 	public CharSequenceParserSource(CharSequence cs) {
-		if (cs == null) {
-			throw new NullPointerException();
-		}
+		if (cs == null) throw new NullPointerException();
 		this.cs = cs;
 	}
 	
@@ -2118,9 +2116,7 @@ class ReaderParserSource implements ParserSource {
 	}
 	
 	public ReaderParserSource(Reader reader) {
-		if (reader == null) {
-			throw new NullPointerException();
-		}
+		if (reader == null) throw new NullPointerException();
 		this.reader = reader;
 	}
 	
