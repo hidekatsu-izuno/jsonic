@@ -730,7 +730,7 @@ public class JSON {
 			case 0xFEFF: // BOM
 				break;
 			case '[':
-				if (o == null) {
+				if (o == Void.class) {
 					s.back();
 					o = parseArray(s, 1);
 					break;
@@ -742,7 +742,7 @@ public class JSON {
 				skipComment(s);
 				break;
 			default:
-				if (o == null) {
+				if (o == Void.class) {
 					s.back();
 					o = parseObject(s, 1);
 					break;
