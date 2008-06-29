@@ -67,11 +67,13 @@
 		<copy file="${tmp}/jsonic-${version}.jar" todir="${tmp}/sample/WEB-INF/lib" />
 	</target>
 	
-	<target name="build.as3" depends="init">
-		<compc output="${tmp}/jsonic-${version}.swc">
+	<target name="build.as3" depends="init">		
+		<compc output="${tmp}/jsonic-${version}.swc" locale="en_US,ja_JP"
+			allow-source-path-overlap="on">
 			<namespace uri="http://arnx.net/jsonic" manifest="${jsonic_as3.src}/manifest.xml"/>
 			<include-namespaces uri="http://arnx.net/jsonic"/>
 			<source-path path-element="${jsonic_as3.src}"/>
+			<source-path path-element="${jsonic_as3.src}/{locale}"/>
 			<include-classes>net.arnx.jsonic.web.mxml.WebService</include-classes>
 			<accessible>true</accessible>
 		</compc>
