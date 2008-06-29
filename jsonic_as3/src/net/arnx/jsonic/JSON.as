@@ -20,7 +20,6 @@ package net.arnx.jsonic {
 	import mx.collections.ArrayCollection;
 	import mx.resources.IResourceManager;
 	import mx.resources.ResourceManager;
-	import mx.utils.StringUtil;
 	
 	[ResourceBundle("jsonic")]
 	public class JSON {
@@ -723,9 +722,7 @@ class StringParserSource implements IParserSource {
 	private var _cache:ByteArray = new ByteArray();
 
 	public function StringParserSource(cs:String) {
-		if (cs == null) {
-			throw new Error("input is null.");
-		}
+		if (cs == null) throw ArgumentError("Invalid argument:" + cs);
 		_cs = cs;
 	}
 

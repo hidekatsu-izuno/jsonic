@@ -203,16 +203,14 @@ package net.arnx.jsonic.web {
 	     * @private
 	     */
 	    override flash_proxy function setProperty(name:*, value:*):void {
-			throw new Error("not supported.");
+			throw new Error("Not supported operation.");
 	    }
 		
 		/**
 		 * @private
 		 */
 		override flash_proxy function callProperty(name:*, ... args:Array):* {
-			var token:AsyncToken = getOperation(getLocalName(name)).apply(null, args);
-			
-			return token;
+			return getOperation(getLocalName(name)).apply(null, args);
 		}
 	
 		private var _nextNameArray:Array;

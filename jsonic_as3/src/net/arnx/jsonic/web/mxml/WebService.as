@@ -87,7 +87,7 @@ package net.arnx.jsonic.web.mxml {
 				} else if (event is FaultEvent) {
 					throw FaultEvent(event).fault;
 				} else {
-					throw new Error("no listener for event: " + reason);
+					throw new Error("No listener for event: " + reason);
 				}
 			}
 			return false;
