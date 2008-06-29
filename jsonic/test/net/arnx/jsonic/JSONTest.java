@@ -308,21 +308,9 @@ public class JSONTest {
 				+ "\n\t{\n\t\t\"a\": \"a\",\n\t\t\"b\": [1, 2, 3, 4, 5],\n\t\t\"c\": {\n\t\t\t\"a\": \"a\"\n\t\t}\n\t},\n\t[1, 2, 3, 4, 5]\n]",
 				json.set(list).write(new StringBuilder(), true).toString());
 		
-		try {
-			json.set(true).write(new StringBuilder(), true);
-			fail();
-		} catch (IllegalArgumentException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
-		
-		try {
-			assertEquals("true", json.set(true).write(new StringBuilder(), false).toString());
-			fail();
-		} catch (IllegalArgumentException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals("true", json.set(true).write(new StringBuilder(), true).toString());
+		assertEquals("true", json.set(true).write(new StringBuilder(), false).toString());
+
 		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.set(
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}).write(new StringBuilder()).toString());
 		

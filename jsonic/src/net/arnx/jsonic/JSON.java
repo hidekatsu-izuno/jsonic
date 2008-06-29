@@ -1857,7 +1857,7 @@ public class JSON {
 		for (Field f : c.getFields()) {
 			if (ignore(c, f)) continue;
 			if (access) f.setAccessible(true);
-			props.put(f.getName(), f);
+			if (f.isAccessible()) props.put(f.getName(), f);
 		}
 		
 		for (Method m : c.getMethods()) {
@@ -1886,7 +1886,7 @@ public class JSON {
 				cs[start] = Character.toLowerCase(cs[start]);
 			}
 			if (access) m.setAccessible(true);
-			props.put(new String(cs, start, cs.length-start), m);
+			if (m.isAccessible()) props.put(new String(cs, start, cs.length-start), m);
 		}
 		
 		return props;
@@ -1900,7 +1900,7 @@ public class JSON {
 		for (Field f : c.getFields()) {
 			if (ignore(c, f)) continue;
 			if (access) f.setAccessible(true);
-			props.put(f.getName(), f);
+			if (f.isAccessible()) props.put(f.getName(), f);
 		}
 		
 		for (Method m : c.getMethods()) {
@@ -1923,7 +1923,7 @@ public class JSON {
 				cs[start] = Character.toLowerCase(cs[start]);
 			}
 			if (access) m.setAccessible(true);
-			props.put(new String(cs, start, cs.length-start), m);
+			if (m.isAccessible()) props.put(new String(cs, start, cs.length-start), m);
 		}
 		
 		return props;
