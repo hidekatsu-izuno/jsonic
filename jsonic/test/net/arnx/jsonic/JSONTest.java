@@ -323,7 +323,7 @@ public class JSONTest {
 	
 	@Test
 	@SuppressWarnings({ "unchecked", "serial" })
-	public void testParse() throws Exception {
+	public void testLoad() throws Exception {
 		Locale.setDefault(Locale.JAPANESE);
 		JSON json = new JSON();
 		
@@ -346,6 +346,14 @@ public class JSONTest {
 		}
 		
 		assertNull(json.load("").get());
+		
+		try {
+			assertNull(null, json.load("").get(TestBean.class));
+			fail();
+		} catch (NullPointerException e) {
+			System.out.println(e);
+			assertNotNull(e);			
+		}
 		
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
@@ -1074,7 +1082,7 @@ class TestBean {
 		result = prime * result + ((d == null) ? 0 : d.hashCode());
 		result = prime * result + ((e == null) ? 0 : e.hashCode());
 		result = prime * result + ((f == null) ? 0 : f.hashCode());
-		result = prime * result + ((g == null) ? 0 : g.pattern().hashCode());
+		result = prime * result + ((g == null) ? 0 : g.hashCode());
 		result = prime * result + ((h == null) ? 0 : h.hashCode());
 		result = prime * result + ((if_ == null) ? 0 : if_.hashCode());
 		result = prime * result + x;
@@ -1124,7 +1132,7 @@ class TestBean {
 		if (g == null) {
 			if (other.g != null)
 				return false;
-		} else if (!g.pattern().equals(other.g.pattern()))
+		} else if (!g.equals(other.g))
 			return false;
 		if (h == null) {
 			if (other.h != null)
@@ -1144,7 +1152,6 @@ class TestBean {
 			return false;
 		return true;
 	}
-	
 	public String toString() {
 		return JSON.encode(this);
 	}
