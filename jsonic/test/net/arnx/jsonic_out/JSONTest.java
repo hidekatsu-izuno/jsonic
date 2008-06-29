@@ -20,18 +20,18 @@ public class JSONTest {
 	public void testDecodeInnerClass() throws Exception {
 		JSON json = new JSON();
 		
-		assertEquals(new Hoge(), json.parse("{\"a\":100}", Hoge.class));
+		assertEquals(new Hoge(), json.load("{\"a\":100}").get(Hoge.class));
 
-		assertEquals(new InnerHoge(), json.parse("{\"a\":100}", InnerHoge.class));
+		assertEquals(new InnerHoge(), json.load("{\"a\":100}").get(InnerHoge.class));
 		
-		assertEquals(new PrivateInnerHoge(), json.parse("{\"a\":100}", PrivateInnerHoge.class));
+		assertEquals(new PrivateInnerHoge(), json.load("{\"a\":100}").get(PrivateInnerHoge.class));
 		
 		assertEquals(new InnerHoge(), JSON.decode("{\"a\":100}", InnerHoge.class));
 		
 		
 		InnerHoge hoge = null;
 		try {
-			hoge = json.parse("{\"a\":100}", InnerHoge.class);
+			hoge = json.load("{\"a\":100}").get(InnerHoge.class);
 			hoge.accessEnclosingClass();
 			fail();
 		} catch (Exception e) {
@@ -39,7 +39,7 @@ public class JSONTest {
 		}
 		
 		json.setContext(this);
-		hoge = json.parse("{\"a\":100}", InnerHoge.class);
+		hoge = json.load("{\"a\":100}").get(InnerHoge.class);
 		hoge.accessEnclosingClass();
 	}
 	

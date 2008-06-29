@@ -391,16 +391,17 @@ public class JSON {
 		return this;
 	}
 	
-	public void write(Appendable appendable, boolean prettyPrint) throws IOException {
-		format(root, appendable, prettyPrint, 0);
+	public Appendable write(Appendable appendable, boolean prettyPrint) throws IOException {
+		return format(root, appendable, prettyPrint, 0);
 	}
 	
-	public void write(Appendable appendable) throws IOException {
-		write(appendable, false);
+	public Appendable write(Appendable appendable) throws IOException {
+		return write(appendable, false);
 	}
 	
-	public void write(OutputStream out, boolean prettyPrint) throws IOException {
+	public OutputStream write(OutputStream out, boolean prettyPrint) throws IOException {
 		write(new BufferedWriter(new OutputStreamWriter(out, "UTF-8")), prettyPrint);
+		return out;
 	}
 	
 	public void write(OutputStream out) throws IOException {
