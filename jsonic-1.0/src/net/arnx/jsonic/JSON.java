@@ -928,14 +928,16 @@ public class JSON {
 					} else {
 						s.back();
 						String literal = parseLiteral(s);
-						if (literal.equals("null")) {
-							map.put(key, null);
-						} else if (literal.equals("true")) {
-							map.put(key, Boolean.TRUE);
-						} else if (literal.equals("false")) {
-							map.put(key, Boolean.FALSE);
-						} else {
-							map.put(key, literal);
+						if (level < this.maxDepth) {
+							if (literal.equals("null")) {
+								map.put(key, null);
+							} else if (literal.equals("true")) {
+								map.put(key, Boolean.TRUE);
+							} else if (literal.equals("false")) {
+								map.put(key, Boolean.FALSE);
+							} else {
+								map.put(key, literal);
+							}
 						}
 					}
 					point = 5;
