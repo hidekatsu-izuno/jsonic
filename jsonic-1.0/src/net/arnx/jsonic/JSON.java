@@ -1713,8 +1713,17 @@ public class JSON {
 			} else if (Enum.class.isAssignableFrom(c)) {
 				if (value instanceof Number) {
 					data = c.getEnumConstants()[((Number)value).intValue()];
+				} else if (value instanceof Boolean) {
+					data = c.getEnumConstants()[((Boolean)value) ? 1 : 0];
 				} else {
-					data = Enum.valueOf((Class<? extends Enum>)c, value.toString().trim());
+					String str = value.toString().trim();
+					if (str.length() == 0) {
+						data = null;
+					} else if (Character.isDigit(str.charAt(0))) {
+						data = c.getEnumConstants()[Integer.parseInt(str)];
+					} else {
+						data = Enum.valueOf((Class<? extends Enum>)c, str);
+					}
 				}
 			} else if (Pattern.class.equals(c)) {
 				data = Pattern.compile(value.toString());

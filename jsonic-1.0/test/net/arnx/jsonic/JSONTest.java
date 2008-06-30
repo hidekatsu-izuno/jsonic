@@ -858,6 +858,9 @@ public class JSONTest {
 		
 		assertEquals(ExampleEnum.Example1, json.convertChild('$', "Example1", ExampleEnum.class, ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convertChild('$', 1, ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convertChild('$', "1", ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convertChild('$', true, ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example0, json.convertChild('$', false, ExampleEnum.class, ExampleEnum.class));
 				
 		try {
 			json.convertChild('$', 5, ExampleEnum.class, ExampleEnum.class);
