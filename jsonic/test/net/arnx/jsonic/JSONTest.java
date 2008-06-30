@@ -329,7 +329,7 @@ public class JSONTest {
 		
 		try {
 			CharSequence cs = null;
-			assertNull(json.load(cs).get());
+			json.load(cs).get();
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -338,7 +338,7 @@ public class JSONTest {
 		
 		try {
 			Reader reader = null;
-			assertNull(null, json.load(reader).get());
+			json.load(reader).get();
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -348,7 +348,7 @@ public class JSONTest {
 		assertNull(json.load("").get());
 		
 		try {
-			assertNull(null, json.load("").get(TestBean.class));
+			json.load("").get(TestBean.class);
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -851,6 +851,9 @@ public class JSONTest {
 		
 		assertEquals(ExampleEnum.Example1, json.convertChild('$', "Example1", ExampleEnum.class, ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convertChild('$', 1, ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convertChild('$', "1", ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convertChild('$', true, ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example0, json.convertChild('$', false, ExampleEnum.class, ExampleEnum.class));
 				
 		try {
 			json.convertChild('$', 5, ExampleEnum.class, ExampleEnum.class);
@@ -1132,7 +1135,7 @@ class TestBean {
 		if (g == null) {
 			if (other.g != null)
 				return false;
-		} else if (!g.equals(other.g))
+		} else if (!g.pattern().equals(other.g.pattern()))
 			return false;
 		if (h == null) {
 			if (other.h != null)
