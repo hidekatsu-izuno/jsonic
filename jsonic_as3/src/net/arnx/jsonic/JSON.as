@@ -16,6 +16,7 @@
 
 package net.arnx.jsonic {
 	import flash.utils.ByteArray;
+	import flash.utils.describeType;
 	
 	import mx.collections.ArrayCollection;
 	import mx.resources.IResourceManager;
@@ -72,6 +73,7 @@ package net.arnx.jsonic {
 				array.writeUTFBytes(']');
 			} else {
 				array.writeUTFBytes('{');
+				
 				var first:Boolean = true;
 				for (var key:Object in o) {
 					if (o[key] === o) continue;
