@@ -151,13 +151,6 @@ public class JSON {
 		PRIMITIVE_MAP.put(char.class, '\0');
 	}
 	
-	private transient Map<Property, Member> cache = new LinkedHashMap<Property, Member>(16, 0.75f, true) {
-		@Override
-		protected boolean removeEldestEntry(Map.Entry eldest) {
-			return size() > 10;
-		}
-	};
-	
 	/**
 	 * Encodes a object into a json string.
 	 * 
