@@ -11,12 +11,11 @@
 	<mx:TextInput x="195" y="34" width="67" id="method" text="concat"/>
 	<mx:Label x="270" y="36" text="パラメータ:"/>
 	<mx:TextInput x="331" y="34" width="184" id="params" text="[100,100]"/>
-	<mx:Button x="523" y="34" label="実行" click="remote.concat.apply(null, JSON.decode(params.text))" />
+	<mx:Button x="523" y="34" label="実行" click="remote[method.text].apply(null, JSON.decode(params.text))" />
 	<mx:TextInput x="6" y="62" width="509" id="request" text="{remote.concat.lastResult}" />
-	<mx:TextArea height="468" id="result" y="92" width="565" x="6" data="{params.text}"  />
+	<mx:TextArea height="468" id="result" y="92" width="565" x="6" text="{params.text}" />
 	<mx:Script>
 		<![CDATA[
-			import mx.controls.Alert;
 			import net.arnx.jsonic.*;
 		]]>
 	</mx:Script>

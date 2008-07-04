@@ -61,7 +61,7 @@ package net.arnx.jsonic.web {
 			return _result;
 		} 
 		
-		public function set lastResult(value:Object):void {
+		private function set lastResult(value:Object):void {
 			_result = value;
 		} 
 				
@@ -82,47 +82,47 @@ package net.arnx.jsonic.web {
 			
 			token.addResponder(new AsyncResponder(
 				function  onResult(event:ResultEvent, token:AsyncToken = null):void {
-					var result:Object = null;
-					var event2:Event = null;
+					var response:Object = null;
+					var nextEvent:Event = null;
 					
 					try {
-						result = JSON.decode(String(event.result));
+						response = JSON.decode(String(event.result));
 					} catch (error:Error) {
 						var fault:Fault = new Fault(FaultEvent.FAULT, error.message, error.getStackTrace());
-						event2 = FaultEvent.createEvent(fault, event.token, event.message);
+						nextEvent = FaultEvent.createEvent(fault, event.token, event.message);
 					}
 					
-					if (event2 == null) {
-						if (result == null 
-							|| !result.hasOwnProperty("result") 
-							|| !result.hasOwnProperty("error")
-							|| !result.hasOwnProperty("id")) {
-							event2 = FaultEvent.createEvent(
+					var result:Object = null;
+					if (nextEvent == null) {
+						if (response == null 
+							|| !response.hasOwnProperty("result") 
+							|| !response.hasOwnProperty("error")
+							|| !response.hasOwnProperty("id")) {
+							nextEvent = FaultEvent.createEvent(
 								new Fault(FaultEvent.FAULT, "illegal result.", null), 
 								event.token, 
 								event.message
 							);
-							result = null
-						} else if (result.error != null) {
-							event2 = FaultEvent.createEvent(
-								new Fault(FaultEvent.FAULT, result.error["message"], null), 
+						} else if (response.error != null) {
+							nextEvent = FaultEvent.createEvent(
+								new Fault(FaultEvent.FAULT, response.error.message, null), 
 								event.token, 
 								event.message
 							);
-							result = null;
+							result = new Error(response.error.message, response.error.code);
 						} else {
 							result = (_service.makeObjectsBindable) ? 
-								new ObjectProxy(result.result) : result.result;
-							event2 = ResultEvent.createEvent(result, event.token, event.message);
+								new ObjectProxy(response.result) : response.result;
+							nextEvent = ResultEvent.createEvent(result, event.token, event.message);
 						}
 					}
 					
 					lastResult = result;
 
-					if (hasEventListener(event2.type)) {
-						dispatchEvent(event2);
+					if (hasEventListener(nextEvent.type)) {
+						dispatchEvent(nextEvent);
 					} else {
-						_service.dispatchEvent(event2);
+						_service.dispatchEvent(nextEvent);
 					}
 				},
 				function onFault(event:FaultEvent, token:AsyncToken = null):void {
