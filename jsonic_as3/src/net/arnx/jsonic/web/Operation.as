@@ -30,9 +30,10 @@ package net.arnx.jsonic.web {
 	[Event(name="result", type="mx.rpc.events.ResultEvent")]
 	[Event(name="fault", type="mx.rpc.events.FaultEvent")]
 	public class Operation extends EventDispatcher {
+		private const BINDING_RESULT:String = "resultForBinding";
+		
 		private var _name:String;
 		private var _service:WebService;
-		private var _result:Object
 
 		public function Operation(name:String = null) {
 			super();
@@ -53,11 +54,17 @@ package net.arnx.jsonic.web {
 			}
 		}
 		
-		[Bindable("resultForBinding")]
+		private var _result:Object;
+		
+		[Bindable]
 		public function get lastResult():Object {
 			return _result;
-		}
+		} 
 		
+		public function set lastResult(value:Object):void {
+			_result = value;
+		} 
+				
 		protected function get service():WebService {
 			return _service;
 		}
@@ -75,39 +82,43 @@ package net.arnx.jsonic.web {
 			
 			token.addResponder(new AsyncResponder(
 				function  onResult(event:ResultEvent, token:AsyncToken = null):void {
-					_result = null;
+					var result:Object = null;
 					var event2:Event = null;
 					
 					try {
-						_result = JSON.decode(String(event.result));
+						result = JSON.decode(String(event.result));
 					} catch (error:Error) {
 						var fault:Fault = new Fault(FaultEvent.FAULT, error.message, error.getStackTrace());
 						event2 = FaultEvent.createEvent(fault, event.token, event.message);
 					}
 					
 					if (event2 == null) {
-						if (_result == null 
-							|| !_result.hasOwnProperty("result") 
-							|| !_result.hasOwnProperty("error")
-							|| !_result.hasOwnProperty("id")) {
+						if (result == null 
+							|| !result.hasOwnProperty("result") 
+							|| !result.hasOwnProperty("error")
+							|| !result.hasOwnProperty("id")) {
 							event2 = FaultEvent.createEvent(
 								new Fault(FaultEvent.FAULT, "illegal result.", null), 
 								event.token, 
 								event.message
 							);
-						} else if (_result.error != null) {
+							result = null
+						} else if (result.error != null) {
 							event2 = FaultEvent.createEvent(
-								new Fault(FaultEvent.FAULT, _result.error["message"], null), 
+								new Fault(FaultEvent.FAULT, result.error["message"], null), 
 								event.token, 
 								event.message
 							);
+							result = null;
 						} else {
-							_result = (_service.makeObjectsBindable) ? 
-								new ObjectProxy(_result.result) : _result.result;
-							event2 = ResultEvent.createEvent(_result, event.token, event.message);
+							result = (_service.makeObjectsBindable) ? 
+								new ObjectProxy(result.result) : result.result;
+							event2 = ResultEvent.createEvent(result, event.token, event.message);
 						}
 					}
 					
+					lastResult = result;
+
 					if (hasEventListener(event2.type)) {
 						dispatchEvent(event2);
 					} else {
@@ -127,10 +138,11 @@ package net.arnx.jsonic.web {
 		}
 		
 		public function clearResult(fireBindingEvent:Boolean = true):void {
-			_result = null;
 			if (fireBindingEvent) {
-				dispatchEvent(new flash.events.Event("resultForBinding"));
-			}	
+				lastResult = null;
+			} else {
+				_result = null;
+			}
 		}
 	}
 }

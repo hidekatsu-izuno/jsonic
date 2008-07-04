@@ -31,6 +31,7 @@ package net.arnx.jsonic.web {
 	[Event(name="result", type="mx.rpc.events.ResultEvent")]
 	[Event(name="fault", type="mx.rpc.events.FaultEvent")]
 	[Event(name="invoke", type="mx.rpc.events.InvokeEvent")]
+	[Bindable(event="operationsChange")]
 	public dynamic class WebService extends Proxy implements IEventDispatcher {
 		private var _service:HTTPService;
 		private var _eventDispatcher:EventDispatcher;
@@ -45,7 +46,7 @@ package net.arnx.jsonic.web {
 			_service.resultFormat = HTTPService.RESULT_FORMAT_TEXT;
 			if (destination != null) _service.destination = destination;
 			
-			_operations = [];
+			_operations = {};
 		}
 		
 		protected function get service():HTTPService {
@@ -129,13 +130,9 @@ package net.arnx.jsonic.web {
 		//  operations
 		//----------------------------------
 		
-		private var _operations:Array;
+		private var _operations:Object;
 
 		[ArrayElementType("net.arnx.jsonic.web.Operation")]
-		public function get operations():Array {
-			return _operations;
-		}
-		
 		public function set operations(ops:Array):void {
 			for (var i:Number = 0; i < ops.length; i++) {
 				var op:Operation = Operation(ops[i]);
@@ -252,8 +249,13 @@ package net.arnx.jsonic.web {
 	    //---------------------------------
 	
 		public function getOperation(name:String):Operation {
-			var o:Object = _operations[name];
-			return (o is Operation) ? Operation(o) : null;
+			var op:Operation = _operations[name];
+			if (!op) {
+				op = new Operation(name);
+				op.init(this);
+				_operations[name] = op;
+			}
+			return op;
 		}
 	
 	    public function disconnect():void {
