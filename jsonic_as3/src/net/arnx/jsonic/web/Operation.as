@@ -30,8 +30,6 @@ package net.arnx.jsonic.web {
 	[Event(name="result", type="mx.rpc.events.ResultEvent")]
 	[Event(name="fault", type="mx.rpc.events.FaultEvent")]
 	public class Operation extends EventDispatcher {
-		private const BINDING_RESULT:String = "resultForBinding";
-		
 		private var _name:String;
 		private var _service:WebService;
 
@@ -113,7 +111,12 @@ package net.arnx.jsonic.web {
 						} else {
 							result = (_service.makeObjectsBindable) ? 
 								new ObjectProxy(response.result) : response.result;
-							nextEvent = ResultEvent.createEvent(result, event.token, event.message);
+								
+							nextEvent = ResultEvent.createEvent(
+								result, 
+								event.token, 
+								event.message
+							);
 						}
 					}
 					
