@@ -13,7 +13,7 @@
 	<mx:TextInput x="331" y="34" width="184" id="params" text="[100,100]"/>
 	<mx:Button x="523" y="34" label="実行" click="remote[method.text].apply(null, JSON.decode(params.text))" />
 	<mx:TextInput x="6" y="62" width="509" id="request" text="{remote.concat.lastResult}" />
-	<mx:TextArea height="468" id="result" y="92" width="565" x="6" text="{params.text}" />
+	<mx:TextArea height="468" id="rst" y="92" width="565" x="6" text="{params.text}" />
 	<mx:Script>
 		<![CDATA[
 			import net.arnx.jsonic.*;
