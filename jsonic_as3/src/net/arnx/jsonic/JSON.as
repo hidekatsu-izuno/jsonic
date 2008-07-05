@@ -48,10 +48,6 @@ package net.arnx.jsonic {
 				o = null;
 			}
 			
-			if (o is ObjectProxy) {
-				o = ObjectProxy(o).object_proxy::object;
-			}
-			
 			if (level == 0) {
 				var type:String = typeof(o);
 				if (type == "number" || type == "boolean" || type == "string" || o is Date) {
