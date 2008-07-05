@@ -419,7 +419,6 @@ package net.arnx.jsonic {
 					}
 				}
 			}
-
 			
 			if (c != ']') {
 				throw createParseException(getMessage("json.parse.ArrayNotClosedError"), s);
