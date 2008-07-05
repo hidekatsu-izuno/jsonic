@@ -16,11 +16,13 @@
 
 package net.arnx.jsonic {
 	import flash.utils.ByteArray;
-	import flash.utils.describeType;
 	
 	import mx.collections.ArrayCollection;
 	import mx.resources.IResourceManager;
 	import mx.resources.ResourceManager;
+	import mx.utils.ObjectProxy;
+	import mx.utils.ObjectUtil;
+	import mx.utils.object_proxy;
 	
 	[ResourceBundle("jsonic")]
 	public class JSON {
@@ -32,7 +34,7 @@ package net.arnx.jsonic {
 			return new JSON().parse(new StringParserSource(source));
 		}
 		
-		private var _resourceManager:IResourceManager = ResourceManager.getInstance();
+		private static var _resourceManager:IResourceManager = ResourceManager.getInstance();
 		
 		private var _maxDepth:int;
 		private var _root:Object;
@@ -44,6 +46,17 @@ package net.arnx.jsonic {
 		private function format(o:Object, array:ByteArray, prettyPrint:Boolean, level:int):ByteArray {
 			if (level > _maxDepth) {
 				o = null;
+			}
+			
+			if (o is ObjectProxy) {
+				o = ObjectProxy(o).object_proxy::object;
+			}
+			
+			if (level == 0) {
+				var type:String = typeof(o);
+				if (type == "number" || type == "boolean" || type == "string" || o is Date) {
+					throw new ArgumentError(getMessage("json.format.IllegalRootTypeError"));
+				}
 			}
 			
 			var escape:Boolean = true;
@@ -72,12 +85,14 @@ package net.arnx.jsonic {
 				if (prettyPrint && o.length > 0) tabs(array, level+1);
 				array.writeUTFBytes(']');
 			} else {
+				var classInfo:Object = ObjectUtil.getClassInfo(o, null, {includeTransient: false});
+				
 				array.writeUTFBytes('{');
 				
 				var first:Boolean = true;
-				for (var key:Object in o) {
+				for each (var key:Object in classInfo[i].properties) {
 					if (o[key] === o) continue;
-					 
+					
 					if (first) {
 						first = false;
 					} else {
@@ -89,7 +104,7 @@ package net.arnx.jsonic {
 					array.writeUTFBytes(':');
 					if (prettyPrint) array.writeUTFBytes(' ');
 					format(o[key], array, prettyPrint, level+1);
-				}
+				}	
 				if (prettyPrint && first) tabs(array, level+1);
 				array.writeUTFBytes('}');
 			}
@@ -684,7 +699,7 @@ package net.arnx.jsonic {
 		}
 				
 		private function createParseException(message:String, s:IParserSource):Error {
-			return new Error("" + s.lineNumber + ": " + message + "\n" + s.toString() + " <- ?");
+			return new JSONParseError("" + s.lineNumber + ": " + message + "\n" + s.toString() + " <- ?");
 		}
 		
 		public function toString(prettyPrint:Boolean = false):String {
