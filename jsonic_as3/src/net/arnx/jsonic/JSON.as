@@ -16,22 +16,24 @@
 
 package net.arnx.jsonic {
 	import flash.utils.ByteArray;
+	import flash.utils.Proxy;
+	import flash.utils.flash_proxy;
 	
 	import mx.collections.ArrayCollection;
 	import mx.resources.IResourceManager;
 	import mx.resources.ResourceManager;
-	import mx.utils.ObjectProxy;
 	import mx.utils.ObjectUtil;
-	import mx.utils.object_proxy;
+	
+	use namespace flash_proxy;
 	
 	[ResourceBundle("jsonic")]
-	public class JSON {
+	public class JSON extends Proxy {
 		public static function encode(source:Object, prettyPrint:Boolean = false):String {
 			return new JSON().format(source, new ByteArray(), prettyPrint, 0).toString();
 		}
 		
 		public static function decode(source:String):Object {
-			return new JSON().parse(new StringParserSource(source));
+			return new JSON().load(source)._root;
 		}
 		
 		private static var _resourceManager:IResourceManager = ResourceManager.getInstance();
@@ -43,6 +45,66 @@ package net.arnx.jsonic {
 			_maxDepth = maxDepth;
 		}
 		
+	    //--------------------------------------------------------------------------
+	    // Proxy methods
+	    //--------------------------------------------------------------------------
+	    
+		/**
+		 * @private
+		 */
+		override flash_proxy function getProperty(name:*):* {
+	        return _root[name];
+		}
+		
+	    /**
+	     * @private
+	     */
+	    override flash_proxy function setProperty(name:*, value:*):void {
+			throw _root[name] = value;
+	    }
+		
+		/**
+		 * @private
+		 */
+		override flash_proxy function callProperty(name:*, ... args:Array):* {
+			return _root[name].apply(null, args);
+		}
+	
+		private var _nextNameArray:Array;
+	    
+		/**
+		 * @private
+		 */
+	    override flash_proxy function nextNameIndex(index:int):int {
+			if (index == 0) {
+				_nextNameArray = [];
+				for (var name:String in _root) {
+					_nextNameArray.push(name);    
+				}    
+			}
+			return (index < _nextNameArray.length) ? index + 1 : 0;
+		}
+	
+		/**
+		 * @private
+		 */
+		override flash_proxy function nextName(index:int):String {
+			return _nextNameArray[index-1];
+		}
+	
+	    /**
+	     * @private
+	     */
+	    override flash_proxy function nextValue(index:int):*
+	    {
+	        return _root[_nextNameArray[index-1]];
+	    }
+	    
+	    public function load(source:String):JSON {
+	    	_root = parse(new StringParserSource(source));
+	    	return this;
+	    }
+	    		
 		private function format(o:Object, array:ByteArray, prettyPrint:Boolean, level:int):ByteArray {
 			if (level > _maxDepth) {
 				o = null;
