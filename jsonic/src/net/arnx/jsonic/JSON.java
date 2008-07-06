@@ -345,21 +345,25 @@ public class JSON {
 	private transient Class<?> scope = null;
 	
 	public JSON() {
-		this(32);
 	}
 	
-	public JSON(int maxDepth) {
-		this.maxDepth = maxDepth;
-	}
-
 	public void setContext(Object context) {
-		if (this.context != context) {
-			this.context = context;
+		this.context = context;
+	}
+	
+	public void setMaxDepth(int maxDepth) {
+		if (maxDepth <= 0) {
+			throw new IllegalArgumentException(getMessage("json.TooSmallArgumentError", "maxDepth", 0));
 		}
+		this.maxDepth= maxDepth;
 	}
 	
 	public void setLocale(Locale locale) {
-		this.locale = locale;
+		if (locale == null) {
+			this.locale = Locale.getDefault();
+		} else {
+			this.locale = locale;
+		}
 	}
 	
 	public JSON set(Object o) {
@@ -1303,7 +1307,6 @@ public class JSON {
 	}
 	
 	private String getMessage(String id, Object... args) {
-		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);
 	}
