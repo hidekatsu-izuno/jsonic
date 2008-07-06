@@ -309,8 +309,21 @@ public class JSONTest {
 				+ "\n\t{\n\t\t\"a\": \"a\",\n\t\t\"b\": [1, 2, 3, 4, 5],\n\t\t\"c\": {\n\t\t\t\"a\": \"a\"\n\t\t}\n\t},\n\t[1, 2, 3, 4, 5]\n]",
 				json.set(list).write(new StringBuilder(), true).toString());
 		
-		assertEquals("true", json.set(true).write(new StringBuilder(), true).toString());
-		assertEquals("true", json.set(true).write(new StringBuilder(), false).toString());
+		try {
+			json.set(true).write(new StringBuilder()).toString();
+			fail();
+		} catch (IllegalArgumentException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.set("true").write(new StringBuilder()).toString();
+			fail();
+		} catch (IllegalArgumentException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 
 		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.set(
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}).write(new StringBuilder()).toString());
@@ -346,15 +359,7 @@ public class JSONTest {
 			assertNotNull(e);			
 		}
 		
-		assertNull(json.load("").get());
-		
-		try {
-			json.load("").get(TestBean.class);
-			fail();
-		} catch (NullPointerException e) {
-			System.out.println(e);
-			assertNotNull(e);			
-		}
+		assertEquals(new LinkedHashMap(), json.load("").get());
 		
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
