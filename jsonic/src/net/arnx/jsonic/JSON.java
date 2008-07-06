@@ -137,6 +137,8 @@ import org.w3c.dom.NodeList;
  */
 @SuppressWarnings("unchecked")
 public class JSON {
+	public static Class prototype = JSON.class;
+	
 	private static final Character ROOT_KEY = '$';
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
@@ -149,6 +151,22 @@ public class JSON {
 		PRIMITIVE_MAP.put(float.class, 0.0f);
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
+	}
+	
+	private static JSON newInstance() {
+		JSON instance = null;
+		
+		if (prototype == JSON.class) {
+			instance = new JSON();
+		} else {
+			try {
+				instance = (JSON)prototype.newInstance();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		return instance;
 	}
 	
 	/**
@@ -169,7 +187,7 @@ public class JSON {
 	 * @return a json string
 	 */
 	public static String encode(Object source, boolean prettyPrint) {			
-		return new JSON().set(source).toString(prettyPrint);
+		return JSON.newInstance().set(source).toString(prettyPrint);
 	}
 
 	/**
@@ -180,7 +198,7 @@ public class JSON {
 	 * @exception IOException if I/O Error occured.
 	 */
 	public static Appendable encode(Object source, Appendable appendable) throws IOException {
-		return new JSON().set(source).write(appendable);
+		return JSON.newInstance().set(source).write(appendable);
 	}
 
 	/**
@@ -191,7 +209,7 @@ public class JSON {
 	 * @exception IOException if I/O Error occured.
 	 */
 	public static OutputStream encode(Object source, OutputStream out) throws IOException {
-		return new JSON().set(source).write(out);
+		return JSON.newInstance().set(source).write(out);
 	}
 
 	/**
@@ -203,7 +221,7 @@ public class JSON {
 	 * @exception IOException if I/O Error occured.
 	 */
 	public static OutputStream encode(Object source, OutputStream out, boolean prettyPrint) throws IOException {
-		return new JSON().set(source).write(out, prettyPrint);
+		return JSON.newInstance().set(source).write(out, prettyPrint);
 	}
 	
 	/**
@@ -214,7 +232,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(String source) throws JSONParseException {
-		return new JSON().load(source).get();
+		return JSON.newInstance().load(source).get();
 	}
 	
 	/**
@@ -227,7 +245,7 @@ public class JSON {
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static <T> T decode(String source, Class<? extends T> cls) throws JSONParseException {
-		return new JSON().load(source).get(cls);
+		return JSON.newInstance().load(source).get(cls);
 	}
 	
 	/**
@@ -240,7 +258,7 @@ public class JSON {
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static Object decode(String source, Type type) throws JSONParseException {
-		return new JSON().load(source).get(type);
+		return JSON.newInstance().load(source).get(type);
 	}
 
 	/**
@@ -252,7 +270,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(InputStream in) throws IOException, JSONParseException {
-		return new JSON().load(in).get();
+		return JSON.newInstance().load(in).get();
 	}
 
 	/**
@@ -265,7 +283,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONParseException {
-		return new JSON().load(in).get(cls);
+		return JSON.newInstance().load(in).get(cls);
 	}
 
 	/**
@@ -278,7 +296,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(InputStream in, Type type) throws IOException, JSONParseException {
-		return new JSON().load(in).get(type);
+		return JSON.newInstance().load(in).get(type);
 	}
 	
 	/**
@@ -290,7 +308,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(Reader reader) throws IOException, JSONParseException {
-		return new JSON().load(reader).get();
+		return JSON.newInstance().load(reader).get();
 	}
 
 	/**
@@ -303,7 +321,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONParseException {
-		return new JSON().load(reader).get(cls);
+		return JSON.newInstance().load(reader).get(cls);
 	}
 
 	/**
@@ -316,7 +334,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(Reader reader, Type type) throws IOException, JSONParseException {
-		return new JSON().load(reader).get(type);
+		return JSON.newInstance().load(reader).get(type);
 	}
 	
 	private int maxDepth;
