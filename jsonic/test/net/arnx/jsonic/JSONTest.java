@@ -70,6 +70,7 @@ public class JSONTest {
 		
 		assertEquals("[\"ja\"]", JSON.encode(new Object[] {Locale.JAPANESE}));
 		assertEquals("[\"ja-JP\"]", JSON.encode(new Object[] {Locale.JAPAN}));
+		assertEquals("[\"ja-JP-osaka\"]", JSON.encode(new Object[] {new Locale("ja", "JP", "osaka")}));
 		
 		Date date = new Date();
 		assertEquals("[" + date.getTime() + "]", JSON.encode(new Object[] {date}));
