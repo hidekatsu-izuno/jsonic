@@ -6,6 +6,10 @@ package net.arnx.jsonic {
 		public function get publicValue():int {
 			return 1;
 		}
+		[Transient]
+		public function get transientValue():int {
+			return 1;
+		}
 		protected function get protectedValue():int {
 			return 1;
 		}
@@ -14,6 +18,9 @@ package net.arnx.jsonic {
 		}
 		private function get privateValue():int {
 			return 1;
+		}
+		public function get mine():EncodeTestClass1 {
+			return this;
 		}
 
 	}

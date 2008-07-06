@@ -156,7 +156,11 @@ package net.arnx.jsonic {
 				if (prettyPrint && o.length > 0) tabs(array, level+1);
 				array.writeUTFBytes(']');
 			} else {
-				var classInfo:Object = ObjectUtil.getClassInfo(o, null, {includeTransient: false});
+				var classInfo:Object = ObjectUtil.getClassInfo(o, null, {
+					includeReadOnly: true,
+					includeTransient: false,
+					uris: null
+				});
 				
 				array.writeUTFBytes('{');
 				

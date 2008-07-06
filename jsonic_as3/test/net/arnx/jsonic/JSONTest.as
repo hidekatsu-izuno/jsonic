@@ -38,6 +38,7 @@ package net.arnx.jsonic {
 			assertEquals('{"value":1}', JSON.encode({value:1}));
 			
 			assertEquals('{"publicValue":1}', JSON.encode(new EncodeTestClass1()));
+			assertEquals('{"publicValue":1}', JSON.encode(new EncodeTestClass2()));
 		}
 		
 		public function testDecode():void {
