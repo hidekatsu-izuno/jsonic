@@ -42,7 +42,9 @@ package net.arnx.jsonic {
 		}
 		
 		public function testDecode():void {
-			
+			var list:Array = [{}, [], 1, "str'ing", "", true, false, null];
+			assertEquals(list, JSON.decode('[{}, [], 1, "str\'ing", "", true, false, null]'));
+			assertEquals(list, JSON.decode('\r[\t{\r}\n, [\t]\r,\n1 ,\t \r"str\'ing"\n, "", true\t,\rfalse\n,\tnull\r]\n'));
 		}
 	}
 }

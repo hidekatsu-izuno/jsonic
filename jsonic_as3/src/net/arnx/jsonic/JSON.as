@@ -532,8 +532,14 @@ package net.arnx.jsonic {
 					if (point == 0) {
 						start = c;
 						point = 1;
-					} else if (point == 1 && start == c) {
-						break loop;
+					} else if (point == 1) {
+						if (start == c) {
+							break loop;
+						} else {
+							sb.writeUTFBytes(c);
+						}
+					} else {
+						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
 					break;
 				default:
