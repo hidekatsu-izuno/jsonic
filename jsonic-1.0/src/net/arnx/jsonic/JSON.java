@@ -444,29 +444,20 @@ public class JSON {
 			o = ((Iterable)o).iterator();
 		} else if (o instanceof Object[]) {
 			o = Arrays.asList((Object[])o).iterator();
-		} else if (o instanceof Pattern) {
-			o = ((Pattern)o).pattern();
-		} else if (o instanceof TimeZone) {
-			o = ((TimeZone)o).getID();
 		} else if (o instanceof Date) {
 			o = ((Date)o).getTime();
 		} else if (o instanceof Calendar) {
 			o = ((Calendar)o).getTimeInMillis();
+		} else if (o instanceof Pattern) {
+			o = ((Pattern)o).pattern();
+		} else if (o instanceof TimeZone) {
+			o = ((TimeZone)o).getID();
 		} else if (o instanceof InetAddress) {
 			o = ((InetAddress)o).getHostAddress();
 		} else if (o instanceof Charset) {
 			o = ((Charset)o).name();
 		} else if (o instanceof Locale) {
-			Locale locale = (Locale)o;
-			if (locale.getLanguage() != null && locale.getLanguage().length() > 0) {
-				if (locale.getCountry() != null && locale.getCountry().length() > 0) {
-					o = locale.getLanguage() + "-" + locale.getCountry();
-				} else {
-					o = locale.getLanguage();
-				}
-			} else {
-				o = null;
-			}
+			o = ((Locale)o).toString().replace('_', '-');
 		} else if (o instanceof Node) {
 			Element elem = null;
 			if (o instanceof Document) {
