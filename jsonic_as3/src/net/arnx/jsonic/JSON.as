@@ -45,6 +45,15 @@ package net.arnx.jsonic {
 		public function JSON(maxDepth:int = 32) {
 			_maxDepth = maxDepth;
 		}
+	    
+	    public function load(source:String):JSON {
+	    	_root = parse(new StringParserSource(source));
+	    	return this;
+	    }
+	    	
+		public function toString(prettyPrint:Boolean = false):String {
+			return format(_root, new ByteArray(), prettyPrint, 0).toString();
+		} 
 		
 	    //--------------------------------------------------------------------------
 	    // Proxy methods
@@ -99,11 +108,6 @@ package net.arnx.jsonic {
 	    override flash_proxy function nextValue(index:int):*
 	    {
 	        return _root[_nextNameArray[index-1]];
-	    }
-	    
-	    public function load(source:String):JSON {
-	    	_root = parse(new StringParserSource(source));
-	    	return this;
 	    }
 	    		
 		private function format(o:Object, array:ByteArray, prettyPrint:Boolean, level:int):ByteArray {
@@ -781,10 +785,6 @@ package net.arnx.jsonic {
 		private function createParseException(message:String, s:IParserSource):Error {
 			return new JSONParseError("" + s.lineNumber + ": " + message + "\n" + s.toString() + " <- ?");
 		}
-		
-		public function toString(prettyPrint:Boolean = false):String {
-			return format(_root, new ByteArray(), prettyPrint, 0).toString();
-		} 
 	
 		private function getMessage(id:String, ... args:Array):String {
 			return _resourceManager.getString("jsonic", id, args);
