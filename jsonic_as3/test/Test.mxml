@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:js="net.arnx.jsonic.web.mxml.*" layout="absolute" initialize="init()">
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:js="net.arnx.jsonic.web.mxml.*"
+	xmlns:flexunit="flexunit.flexui.*"
+	layout="absolute" 
+	creationComplete="onCreationComplete()">
+
+	<flexunit:TestRunnerBase id="testRunner" width="100%" height="100%" />
+	
+	<mx:Script>
+		<![CDATA[
+			import net.arnx.jsonic.*;
+			import flexunit.framework.TestSuite;
+			
+			private function onCreationComplete():void {
+ 				testRunner.test = createSuite();
+ 				testRunner.startTest();
+ 			}
+			
+			private function createSuite():TestSuite {
+ 				var ts:TestSuite = new TestSuite();
+ 				ts.addTest(JSONTest.suite());
+ 				return ts;
+			}
+
+		]]>
+	</mx:Script>	
+<!--
 	<js:WebService id="remote" endpoint="{url2.text}" source="{object.text}" makeObjectsBindable="false" showBusyCursor="true">
 	</js:WebService>
 
@@ -14,9 +40,5 @@
 	<mx:Button x="523" y="34" label="実行" click="remote[method.text].apply(null, JSON.decode(params.text))" />
 	<mx:TextInput x="6" y="62" width="509" id="request" text="{remote.concat.lastResult}" />
 	<mx:TextArea height="468" id="rst" y="92" width="565" x="6" text="{params.text}" />
-	<mx:Script>
-		<![CDATA[
-			import net.arnx.jsonic.*;
-		]]>
-	</mx:Script>
+-->	
 </mx:WindowedApplication>

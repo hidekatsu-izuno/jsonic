@@ -21,6 +21,7 @@ package net.arnx.jsonic {
 	
 	import mx.collections.ArrayCollection;
 	import mx.resources.IResourceManager;
+	import mx.resources.Locale;
 	import mx.resources.ResourceManager;
 	import mx.utils.ObjectUtil;
 	
@@ -110,6 +111,14 @@ package net.arnx.jsonic {
 				o = null;
 			}
 			
+			if (o is Date) {
+				o = (o as Date).getTime();
+			} else if (o is RegExp) {
+				o = RegExp(o).source;
+			} else if (o is Locale) {
+				o = o.toString().replace(/_/g, '-');
+			}
+			
 			if (level == 0) {
 				var type:String = typeof(o);
 				if (type == "number" || type == "boolean" || type == "string" || o is Date) {
@@ -125,10 +134,14 @@ package net.arnx.jsonic {
 				if (escape) {
 					formatString(o as String, array);
 				} else {
-					array.writeUTFBytes(o as String);					
+					array.writeUTFBytes(o as String);
 				}
 			} else if (o is Number) {
-				array.writeUTFBytes(o.toString());
+				if (isNaN(o as Number) || !isFinite(o as Number)) {
+					formatString(o.toString(), array);
+				} else {
+					array.writeUTFBytes(o.toString());
+				}
 			} else if (o is Boolean) {
 				array.writeUTFBytes(o.toString());
 			} else if (o is Array || o is ArrayCollection) {
@@ -148,7 +161,7 @@ package net.arnx.jsonic {
 				array.writeUTFBytes('{');
 				
 				var first:Boolean = true;
-				for each (var key:Object in classInfo[i].properties) {
+				for each (var key:Object in classInfo.properties) {
 					if (o[key] === o) continue;
 					
 					if (first) {
