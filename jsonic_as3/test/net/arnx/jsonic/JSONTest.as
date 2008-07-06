@@ -2,7 +2,6 @@ package net.arnx.jsonic {
 	import flexunit.framework.AssertionFailedError;
 	import flexunit.framework.TestCase;
 	import flexunit.framework.TestSuite;
-	import flexunit.framework.Assert;
 	
 	import mx.resources.Locale;
 	import mx.utils.ObjectUtil;
@@ -48,6 +47,22 @@ package net.arnx.jsonic {
 			var list:Array = [{}, [], 1, "str'ing", "", true, false, null];
 			assertEquals(list, JSON.decode('[{}, [], 1, "str\'ing", "", true, false, null]'));
 			assertEquals(list, JSON.decode('\r[\t{\r}\n, [\t]\r,\n1 ,\t \r"str\'ing"\n, "", true\t,\rfalse\n,\tnull\r]\n'));
+			
+			list = [-1.1, 1.11e1, 1.11E+1, 11.1e-1];
+			assertEquals(list, JSON.decode("[-1.1, 1.11e1, 1.11E+1, 11.1e-1]"));
+			
+			var map1:Object = {
+				map2: {
+					"'2'": 2,
+					map3: {
+						"'3": 3
+					}
+				},
+				'1': 1
+			};
+			
+			assertEquals(map1, JSON.decode('{"map2": {"\'2\'": 2, "map3": {"\'3": 3}}, "1": 1}'));
+
 		}
 		
 		public static function assertEquals(... rest):void {
@@ -69,7 +84,7 @@ package net.arnx.jsonic {
 				if (message.length > 0) {
 					message = message + " - ";
 				}
-				throw new AssertionFailedError(message + "expected:<" + expected + "> but was:<" + actual + ">");
+				throw new AssertionFailedError(message + "expected:<" + ObjectUtil.toString(expected) + "> but was:<" + ObjectUtil.toString(actual) + ">");
 			}
 		}
 	}
