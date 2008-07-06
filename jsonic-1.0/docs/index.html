@@ -111,7 +111,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>char, Character</td></tr>
 <tr><td>TimeZone, Pattern, URL, URI, Type, Member, Charset</td></tr>
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
-<tr><td>Locale</td><td>string (言語コード-国コード)</td></tr>
+<tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
 <tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※2)</sup></td></tr>
 <tr><td>Number</td></tr>
@@ -672,6 +672,7 @@ public class HogeService {
 <li>JSON stringからEnum派生型へ変換時、頭一文字が数値の場合はint型とみなしEnum.ordinal()にて変換するよう変更しました。</li>
 <li>JSON true/falseからEnum派生型への変換に対応しました。</li>
 <li>JSON object中で値としてリテラル値が使われる場合、maxDepthの設定が使用されない問題を修正しました。</li>
+<li>java.util.LocaleからJSON stringへの変換時にバリアントコードも変換されるように変更しました。</li>
 </ul>
 
 <h3>2008/05/15 version 1.0</h3>
