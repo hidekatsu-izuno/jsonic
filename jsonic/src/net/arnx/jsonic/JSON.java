@@ -767,8 +767,8 @@ public class JSON {
 		}
 		
 		return (o == null) ? new LinkedHashMap<String, Object>() : o;
-	}	
-	
+	}
+
 	private Map<String, Object> parseObject(ParserSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
@@ -904,7 +904,7 @@ public class JSON {
 		}
 		return map;
 	}
-	
+
 	private List<Object> parseArray(ParserSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
 		List<Object> list = new ArrayList<Object>();
