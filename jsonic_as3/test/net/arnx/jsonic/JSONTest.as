@@ -60,9 +60,7 @@ package net.arnx.jsonic {
 				},
 				'1': 1
 			};
-			
 			assertEquals(map1, JSON.decode('{"map2": {"\'2\'": 2, "map3": {"\'3": 3}}, "1": 1}'));
-
 		}
 		
 		public static function assertEquals(... rest):void {
