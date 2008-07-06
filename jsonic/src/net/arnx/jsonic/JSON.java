@@ -347,15 +347,15 @@ public class JSON {
 	public JSON() {
 	}
 	
-	public void setContext(Object context) {
-		this.context = context;
-	}
-	
-	public void setMaxDepth(int maxDepth) {
+	public JSON(int maxDepth) {
 		if (maxDepth <= 0) {
 			throw new IllegalArgumentException(getMessage("json.TooSmallArgumentError", "maxDepth", 0));
 		}
 		this.maxDepth= maxDepth;
+	}
+	
+	public void setContext(Object context) {
+		this.context = context;
 	}
 	
 	public void setLocale(Locale locale) {
