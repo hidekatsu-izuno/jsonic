@@ -241,9 +241,10 @@ package net.arnx.jsonic {
 					if (o == null) {
 						s.back();
 						o = parseArray(s, 1);
-						break;
+					} else {
+						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					break;
 				case '/':
 				case '#':
 					s.back();
@@ -253,13 +254,13 @@ package net.arnx.jsonic {
 					if (o == null) {
 						s.back();
 						o = parseObject(s, 1);
-						break;
+					} else {
+						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 			}
 			
-			return o;
+			return (!o) ? {} : o;
 		}
 		
 		private function parseObject(s:IParserSource, level:int):Object {
@@ -317,11 +318,10 @@ package net.arnx.jsonic {
 						if (point == 3) {
 							if (level < _maxDepth) map[key] = null;
 						}
-						break loop;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
-					break;
+					break loop;
 				case '\'':
 				case '"':
 					if (point == 0) {
@@ -437,15 +437,14 @@ package net.arnx.jsonic {
 					}
 					break;
 				case ']':
-					if (point == 1) {
-						if (list.length != 0 && level < _maxDepth) list.push(null);
-						break loop;					
-					} else if (point == 2 || point == 3) {
-						break loop;
+					if (point == 1 || point == 2 || point == 3) {
+						if (point == 1 && list.length != 0 && level < _maxDepth) {
+							list.push(null);
+						}
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
-					break;
+					break loop;
 				case '{':
 					if (point == 1 || point == 3){
 						s.back();
@@ -567,32 +566,21 @@ package net.arnx.jsonic {
 			
 			var c:String = null;
 			loop:while ((c = s.next()) != null) {
-				switch(c) {
-				case '\uFEFF': // BOM
-					break;
-				case '\\':
+				if (c == '\uFEFF') continue;
+				
+				if (c == '\\') {
 					s.back();
 					c = parseEscape(s);
-					if (point == 0 && /[a-zA-Z$_]/.test(c)) {
-						sb.writeUTFBytes(c);
-						point = 1;
-					} else if (point == 1 && /[a-zA-Z0-9$_]/.test(c)){
-						sb.writeUTFBytes(c);
-					} else {
-						s.back();
-						break loop;
-					}
-					break;
-				default:
-					if (point == 0 && /[a-zA-Z$_]/.test(c)) {
-						sb.writeUTFBytes(c);
-						point = 1;
-					} else if (point == 1 && /[a-zA-Z0-9$_]/.test(c)){
-						sb.writeUTFBytes(c);
-					} else {
-						s.back();
-						break loop;
-					}
+				}
+				
+				if (point == 0 && /[a-zA-Z$_]/.test(c)) {
+					sb.writeUTFBytes(c);
+					point = 1;
+				} else if (point == 1 && /[a-zA-Z0-9$_]/.test(c)){
+					sb.writeUTFBytes(c);
+				} else {
+					s.back();
+					break loop;
 				}
 			}
 			return sb.toString();
