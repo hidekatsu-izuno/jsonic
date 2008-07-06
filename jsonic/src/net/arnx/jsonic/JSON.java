@@ -363,6 +363,14 @@ public class JSON {
 	}
 	
 	public JSON set(Object o) {
+		if (o == null
+				|| o instanceof CharSequence
+				|| o instanceof Boolean
+				|| o instanceof Number
+				|| o instanceof Date) {
+			throw new IllegalArgumentException(getMessage("json.format.IllegalRootTypeError"));
+		}
+		
 		this.root = o;
 		return this;
 	}
@@ -421,6 +429,10 @@ public class JSON {
 	
 	public OutputStream write(OutputStream out) throws IOException {
 		return write(out, false);
+	}
+	
+	public void claer() {
+		root = null;
 	}
 	
 	public String toString(boolean prettyPrint) {
@@ -514,14 +526,6 @@ public class JSON {
 				}
 				o = map;
 			}
-		}
-		
-		if (level == 0 && (o == null
-				|| o instanceof CharSequence
-				|| o instanceof Boolean
-				|| o instanceof Number
-				|| o instanceof Date)) {
-			throw new IllegalArgumentException(getMessage("json.format.IllegalRootTypeError"));
 		}
 		
 		if (o == null) {
