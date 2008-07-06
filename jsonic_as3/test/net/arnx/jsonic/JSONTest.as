@@ -1,8 +1,11 @@
 package net.arnx.jsonic {
+	import flexunit.framework.AssertionFailedError;
 	import flexunit.framework.TestCase;
 	import flexunit.framework.TestSuite;
+	import flexunit.framework.Assert;
 	
 	import mx.resources.Locale;
+	import mx.utils.ObjectUtil;
 
 	public class JSONTest extends TestCase {
 		public function JSONTest(methodName:String=null) {
@@ -45,6 +48,29 @@ package net.arnx.jsonic {
 			var list:Array = [{}, [], 1, "str'ing", "", true, false, null];
 			assertEquals(list, JSON.decode('[{}, [], 1, "str\'ing", "", true, false, null]'));
 			assertEquals(list, JSON.decode('\r[\t{\r}\n, [\t]\r,\n1 ,\t \r"str\'ing"\n, "", true\t,\rfalse\n,\tnull\r]\n'));
+		}
+		
+		public static function assertEquals(... rest):void {
+			var message:String;
+			var expected:Object;
+			var actual:Object;
+			
+			if ( rest.length == 3 ) {
+				message = rest[0];
+				expected = rest[1];
+				actual = rest[2];
+			} else {
+				message = "";
+				expected = rest[0];
+				actual = rest[1];
+			}
+			
+			if (ObjectUtil.compare(expected, actual) != 0) {
+				if (message.length > 0) {
+					message = message + " - ";
+				}
+				throw new AssertionFailedError(message + "expected:<" + expected + "> but was:<" + actual + ">");
+			}
 		}
 	}
 }
