@@ -258,7 +258,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(String source) {
-		return JSON.newInstance().parse(source, null);
+		return decode(source, (Type)null);
 	}
 	
 	/**
@@ -271,7 +271,7 @@ public class JSON {
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static <T> T decode(String source, Class<? extends T> cls) {
-		return (T)JSON.newInstance().parse(source, cls);
+		return (T)decode(source, (Type)cls);
 	}
 	
 	/**
@@ -296,7 +296,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(InputStream in) {
-		return decode(in, null);
+		return decode(in, (Type)null);
 	}
 
 	/**
@@ -309,7 +309,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(InputStream in, Class<? extends T> cls) {
-		return (T)decode(in, cls);
+		return (T)decode(in, (Type)cls);
 	}
 
 	/**
@@ -340,7 +340,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(Reader reader) {
-		return decode(reader, null);
+		return decode(reader, (Type)null);
 	}
 
 	/**
@@ -353,7 +353,7 @@ public class JSON {
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(Reader reader, Class<? extends T> cls) {
-		return (T)decode(reader, cls);
+		return (T)decode(reader, (Type)cls);
 	}
 
 	/**
@@ -403,6 +403,16 @@ public class JSON {
 		}
 	}
 	
+	public String format(Object source, boolean prettyPrint) {
+		Appendable appendable = new StringBuilder(1000);
+		try {
+			format(source, appendable, prettyPrint).toString();
+		} catch (IOException e) {
+			// never occured
+		}
+		return appendable.toString();
+	}
+	
 	/**
 	 * Format a object into a json string.
 	 * 
@@ -427,6 +437,10 @@ public class JSON {
 		return parse(cs, null);
 	}
 	
+	public <T> T parse(CharSequence cs, Class<? extends T> cls) {
+		return (T)parse(cs, cls);
+	}
+	
 	public Object parse(CharSequence cs, Type type) {
 		if (type == null) type = Object.class;
 		
@@ -443,6 +457,10 @@ public class JSON {
 		return parse(in, null);
 	}
 	
+	public <T> T parse(InputStream in, Class<? extends T> cls) throws IOException {
+		return (T)parse(in, (Type)cls);
+	}
+	
 	public Object parse(InputStream in, Type type) throws IOException {
 		if (type == null) type = Object.class;
 		
@@ -452,6 +470,10 @@ public class JSON {
 	
 	public Object parse(Reader reader) throws IOException {
 		return parse(reader, null);
+	}
+	
+	public <T> T parse(Reader reader, Class<? extends T> cls)  throws IOException {
+		return (T)parse(reader, (Type)cls);
 	}
 	
 	public Object parse(Reader reader, Type type) throws IOException {
