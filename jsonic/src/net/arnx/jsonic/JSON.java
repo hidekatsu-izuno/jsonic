@@ -423,7 +423,11 @@ public class JSON {
 		return ap;
 	}
 	
-	public Object parse(CharSequence cs, Type type) throws JSONParseException {
+	public Object parse(CharSequence cs) {
+		return parse(cs, null);
+	}
+	
+	public Object parse(CharSequence cs, Type type) {
 		if (type == null) type = Object.class;
 		
 		Object value = null;
@@ -435,21 +439,29 @@ public class JSON {
 		return (type == Object.class) ? value : convert(value, type);
 	}
 	
-	public Object parse(InputStream in, Type type) throws IOException, JSONParseException {
+	public Object parse(InputStream in) throws IOException {
+		return parse(in, null);
+	}
+	
+	public Object parse(InputStream in, Type type) throws IOException {
 		if (type == null) type = Object.class;
 		
 		Object value = parse(new ReaderParserSource(in));
 		return (type == Object.class) ? value : convert(value, type); 
 	}
 	
-	public Object parse(Reader reader, Type type) throws IOException, JSONParseException {
+	public Object parse(Reader reader) throws IOException {
+		return parse(reader, null);
+	}
+	
+	public Object parse(Reader reader, Type type) throws IOException {
 		if (type == null) type = Object.class;
 		
 		Object value = parse(new ReaderParserSource(reader));
 		return (type == Object.class) ? value : convert(value, type);
 	}
 	
-	public final Object convert(Object value, Type type) throws JSONConvertException {
+	public final Object convert(Object value, Type type) {
 		Class<?> cls = getRawType(type);
 		if (context != null) scope = context.getClass();
 		if (scope == null) scope = cls.getEnclosingClass();
