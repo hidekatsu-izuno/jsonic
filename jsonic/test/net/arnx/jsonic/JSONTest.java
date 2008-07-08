@@ -276,10 +276,10 @@ public class JSONTest {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testWrite() throws Exception {
+	public void testFormat() throws Exception {
 		JSON json = new JSON();
 		ArrayList<Object> list = new ArrayList<Object>();
-		assertEquals("[]", json.set(list).write(new StringBuilder()).toString());
+		assertEquals("[]", json.format(list, new StringBuilder()).toString());
 		
 		list.add(1);
 		list.add(1.0);
@@ -307,10 +307,10 @@ public class JSONTest {
 
 		assertEquals("[\n\t1,\n\t1.0,\n\t\"c\",\n\t\"char[]\",\n\t\"string\",\n\ttrue,\n\tfalse,\n\tnull," 
 				+ "\n\t{\n\t\t\"a\": \"a\",\n\t\t\"b\": [1, 2, 3, 4, 5],\n\t\t\"c\": {\n\t\t\t\"a\": \"a\"\n\t\t}\n\t},\n\t[1, 2, 3, 4, 5]\n]",
-				json.set(list).write(new StringBuilder(), true).toString());
+				json.format(list, new StringBuilder(), true).toString());
 		
 		try {
-			json.set(true).write(new StringBuilder()).toString();
+			json.format(true, new StringBuilder());
 			fail();
 		} catch (IllegalArgumentException e) {
 			System.out.println(e);
@@ -318,32 +318,31 @@ public class JSONTest {
 		}
 		
 		try {
-			json.set("true").write(new StringBuilder()).toString();
+			assertEquals("true", json.format(true, new StringBuilder()).toString());
 			fail();
 		} catch (IllegalArgumentException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-
-		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.set(
-				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}).write(new StringBuilder()).toString());
+		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.format(
+				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
 		
 		Date d = new Date();
-		assertEquals("[" + Long.toString(d.getTime()) + "]", json.set(new Date[] {d}).write(new StringBuilder()).toString());
+		assertEquals("[" + Long.toString(d.getTime()) + "]", json.format(new Date[] {d}, new StringBuilder()).toString());
 		
 		
-		assertEquals("[\"AQID\"]", json.set(new byte[][] {{1,2,3}}).write(new StringBuilder()).toString());
+		assertEquals("[\"AQID\"]", json.format(new byte[][] {{1,2,3}}, new StringBuilder()).toString());
 	}
 	
 	@Test
 	@SuppressWarnings({ "unchecked", "serial" })
-	public void testLoad() throws Exception {
+	public void testParse() throws Exception {
 		Locale.setDefault(Locale.JAPANESE);
 		JSON json = new JSON();
 		
 		try {
 			CharSequence cs = null;
-			json.load(cs).get();
+			json.parse(cs, null);
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -352,14 +351,14 @@ public class JSONTest {
 		
 		try {
 			Reader reader = null;
-			json.load(reader).get();
+			json.parse(reader, null);
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
 			assertNotNull(e);			
 		}
 		
-		assertEquals(new LinkedHashMap(), json.load("").get());
+		assertEquals(new LinkedHashMap(), json.parse(""));
 		
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
@@ -375,7 +374,7 @@ public class JSONTest {
 		list.add(null);
 		
 		try {
-			assertEquals(list, json.load("[{\"maa\": \"bbb\"}, [], 1, \"str\\'ing\", true, false, null").get());
+			assertEquals(list, json.parse("[{\"maa\": \"bbb\"}, [], 1, \"str\\'ing\", true, false, null"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -383,21 +382,21 @@ public class JSONTest {
 		}
 		
 		try {
-			assertEquals(list, json.load("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]").get());
+			assertEquals(list, json.parse("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
 		
-		assertEquals(list, json.load("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]").get());
+		assertEquals(list, json.parse("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
 		
-		assertEquals(list, json.load("[{\"\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]").get());
+		assertEquals(list, json.parse("[{\"\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
 
-		assertEquals(list, json.load("[{'\u006Daa': 'bbb'}, [], 1, \"str'ing\", true, false, null]").get());
+		assertEquals(list, json.parse("[{'\u006Daa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 		
 		try {
-			assertEquals(list, json.load("[{'\u006daa\": 'bbb'}, [], 1, \"str'ing\", true, false, null]").get());
+			assertEquals(list, json.parse("[{'\u006daa\": 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -405,14 +404,14 @@ public class JSONTest {
 		}
 		
 		try {
-			assertEquals(list, json.load("[{\"maa': 'bbb'}, [], 1, \"str'ing\", true, false, null]").get());
+			assertEquals(list, json.parse("[{\"maa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
 
-		assertEquals(list, json.load("[{   \t\u006da\u0061   : 'bbb'}, [], 1, \"str'ing\", true, false, null]").get());
+		assertEquals(list, json.parse("[{   \t\u006da\u0061   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 		
 		list.set(0, new HashMap() {
 			{
@@ -420,7 +419,7 @@ public class JSONTest {
 			}
 		});
 
-		assertEquals(list, json.load("[{float   : 'bbb'}, [], 1, \"str'ing\", true, false, null]").get());
+		assertEquals(list, json.parse("[{float   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 		
 		list.set(0, new HashMap() {
 			{
@@ -429,7 +428,7 @@ public class JSONTest {
 		});
 
 		try {
-			assertEquals(list, json.load("[{0float   : 'bbb'}, [], 1, \"str'ing\", true, false, null]").get());
+			assertEquals(list, json.parse("[{0float   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -441,13 +440,13 @@ public class JSONTest {
 				put("float0", "bbb");
 			}
 		});
-		assertEquals(list, json.load("[{float0   : 'bbb'}, [], 1, \"str'ing\", true, false, null]").get());
+		assertEquals(list, json.parse("[{float0   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 		
-		assertEquals(new HashMap() {{put("true", true);}}, json.load("  true: true  ").get());
-		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.load(" number: -100  ").get());
+		assertEquals(new HashMap() {{put("true", true);}}, json.parse("  true: true  "));
+		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  "));
 		
 		try {
-			assertEquals(new HashMap() {{put("true", true);}}, json.load("  {true: true  ").get());
+			assertEquals(new HashMap() {{put("true", true);}}, json.parse("  {true: true  "));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -455,7 +454,7 @@ public class JSONTest {
 		}
 
 		try {
-			assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.load(" number: -100  }").get());
+			assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  }"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -470,7 +469,7 @@ public class JSONTest {
 					}
 				});
 			}
-		}, json.load(" numbers: { number: -100 } ").get());
+		}, json.parse(" numbers: { number: -100 } "));
 		
 		try {
 			assertEquals(new HashMap() {
@@ -481,22 +480,22 @@ public class JSONTest {
 						}
 					});
 				}
-			}, json.load(" numbers: { number: -100 ").get());
+			}, json.parse(" numbers: { number: -100 "));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
 		
-		assertEquals(list, json.load("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,#d\r\r\r\r"
-				+ " [/*#\n x\r */], 1, \"str\\'in\\g\",/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ #  aaaa").get());
+		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,#d\r\r\r\r"
+				+ " [/*#\n x\r */], 1, \"str\\'in\\g\",/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ #  aaaa"));
 		
 		NamedBean nb = new NamedBean();
 		nb.namedPropertyAaa = 100;
-		assertEquals(nb, json.load("{\"namedPropertyAaa\":100}").get(NamedBean.class));
-		assertEquals(nb, json.load("{\"named property aaa\":100}").get(NamedBean.class));
-		assertEquals(nb, json.load("{\"named_property_aaa\":100}").get(NamedBean.class));
-		assertEquals(nb, json.load("{\"Named Property Aaa\":100}").get(NamedBean.class));
+		assertEquals(nb, json.parse("{\"namedPropertyAaa\":100}", NamedBean.class));
+		assertEquals(nb, json.parse("{\"named property aaa\":100}", NamedBean.class));
+		assertEquals(nb, json.parse("{\"named_property_aaa\":100}", NamedBean.class));
+		assertEquals(nb, json.parse("{\"Named Property Aaa\":100}", NamedBean.class));
 		
 		Map map1 = new LinkedHashMap() {
 			{
@@ -514,10 +513,10 @@ public class JSONTest {
 				});
 			}
 		};
-		assertEquals(map1, json.load("map: {string: string_aaa  \t \nint:100}\n list:[ string, 100]").get());
-		assertEquals(map1, json.load("map {string: string_aaa  \t \nint:100}\n list:[ string\n 100]").get());
-		assertEquals(map1, json.load("\"map\" {string: string_aaa  \t \nint:100}\n list:[ string\n 100]").get());
-		assertEquals(map1, json.load("'map' {string: string_aaa  \t \nint:100}\n list:[ string\n 100]").get());
+		assertEquals(map1, json.parse("map: {string: string_aaa  \t \nint:100}\n list:[ string, 100]"));
+		assertEquals(map1, json.parse("map {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		assertEquals(map1, json.parse("\"map\" {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
+		assertEquals(map1, json.parse("'map' {string: string_aaa  \t \nint:100}\n list:[ string\n 100]"));
 
 		Map map2 = new LinkedHashMap() {
 			{
@@ -541,33 +540,34 @@ public class JSONTest {
 		
 		Map map4 = new LinkedHashMap();
 		
-		json = new JSON(1);
-		assertEquals(map4, json.load("{'1': '1'}").get());
+		json.setMaxDepth(1);
+		assertEquals(map4, json.parse("{'1': '1'}"));
 
-		json = new JSON(2);
+		json.setMaxDepth(2);
 		map4.put("1", "1");
-		assertEquals(map4, json.load("{'1': '1'}").get());
+		assertEquals(map4, json.parse("{'1': '1'}"));
 		
 		List map4_2 = new ArrayList();
 		map4.put("2", map4_2);
-		assertEquals(map4, json.load("{'1': '1', '2': ['2']}").get());
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2']}"));
 		
-		json = new JSON(3);
+		json.setMaxDepth(3);
 		map4_2.add("2");
-		assertEquals(map4, json.load("{'1': '1', '2': ['2']}").get());
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2']}"));
 		
 		Map map4_3 = new LinkedHashMap();
 		List map4_3_1 = new ArrayList();
 		map4_3.put("3_1", map4_3_1);
 		map4.put("3", map4_3);
-		assertEquals(map4, json.load("{'1': '1', '2': ['2'], '3': {'3_1': ['3']}}").get());
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2'], '3': {'3_1': ['3']}}"));
 
-		json = new JSON(4);
+		json.setMaxDepth(4);
 		map4_3_1.add("3");
-		assertEquals(map4, json.load("{'1': '1', '2': ['2'], '3': {'3_1': ['3']}}").get());
+		assertEquals(map4, json.parse("{'1': '1', '2': ['2'], '3': {'3_1': ['3']}}"));
 		
-		json = new JSON(32);
-		assertEquals(map2, json.load("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]").get());
+		json.setMaxDepth(32);
+		assertEquals(map2, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
+		//assertEquals(map, json.parse("emap:{}\n\n map: {string: \n int:}, elist:[]\nlist: [,string, ]"));
 		
 		Map map3 = new LinkedHashMap() {
 			{
@@ -580,8 +580,8 @@ public class JSONTest {
 				});
 			}
 		};
-		assertEquals(map3, json.load("# database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
-				+ " xxxx // you need to replace your password.\n}\n/* {\"database\": {\"description\": \"ms sql server\", \"user\": \"sa\", \"password\": \"xxxx\"}} */\n").get());
+		assertEquals(map3, json.parse("# database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
+				+ " xxxx // you need to replace your password.\n}\n/* {\"database\": {\"description\": \"ms sql server\", \"user\": \"sa\", \"password\": \"xxxx\"}} */\n"));
 
 		InheritedBean ibean = new InheritedBean();
 		ibean.map0 = new LinkedHashMap();
@@ -596,22 +596,22 @@ public class JSONTest {
 		ibean.list1.add(new BigDecimal("14"));
 		ibean.list2 = new SuperArrayList();
 		ibean.list2.add(new BigDecimal("15"));
-		assertEquals(ibean, json.load("{map0:{'10':10},map1:{'11':11},map2:{'12':12},list0:[13],list1:[14],list2:[15]}").get(InheritedBean.class));
+		assertEquals(ibean, json.parse("{map0:{'10':10},map1:{'11':11},map2:{'12':12},list0:[13],list1:[14],list2:[15]}", InheritedBean.class));
 		
 		List list2 = new ArrayList();
 		list2.add("あいうえお");
 		
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-8.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-16BE.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-16LE.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-32BE.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-32LE.json")).get());
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE.json")));
 		
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-8_BOM.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-16BE_BOM.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-16LE_BOM.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-32BE_BOM.json")).get());
-		assertEquals(list2, json.load(this.getClass().getResourceAsStream("UTF-32LE_BOM.json")).get());
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE_BOM.json")));
+		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE_BOM.json")));
 	}
 
 	@Test
@@ -620,37 +620,37 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		// boolean
-		assertEquals(Boolean.TRUE, json.set(100).get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set(0).get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set("f").get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set("off").get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set("no").get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set("NaN").get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set("false").get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set("").get(boolean.class));
-		assertEquals(Boolean.FALSE, json.set(null).get(boolean.class));
+		assertEquals(Boolean.TRUE, json.convert(100, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(0, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("f", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("off", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("no", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("NaN", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("false", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("", boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(null, boolean.class));
 		
 		// Boolean
-		assertEquals(Boolean.TRUE, json.set(100).get(Boolean.class));
-		assertEquals(Boolean.FALSE, json.set(0).get(Boolean.class));
-		assertEquals(Boolean.FALSE, json.set("off").get(Boolean.class));
-		assertEquals(Boolean.FALSE, json.set("no").get(Boolean.class));
-		assertEquals(Boolean.FALSE, json.set("NaN").get(Boolean.class));
-		assertEquals(Boolean.FALSE, json.set("false").get(Boolean.class));
-		assertEquals(Boolean.FALSE, json.set("").get(Boolean.class));
-		assertNull(json.set(null).get(Boolean.class));
+		assertEquals(Boolean.TRUE, json.convert(100, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(0, Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("off", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("no", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("NaN", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("false", Boolean.class));
+		assertEquals(Boolean.FALSE, json.convert("", Boolean.class));
+		assertNull(json.convert(null, Boolean.class));
 		
 		// byte
-		assertEquals((byte)0, json.set(null).get(byte.class));
-		assertEquals((byte)0, json.set("0").get(byte.class));
-		assertEquals((byte)0, json.set("+0").get(byte.class));
-		assertEquals((byte)0, json.set("-0").get(byte.class));
-		assertEquals((byte)5, json.set(new BigDecimal("5")).get(byte.class));
-		assertEquals((byte)5, json.set(new BigDecimal("5.00")).get(byte.class));
-		assertEquals((byte)0xFF, json.set("0xFF").get(byte.class));
-		assertEquals((byte)0xFF, json.set("+0xFF").get(byte.class));
+		assertEquals((byte)0, json.convert(null, byte.class));
+		assertEquals((byte)0, json.convert("0", byte.class));
+		assertEquals((byte)0, json.convert("+0", byte.class));
+		assertEquals((byte)0, json.convert("-0", byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5"), byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5.00"), byte.class));
+		assertEquals((byte)0xFF, json.convert("0xFF", byte.class));
+		assertEquals((byte)0xFF, json.convert("+0xFF", byte.class));
 		try {
-			json.set(new BigDecimal("5.01")).get(byte.class);
+			json.convert(new BigDecimal("5.01"), byte.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -658,16 +658,16 @@ public class JSONTest {
 		}
 		
 		// Byte
-		assertEquals(null, json.set(null).get(Byte.class));
-		assertEquals((byte)0, json.set("0").get(Byte.class));
-		assertEquals((byte)0, json.set("+0").get(Byte.class));
-		assertEquals((byte)0, json.set("-0").get(Byte.class));
-		assertEquals((byte)5, json.set(new BigDecimal("5")).get(Byte.class));
-		assertEquals((byte)5, json.set(new BigDecimal("5.00")).get(Byte.class));
-		assertEquals((byte)0xFF, json.set("0xFF").get(Byte.class));
-		assertEquals((byte)0xFF, json.set("+0xFF").get(Byte.class));
+		assertEquals(null, json.convert(null, Byte.class));
+		assertEquals((byte)0, json.convert("0", Byte.class));
+		assertEquals((byte)0, json.convert("+0", Byte.class));
+		assertEquals((byte)0, json.convert("-0", Byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5"), Byte.class));
+		assertEquals((byte)5, json.convert(new BigDecimal("5.00"), Byte.class));
+		assertEquals((byte)0xFF, json.convert("0xFF", Byte.class));
+		assertEquals((byte)0xFF, json.convert("+0xFF", Byte.class));
 		try {
-			json.set(new BigDecimal("5.01")).get(Byte.class);
+			json.convert(new BigDecimal("5.01"), Byte.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -675,18 +675,18 @@ public class JSONTest {
 		}
 		
 		// short
-		assertEquals((short)0, json.set(null).get(short.class));
-		assertEquals((short)0, json.set("0").get(short.class));
-		assertEquals((short)0, json.set("+0").get(short.class));
-		assertEquals((short)0, json.set("-0").get(short.class));
-		assertEquals((short)100, json.set(new BigDecimal("100")).get(short.class));
-		assertEquals((short)100, json.set(new BigDecimal("100.00")).get(short.class));
-		assertEquals((short)100, json.set("100").get(short.class));
-		assertEquals((short)100, json.set("+100").get(short.class));
-		assertEquals((short)0xFF, json.set("0xFF").get(short.class));
-		assertEquals((short)0xFF, json.set("+0xFF").get(short.class));
+		assertEquals((short)0, json.convert(null, short.class));
+		assertEquals((short)0, json.convert("0", short.class));
+		assertEquals((short)0, json.convert("+0", short.class));
+		assertEquals((short)0, json.convert("-0", short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100"), short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100.00"), short.class));
+		assertEquals((short)100, json.convert("100", short.class));
+		assertEquals((short)100, json.convert("+100", short.class));
+		assertEquals((short)0xFF, json.convert("0xFF", short.class));
+		assertEquals((short)0xFF, json.convert("+0xFF", short.class));
 		try {
-			json.set(new BigDecimal("100.01")).get(short.class);
+			json.convert(new BigDecimal("100.01"), short.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -694,18 +694,18 @@ public class JSONTest {
 		}
 		
 		// Short
-		assertEquals(null, json.set(null).get(Short.class));
-		assertEquals((short)0, json.set("0").get(Short.class));
-		assertEquals((short)0, json.set("+0").get(Short.class));
-		assertEquals((short)0, json.set("-0").get(Short.class));
-		assertEquals((short)100, json.set(new BigDecimal("100")).get(Short.class));
-		assertEquals((short)100, json.set(new BigDecimal("100.00")).get(Short.class));
-		assertEquals((short)100, json.set("100").get(Short.class));
-		assertEquals((short)100, json.set("+100").get(Short.class));
-		assertEquals((short)0xFF, json.set("0xFF").get(Short.class));
-		assertEquals((short)0xFF, json.set("+0xFF").get(Short.class));
+		assertEquals(null, json.convert(null, Short.class));
+		assertEquals((short)0, json.convert("0", Short.class));
+		assertEquals((short)0, json.convert("+0", Short.class));
+		assertEquals((short)0, json.convert("-0", Short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100"), Short.class));
+		assertEquals((short)100, json.convert(new BigDecimal("100.00"), Short.class));
+		assertEquals((short)100, json.convert("100", Short.class));
+		assertEquals((short)100, json.convert("+100", Short.class));
+		assertEquals((short)0xFF, json.convert("0xFF", Short.class));
+		assertEquals((short)0xFF, json.convert("+0xFF", Short.class));
 		try {
-			json.set(new BigDecimal("100.01")).get(Short.class);
+			json.convert(new BigDecimal("100.01"), Short.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -713,18 +713,18 @@ public class JSONTest {
 		}
 		
 		// int
-		assertEquals(0, json.set(null).get(int.class));
-		assertEquals(0, json.set("0").get(int.class));
-		assertEquals(0, json.set("+0").get(int.class));
-		assertEquals(0, json.set("-0").get(int.class));
-		assertEquals(100, json.set(new BigDecimal("100")).get(int.class));
-		assertEquals(100, json.set(new BigDecimal("100.00")).get(int.class));
-		assertEquals(100, json.set("100").get(int.class));
-		assertEquals(100, json.set("+100").get(int.class));
-		assertEquals(0xFF, json.set("0xFF").get(int.class));
-		assertEquals(0xFF, json.set("+0xFF").get(int.class));
+		assertEquals(0, json.convert(null, int.class));
+		assertEquals(0, json.convert("0", int.class));
+		assertEquals(0, json.convert("+0", int.class));
+		assertEquals(0, json.convert("-0", int.class));
+		assertEquals(100, json.convert(new BigDecimal("100"), int.class));
+		assertEquals(100, json.convert(new BigDecimal("100.00"), int.class));
+		assertEquals(100, json.convert("100", int.class));
+		assertEquals(100, json.convert("+100", int.class));
+		assertEquals(0xFF, json.convert("0xFF", int.class));
+		assertEquals(0xFF, json.convert("+0xFF", int.class));
 		try {
-			json.set(new BigDecimal("100.01")).get(int.class);
+			json.convert(new BigDecimal("100.01"), int.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -732,18 +732,18 @@ public class JSONTest {
 		}
 		
 		// Integer
-		assertEquals(null, json.set(null).get(Integer.class));
-		assertEquals(0, json.set("0").get(Integer.class));
-		assertEquals(0, json.set("+0").get(Integer.class));
-		assertEquals(0, json.set("-0").get(Integer.class));
-		assertEquals(100, json.set(new BigDecimal("100")).get(Integer.class));
-		assertEquals(100, json.set(new BigDecimal("100.00")).get(Integer.class));
-		assertEquals(100, json.set("100").get(Integer.class));
-		assertEquals(100, json.set("+100").get(Integer.class));
-		assertEquals(0xFF, json.set("0xFF").get(Integer.class));
-		assertEquals(0xFF, json.set("+0xFF").get(Integer.class));
+		assertEquals(null, json.convert(null, Integer.class));
+		assertEquals(0, json.convert("0", Integer.class));
+		assertEquals(0, json.convert("+0", Integer.class));
+		assertEquals(0, json.convert("-0", Integer.class));
+		assertEquals(100, json.convert(new BigDecimal("100"), Integer.class));
+		assertEquals(100, json.convert(new BigDecimal("100.00"), Integer.class));
+		assertEquals(100, json.convert("100", Integer.class));
+		assertEquals(100, json.convert("+100", Integer.class));
+		assertEquals(0xFF, json.convert("0xFF", Integer.class));
+		assertEquals(0xFF, json.convert("+0xFF", Integer.class));
 		try {
-			json.set(new BigDecimal("100.01")).get(Integer.class);
+			json.convert(new BigDecimal("100.01"), Integer.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -751,18 +751,18 @@ public class JSONTest {
 		}
 		
 		// long
-		assertEquals(0l, json.set(null).get(long.class));
-		assertEquals(0l, json.set("0").get(long.class));
-		assertEquals(0l, json.set("+0").get(long.class));
-		assertEquals(0l, json.set("-0").get(long.class));
-		assertEquals(100l, json.set(new BigDecimal("100")).get(long.class));
-		assertEquals(100l, json.set(new BigDecimal("100.00")).get(long.class));
-		assertEquals(100l, json.set("100").get(long.class));
-		assertEquals(100l, json.set("+100").get(long.class));
-		assertEquals((long)0xFF, json.set("0xFF").get(long.class));
-		assertEquals((long)0xFF, json.set("+0xFF").get(long.class));
+		assertEquals(0l, json.convert(null, long.class));
+		assertEquals(0l, json.convert("0", long.class));
+		assertEquals(0l, json.convert("+0", long.class));
+		assertEquals(0l, json.convert("-0", long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100"), long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100.00"), long.class));
+		assertEquals(100l, json.convert("100", long.class));
+		assertEquals(100l, json.convert("+100", long.class));
+		assertEquals((long)0xFF, json.convert("0xFF", long.class));
+		assertEquals((long)0xFF, json.convert("+0xFF", long.class));
 		try {
-			json.set(new BigDecimal("100.01")).get(long.class);
+			json.convert(new BigDecimal("100.01"), long.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -770,18 +770,18 @@ public class JSONTest {
 		}
 		
 		// Long
-		assertEquals(null, json.set(null).get(Long.class));
-		assertEquals(0l, json.set("0").get(Long.class));
-		assertEquals(0l, json.set("+0").get(Long.class));
-		assertEquals(0l, json.set("-0").get(Long.class));
-		assertEquals(100l, json.set(new BigDecimal("100")).get(Long.class));
-		assertEquals(100l, json.set(new BigDecimal("100.00")).get(Long.class));
-		assertEquals(100l, json.set("100").get(Long.class));
-		assertEquals(100l, json.set("+100").get(Long.class));
-		assertEquals((long)0xFF, json.set("0xFF").get(Long.class));
-		assertEquals((long)0xFF, json.set("+0xFF").get(Long.class));
+		assertEquals(null, json.convert(null, Long.class));
+		assertEquals(0l, json.convert("0", Long.class));
+		assertEquals(0l, json.convert("+0", Long.class));
+		assertEquals(0l, json.convert("-0", Long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100"), Long.class));
+		assertEquals(100l, json.convert(new BigDecimal("100.00"), Long.class));
+		assertEquals(100l, json.convert("100", Long.class));
+		assertEquals(100l, json.convert("+100", Long.class));
+		assertEquals((long)0xFF, json.convert("0xFF", Long.class));
+		assertEquals((long)0xFF, json.convert("+0xFF", Long.class));
 		try {
-			json.set(new BigDecimal("100.01")).get(Long.class);
+			json.convert(new BigDecimal("100.01"), Long.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -789,15 +789,15 @@ public class JSONTest {
 		}
 		
 		// BigInteger
-		assertEquals(null, json.set(null).get(BigInteger.class));
-		assertEquals(new BigInteger("100"), json.set(new BigDecimal("100")).get(BigInteger.class));
-		assertEquals(new BigInteger("100"), json.set(new BigDecimal("100.00")).get(BigInteger.class));
-		assertEquals(new BigInteger("100"), json.set("100").get(BigInteger.class));
-		assertEquals(new BigInteger("100"), json.set("+100").get(BigInteger.class));
-		assertEquals(new BigInteger("FF", 16), json.set("0xFF").get(BigInteger.class));
-		assertEquals(new BigInteger("FF", 16), json.set("+0xFF").get(BigInteger.class));
+		assertEquals(null, json.convert(null, BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert(new BigDecimal("100"), BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert(new BigDecimal("100.00"), BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert("100", BigInteger.class));
+		assertEquals(new BigInteger("100"), json.convert("+100", BigInteger.class));
+		assertEquals(new BigInteger("FF", 16), json.convert("0xFF", BigInteger.class));
+		assertEquals(new BigInteger("FF", 16), json.convert("+0xFF", BigInteger.class));
 		try {
-			json.set(new BigDecimal("100.01")).get(BigInteger.class);
+			json.convert(new BigDecimal("100.01"), BigInteger.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -805,12 +805,12 @@ public class JSONTest {
 		}
 		
 		// BigDecimal
-		assertEquals(null, json.set(null).get(BigDecimal.class));
-		assertEquals(new BigDecimal("100"), json.set(new BigDecimal("100")).get(BigDecimal.class));
-		assertEquals(new BigDecimal("100"), json.set(new BigDecimal("100.00")).get(BigDecimal.class));
-		assertEquals(new BigDecimal("100"), json.set("100").get(BigDecimal.class));
-		assertEquals(new BigDecimal("100"), json.set("+100").get(BigDecimal.class));
-		assertEquals(new BigDecimal("100.01"), json.set("100.01").get(BigDecimal.class));
+		assertEquals(null, json.convert(null, BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100"), BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100.00"), BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert("100", BigDecimal.class));
+		assertEquals(new BigDecimal("100"), json.convert("+100", BigDecimal.class));
+		assertEquals(new BigDecimal("100.01"), json.convert("100.01", BigDecimal.class));
 		
 		// Date
 		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convertChild('$', "1", Date.class, Date.class));
@@ -892,18 +892,18 @@ public class JSONTest {
 		}
 		
 		// URI
-		assertEquals(new URI("http://www.google.co.jp"), json.set("http://www.google.co.jp").get(URI.class));
-		assertEquals(new URI("/aaa/bbb.json"), json.set("/aaa/bbb.json").get(URI.class));
+		assertEquals(new URI("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URI.class));
+		assertEquals(new URI("/aaa/bbb.json"), json.convert("/aaa/bbb.json", URI.class));
 		
 		// URL
-		assertEquals(new URL("http://www.google.co.jp"), json.set("http://www.google.co.jp").get(URL.class));
+		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));
 		
 		// InetAddress
-		assertEquals(InetAddress.getByName("localhost"), json.set("localhost").get(InetAddress.class));
-		assertEquals(InetAddress.getByName("127.0.0.1"), json.set("127.0.0.1").get(InetAddress.class));
+		assertEquals(InetAddress.getByName("localhost"), json.convert("localhost", InetAddress.class));
+		assertEquals(InetAddress.getByName("127.0.0.1"), json.convert("127.0.0.1", InetAddress.class));
 		
 		// Charset
-		assertEquals(Charset.forName("UTF-8"), json.set("UTF-8").get(Charset.class));		
+		assertEquals(Charset.forName("UTF-8"), json.convert("UTF-8", Charset.class));		
 		
 		// object
 		try {
@@ -933,7 +933,7 @@ public class JSONTest {
 			byte[][] input = new byte[1][i];
 			rand.nextBytes(input[0]);
 			
-			byte[][] output = (byte[][])json.load(json.set(input).toString()).get(byte[][].class);
+			byte[][] output = (byte[][])json.parse(json.format(input), byte[][].class);
 			assertEquals(toHexString(input[0]), toHexString(output[0]));
 		}
 	}
@@ -962,11 +962,11 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		long start = System.currentTimeMillis();
-		json.load(this.getClass().getResourceAsStream("KEN_ALL.json"));
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL.json"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
-		json.load(this.getClass().getResourceAsStream("KEN_ALL.json")).get(String[][].class);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL.json"), String[][].class);
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 	}
 	
@@ -1030,14 +1030,14 @@ public class JSONTest {
 		assertEquals(listB, JSON.decode(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
 		
 		JSON json = new JSON();
-		assertEquals(listA, json.load("[1,2,3,4,5]").get(this.getClass().getField("tx").getType()));
-		assertEquals(listB, json.load("[1,2,3,4,5]").get(this.getClass().getField("tx").getGenericType()));
+		assertEquals(listA, json.parse("[1,2,3,4,5]", this.getClass().getField("tx").getType()));
+		assertEquals(listB, json.parse("[1,2,3,4,5]", this.getClass().getField("tx").getGenericType()));
 
-		assertEquals(listA, json.load(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8"))).get(this.getClass().getField("tx").getType()));
-		assertEquals(listB, json.load(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8"))).get(this.getClass().getField("tx").getGenericType()));
+		assertEquals(listA, json.parse(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getType()));
+		assertEquals(listB, json.parse(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getGenericType()));
 
-		assertEquals(listA, json.load(new StringReader("[1,2,3,4,5]")).get(this.getClass().getField("tx").getType()));
-		assertEquals(listB, json.load(new StringReader("[1,2,3,4,5]")).get(this.getClass().getField("tx").getGenericType()));
+		assertEquals(listA, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
+		assertEquals(listB, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
 	}
 }
 
@@ -1091,7 +1091,7 @@ class TestBean {
 		result = prime * result + ((d == null) ? 0 : d.hashCode());
 		result = prime * result + ((e == null) ? 0 : e.hashCode());
 		result = prime * result + ((f == null) ? 0 : f.hashCode());
-		result = prime * result + ((g == null) ? 0 : g.hashCode());
+		result = prime * result + ((g == null) ? 0 : g.pattern().hashCode());
 		result = prime * result + ((h == null) ? 0 : h.hashCode());
 		result = prime * result + ((if_ == null) ? 0 : if_.hashCode());
 		result = prime * result + x;
@@ -1161,6 +1161,7 @@ class TestBean {
 			return false;
 		return true;
 	}
+	
 	public String toString() {
 		return JSON.encode(this);
 	}

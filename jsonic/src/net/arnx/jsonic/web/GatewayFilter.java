@@ -70,14 +70,14 @@ public class GatewayFilter implements Filter {
 		String configText = filterConfig.getInitParameter("config");
 		if (configText == null) configText = "";
 
-		Map map = json.load(configText).get(Map.class);
+		Map map = (Map)json.parse(configText, Map.class);
 		
 		Map<String, Object> baseMap = new LinkedHashMap<String, Object>();
 		for (Field field : Config.class.getFields()) {
 			baseMap.put(field.getName(), map.get(field.getName()));
 		}
 		
-		Config base = (Config)json.set(baseMap).get(Config.class);
+		Config base = (Config)json.convert(baseMap, Config.class);
 		for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
 			if (!baseMap.containsKey(entry.getKey()) && entry.getValue() instanceof Map) {
 				Map valueMap = (Map)entry.getValue();
@@ -87,7 +87,7 @@ public class GatewayFilter implements Filter {
 					}
 				}
 				
-				Config config = (Config)json.set(valueMap).get(Config.class);
+				Config config = (Config)json.convert(valueMap, Config.class);
 				locations.put(Pattern.compile("^" + entry.getKey() + "$"), config);
 			}
 		}
