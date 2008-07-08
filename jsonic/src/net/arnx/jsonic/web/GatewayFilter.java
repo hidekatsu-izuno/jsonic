@@ -69,8 +69,9 @@ public class GatewayFilter implements Filter {
 
 		String configText = filterConfig.getInitParameter("config");
 		if (configText == null) configText = "";
-
-		Map map = (Map)json.parse(configText, Map.class);
+		
+		json.setDestinationType(Map.class);
+		Map map = (Map)json.parse(configText);
 		
 		Map<String, Object> baseMap = new LinkedHashMap<String, Object>();
 		for (Field field : Config.class.getFields()) {

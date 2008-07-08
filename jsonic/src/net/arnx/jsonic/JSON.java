@@ -215,7 +215,9 @@ public class JSON {
 	 */
 	public static Appendable encode(Object source, Appendable appendable, boolean prettyPrint) {
 		try {
-			JSON.newInstance().format(source, appendable, prettyPrint);
+			JSON json = JSON.newInstance();
+			json.setPrettyPrint(true);
+			json.format(source, appendable);
 		} catch (Exception e) {
 			JSON.<RuntimeException>throwException(e);
 		}
@@ -243,7 +245,9 @@ public class JSON {
 	 */
 	public static OutputStream encode(Object source, OutputStream out, boolean prettyPrint) {
 		try {
-			JSON.newInstance().format(source, new OutputStreamWriter(out, "UTF-8"), prettyPrint);
+			JSON json = JSON.newInstance();
+			json.setPrettyPrint(true);
+			json.format(source, out);
 		} catch (Exception e) {
 			JSON.<RuntimeException>throwException(e);
 		}
@@ -284,7 +288,9 @@ public class JSON {
 	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
 	 */
 	public static Object decode(String source, Type type) {
-		return JSON.newInstance().parse(source, type);
+		JSON json = JSON.newInstance();
+		json.setDestinationType(type);
+		return json.parse(source);
 	}
 
 	/**
@@ -324,7 +330,9 @@ public class JSON {
 	public static Object decode(InputStream in, Type type) {
 		Object value = null;
 		try {
-			value = JSON.newInstance().parse(in, type);
+			JSON json = JSON.newInstance();
+			json.setDestinationType(type);
+			value = json.parse(in);
 		} catch (Exception e) {
 			JSON.<RuntimeException>throwException(e);
 		}
@@ -368,7 +376,9 @@ public class JSON {
 	public static Object decode(Reader reader, Type type) {
 		Object value = null;
 		try {
-			value = JSON.newInstance().parse(reader, type);
+			JSON json = JSON.newInstance();
+			json.setDestinationType(type);
+			value = json.parse(reader);
 		} catch (Exception e) {
 			JSON.<RuntimeException>throwException(e);
 		}
@@ -378,7 +388,9 @@ public class JSON {
 	private int maxDepth;
 	private Object context;
 	private Locale locale;
-
+	private boolean prettyPrint;
+	private Type destinationType;
+	
 	private transient Class<?> scope = null;
 	
 	public JSON() {
@@ -403,14 +415,27 @@ public class JSON {
 		}
 	}
 	
-	public String format(Object source, boolean prettyPrint) {
+	public void setPrettyPrint(boolean prettyPrint) {
+		this.prettyPrint = prettyPrint;
+	}
+	
+	public void setDestinationType(Type destinationType) {
+		this.destinationType = destinationType;
+	}
+	
+	public String format(Object source) {
 		Appendable appendable = new StringBuilder(1000);
 		try {
-			format(source, appendable, prettyPrint).toString();
+			format(source, appendable).toString();
 		} catch (IOException e) {
 			// never occured
 		}
 		return appendable.toString();
+	}
+	
+	public OutputStream format(Object source, OutputStream out) throws IOException {
+		format(source, new OutputStreamWriter(out, "UTF-8"));
+		return out;
 	}
 	
 	/**
@@ -421,12 +446,12 @@ public class JSON {
 	 * @param prettyPrint output a json string with indent, space or break.
 	 * @return a json string
 	 */
-	public Appendable format(Object source, Appendable ap, boolean prettyPrint) throws IOException {
+	public Appendable format(Object source, Appendable ap) throws IOException {
 		if (context != null) scope = context.getClass();
 		if (scope == null) scope = source.getClass().getEnclosingClass();
 		if (scope == null) scope = source.getClass();
 		try {
-			ap = format(source, ap, prettyPrint, 0);
+			ap = format(source, ap, 0);
 		} finally {
 			scope = null;
 		}
@@ -434,56 +459,26 @@ public class JSON {
 	}
 	
 	public Object parse(CharSequence cs) {
-		return parse(cs, null);
-	}
-	
-	public <T> T parse(CharSequence cs, Class<? extends T> cls) {
-		return (T)parse(cs, cls);
-	}
-	
-	public Object parse(CharSequence cs, Type type) {
-		if (type == null) type = Object.class;
-		
 		Object value = null;
 		try {
 			value = parse(new CharSequenceParserSource(cs));
 		} catch (IOException e) {
 			// never occure
 		}
-		return (type == Object.class) ? value : convert(value, type);
+		return (destinationType == null) ? value : convert(value, destinationType);
 	}
 	
 	public Object parse(InputStream in) throws IOException {
-		return parse(in, null);
-	}
-	
-	public <T> T parse(InputStream in, Class<? extends T> cls) throws IOException {
-		return (T)parse(in, (Type)cls);
-	}
-	
-	public Object parse(InputStream in, Type type) throws IOException {
-		if (type == null) type = Object.class;
-		
 		Object value = parse(new ReaderParserSource(in));
-		return (type == Object.class) ? value : convert(value, type); 
+		return (destinationType == null) ? value : convert(value, destinationType);
 	}
 	
 	public Object parse(Reader reader) throws IOException {
-		return parse(reader, null);
-	}
-	
-	public <T> T parse(Reader reader, Class<? extends T> cls)  throws IOException {
-		return (T)parse(reader, (Type)cls);
-	}
-	
-	public Object parse(Reader reader, Type type) throws IOException {
-		if (type == null) type = Object.class;
-		
 		Object value = parse(new ReaderParserSource(reader));
-		return (type == Object.class) ? value : convert(value, type);
+		return (destinationType == null) ? value : convert(value, destinationType);
 	}
 	
-	public final Object convert(Object value, Type type) {
+	public Object convert(Object value, Type type) {
 		Class<?> cls = getRawType(type);
 		if (context != null) scope = context.getClass();
 		if (scope == null) scope = cls.getEnclosingClass();
@@ -497,8 +492,8 @@ public class JSON {
 		return result;
 	}
 	
-	private Appendable format(Object o, Appendable ap, boolean prettyPrint, int level) throws IOException {
-		if (level > this.maxDepth) {
+	private Appendable format(Object o, Appendable ap, int level) throws IOException {
+		if (level > maxDepth) {
 			o = null;
 		}
 		
@@ -680,7 +675,7 @@ public class JSON {
 					for (int j = 0; j < level+1; j++) ap.append('\t');
 				}
 				if (item == o) item = null;
-				format(item, ap, prettyPrint, level+1);
+				format(item, ap, level+1);
 				if (i.hasNext()) ap.append(',');
 			}
 			if (prettyPrint && !isEmpty) {
@@ -699,7 +694,7 @@ public class JSON {
 					for (int j = 0; j < level+1; j++) ap.append('\t');
 				}
 				if (item == o) item = null;
-				format(item, ap, prettyPrint, level+1);
+				format(item, ap, level+1);
 				if (e.hasMoreElements()) ap.append(',');
 			}
 			if (prettyPrint && !isEmpty) {
@@ -743,7 +738,7 @@ public class JSON {
 				}
 				formatString(entry.getKey().toString(), ap).append(':');
 				if (prettyPrint) ap.append(' ');
-				format(entry.getValue(), ap, prettyPrint, level+1);
+				format(entry.getValue(), ap, level+1);
 				if (i.hasNext()) ap.append(',');
 			}
 			if (prettyPrint && !map.isEmpty()) {

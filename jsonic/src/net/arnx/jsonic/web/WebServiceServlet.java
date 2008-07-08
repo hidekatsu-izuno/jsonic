@@ -79,10 +79,12 @@ public class WebServiceServlet extends HttpServlet {
 		JSON json = new JSON();
 		
 		try {
-			config = (Config)json.parse(configText, Config.class);
+			json.setDestinationType(Config.class);
+			config = (Config)json.parse(configText);
 			if (config.container == null) config.container = Container.class;
-
-			container = (Container)json.parse(configText, config.container);
+			
+			json.setDestinationType(config.container);
+			container = (Container)json.parse(configText);
 			container.init(getServletContext());
 		} catch (Exception e) {
 			throw new ServletException(e);
@@ -248,8 +250,9 @@ public class WebServiceServlet extends HttpServlet {
 		int errorCode = 0;
 		String errorMessage = null;
 		
-		try {			
-			req = (RpcRequest)json.parse(request.getReader(), RpcRequest.class);
+		try {
+			json.setDestinationType(RpcRequest.class);
+			req = (RpcRequest)json.parse(request.getReader());
 			if (req == null || req.method == null || req.params == null) {
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
@@ -326,10 +329,11 @@ public class WebServiceServlet extends HttpServlet {
 		res.put("id", (req != null) ? req.id : null);
 
 		Writer writer = response.getWriter();
-
+		
+		json.setPrettyPrint(container.isDebugMode());
 		try {
 			json.setContext(result);
-			json.format(res, writer, container.isDebugMode());
+			json.format(res, writer);
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			res.clear();
@@ -339,7 +343,7 @@ public class WebServiceServlet extends HttpServlet {
 			error.put("message", "Internal error.");
 			res.put("error", error);
 			res.put("id", (req != null) ? req.id : null);
-			json.format(res, writer, container.isDebugMode());
+			json.format(res, writer);
 			return;
 		}
 	}
@@ -383,7 +387,7 @@ public class WebServiceServlet extends HttpServlet {
 				contents.putAll(route);
 				params.add(contents);
 			} else {
-				Object o = json.parse(request.getReader(), null);
+				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
 					params = (List)o;
 					Map<String, Object> contents = getParameterMap(request);
@@ -448,8 +452,9 @@ public class WebServiceServlet extends HttpServlet {
 			
 				Writer writer = response.getWriter();
 				
+				json.setPrettyPrint(container.isDebugMode());
 				if (callback != null) writer.append(callback).append("(");
-				json.format(res, writer, container.isDebugMode());
+				json.format(res, writer);
 				if (callback != null) writer.append(");");
 			}
 		} catch (Exception e) {
