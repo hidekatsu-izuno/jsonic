@@ -42,15 +42,19 @@
 <ul>
 	<li><a href="#introduction">JSONICとは</a></li>
 	<li><a href="#download">ダウンロード</a></li>
-	<li><a href="#usage">使い方</a>
+	<li>使い方
 		<ul>
 			<li><a href="#usage_basic">基本的な使い方</a></li>
 			<li><a href="#usage_advanced">高度な使い方</a></li>
 			<li><a href="#webservice">Web Service Servlet</a></li>
 		</ul>
 	</li>
-	<li><a href="api/java/index.html">API Docs (JAVA)</a></li>
-	<li><a href="api/as3/index.html">API Docs (AS3)</a></li>
+	<li>APIドキュメント
+		<ul>
+			<li><a href="api/java/index.html">Java API</a></li>
+			<li><a href="api/as3/index.html">AS3 API</a></li>
+		</ul>
+	</li>
 	<li><a href="#license">ライセンス</a></li>
 	<li><a href="#releasenote">リリースノート</a></li>
 </ul>
@@ -75,12 +79,10 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 <p><a href="http://sourceforge.jp/projects/jsonic">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Javaバージョン5.0以上が必要です。</p>
 <script src="http://sourceforge.jp/projects/jsonic/files/compact.js" type="text/javascript" charset="utf-8"></script>
 
-<h2 id="usage">使い方</h2>
-
-<h3 id="usage_basic">基本的な使い方</h3>
+<h2 id="usage_basic">基本的な使い方</h2>
 
 <p>通常の用途では、二つの静的メソッドencode/decodeだけ利用すれば事足ります。</p>
-<h4>■ encodeメソッド <span class="subtitle">- POJOからJSONへの変換</span></h4>
+<h3>■ encodeメソッド <span class="subtitle">- POJOからJSONへの変換</span></h3>
 <p>POJOからJSONに変換する場合は、encodeを使います。デフォルトでは、空白などを含まない可読性の低いJSONが出力されますが、二番目の引数をtrueにすることで可読性の高いJSONが出力されるようになります（Pretty Printモード）。</p>
 <pre class="source">
 <span class="comment">// 変換対象のPOJOを準備</span>
@@ -98,8 +100,15 @@ String text = <span class="em">JSON.encode(</span>hoge<span class="em">)</span>;
 //     "string": "aaa",
 //     "array": [1, 2, 3]
 // }</span>
-String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>; 
+String text = <span class="em">JSON.encode(</span>hoge<span class="em">,</span> true<span class="em">)</span>;
+
+<span class="comment">// Appendable(StringBuffer, Writerなど)やOutputStreamを出力先にすることもできます<sup>(※4)</sup></span>
+<span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileWriter("hoge.txt")<span class="em">)</span>;
+<span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileOutputStream("hoge.txt")<span class="em">)</span>;
 </pre>
+<div class="caption">(※4) OutputStreamを指定した場合に出力される文字コードはUTF-8固定となります。
+また、close処理は自動では行われませんので必要に応じて別途行う必要があります。</div>
+
 <p>POJOからJSONへの変換ルールは次の通りです。</p>
 <table class="table" summary="POJOからJSONへの変換ルール">
 <tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
@@ -128,16 +137,23 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
 <p>なお、JSONはobjectかarrayで始まる必要があるため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合エラーとなります。</p>
 
-<h4>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h4>
+<h3>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h3>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
-<p>なお、JSON文字列が不正な場合にはJSONParseExceptionを投げ、型の変換に失敗した場合はJSONConvertExceptionを投げます（変換に失敗した際の動作を変更したい場合には、handleConversionFailureをオーバーライドします）。</p>
+<p>なお、JSON文字列が不正な場合にはJSONParseExceptionを投げ、型の変換に失敗した場合はJSONConvertExceptionを投げます。</p>
 <pre class="source">
 <span class="comment">// JSONをPOJOに変換します。戻り値としてサイズが4のArrayListが返されます</span>
 List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<span class="em">)</span>;
 
 <span class="comment">// JSONをHogeクラスのインスタンスに変換します（キャストは不要です）</span>
 Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1, 2, 3]}", Hoge.class<span class="em">)</span>;
+
+<span class="comment">// ReaderやInputStreamからJSONを読み込むことも可能です<sup>(※4)</sup></span>
+Hoge hoge = <span class="em">JSON.decode(</span>new FileReader("hoge.txt")<span class="em">,</span> Hoge.class<span class="em">)</span>;
+Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<span class="em">,</span> Hoge.class<span class="em">)</span>;
 </pre>
+<div class="caption">(※4) InputStreamから読み込む場合の文字コードは、UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別されます。
+また、close処理は自動では行われませんので必要に応じて別途行う必要があります。</div>
+
 <p>JSONからPOJOへの変換ルールは次の通りです。</p>
 <table class="table" summary="JSONからPOJOへの変換ルール">
 <tr><th style="width: 20%">変換元（JSON）</th><th style="width: 40%">指定された型</th><th style="width: 40%">変換先（Java）</th></tr>
@@ -192,11 +208,10 @@ staticやtransientのメソッド/フィールドは対象となりません。
 なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較し、次に末尾に「_」を付けて比較します（これは、予約語に対応するためです）。
 </div>
 
-<h3 id="usage_advanced">高度な使い方</h3>
+<h2 id="usage_advanced">高度な使い方</h3>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
 <li><a href="#extends">継承による機能拡張</a></li>
-<li><a href="#io">Reader/InputStreamによるparse</a></li>
 <li><a href="#generics">総称型を指定してのdecode/parse</a></li>
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="#innerclass">内部クラスを利用したエンコード/デコード</a></li>
@@ -204,8 +219,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 </ul>
 
-
-<h4 id="extends">■ 継承による機能拡張</h4>
+<h3 id="extends">■ 継承による機能拡張</h3>
 <p>JSONICは、フレームワークでの利用を考慮しインスタンスを生成したり、継承して拡張することができるように設計してあります。
 なお、インスタンスを生成して利用する場合は、encode/decodeメソッドの代わりにformat/parseメソッドを利用します。</p>
 <pre class="source">
@@ -223,7 +237,7 @@ String text = json<span class="em">.format(</span>new Hoge()<span class="em">)</
 Map map = (Map)json<span class="em">.parse(</span>text<span class="em">)</span>;
 
 <span class="comment">// JSONをHogeクラスのインスタンスに変換します(decodeと同じ機能)</span>
-Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">)</span>;
+Hoge hoge = json<span class="em">.parse(</span>text<span class="em">,</span> Hoge.class<span class="em">)</span>;
 </pre>
 
 <p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を追加するために次のようなオーバーライド可能なメソッドが用意されています。</p>
@@ -260,20 +274,7 @@ JSON json = new JSON() {
 };
 </pre>
 
-<h4 id="io">■ Reader/InputStreamによるparse</h4>
-<p>decode/parseメソッドの引数にjava.io.Readerやjava.io.InputStreamを指定してJSONデータを読み込むことができます。</p>
-<pre class="source">
-<span class="comment">// ReaderからのJSONの読み込み</span>
-Hoge hoge = JSON.<span class="em">parse(</span>new FileReader("sample.json"), Hoge.class<span class="em">)</span>;
-
-<span class="comment">// InputStreamからのJSONの読み込み（ファイルはUnicodeである必要があります<sup>(※4)</sup>）</span>
-Hoge hoge = JSON.<span class="em">parse(</span>new FileInputStream("sample.json"), Hoge.class<span class="em">)</span>;
-</pre>
-<div class="caption">
-(※4) UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別します。<br />
-</div>
-
-<h4 id="generics">■ 総称型を指定してのdecode/parse</h4>
+<h3 id="generics">■ 総称型を指定してのdecode/parse</h3>
 <p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
 <pre class="source">
 public class JSONConfigLoader {
@@ -294,7 +295,7 @@ public class JSONConfigLoader {
 }
 </pre>
 
-<h4 id="liberalparsing">■ 柔軟な読み込み <span class="subtitle">- 妥当でないJSONのデコード</span></h4>
+<h3 id="liberalparsing">■ 柔軟な読み込み <span class="subtitle">- 妥当でないJSONのデコード</span></h3>
 <p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、妥当でないJSONであっても読み込みが可能なように作成されています。<a 
 href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
 <ul>
@@ -323,7 +324,7 @@ database {
 */
 </pre>
 
-<h4 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h4>
+<h3 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h3>
 <p>JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
 JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一パッケージの内部クラスや無名クラスを自動的にアクセス可能に変更します。<br />
 ただし、この場合に生成された内部クラスのインスタンスには包含するクラスのインスタンスがセットされていない状態になります。内部クラスから包含するクラスのインスタンスにアクセスしたい場合や引数に指定したクラス以外のコンテキストで実行したい場合は、setContextを利用して明示的に指定してください。</p>
@@ -353,7 +354,7 @@ public class EnclosingClass {
 }
 </pre>
 
-<h4 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h4>
+<h3 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h3>
 <p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。
 しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため
 単純に入れ子の深さに制限を設けています。なお、最大深度の設定はdecode/parse時にも有効ですので深すぎるデータの取得も避けることが可能となります。</p>
@@ -363,7 +364,7 @@ public class EnclosingClass {
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
-<h4 id="xmltojson">■ XMLからJSONへの変換</h4>
+<h3 id="xmltojson">■ XMLからJSONへの変換</h3>
 <p>JSONICでは、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。
 方法は、通常と同じようにencode/formatの引数にorg.w3c.dom.Document/Elementのインスタンスを設定するだけです。</p>
 <pre class="source">
@@ -393,10 +394,10 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 }
 </pre>
 
-<h3 id="webservice">Web Service Servlet</h3>
+<h2 id="webservice">Web Service Servlet</h3>
 <p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
 
-<h4>■ 設定方法</h4>
+<h3>■ 設定方法</h3>
 <p>JSON Web Service Servletの設定は簡単です。web.xmlにWebServiceServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
 <pre class="source">
 <span class="elem">&lt;servlet&gt;</span>
@@ -442,7 +443,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
-<h4>■ RPCモード</h4>
+<h3>■ RPCモード</h3>
 <p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSON Web Service Servletでは、class変数の値が<code>"rpc"</code>であった場合、RPCモードとなります。</p>
 
 <p>RPCモードでは、対象のパスに対し次のようなJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
@@ -518,7 +519,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <div class="caption">(※6) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
 <div class="caption">(※7) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
-<h4>■ RESTモード</h4>
+<h3>■ RESTモード</h3>
 <p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※6)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※7)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
@@ -552,7 +553,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <div class="caption">(※8) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
 <div class="caption">(※9) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
-<h4>■ JSONP</h4>
+<h3>■ JSONP</h3>
 <p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
 <pre class="source">
 &lt;script type="text/javascript" &gt;
@@ -566,7 +567,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
 
-<h4>■ 初期化/Servletパラメータへのアクセス</h4>
+<h3>■ 初期化/Servletパラメータへのアクセス</h3>
 <p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※10)</sup>
 このとき引数にServletContext, HttpServletRequest, HttpServletResponse, HttpSessionを受け取れるように設定するとそれぞれのインスタンスが設定されます。<p>
 <pre class="source">
@@ -586,7 +587,7 @@ public class HogeService {
 </pre>
 <div class="caption">(※10) 呼び出されるメソッド名は設定で変更可能です。</div>
 
-<h4>■ DI Container対応</h4>
+<h3>■ DI Container対応</h3>
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
 
 <pre class="source">
@@ -609,7 +610,7 @@ public class HogeService {
 
 <p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>および<a href="http://www.springframework.org/">Spring Framework</a>に対応したContainerを標準添付しています。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 
-<h4>■ Gateway Filter</h4>
+<h3>■ Gateway Filter</h3>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
 <p>最初にマッチしたパスの設定が使われますが、そこで設定が行われなわれていない場合、ルートの設定が初期値として利用されます。パスには正規表現が利用できます。</p>
 <pre class="source">
@@ -668,16 +669,12 @@ public class HogeService {
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/07/01 version 1.0.1</h3>
+<h3>2008/07/01 version 1.1</h3>
 <ul>
-<li>JSON stringからEnum派生型へ変換時、頭一文字が数値の場合はint型とみなしEnum.ordinal()にて変換するよう変更しました。</li>
+<li>JSON stringからEnum派生型へ変換時、最初の文字が数値とみなせる場合は数値とみなしEnum型に変換できるようにしました。</li>
 <li>JSON true/falseからEnum派生型への変換に対応しました。</li>
 <li>JSON object中で値としてリテラル値が使われる場合、maxDepthの設定が使用されない問題を修正しました。</li>
-</ul>
-
-<h3>2008/05/15 version 1.0</h3>
-<ul>
-<li>Collectionだけでなく、Iterable, Iterator, EnumerationからJSON arrayへの変換に対応しました。</li>
+<li>OutputStreamによるencode/parse機能を追加しました。</li>
 </ul>
 </div>
 <div class="bar">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>

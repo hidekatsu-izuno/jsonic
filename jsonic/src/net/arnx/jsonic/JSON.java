@@ -289,7 +289,7 @@ public class JSON {
 	 */
 	public static Object decode(String source, Type type) {
 		JSON json = JSON.newInstance();
-		json.setDestinationType(type);
+		json.setReturnType(type);
 		return json.parse(source);
 	}
 
@@ -331,7 +331,7 @@ public class JSON {
 		Object value = null;
 		try {
 			JSON json = JSON.newInstance();
-			json.setDestinationType(type);
+			json.setReturnType(type);
 			value = json.parse(in);
 		} catch (Exception e) {
 			JSON.<RuntimeException>throwException(e);
@@ -377,7 +377,7 @@ public class JSON {
 		Object value = null;
 		try {
 			JSON json = JSON.newInstance();
-			json.setDestinationType(type);
+			json.setReturnType(type);
 			value = json.parse(reader);
 		} catch (Exception e) {
 			JSON.<RuntimeException>throwException(e);
@@ -389,7 +389,7 @@ public class JSON {
 	private Object context;
 	private Locale locale;
 	private boolean prettyPrint;
-	private Type destinationType;
+	private Type returnType;
 	
 	private transient Class<?> scope = null;
 	
@@ -419,8 +419,8 @@ public class JSON {
 		this.prettyPrint = prettyPrint;
 	}
 	
-	public void setDestinationType(Type destinationType) {
-		this.destinationType = destinationType;
+	public void setReturnType(Type returnType) {
+		this.returnType = returnType;
 	}
 	
 	public String format(Object source) {
@@ -465,17 +465,17 @@ public class JSON {
 		} catch (IOException e) {
 			// never occure
 		}
-		return (destinationType == null) ? value : convert(value, destinationType);
+		return (returnType == null) ? value : convert(value, returnType);
 	}
 	
 	public Object parse(InputStream in) throws IOException {
 		Object value = parse(new ReaderParserSource(in));
-		return (destinationType == null) ? value : convert(value, destinationType);
+		return (returnType == null) ? value : convert(value, returnType);
 	}
 	
 	public Object parse(Reader reader) throws IOException {
 		Object value = parse(new ReaderParserSource(reader));
-		return (destinationType == null) ? value : convert(value, destinationType);
+		return (returnType == null) ? value : convert(value, returnType);
 	}
 	
 	public Object convert(Object value, Type type) {

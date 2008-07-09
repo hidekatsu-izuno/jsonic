@@ -79,11 +79,11 @@ public class WebServiceServlet extends HttpServlet {
 		JSON json = new JSON();
 		
 		try {
-			json.setDestinationType(Config.class);
+			json.setReturnType(Config.class);
 			config = (Config)json.parse(configText);
 			if (config.container == null) config.container = Container.class;
 			
-			json.setDestinationType(config.container);
+			json.setReturnType(config.container);
 			container = (Container)json.parse(configText);
 			container.init(getServletContext());
 		} catch (Exception e) {
@@ -251,7 +251,7 @@ public class WebServiceServlet extends HttpServlet {
 		String errorMessage = null;
 		
 		try {
-			json.setDestinationType(RpcRequest.class);
+			json.setReturnType(RpcRequest.class);
 			req = (RpcRequest)json.parse(request.getReader());
 			if (req == null || req.method == null || req.params == null) {
 				errorCode = -32600;
