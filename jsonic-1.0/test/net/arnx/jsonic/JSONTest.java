@@ -177,9 +177,9 @@ public class JSONTest {
 
 		assertEquals(list, JSON.decode("[-1.1, 1.11e1, 1.11E+1, 11.1e-1]"));
 		
-		Map<String, Object> map1 = new HashMap<String, Object>();
-		Map<String, Object> map2 = new HashMap<String, Object>();
-		Map<String, Object> map3 = new HashMap<String, Object>();
+		Map<String, Object> map1 = new LinkedHashMap<String, Object>();
+		Map<String, Object> map2 = new LinkedHashMap<String, Object>();
+		Map<String, Object> map3 = new LinkedHashMap<String, Object>();
 		map1.put("map2", map2);
 		map1.put("1", new BigDecimal("1"));
 		map2.put("'2'", new BigDecimal("2"));
@@ -197,6 +197,21 @@ public class JSONTest {
 		output.add(new BigDecimal(((Calendar)input[1]).getTimeInMillis()));
 		
 		assertEquals(output, JSON.decode(JSON.encode(input)));
+		
+		try {
+			JSON.decode("aaa: 1, bbb");
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		Map<String, Object> map4 = new LinkedHashMap<String, Object>();
+		map4.put("aaa", new BigDecimal("1"));
+		map4.put("bbb", null);
+		
+		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));		
+		assertEquals(map4, JSON.decode("aaa: 1, bbb:\n "));
 	}
 
 	@Test
