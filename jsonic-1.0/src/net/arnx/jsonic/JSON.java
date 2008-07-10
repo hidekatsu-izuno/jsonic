@@ -151,6 +151,9 @@ import org.w3c.dom.NodeList;
  */
 @SuppressWarnings("unchecked")
 public class JSON {
+	/**
+	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
+	 */
 	public static Class prototype = JSON.class;
 
 	private static final Character ROOT_KEY = '$';
@@ -177,7 +180,6 @@ public class JSON {
 		return instance;
 	}
 
-	
 	/**
 	 * Encodes a object into a json string.
 	 * 
