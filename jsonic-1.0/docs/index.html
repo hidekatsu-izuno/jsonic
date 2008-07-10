@@ -667,13 +667,15 @@ public class HogeService {
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/07/01 version 1.0.1</h3>
+<h3>2008/07/11 version 1.0.1</h3>
 <ul>
 <li>JSON stringからEnum派生型へ変換時、頭一文字が数値の場合はint型とみなしEnum.ordinal()にて変換するよう変更しました。</li>
 <li>JSON true/falseからEnum派生型への変換に対応しました。</li>
 <li>JSON object中で値としてリテラル値が使われる場合、maxDepthの設定が使用されない問題を修正しました。</li>
 <li>java.util.LocaleからJSON stringへの変換時にバリアントコードも変換されるように変更しました。</li>
 <li>ルートの'{'が省略された場合、キーのみしか見つからずに終了した場合にエラーとならない問題を修正しました。</li>
+<li>JSONクラスのstaticメソッドで使用するクラスを交換可能にするためprototypeフィールドを追加しました。</li>
+<li>ActionScript3.0版のJSONICライブラリ（JSONクラスおよびJSON-RPCクライアントクラス）を添付しました。</li>
 </ul>
 
 <h3>2008/05/15 version 1.0</h3>
