@@ -120,7 +120,7 @@ package net.arnx.jsonic.web {
 						}
 					}
 					
-					lastResult = result;
+					this.lastResult = result;
 
 					if (hasEventListener(nextEvent.type)) {
 						dispatchEvent(nextEvent);
@@ -142,7 +142,7 @@ package net.arnx.jsonic.web {
 		
 		public function clearResult(fireBindingEvent:Boolean = true):void {
 			if (fireBindingEvent) {
-				lastResult = null;
+				this.lastResult = null;
 			} else {
 				_result = null;
 			}
