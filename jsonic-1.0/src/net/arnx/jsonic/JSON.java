@@ -169,19 +169,11 @@ public class JSON {
 	
 	private static JSON newInstance() {
 		JSON instance = null;
-		
-		synchronized (prototype) {
-			if (prototype == JSON.class) {
-				instance = new JSON();
-			} else {
-				try {
-					instance = (JSON)prototype.newInstance();
-				} catch (Exception e) {
-					throw new IllegalStateException(e);
-				}
-			}
+		try {
+			instance = (JSON)prototype.newInstance();
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
 		}
-		
 		return instance;
 	}
 
