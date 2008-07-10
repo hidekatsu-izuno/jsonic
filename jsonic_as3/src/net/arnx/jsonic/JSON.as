@@ -17,7 +17,6 @@
 package net.arnx.jsonic {
 	import flash.utils.ByteArray;
 	import flash.utils.Proxy;
-	import flash.utils.flash_proxy;
 	
 	import mx.collections.ArrayCollection;
 	import mx.resources.IResourceManager;
@@ -25,92 +24,44 @@ package net.arnx.jsonic {
 	import mx.resources.ResourceManager;
 	import mx.utils.ObjectUtil;
 	
-	use namespace flash_proxy;
-	
 	[ResourceBundle("jsonic")]
 	public class JSON extends Proxy {
 		public static function encode(source:Object, prettyPrint:Boolean = false):String {
-			return new JSON().format(source, new ByteArray(), prettyPrint, 0).toString();
+			var json:JSON = new JSON();
+			json.prettyPrint = prettyPrint;
+			return json.format(source);
 		}
 		
 		public static function decode(source:String):Object {
-			return new JSON().load(source)._root;
+			return new JSON().parse(source);
 		}
 		
 		private static var _resourceManager:IResourceManager = ResourceManager.getInstance();
 		
+		private var _prettyPrint:Boolean = false;
 		private var _maxDepth:int;
-		private var _root:Object;
 		
 		public function JSON(maxDepth:int = 32) {
-			_maxDepth = maxDepth;
-		}
-	    
-	    public function load(source:String):JSON {
-	    	_root = parse(new StringParserSource(source));
-	    	return this;
-	    }
-	    	
-		public function toString(prettyPrint:Boolean = false):String {
-			return format(_root, new ByteArray(), prettyPrint, 0).toString();
-		} 
-		
-	    //--------------------------------------------------------------------------
-	    // Proxy methods
-	    //--------------------------------------------------------------------------
-	    
-		/**
-		 * @private
-		 */
-		override flash_proxy function getProperty(name:*):* {
-	        return _root[name];
+			this.maxDepth = maxDepth;
 		}
 		
-	    /**
-	     * @private
-	     */
-	    override flash_proxy function setProperty(name:*, value:*):void {
-			throw _root[name] = value;
-	    }
+		public function set prettyPrint(value:Boolean):void {
+			_prettyPrint = value;	
+		}
 		
-		/**
-		 * @private
-		 */
-		override flash_proxy function callProperty(name:*, ... args:Array):* {
-			return _root[name].apply(null, args);
+		public function set maxDepth(value:int):void {
+			_maxDepth = value;
 		}
-	
-		private var _nextNameArray:Array;
-	    
-		/**
-		 * @private
-		 */
-	    override flash_proxy function nextNameIndex(index:int):int {
-			if (index == 0) {
-				_nextNameArray = [];
-				for (var name:String in _root) {
-					_nextNameArray.push(name);    
-				}    
-			}
-			return (index < _nextNameArray.length) ? index + 1 : 0;
+		
+		public function format(o:Object):String {
+			return _format(o, new ByteArray(), 0).toString();
 		}
-	
-		/**
-		 * @private
-		 */
-		override flash_proxy function nextName(index:int):String {
-			return _nextNameArray[index-1];
+		
+		public function parse(s:String):Object {
+			return _parse(new StringParserSource(s));
 		}
-	
-	    /**
-	     * @private
-	     */
-	    override flash_proxy function nextValue(index:int):*
-	    {
-	        return _root[_nextNameArray[index-1]];
-	    }
 	    		
-		private function format(o:Object, array:ByteArray, prettyPrint:Boolean, level:int):ByteArray {
+		private function _format(o:Object, array:ByteArray, level:int):ByteArray {
 			if (level > _maxDepth) {
 				o = null;
 			}
@@ -136,13 +87,13 @@ package net.arnx.jsonic {
 				array.writeUTFBytes("null");
 			} else if (o is String) {
 				if (escape) {
-					formatString(o as String, array);
+					_formatString(o as String, array);
 				} else {
 					array.writeUTFBytes(o as String);
 				}
 			} else if (o is Number) {
 				if (isNaN(o as Number) || !isFinite(o as Number)) {
-					formatString(o.toString(), array);
+					_formatString(o.toString(), array);
 				} else {
 					array.writeUTFBytes(o.toString());
 				}
@@ -154,10 +105,10 @@ package net.arnx.jsonic {
 					if (o[i] === o) continue;
 					
 					if (i != 0) array.writeUTFBytes(',');
-					if (prettyPrint) tabs(array, level+1);
-					format(o[i], array, prettyPrint, level+1);
+					if (_prettyPrint) tabs(array, level+1);
+					_format(o[i], array, level+1);
 				}
-				if (prettyPrint && o.length > 0) tabs(array, level+1);
+				if (_prettyPrint && o.length > 0) tabs(array, level+1);
 				array.writeUTFBytes(']');
 			} else {
 				var classInfo:Object = ObjectUtil.getClassInfo(o, null, {
@@ -178,20 +129,20 @@ package net.arnx.jsonic {
 						array.writeUTFBytes(',');
 					}
 					
-					if (prettyPrint) tabs(array, level+1);
-					formatString(key.toString(), array);
+					if (_prettyPrint) tabs(array, level+1);
+					_formatString(key.toString(), array);
 					array.writeUTFBytes(':');
-					if (prettyPrint) array.writeUTFBytes(' ');
-					format(o[key], array, prettyPrint, level+1);
+					if (_prettyPrint) array.writeUTFBytes(' ');
+					_format(o[key], array, level+1);
 				}	
-				if (prettyPrint && first) tabs(array, level+1);
+				if (_prettyPrint && first) tabs(array, level+1);
 				array.writeUTFBytes('}');
 			}
 			
 			return array;
 		}
 		
-		private function formatString(s:String, array:ByteArray):ByteArray {
+		private function _formatString(s:String, array:ByteArray):ByteArray {
 			array.writeUTFBytes('"');
 			for (var i:int = 0; i < s.length; i++) {
 				var c:String = s.charAt(i);
@@ -225,7 +176,7 @@ package net.arnx.jsonic {
 			return array;
 		}
 		
-		private function parse(s:IParserSource):Object {
+		private function _parse(s:IParserSource):Object {
 			var o:Object = null;
 
 			var c:String = null;
@@ -240,7 +191,7 @@ package net.arnx.jsonic {
 				case '[':
 					if (o == null) {
 						s.back();
-						o = parseArray(s, 1);
+						o = _parseArray(s, 1);
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
@@ -248,12 +199,12 @@ package net.arnx.jsonic {
 				case '/':
 				case '#':
 					s.back();
-					skipComment(s);
+					_skipComment(s);
 					break;
 				default:
 					if (o == null) {
 						s.back();
-						o = parseObject(s, 1);
+						o = _parseObject(s, 1);
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
@@ -263,7 +214,7 @@ package net.arnx.jsonic {
 			return (!o) ? {} : o;
 		}
 		
-		private function parseObject(s:IParserSource, level:int):Object {
+		private function _parseObject(s:IParserSource, level:int):Object {
 			var point:int = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 			var map:Object = {};
 			var key:String = null;
@@ -289,7 +240,7 @@ package net.arnx.jsonic {
 						point = 1;
 					} else if (point == 2 || point == 3){
 						s.back();
-						value = parseObject(s, level+1);
+						value = _parseObject(s, level+1);
 						if (level < _maxDepth) map[key] = value;
 						point = 5;
 					} else {
@@ -329,11 +280,11 @@ package net.arnx.jsonic {
 						point = 1;
 					} else if (point == 1 || point == 6) {
 						s.back();
-						key = parseString(s);
+						key = _parseString(s);
 						point = 2;
 					} else if (point == 3) {
 						s.back();
-						value = parseString(s);
+						value = _parseString(s);
 						if (level < _maxDepth) map[key] = value;
 						point = 5;
 					} else {
@@ -343,7 +294,7 @@ package net.arnx.jsonic {
 				case '[':
 					if (point == 3) {
 						s.back();
-						value = parseArray(s, level+1);
+						value = _parseArray(s, level+1);
 						if (level < _maxDepth) map[key] = value;
 						point = 5;
 					} else {
@@ -353,7 +304,7 @@ package net.arnx.jsonic {
 				case '/':
 				case '#':
 					s.back();
-					skipComment(s);
+					_skipComment(s);
 					if (point == 5) {
 						point = 6;
 					}
@@ -364,16 +315,16 @@ package net.arnx.jsonic {
 						point = 1;
 					} else if (point == 1 || point == 6) {
 						s.back();
-						key = parseLiteral(s);
+						key = _parseLiteral(s);
 						point = 2;
 					} else if (point == 3) {
 						if ((c == '-') || (c >= '0' && c <= '9')) {
 							s.back();
-							value = parseNumber(s);
+							value = _parseNumber(s);
 							if (level < _maxDepth) map[key] = value;
 						} else {
 							s.back();
-							var literal:String = parseLiteral(s);
+							var literal:String = _parseLiteral(s);
 							if (literal == "null") {
 								map[key] = null;
 							} else if (literal == "true") {
@@ -391,13 +342,21 @@ package net.arnx.jsonic {
 				}
 			}
 			
+			if (c == null) {
+				if (point == 3 || point == 4) {
+					if (level < _maxDepth) map[key] = null;
+				} else if (point == 2) {
+					throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
+				}
+			}
+			
 			if ((c == null) ? (start != '\0') : (c != '}')) {
 				throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
 			}
 			return map;
 		}
 		
-		private function parseArray(s:IParserSource, level:int):Array {
+		private function _parseArray(s:IParserSource, level:int):Array {
 			var point:int = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
 			var list:Array = [];
 			var value:Object = null;
@@ -420,7 +379,7 @@ package net.arnx.jsonic {
 						point = 1;
 					} else if (point == 1 || point == 3) {
 						s.back();
-						value = parseArray(s, level+1);
+						value = _parseArray(s, level+1);
 						if (level < _maxDepth) list.push(value);
 						point = 2;
 					} else {
@@ -448,7 +407,7 @@ package net.arnx.jsonic {
 				case '{':
 					if (point == 1 || point == 3){
 						s.back();
-						value = parseObject(s, level+1);
+						value = _parseObject(s, level+1);
 						if (level < _maxDepth) list.push(value);
 						point = 2;
 					} else {
@@ -459,7 +418,7 @@ package net.arnx.jsonic {
 				case '"':
 					if (point == 1 || point == 3) {
 						s.back();
-						value = parseString(s);
+						value = _parseString(s);
 						if (level < _maxDepth) list.push(value);
 						point = 2;
 					} else {
@@ -469,7 +428,7 @@ package net.arnx.jsonic {
 				case '/':
 				case '#':
 					s.back();
-					skipComment(s);
+					_skipComment(s);
 					if (point == 2) {
 						point = 3;
 					}
@@ -478,11 +437,11 @@ package net.arnx.jsonic {
 					if (point == 1 || point == 3) {
 						if ((c == '-') || (c >= '0' && c <= '9')) {
 							s.back();
-							value = parseNumber(s);
+							value = _parseNumber(s);
 							if (level < _maxDepth) list.push(value);
 						} else {
 							s.back();
-							var literal:String = parseLiteral(s);
+							var literal:String = _parseLiteral(s);
 							if (level < _maxDepth) {
 								if (literal == "null") {
 									list.push(null);
@@ -508,7 +467,7 @@ package net.arnx.jsonic {
 			return list;
 		}
 		
-		private function parseString(s:IParserSource):String {
+		private function _parseString(s:IParserSource):String {
 			var point:int = 0; // 0 '"|'' 1 'c' ... '"|'' E
 			var sb:ByteArray = s.getCachedBuilder();
 			var start:String = '\0';
@@ -522,7 +481,7 @@ package net.arnx.jsonic {
 					if (point == 1) {
 						if (start == '"') {
 							s.back();
-							sb.writeUTFBytes(parseEscape(s));
+							sb.writeUTFBytes(_parseEscape(s));
 						} else {
 							sb.writeUTFBytes(c);
 						}
@@ -560,7 +519,7 @@ package net.arnx.jsonic {
 			return sb.toString();
 		}
 		
-		private function parseLiteral(s:IParserSource):String {
+		private function _parseLiteral(s:IParserSource):String {
 			var point:int = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 			var sb:ByteArray = s.getCachedBuilder();
 			
@@ -570,7 +529,7 @@ package net.arnx.jsonic {
 				
 				if (c == '\\') {
 					s.back();
-					c = parseEscape(s);
+					c = _parseEscape(s);
 				}
 				
 				if (point == 0 && /[a-zA-Z$_]/.test(c)) {
@@ -586,7 +545,7 @@ package net.arnx.jsonic {
 			return sb.toString();
 		}	
 		
-		private function parseNumber(s:IParserSource):Number {
+		private function _parseNumber(s:IParserSource):Number {
 			var point:int = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
 			var sb:ByteArray = s.getCachedBuilder();
 			
@@ -659,7 +618,7 @@ package net.arnx.jsonic {
 			return new Number(sb.toString());
 		}
 		
-		private function parseEscape(s:IParserSource):String {
+		private function _parseEscape(s:IParserSource):String {
 			var point:int = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 			var escape:String = '\0';
 			
@@ -713,7 +672,7 @@ package net.arnx.jsonic {
 			return escape;
 		}
 		
-		private function skipComment(s:IParserSource):void {
+		private function _skipComment(s:IParserSource):void {
 			var point:int = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 			
 			var c:String = null;
