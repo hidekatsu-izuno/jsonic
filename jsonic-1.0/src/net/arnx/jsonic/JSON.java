@@ -939,6 +939,14 @@ public class JSON {
 			}
 		}
 		
+		if (n == -1) {
+			if (point == 3 || point == 4) {
+				if (level < this.maxDepth) map.put(key, null);
+			} else if (point == 2) {
+				throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
+			}
+		}
+		
 		if ((n == -1) ? (start != '\0') : (n != '}')) {
 			throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
 		}
