@@ -151,6 +151,8 @@ import org.w3c.dom.NodeList;
  */
 @SuppressWarnings("unchecked")
 public class JSON {
+	public static Class prototype = JSON.class;
+
 	private static final Character ROOT_KEY = '$';
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
@@ -163,6 +165,186 @@ public class JSON {
 		PRIMITIVE_MAP.put(float.class, 0.0f);
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
+	}
+	
+	private static JSON newInstance() {
+		JSON instance = null;
+		
+		synchronized (prototype) {
+			if (prototype == JSON.class) {
+				instance = new JSON();
+			} else {
+				try {
+					instance = (JSON)prototype.newInstance();
+				} catch (Exception e) {
+					throw new IllegalStateException(e);
+				}
+			}
+		}
+		
+		return instance;
+	}
+
+	
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @return a json string
+	 */
+	public static String encode(Object source) {
+		return encode(source, false);
+	}
+	
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param prettyPrint output a json string with indent, space or break.
+	 * @return a json string
+	 */
+	public static String encode(Object source, boolean prettyPrint) {		
+		JSON json = JSON.newInstance();
+		json.setPrettyPrint(prettyPrint);		
+		return json.format(source);
+	}
+
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param appendable a destination to output a json string.
+	 * @exception IOException if I/O Error occured.
+	 */
+	public static void encode(Object source, Appendable appendable) throws IOException {
+		JSON.newInstance().format(source, appendable);
+	}
+
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param appendable a destination to output a json string.
+	 * @param prettyPrint output a json string with indent, space or break.
+	 * @exception IOException if I/O Error occured.
+	 */
+	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException {
+		JSON json = JSON.newInstance();
+		json.setPrettyPrint(prettyPrint);		
+		json.format(source, appendable);
+	}
+	
+	/**
+	 * Decodes a json string into a object.
+	 * 
+	 * @param source a json string to decode
+	 * @return a decoded object
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(String source) throws JSONParseException {
+		return JSON.newInstance().parse(source);
+	}
+	
+	/**
+	 * Decodes a json string into a typed object.
+	 * 
+	 * @param source a json string to decode
+	 * @param cls class for converting
+	 * @return a decoded object
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
+	 */
+	public static <T> T decode(String source, Class<? extends T> cls) throws JSONParseException {
+		return JSON.newInstance().parse(source, cls);
+	}
+	
+	/**
+	 * Decodes a json string into a typed object.
+	 * 
+	 * @param source a json string to decode
+	 * @param type type for converting
+	 * @return a decoded object
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
+	 */
+	public static Object decode(String source, Type type) throws JSONParseException {
+		return JSON.newInstance().parse(source, type);
+	}
+
+	/**
+	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * 
+	 * @param in a json stream to decode
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(InputStream in) throws IOException, JSONParseException {
+		return JSON.newInstance().parse(in);
+	}
+
+	/**
+	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * 
+	 * @param in a json stream to decode
+	 * @param cls class for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONParseException {
+		return JSON.newInstance().parse(in, cls);
+	}
+
+	/**
+	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * 
+	 * @param in a json stream to decode
+	 * @param type type for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(InputStream in, Type type) throws IOException, JSONParseException {
+		return JSON.newInstance().parse(in, type);
+	}
+	
+	/**
+	 * Decodes a json stream into a object.
+	 * 
+	 * @param reader a json stream to decode
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(Reader reader) throws IOException, JSONParseException {
+		return JSON.newInstance().parse(reader);
+	}
+
+	/**
+	 * Decodes a json stream into a object.
+	 * 
+	 * @param reader a json stream to decode
+	 * @param cls class for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONParseException {
+		return JSON.newInstance().parse(reader, cls);
+	}
+
+	/**
+	 * Decodes a json stream into a object.
+	 * 
+	 * @param reader a json stream to decode
+	 * @param type type for converting
+	 * @return a decoded object
+	 * @exception IOException if I/O error occured.
+	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
+	 */
+	public static Object decode(Reader reader, Type type) throws IOException, JSONParseException {
+		return JSON.newInstance().parse(reader, type);
 	}
 
 	public JSON() {
@@ -221,167 +403,6 @@ public class JSON {
 			throw new IllegalArgumentException(getMessage("json.TooSmallArgumentError", "maxDepth", 0));
 		}
 		this.maxDepth = value;
-	}
-	
-	/**
-	 * Encodes a object into a json string.
-	 * 
-	 * @param source a object to encode.
-	 * @return a json string
-	 */
-	public static String encode(Object source) {
-		return encode(source, false);
-	}
-	
-	/**
-	 * Encodes a object into a json string.
-	 * 
-	 * @param source a object to encode.
-	 * @param prettyPrint output a json string with indent, space or break.
-	 * @return a json string
-	 */
-	public static String encode(Object source, boolean prettyPrint) {		
-		JSON json = new JSON();
-		json.setPrettyPrint(prettyPrint);		
-		return json.format(source);
-	}
-
-	/**
-	 * Encodes a object into a json string.
-	 * 
-	 * @param source a object to encode.
-	 * @param appendable a destination to output a json string.
-	 * @exception IOException if I/O Error occured.
-	 */
-	public static void encode(Object source, Appendable appendable) throws IOException {
-		(new JSON()).format(source, appendable);
-	}
-
-	/**
-	 * Encodes a object into a json string.
-	 * 
-	 * @param source a object to encode.
-	 * @param appendable a destination to output a json string.
-	 * @param prettyPrint output a json string with indent, space or break.
-	 * @exception IOException if I/O Error occured.
-	 */
-	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException {
-		JSON json = new JSON();
-		json.setPrettyPrint(prettyPrint);		
-		json.format(source, appendable);
-	}
-	
-	/**
-	 * Decodes a json string into a object.
-	 * 
-	 * @param source a json string to decode
-	 * @return a decoded object
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 */
-	public static Object decode(String source) throws JSONParseException {
-		return (new JSON()).parse(source);
-	}
-	
-	/**
-	 * Decodes a json string into a typed object.
-	 * 
-	 * @param source a json string to decode
-	 * @param cls class for converting
-	 * @return a decoded object
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
-	 */
-	public static <T> T decode(String source, Class<? extends T> cls) throws JSONParseException {
-		return new JSON().parse(source, cls);
-	}
-	
-	/**
-	 * Decodes a json string into a typed object.
-	 * 
-	 * @param source a json string to decode
-	 * @param type type for converting
-	 * @return a decoded object
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
-	 */
-	public static Object decode(String source, Type type) throws JSONParseException {
-		return new JSON().parse(source, type);
-	}
-
-	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
-	 * 
-	 * @param in a json stream to decode
-	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 */
-	public static Object decode(InputStream in) throws IOException, JSONParseException {
-		return (new JSON()).parse(in);
-	}
-
-	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
-	 * 
-	 * @param in a json stream to decode
-	 * @param cls class for converting
-	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 */
-	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONParseException {
-		return (new JSON()).parse(in, cls);
-	}
-
-	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
-	 * 
-	 * @param in a json stream to decode
-	 * @param type type for converting
-	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 */
-	public static Object decode(InputStream in, Type type) throws IOException, JSONParseException {
-		return (new JSON()).parse(in, type);
-	}
-	
-	/**
-	 * Decodes a json stream into a object.
-	 * 
-	 * @param reader a json stream to decode
-	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 */
-	public static Object decode(Reader reader) throws IOException, JSONParseException {
-		return (new JSON()).parse(reader);
-	}
-
-	/**
-	 * Decodes a json stream into a object.
-	 * 
-	 * @param reader a json stream to decode
-	 * @param cls class for converting
-	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 */
-	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONParseException {
-		return (new JSON()).parse(reader, cls);
-	}
-
-	/**
-	 * Decodes a json stream into a object.
-	 * 
-	 * @param reader a json stream to decode
-	 * @param type type for converting
-	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
-	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
-	 */
-	public static Object decode(Reader reader, Type type) throws IOException, JSONParseException {
-		return (new JSON()).parse(reader, type);
 	}
 	
 	/**
