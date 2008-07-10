@@ -674,7 +674,10 @@ public class HogeService {
 <li>JSON stringからEnum派生型へ変換時、最初の文字が数値とみなせる場合は数値とみなしEnum型に変換できるようにしました。</li>
 <li>JSON true/falseからEnum派生型への変換に対応しました。</li>
 <li>JSON object中で値としてリテラル値が使われる場合、maxDepthの設定が使用されない問題を修正しました。</li>
-<li>OutputStreamによるencode/parse機能を追加しました。</li>
+<li>OutputStreamによるencode機能を追加しました。</li>
+<li>JSONによるvalidationを可能にできるよう、setMaxDepthに負の値を設定できるようにしました。</li>
+<li>妥当なJSONのみparseを受け付けることが可能なようにsetModeメソッドを追加しました。</li>
+<li>static メソッドで使用する実装クラスを変更できるよう静的フィールドのprototypeを追加しました。</li>
 </ul>
 </div>
 <div class="bar">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>
