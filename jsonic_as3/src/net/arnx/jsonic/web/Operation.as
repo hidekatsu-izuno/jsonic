@@ -17,6 +17,7 @@
 package net.arnx.jsonic.web {
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.geom.Rectangle;
 	
 	import mx.events.PropertyChangeEvent;
 	import mx.rpc.AsyncResponder;
@@ -43,6 +44,7 @@ package net.arnx.jsonic.web {
 			this._service = service;
 		}
 		
+		[Bindable]
 		public function get name():String {
 			return _name;
 		}
@@ -74,66 +76,7 @@ package net.arnx.jsonic.web {
 				+ '"id":' + (new Date().getTime())
 				+ '}');
 			
-			token.addResponder(new AsyncResponder(
-				function  onResult(event:ResultEvent, token:AsyncToken = null):void {
-					var response:Object = null;
-					var nextEvent:Event = null;
-					
-					try {
-						response = JSON.decode(String(event.result));
-					} catch (error:Error) {
-						var fault:Fault = new Fault(FaultEvent.FAULT, error.message, error.getStackTrace());
-						nextEvent = FaultEvent.createEvent(fault, event.token, event.message);
-					}
-					
-					var result:Object = null;
-					if (nextEvent == null) {
-						if (response == null 
-							|| !response.hasOwnProperty("result") 
-							|| !response.hasOwnProperty("error")
-							|| !response.hasOwnProperty("id")) {
-							nextEvent = FaultEvent.createEvent(
-								new Fault(FaultEvent.FAULT, "illegal result.", null), 
-								event.token, 
-								event.message
-							);
-						} else if (response.error != null) {
-							nextEvent = FaultEvent.createEvent(
-								new Fault(FaultEvent.FAULT, response.error.message, null), 
-								event.token, 
-								event.message
-							);
-							result = new Error(response.error.message, response.error.code);
-						} else {
-							result = (_service.makeObjectsBindable) ? 
-								new ObjectProxy(response.result) : response.result;
-								
-							nextEvent = ResultEvent.createEvent(
-								result, 
-								event.token, 
-								event.message
-							);
-						}
-					}
-					
-					var old:Object = _result;
-					_result = result;
-					this.dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "lastResult", old, _result));
-
-					if (hasEventListener(nextEvent.type)) {
-						dispatchEvent(nextEvent);
-					} else {
-						_service.dispatchEvent(nextEvent);
-					}
-				},
-				function onFault(event:FaultEvent, token:AsyncToken = null):void {
-					if (hasEventListener(event.type)) {
-						dispatchEvent(event);
-					} else {
-						_service.dispatchEvent(event);
-					}
-				}
-			));
+			token.addResponder(new AsyncResponder(_onResult, _onFault));
 			
 			return token;
 		}
@@ -146,5 +89,66 @@ package net.arnx.jsonic.web {
 				this.dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "lastResult", old, _result));
 			}
 		}
+		
+		private function _onResult(event:ResultEvent, token:AsyncToken = null):void {
+			var response:Object = null;
+			var nextEvent:Event = null;
+			
+			try {
+				response = JSON.decode(String(event.result));
+			} catch (error:Error) {
+				var fault:Fault = new Fault(FaultEvent.FAULT, error.message, error.getStackTrace());
+				nextEvent = FaultEvent.createEvent(fault, event.token, event.message);
+			}
+			
+			var rst:Object = null;
+			if (nextEvent == null) {
+				if (response == null 
+					|| !response.hasOwnProperty("result") 
+					|| !response.hasOwnProperty("error")
+					|| !response.hasOwnProperty("id")) {
+					nextEvent = FaultEvent.createEvent(
+						new Fault(FaultEvent.FAULT, "illegal result.", null), 
+						event.token, 
+						event.message
+					);
+				} else if (response.error != null) {
+					nextEvent = FaultEvent.createEvent(
+						new Fault(FaultEvent.FAULT, response.error.message, null), 
+						event.token, 
+						event.message
+					);
+					rst = new Error(response.error.message, response.error.code);
+				} else {
+					rst = (_service.makeObjectsBindable) ? 
+						new ObjectProxy(response.result) : response.result;
+						
+					nextEvent = ResultEvent.createEvent(
+						rst, 
+						event.token, 
+						event.message
+					);
+				}
+			}
+			
+			var old:Object = _result;
+			_result = rst;
+			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "lastResult", old, _result));
+
+			if (hasEventListener(nextEvent.type)) {
+				dispatchEvent(nextEvent);
+			} else {
+				_service.dispatchEvent(nextEvent);
+			}
+		}
+
+		private function _onFault(event:FaultEvent, token:AsyncToken = null):void {
+			if (hasEventListener(event.type)) {
+				dispatchEvent(event);
+			} else {
+				_service.dispatchEvent(event);
+			}
+		}
+
 	}
 }
