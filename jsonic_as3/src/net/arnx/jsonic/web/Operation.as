@@ -18,6 +18,7 @@ package net.arnx.jsonic.web {
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	
+	import mx.events.PropertyChangeEvent;
 	import mx.rpc.AsyncResponder;
 	import mx.rpc.AsyncToken;
 	import mx.rpc.Fault;
@@ -57,10 +58,6 @@ package net.arnx.jsonic.web {
 		[Bindable]
 		public function get lastResult():Object {
 			return _result;
-		} 
-		
-		private function set lastResult(value:Object):void {
-			_result = value;
 		} 
 				
 		protected function get service():WebService {
@@ -120,7 +117,9 @@ package net.arnx.jsonic.web {
 						}
 					}
 					
-					this.lastResult = result;
+					var old:Object = _result;
+					_result = result;
+					this.dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "lastResult", old, _result));
 
 					if (hasEventListener(nextEvent.type)) {
 						dispatchEvent(nextEvent);
@@ -141,10 +140,11 @@ package net.arnx.jsonic.web {
 		}
 		
 		public function clearResult(fireBindingEvent:Boolean = true):void {
+			var old:Object = _result;
+			_result = null;
+			
 			if (fireBindingEvent) {
-				this.lastResult = null;
-			} else {
-				_result = null;
+				this.dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "lastResult", old, _result));
 			}
 		}
 	}
