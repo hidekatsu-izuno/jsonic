@@ -32,6 +32,8 @@ package net.arnx.jsonic.web {
 	[Event(name="result", type="mx.rpc.events.ResultEvent")]
 	[Event(name="fault", type="mx.rpc.events.FaultEvent")]
 	public class Operation extends EventDispatcher {
+		private static const BINDING_RESULT:String = "resultForBinding";
+		
 		private var _name:String;
 		private var _service:WebService;
 
@@ -44,7 +46,6 @@ package net.arnx.jsonic.web {
 			this._service = service;
 		}
 		
-		[Bindable]
 		public function get name():String {
 			return _name;
 		}
@@ -57,6 +58,7 @@ package net.arnx.jsonic.web {
 		
 		private var _result:Object;
 		
+		[Bindable(BINDING_RESULT)]
 		public function get lastResult():Object {
 			return _result;
 		} 
@@ -82,11 +84,10 @@ package net.arnx.jsonic.web {
 		}
 		
 		public function clearResult(fireBindingEvent:Boolean = true):void {
-			var old:Object = _result;
 			_result = null;
 			
 			if (fireBindingEvent) {
-				this.dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "lastResult", old, _result));
+				this.dispatchEvent(new flash.events.Event(BINDING_RESULT));
 			}
 		}
 		
@@ -101,7 +102,7 @@ package net.arnx.jsonic.web {
 				nextEvent = FaultEvent.createEvent(fault, event.token, event.message);
 			}
 			
-			var rst:Object = null;
+			var result:Object = null;
 			if (nextEvent == null) {
 				if (response == null 
 					|| !response.hasOwnProperty("result") 
@@ -118,22 +119,21 @@ package net.arnx.jsonic.web {
 						event.token, 
 						event.message
 					);
-					rst = new Error(response.error.message, response.error.code);
+					result = new Error(response.error.message, response.error.code);
 				} else {
-					rst = (_service.makeObjectsBindable) ? 
+					result = (_service.makeObjectsBindable) ? 
 						new ObjectProxy(response.result) : response.result;
 						
 					nextEvent = ResultEvent.createEvent(
-						rst, 
+						result, 
 						event.token, 
 						event.message
 					);
 				}
 			}
 			
-			var old:Object = _result;
-			_result = rst;
-			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "lastResult", old, _result));
+			_result = result;
+			dispatchEvent(new flash.events.Event(BINDING_RESULT));
 
 			if (hasEventListener(nextEvent.type)) {
 				dispatchEvent(nextEvent);
