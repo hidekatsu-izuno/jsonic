@@ -47,9 +47,15 @@
 			<li><a href="#usage_basic">基本的な使い方</a></li>
 			<li><a href="#usage_advanced">高度な使い方</a></li>
 			<li><a href="#webservice">Web Service Servlet</a></li>
+			<li><a href="#as3">JSONIC for AS3</a></li>
 		</ul>
 	</li>
-	<li><a href="api/index.html">API Docs</a></li>
+	<li>API Docs
+		<ul>
+			<li><a href="java/api/index.html">javadoc</a></li>
+			<li><a href="as3/api/index.html">asdoc</a></li>
+		</ul>
+	</li>
 	<li><a href="#license">ライセンス</a></li>
 	<li><a href="#releasenote">リリースノート</a></li>
 </ul>
@@ -655,6 +661,8 @@ public class HogeService {
 </table>
 <p>なお、encodingとexpireに関してはWebServiceServlet側にも同様の設定が用意されていますが、基本的にWebServiceServlet側の設定が優先されます。
 ただし、WebServiceServlet側が未設定の場合は、GatewayFilter側の設定が利用されます。</p>
+
+<h2 id="as3">JSONIC for AS3</h2>
 
 <h3>■ ActionScript3版 JSON-RPCクライアントライブラリ</h3>
 <p>JSONICでｄは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、RemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。
