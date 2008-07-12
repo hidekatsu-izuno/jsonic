@@ -25,7 +25,7 @@ package net.arnx.jsonic {
 	import mx.utils.ObjectUtil;
 	
 	[ResourceBundle("jsonic")]
-	public class JSON extends Proxy {
+	public class JSON {
 		public static function encode(source:Object, prettyPrint:Boolean = false):String {
 			var json:JSON = new JSON();
 			json.prettyPrint = prettyPrint;
