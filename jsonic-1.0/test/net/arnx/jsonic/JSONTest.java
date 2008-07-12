@@ -979,49 +979,34 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		long start = System.currentTimeMillis();
+		json.setMaxDepth(1);
 		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
+		json.setMaxDepth(32);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
+		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.setMaxDepth(32);
 		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"), String[][].class);
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
-		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"), KenAll[].class);
+		json.setMaxDepth(1);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
-		/*
-		FileWriter writer = new FileWriter("c:/KEN_ALL_Object.json");
+		start = System.currentTimeMillis();
+		json.setMaxDepth(32);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"));
+		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
-		writer.write("[\n");
-		for (int i = 0; i < data.length; i++) {
-			KenAll ken = new KenAll();
-			for (int j = 0; j < data[i].length; j++) {
-				switch (j) {
-				case 0: ken.localPublicOrgCode = data[i][j]; break;
-				case 1: ken.postalCode5 = data[i][j]; break;
-				case 2: ken.postalCode7 = data[i][j]; break;
-				case 3: ken.prefectureCode = data[i][j]; break;
-				case 4: ken.mairieCode = data[i][j]; break;
-				case 5: ken.cityCode = data[i][j]; break;
-				case 6: ken.prefectureName = data[i][j]; break;
-				case 7: ken.mairieName = data[i][j]; break;
-				case 8: ken.cityName = data[i][j]; break;
-				case 9: ken.duplicateNo = Integer.parseInt(data[i][j]); break;
-				case 10: ken.cityNo= Integer.parseInt(data[i][j]); break;
-				case 11: ken.blockNo = Integer.parseInt(data[i][j]); break;
-				case 12: ken.complexNo = Integer.parseInt(data[i][j]); break;
-				case 13: ken.updateNo = Integer.parseInt(data[i][j]); break;
-				case 14: ken.reasonNo = Integer.parseInt(data[i][j]); break;
-				}
-			}
-			JSON.encode(ken, writer);
-			writer.write(",\n");
-		}
-		writer.write("]");
-		writer.flush();
-		writer.close();
-		*/
+		start = System.currentTimeMillis();
+		json.setMaxDepth(32);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"), KenAll[].class);
+		System.out.println("time: " + (System.currentTimeMillis()-start));
 	}
 	
 	public List<List<Object>> t1;

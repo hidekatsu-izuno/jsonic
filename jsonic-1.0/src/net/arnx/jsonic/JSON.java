@@ -340,6 +340,13 @@ public class JSON {
 	public static Object decode(Reader reader, Type type) throws IOException, JSONParseException {
 		return JSON.newInstance().parse(reader, type);
 	}
+	
+	private Object context = null;
+	private Locale locale;
+	private boolean prettyPrint = false;	
+	private int maxDepth = 32;
+	
+	private transient Class<?> scope = null;
 
 	public JSON() {
 	}
@@ -347,8 +354,6 @@ public class JSON {
 	public JSON(int maxDepth) {
 		setMaxDepth(maxDepth);
 	}
-	
-	private Object context = null;
 	
 	/**
 	 * Sets context for inner class.
@@ -359,7 +364,6 @@ public class JSON {
 		this.context = value;
 	}
 
-	private Locale locale;
 	
 	/**
 	 * Sets locale for conversion or message.
@@ -373,7 +377,6 @@ public class JSON {
 		this.locale = locale;
 	}
 	
-	private boolean prettyPrint = false;
 	
 	/**
 	 * Output json string is to human-readable format.
@@ -384,7 +387,6 @@ public class JSON {
 		this.prettyPrint = value;
 	}
 	
-	private int maxDepth = 32;
 	
 	/**
 	 * Sets maximum depth for the nest level.
@@ -2138,8 +2140,6 @@ public class JSON {
 		
 		return format.parse(value).getTime();
 	}
-	
-	private transient Class<?> scope = null;
 }
 
 interface ParserSource {
