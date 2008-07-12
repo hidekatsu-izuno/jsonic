@@ -19,8 +19,6 @@
 	h3 { font: bold 10pt sans-serif; border-bottom: 1px solid gray; margin: 30px 0px 12px 0px;
 		padding: 1px; line-height: 1.0; }
 	h3 .subtitle { font: 9pt sans-serif; padding: 1px; line-height: 1.0; }
-	h4 { font: bold 10pt sans-serif;  margin: 20px 0px 10px 0px; padding: 1px; line-height: 1.0; }
-	h4 .subtitle { font: 9pt sans-serif; padding: 1px; line-height: 1.0; }
 	a { color: darkblue; }
 	p { margin: 0px 0px 1em 0px; padding: 0px; }
 	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
@@ -138,7 +136,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
 <p>なお、JSONはobjectかarrayで始まる必要があるため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合エラーとなります。</p>
 
-<h4>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h4>
+<h3>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h3>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
 <p>なお、JSON文字列が不正な場合にはJSONParseExceptionを投げ、型の変換に失敗した場合はJSONConvertExceptionを投げます。</p>
 <pre class="source">
@@ -662,42 +660,53 @@ public class HogeService {
 ただし、WebServiceServlet側が未設定の場合は、GatewayFilter側の設定が利用されます。</p>
 
 <h2 id="as3">JSONIC for AS3</h2>
+<p>JSONICでは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、AS3版のJSONクラスとRemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。</p>
+
+<h3>■ ActionScript3版 JSONライブラリ</h3>
+<p>Java版JSONクラスとほぼ同じです。ただし、decode/parseメソッドでの特定クラスへの変換はサポートしていません（動的型で十分だと思いますので……）。</p>
+<pre class="source">
+import net.arnx.jsonic.JSON;
+
+<span class="comment">// インスタンスをJSONに変換します</span>
+var text:String = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// JSONをObjectに変換します</span>
+var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</span>;
+</pre>
 
 <h3>■ ActionScript3版 JSON-RPCクライアントライブラリ</h3>
-<p>JSONICでｄは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、RemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。
-使い方はmx:RemoteObjectやmx:WebServiceなどを参考にしてください（lastResultも利用できます）。</p>
+<p>RemoteObjectライクなJSON-RPCクライアントクラスです。使い方はmx:RemoteObjectやmx:WebServiceなどを参考にしてください（lastResultのBindingも可能です）。</p>
 <pre class="source">
 <span class="elem">&lt;mx:WindowedApplication xmlns:mx="</span>http://www.adobe.com/2006/mxml<span class="elem">" </span>
-    <span class="elem">xmlns:js="</span>http://arnx.net/jsonic<span class="elem">"&gt;</span>
+  <span class="elem">xmlns:js="</span>http://arnx.net/jsonic<span class="elem">"&gt;</span>
     
-    &lt;!-- sourceにコンポーネント名、Operationのnameにメソッド名を指定します。 --&gt;
-    <span class="elem">&lt;js:WebService id="</span>remote<span class="elem">" </span>
-        <span class="elem">endpoint="</span>http://localhost:8080/sample/rpc/rpc.json<span class="elem">" </span>
-        <span class="elem">source="</span>calc<span class="elem">" </span>
-        <span class="elem">makeObjectsBindable="</span>false<span class="elem">" </span>
-        <span class="elem">showBusyCursor="</span>true<span class="elem">"</span>
-        <span class="elem">result="</span>onResult(event)<span class="elem">"</span>
-        <span class="elem">fault="</span>onFault(event)<span class="elem">"&gt;</span>
-    	
-    	<span class="elem">&lt;js:Operation name="</span>plus<span class="elem">" </span>
-            <span class="elem">result="</span>onResult(event)<span class="elem">" </span>
-            <span class="elem">fault="</span>onFault(event)<span class="elem">" /&gt;</span>
-        ...
-    <span class="elem">&lt;/js:WebService&gt;</span>
+  &lt;!-- sourceにコンポーネント名、Operationのnameにメソッド名を指定します。 --&gt;
+  <span class="elem">&lt;js:WebService id="</span>remote<span class="elem">" </span>
+    <span class="elem">endpoint="</span>http://localhost:8080/sample/rpc/rpc.json<span class="elem">" </span>
+    <span class="elem">source="</span>calc<span class="elem">" </span>
+    <span class="elem">makeObjectsBindable="</span>false<span class="elem">" </span>
+    <span class="elem">showBusyCursor="</span>true<span class="elem">"</span>
+    <span class="elem">result="</span>onResult(event)<span class="elem">"</span>
+    <span class="elem">fault="</span>onFault(event)<span class="elem">"&gt;</span>
     
-    <span class="elem">&lt;mx:Button label="</span>実行<span class="elem">" click="</span>remote.plus(100, 200)<span class="elem">" /&gt;</span>
-    <span class="elem">&lt;mx:TextInput id="</span>output<span class="elem">" text="</span>{remote.plus.lastResult}<span class="elem">" /&gt;</span>
+    <span class="elem">&lt;js:Operation name="</span>plus<span class="elem">" result="</span>onResult(event)<span class="elem">" fault="</span>onFault(event)<span class="elem">" /&gt;</span>
+    ...
+  <span class="elem">&lt;/js:WebService&gt;</span>
     
-    <span class="elem">&lt;mx:Script&gt;</span>
-    &lt;![[
-        private function onResult(event:ResultEvent) {
-            trace(event.result); // 100+200 => 300
-        }
-        
-        private function onFault(event:FaultEvent) {
-        }
+  <span class="elem">&lt;mx:Button label="</span>実行<span class="elem">" click="</span>remote.plus(100, 200)<span class="elem">" /&gt;</span>
+  <span class="elem">&lt;mx:TextInput id="</span>output<span class="elem">" text="</span>{remote.plus.lastResult}<span class="elem">" /&gt;</span>
+    
+  <span class="elem">&lt;mx:Script&gt;</span>
+    &lt;![CDATA[
+      private function onResult(event:ResultEvent) {
+        trace(event.result); // 100+200 => 300
+      }
+      
+      private function onFault(event:FaultEvent) {
+        trace(event.fault.message);
+      }
     ]]&gt;
-    <span class="elem">&lt;/mx:Script&gt;</span>
+  <span class="elem">&lt;/mx:Script&gt;</span>
 <span class="elem">&lt;/mx:WindowedApplication&gt;</span>
 </pre>
 
@@ -710,13 +719,14 @@ public class HogeService {
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/07/11 version 1.0.1</h3>
+<h3>2008/07/12 version 1.0.1</h3>
 <ul>
 <li>JSON stringからEnum派生型へ変換時、頭一文字が数値の場合はint型とみなしEnum.ordinal()にて変換するよう変更しました。</li>
 <li>JSON true/falseからEnum派生型への変換に対応しました。</li>
 <li>JSON object中で値としてリテラル値が使われる場合、maxDepthの設定が使用されない問題を修正しました。</li>
 <li>java.util.LocaleからJSON stringへの変換時にバリアントコードも変換されるように変更しました。</li>
-<li>ルートの'{'が省略された場合、キーのみしか見つからずに終了した場合にエラーとならない問題を修正しました。</li>
+<li>ルートの'{'が省略され、かつキーのみしか見つからないまま終了した場合にエラーとならない問題を修正しました。</li>
+<li>encode/formatにOutputStreamを引数にとるメソッドを追加しました。</li>
 <li>JSONクラスのstaticメソッドで使用するクラスを交換可能にするためprototypeフィールドを追加しました。</li>
 <li>ActionScript3.0版のJSONICライブラリ（JSONクラスおよびJSON-RPCクライアントクラス）を添付しました。</li>
 </ul>
