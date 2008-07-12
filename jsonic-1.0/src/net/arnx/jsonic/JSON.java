@@ -18,6 +18,8 @@ package net.arnx.jsonic;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
@@ -201,6 +203,31 @@ public class JSON {
 		JSON json = JSON.newInstance();
 		json.setPrettyPrint(prettyPrint);		
 		return json.format(source);
+	}
+
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param out a destination to output a json string.
+	 * @exception IOException if I/O Error occured.
+	 */
+	public static void encode(Object source, OutputStream out) throws IOException {
+		JSON.newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
+	}
+
+	/**
+	 * Encodes a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param out a destination to output a json string.
+	 * @param prettyPrint output a json string with indent, space or break.
+	 * @exception IOException if I/O Error occured.
+	 */
+	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException {
+		JSON json = JSON.newInstance();
+		json.setPrettyPrint(prettyPrint);		
+		json.format(source, new OutputStreamWriter(out, "UTF-8"));
 	}
 
 	/**
@@ -415,6 +442,11 @@ public class JSON {
 			// no handle;
 		}
 		return text;
+	}
+	
+	public OutputStream format(Object source, OutputStream out) throws IOException {
+		format(source, new OutputStreamWriter(out, "UTF-8"));
+		return out;
 	}
 	
 	/**

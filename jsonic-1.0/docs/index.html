@@ -102,7 +102,14 @@ String text = <span class="em">JSON.encode(</span>hoge<span class="em">)</span>;
 //     "array": [1, 2, 3]
 // }</span>
 String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>; 
+
+<span class="comment">// Appendable(StringBuffer, Writerなど)やOutputStreamを出力先にすることもできます<sup>(※4)</sup></span>
+<span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileWriter("hoge.txt")<span class="em">)</span>;
+<span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileOutputStream("hoge.txt")<span class="em">)</span>;
 </pre>
+<div class="caption">(※4) OutputStreamを指定した場合に出力される文字コードはUTF-8固定となります。
+また、close処理は自動では行われませんので必要に応じて別途行う必要があります。</div>
+
 <p>POJOからJSONへの変換ルールは次の通りです。</p>
 <table class="table" summary="POJOからJSONへの変換ルール">
 <tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
@@ -140,7 +147,14 @@ List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<sp
 
 <span class="comment">// JSONをHogeクラスのインスタンスに変換します（キャストは不要です）</span>
 Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1, 2, 3]}", Hoge.class<span class="em">)</span>;
+
+<span class="comment">// ReaderやInputStreamからJSONを読み込むことも可能です<sup>(※4)</sup></span>
+Hoge hoge = <span class="em">JSON.decode(</span>new FileReader("hoge.txt")<span class="em">,</span> Hoge.class<span class="em">)</span>;
+Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<span class="em">,</span> Hoge.class<span class="em">)</span>;
 </pre>
+<div class="caption">(※4) InputStreamから読み込む場合の文字コードは、UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別されます。
+また、close処理は自動では行われませんので必要に応じて別途行う必要があります。</div>
+
 <p>JSONからPOJOへの変換ルールは次の通りです。</p>
 <table class="table" summary="JSONからPOJOへの変換ルール">
 <tr><th style="width: 20%">変換元（JSON）</th><th style="width: 40%">指定された型</th><th style="width: 40%">変換先（Java）</th></tr>
@@ -199,14 +213,12 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
 <li><a href="#extends">継承による機能拡張</a></li>
-<li><a href="#io">Reader/InputStreamによるparse</a></li>
 <li><a href="#generics">総称型を指定してのdecode/parse</a></li>
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 </ul>
-
 
 <h3 id="extends">■ 継承による機能拡張</h3>
 <p>JSONICは、フレームワークでの利用を考慮しインスタンスを生成したり、継承して拡張することができるように設計してあります。
@@ -262,19 +274,6 @@ JSON json = new JSON() {
   }    
 };
 </pre>
-
-<h3 id="io">■ Reader/InputStreamによるparse</h3>
-<p>decode/parseメソッドの引数にjava.io.Readerやjava.io.InputStreamを指定してJSONデータを読み込むことができます。</p>
-<pre class="source">
-<span class="comment">// ReaderからのJSONの読み込み</span>
-Hoge hoge = JSON.<span class="em">parse(</span>new FileReader("sample.json"), Hoge.class<span class="em">)</span>;
-
-<span class="comment">// InputStreamからのJSONの読み込み（ファイルはUnicodeである必要があります<sup>(※4)</sup>）</span>
-Hoge hoge = JSON.<span class="em">parse(</span>new FileInputStream("sample.json"), Hoge.class<span class="em">)</span>;
-</pre>
-<div class="caption">
-(※4) UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別します。<br />
-</div>
 
 <h3 id="generics">■ 総称型を指定してのdecode/parse</h3>
 <p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
