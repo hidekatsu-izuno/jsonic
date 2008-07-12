@@ -58,7 +58,7 @@ package net.arnx.jsonic.web {
 		
 		private var _result:Object;
 		
-		[Bindable(BINDING_RESULT)]
+		[Bindable("resultForBinding")]
 		public function get lastResult():Object {
 			return _result;
 		} 
