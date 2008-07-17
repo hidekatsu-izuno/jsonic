@@ -19,8 +19,6 @@
 	h3 { font: bold 10pt sans-serif; border-bottom: 1px solid gray; margin: 30px 0px 12px 0px;
 		padding: 1px; line-height: 1.0; }
 	h3 .subtitle { font: 9pt sans-serif; padding: 1px; line-height: 1.0; }
-	h4 { font: bold 10pt sans-serif;  margin: 20px 0px 10px 0px; padding: 1px; line-height: 1.0; }
-	h4 .subtitle { font: 9pt sans-serif; padding: 1px; line-height: 1.0; }
 	a { color: darkblue; }
 	p { margin: 0px 0px 1em 0px; padding: 0px; }
 	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
@@ -47,12 +45,13 @@
 			<li><a href="#usage_basic">基本的な使い方</a></li>
 			<li><a href="#usage_advanced">高度な使い方</a></li>
 			<li><a href="#webservice">Web Service Servlet</a></li>
+			<li><a href="#as3">JSONIC for AS3</a></li>
 		</ul>
 	</li>
-	<li>APIドキュメント
+	<li>API Docs
 		<ul>
-			<li><a href="api/java/index.html">Java API</a></li>
-			<li><a href="api/as3/index.html">AS3 API</a></li>
+			<li><a href="java/api/index.html">javadoc</a></li>
+			<li><a href="as3/api/index.html">asdoc</a></li>
 		</ul>
 	</li>
 	<li><a href="#license">ライセンス</a></li>
@@ -100,7 +99,7 @@ String text = <span class="em">JSON.encode(</span>hoge<span class="em">)</span>;
 //     "string": "aaa",
 //     "array": [1, 2, 3]
 // }</span>
-String text = <span class="em">JSON.encode(</span>hoge<span class="em">,</span> true<span class="em">)</span>;
+String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>; 
 
 <span class="comment">// Appendable(StringBuffer, Writerなど)やOutputStreamを出力先にすることもできます<sup>(※4)</sup></span>
 <span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileWriter("hoge.txt")<span class="em">)</span>;
@@ -121,7 +120,7 @@ String text = <span class="em">JSON.encode(</span>hoge<span class="em">,</span> 
 <tr><td>char, Character</td></tr>
 <tr><td>TimeZone, Pattern, URL, URI, Type, Member, Charset</td></tr>
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
-<tr><td>Locale</td><td>string (言語コード-国コード)</td></tr>
+<tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
 <tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※2)</sup></td></tr>
 <tr><td>Number</td></tr>
@@ -208,7 +207,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較し、次に末尾に「_」を付けて比較します（これは、予約語に対応するためです）。
 </div>
 
-<h2 id="usage_advanced">高度な使い方</h3>
+<h2 id="usage_advanced">高度な使い方</h2>
 <p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
 <ul>
 <li><a href="#extends">継承による機能拡張</a></li>
@@ -237,7 +236,7 @@ String text = json<span class="em">.format(</span>new Hoge()<span class="em">)</
 Map map = (Map)json<span class="em">.parse(</span>text<span class="em">)</span>;
 
 <span class="comment">// JSONをHogeクラスのインスタンスに変換します(decodeと同じ機能)</span>
-Hoge hoge = json<span class="em">.parse(</span>text<span class="em">,</span> Hoge.class<span class="em">)</span>;
+Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">)</span>;
 </pre>
 
 <p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を追加するために次のようなオーバーライド可能なメソッドが用意されています。</p>
@@ -272,6 +271,11 @@ JSON json = new JSON() {
     return super.ignore(c, m);
   }    
 };
+</pre>
+
+<p>また、継承して作成した自作クラスをJSON.prototypeにセットすることで、JSON.encodeやJSON.decodeの動作を置き換えることも可能です。</p>
+<pre class="source">
+JSON.prototype = MyJSON.class;
 </pre>
 
 <h3 id="generics">■ 総称型を指定してのdecode/parse</h3>
@@ -357,7 +361,8 @@ public class EnclosingClass {
 <h3 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h3>
 <p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。
 しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため
-単純に入れ子の深さに制限を設けています。なお、最大深度の設定はdecode/parse時にも有効ですので深すぎるデータの取得も避けることが可能となります。</p>
+単純に入れ子の深さに制限を設けています。</p>
+<p>なお、最大深度の設定はdecode/parse時にも有効ですので深すぎるデータの取得を避けることも可能となります。</p>
 <p>この最大深度は、デフォルトでは32に設定されていますが変更することも可能です。</p>
 <pre class="source">
 <span class="comment">// 5階層以下の情報は取得しない</span>
@@ -394,7 +399,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 }
 </pre>
 
-<h2 id="webservice">Web Service Servlet</h3>
+<h2 id="webservice">Web Service Servlet</h2>
 <p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
 
 <h3>■ 設定方法</h3>
@@ -660,6 +665,57 @@ public class HogeService {
 <p>なお、encodingとexpireに関してはWebServiceServlet側にも同様の設定が用意されていますが、基本的にWebServiceServlet側の設定が優先されます。
 ただし、WebServiceServlet側が未設定の場合は、GatewayFilter側の設定が利用されます。</p>
 
+<h2 id="as3">JSONIC for AS3</h2>
+<p>JSONICでは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、AS3版のJSONクラスとRemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。</p>
+
+<h3>■ ActionScript3版 JSONライブラリ</h3>
+<p>Java版JSONクラスとほぼ同じです。ただし、decode/parseメソッドでの特定クラスへの変換はサポートしていません（動的型で十分だと思いますので……）。</p>
+<pre class="source">
+import net.arnx.jsonic.JSON;
+
+<span class="comment">// インスタンスをJSONに変換します</span>
+var text:String = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// JSONをObjectに変換します</span>
+var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</span>;
+</pre>
+
+<h3>■ ActionScript3版 JSON-RPCクライアントライブラリ</h3>
+<p>RemoteObjectライクなJSON-RPCクライアントクラスです。使い方はmx:RemoteObjectやmx:WebServiceなどを参考にしてください（lastResultのBindingも可能です）。</p>
+<pre class="source">
+<span class="elem">&lt;mx:WindowedApplication xmlns:mx="</span>http://www.adobe.com/2006/mxml<span class="elem">" </span>
+  <span class="elem">xmlns:js="</span>http://arnx.net/jsonic<span class="elem">"&gt;</span>
+    
+  &lt;!-- sourceにコンポーネント名、Operationのnameにメソッド名を指定します。 --&gt;
+  <span class="elem">&lt;js:WebService id="</span>remote<span class="elem">" </span>
+    <span class="elem">endpoint="</span>http://localhost:8080/sample/rpc/rpc.json<span class="elem">" </span>
+    <span class="elem">source="</span>calc<span class="elem">" </span>
+    <span class="elem">makeObjectsBindable="</span>false<span class="elem">" </span>
+    <span class="elem">showBusyCursor="</span>true<span class="elem">"</span>
+    <span class="elem">result="</span>onResult(event)<span class="elem">"</span>
+    <span class="elem">fault="</span>onFault(event)<span class="elem">"&gt;</span>
+    
+    <span class="elem">&lt;js:Operation name="</span>plus<span class="elem">" result="</span>onResult(event)<span class="elem">" fault="</span>onFault(event)<span class="elem">" /&gt;</span>
+    ...
+  <span class="elem">&lt;/js:WebService&gt;</span>
+    
+  <span class="elem">&lt;mx:Button label="</span>実行<span class="elem">" click="</span>remote.plus(100, 200)<span class="elem">" /&gt;</span>
+  <span class="elem">&lt;mx:TextInput id="</span>output<span class="elem">" text="</span>{remote.plus.lastResult}<span class="elem">" /&gt;</span>
+    
+  <span class="elem">&lt;mx:Script&gt;</span>
+    &lt;![CDATA[
+      private function onResult(event:ResultEvent) {
+        trace(event.result); // 100+200 => 300
+      }
+      
+      private function onFault(event:FaultEvent) {
+        trace(event.fault.message);
+      }
+    ]]&gt;
+  <span class="elem">&lt;/mx:Script&gt;</span>
+<span class="elem">&lt;/mx:WindowedApplication&gt;</span>
+</pre>
+
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
 <p>なお、書くまでもないことですが自分のライブラリへの組み込みやその際にパッケージ名や処理の変更など行っていただいて一向に構いません。保障はありませんが、ライセンスの範囲内でご自由にお使いください。</p>
@@ -669,15 +725,21 @@ public class HogeService {
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/07/01 version 1.1</h3>
+<h3>2008/07/12 version 1.0.1</h3>
 <ul>
-<li>JSON stringからEnum派生型へ変換時、最初の文字が数値とみなせる場合は数値とみなしEnum型に変換できるようにしました。</li>
+<li>JSON stringからEnum派生型へ変換時、頭一文字が数値の場合はint型とみなしEnum.ordinal()にて変換するよう変更しました。</li>
 <li>JSON true/falseからEnum派生型への変換に対応しました。</li>
 <li>JSON object中で値としてリテラル値が使われる場合、maxDepthの設定が使用されない問題を修正しました。</li>
-<li>OutputStreamによるencode機能を追加しました。</li>
-<li>JSONによるvalidationを可能にできるよう、setMaxDepthに負の値を設定できるようにしました。</li>
-<li>妥当なJSONのみparseを受け付けることが可能なようにsetModeメソッドを追加しました。</li>
-<li>static メソッドで使用する実装クラスを変更できるよう静的フィールドのprototypeを追加しました。</li>
+<li>java.util.LocaleからJSON stringへの変換時にバリアントコードも変換されるように変更しました。</li>
+<li>ルートの'{'が省略され、かつキーのみしか見つからないまま終了した場合にエラーとならない問題を修正しました。</li>
+<li>encode/formatにOutputStreamを引数にとるメソッドを追加しました。</li>
+<li>JSONクラスのstaticメソッドで使用するクラスを交換可能にするためprototypeフィールドを追加しました。</li>
+<li>ActionScript3.0版のJSONICライブラリ（JSONクラスおよびJSON-RPCクライアントクラス）を添付しました。</li>
+</ul>
+
+<h3>2008/05/15 version 1.0</h3>
+<ul>
+<li>Collectionだけでなく、Iterable, Iterator, EnumerationからJSON arrayへの変換に対応しました。</li>
 </ul>
 </div>
 <div class="bar">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>
