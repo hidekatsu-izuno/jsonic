@@ -177,9 +177,9 @@ public class JSONTest {
 
 		assertEquals(list, JSON.decode("[-1.1, 1.11e1, 1.11E+1, 11.1e-1]"));
 		
-		Map<String, Object> map1 = new HashMap<String, Object>();
-		Map<String, Object> map2 = new HashMap<String, Object>();
-		Map<String, Object> map3 = new HashMap<String, Object>();
+		Map<String, Object> map1 = new LinkedHashMap<String, Object>();
+		Map<String, Object> map2 = new LinkedHashMap<String, Object>();
+		Map<String, Object> map3 = new LinkedHashMap<String, Object>();
 		map1.put("map2", map2);
 		map1.put("1", new BigDecimal("1"));
 		map2.put("'2'", new BigDecimal("2"));
@@ -197,6 +197,21 @@ public class JSONTest {
 		output.add(new BigDecimal(((Calendar)input[1]).getTimeInMillis()));
 		
 		assertEquals(output, JSON.decode(JSON.encode(input)));
+		
+		try {
+			JSON.decode("aaa: 1, bbb");
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		Map<String, Object> map4 = new LinkedHashMap<String, Object>();
+		map4.put("aaa", new BigDecimal("1"));
+		map4.put("bbb", null);
+		
+		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));		
+		assertEquals(map4, JSON.decode("aaa: 1, bbb:\n "));
 	}
 
 	@Test
@@ -305,9 +320,10 @@ public class JSONTest {
 		});
 		list.add(new int[] {1,2,3,4,5});
 
+		json.setPrettyPrint(true);
 		assertEquals("[\n\t1,\n\t1.0,\n\t\"c\",\n\t\"char[]\",\n\t\"string\",\n\ttrue,\n\tfalse,\n\tnull," 
 				+ "\n\t{\n\t\t\"a\": \"a\",\n\t\t\"b\": [1, 2, 3, 4, 5],\n\t\t\"c\": {\n\t\t\t\"a\": \"a\"\n\t\t}\n\t},\n\t[1, 2, 3, 4, 5]\n]",
-				json.format(list, new StringBuilder(), true).toString());
+				json.format(list, new StringBuilder()).toString());
 		
 		try {
 			json.format(true, new StringBuilder());
@@ -317,6 +333,7 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
+		json.setPrettyPrint(false);
 		try {
 			assertEquals("true", json.format(true, new StringBuilder()).toString());
 			fail();
@@ -342,7 +359,7 @@ public class JSONTest {
 		
 		try {
 			CharSequence cs = null;
-			json.parse(cs, null);
+			assertEquals(null, json.parse(cs));
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -351,7 +368,7 @@ public class JSONTest {
 		
 		try {
 			Reader reader = null;
-			json.parse(reader, null);
+			assertEquals(null, json.parse(reader));
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -962,11 +979,33 @@ public class JSONTest {
 		JSON json = new JSON();
 		
 		long start = System.currentTimeMillis();
-		json.parse(this.getClass().getResourceAsStream("KEN_ALL.json"));
+		json.setMaxDepth(1);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
-		json.parse(this.getClass().getResourceAsStream("KEN_ALL.json"), String[][].class);
+		json.setMaxDepth(32);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
+		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.setMaxDepth(32);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"), String[][].class);
+		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.setMaxDepth(1);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"));
+		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.setMaxDepth(32);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"));
+		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.setMaxDepth(32);
+		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"), KenAll[].class);
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 	}
 	
@@ -1355,4 +1394,22 @@ class SuperArrayList extends ArrayList {
 
 enum ExampleEnum {
 	Example0, Example1, Example2
+}
+
+class KenAll {
+	public String localPublicOrgCode;
+	public String postalCode5;
+	public String postalCode7;
+	public String prefectureCode;
+	public String mairieCode;
+	public String cityCode;
+	public String prefectureName;
+	public String mairieName;
+	public String cityName;
+	public int duplicateNo;
+	public int cityNo;
+	public int blockNo;
+	public int complexNo;
+	public int updateNo;
+	public int reasonNo;
 }

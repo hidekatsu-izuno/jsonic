@@ -79,12 +79,10 @@ public class WebServiceServlet extends HttpServlet {
 		JSON json = new JSON();
 		
 		try {
-			json.setReturnType(Config.class);
-			config = (Config)json.parse(configText);
+			config = json.parse(configText, Config.class);
 			if (config.container == null) config.container = Container.class;
-			
-			json.setReturnType(config.container);
-			container = (Container)json.parse(configText);
+
+			container = (Container)json.parse(configText, config.container);
 			container.init(getServletContext());
 		} catch (Exception e) {
 			throw new ServletException(e);
@@ -250,9 +248,8 @@ public class WebServiceServlet extends HttpServlet {
 		int errorCode = 0;
 		String errorMessage = null;
 		
-		try {
-			json.setReturnType(RpcRequest.class);
-			req = (RpcRequest)json.parse(request.getReader());
+		try {			
+			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
@@ -329,10 +326,10 @@ public class WebServiceServlet extends HttpServlet {
 		res.put("id", (req != null) ? req.id : null);
 
 		Writer writer = response.getWriter();
-		
-		json.setPrettyPrint(container.isDebugMode());
+
 		try {
 			json.setContext(result);
+			json.setPrettyPrint(container.isDebugMode());
 			json.format(res, writer);
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
@@ -451,8 +448,8 @@ public class WebServiceServlet extends HttpServlet {
 				response.setContentType((callback != null) ? "text/javascript" : "application/json");
 			
 				Writer writer = response.getWriter();
-				
 				json.setPrettyPrint(container.isDebugMode());
+				
 				if (callback != null) writer.append(callback).append("(");
 				json.format(res, writer);
 				if (callback != null) writer.append(");");
