@@ -130,6 +130,11 @@ public class GatewayFilter implements Filter {
 		URI dest = null;
 		// access check
 		if (config.access != null) {
+			if (request.getRemoteUser() == null) {
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+				return;
+			}
+
 			boolean access = false;
 			for (String role : config.access) {
 				if (request.isUserInRole(role)) {
@@ -137,6 +142,7 @@ public class GatewayFilter implements Filter {
 					break;
 				}
 			}
+			
 			if (!access) {
 				response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
 				return;
