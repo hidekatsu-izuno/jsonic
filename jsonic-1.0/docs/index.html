@@ -454,11 +454,12 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <p>RPCモードでは、対象のパスに対し次のようなJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
 <pre class="source">
 {
-  "method": "[class].[method]",
+  "method": "class.method",
   "params": [ arg1, arg2, ... ],
   "id": request_id
 }
 </pre>
+<p>class, methodにはそれぞれ変数の値、argNにはメソッドの引数を設定してください。requesst_idには送受信の同期確認用のキーとしてnull以外の任意の値を設定してください（HTTPでは、送信と受信は同期処理ですのでほとんど意味はありませんが、省略すると通知(Notification)モードとなり返信が返されませんので必ず値を指定してください）。</p>
 <p>例えば、mappingsに "/[package]/[class].[ext]": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/rpc.jsonというパスに次のJSONがPOSTすると、boo.foo.woo.CalcServiceクラスのint plus(int a, int b)のようなメソッドが呼び出されます。</p>
 <pre class="source">
 {
@@ -477,6 +478,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 </pre>
 
 <p>RPCモードでエラーが発生した場合にはレスポンスボディでクライアントに通知されます。ステータスコードは、エラーの有無に関わらず200 OKが返されます。</p>
+<p>errorの値には code, message, dataの三つのキーを持つJSON objectが設定されます。codeとmessageについては次表を参照してください。dataには投げられた例外のプロパティがセットされます（ただし、Throwableクラスのプロパティは除外されます）。</p>
 <table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th><th>JSON error</th></tr>
 <tr>
