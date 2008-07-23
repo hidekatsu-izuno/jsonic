@@ -617,11 +617,8 @@ public class WebServiceServlet extends HttpServlet {
 		
 		@Override
 		protected boolean ignore(Class<?> target, Member member) {
-			if (Throwable.class.isAssignableFrom(target)) {
-				return member.getDeclaringClass().equals(Throwable.class)
-					|| super.ignore(target, member);
-			}
-			return super.ignore(target, member);
+			return member.getDeclaringClass().equals(Throwable.class)
+				|| super.ignore(target, member);
 		}
 		
 		private Object get(Type t) {

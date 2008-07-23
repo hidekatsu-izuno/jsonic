@@ -727,6 +727,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
+<h3>2008/07/12 version 1.0.2</h3>
+<ul>
+<li>WebServiceServletのRPCモードにて、エラー時に返されるerrorオブジェクトのdataプロパティに発生した例外をセットするようになりました。ただし、Throwableクラスのメソッドは対象になりません。</li>
+<li></li>
+</ul>
+
 <h3>2008/07/12 version 1.0.1</h3>
 <ul>
 <li>JSON stringからEnum派生型へ変換時、頭一文字が数値の場合はint型とみなしEnum.ordinal()にて変換するよう変更しました。</li>
