@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -247,6 +248,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		int errorCode = 0;
 		String errorMessage = null;
+		Throwable throwable = null;
 		
 		try {			
 			req = json.parse(request.getReader(), RpcRequest.class);
@@ -270,23 +272,28 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
+			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
+			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (JSONConvertException e) {
 			container.debug(e.getMessage());
+			throwable = e;
 			errorCode = -32602;
 			errorMessage = "Invalid params.";
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
+			throwable = e;
 			errorCode = -32700;
 			errorMessage = "Parse error.";
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.debug(cause.toString());
+			throwable = cause;
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
 				errorCode = -32601;
@@ -300,6 +307,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
+			throwable = e;
 			errorCode = -32603;
 			errorMessage = "Internal error.";
 		}
@@ -321,6 +329,7 @@ public class WebServiceServlet extends HttpServlet {
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
 			error.put("code", errorCode);
 			error.put("message", errorMessage);
+			error.put("data", throwable);
 			res.put("error", error);
 		}
 		res.put("id", (req != null) ? req.id : null);
@@ -338,6 +347,7 @@ public class WebServiceServlet extends HttpServlet {
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
 			error.put("code", -32603);
 			error.put("message", "Internal error.");
+			error.put("data", e);
 			res.put("error", error);
 			res.put("id", (req != null) ? req.id : null);
 			json.format(res, writer);
@@ -603,6 +613,14 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			return ret;
+		}
+		
+		@Override
+		protected boolean ignore(Class<?> target, Member member) {
+			if (Throwable.class.isAssignableFrom(target)) {
+				return member.getDeclaringClass().equals(Throwable.class);
+			}
+			return super.ignore(target, member);
 		}
 		
 		private Object get(Type t) {
