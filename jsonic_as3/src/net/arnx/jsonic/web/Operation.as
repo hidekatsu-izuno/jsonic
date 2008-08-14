@@ -92,11 +92,13 @@ package net.arnx.jsonic.web {
 		private function _onResult(event:ResultEvent, token:AsyncToken = null):void {
 			var response:Object = null;
 			var nextEvent:Event = null;
+			var fault:Fault = null;
 			
 			try {
 				response = JSON.decode(String(event.result));
 			} catch (error:Error) {
-				var fault:Fault = new Fault(FaultEvent.FAULT, error.message, error.getStackTrace());
+				fault = new Fault(FaultEvent.FAULT, error.message, error.getStackTrace());
+				fault.rootCause = error;
 				nextEvent = FaultEvent.createEvent(fault, event.token, event.message);
 			}
 			
@@ -112,19 +114,17 @@ package net.arnx.jsonic.web {
 						event.message
 					);
 				} else if (response.error != null) {
-					var error:Error = new Error(response.error.message, response.error.code);
-					error.data = response.error.data;
+					result = new Error(response.error.message, response.error.code);
+					result.data = response.error.data;
 					
-					var fault:Fault = new Fault(FaultEvent.FAULT, response.error.message, null);
-					fault.rootCause = error;
+					fault = new Fault(FaultEvent.FAULT, response.error.message, null);
+					fault.rootCause = result;
 					
 					nextEvent = FaultEvent.createEvent(
 						fault,
 						event.token, 
 						event.message
 					);
-					
-					result = error;
 				} else {
 					result = (_service.makeObjectsBindable) ? 
 						new ObjectProxy(response.result) : response.result;
