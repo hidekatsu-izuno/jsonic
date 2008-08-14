@@ -18,16 +18,17 @@ package net.arnx.jsonic.web;
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
 import org.seasar.framework.env.Env;
 import org.seasar.framework.log.Logger;
+import org.seasar.framework.util.ClassUtil;
 
 @SuppressWarnings("unchecked")
 public class S2Container extends Container {
 	private static Logger log = Logger.getLogger(S2Container.class);
 	
 	@Override
-	public <T> T getComponent(Class<? extends T> c) throws Exception {
+	public <T> T getComponent(String className) throws Exception {
 		return (T)SingletonS2ContainerFactory
 			.getContainer()
-			.getComponent(c);
+			.getComponent(ClassUtil.forName(className));
 	}
 	
 	@Override

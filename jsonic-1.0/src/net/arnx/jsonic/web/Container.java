@@ -34,8 +34,8 @@ public class Container {
 		return debug;
 	}
 
-	public <T> T getComponent(Class<? extends T> c) throws Exception {
-		return c.newInstance();
+	public <T> T getComponent(String className) throws Exception {
+		return (T)Class.forName(className).newInstance();
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {

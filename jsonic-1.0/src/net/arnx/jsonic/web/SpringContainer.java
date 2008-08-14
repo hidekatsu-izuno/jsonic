@@ -34,8 +34,8 @@ public class SpringContainer extends Container {
 	}
 	
 	@Override
-	public <T> T getComponent(Class<? extends T> c) throws Exception {
-		Object component = appContext.getBean(c.getName());
+	public <T> T getComponent(String className) throws Exception {
+		Object component = appContext.getBean(className);
 		
 		if (component instanceof ApplicationContextAware) {
 			((ApplicationContextAware)component).setApplicationContext(appContext);

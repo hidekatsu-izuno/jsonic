@@ -717,7 +717,7 @@ class Route extends HashMap<String, String> {
 		return method;
 	}
 	
-	public Class<? extends Object> getComponentClass() throws ClassNotFoundException {
+	public String getComponentClass() {
 		Matcher m = REPLACE_PATTERN.matcher(target);
 		StringBuffer sb = new StringBuffer();
 		while (m.find()) {
@@ -733,7 +733,7 @@ class Route extends HashMap<String, String> {
 			m.appendReplacement(sb, value);
 		}
 		m.appendTail(sb);
-		return Class.forName(sb.toString());
+		return sb.toString();
 	}
 	
 	private String toUpperCamel(String name) {
