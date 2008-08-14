@@ -9,28 +9,28 @@ input {
 textarea {
 	font-size: 9pt;
 }
-table#list {
+div#list table {
 	border: 1px solid black;
 	border-collapse: collapse;
 }
-table#list th {
+div#list table th {
 	border: 1px solid black;
 	font-size: 9pt;
 
 }
-table#list td {
+div#list table td {
 	border: 1px solid black;
 	font-size: 9pt;
 }
 </style>
-<script type="text/javascript" src="prototype.js"></script>
+<script type="text/javascript" src="prototype-1.6.0.2.js"></script>
 <script type="text/javascript">
 function show() {
 	var request = new Ajax.Request('rest/memo.json', {
 		method:'get',
 		onSuccess: function (req) {
 			var o = req.responseText.evalJSON();
-			var content = '<tr><th width="30">ID</th><th width="50">Title</th><th width="300">Text</th><th width="50">&nbsp;</th></tr>';
+			var content = '<table><tr><th width="30">ID</th><th width="50">Title</th><th width="300">Text</th><th width="50">&nbsp;</th></tr>';
 			for (i = 0; i < o.length; i++) {
 				content += '<tr>'
 					+ '<td>' + o[i].id + '</td>'
@@ -45,7 +45,7 @@ function show() {
 				+ '<td><input id="title" type="text" style="width:100%" /></td>'
 				+ '<td><input id="text" type="text" style="width:100%" /></td>'
 				+ '<td><input type="button" id="add" value="Add" onclick="addRow()"/></td>'
-				+ '</tr>';
+				+ '</tr></table>';
 			$('list').innerHTML = content;
 		}
 	});
@@ -82,6 +82,6 @@ function deleteRow(id) {
 <h1>JSON-REST sample</h1>
 <hr />
 <h2>Memo Service</h2>
-<table id="list"></table>
+<div id="list"></div>
 </body>
 </html>

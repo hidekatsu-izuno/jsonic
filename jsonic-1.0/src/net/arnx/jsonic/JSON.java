@@ -1963,7 +1963,12 @@ public class JSON {
 			if (Modifier.isPrivate(modifier)) {
 				return scope.equals(c.getEnclosingClass());
 			}
-			return c.getPackage().equals(scope.getPackage());
+			int cpos = c.getName().lastIndexOf('.');
+			int ppos = scope.getName().lastIndexOf('.');
+			if (cpos == ppos 
+				&& (cpos != -1 || c.getName().substring(0, cpos).equals(scope.getName().substring(0, ppos)))) {
+				return true;
+			}
 		}
 		return false;
 	}
