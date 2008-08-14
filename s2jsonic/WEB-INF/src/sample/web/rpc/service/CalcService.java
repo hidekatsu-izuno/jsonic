@@ -17,7 +17,7 @@ package sample.web.rpc.service;
 
 public class CalcService {
 	public int plus(int a, int b) {
-		return a + b;
+		return a + 2*b;
 	}
 	
 	public int sum(int[] a) {
