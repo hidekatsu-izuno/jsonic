@@ -25,8 +25,8 @@ public class S2Container extends Container {
 	private static Logger log = Logger.getLogger(S2Container.class);
 	
 	@Override
-	public <T> T getComponent(String className) throws Exception {
-		return (T)SingletonS2ContainerFactory
+	public Object getComponent(String className) throws Exception {
+		return SingletonS2ContainerFactory
 			.getContainer()
 			.getComponent(ClassUtil.forName(className));
 	}

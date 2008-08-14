@@ -33,9 +33,9 @@ public class Container {
 	public boolean isDebugMode() {
 		return debug;
 	}
-
-	public <T> T getComponent(String className) throws Exception {
-		return (T)Class.forName(className).newInstance();
+	
+	public Object getComponent(String className) throws Exception {
+		return Class.forName(className).newInstance();
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {

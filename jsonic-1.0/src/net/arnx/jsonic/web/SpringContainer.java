@@ -34,14 +34,14 @@ public class SpringContainer extends Container {
 	}
 	
 	@Override
-	public <T> T getComponent(String className) throws Exception {
+	public Object getComponent(String className) throws Exception {
 		Object component = appContext.getBean(className);
 		
 		if (component instanceof ApplicationContextAware) {
 			((ApplicationContextAware)component).setApplicationContext(appContext);
 		}
 		
-		return (T)component;
+		return component;
 	}
 	
 	@Override
