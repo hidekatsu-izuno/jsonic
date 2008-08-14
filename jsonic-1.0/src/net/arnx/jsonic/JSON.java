@@ -147,7 +147,7 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.0.1
+ * @version 1.0.2
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -1966,7 +1966,7 @@ public class JSON {
 			int cpos = c.getName().lastIndexOf('.');
 			int ppos = scope.getName().lastIndexOf('.');
 			if (cpos == ppos 
-				&& (cpos != -1 || c.getName().substring(0, cpos).equals(scope.getName().substring(0, ppos)))) {
+				&& (cpos == -1 || c.getName().substring(0, cpos).equals(scope.getName().substring(0, ppos)))) {
 				return true;
 			}
 		}
