@@ -253,6 +253,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {			
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
+				throwable = new Throwable();
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
 			} else {
