@@ -41,6 +41,14 @@ public class JSONTest {
 		json.setContext(this);
 		hoge = json.parse("{\"a\":100}", InnerHoge.class);
 		hoge.accessEnclosingClass();
+		
+		try {
+			json.setContext(new Object());
+			hoge = json.parse("{\"a\":100}", InnerHoge.class);
+			fail();
+		} catch (Exception e) {
+			assertNotNull(e);
+		}
 	}
 	
 	class InnerHoge {
