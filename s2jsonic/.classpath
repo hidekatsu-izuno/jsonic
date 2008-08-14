@@ -6,6 +6,6 @@
 	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
 	<classpathentry kind="src" output="work" path="work"/>
 	<classpathentry kind="src" path="WEB-INF/src"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/jsonic"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/jsonic-1.0"/>
 	<classpathentry kind="output" path="WEB-INF/classes"/>
 </classpath>
