@@ -30,6 +30,14 @@
 	<servlet>
 	    <servlet-name>s2servlet</servlet-name>
 	    <servlet-class>org.seasar.framework.container.servlet.S2ContainerServlet</servlet-class>
+	    <init-param>
+	        <param-name>configPath</param-name>
+	        <param-value>app.dicon</param-value>
+	    </init-param>
+	    <init-param>
+	        <param-name>debug</param-name>
+	        <param-value>true</param-value>
+	    </init-param>
 	    <load-on-startup>1</load-on-startup>
 	</servlet>
 	
@@ -43,6 +51,7 @@
 				container: 'net.arnx.jsonic.web.S2Container'
 				debug: true
 				mappings: {
+					'/[package]/[class]/[id].[ext]': 'sample.web.${package}.service.${class}Service'
 					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
 					'/[class].[ext]': 'sample.service.${class}Service'
 				}
