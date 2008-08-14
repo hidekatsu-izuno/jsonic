@@ -17,9 +17,7 @@
 package net.arnx.jsonic.web {
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
-	import flash.geom.Rectangle;
 	
-	import mx.events.PropertyChangeEvent;
 	import mx.rpc.AsyncResponder;
 	import mx.rpc.AsyncToken;
 	import mx.rpc.Fault;
@@ -114,12 +112,19 @@ package net.arnx.jsonic.web {
 						event.message
 					);
 				} else if (response.error != null) {
+					var error:Error = new Error(response.error.message, response.error.code);
+					error.data = response.error.data;
+					
+					var fault:Fault = new Fault(FaultEvent.FAULT, response.error.message, null);
+					fault.rootCause = error;
+					
 					nextEvent = FaultEvent.createEvent(
-						new Fault(FaultEvent.FAULT, response.error.message, null), 
+						fault,
 						event.token, 
 						event.message
 					);
-					result = new Error(response.error.message, response.error.code);
+					
+					result = error;
 				} else {
 					result = (_service.makeObjectsBindable) ? 
 						new ObjectProxy(response.result) : response.result;
