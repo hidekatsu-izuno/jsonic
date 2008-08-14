@@ -2,15 +2,14 @@
 <tomcatProjectProperties>
     <rootDir>/</rootDir>
     <exportSource>false</exportSource>
-    <reloadable>true</reloadable>
+    <reloadable>false</reloadable>
     <redirectLogger>true</redirectLogger>
     <updateXml>true</updateXml>
     <warLocation></warLocation>
     <extraInfo></extraInfo>
     <webPath>/s2jsonic</webPath>
     <webClassPathEntries>
-        <webClassPathEntry>/jsonic/bin</webClassPathEntry>
-        <webClassPathEntry>/jsonic/sample/WEB-INF/classes</webClassPathEntry>
+        <webClassPathEntry>/jsonic-1.0/bin</webClassPathEntry>
         <webClassPathEntry>/s2jsonic/WEB-INF/classes</webClassPathEntry>
     </webClassPathEntries>
 </tomcatProjectProperties>
