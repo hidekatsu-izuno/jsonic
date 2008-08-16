@@ -1080,7 +1080,7 @@ public class JSONTest {
 	}
 }
 
-@SuppressWarnings({"unchecked","unused"})
+@SuppressWarnings({"unchecked"})
 class TestBean {
 	private int a;
 	public void setA(int a) { this.a = a; }

@@ -16,7 +16,6 @@ public class JSONTest {
 	}
 	
 	@Test
-	@SuppressWarnings("unused")
 	public void testDecodeInnerClass() throws Exception {
 		JSON json = new JSON();
 		
