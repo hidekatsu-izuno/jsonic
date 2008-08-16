@@ -25,7 +25,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class MemoService {
 	
-	// it's incorrect use. you shoud use RDBMS.
+	// it's incorrect use. you should use RDBMS.
+	// and it's not work in a hot deploy.
 	private static int count = 0;
 	private static Map<Integer, Memo> list = Collections.synchronizedMap(new LinkedHashMap<Integer, Memo>());
 	
