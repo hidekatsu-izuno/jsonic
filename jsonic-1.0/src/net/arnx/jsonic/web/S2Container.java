@@ -18,7 +18,6 @@ package net.arnx.jsonic.web;
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
 import org.seasar.framework.env.Env;
 import org.seasar.framework.log.Logger;
-import org.seasar.framework.util.ClassUtil;
 
 @SuppressWarnings("unchecked")
 public class S2Container extends Container {
@@ -26,9 +25,11 @@ public class S2Container extends Container {
 	
 	@Override
 	public Object getComponent(String className) throws Exception {
+		ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		
 		return SingletonS2ContainerFactory
 			.getContainer()
-			.getComponent(ClassUtil.forName(className));
+			.getComponent(Class.forName(className, true, loader));
 	}
 	
 	@Override
