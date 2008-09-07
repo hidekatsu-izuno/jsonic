@@ -19,11 +19,17 @@ public class JSONTest {
 	public void testDecodeInnerClass() throws Exception {
 		JSON json = new JSON();
 		
+		Hoge anonymousHoge = new Hoge() {};
+		
+		assertEquals(anonymousHoge, json.parse("{\"a\":100}", anonymousHoge.getClass()));
+		
 		assertEquals(new Hoge(), json.parse("{\"a\":100}", Hoge.class));
 
 		assertEquals(new InnerHoge(), json.parse("{\"a\":100}", InnerHoge.class));
 		
 		assertEquals(new PrivateInnerHoge(), json.parse("{\"a\":100}", PrivateInnerHoge.class));
+
+		assertEquals(new StaticInnerHoge(), json.parse("{\"a\":100}", StaticInnerHoge.class));
 		
 		assertEquals(new InnerHoge(), JSON.decode("{\"a\":100}", InnerHoge.class));
 		
@@ -104,6 +110,32 @@ public class JSONTest {
 			if (getClass() != obj.getClass())
 				return false;
 			final PrivateInnerHoge other = (PrivateInnerHoge) obj;
+			if (a != other.a)
+				return false;
+			return true;
+		}
+	}
+	
+	static class StaticInnerHoge {
+		public int a = 100;
+		
+		@Override
+		public int hashCode() {
+			final int PRIME = 31;
+			int result = 1;
+			result = PRIME * result + a;
+			return result;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			final StaticInnerHoge other = (StaticInnerHoge) obj;
 			if (a != other.a)
 				return false;
 			return true;

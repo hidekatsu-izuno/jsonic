@@ -1916,7 +1916,7 @@ public class JSON {
 			if (Calendar.class.equals(c)) {
 				instance = Calendar.getInstance();
 			}
-		} else if (c.isMemberClass() || c.isAnonymousClass()) {
+		} else if ((c.isMemberClass() || c.isAnonymousClass()) && !Modifier.isStatic(c.getModifiers())) {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
 			if(tryAccess(c)) con.setAccessible(true);
