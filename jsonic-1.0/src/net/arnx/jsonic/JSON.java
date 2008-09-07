@@ -210,7 +210,7 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, OutputStream out) throws IOException {
 		JSON.newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
@@ -222,7 +222,7 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException {
 		JSON json = JSON.newInstance();
@@ -235,7 +235,7 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, Appendable appendable) throws IOException {
 		JSON.newInstance().format(source, appendable);
@@ -247,7 +247,7 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException {
 		JSON json = JSON.newInstance();
@@ -293,11 +293,11 @@ public class JSON {
 	}
 
 	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 * 
 	 * @param in a json stream to decode
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(InputStream in) throws IOException, JSONParseException {
@@ -305,12 +305,12 @@ public class JSON {
 	}
 
 	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 * 
 	 * @param in a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONParseException {
