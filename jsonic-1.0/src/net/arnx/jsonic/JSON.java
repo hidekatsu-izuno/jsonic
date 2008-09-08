@@ -318,12 +318,12 @@ public class JSON {
 	}
 
 	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 * 
 	 * @param in a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(InputStream in, Type type) throws IOException, JSONParseException {
@@ -335,7 +335,7 @@ public class JSON {
 	 * 
 	 * @param reader a json stream to decode
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(Reader reader) throws IOException, JSONParseException {
@@ -348,7 +348,7 @@ public class JSON {
 	 * @param reader a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONParseException {
@@ -361,7 +361,7 @@ public class JSON {
 	 * @param reader a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(Reader reader, Type type) throws IOException, JSONParseException {
