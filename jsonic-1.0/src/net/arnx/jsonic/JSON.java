@@ -147,7 +147,7 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.0.2
+ * @version 1.0.3
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -453,7 +453,7 @@ public class JSON {
 	 * Format a object into a json string.
 	 * 
 	 * @param source a object to encode.
-	 * @param ap a destination. ex: StringBuilder, Writer, ...
+	 * @param ap a destination. example: StringBuilder, Writer, ...
 	 * @return a json string
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
