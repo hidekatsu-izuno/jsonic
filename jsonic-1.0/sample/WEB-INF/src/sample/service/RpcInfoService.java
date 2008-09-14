@@ -25,16 +25,16 @@ import java.util.Map;
 import sample.web.rpc.service.*;
 
 public class RpcInfoService {
-	static List<Class<?>> rpcList = new ArrayList<Class<?>>();
+	static List<Class> rpcList = new ArrayList<Class>();
 	static {
 		rpcList.add(CalcService.class);
 		rpcList.add(EditService.class);
 	}
 	
-	public List<?> find() {
+	public List find() {
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		
-		for (Class<?> c : rpcList) {
+		for (Class c : rpcList) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("name", toComponentName(c.getName()));
 			
@@ -75,9 +75,9 @@ public class RpcInfoService {
 		return sb.toString();
 	}
 	
-	private String getParameterExample(Class<?>[] paramTypes) {
+	private String getParameterExample(Class[] paramTypes) {
 		StringBuilder sb = new StringBuilder("[");
-		for (Class<?> c : paramTypes) {
+		for (Class c : paramTypes) {
 			if (c.equals(boolean.class) || c.equals(Boolean.class)) {
 				sb.append("true");
 			} else if (c.equals(byte.class) || c.equals(short.class) || c.equals(int.class) || c.equals(long.class)
@@ -89,7 +89,7 @@ public class RpcInfoService {
 			} else if (CharSequence.class.isAssignableFrom(c)) {
 				sb.append("\"abc\"");
 			} else if (c.isArray()) {
-				Class<?>[] array = new Class[5];
+				Class[] array = new Class[5];
 				for (int i = 0; i < array.length; i++) {
 					array[i] = c.getComponentType();
 				}
