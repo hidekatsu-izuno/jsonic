@@ -4,7 +4,7 @@
 	<property name="version" value="1.0.3" />
 
 	<property name="src" location="src" />
-	<property name="lib" location="lib" />
+	<property name="lib" location="sample/WEB-INF/lib" />
 	<property name="tmp" location="tmp" />
 	<property name="dist" location="." />
 	
