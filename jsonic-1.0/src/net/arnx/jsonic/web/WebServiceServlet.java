@@ -356,7 +356,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
@@ -472,7 +471,6 @@ public class WebServiceServlet extends HttpServlet {
 		}		
 	}
 	
-	@SuppressWarnings("unchecked")
 	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		

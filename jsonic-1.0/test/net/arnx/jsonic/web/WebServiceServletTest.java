@@ -27,6 +27,7 @@ import org.seasar.framework.mock.servlet.MockServletContextImpl;
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
 
+@SuppressWarnings("unchecked")
 public class WebServiceServletTest {
 	
 	@Test

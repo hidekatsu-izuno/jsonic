@@ -35,10 +35,10 @@ import net.arnx.jsonic.JSON;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
+@SuppressWarnings({"unchecked", "unused", "serial"})
 public class JSONTest {
 
 	@Test
-	@SuppressWarnings("unused")
 	public void testEncode() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		assertEquals("[]", JSON.encode(list));
@@ -154,7 +154,6 @@ public class JSONTest {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testDecodeString() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap());
@@ -215,7 +214,6 @@ public class JSONTest {
 	}
 
 	@Test
-	@SuppressWarnings({ "unchecked", "serial" })
 	public void testDecodeStringClassOfQextendsT() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap());
@@ -290,7 +288,6 @@ public class JSONTest {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testFormat() throws Exception {
 		JSON json = new JSON();
 		ArrayList<Object> list = new ArrayList<Object>();
@@ -352,7 +349,6 @@ public class JSONTest {
 	}
 	
 	@Test
-	@SuppressWarnings({ "unchecked", "serial" })
 	public void testParse() throws Exception {
 		Locale.setDefault(Locale.JAPANESE);
 		JSON json = new JSON();
@@ -632,7 +628,6 @@ public class JSONTest {
 	}
 
 	@Test
-	@SuppressWarnings({ "unchecked", "serial", "unused" })
 	public void testConvert() throws Exception {
 		JSON json = new JSON();
 		
@@ -1321,6 +1316,7 @@ class GenericsBean {
 	}
 }
 
+@SuppressWarnings("unchecked")
 class InheritedBean {
 	public Map<String, Object> map0;
 	public LinkedHashMap map1;
@@ -1384,10 +1380,12 @@ class InheritedBean {
 	}
 }
 
+@SuppressWarnings("unchecked")
 class SuperLinkedHashMap extends LinkedHashMap {
 	private static final long serialVersionUID = 1L;
 }
 
+@SuppressWarnings("unchecked")
 class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
 }

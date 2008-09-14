@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="jsonic-1.0_2">
+        <wb-resource deploy-path="/" source-path="/sample"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/test"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/sample/WEB-INF/src"/>
+        <property name="java-output-path"/>
+        <property name="context-root" value="jsonic-1.0_2"/>
+    </wb-module>
+</project-modules>

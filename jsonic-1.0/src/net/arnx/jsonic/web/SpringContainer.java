@@ -23,7 +23,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-@SuppressWarnings("unchecked")
 public class SpringContainer extends Container {
 	private static Log log = LogFactory.getLog(SpringContainer.class);
 	

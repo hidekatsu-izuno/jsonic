@@ -34,8 +34,8 @@
 </style>
 </head>
 <body>
-<h1 class="title"><a href=""><img src="images/jsonic_logo.jpg" width="136" height="34" border="0" alt="jsonic" style="vertical-align: -10px;" /></a> <span class="subtitle">- simple json encoder/decoder for java</span></h1>
-<div class="bar">[MENU] >>></div>
+<h1 class="title"><a href=""><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a> <span class="subtitle">- simple json encoder/decoder for java</span></h1>
+<div class="bar">[MENU] &gt;&gt;&gt;</div>
 <div class="menu">
 <ul>
 	<li><a href="#introduction">JSONICとは</a></li>
@@ -250,7 +250,7 @@ JSON json = new JSON() {
     
     <span class="comment">// JSON arrrayをjava.awt.Pointに変換する例です。
     // さらに下の階層を変換する場合はconvertChildメソッドを呼び出してください。</span>
-    if (c == Point.class && value instanceof List) {
+    if (c == Point.class &amp;&amp; value instanceof List) {
       return (T)new Point(
       	convertChild(0, ((List)value).get(0), int.class, int.class), 
       	convertChild(1, ((List)value).get(1), int.class, int.class)
@@ -576,7 +576,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 
 <h3>■ 初期化/Servletパラメータへのアクセス</h3>
 <p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※10)</sup>
-このとき引数にServletContext, HttpServletRequest, HttpServletResponse, HttpSessionを受け取れるように設定するとそれぞれのインスタンスが設定されます。<p>
+このとき引数にServletContext, HttpServletRequest, HttpServletResponse, HttpSessionを受け取れるように設定するとそれぞれのインスタンスが設定されます。</p>
 <pre class="source">
 public class HogeService {
     <span class="comment">// 処理の前に呼び出されます。</span>
@@ -707,7 +707,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
   <span class="elem">&lt;mx:Script&gt;</span>
     &lt;![CDATA[
       private function onResult(event:ResultEvent) {
-        trace(event.result); // 100+200 => 300
+        trace(event.result); // 100+200 =&gt; 300
       }
       
       private function onFault(event:FaultEvent) {
@@ -754,6 +754,6 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 </ul>
 </div>
 <div class="bar">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>
-<a href="http://sourceforge.jp/" style="position:absolute; top: 7px; left: 678px;"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" border="0" alt="SourceForge.jp" /></a>
+<a href="http://sourceforge.jp/" style="position:absolute; top: 7px; left: 678px;"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" style=" border-width:0px;" alt="SourceForge.jp" /></a>
 </body>
 </html>
