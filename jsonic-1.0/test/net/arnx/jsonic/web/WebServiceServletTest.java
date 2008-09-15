@@ -37,7 +37,7 @@ public class WebServiceServletTest {
 	@BeforeClass
 	public static void init() throws Exception {
 		Map args = new HashMap();
-		args.put("webappsDir", ".");
+		args.put("webappsDir", "webapps");
 		
 		Launcher.initLogger(args);
 		winstone = new Launcher(args);

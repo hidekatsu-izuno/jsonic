@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" output="webapps/sample/WEB-INF/classes" path="webapps/sample/WEB-INF/src"/>
 	<classpathentry kind="src" path="test"/>
-	<classpathentry kind="src" output="sample/WEB-INF/classes" path="sample/WEB-INF/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/spring.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
@@ -10,7 +10,6 @@
 	<classpathentry kind="lib" path="lib/winstone-0.9.10.jar"/>
 	<classpathentry kind="lib" path="lib/s2-framework-2.4.29.jar"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.8.0.jar"/>
-	<classpathentry kind="src" output="work" path="work"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
