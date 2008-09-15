@@ -26,10 +26,10 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -471,14 +471,53 @@ public class WebServiceServlet extends HttpServlet {
 		}		
 	}
 	
-	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
+	private static Map<String, Object> getParameterMap(HttpServletRequest request) throws IOException {
+		String query = request.getQueryString();
+		if (query == null || query.length() == 0) {
+			return (Map<String, Object>)Collections.EMPTY_MAP;
+		}
+		
+		String encoding = request.getCharacterEncoding();
+		if (encoding == null) encoding = "UTF-8";
+		
+		Map<String, Object> params = new HashMap<String, Object>();
+		int start = 0;
+		String name = null;
+		for (int i = 0; i < query.length(); i++) {
+			char c = query.charAt(i);
+			if (c == '=') {
+				name = URLDecoder.decode(query.substring(start, i), encoding);
+				start = i+1;
+			} else if (c == '&' || (i+1) == query.length()) {
+				Object value = null;
+				if (name == null) {
+					name = URLDecoder.decode(query.substring(start, i), encoding);
+				} else {
+					value = URLDecoder.decode(query.substring(start, i), encoding);
+				}
+				
+				Object pvalue = params.get(name);
+				if (pvalue instanceof List) {
+					((List)params).add(value);
+				} else if (pvalue instanceof String) {
+					List list = new ArrayList();
+					list.add(pvalue);
+					list.add(value);
+					params.put(name, list);
+				} else {
+					params.put(name, value);
+				}
+				
+				name = null;
+				start = i+1;
+			}
+		}
+		
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		
-		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
-			String name = e.nextElement();
-			String[] values = request.getParameterValues(name);
-			
-			int start = 0;
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			name = entry.getKey();
+			start = 0;
 			char old = '\0';
 			Map<String, Object> current = result;
 			for (int i = 0; i < name.length(); i++) {
@@ -500,18 +539,7 @@ public class WebServiceServlet extends HttpServlet {
 				old = c;
 			}
 			
-			Object value = null;
-			if (values == null || values.length == 0) {
-				value = null;
-			} else if (values.length == 1) {
-				value = values[0];
-			} else {
-				List list = new ArrayList(values.length);
-				for (String str : values) list.add(str);
-				value = list;
-			}
-			
-			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), value);
+			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), entry.getValue());
 		}
 		
 		return result;
