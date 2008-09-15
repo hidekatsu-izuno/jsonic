@@ -779,7 +779,7 @@ class Route extends HashMap<String, String> {
 		try {
 			result = URLDecoder.decode(data, encoding);
 		} catch (UnsupportedEncodingException e) {
-			// no handle
+			throw new IllegalStateException(e);
 		}
 		return result;
 	}

@@ -87,7 +87,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 <span class="comment">// 変換対象のPOJOを準備</span>
 Hoge hoge = new Hoge();
 hoge.number = 10;      <span class="comment">// public field</span>
-hoge.setString("aaa"); <span class="comment">// publid property</span>
+hoge.setString("aaa"); <span class="comment">// public property</span>
 hoge.setArray(new int[] {1, 2, 3});
 
 <span class="comment">// POJOをJSONに変換します。戻り値は {"number":10,"string":"aaa","array":[1,2,3]}となります</span>
@@ -726,6 +726,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>のトラッキング情報あるいはフォーラムまでご連絡ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2008/08/15 version 1.0.3</h3>
+<ul>
+<li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました。</li>
+<li>WebServiceServletにてgetReaderとgetParameterを併用できないコンテナを使用した場合、エラーが発生する問題に対応しました。</li>
+<li><a href="http://commons.apache.org/beanutils/apidocs/org/apache/commons/beanutils/DynaBean.html">DynaBean</a>のformatに対応しました。リフレクションにより処理を行っているため、DynaBeanを利用しない場合にはbeanutilsのjarをクラスパスに追加する必要はありません。</li>
+</ul>
 
 <h3>2008/08/15 version 1.0.2</h3>
 <ul>
