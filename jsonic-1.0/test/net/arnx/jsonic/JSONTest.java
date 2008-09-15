@@ -32,12 +32,13 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import net.arnx.jsonic.JSON;
 
+import org.junit.Test;
+import org.w3c.dom.Document;
+
 import org.apache.commons.beanutils.BasicDynaClass;
 import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaClass;
 import org.apache.commons.beanutils.DynaProperty;
-import org.junit.Test;
-import org.w3c.dom.Document;
 
 @SuppressWarnings({"unchecked", "unused", "serial"})
 public class JSONTest {
@@ -167,6 +168,7 @@ public class JSONTest {
 		dynaBean.set("b", "string");
 		dynaBean.set("c", true);
 		assertEquals("{\"a\":100,\"b\":\"string\",\"c\":true,\"d\":null}", JSON.encode(dynaBean));
+
 	}
 
 	@Test
