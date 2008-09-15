@@ -486,14 +486,14 @@ public class WebServiceServlet extends HttpServlet {
 		String name = null;
 		for (int i = 0; i <= query.length(); i++) {
 			char c = (i != query.length()) ? query.charAt(i) : '&';
-			if (c == '=') {
+			if (c == '=' && name == null) {
 				name = URLDecoder.decode(query.substring(start, i), encoding);
 				start = i+1;
 			} else if (c == '&') {
 				String value = URLDecoder.decode(query.substring(start, i), encoding);
 				if (name == null) {
 					name = value;
-					value = null;
+					value = "";
 				}
 				
 				if (params.containsKey(name)) {
@@ -538,7 +538,6 @@ public class WebServiceServlet extends HttpServlet {
 				}
 				old = c;
 			}
-			
 			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), entry.getValue());
 		}
 		
