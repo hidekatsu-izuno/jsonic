@@ -223,7 +223,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testGetParameterMap() throws Exception {
-		Method m = WebServiceServlet.class.getDeclaredMethod("getParameterMap", HttpServletRequest.class);
+		Method m = Route.class.getDeclaredMethod("getParameterMap", HttpServletRequest.class);
 		m.setAccessible(true);
 		
 		final String[] query = new String[1];

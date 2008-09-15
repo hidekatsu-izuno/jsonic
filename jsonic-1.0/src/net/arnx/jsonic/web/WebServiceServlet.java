@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -149,7 +150,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		for (RouteMapping m : mappings) {
-			Route route = m.matches(request.getMethod(), uri);
+			Route route = m.matches(request, uri);
 			if (route != null) {
 				container.debug("route found: " + request.getMethod() + " " + uri);
 				return route;
@@ -185,7 +186,7 @@ public class WebServiceServlet extends HttpServlet {
 		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			doRPC(route, request, response);
 		} else {
-			String method = request.getParameter("_method");
+			String method = route.getParameter("_method");
 			if (method == null) method = request.getMethod();
 			if (method.equalsIgnoreCase("GET") 
 				|| method.equalsIgnoreCase("POST")
@@ -365,7 +366,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if ("get".equals(route.getMethod())) {
 			methodName = "find";
-			callback = request.getParameter("callback");
+			callback = route.getParameter("callback");
 		} else if ("post".equals(route.getMethod())) {
 			methodName = "create";
 			status = SC_CREATED;
@@ -390,19 +391,19 @@ public class WebServiceServlet extends HttpServlet {
 			List<Object> params = null;
 			if ("get".equals(route.getMethod())) {
 				params = new ArrayList<Object>();
-				Map<String, Object> contents = getParameterMap(request);
+				Map<String, Object> contents = route.getParameterMap();
 				contents.putAll(route);
 				params.add(contents);
 			} else {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
 					params = (List)o;
-					Map<String, Object> contents = getParameterMap(request);
+					Map<String, Object> contents = route.getParameterMap();
 					contents.putAll(route);
 					params.add(contents);
 				} else if (o instanceof Map) {
 					Map<String, Object> contents = (Map)o;
-					contents.putAll(getParameterMap(request));
+					contents.putAll(route.getParameterMap());
 					contents.putAll(route);
 					params = new ArrayList<Object>();
 					params.add(contents);
@@ -446,7 +447,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		try {		
+		try {
 			if (res == null
 					|| res instanceof CharSequence
 					|| res instanceof Boolean
@@ -469,79 +470,6 @@ public class WebServiceServlet extends HttpServlet {
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}		
-	}
-	
-	private static Map<String, Object> getParameterMap(HttpServletRequest request) throws IOException {
-		Map<String, Object> result = new LinkedHashMap<String, Object>();
-
-		String query = request.getQueryString();
-		if (query == null || query.length() == 0) {
-			return result;
-		}
-		
-		String encoding = request.getCharacterEncoding();
-		
-		Map<String, Object> params = new HashMap<String, Object>();
-		int start = 0;
-		String name = null;
-		for (int i = 0; i <= query.length(); i++) {
-			char c = (i != query.length()) ? query.charAt(i) : '&';
-			if (c == '=' && name == null) {
-				name = URLDecoder.decode(query.substring(start, i), encoding);
-				start = i+1;
-			} else if (c == '&') {
-				String value = URLDecoder.decode(query.substring(start, i), encoding);
-				if (name == null) {
-					name = value;
-					value = "";
-				}
-				
-				if (params.containsKey(name)) {
-					Object pvalue = params.get(name);
-					if (pvalue instanceof List) {
-						((List)params).add(value);
-					} else {
-						List list = new ArrayList();
-						list.add(pvalue);
-						list.add(value);
-						params.put(name, list);
-					}
-				} else {
-					params.put(name, value);
-				}
-				
-				name = null;
-				start = i+1;
-			}
-		}
-		
-		for (Map.Entry<String, Object> entry : params.entrySet()) {
-			name = entry.getKey();
-			start = 0;
-			char old = '\0';
-			Map<String, Object> current = result;
-			for (int i = 0; i < name.length(); i++) {
-				char c = name.charAt(i);
-				if (c == '.' || c == '[') {
-					String key = name.substring(start, (old == ']') ? i-1 : i);
-					Object target = current.get(key);
-					
-					if (!(target instanceof Map)) {
-						Map<String, Object> map = new LinkedHashMap<String, Object>();
-						if (target != null) map.put("", target);
-						current.put(key, map);
-						current = map;
-					} else {
-						current = (Map<String, Object>)target;
-					}
-					start = i+1;
-				}
-				old = c;
-			}
-			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), entry.getValue());
-		}
-		
-		return result;
 	}
 	
 	@Override
@@ -710,10 +638,10 @@ class RouteMapping {
 		this.target = target;
 	}
 	
-	public Route matches(String method, String path) {
+	public Route matches(HttpServletRequest request, String path) throws IOException {
 		Matcher m = pattern.matcher(path);
 		if (m.matches()) {
-			Route route = new Route(method, target);
+			Route route = new Route(request, target);
 			for (int i = 0; i < names.size(); i++) {
 				route.put(names.get(i), m.group(i+1));
 			}
@@ -729,10 +657,12 @@ class Route extends HashMap<String, String> {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 	private String target;
 	private String method;
+	private Map<String, Object> params;
 	
-	public Route(String method, String target) {
-		this.method = method.toLowerCase();
+	public Route(HttpServletRequest request, String target) {
+		this.method = request.getMethod().toLowerCase();
 		this.target = target;
+		this.params = getParameterMap(request);
 	}
 	
 	public void setMethod(String method) {
@@ -741,6 +671,15 @@ class Route extends HashMap<String, String> {
 	
 	public String getMethod() {
 		return method;
+	}
+	
+	public Map<String, Object> getParameterMap() {
+		return params;
+	}
+	
+	public String getParameter(String name) {
+		Object o = params.get(name);
+		return (o instanceof String) ? (String)o : null;
 	}
 	
 	public String getComponentClass() {
@@ -760,6 +699,89 @@ class Route extends HashMap<String, String> {
 		}
 		m.appendTail(sb);
 		return sb.toString();
+	}
+	
+	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		
+		String query = request.getQueryString();
+		if (query == null || query.length() == 0) {
+			return result;
+		}
+		
+		String encoding = request.getCharacterEncoding();
+		
+		Map<String, Object> params = new HashMap<String, Object>();
+		int start = 0;
+		String name = null;
+		for (int i = 0; i <= query.length(); i++) {
+			char c = (i != query.length()) ? query.charAt(i) : '&';
+			if (c == '=' && name == null) {
+				name = decode(query.substring(start, i), encoding);
+				start = i+1;
+			} else if (c == '&') {
+				String value = decode(query.substring(start, i), encoding);
+				if (name == null) {
+					name = value;
+					value = "";
+				}
+				
+				if (params.containsKey(name)) {
+					Object pvalue = params.get(name);
+					if (pvalue instanceof List) {
+						((List)params).add(value);
+					} else {
+						List list = new ArrayList();
+						list.add(pvalue);
+						list.add(value);
+						params.put(name, list);
+					}
+				} else {
+					params.put(name, value);
+				}
+				
+				name = null;
+				start = i+1;
+			}
+		}
+		
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			name = entry.getKey();
+			start = 0;
+			char old = '\0';
+			Map<String, Object> current = result;
+			for (int i = 0; i < name.length(); i++) {
+				char c = name.charAt(i);
+				if (c == '.' || c == '[') {
+					String key = name.substring(start, (old == ']') ? i-1 : i);
+					Object target = current.get(key);
+					
+					if (!(target instanceof Map)) {
+						Map<String, Object> map = new LinkedHashMap<String, Object>();
+						if (target != null) map.put("", target);
+						current.put(key, map);
+						current = map;
+					} else {
+						current = (Map<String, Object>)target;
+					}
+					start = i+1;
+				}
+				old = c;
+			}
+			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), entry.getValue());
+		}
+		
+		return result;
+	}
+	
+	private static String decode(String data, String encoding) {
+		String result = null;
+		try {
+			result = URLDecoder.decode(data, encoding);
+		} catch (UnsupportedEncodingException e) {
+			// no handle
+		}
+		return result;
 	}
 	
 	private String toUpperCamel(String name) {
