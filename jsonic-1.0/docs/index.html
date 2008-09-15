@@ -111,8 +111,8 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <p>POJOからJSONへの変換ルールは次の通りです。</p>
 <table class="table" summary="POJOからJSONへの変換ルール">
 <tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
-<tr><td>Map</td><td rowspan="2">object</td></tr>
-<tr><td>Object<sup>(※1)</sup></td></tr>
+<tr><td>Map, DynaBean<sup>(※1)</sup></td><td rowspan="2">object</td></tr>
+<tr><td>Object<sup>(※2)</sup></td></tr>
 <tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="3">array</td></tr>
 <tr><td>Iterable (Collection, Listなど)</td></tr>
 <tr><td>Iterator, Enumeration</td></tr>
@@ -122,7 +122,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
 <tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
-<tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※2)</sup></td></tr>
+<tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※3)</sup></td></tr>
 <tr><td>Number</td></tr>
 <tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
 <tr><td>Enum</td><td>number (ordinalにより変換)</td></tr>
@@ -130,8 +130,9 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>null</td><td>null</td></tr>
 </table>
 <div class="caption">
-(※1) 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
-(※2) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
+(※1) DynaBeanを利用する場合、<a href="http://commons.apache.org/beanutils/">Commons BeanUtils</a>のjarファイルをクラスパスに追加する必要があります。リフレクションを利用して処理を行っているため、利用しない場合は特に含める必要はありません。<br />
+(※2) 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
+(※3) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
 </div>
 <p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
 <p>なお、JSONはobjectかarrayで始まる必要があるため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合エラーとなります。</p>
@@ -731,7 +732,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました。</li>
 <li>WebServiceServletにてgetReaderとgetParameterを併用できないコンテナを使用した場合、エラーが発生する問題に対応しました。</li>
-<li><a href="http://commons.apache.org/beanutils/apidocs/org/apache/commons/beanutils/DynaBean.html">DynaBean</a>のformatに対応しました。リフレクションにより処理を行っているため、DynaBeanを利用しない場合にはbeanutilsのjarをクラスパスに追加する必要はありません。</li>
+<li><a href="http://commons.apache.org/beanutils/apidocs/org/apache/commons/beanutils/DynaBean.html">DynaBean</a>のformatに対応しました。リフレクションにより処理を行っているため、DynaBeanを利用しない場合commons beanutilsのライブラリをクラスパスに追加する必要はありません。</li>
 </ul>
 
 <h3>2008/08/15 version 1.0.2</h3>
