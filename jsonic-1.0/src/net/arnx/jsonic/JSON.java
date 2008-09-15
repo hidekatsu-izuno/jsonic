@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
@@ -704,11 +705,15 @@ public class JSON {
 					Method get = dynaBeanClasses[0].getMethod("get", String.class);
 					
 					for (Object dp : dynaProperties) {
-						Object name = getName.invoke(dp);
-						map.put(name, get.invoke(o, name));
+						try {
+							Object name = getName.invoke(dp);
+							map.put(name, get.invoke(o, name));
+						} catch (InvocationTargetException ite) {
+							// no handle
+						}
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					// no handle
 				}
 			} else {
 				Class<?> c = o.getClass();
