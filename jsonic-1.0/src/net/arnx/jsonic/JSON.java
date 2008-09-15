@@ -701,14 +701,14 @@ public class JSON {
 					Object[] dynaProperties = (Object[])dynaBeanClasses[1].getMethod("getDynaProperties").invoke(dynaClass);
 					
 					Method getName = dynaBeanClasses[2].getMethod("getName");
-					Method get = dynaBeanClasses[0].getMethod("get");
+					Method get = dynaBeanClasses[0].getMethod("get", String.class);
 					
 					for (Object dp : dynaProperties) {
 						Object name = getName.invoke(dp);
 						map.put(name, get.invoke(o, name));
 					}
 				} catch (Exception e) {
-					// no handle
+					e.printStackTrace();
 				}
 			} else {
 				Class<?> c = o.getClass();
@@ -794,7 +794,7 @@ public class JSON {
 		try {
 			value = parse(new CharSequenceParserSource(cs));
 		} catch (IOException e) {
-			// never occure
+			// never occur
 		}
 		return value; 
 	}
@@ -810,7 +810,7 @@ public class JSON {
 		try {
 			value = parse(new CharSequenceParserSource(s), type);
 		} catch (IOException e) {
-			// never occure
+			// never occur
 		}
 		return value;
 	}
