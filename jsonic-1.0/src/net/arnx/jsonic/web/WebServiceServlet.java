@@ -125,7 +125,7 @@ public class WebServiceServlet extends HttpServlet {
 			response.setCharacterEncoding(encoding);
 		}
 		
-		// set expilation
+		// set expiration
 		if (expire != null && expire) {
 			response.setHeader("Cache-Control","no-cache");
 			response.setHeader("Pragma","no-cache");

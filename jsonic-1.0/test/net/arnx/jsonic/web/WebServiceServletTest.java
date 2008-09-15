@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +25,29 @@ import org.seasar.framework.mock.servlet.MockHttpServletRequest;
 import org.seasar.framework.mock.servlet.MockHttpServletRequestImpl;
 import org.seasar.framework.mock.servlet.MockServletContextImpl;
 
+import winstone.Launcher;
+
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
 
 @SuppressWarnings("unchecked")
 public class WebServiceServletTest {
+	
+	private static Launcher winstone;
+	
+	@BeforeClass
+	public static void init() throws Exception {
+		Map args = new HashMap();
+		args.put("webappsDir", ".");
+		
+		Launcher.initLogger(args);
+		winstone = new Launcher(args);
+	}
+	
+	@AfterClass
+	public static void destroy() throws Exception {
+		winstone.shutdown();
+	}
 	
 	@Test
 	public void testRPC() throws Exception {
@@ -46,6 +65,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), 
@@ -66,6 +86,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("PUT");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
@@ -74,6 +95,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("DELETE");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
@@ -118,6 +140,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setRequestMethod("DELETE");
 		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
 		con.disconnect();
@@ -126,6 +149,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setRequestMethod("DELETE");
 		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_NOT_FOUND, con.getResponseCode());
 		con.disconnect();

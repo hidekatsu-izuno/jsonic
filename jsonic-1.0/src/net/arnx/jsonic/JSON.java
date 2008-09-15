@@ -161,6 +161,8 @@ public class JSON {
 	private static final Character ROOT_KEY = '$';
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
+	private static Class<?>[] dynaBeanClasses = null;
+	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
 		PRIMITIVE_MAP.put(byte.class, (byte)0);
@@ -170,6 +172,16 @@ public class JSON {
 		PRIMITIVE_MAP.put(float.class, 0.0f);
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
+		
+		try {
+			dynaBeanClasses = new Class<?>[] {
+				Class.forName("org.apache.commons.beanutils.DynaBean"),
+				Class.forName("org.apache.commons.beanutils.DynaClass"),
+				Class.forName("org.apache.commons.beanutils.DynaProperty")
+			};
+		} catch (Exception e ) {
+			// no handle
+		}
 	}
 	
 	private static JSON newInstance() {
@@ -682,6 +694,22 @@ public class JSON {
 			Map map = null;
 			if (o instanceof Map) {
 				map = (Map)o;
+			} else if (dynaBeanClasses != null && dynaBeanClasses[0].isAssignableFrom(o.getClass())) {
+				map = new TreeMap();
+				try {
+					Object dynaClass = dynaBeanClasses[0].getMethod("getDynaClass").invoke(o);
+					Object[] dynaProperties = (Object[])dynaBeanClasses[1].getMethod("getDynaProperties").invoke(dynaClass);
+					
+					Method getName = dynaBeanClasses[2].getMethod("getName");
+					Method get = dynaBeanClasses[0].getMethod("get");
+					
+					for (Object dp : dynaProperties) {
+						Object name = getName.invoke(dp);
+						map.put(name, get.invoke(o, name));
+					}
+				} catch (Exception e) {
+					// no handle
+				}
 			} else {
 				Class<?> c = o.getClass();
 				
@@ -702,7 +730,7 @@ public class JSON {
 					}
 				}
 			}
-
+			
 			ap.append('{');
 			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 				Map.Entry entry = (Map.Entry)i.next();
