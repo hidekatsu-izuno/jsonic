@@ -480,7 +480,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		String encoding = request.getCharacterEncoding();
-		if (encoding == null) encoding = "UTF-8";
 		
 		Map<String, Object> params = new HashMap<String, Object>();
 		int start = 0;
@@ -497,14 +496,16 @@ public class WebServiceServlet extends HttpServlet {
 					value = null;
 				}
 				
-				Object pvalue = params.get(name);
-				if (pvalue instanceof List) {
-					((List)params).add(value);
-				} else if (pvalue instanceof String) {
-					List list = new ArrayList();
-					list.add(pvalue);
-					list.add(value);
-					params.put(name, list);
+				if (params.containsKey(name)) {
+					Object pvalue = params.get(name);
+					if (pvalue instanceof List) {
+						((List)params).add(value);
+					} else {
+						List list = new ArrayList();
+						list.add(pvalue);
+						list.add(value);
+						params.put(name, list);
+					}
 				} else {
 					params.put(name, value);
 				}

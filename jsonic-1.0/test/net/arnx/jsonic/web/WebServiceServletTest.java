@@ -237,6 +237,12 @@ public class WebServiceServletTest {
 
 		query[0] = "aaa=";
 		assertEquals(JSON.decode("{aaa:''}"), m.invoke(null, request));
+
+		query[0] = "&";
+		assertEquals(JSON.decode("{'':[null,null]}"), m.invoke(null, request));
+
+		query[0] = "=&=";
+		assertEquals(JSON.decode("{'':['','']}"), m.invoke(null, request));
 		
 		query[0] = "aaa.bbb=aaa";
 		assertEquals(JSON.decode("{aaa:{bbb:'aaa'}}"), m.invoke(null, request));
