@@ -472,9 +472,11 @@ public class WebServiceServlet extends HttpServlet {
 	}
 	
 	private static Map<String, Object> getParameterMap(HttpServletRequest request) throws IOException {
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+
 		String query = request.getQueryString();
 		if (query == null || query.length() == 0) {
-			return (Map<String, Object>)Collections.EMPTY_MAP;
+			return result;
 		}
 		
 		String encoding = request.getCharacterEncoding();
@@ -483,17 +485,16 @@ public class WebServiceServlet extends HttpServlet {
 		Map<String, Object> params = new HashMap<String, Object>();
 		int start = 0;
 		String name = null;
-		for (int i = 0; i < query.length(); i++) {
-			char c = query.charAt(i);
+		for (int i = 0; i <= query.length(); i++) {
+			char c = (i != query.length()) ? query.charAt(i) : '&';
 			if (c == '=') {
 				name = URLDecoder.decode(query.substring(start, i), encoding);
 				start = i+1;
-			} else if (c == '&' || (i+1) == query.length()) {
-				Object value = null;
+			} else if (c == '&') {
+				String value = URLDecoder.decode(query.substring(start, i), encoding);
 				if (name == null) {
-					name = URLDecoder.decode(query.substring(start, i), encoding);
-				} else {
-					value = URLDecoder.decode(query.substring(start, i), encoding);
+					name = value;
+					value = null;
 				}
 				
 				Object pvalue = params.get(name);
@@ -512,8 +513,6 @@ public class WebServiceServlet extends HttpServlet {
 				start = i+1;
 			}
 		}
-		
-		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			name = entry.getKey();

@@ -10,9 +10,8 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Enumeration;
+import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -227,43 +226,48 @@ public class WebServiceServletTest {
 		Method m = WebServiceServlet.class.getDeclaredMethod("getParameterMap", HttpServletRequest.class);
 		m.setAccessible(true);
 		
-		final Hashtable<String, String[]> v = new Hashtable<String, String[]>();
-		
+		final String[] query = new String[1];
+				
 		MockHttpServletRequest request = new MockHttpServletRequestImpl(new MockServletContextImpl("/"), "/") {
 			@Override
-			public Enumeration getParameterNames() {
-				return v.keys();
-			}
-			
-			@Override
-			public String[] getParameterValues(String name) {
-				return v.get(name);
+			public String getQueryString() {
+				return query[0];
 			}
 		};
-		
-		v.put("aaa", new String[] {""});
+
+		query[0] = "aaa=";
 		assertEquals(JSON.decode("{aaa:''}"), m.invoke(null, request));
 		
-		v.put("aaa.bbb", new String[] {"aaa", "bbb"});
-		assertEquals(JSON.decode("{aaa:{'':'', bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
+		query[0] = "aaa.bbb=aaa";
+		assertEquals(JSON.decode("{aaa:{bbb:'aaa'}}"), m.invoke(null, request));
 		
-		v.clear();
-		v.put("aaa.bbb.", new String[] {"aaa", "bbb"});
+		request.setCharacterEncoding("UTF-8");
+		query[0] = URLEncoder.encode("諸行 無常", "UTF-8") + "=" + URLEncoder.encode("古今=東西", "UTF-8");
+		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), m.invoke(null, request));
+		
+		request.setCharacterEncoding("MS932");
+		query[0] = URLEncoder.encode("諸行 無常", "MS932") + "=" + URLEncoder.encode("古今=東西", "MS932");
+		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), m.invoke(null, request));
+		
+		query[0] = "aaa.bbb=aaa&aaa.bbb=bbb&aaa=aaa";
+		assertEquals(JSON.decode("{aaa:{'':'aaa',bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
+		
+		query[0] = "aaa.bbb=aaa&aaa.bbb=bbb";
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
+		
+		query[0] = "aaa.bbb.=aaa&aaa.bbb.=bbb";
 		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
 		
-		v.put("..", new String[] {"aaa", "bbb"});
-		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}, aaa:{bbb:{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
+		query[0] = "..=aaa&..=bbb";
+		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), m.invoke(null, request));
 		
-		v.clear();
-		v.put("aaa[bbb]", new String[] {"aaa", "bbb"});
+		query[0] = "aaa[bbb]=aaa&aaa[bbb]=bbb";
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), m.invoke(null, request));
 
-		v.clear();
-		v.put("aaa[bbb].ccc", new String[] {"aaa", "bbb"});
+		query[0] = "aaa[bbb].ccc=aaa&aaa[bbb].ccc=bbb";
 		assertEquals(JSON.decode("{aaa:{bbb:{ccc:['aaa', 'bbb']}}}"), m.invoke(null, request));
 
-		v.clear();
-		v.put("[aaa].bbb", new String[] {"aaa", "bbb"});
+		query[0] = "[aaa].bbb=aaa&[aaa].bbb=bbb";
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), m.invoke(null, request));
 	}
 	
