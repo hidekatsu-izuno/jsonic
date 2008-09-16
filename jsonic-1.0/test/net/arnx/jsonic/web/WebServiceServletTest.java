@@ -64,7 +64,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-Length", "0");
+		write(con.getOutputStream(), "");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), 
@@ -85,7 +85,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("PUT");
-		con.setRequestProperty("Content-Length", "0");
+		write(con.getOutputStream(), "");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
