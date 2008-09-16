@@ -10,19 +10,14 @@
 	
 	<property name="jsonic_as3.src" location="../jsonic_as3/src" />
 	
-	<target name="clean">
-		<delete dir="${tmp}" failonerror="off" />
-		<delete file="jsonic-${version}.zip" failonerror="off" />
-	</target>
-	
 	<target name="init" depends="clean">
 		<tstamp />
 	</target>
 	
-	<target name="build" depends="build.java,build.as3">
+	<target name="build" depends="build.java, build.as3">
 	</target>
 	
-	<target name="dist" depends="dist.java,dist.as3">
+	<target name="dist" depends="dist.java, dist.as3">
 		<zip destfile="jsonic-${version}.zip">
 			<zipfileset dir="tmp" prefix="jsonic-${version}"/>
 			<zipfileset dir="docs" prefix="jsonic-${version}/docs"/>
@@ -40,16 +35,7 @@
 				<fileset dir="${lib}" includes="*.jar"/>
 			</classpath>
 		</javac>
-		
-		<javadoc sourcepath="${src}" destdir="${tmp}/docs/java/api"
-			encoding="UTF-8" charset="UTF-8" docencoding="UTF-8"
-			author="true" locale="en_US">
-			<link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
-			<classpath>
-				<fileset dir="${lib}" includes="*.jar"/>
-			</classpath>
-		</javadoc>
-		
+				
 		<jar destfile="${tmp}/jsonic-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
 			<fileset dir="${src}" excludes="**/*.java" />
@@ -58,13 +44,20 @@
 	</target>
 	
 	<target name="dist.java" depends="build.java">
+		<javadoc sourcepath="${src}" destdir="${tmp}/docs/java/api"
+			encoding="UTF-8" charset="UTF-8" docencoding="UTF-8"
+			author="true" locale="en_US">
+			<link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
+			<classpath>
+				<fileset dir="${lib}" includes="*.jar"/>
+			</classpath>
+		</javadoc>
 		<copy todir="${tmp}/src/java">
 			<fileset dir="${src}"  />
 		</copy>
 		<copy todir="${tmp}/sample">
-			<fileset dir="sample" />
+			<fileset dir="webapps/sample" />
 		</copy>
-		<copy file="${tmp}/jsonic-${version}.jar" todir="${tmp}/sample/WEB-INF/lib" />
 	</target>
 	
 	<target name="build.as3" depends="init">		
@@ -77,17 +70,21 @@
 			<include-classes>net.arnx.jsonic.web.mxml.WebService</include-classes>
 			<accessible>true</accessible>
 		</compc>
-		
+	</target>
+	
+	<target name="dist.as3" depends="build.as3">
 		<exec executable="${FLEX_HOME}/bin/asdoc.exe" dir="." failonerror="on">
 			<arg line="-output '${tmp}/docs/as3/api'"/>
 			<arg line="-source-path '${jsonic_as3.src}'"/>
 			<arg line="-doc-sources '${jsonic_as3.src}'" />
 		</exec>
-	</target>
-	
-	<target name="dist.as3" depends="build.as3">
 		<copy todir="${tmp}/src/as3">
 			<fileset dir="${jsonic_as3.src}"  />
 		</copy>
+	</target>
+	
+	<target name="clean">
+		<delete dir="${tmp}" failonerror="off" />
+		<delete file="jsonic-${version}.zip" failonerror="off" />
 	</target>
 </project>
