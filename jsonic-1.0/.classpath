@@ -3,7 +3,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" output="webapps/spring/WEB-INF/classes" path="webapps/spring/WEB-INF/src"/>
 	<classpathentry kind="src" output="webapps/seasar2/WEB-INF/classes" path="webapps/seasar2/WEB-INF/src"/>
-	<classpathentry kind="src" output="webapps/sample/WEB-INF/classes" path="webapps/sample/WEB-INF/src"/>
+	<classpathentry kind="src" path="webapps/sample/WEB-INF/src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/spring.jar"/>

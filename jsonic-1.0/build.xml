@@ -60,7 +60,7 @@
 		</copy>
 	</target>
 	
-	<target name="build.as3" depends="init">		
+	<target name="build.as3" depends="init">
 		<compc output="${tmp}/jsonic-${version}.swc" locale="en_US,ja_JP"
 			allow-source-path-overlap="on">
 			<namespace uri="http://arnx.net/jsonic" manifest="${jsonic_as3.src}/manifest.xml"/>
@@ -86,5 +86,24 @@
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
 		<delete file="jsonic-${version}.zip" failonerror="off" />
+	</target>
+	
+	<target name="start">
+		<java classpath="lib/winstone-0.9.10.jar" classname="winstone.Launcher"
+			fork="true">
+			<arg value="--controlPort=8081"/>
+			<arg value="--webappsDir=webapps"/>
+			<arg value="--commonLibFolder=webapps/lib"/>
+			<arg value="--preferredClassLoader=winstone.classLoader.WebappDevLoader"/>
+			<arg value="--debug=7"/>
+		</java>
+	</target>
+	
+	<target name="stop">
+		<java classpath="lib/winstone-0.9.10.jar" classname="winstone.tools.WinstoneControl"
+			 fork="true">
+			<arg value="--controlPort=8081"/>
+			<arg value="shutdown"/>
+		</java>
 	</target>
 </project>
