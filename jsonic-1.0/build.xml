@@ -95,7 +95,6 @@
 			<arg value="--webappsDir=webapps"/>
 			<arg value="--commonLibFolder=webapps/lib"/>
 			<arg value="--preferredClassLoader=winstone.classLoader.WebappDevLoader"/>
-			<arg value="--debug=7"/>
 		</java>
 	</target>
 	
