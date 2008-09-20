@@ -4,11 +4,30 @@
 	xmlns:flexunit="flexunit.flexui.*"
 	layout="absolute" 
 	creationComplete="onCreationComplete()">
-
-	<flexunit:TestRunnerBase id="testRunner" width="100%" height="100%" />
+	
+	<mx:TabNavigator width="100%" height="100%">
+		<mx:Panel label="Flex Unit" width="100%" height="100%">
+			<flexunit:TestRunnerBase id="testRunner" width="100%" height="100%" />
+		</mx:Panel>
+		<mx:Panel layout="absolute" label="Connection Test" width="100%" height="100%" paddingTop="5" paddingRight="5" paddingLeft="5" paddingBottom="5">
+			<mx:Label x="10" y="10" text="URL:" />
+			<mx:TextInput x="76" y="8" width="495" id="url2" text="http://localhost:8080/sample/rpc/rpc.json" />
+			<mx:Label x="10" y="36" text="オブジェクト:"/>
+			<mx:TextInput x="76" y="34" width="65" id="object" text="edit"/>
+			<mx:Label x="148" y="36" text="メソッド:"/>
+			<mx:TextInput x="195" y="34" width="67" id="method" text="concat"/>
+			<mx:Label x="270" y="36" text="パラメータ:"/>
+			<mx:TextInput x="331" y="34" width="184" id="params" text="[100,100]"/>
+			<mx:Button x="523" y="34" label="実行" click="remote[method.text].apply(null, JSON.decode(params.text))" />
+			<mx:TextArea id="response" height="468" y="60" width="565" x="6" />	
+		</mx:Panel>
+	</mx:TabNavigator>
+	
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.events.FaultEvent;
 			import net.arnx.jsonic.*;
 			import flexunit.framework.TestSuite;
 			
@@ -22,23 +41,19 @@
  				ts.addTest(JSONTest.suite());
  				return ts;
 			}
-
+			
+			private function onResult(event:ResultEvent):void {
+				response.text = String(event.result);
+			}
+			
+			private function onFault(event:FaultEvent):void {
+				response.text = String(event.fault);
+			}
 		]]>
-	</mx:Script>	
-<!--
-	<js:WebService id="remote" endpoint="{url2.text}" source="{object.text}" makeObjectsBindable="false" showBusyCursor="true">
-	</js:WebService>
+	</mx:Script>
 
-	<mx:Label x="10" y="10" text="URL:" />
-	<mx:TextInput x="76" y="8" width="495" id="url2" text="http://localhost:8080/sample/rpc/rpc.json" />
-	<mx:Label x="10" y="36" text="オブジェクト:"/>
-	<mx:TextInput x="76" y="34" width="65" id="object" text="edit"/>
-	<mx:Label x="148" y="36" text="メソッド:"/>
-	<mx:TextInput x="195" y="34" width="67" id="method" text="concat"/>
-	<mx:Label x="270" y="36" text="パラメータ:"/>
-	<mx:TextInput x="331" y="34" width="184" id="params" text="[100,100]"/>
-	<mx:Button x="523" y="34" label="実行" click="remote[method.text].apply(null, JSON.decode(params.text))" />
-	<mx:TextInput x="6" y="62" width="509" id="request" text="{remote.concat.lastResult}" />
-	<mx:TextArea height="468" id="rst" y="92" width="565" x="6" text="{params.text}" />
--->	
+	<js:WebService id="remote" endpoint="{url2.text}" source="{object.text}"
+		 makeObjectsBindable="false" showBusyCursor="true" result="onResult(event)" fault="onFault(event)">
+	</js:WebService>
+	
 </mx:WindowedApplication>
