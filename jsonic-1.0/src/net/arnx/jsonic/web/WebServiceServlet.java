@@ -388,7 +388,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			List<Object> params = null;
-			if ("get".equals(route.getMethod())) {
+			if (!hasJSONContent(route.getMethod(), request)) {
 				params = new ArrayList<Object>();
 				Map<String, Object> contents = getParameterMap(request);
 				contents.putAll(route);
@@ -469,6 +469,18 @@ public class WebServiceServlet extends HttpServlet {
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}		
+	}
+	
+	private static boolean hasJSONContent(String method, HttpServletRequest request) {
+		if ("get".equals(method)) return true;
+		
+		String type = request.getContentType();
+		if (type == null) return true;
+		
+		int index = type.indexOf(';');
+		type = ((index != -1) ? type.substring(0, index) : type).trim();
+		
+		return !("application/x-www-form-urlencoded".equals(type));
 	}
 	
 	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
