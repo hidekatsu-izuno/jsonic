@@ -102,7 +102,21 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testREST() throws Exception {
-		String url = "http://localhost:8080/sample/rest/memo";
+		testREST("sample");
+	}
+	
+	@Test
+	public void testRESTwithSeasar2() throws Exception {
+		testREST("seasar2");
+	}
+	
+	@Test
+	public void testRESTwithSpring() throws Exception {
+		testREST("spring");
+	}
+	
+	public void testREST(String app) throws Exception {
+		String url = "http://localhost:8080/" + app + "/rest/memo";
 		HttpURLConnection con = null;
 		
 		List<Map<String, Object>> content = null;
