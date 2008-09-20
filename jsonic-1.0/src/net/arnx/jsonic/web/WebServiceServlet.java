@@ -472,7 +472,7 @@ public class WebServiceServlet extends HttpServlet {
 	}
 	
 	private static boolean hasJSONContent(String method, HttpServletRequest request) {
-		if ("get".equals(method)) return true;
+		if ("get".equals(method)) return false;
 		
 		String type = request.getContentType();
 		if (type == null) return true;

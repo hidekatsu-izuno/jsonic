@@ -36,6 +36,7 @@ public class WebServiceServletTest {
 	public static void init() throws Exception {
 		Map args = new HashMap();
 		args.put("webappsDir", "webapps");
+		args.put("controlPort", "8081");
 		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
 		
 		Launcher.initLogger(args);
