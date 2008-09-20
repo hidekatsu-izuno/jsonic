@@ -8,12 +8,10 @@
 	<property name="tmp" location="tmp" />
 	<property name="dist" location="." />
 	
-	<property name="jsonic_as3.src" location="../jsonic_as3/src" />
-	
-	<condition property="jsonic_as3">
+	<condition property="jsonic_as3" value="../jsonic_as3">
 		<and>
 			<available classname="flex.ant.CompcTask"/>
-			<available file="${jsonic_as3.src}/.project" />
+			<available file="${jsonic_as3}/src/.project" />
 		</and>
 	</condition>
 	
@@ -70,10 +68,10 @@
 	<target name="build.as3" depends="init" if="jsonic_as3">
 		<compc output="${tmp}/jsonic-${version}.swc" locale="en_US,ja_JP"
 			allow-source-path-overlap="on">
-			<namespace uri="http://arnx.net/jsonic" manifest="${jsonic_as3.src}/manifest.xml"/>
+			<namespace uri="http://arnx.net/jsonic" manifest="${jsonic_as3}/src/manifest.xml"/>
 			<include-namespaces uri="http://arnx.net/jsonic"/>
-			<source-path path-element="${jsonic_as3.src}"/>
-			<source-path path-element="${jsonic_as3.src}/{locale}"/>
+			<source-path path-element="${jsonic_as3}/src"/>
+			<source-path path-element="${jsonic_as3}/src/{locale}"/>
 			<include-classes>net.arnx.jsonic.web.mxml.WebService</include-classes>
 			<accessible>true</accessible>
 		</compc>
@@ -82,11 +80,11 @@
 	<target name="dist.as3" depends="build.as3" if="jsonic_as3">
 		<exec executable="${FLEX_HOME}/bin/asdoc.exe" dir="." failonerror="on">
 			<arg line="-output '${tmp}/docs/as3/api'"/>
-			<arg line="-source-path '${jsonic_as3.src}'"/>
-			<arg line="-doc-sources '${jsonic_as3.src}'" />
+			<arg line="-source-path '${jsonic_as3}/src'"/>
+			<arg line="-doc-sources '${jsonic_as3}/src'" />
 		</exec>
 		<copy todir="${tmp}/src/as3">
-			<fileset dir="${jsonic_as3.src}"  />
+			<fileset dir="${jsonic_as3}/src"  />
 		</copy>
 	</target>
 	
