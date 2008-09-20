@@ -96,7 +96,7 @@
 			<arg value="--preferredClassLoader=winstone.classLoader.WebappDevLoader"/>
 			<classpath>
 				<pathelement location="lib/winstone-0.9.10.jar"/>
-				<pathelement location="webapps/lib/winstone_devloader.jar"/>
+				<pathelement location="lib/winstone_devloader.jar"/>
 			</classpath>
 		</java>
 	</target>
