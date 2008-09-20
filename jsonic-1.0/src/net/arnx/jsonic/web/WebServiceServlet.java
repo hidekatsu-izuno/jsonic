@@ -29,8 +29,10 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -389,7 +391,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			List<Object> params = null;
-			if ("get".equals(route.getMethod())) {
+			if (route.isJSONRequest()) {
 				params = new ArrayList<Object>();
 				Map<String, Object> contents = route.getParameterMap();
 				contents.putAll(route);
@@ -657,12 +659,23 @@ class Route extends HashMap<String, String> {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 	private String target;
 	private String method;
+	private boolean isJSONRequest = true;
 	private Map<String, Object> params;
 	
-	public Route(HttpServletRequest request, String target) {
+	public Route(HttpServletRequest request, String target) throws IOException {
 		this.method = request.getMethod().toLowerCase();
 		this.target = target;
-		this.params = getParameterMap(request);
+		
+		String type = request.getContentType();
+		if(type == null) type = "";
+		int index = type.indexOf(';');
+		type = (index != -1) ? type.substring(0, index).trim() : type.trim();
+		
+		if (type.equals("application/x-www-form-urlencoded")) {
+			isJSONRequest = false;
+		}
+		
+		this.params = toParameterMap(request, isJSONRequest);
 	}
 	
 	public void setMethod(String method) {
@@ -680,6 +693,10 @@ class Route extends HashMap<String, String> {
 	public String getParameter(String name) {
 		Object o = params.get(name);
 		return (o instanceof String) ? (String)o : null;
+	}
+	
+	public boolean isJSONRequest() {
+		return isJSONRequest;
 	}
 	
 	public String getComponentClass() {
@@ -701,50 +718,69 @@ class Route extends HashMap<String, String> {
 		return sb.toString();
 	}
 	
-	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
+	private static Map<String, Object> toParameterMap(HttpServletRequest request, boolean isJSONRequest) {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		
-		String query = request.getQueryString();
-		if (query == null || query.length() == 0) {
-			return result;
-		}
-		
-		String encoding = request.getCharacterEncoding();
 		
 		Map<String, Object> params = new HashMap<String, Object>();
 		int start = 0;
 		String name = null;
-		for (int i = 0; i <= query.length(); i++) {
-			char c = (i != query.length()) ? query.charAt(i) : '&';
-			if (c == '=' && name == null) {
-				name = decode(query.substring(start, i), encoding);
-				start = i+1;
-			} else if (c == '&') {
-				String value = decode(query.substring(start, i), encoding);
-				if (name == null) {
-					name = value;
-					value = "";
-				}
-				
-				if (params.containsKey(name)) {
-					Object pvalue = params.get(name);
-					if (pvalue instanceof List) {
-						((List)params).add(value);
-					} else {
-						List list = new ArrayList();
-						list.add(pvalue);
-						list.add(value);
-						params.put(name, list);
+		
+		if (isJSONRequest) {
+			String query = request.getQueryString();
+			if (query == null || query.length() == 0) {
+				return result;
+			}
+			
+			start = 0;
+			name = null;
+			for (int i = 0; i <= query.length(); i++) {
+				char c = (i != query.length()) ? query.charAt(i) : '&';
+				if (c == '=' && name == null) {
+					name = decode(query.substring(start, i), request.getCharacterEncoding());
+					start = i+1;
+				} else if (c == '&') {
+					String value = decode(query.substring(start, i), request.getCharacterEncoding());
+					if (name == null) {
+						name = value;
+						value = "";
 					}
-				} else {
-					params.put(name, value);
+					
+					if (params.containsKey(name)) {
+						Object pvalue = params.get(name);
+						if (pvalue instanceof List) {
+							((List)params).add(value);
+						} else {
+							List list = new ArrayList();
+							list.add(pvalue);
+							list.add(value);
+							params.put(name, list);
+						}
+					} else {
+						params.put(name, value);
+					}
+					
+					name = null;
+					start = i+1;
 				}
+			}
+		} else {
+			for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
+				name = e.nextElement();
+				String[] values = request.getParameterValues(name);
 				
-				name = null;
-				start = i+1;
+				if (values.length == 0) {
+					params.put(name, "");
+				} else if (values.length == 1) {
+					params.put(name, values[0]);
+				} else {
+					params.put(name, Arrays.asList(values));
+				}
 			}
 		}
 		
+		start = 0;
+		name = null;
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			name = entry.getKey();
 			start = 0;
