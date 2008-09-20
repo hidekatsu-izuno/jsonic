@@ -11,7 +11,7 @@
 	<condition property="jsonic_as3" value="../jsonic_as3">
 		<and>
 			<available classname="flex.ant.CompcTask"/>
-			<available file="${jsonic_as3}/src/.project" />
+			<available file="../jsonic_as3/.project" />
 		</and>
 	</condition>
 	
