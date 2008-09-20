@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,8 +25,28 @@ import org.seasar.framework.mock.servlet.MockServletContextImpl;
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
 
+import winstone.Launcher;
+
 @SuppressWarnings("unchecked")
 public class WebServiceServletTest {	
+	
+	private static Launcher winstone;
+	
+	@BeforeClass
+	public static void init() throws Exception {
+		Map args = new HashMap();
+		args.put("webappsDir", "webapps");
+		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
+		
+		Launcher.initLogger(args);
+		winstone = new Launcher(args);
+	}
+	
+	@AfterClass
+	public static void destroy() throws Exception {
+		winstone.shutdown();
+	}
+
 	@Test
 	public void testRPC() throws Exception {
 		URL url = new URL("http://localhost:8080/sample/rpc/rpc.json");
