@@ -38,6 +38,7 @@ public class WebServiceServletTest {
 	public static void init() throws Exception {
 		Map args = new HashMap();
 		args.put("webappsDir", "webapps");
+		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
 		
 		Launcher.initLogger(args);
 		winstone = new Launcher(args);
