@@ -176,6 +176,16 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
+		
+		// POST
+		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
+		write(con, "title=title&text=text");
+		con.connect();
+		assertEquals(SC_CREATED, con.getResponseCode());
+		con.disconnect();
 	}
 	
 	@Test
