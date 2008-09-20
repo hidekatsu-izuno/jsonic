@@ -92,7 +92,6 @@
 		<java classname="winstone.Launcher" fork="true">
 			<arg value="--controlPort=8081"/>
 			<arg value="--webappsDir=webapps"/>
-			<arg value="--commonLibFolder=webapps"/>
 			<arg value="--preferredClassLoader=winstone.classLoader.WebappDevLoader"/>
 			<classpath>
 				<pathelement location="lib/winstone-0.9.10.jar"/>
