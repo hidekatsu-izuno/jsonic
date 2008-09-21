@@ -8,12 +8,6 @@
 	<property name="tmp" location="tmp" />
 	<property name="dist" location="." />
 
-	<condition property="jsonic_as3" value="../jsonic_as3">
-		<and>
-			<available file="../jsonic_as3/.project" />
-		</and>
-	</condition>
-
 	<target name="init" depends="clean">
 		<tstamp />
 		<mkdir dir="${tmp}" />
@@ -32,17 +26,23 @@
 			<fileset dir="${src}" excludes="**/*.java" />
 		</jar>
 		<delete dir="${tmp}/build" />
+		<javadoc sourcepath="${src}" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
+			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+			<classpath>
+				<fileset dir="${lib}" includes="*.jar" />
+			</classpath>
+		</javadoc>
 	</target>
-	
+
 	<target name="sample" depends="build">
-		<mkdir dir="${tmp}/sample"/>
+		<mkdir dir="${tmp}/sample" />
 
 		<copy todir="${tmp}/sample">
-			<fileset dir="webapps/sample"/>
+			<fileset dir="webapps/sample" />
 		</copy>
-		<copy file="webapps/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/WEB-INF/web_seasar2.xml"/>
-		<copy file="webapps/spring/WEB-INF/web.xml" tofile="${tmp}/sample/WEB-INF/web_spring.xml"/>
-		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/WEB-INF/lib"/>
+		<copy file="webapps/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/WEB-INF/web_seasar2.xml" />
+		<copy file="webapps/spring/WEB-INF/web.xml" tofile="${tmp}/sample/WEB-INF/web_spring.xml" />
+		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/WEB-INF/lib" />
 
 		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/WEB-INF/src" destdir="${tmp}/sample/WEB-INF/classes">
 			<classpath>
@@ -53,12 +53,6 @@
 	</target>
 
 	<target name="dist" depends="build, sample">
-		<javadoc sourcepath="${src}" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
-			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
-			<classpath>
-				<fileset dir="${lib}" includes="*.jar" />
-			</classpath>
-		</javadoc>
 		<zip destfile="${ant.project.name}-${version}.zip">
 			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}" />
 			<zipfileset dir="${src}" prefix="${ant.project.name}-${version}/src" />
@@ -67,6 +61,9 @@
 			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />
 		</zip>
 		<delete dir="${tmp}" />
+	</target>
+	
+	<target name="dist-all" depends="">
 	</target>
 
 	<target name="clean">
