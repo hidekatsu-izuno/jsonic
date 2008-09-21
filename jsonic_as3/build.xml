@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="jsonic_as3" basedir="." default="dist">
+	<property name="version" value="1.0.3" />
+
+	<property name="src" location="src" />
+	<property name="lib" location="libs" />
+	<property name="tmp" location="tmp" />
+	<property name="dist" location="." />
+	
+	<target name="init" depends="clean">
+		<tstamp />
+		<mkdir dir="${tmp}" />
+	</target>
+	
+	<target name="build" depends="init">
+		<compc output="${tmp}/${ant.project.name}-${version}.swc" locale="en_US,ja_JP"
+			allow-source-path-overlap="on">
+			<namespace uri="http://arnx.net/jsonic" manifest="${src}/manifest.xml"/>
+			<include-namespaces uri="http://arnx.net/jsonic"/>
+			<source-path path-element="${src}"/>
+			<source-path path-element="${src}/{locale}"/>
+			<include-classes>net.arnx.jsonic.web.mxml.WebService</include-classes>
+			<accessible>true</accessible>
+		</compc>
+	</target>
+	
+	<target name="dist" depends="build">
+		<exec executable="${FLEX_HOME}/bin/asdoc.exe" dir="." failonerror="on" taskname="asdoc">
+			<arg line="-output '${tmp}/docs/api'"/>
+			<arg line="-source-path '${src}'"/>
+			<arg line="-doc-sources '${src}'" />
+		</exec>
+		<copy todir="${tmp}/src">
+			<fileset dir="${src}"  />
+		</copy>
+		<zip destfile="${ant.project.name}-${version}.zip">
+			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}"/>
+			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}"/>
+			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}"/>
+		</zip>
+		<delete dir="${tmp}" />
+	</target>
+	
+	<target name="clean">
+		<delete dir="${tmp}" failonerror="off" />
+		<delete file="${ant.project.name}-${version}.zip" failonerror="off" />
+	</target>
+</project>
