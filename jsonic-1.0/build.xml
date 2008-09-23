@@ -53,7 +53,7 @@
 		</javac>
 	</target>
 
-	<target name="dist" depends="build, build-sample">
+	<target name="dist" depends="build">
 		<zip destfile="${ant.project.name}-${version}.zip">
 			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}" />
 			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src" />
