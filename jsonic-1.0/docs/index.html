@@ -732,6 +732,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>
 <li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
+<li>JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
 <li><a href="http://commons.apache.org/beanutils/apidocs/org/apache/commons/beanutils/DynaBean.html">DynaBean</a>のformatに対応しました。リフレクションにより処理を行っているため、DynaBeanを利用しない場合commons beanutilsのライブラリをクラスパスに追加する必要はありません。</li>
 </ul>
 
