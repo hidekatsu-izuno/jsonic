@@ -206,6 +206,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=GET").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		content = (List<Map<String, Object>>)JSON.decode(read(con.getInputStream()));

@@ -386,7 +386,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if ("get".equals(route.getMethod())) {
 			methodName = "find";
-			callback = request.getParameter("callback");
+			callback = route.getParameter("callback");
 		} else if ("post".equals(route.getMethod())) {
 			methodName = "create";
 			status = SC_CREATED;
@@ -673,20 +673,35 @@ class Route extends HashMap<String, String> {
 	private String target;
 	private String method;
 	private String contentType;
+	private Map<String, Object> params;
 	
 	public Route(HttpServletRequest request, String target) {
 		this.request = request;
 		this.target = target;
+		this.params = toParameterMap();
 	}
 	
 	public String getMethod() {
 		if (method == null) {
-			String m = request.getParameter("_method");
+			String m = getParameter("_method");
 			if (m == null) m = request.getMethod();
 			method = m.toLowerCase();
 		}
 		
 		return method;
+	}
+	
+	public String getParameter(String name) {
+		Object o = params.get(name);
+		if (o instanceof String) {
+			return (String)o;
+		}
+		return null;
+	}
+	
+	public Map<String, Object> getParameterMap() {
+		params.putAll(this);
+		return params;
 	}
 	
 	public String getContentType() {
@@ -708,7 +723,7 @@ class Route extends HashMap<String, String> {
 	}
 	
 	public boolean hasJSONContent() {
-		return !getMethod().equals("get") 
+		return !request.getMethod().equalsIgnoreCase("GET")
 			&& !getContentType().equals("application/x-www-form-urlencoded") 
 			&& !isMultipart();
 	}
@@ -732,7 +747,7 @@ class Route extends HashMap<String, String> {
 		return sb.toString();
 	}
 	
-	public Map<String, Object> getParameterMap() throws Exception {
+	private Map<String, Object> toParameterMap() {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 
 		Map<String, Object> params = new LinkedHashMap<String, Object>();
@@ -849,8 +864,6 @@ class Route extends HashMap<String, String> {
 				current.put(name, values);
 			}
 		}
-		
-		result.putAll(this);
 		
 		return result;
 	}
