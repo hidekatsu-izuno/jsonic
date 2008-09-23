@@ -5,11 +5,11 @@
 
 	<property name="src" location="src" />
 	<property name="lib" location="libs" />
-	<property name="tmp" location="tmp" />
+	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 	<property name="dist" location="." />
 
-	<property name="flex.home" location="${FLEX_HOME}" />
-
+	<property name="flex.home" location="${application.home}"/>
+	
 	<target name="init" depends="clean">
 		<tstamp />
 		<mkdir dir="${tmp}" />
