@@ -452,6 +452,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		try {		
+			response.setContentType((callback != null) ? MIME_JAVASCRIPT : MIME_JSON);
 			if (res == null
 					|| res instanceof CharSequence
 					|| res instanceof Boolean
@@ -460,12 +461,6 @@ public class WebServiceServlet extends HttpServlet {
 				if (status != SC_CREATED) status = SC_NO_CONTENT;
 				response.setStatus(status);
 			} else {
-				if (callback != null) {
-					response.setContentType(MIME_JAVASCRIPT);
-				} else {
-					response.setContentType(MIME_JSON);
-				}
-			
 				Writer writer = response.getWriter();
 				json.setPrettyPrint(container.isDebugMode());
 				

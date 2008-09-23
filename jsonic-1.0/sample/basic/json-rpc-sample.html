@@ -21,6 +21,7 @@
 			'rpc/rpc.json',
 			{
 				method: 'POST',
+				contentType: 'application/json',
 				postBody: Object.toJSON({
 					method: name + '.' + ds[name][$("method").value].name,
 					params: $('params').value.evalJSON(),
