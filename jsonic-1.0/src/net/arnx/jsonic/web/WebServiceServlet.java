@@ -57,15 +57,13 @@ import static javax.servlet.http.HttpServletResponse.*;
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
-	public static final String MIME_JSON = "application/json";
-	public static final String MIME_JAVASCRIPT = "text/javascript";
-	
 	class Config {
 		public Class<? extends Container> container;
 		public String encoding;
 		public Boolean expire;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
+		public String uploadPath;
 	}
 	
 	private Container container;
@@ -151,15 +149,19 @@ public class WebServiceServlet extends HttpServlet {
 			return null;
 		}
 		
+		Route route = null;
 		for (RouteMapping m : mappings) {
-			Route route = m.matches(request, uri);
-			if (route != null) {
-				container.debug("route found: " + request.getMethod() + " " + uri);
-				return route;
+			if ((route = m.matches(request, uri)) != null) {
+				break;
 			}
 		}
-		response.sendError(SC_NOT_FOUND, "Not Found");
-		return null;
+		
+		if (route != null) {
+			container.debug("route found: " + request.getMethod() + " " + uri);
+		} else {
+			response.sendError(SC_NOT_FOUND, "Not Found");
+		}
+		return route;
 	}
 	
 	@Override
@@ -443,7 +445,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		try {		
-			response.setContentType((callback != null) ? MIME_JAVASCRIPT : MIME_JSON);
+			response.setContentType((callback != null) ? "text/javascript" : "application/json");
 			if (res == null
 					|| res instanceof CharSequence
 					|| res instanceof Boolean
@@ -648,13 +650,11 @@ class RouteMapping {
 class Route extends HashMap<String, String> {
 	private static final long serialVersionUID = 9001379442185239302L;
 	
-	public static final String MIME_FORM = "application/x-www-form-urlencoded";
-	public static final String MIME_MULTIPART = "multipart/";
-	
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 	private HttpServletRequest request;
 	private String target;
 	private String method;
+	private String contentType;
 	
 	public Route(HttpServletRequest request, String target) {
 		this.request = request;
@@ -669,6 +669,30 @@ class Route extends HashMap<String, String> {
 		}
 		
 		return method;
+	}
+	
+	public String getContentType() {
+		if (contentType == null) {
+			String type = request.getContentType();
+			if (type != null) {
+				int index = type.indexOf(';');
+				type = ((index != -1) ? type.substring(0, index) : type).trim();
+			} else {
+				type = "";
+			}
+			contentType = type.toLowerCase();
+		}
+		return contentType;
+	}
+	
+	public boolean isMultipart() {
+		return (getContentType().startsWith("multipart/"));
+	}
+	
+	public boolean hasJSONContent() {
+		return !getMethod().equals("get") 
+			&& !getContentType().equals("application/x-www-form-urlencoded") 
+			&& !isMultipart();
 	}
 	
 	public String getComponentClass() {
@@ -690,24 +714,31 @@ class Route extends HashMap<String, String> {
 		return sb.toString();
 	}
 	
-	public boolean hasJSONContent() {
-		if ("get".equals(getMethod())) return false;
-		
-		String type = request.getContentType();
-		if (type == null) return true;
-		
-		int index = type.indexOf(';');
-		type = ((index != -1) ? type.substring(0, index) : type).trim();
-		
-		return !(MIME_FORM.equals(type));
-	}
-	
-	public Map<String, Object> getParameterMap() {
+	public Map<String, Object> getParameterMap() throws Exception {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
-		
+
+		Map<String, Object> params = new LinkedHashMap<String, Object>();
 		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
 			String name = e.nextElement();
 			String[] values = request.getParameterValues(name);
+			
+			if (values == null || values.length == 0) {
+				params.put(name, null);
+			} else if (values.length == 1) {
+				params.put(name, values[0]);
+			} else {
+				List list = new ArrayList(values.length);
+				for (String str : values) list.add(str);
+				params.put(name, list);
+			}
+		}
+		
+		if (isMultipart()) {
+			// TODO
+		}
+		
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			String name = entry.getKey();
 			
 			int start = 0;
 			char old = '\0';
@@ -731,18 +762,34 @@ class Route extends HashMap<String, String> {
 				old = c;
 			}
 			
-			Object value = null;
-			if (values == null || values.length == 0) {
-				value = null;
-			} else if (values.length == 1) {
-				value = values[0];
-			} else {
-				List list = new ArrayList(values.length);
-				for (String str : values) list.add(str);
-				value = list;
-			}
+			name = name.substring(start, (old == ']') ? name.length()-1 : name.length());
 			
-			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), value);
+			Object values = entry.getValue();
+			
+			if (current.containsKey(name)) {
+				Object target = current.get(name);
+				if (target instanceof Map) {
+					((Map)target).put("", values);
+				} else if (target instanceof List) {
+					if (values instanceof List) {
+						((List)target).addAll((List)values);
+					} else {
+						((List)target).add(values);
+					}
+				} else {
+					List list = new ArrayList();
+					if (values instanceof List) {
+						list.add(target);
+						list.addAll((List)values);
+					} else {
+						list.add(target);
+						list.add(values);
+					}
+					current.put(name, list);
+				}
+			} else {
+				current.put(name, values);
+			}
 		}
 		
 		result.putAll(this);
