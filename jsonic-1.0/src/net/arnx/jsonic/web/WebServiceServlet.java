@@ -53,7 +53,6 @@ import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
-@SuppressWarnings("unchecked")
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
