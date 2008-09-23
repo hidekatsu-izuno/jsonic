@@ -63,7 +63,7 @@ public class WebServiceServlet extends HttpServlet {
 		public Boolean expire;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
-		public String uploadPath;
+		public String repository;
 	}
 	
 	private Container container;
@@ -83,7 +83,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			config = json.parse(configText, Config.class);
 			if (config.container == null) config.container = Container.class;
-
+			
 			container = (Container)json.parse(configText, config.container);
 			container.init(getServletContext());
 		} catch (Exception e) {
@@ -97,6 +97,21 @@ public class WebServiceServlet extends HttpServlet {
 		if (config.mappings != null) {
 			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
 				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
+			}
+		}
+		
+		if (config.repository != null) {
+			try {
+				File repo = new File(config.repository);
+				if (!repo.exists()) {
+					container.error("repository does not exist.", null);
+				}
+				
+				if (!repo.isDirectory()) {
+					container.error("repository does not exist.", null);
+				}
+			} catch (SecurityException e) {
+				container.error("upload root cannot access.", e);
 			}
 		}
 	}

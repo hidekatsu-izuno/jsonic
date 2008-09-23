@@ -43,6 +43,10 @@ public class S2Container extends Container {
 
 	@Override
 	public void error(String message, Throwable e) {
-		log.error(message, e);
+		if (e != null) {
+			log.error(message, e);
+		} else {
+			log.error(message);
+		}
 	}
 }

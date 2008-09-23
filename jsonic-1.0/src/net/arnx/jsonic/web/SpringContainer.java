@@ -42,11 +42,6 @@ public class SpringContainer extends Container {
 		
 		return component;
 	}
-	
-	@Override
-	public boolean isDebugMode() {
-		return (debug != null) ? debug : false;
-	}
 
 	@Override
 	public void debug(String message) {
@@ -55,6 +50,10 @@ public class SpringContainer extends Container {
 
 	@Override
 	public void error(String message, Throwable e) {
-		log.error(message, e);
+		if (e != null) {
+			log.error(message, e);
+		} else {
+			log.error(message);
+		}
 	}
 }
