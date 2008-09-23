@@ -59,8 +59,6 @@ public class WebServiceServlet extends HttpServlet {
 	
 	public static final String MIME_JSON = "application/json";
 	public static final String MIME_JAVASCRIPT = "text/javascript";
-	public static final String MIME_FORM = "application/x-www-form-urlencoded";
-	public static final String MIME_MULTIPART = "multipart/";
 	
 	class Config {
 		public Class<? extends Container> container;
@@ -190,16 +188,14 @@ public class WebServiceServlet extends HttpServlet {
 		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
 			doRPC(route, request, response);
 		} else {
-			String method = request.getParameter("_method");
-			if (method == null) method = request.getMethod();
+			String method = route.getMethod();
 			if (method.equalsIgnoreCase("GET") 
 				|| method.equalsIgnoreCase("POST")
 				|| method.equalsIgnoreCase("PUT")
 				|| method.equalsIgnoreCase("DELETE")) {
-				route.setMethod(method);
 				doREST(route, request, response);
 			} else {
-				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
+				response.sendError(SC_FORBIDDEN, "Method Not Allowed");
 				return;
 			}
 		}
@@ -393,22 +389,17 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			List<Object> params = null;
-			if (!hasJSONContent(route.getMethod(), request)) {
+			if (!route.hasJSONContent()) {
 				params = new ArrayList<Object>();
-				Map<String, Object> contents = getParameterMap(request);
-				contents.putAll(route);
-				params.add(contents);
+				params.add(route.getParameterMap());
 			} else {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
 					params = (List)o;
-					Map<String, Object> contents = getParameterMap(request);
-					contents.putAll(route);
-					params.add(contents);
+					params.add(route.getParameterMap());
 				} else if (o instanceof Map) {
 					Map<String, Object> contents = (Map)o;
-					contents.putAll(getParameterMap(request));
-					contents.putAll(route);
+					contents.putAll(route.getParameterMap());
 					params = new ArrayList<Object>();
 					params.add(contents);
 				} else {
@@ -473,64 +464,6 @@ public class WebServiceServlet extends HttpServlet {
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}		
-	}
-	
-	private static boolean hasJSONContent(String method, HttpServletRequest request) {
-		if ("get".equals(method)) return false;
-		
-		String type = request.getContentType();
-		if (type == null) return true;
-		
-		int index = type.indexOf(';');
-		type = ((index != -1) ? type.substring(0, index) : type).trim();
-		
-		return !(MIME_FORM.equals(type));
-	}
-	
-	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
-		Map<String, Object> result = new LinkedHashMap<String, Object>();
-		
-		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
-			String name = e.nextElement();
-			String[] values = request.getParameterValues(name);
-			
-			int start = 0;
-			char old = '\0';
-			Map<String, Object> current = result;
-			for (int i = 0; i < name.length(); i++) {
-				char c = name.charAt(i);
-				if (c == '.' || c == '[') {
-					String key = name.substring(start, (old == ']') ? i-1 : i);
-					Object target = current.get(key);
-					
-					if (!(target instanceof Map)) {
-						Map<String, Object> map = new LinkedHashMap<String, Object>();
-						if (target != null) map.put("", target);
-						current.put(key, map);
-						current = map;
-					} else {
-						current = (Map<String, Object>)target;
-					}
-					start = i+1;
-				}
-				old = c;
-			}
-			
-			Object value = null;
-			if (values == null || values.length == 0) {
-				value = null;
-			} else if (values.length == 1) {
-				value = values[0];
-			} else {
-				List list = new ArrayList(values.length);
-				for (String str : values) list.add(str);
-				value = list;
-			}
-			
-			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), value);
-		}
-		
-		return result;
 	}
 	
 	@Override
@@ -715,20 +648,26 @@ class RouteMapping {
 class Route extends HashMap<String, String> {
 	private static final long serialVersionUID = 9001379442185239302L;
 	
+	public static final String MIME_FORM = "application/x-www-form-urlencoded";
+	public static final String MIME_MULTIPART = "multipart/";
+	
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
+	private HttpServletRequest request;
 	private String target;
 	private String method;
 	
 	public Route(HttpServletRequest request, String target) {
-		this.method = request.getMethod().toLowerCase();
+		this.request = request;
 		this.target = target;
 	}
 	
-	public void setMethod(String method) {
-		this.method = method.toLowerCase();
-	}
-	
 	public String getMethod() {
+		if (method == null) {
+			String m = request.getParameter("_method");
+			if (m == null) m = request.getMethod();
+			method = m.toLowerCase();
+		}
+		
 		return method;
 	}
 	
@@ -749,6 +688,66 @@ class Route extends HashMap<String, String> {
 		}
 		m.appendTail(sb);
 		return sb.toString();
+	}
+	
+	public boolean hasJSONContent() {
+		if ("get".equals(getMethod())) return false;
+		
+		String type = request.getContentType();
+		if (type == null) return true;
+		
+		int index = type.indexOf(';');
+		type = ((index != -1) ? type.substring(0, index) : type).trim();
+		
+		return !(MIME_FORM.equals(type));
+	}
+	
+	public Map<String, Object> getParameterMap() {
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		
+		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
+			String name = e.nextElement();
+			String[] values = request.getParameterValues(name);
+			
+			int start = 0;
+			char old = '\0';
+			Map<String, Object> current = result;
+			for (int i = 0; i < name.length(); i++) {
+				char c = name.charAt(i);
+				if (c == '.' || c == '[') {
+					String key = name.substring(start, (old == ']') ? i-1 : i);
+					Object target = current.get(key);
+					
+					if (!(target instanceof Map)) {
+						Map<String, Object> map = new LinkedHashMap<String, Object>();
+						if (target != null) map.put("", target);
+						current.put(key, map);
+						current = map;
+					} else {
+						current = (Map<String, Object>)target;
+					}
+					start = i+1;
+				}
+				old = c;
+			}
+			
+			Object value = null;
+			if (values == null || values.length == 0) {
+				value = null;
+			} else if (values.length == 1) {
+				value = values[0];
+			} else {
+				List list = new ArrayList(values.length);
+				for (String str : values) list.add(str);
+				value = list;
+			}
+			
+			current.put(name.substring(start, (old == ']') ? name.length()-1 : name.length()), value);
+		}
+		
+		result.putAll(this);
+		
+		return result;
 	}
 	
 	private String toUpperCamel(String name) {
