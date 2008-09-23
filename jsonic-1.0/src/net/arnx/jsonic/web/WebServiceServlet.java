@@ -107,17 +107,9 @@ public class WebServiceServlet extends HttpServlet {
 					repo = new File(servletConfig.getServletContext().getRealPath("/"), config.repository);
 				}
 				
-				if (!repo.exists()) {
-					container.error("repository is not found: " + config.repository, null);
-				}
-				
-				if (!repo.isDirectory()) {
-					container.error("repository is not a directory: " + config.repository, null);
-				}
-				
-				if (!repo.canWrite()) {
-					container.error("repository is not writable: " + config.repository, null);					
-				}
+				if (!repo.exists()) container.error("repository is not found: " + config.repository, null);
+				if (!repo.isDirectory()) container.error("repository is not a directory: " + config.repository, null);
+				if (!repo.canWrite()) container.error("repository is not writable: " + config.repository, null);
 				
 				config.repository = repo.getCanonicalPath();
 			} catch (Exception e) {
