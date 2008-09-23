@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" output="webapps/spring/WEB-INF/classes" path="webapps/spring/WEB-INF/src"/>
-	<classpathentry kind="src" output="webapps/seasar2/WEB-INF/classes" path="webapps/seasar2/WEB-INF/src"/>
-	<classpathentry kind="src" path="webapps/sample/WEB-INF/src"/>
+	<classpathentry kind="src" output="sample/spring/WEB-INF/classes" path="sample/spring/WEB-INF/src"/>
+	<classpathentry kind="src" output="sample/seasar2/WEB-INF/classes" path="sample/seasar2/WEB-INF/src"/>
+	<classpathentry kind="src" path="sample/basic/WEB-INF/src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/spring.jar"/>
