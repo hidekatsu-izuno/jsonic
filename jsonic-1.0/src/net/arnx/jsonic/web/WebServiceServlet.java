@@ -20,12 +20,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -112,7 +114,7 @@ public class WebServiceServlet extends HttpServlet {
 				
 				config.repository = repo.getCanonicalPath();
 			} catch (Exception e) {
-				container.error("cannot access directory: " + config.repository, e);
+				container.error("cannot access repository: " + config.repository, e);
 			}
 		}
 	}
@@ -734,18 +736,58 @@ class Route extends HashMap<String, String> {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 
 		Map<String, Object> params = new LinkedHashMap<String, Object>();
-		for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
-			String name = e.nextElement();
-			String[] values = request.getParameterValues(name);
+		if (!hasJSONContent()) {
+			String query = request.getQueryString();
+			if (query == null || query.length() == 0) {
+				return result;
+			}
 			
-			if (values == null || values.length == 0) {
-				params.put(name, null);
-			} else if (values.length == 1) {
-				params.put(name, values[0]);
-			} else {
-				List list = new ArrayList(values.length);
-				for (String str : values) list.add(str);
-				params.put(name, list);
+			int start = 0;
+			String name = null;
+			for (int i = 0; i <= query.length(); i++) {
+				char c = (i != query.length()) ? query.charAt(i) : '&';
+				if (c == '=' && name == null) {
+					name = decode(query.substring(start, i), request.getCharacterEncoding());
+					start = i+1;
+				} else if (c == '&') {
+					String value = decode(query.substring(start, i), request.getCharacterEncoding());
+					if (name == null) {
+						name = value;
+						value = "";
+					}
+					
+					if (params.containsKey(name)) {
+						Object target = params.get(name);
+						if (target instanceof List) {
+							((List)params).add(value);
+						} else {
+							List list = new ArrayList();
+							list.add(target);
+							list.add(value);
+							params.put(name, list);
+						}
+					} else {
+						params.put(name, value);
+					}
+					
+					name = null;
+					start = i+1;
+				}
+			}
+		} else {
+			for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
+				String name = e.nextElement();
+				String[] values = request.getParameterValues(name);
+				
+				if (values == null || values.length == 0) {
+					params.put(name, "");
+				} else if (values.length == 1) {
+					params.put(name, values[0]);
+				} else {
+					List list = new ArrayList(values.length);
+					for (String str : values) list.add(str);
+					params.put(name, list);
+				}
 			}
 		}
 		
@@ -810,6 +852,16 @@ class Route extends HashMap<String, String> {
 		
 		result.putAll(this);
 		
+		return result;
+	}
+	
+	private static String decode(String data, String encoding) {
+		String result = null;
+		try {
+			result = URLDecoder.decode(data, encoding);
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
 		return result;
 	}
 	

@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -246,20 +247,20 @@ public class WebServiceServletTest {
 		MockServletContextImpl context = new MockServletContextImpl("/");
 		MockHttpServletRequest request = null;
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?aaa=");
 		request.addParameter("aaa", "");
 		assertEquals(JSON.decode("{aaa:''}"), new Route(request, null).getParameterMap());
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?aaa=aaa=bbb&");
 		request.addParameter("aaa", "aaa=bbb");
 		assertEquals(JSON.decode("{aaa:'aaa=bbb'}"), new Route(request, null).getParameterMap());
 
-		request = context.createRequest("/");
+		request = context.createRequest("/?&");
 		request.addParameter("", "");
 		request.addParameter("", "");
 		assertEquals(JSON.decode("{'':['','']}"), new Route(request, null).getParameterMap());
 
-		request = context.createRequest("/");
+		request = context.createRequest("/?=&=");
 		request.addParameter("", "");
 		request.addParameter("", "");
 		assertEquals(JSON.decode("{'':['','']}"), new Route(request, null).getParameterMap());
@@ -268,53 +269,59 @@ public class WebServiceServletTest {
 		request.addParameter("aaa.bbb", "aaa");
 		assertEquals(JSON.decode("{aaa:{bbb:'aaa'}}"), new Route(request, null).getParameterMap());
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "UTF-8") + "=" + URLEncoder.encode("古今=東西", "UTF-8"));
+		request.setCharacterEncoding("UTF-8");
 		request.addParameter("諸行 無常", "古今=東西");
 		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), new Route(request, null).getParameterMap());
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "MS932") + "=" + URLEncoder.encode("古今=東西", "MS932"));
+		request.setCharacterEncoding("MS932");
+		request.addParameter("諸行 無常", "古今=東西");
+		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), new Route(request, null).getParameterMap());
+		
+		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb&aaa=aaa");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
 		assertEquals(JSON.decode("{aaa:{'':'aaa',bbb:['aaa', 'bbb']}}"), new Route(request, null).getParameterMap());
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), new Route(request, null).getParameterMap());
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?aaa.bbb.=aaa&aaa.bbb.=bbb");
 		request.addParameter("aaa.bbb.", "aaa");
 		request.addParameter("aaa.bbb.", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?..=aaa&..=bbb");
 		request.addParameter("..", "aaa");
 		request.addParameter("..", "bbb");
 		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
 		
-		request = context.createRequest("/");
+		request = context.createRequest("/?aaa[bbb]=aaa&aaa[bbb]=bbb");
 		request.addParameter("aaa[bbb]", "aaa");
 		request.addParameter("aaa[bbb]", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), new Route(request, null).getParameterMap());
 
-		request = context.createRequest("/");
+		request = context.createRequest("/?aaa[bbb].ccc=aaa&aaa[bbb].ccc=bbb");
 		request.addParameter("aaa[bbb].ccc", "aaa");
 		request.addParameter("aaa[bbb].ccc", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:{ccc:['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
 
-		request = context.createRequest("/");
+		request = context.createRequest("/?[aaa].bbb=aaa&[aaa].bbb=bbb");
 		request.addParameter("[aaa].bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
 
-		request = context.createRequest("/");
+		request = context.createRequest("/?.aaa.bbb=aaa&[aaa].bbb=bbb&[aaa].bbb=ccc");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), new Route(request, null).getParameterMap());
 
-		request = context.createRequest("/");
+		request = context.createRequest("/?.aaa.bbb=aaa&.aaa.bbb=bbb&[aaa].bbb=ccc");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter(".aaa.bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
