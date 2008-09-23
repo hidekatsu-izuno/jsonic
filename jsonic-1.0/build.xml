@@ -2,11 +2,12 @@
 
 <project name="jsonic" basedir="." default="dist">
 	<property name="version" value="1.0.3" />
-
-	<property name="src" location="src" />
-	<property name="lib" location="lib" />
-	<property name="tmp" location="tmp" />
+	
+	<property name="webapps" location="sample"/>
+	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 	<property name="dist" location="." />
+	
+	<property name="jsonic_as3.home" location="../jsonic_as3" />
 
 	<target name="init" depends="clean">
 		<tstamp />
@@ -15,47 +16,47 @@
 
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
-		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${tmp}/build">
+		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build">
 			<classpath>
-				<fileset dir="${lib}" includes="*.jar" />
+				<fileset dir="lib" includes="*.jar" />
 			</classpath>
 		</javac>
 
 		<jar destfile="${tmp}/${ant.project.name}-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
-			<fileset dir="${src}" excludes="**/*.java" />
+			<fileset dir="src" excludes="**/*.java" />
 		</jar>
 		<delete dir="${tmp}/build" />
-		<javadoc sourcepath="${src}" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
+		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<classpath>
-				<fileset dir="${lib}" includes="*.jar" />
+				<fileset dir="lib" includes="*.jar" />
 			</classpath>
 		</javadoc>
 	</target>
 
-	<target name="sample" depends="build">
-		<mkdir dir="${tmp}/sample" />
+	<target name="build-sample" depends="build">
+		<mkdir dir="${tmp}/sample/basic" />
 
-		<copy todir="${tmp}/sample">
-			<fileset dir="webapps/sample" />
+		<copy todir="${tmp}/sample/basic">
+			<fileset dir="${webapps}/basic" />
 		</copy>
-		<copy file="webapps/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/WEB-INF/web_seasar2.xml" />
-		<copy file="webapps/spring/WEB-INF/web.xml" tofile="${tmp}/sample/WEB-INF/web_spring.xml" />
-		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/WEB-INF/lib" />
+		<copy file="${webapps}/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_seasar2.xml" />
+		<copy file="${webapps}/spring/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_spring.xml" />
+		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
-		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/WEB-INF/src" destdir="${tmp}/sample/WEB-INF/classes">
+		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes">
 			<classpath>
-				<fileset dir="${lib}" includes="*.jar" />
-				<fileset dir="${tmp}/sample/WEB-INF/lib" includes="*.jar" />
+				<fileset dir="lib" includes="*.jar" />
+				<fileset dir="${tmp}/sample/basic/WEB-INF/lib" includes="*.jar" />
 			</classpath>
 		</javac>
 	</target>
 
-	<target name="dist" depends="build, sample">
+	<target name="dist" depends="build, build-sample">
 		<zip destfile="${ant.project.name}-${version}.zip">
 			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="${src}" prefix="${ant.project.name}-${version}/src" />
+			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src" />
 			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
 			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
 			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />
@@ -63,18 +64,39 @@
 		<delete dir="${tmp}" />
 	</target>
 	
-	<target name="dist-all" depends="">
+	<target name="dist-all">
+		<antcall target="build">
+			<param name="tmp" location="${tmp}/java" />
+		</antcall>
+		<ant antfile="${jsonic_as3.home}/build.xml" target="build" inheritall="false">
+			<property name="tmp" location="${tmp}/as3" />
+		</ant>
+		<zip destfile="${dist}/${ant.project.name}-${version}.zip">
+			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src/java" />
+			<zipfileset dir="${tmp}/java/docs" prefix="${ant.project.name}-${version}/docs/java" />
+			<zipfileset file="${tmp}/java/${ant.project.name}-${version}.jar" prefix="${ant.project.name}-${version}" />
+			
+			<zipfileset dir="${jsonic_as3.home}/src" prefix="${ant.project.name}-${version}/src/as3" />
+			<zipfileset dir="${tmp}/as3/docs" prefix="${ant.project.name}-${version}/docs/as3" />
+			<zipfileset file="${tmp}/as3/${ant.project.name}-${version}.swc" prefix="${ant.project.name}-${version}" />
+			
+			<zipfileset dir="sample" prefix="${ant.project.name}-${version}/sample" />
+			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
+			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
+			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />			
+		</zip>
+		<delete dir="${tmp}" />
 	</target>
 
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
-		<delete file="${ant.project.name}-${version}.zip" failonerror="off" />
+		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
 	</target>
 
 	<target name="start">
 		<java classname="winstone.Launcher" fork="true">
 			<arg value="--controlPort=8081" />
-			<arg value="--webappsDir=webapps" />
+			<arg value="--webappsDir=${webapps}" />
 			<arg value="--preferredClassLoader=winstone.classLoader.WebappDevLoader" />
 			<classpath>
 				<pathelement location="lib/winstone-0.9.10.jar" />

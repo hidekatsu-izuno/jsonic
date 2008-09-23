@@ -35,7 +35,7 @@ public class WebServiceServletTest {
 	@BeforeClass
 	public static void init() throws Exception {
 		Map args = new HashMap();
-		args.put("webappsDir", "webapps");
+		args.put("webappsDir", "sample");
 		args.put("controlPort", "8081");
 		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
 		
@@ -50,7 +50,7 @@ public class WebServiceServletTest {
 
 	@Test
 	public void testRPC() throws Exception {
-		URL url = new URL("http://localhost:8080/sample/rpc/rpc.json");
+		URL url = new URL("http://localhost:8080/basic/rpc/rpc.json");
 		HttpURLConnection con = null;
 		
 		// GET
@@ -102,7 +102,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testREST() throws Exception {
-		testREST("sample");
+		testREST("basic");
 	}
 	
 	@Test
@@ -190,7 +190,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRESTWithMethod() throws Exception {
-		String url = "http://localhost:8080/sample/rest/memo.json";
+		String url = "http://localhost:8080/basic/rest/memo.json";
 		HttpURLConnection con = null;
 		
 		List<Map<String, Object>> content = null;
