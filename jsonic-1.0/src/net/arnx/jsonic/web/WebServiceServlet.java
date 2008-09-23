@@ -57,6 +57,11 @@ import static javax.servlet.http.HttpServletResponse.*;
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
+	public static final String MIME_JSON = "application/json";
+	public static final String MIME_JAVASCRIPT = "text/javascript";
+	public static final String MIME_FORM = "application/x-www-form-urlencoded";
+	public static final String MIME_MULTIPART = "multipart/";
+	
 	class Config {
 		public Class<? extends Container> container;
 		public String encoding;
@@ -455,7 +460,11 @@ public class WebServiceServlet extends HttpServlet {
 				if (status != SC_CREATED) status = SC_NO_CONTENT;
 				response.setStatus(status);
 			} else {
-				response.setContentType((callback != null) ? "text/javascript" : "application/json");
+				if (callback != null) {
+					response.setContentType(MIME_JAVASCRIPT);
+				} else {
+					response.setContentType(MIME_JSON);
+				}
 			
 				Writer writer = response.getWriter();
 				json.setPrettyPrint(container.isDebugMode());
@@ -480,7 +489,7 @@ public class WebServiceServlet extends HttpServlet {
 		int index = type.indexOf(';');
 		type = ((index != -1) ? type.substring(0, index) : type).trim();
 		
-		return !("application/x-www-form-urlencoded".equals(type));
+		return !(MIME_FORM.equals(type));
 	}
 	
 	private static Map<String, Object> getParameterMap(HttpServletRequest request) {
