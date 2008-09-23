@@ -65,7 +65,7 @@
 	</target>
 	
 	<target name="dist-all">
-		<antcall target="build">
+		<antcall target="build-sample">
 			<param name="tmp" location="${tmp}/java" />
 		</antcall>
 		<ant antfile="${jsonic_as3.home}/build.xml" target="build" inheritall="false">
@@ -80,7 +80,7 @@
 			<zipfileset dir="${tmp}/as3/docs" prefix="${ant.project.name}-${version}/docs/as3" />
 			<zipfileset file="${tmp}/as3/${ant.project.name}-${version}.swc" prefix="${ant.project.name}-${version}" />
 			
-			<zipfileset dir="sample" prefix="${ant.project.name}-${version}/sample" />
+			<zipfileset dir="${tmp}/java/sample/basic" prefix="${ant.project.name}-${version}/sample" />
 			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
 			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
 			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />			
