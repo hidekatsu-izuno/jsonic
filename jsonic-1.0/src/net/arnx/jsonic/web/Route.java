@@ -33,7 +33,7 @@ public class Route {
 			this.method = request.getMethod().toUpperCase();
 		} else {
 			if (request.getQueryString() != null) {
-				parse(new ByteArrayInputStream(request.getQueryString().getBytes("US-ASCII")), params, request.getCharacterEncoding());
+				parseQueryString(new ByteArrayInputStream(request.getQueryString().getBytes("US-ASCII")), request.getCharacterEncoding());
 			}
 			if (!request.getMethod().equalsIgnoreCase("GET")) {
 				contentLength = request.getContentLength();
@@ -46,7 +46,10 @@ public class Route {
 				
 				if (contentLength > 0) {
 					if (contentType.equals("application/x-www-form-urlencoded")) {
-						parse(request.getInputStream(), params, request.getCharacterEncoding());
+						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
+						contentLength = 0;
+					} else if (contentType.startsWith("multipart/")) {
+						parseMultipart(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
 					}
 				}
@@ -109,7 +112,7 @@ public class Route {
 		return sb.toString();
 	}
 	
-	private void parse(InputStream in, Map<String, Object> params, String encoding) throws IOException {		
+	private void parseQueryString(InputStream in, String encoding) throws IOException {
 		List<String> pairs = new ArrayList<String>();
 
 		int state = 0; // 0 '%' 1 'N' 2 ('N' | '=' | '&')
@@ -180,6 +183,16 @@ public class Route {
 			before = c;
 		}
 		
+		parseParameter(pairs, params);
+	}
+	
+	private void parseMultipart(InputStream in, String encoding) throws IOException {
+		List<String> pairs = new ArrayList<String>();
+		
+		parseParameter(pairs, params);
+	}
+	
+	private static void parseParameter(List<String> pairs, Map<String, Object> params) {
 		for (int i = 0; i < pairs.size(); i+= 2) {
 			String name = pairs.get(i);
 			String value = pairs.get(i+1);
@@ -237,7 +250,7 @@ public class Route {
 			} else {
 				current.put(name, value);
 			}
-		}
+		}		
 	}
 	
 	private static byte[] byteAppend(byte[] array, int pos, int b) {
