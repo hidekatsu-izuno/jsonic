@@ -183,7 +183,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<
 <tr><td>Pattern</td><td>Pattern（文字列をcompileにより変換）</td></tr>
 <tr><td>Class, Charset</td><td>指定された型（文字列をforNameにより変換）</td></tr>
 <tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
-<tr><td>URI, URL</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
+<tr><td>File, URI, URL</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
 <tr><td>InetAddress</td><td>InetAddress（文字列をInetAddress.getByNameで変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
 <tr><td rowspan="5">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
@@ -730,6 +730,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h3>2008/08/15 version 1.0.3</h3>
 <ul>
+<li>JSON stringとjava.io.Fileの相互変換に対応しました。</li>
 <li>Decode/Format時にMapのkeyがnullだった場合、NullPointerExceptionが発生していた問題を修正しました（空文字列として扱います）</li>
 <li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するよう変更しました。</li>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>

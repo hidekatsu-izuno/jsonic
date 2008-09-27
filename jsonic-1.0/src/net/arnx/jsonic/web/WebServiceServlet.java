@@ -397,19 +397,41 @@ public class WebServiceServlet extends HttpServlet {
 				return;
 			}
 			
-			List<Object> params = null;
+			List<Object> params = new ArrayList<Object>();
 			if (!route.hasJSONContent()) {
-				params = new ArrayList<Object>();
 				params.add(route.getParameterMap());
 			} else {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
-					params = (List)o;
+					params.add(o);
 					params.add(route.getParameterMap());
 				} else if (o instanceof Map) {
-					Map<String, Object> contents = (Map)o;
-					contents.putAll(route.getParameterMap());
-					params = new ArrayList<Object>();
+					Map<String, Object> contents = route.getParameterMap();
+					for (Map.Entry<String, Object> entry : ((Map<String, Object>)o).entrySet()) {
+						if (contents.containsKey(entry.getKey())) {
+							Object target = contents.get(entry.getKey());
+							
+							if (target instanceof Map) {
+								Map map = (Map)target;
+								if (map.containsKey(null)) {
+									target = map.get(null);
+								}
+							}
+							
+							if (target instanceof Map) {
+								((Map)target).put(null, entry.getValue());
+							} else  if (target instanceof List) {
+								((List)target).add(entry.getValue());
+							} else {
+								List<Object> list = new ArrayList<Object>();
+								list.add(target);
+								list.add(entry.getValue());
+								contents.put(entry.getKey(), list);
+							}
+						} else {
+							contents.put(entry.getKey(), entry.getValue());
+						}
+					}
 					params.add(contents);
 				} else {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
