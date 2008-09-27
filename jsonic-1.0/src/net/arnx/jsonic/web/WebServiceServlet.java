@@ -20,18 +20,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -174,11 +171,18 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		}
 		
-		if (route != null) {
-			container.debug("route found: " + request.getMethod() + " " + uri);
-		} else {
+		if (route == null) {
 			response.sendError(SC_NOT_FOUND, "Not Found");
+			return null;
 		}
+		
+		String method = route.getMethod();
+		if (!method.equals("GET") && !method.equals("POST") && !method.equals("PUT") && !method.equals("DELETE")) {
+			response.sendError(SC_FORBIDDEN, "Method Not Allowed");
+			return null;
+		}
+		
+		container.debug("route found: " + request.getMethod() + " " + uri);
 		return route;
 	}
 	
@@ -186,13 +190,11 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {		
 		Route route = preprocess(request, response);
+		if (route == null) return;
 		
-		if (route == null) {
-			return;
-		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
+		if (route.isRpcMode()) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowd");
-			return;
 		} else {
 			doREST(route, request, response);
 		}
@@ -202,22 +204,12 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		Route route = preprocess(request, response);
-		
-		if (route == null) {
-			return;
-		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
+		if (route == null) return;
+
+		if (route.isRpcMode()) {
 			doRPC(route, request, response);
 		} else {
-			String method = route.getMethod();
-			if (method.equalsIgnoreCase("GET") 
-				|| method.equalsIgnoreCase("POST")
-				|| method.equalsIgnoreCase("PUT")
-				|| method.equalsIgnoreCase("DELETE")) {
-				doREST(route, request, response);
-			} else {
-				response.sendError(SC_FORBIDDEN, "Method Not Allowed");
-				return;
-			}
+			doREST(route, request, response);
 		}
 	}
 
@@ -225,10 +217,9 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		Route route = preprocess(request, response);
+		if (route == null) return;
 		
-		if (route == null) {
-			return;
-		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
+		if (route.isRpcMode()) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
 		} else {
@@ -240,10 +231,9 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
 		Route route = preprocess(request, response);
+		if (route == null) return;
 		
-		if (route == null) {
-			return;
-		} else if ("rpc".equalsIgnoreCase(route.get("class"))) {
+		if (route.isRpcMode()) {
 			response.addHeader("Allow", "POST");
 			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
 		} else {
@@ -271,7 +261,7 @@ public class WebServiceServlet extends HttpServlet {
 		String errorMessage = null;
 		Throwable throwable = null;
 		
-		try {			
+		try {
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
 				throwable = new Throwable();
@@ -282,8 +272,7 @@ public class WebServiceServlet extends HttpServlet {
 				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
 					throw new NoSuchMethodException(req.method);
 				} else {
-					route.put("class", req.method.substring(0, delimiter));
-					Object component = container.getComponent(route.getComponentClass());
+					Object component = container.getComponent(route.getComponentClass(req.method.substring(0, delimiter)));
 					if (component == null) {
 						throw new NoSuchMethodException(req.method);
 					}
@@ -380,19 +369,19 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		String methodName = route.getMethod();
+		String methodName = route.getMethod().toLowerCase();
 		int status = SC_OK;
 		String callback = null;
 		
-		if ("get".equals(route.getMethod())) {
+		if ("GET".equals(route.getMethod())) {
 			methodName = "find";
 			callback = route.getParameter("callback");
-		} else if ("post".equals(route.getMethod())) {
+		} else if ("POST".equals(route.getMethod())) {
 			methodName = "create";
 			status = SC_CREATED;
-		} else if ("put".equals(route.getMethod())) {
+		} else if ("PUT".equals(route.getMethod())) {
 			methodName = "update";
-		} else if ("delte".equals(route.getMethod())) {
+		} else if ("DELETE".equals(route.getMethod())) {
 			methodName = "delete";
 		}
 		
@@ -402,7 +391,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		Object res = null;
 		try {
-			Object component = container.getComponent(route.getComponentClass());
+			Object component = container.getComponent(route.getComponentClass(null));
 			if (component == null) {
 				response.sendError(SC_NOT_FOUND, "Not Found");
 				return;
@@ -652,246 +641,29 @@ class RouteMapping {
 		this.target = target;
 	}
 	
-	public Route matches(HttpServletRequest request, String path) {
+	public Route matches(HttpServletRequest request, String path) throws IOException {
 		Matcher m = pattern.matcher(path);
 		if (m.matches()) {
-			Route route = new Route(request, target);
+			Map<String, Object> params = new HashMap<String, Object>(); 
 			for (int i = 0; i < names.size(); i++) {
-				route.put(names.get(i), m.group(i+1));
+				String key = names.get(i);
+				Object value = m.group(i+1);
+				if (params.containsKey(key)) {
+					Object target = params.get(key);
+					if (target instanceof List) {
+						((List)target).add(value);
+					} else {
+						List list = new ArrayList(2);
+						list.add(target);
+						list.add(value);
+					}
+				} else {
+					params.put(key, value);
+				}
 			}
+			Route route = new Route(request, target, params);
 			return route;
 		}
 		return null;
-	}
-}
-
-class Route extends HashMap<String, String> {
-	private static final long serialVersionUID = 9001379442185239302L;
-	
-	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
-	private HttpServletRequest request;
-	private String target;
-	private String method;
-	private String contentType;
-	private Map<String, Object> params;
-	
-	public Route(HttpServletRequest request, String target) {
-		this.request = request;
-		this.target = target;
-		this.params = toParameterMap();
-	}
-	
-	public String getMethod() {
-		if (method == null) {
-			String m = getParameter("_method");
-			if (m == null) m = request.getMethod();
-			method = m.toLowerCase();
-		}
-		
-		return method;
-	}
-	
-	public String getParameter(String name) {
-		Object o = params.get(name);
-		if (o instanceof String) {
-			return (String)o;
-		}
-		return null;
-	}
-	
-	public Map<String, Object> getParameterMap() {
-		params.putAll(this);
-		return params;
-	}
-	
-	public String getContentType() {
-		if (contentType == null) {
-			String type = request.getContentType();
-			if (type != null) {
-				int index = type.indexOf(';');
-				type = ((index != -1) ? type.substring(0, index) : type).trim();
-			} else {
-				type = "";
-			}
-			contentType = type.toLowerCase();
-		}
-		return contentType;
-	}
-	
-	public boolean isMultipart() {
-		return (getContentType().startsWith("multipart/"));
-	}
-	
-	public boolean hasJSONContent() {
-		return !request.getMethod().equalsIgnoreCase("GET")
-			&& !getContentType().equals("application/x-www-form-urlencoded") 
-			&& !isMultipart();
-	}
-	
-	public String getComponentClass() {
-		Matcher m = REPLACE_PATTERN.matcher(target);
-		StringBuffer sb = new StringBuffer();
-		while (m.find()) {
-			String key = m.group(1);
-			String value = remove(key);
-			if (value == null) {
-				value = "";
-			} else if (key.equals("class")) {
-				value = toUpperCamel(value);
-			} else if (key.equals("package")) {
-				value = value.replace('/', '.');
-			}
-			m.appendReplacement(sb, value);
-		}
-		m.appendTail(sb);
-		return sb.toString();
-	}
-	
-	private Map<String, Object> toParameterMap() {
-		Map<String, Object> result = new LinkedHashMap<String, Object>();
-
-		Map<String, Object> params = new LinkedHashMap<String, Object>();
-		if (!hasJSONContent()) {
-			String query = request.getQueryString();
-			if (query == null || query.length() == 0) {
-				return result;
-			}
-			
-			int start = 0;
-			String name = null;
-			for (int i = 0; i <= query.length(); i++) {
-				char c = (i != query.length()) ? query.charAt(i) : '&';
-				if (c == '=' && name == null) {
-					name = decode(query.substring(start, i), request.getCharacterEncoding());
-					start = i+1;
-				} else if (c == '&') {
-					String value = decode(query.substring(start, i), request.getCharacterEncoding());
-					if (name == null) {
-						name = value;
-						value = "";
-					}
-					
-					if (params.containsKey(name)) {
-						Object target = params.get(name);
-						if (target instanceof List) {
-							((List)params).add(value);
-						} else {
-							List list = new ArrayList();
-							list.add(target);
-							list.add(value);
-							params.put(name, list);
-						}
-					} else {
-						params.put(name, value);
-					}
-					
-					name = null;
-					start = i+1;
-				}
-			}
-		} else {
-			for (Enumeration<String> e = request.getParameterNames(); e.hasMoreElements(); ) {
-				String name = e.nextElement();
-				String[] values = request.getParameterValues(name);
-				
-				if (values == null || values.length == 0) {
-					params.put(name, "");
-				} else if (values.length == 1) {
-					params.put(name, values[0]);
-				} else {
-					List list = new ArrayList(values.length);
-					for (String str : values) list.add(str);
-					params.put(name, list);
-				}
-			}
-		}
-		
-		if (isMultipart()) {
-			// TODO
-		}
-		
-		for (Map.Entry<String, Object> entry : params.entrySet()) {
-			String name = entry.getKey();
-			
-			int start = 0;
-			char old = '\0';
-			Map<String, Object> current = result;
-			for (int i = 0; i < name.length(); i++) {
-				char c = name.charAt(i);
-				if (c == '.' || c == '[') {
-					String key = name.substring(start, (old == ']') ? i-1 : i);
-					Object target = current.get(key);
-					
-					if (!(target instanceof Map)) {
-						Map<String, Object> map = new LinkedHashMap<String, Object>();
-						if (target != null) map.put("", target);
-						current.put(key, map);
-						current = map;
-					} else {
-						current = (Map<String, Object>)target;
-					}
-					start = i+1;
-				}
-				old = c;
-			}
-			
-			name = name.substring(start, (old == ']') ? name.length()-1 : name.length());
-			
-			Object values = entry.getValue();
-			
-			if (current.containsKey(name)) {
-				Object target = current.get(name);
-				if (target instanceof Map) {
-					((Map)target).put("", values);
-				} else if (target instanceof List) {
-					if (values instanceof List) {
-						((List)target).addAll((List)values);
-					} else {
-						((List)target).add(values);
-					}
-				} else {
-					List list = new ArrayList();
-					if (values instanceof List) {
-						list.add(target);
-						list.addAll((List)values);
-					} else {
-						list.add(target);
-						list.add(values);
-					}
-					current.put(name, list);
-				}
-			} else {
-				current.put(name, values);
-			}
-		}
-		
-		return result;
-	}
-	
-	private static String decode(String data, String encoding) {
-		String result = null;
-		try {
-			result = URLDecoder.decode(data, encoding);
-		} catch (UnsupportedEncodingException e) {
-			throw new IllegalStateException(e);
-		}
-		return result;
-	}
-	
-	private String toUpperCamel(String name) {
-		StringBuilder sb = new StringBuilder(name.length());
-		boolean toUpperCase = true;
-		for (int i = 0; i < name.length(); i++) {
-			char c = name.charAt(i);
-			if (c == ' ' || c == '_' || c == '-') {
-				toUpperCase = true;
-			} else if (toUpperCase) {
-				sb.append(Character.toUpperCase(c));
-				toUpperCase = false;
-			} else {
-				sb.append(c);
-			}
-		}
-		return sb.toString();
 	}
 }

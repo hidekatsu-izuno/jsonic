@@ -730,6 +730,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h3>2008/08/15 version 1.0.3</h3>
 <ul>
+<li>Decode/Format時にMapのkeyがnullだった場合、NullPointerExceptionが発生していた問題を修正しました（空文字列として扱います）</li>
+<li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するよう変更しました。</li>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>
 <li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
 <li>JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>

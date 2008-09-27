@@ -745,7 +745,8 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < level+1; j++) ap.append('\t');
 				}
-				formatString(entry.getKey().toString(), ap).append(':');
+				String key = (entry.getKey() != null) ? entry.getKey().toString() : "";
+				formatString(key, ap).append(':');
 				if (this.prettyPrint) ap.append(' ');
 				format(entry.getValue(), ap, level+1);
 				if (i.hasNext()) ap.append(',');
@@ -891,10 +892,10 @@ public class JSON {
 		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
-	private Map<String, Object> parseObject(ParserSource s, int level) throws IOException, JSONParseException {
+	private Map<Object, Object> parseObject(ParserSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
-		Map<String, Object> map = new LinkedHashMap<String, Object>();
-		String key = null;
+		Map<Object, Object> map = new LinkedHashMap<Object, Object>();
+		Object key = null;
 		char start = '\0';
 		
 		int n = -1;
@@ -992,28 +993,12 @@ public class JSON {
 					point = 1;
 				} else if (point == 1 || point == 6) {
 					s.back();
-					key = parseLiteral(s);
+					key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
 					point = 2;
 				} else if (point == 3) {
-					if ((c == '-') || (c >= '0' && c <= '9')) {
-						s.back();
-						Number value = parseNumber(s);
-						if (level < this.maxDepth) map.put(key, value);
-					} else {
-						s.back();
-						String literal = parseLiteral(s);
-						if (level < this.maxDepth) {
-							if (literal.equals("null")) {
-								map.put(key, null);
-							} else if (literal.equals("true")) {
-								map.put(key, Boolean.TRUE);
-							} else if (literal.equals("false")) {
-								map.put(key, Boolean.FALSE);
-							} else {
-								map.put(key, literal);
-							}
-						}
-					}
+					s.back();
+					Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
+					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1086,7 +1071,7 @@ public class JSON {
 			case '{':
 				if (point == 1 || point == 3){
 					s.back();
-					Map<String, Object> value = parseObject(s, level+1);
+					Map<Object, Object> value = parseObject(s, level+1);
 					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
@@ -1114,25 +1099,9 @@ public class JSON {
 				break;
 			default:
 				if (point == 1 || point == 3) {
-					if ((c == '-') || (c >= '0' && c <= '9')) {
-						s.back();
-						Number value = parseNumber(s);
-						if (level < this.maxDepth) list.add(value);
-					} else {
-						s.back();
-						String literal = parseLiteral(s);
-						if (level < this.maxDepth) {
-							if (literal.equals("null")) {
-								list.add(null);
-							} else if (literal.equals("true")) {
-								list.add(Boolean.TRUE);
-							} else if (literal.equals("false")) {
-								list.add(Boolean.FALSE);
-							} else {
-								list.add(literal);
-							}
-						}
-					}
+					s.back();
+					Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
+					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1200,7 +1169,7 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private String parseLiteral(ParserSource s) throws IOException, JSONParseException {
+	private Object parseLiteral(ParserSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 
@@ -1225,7 +1194,13 @@ public class JSON {
 			}
 		}
 		
-		return sb.toString();
+		String str = sb.toString();
+		
+		if ("null".equals(str)) return null;
+		if ("true".equals(str)) return true;
+		if ("false".equals(str)) return false;
+
+		return str;
 	}	
 	
 	private Number parseNumber(ParserSource s) throws IOException, JSONParseException {

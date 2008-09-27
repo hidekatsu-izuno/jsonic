@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -250,83 +251,91 @@ public class WebServiceServletTest {
 		
 		request = context.createRequest("/?aaa=");
 		request.addParameter("aaa", "");
-		assertEquals(JSON.decode("{aaa:''}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:''}"), getParameterMap(request));
 		
-		request = context.createRequest("/?aaa=aaa=bbb&");
+		request = context.createRequest("/?aaa=aaa=bbb");
 		request.addParameter("aaa", "aaa=bbb");
-		assertEquals(JSON.decode("{aaa:'aaa=bbb'}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:'aaa=bbb'}"), getParameterMap(request));
 
 		request = context.createRequest("/?&");
 		request.addParameter("", "");
 		request.addParameter("", "");
-		assertEquals(JSON.decode("{'':['','']}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'':['','']}"), getParameterMap(request));
 
 		request = context.createRequest("/?=&=");
 		request.addParameter("", "");
 		request.addParameter("", "");
-		assertEquals(JSON.decode("{'':['','']}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'':['','']}"),getParameterMap(request));
 		
 		request = context.createRequest("/");
+		assertEquals(JSON.decode("{}"), getParameterMap(request));
+		
+		request = context.createRequest("/?aaa.bbb=aaa");
 		request.addParameter("aaa.bbb", "aaa");
-		assertEquals(JSON.decode("{aaa:{bbb:'aaa'}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:{bbb:'aaa'}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "UTF-8") + "=" + URLEncoder.encode("古今=東西", "UTF-8"));
 		request.setCharacterEncoding("UTF-8");
 		request.addParameter("諸行 無常", "古今=東西");
-		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "MS932") + "=" + URLEncoder.encode("古今=東西", "MS932"));
 		request.setCharacterEncoding("MS932");
 		request.addParameter("諸行 無常", "古今=東西");
-		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb&aaa=aaa");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
-		assertEquals(JSON.decode("{aaa:{'':'aaa',bbb:['aaa', 'bbb']}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null: 'aaa'}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
-		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb.=aaa&aaa.bbb.=bbb");
 		request.addParameter("aaa.bbb.", "aaa");
 		request.addParameter("aaa.bbb.", "bbb");
-		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?..=aaa&..=bbb");
 		request.addParameter("..", "aaa");
 		request.addParameter("..", "bbb");
-		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa[bbb]=aaa&aaa[bbb]=bbb");
 		request.addParameter("aaa[bbb]", "aaa");
 		request.addParameter("aaa[bbb]", "bbb");
-		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), getParameterMap(request));
 
 		request = context.createRequest("/?aaa[bbb].ccc=aaa&aaa[bbb].ccc=bbb");
 		request.addParameter("aaa[bbb].ccc", "aaa");
 		request.addParameter("aaa[bbb].ccc", "bbb");
-		assertEquals(JSON.decode("{aaa:{bbb:{ccc:['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{aaa:{bbb:{ccc:['aaa', 'bbb']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?[aaa].bbb=aaa&[aaa].bbb=bbb");
 		request.addParameter("[aaa].bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
-		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?.aaa.bbb=aaa&[aaa].bbb=bbb&[aaa].bbb=ccc");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
-		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?.aaa.bbb=aaa&.aaa.bbb=bbb&[aaa].bbb=ccc");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter(".aaa.bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
-		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), new Route(request, null).getParameterMap());
+		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
+	}
+	
+	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
+		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
+		return new Route(request, null, new LinkedHashMap<String, Object>()).getParameterMap();
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {

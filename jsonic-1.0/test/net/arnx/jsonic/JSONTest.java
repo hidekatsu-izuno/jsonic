@@ -473,11 +473,14 @@ public class JSONTest {
 		});
 		assertEquals(list, json.parse("[{float0   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 		
-		assertEquals(new HashMap() {{put("true", true);}}, json.parse("  true: true  "));
+		assertEquals(new HashMap() {{put(true, true);}}, json.parse("  true: true  "));
+		assertEquals(new HashMap() {{put(false, false);}}, json.parse("  false: false  "));
+		assertEquals(new HashMap() {{put(new BigDecimal("100"), new BigDecimal("100"));}}, json.parse("  100: 100  "));
+		assertEquals(new HashMap() {{put(null, null);}}, json.parse("  null: null  "));
 		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  "));
 		
 		try {
-			assertEquals(new HashMap() {{put("true", true);}}, json.parse("  {true: true  "));
+			assertEquals(new HashMap() {{put(true, true);}}, json.parse("  {true: true  "));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
