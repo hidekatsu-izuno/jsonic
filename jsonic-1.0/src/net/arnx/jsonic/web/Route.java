@@ -215,11 +215,17 @@ public class Route {
 					Map map = (Map)target;
 					if (map.containsKey(null)) {
 						target = map.get(null);
+						if (target instanceof List) {
+							((List)target).add(value);
+						} else {
+							List list = new ArrayList();
+							list.add(target);
+							list.add(value);
+							map.put(null, list);
+						}
+					} else {
+						map.put(null, value);
 					}
-				}
-				
-				if (target instanceof Map) {
-					((Map)target).put(null, value);
 				} else if (target instanceof List) {
 					((List)target).add(value);
 				} else {

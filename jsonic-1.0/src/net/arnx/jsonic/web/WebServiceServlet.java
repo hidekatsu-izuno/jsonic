@@ -415,11 +415,17 @@ public class WebServiceServlet extends HttpServlet {
 								Map map = (Map)target;
 								if (map.containsKey(null)) {
 									target = map.get(null);
+									if (target instanceof List) {
+										((List)target).add(entry.getValue());
+									} else {
+										List list = new ArrayList();
+										list.add(target);
+										list.add(entry.getValue());
+										map.put(null, list);
+									}
+								} else {
+									map.put(null, entry.getValue());
 								}
-							}
-							
-							if (target instanceof Map) {
-								((Map)target).put(null, entry.getValue());
 							} else  if (target instanceof List) {
 								((List)target).add(entry.getValue());
 							} else {

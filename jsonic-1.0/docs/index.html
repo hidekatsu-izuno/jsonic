@@ -371,7 +371,7 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
 <h3 id="xmltojson">■ XMLからJSONへの変換</h3>
-<p>JSONICでは、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。
+<p>JSONICでは、org.w3c.dom.Document/Elementから<a href="http://jsonml.org/">JsonML</a>への変換もサポートしています。
 方法は、通常と同じようにencode/formatの引数にorg.w3c.dom.Document/Elementのインスタンスを設定するだけです。</p>
 <pre class="source">
 Document doc = builder.parse(new File("sample.xml"));
@@ -386,18 +386,14 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
   <span class="elem">&lt;/entry&gt;</span>
 <span class="elem">&lt;/feed&gt;</span>
 </pre>
-<p>次のようなJSONが生成されます（実際にはタグ間の空白文字もTextNodeとして出力されます）。</p>
+<p>次のようなJSONが生成されます（実際にはタグ間の空白文字もTextNodeとして出力されます。不要な場合は、DOM作成時に取り除く必要があります）。</p>
 <pre class="source">
-{ "tagName": "feed", "attributes": {
-    "xmlns": "http://www.w3.org/2005/Atom"
-  },
-  "childNodes": [
-    { "tagName": "title", "childNodes": [ "Feed Title" ] },
-    { "tagName": "entry", "childNodes": [
-        { "tagName": "title", "childNodes": [ "Entry Title" ] }
-    ]}
-  ]
-}
+["feed", {"xmlns": "http://www.w3.org/2005/Atom"}, 
+	["title", "Feed Title"],
+	["entry",
+		["title", "Entry Title"],
+	]
+]
 </pre>
 
 <h2 id="webservice">Web Service Servlet</h2>
@@ -728,9 +724,10 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/08/15 version 1.0.3</h3>
+<h3>2008/08/15 version 1.1.0</h3>
 <ul>
 <li>JSON stringとjava.io.Fileの相互変換に対応しました。</li>
+<li>XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>に変更しました。</li>
 <li>Decode/Format時にMapのkeyがnullだった場合、NullPointerExceptionが発生していた問題を修正しました（空文字列として扱います）</li>
 <li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するよう変更しました。</li>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>

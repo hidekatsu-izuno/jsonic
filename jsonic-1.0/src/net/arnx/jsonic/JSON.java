@@ -67,7 +67,9 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -523,42 +525,14 @@ public class JSON {
 		} else if (o instanceof Locale) {
 			o = ((Locale)o).toString().replace('_', '-');
 		} else if (o instanceof Node) {
-			Element elem = null;
 			if (o instanceof Document) {
-				elem = ((Document)o).getDocumentElement();
+				o = ((Document)o).getDocumentElement();
 			} else if (o instanceof Element) {
-				elem = (Element)o;
-			}
-			
-			if (elem != null) {
-				Map<String, Object> map = new LinkedHashMap<String, Object>();
-				map.put("tagName", elem.getTagName());
-				if (elem.hasAttributes()) {
-					NamedNodeMap nmap = elem.getAttributes();
-					Map<String, String> attrs = new LinkedHashMap<String, String>();
-					for (int i = 0; i < nmap.getLength(); i++) {
-						Node node = nmap.item(i);
-						if (node.getNodeType() == Node.ATTRIBUTE_NODE) {
-							attrs.put(node.getNodeName(), node.getNodeValue());
-						}
-					}
-					map.put("attributes", attrs);
-				}
-				if (elem.hasChildNodes()) {
-					NodeList nlist = elem.getChildNodes();
-					List<Object> childNodes = new ArrayList<Object>(nlist.getLength());
-					for (int i = 0; i < nlist.getLength(); i++) {
-						Node node = nlist.item(i);
-						if (node.getNodeType() == Node.ELEMENT_NODE) {
-							childNodes.add((Element)node);
-						} else if (node.getNodeType() == Node.TEXT_NODE
-								|| node.getNodeType() == Node.CDATA_SECTION_NODE) {
-							childNodes.add(((CharacterData)node).getData());
-						}
-					}
-					map.put("childNodes", childNodes);
-				}
-				o = map;
+				o = (Element)o;
+			} else if (o instanceof CharacterData && !(o instanceof Comment)) {
+				o = ((CharacterData)o).getData();
+			} else {
+				o = null;
 			}
 		}
 		
@@ -689,6 +663,49 @@ public class JSON {
 				if (e.hasMoreElements()) ap.append(',');
 			}
 			if (this.prettyPrint && !isEmpty) {
+				ap.append('\n');
+				for (int j = 0; j < level; j++) ap.append('\t');
+			}
+			ap.append(']');
+		} else if (o instanceof Element) {
+			Element elem = (Element)o;
+			ap.append('[');
+			formatString(elem.getTagName(), ap);
+			if (elem.hasAttributes()) {
+				ap.append(',');
+				if (this.prettyPrint) ap.append(' ');
+				ap.append('{');
+				NamedNodeMap names = elem.getAttributes();
+				for (int i = 0; i < names.getLength(); i++) {
+					if (i != 0) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+					Node node = names.item(i);
+					if (node instanceof Attr) {
+						formatString(node.getNodeName(), ap);
+						ap.append(':');
+						if (this.prettyPrint) ap.append(' ');
+						formatString(node.getNodeValue(), ap);
+					}
+				}
+				ap.append('}');
+			}
+			if (elem.hasChildNodes()) {
+				NodeList nodes = elem.getChildNodes();
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					if ((node instanceof Element) || (node instanceof CharacterData && !(node instanceof Comment))) {
+						ap.append(',');
+						if (this.prettyPrint) {
+							ap.append('\n');
+							for (int j = 0; j < level+1; j++) ap.append('\t');
+						}
+						format(node, ap, level+1);
+					}
+				}
+			}
+			if (this.prettyPrint) {
 				ap.append('\n');
 				for (int j = 0; j < level; j++) ap.append('\t');
 			}

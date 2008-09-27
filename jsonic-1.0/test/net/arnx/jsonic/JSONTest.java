@@ -33,6 +33,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import net.arnx.jsonic.JSON;
 
 import org.junit.Test;
+import org.seasar.framework.util.ReaderUtil;
 import org.w3c.dom.Document;
 
 import org.apache.commons.beanutils.BasicDynaClass;
@@ -144,7 +145,11 @@ public class JSONTest {
 			.newInstance()
 			.newDocumentBuilder()
 			.parse(this.getClass().getResourceAsStream("Sample.xml"));
-		assertEquals("{\"tagName\":\"html\",\"attributes\":{\"lang\":\"ja\",\"xmlns:hoge\":\"aaa\"},\"childNodes\":[\"\\n\",{\"tagName\":\"head\",\"childNodes\":[\"\\n\\t\",{\"tagName\":\"title\",\"childNodes\":[\"タイトル\"]},\"\\n\"]},\"\\n\",{\"tagName\":\"body\",\"childNodes\":[\"\\n\\t本文\\n\\t\",{\"tagName\":\"p\",\"childNodes\":[\"サンプル1\"]},\"\\n\\t\",{\"tagName\":\"p\",\"childNodes\":[\"サンプル2\"]},\"\\n\\t本文\\n\\t\",{\"tagName\":\"hoge:p\",\"attributes\":{\"hoge:x\":\"aaa\"},\"childNodes\":[\"サンプル3\"]},\"\\n\"]},\"\\n\"]}", JSON.encode(doc));
+		String sample1 = read(this.getClass().getResourceAsStream("Sample1.json"));
+		assertEquals(sample1, JSON.encode(doc));
+		
+		String sample2 = read(this.getClass().getResourceAsStream("Sample2.json"));
+		assertEquals(sample2, JSON.encode(doc, true));
 
 		list = new ArrayList<Object>();
 		list.add(new URI("http://www.google.co.jp/"));
@@ -606,7 +611,6 @@ public class JSONTest {
 		
 		json.setMaxDepth(32);
 		assertEquals(map2, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
-		//assertEquals(map, json.parse("emap:{}\n\n map: {string: \n int:}, elist:[]\nlist: [,string, ]"));
 		
 		Map map3 = new LinkedHashMap() {
 			{
@@ -1102,6 +1106,18 @@ public class JSONTest {
 
 		assertEquals(listA, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
 		assertEquals(listB, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
+	}
+	
+	private static String read(InputStream in) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+		StringBuilder sb = new StringBuilder();
+		char[] cb = new char[1024];
+		int length = 0; 
+		while ((length = reader.read(cb)) != -1) {
+			sb.append(cb, 0, length);
+		}
+		reader.close();
+		return sb.toString();
 	}
 }
 
