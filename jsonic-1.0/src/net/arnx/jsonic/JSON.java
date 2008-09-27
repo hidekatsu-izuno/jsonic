@@ -16,6 +16,7 @@
 package net.arnx.jsonic;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -493,7 +494,8 @@ public class JSON {
 				|| o instanceof Type
 				|| o instanceof Member
 				|| o instanceof URL
-				|| o instanceof URI) {
+				|| o instanceof URI
+				|| o instanceof File) {
 			o = o.toString();
 		} else if (o instanceof Enum) {
 			o = ((Enum)o).ordinal();
@@ -1834,6 +1836,8 @@ public class JSON {
 				} else if (array.length > 2) {
 					data = new Locale(array[0], array[1], array[2]);
 				}
+			} else if (File.class.equals(c)) {
+				data = new File(value.toString().trim());
 			} else if (URL.class.equals(c)) {
 				data = new URL(value.toString().trim());
 			} else if (URI.class.equals(c)) {
