@@ -153,9 +153,14 @@ public class JSONTest {
 		list.add(Charset.forName("UTF-8"));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list.iterator()));
-
+		
 		Vector v = new Vector(list);
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(v.elements()));
+
+		list = new ArrayList<Object>();
+		list.add(new File("./sample.txt"));
+		String sep = (File.separatorChar == '\\') ? File.separator + File.separator : File.separator;
+		assertEquals("[\"." + sep + "sample.txt\"]", JSON.encode(list));
 		
 		DynaClass dynaClass = new BasicDynaClass("TestDynaBean", null, new DynaProperty[] {
 				new DynaProperty("a", int.class),
@@ -930,6 +935,10 @@ public class JSONTest {
 		
 		// URL
 		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));
+		
+		// File
+		assertEquals(new File("./hoge.txt"), json.convert("./hoge.txt", File.class));
+		assertEquals(new File("C:\\hoge.txt"), json.convert("C:\\hoge.txt", File.class));
 		
 		// InetAddress
 		assertEquals(InetAddress.getByName("localhost"), json.convert("localhost", InetAddress.class));

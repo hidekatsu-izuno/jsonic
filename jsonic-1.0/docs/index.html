@@ -118,7 +118,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>Iterator, Enumeration</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
-<tr><td>TimeZone, Pattern, URL, URI, Type, Member, Charset</td></tr>
+<tr><td>TimeZone, Pattern, File, URL, URI, Type, Member, Charset</td></tr>
 <tr><td>byte[]</td><td>string (BASE64)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
 <tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
@@ -249,7 +249,7 @@ JSON json = new JSON() {
   protected <span class="em">&lt;T&gt; T convert(Object key, Object value,
     Class&lt;? extends T&gt; c, Type type)</span> throws Exception {
     
-    <span class="comment">// JSON arrrayをjava.awt.Pointに変換する例です。
+    <span class="comment">// JSON arrayをjava.awt.Pointに変換する例です。
     // さらに下の階層を変換する場合はconvertChildメソッドを呼び出してください。</span>
     if (c == Point.class &amp;&amp; value instanceof List) {
       return (T)new Point(
@@ -735,6 +735,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するよう変更しました。</li>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>
 <li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
+<li>JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、従来は引数リストの扱いでしたが、JSON objectの時と同様、第一引数に値として渡すよう変更しました。</li>
 <li>JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
 <li><a href="http://commons.apache.org/beanutils/apidocs/org/apache/commons/beanutils/DynaBean.html">DynaBean</a>のformatに対応しました。リフレクションにより処理を行っているため、DynaBeanを利用しない場合commons beanutilsのライブラリをクラスパスに追加する必要はありません。</li>
 </ul>

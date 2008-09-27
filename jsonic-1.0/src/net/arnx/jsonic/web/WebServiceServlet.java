@@ -397,7 +397,7 @@ public class WebServiceServlet extends HttpServlet {
 				return;
 			}
 			
-			List<Object> params = new ArrayList<Object>();
+			List<Object> params = new ArrayList<Object>(2);
 			if (!route.hasJSONContent()) {
 				params.add(route.getParameterMap());
 			} else {
