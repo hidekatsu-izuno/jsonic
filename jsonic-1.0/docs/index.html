@@ -548,11 +548,11 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
 <tr>
-<td>クラス/メソッドが見つからない<sup>(※12)</sup></td>
+<td>クラス/メソッドが見つからない<sup>(※13)</sup></td>
 <td>404&nbsp;Not&nbsp;found</td>
 </tr>
 <tr>
-<td>送信されたJSONの解析/変換に失敗した<sup>(※13)</sup></td>
+<td>送信されたJSONの解析/変換に失敗した<sup>(※14)</sup></td>
 <td>400&nbsp;Bad&nbsp;request</td>
 </tr>
 <tr>
@@ -560,8 +560,8 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
 </tr>
 </table>
-<div class="caption">(※12) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
-<div class="caption">(※13) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※13) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※14) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
 <h3>■ JSONP</h3>
 <p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
@@ -578,7 +578,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 </pre>
 
 <h3>■ 初期化/Servletパラメータへのアクセス</h3>
-<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※14)</sup>
+<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※15)</sup>
 このとき引数にServletContext, HttpServletRequest, HttpServletResponse, HttpSessionを受け取れるように設定するとそれぞれのインスタンスが設定されます。</p>
 <pre class="source">
 public class HogeService {
@@ -595,7 +595,7 @@ public class HogeService {
     }
 }
 </pre>
-<div class="caption">(※14) 呼び出されるメソッド名は設定で変更可能です。</div>
+<div class="caption">(※15) 呼び出されるメソッド名は設定で変更可能です。</div>
 
 <h3>■ DI Container対応</h3>
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
@@ -733,9 +733,10 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2008/08/15 version 1.1.0</h3>
 <ul>
 <li>JSON stringとjava.io.Fileの相互変換に対応しました。</li>
-<li>XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>に変更しました。</li>
+<li>XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>形式に変更しました。</li>
 <li>Decode/Format時にMapのkeyがnullだった場合、NullPointerExceptionが発生していた問題を修正しました（単に値を無視します）</li>
-<li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するよう変更しました。</li>
+<li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するように変更しました。</li>
+<li>Convert時にJSON arrayの変換がうまくいかない場合、一番目の値を対象として変換するように変更しました。</li>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>
 <li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
 <li>JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、従来は引数リストの扱いでしたが、JSON objectの時と同様、第一引数に値として渡すよう変更しました。</li>

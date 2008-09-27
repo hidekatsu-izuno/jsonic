@@ -912,7 +912,7 @@ public class JSON {
 	
 	private Map<Object, Object> parseObject(ParserSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
-		Map<Object, Object> map = new LinkedHashMap<Object, Object>();
+		Map<Object, Object> map = (level <= this.maxDepth) ? new LinkedHashMap<Object, Object>() : null;
 		Object key = null;
 		char start = '\0';
 		
@@ -1040,7 +1040,7 @@ public class JSON {
 	
 	private List<Object> parseArray(ParserSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
-		List<Object> list = new ArrayList<Object>();
+		List<Object> list = (level <= this.maxDepth) ? new ArrayList<Object>() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1079,7 +1079,7 @@ public class JSON {
 				break;
 			case ']':
 				if (point == 1 || point == 2 || point == 3) {
-					if (point == 1 && !list.isEmpty() && level < this.maxDepth) {
+					if (level < this.maxDepth && point == 1 && !list.isEmpty()) {
 						list.add(null);
 					}
 				} else {
@@ -1597,6 +1597,8 @@ public class JSON {
 				} else if (src.size() > 2) {
 					data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
 				}
+			} else if (!src.isEmpty()) {
+				data = convert(key, src.get(0), c, type);
 			} else {
 				throw new UnsupportedOperationException();
 			}
