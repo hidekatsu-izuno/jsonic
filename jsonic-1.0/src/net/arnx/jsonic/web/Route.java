@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,9 +40,12 @@ public class Route {
 				contentLength = request.getContentLength();
 				
 				String type = request.getContentType();
+				Map<String, String> options = new HashMap<String, String>();
+				
 				if (type != null) {
 					int index = type.indexOf(';');
 					contentType = ((index != -1) ? type.substring(0, index) : type).trim().toLowerCase();
+					if (index != -1) parseContentTypeOptions(contentType.substring(index), options);
 				}
 				
 				if (contentLength > 0) {
@@ -49,6 +53,8 @@ public class Route {
 						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
 					} else if (contentType.startsWith("multipart/")) {
+						
+						
 						parseMultipart(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
 					}
@@ -110,6 +116,64 @@ public class Route {
 		}
 		m.appendTail(sb);
 		return sb.toString();
+	}
+	
+	private void parseContentTypeOptions(String text, Map<String, String> options) throws IOException {
+		int state = 0; // 0 ';' 1 'attribute' '=' 2 ( 3 'token' | '"' 4 'token' 5 '\\' 'token' '"') 
+		
+		String attr = null;
+
+		int start = 0;
+		for (int i = 0; i <= text.length(); i++) {
+			char c = (i == text.length()) ? text.charAt(i) : ';';
+			
+			switch (c) {
+			case ';':
+				if (state == 0) {
+					if (attr != null) {
+						options.put(attr, text.substring(start, i-1));
+					} else if (i > start){
+						options.put(text.substring(start, i-1).trim(), "");
+					}
+					start = i+1;
+					state = 1;
+					break;
+				}
+			case '=':
+				if (state == 1) {
+					attr = text.substring(start, i-1).trim();
+					start = i+1;
+					state = 2;
+					break;
+				}
+			case '"':
+				if (state == 2) {
+					state = 4;
+					break;
+				} else if (state == 4) {
+					state = 0;
+					break;
+				}
+			case '\\':
+				if (state == 4) {
+					state = 5;
+					break;
+				}
+			case ' ':
+			case '\t':
+			case '\r':
+			case '\n':
+				if (state == 2) {
+					start++;
+				}
+			default:
+				if (state == 2) {
+					state = 3; 
+				} else if (state == 5) {
+					state = 4;
+				}
+			}
+		}
 	}
 	
 	private void parseQueryString(InputStream in, String encoding) throws IOException {
