@@ -758,14 +758,13 @@ public class JSON {
 			ap.append('{');
 			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 				Map.Entry entry = (Map.Entry)i.next();
-				if (entry.getValue() == o) continue; 
+				if (entry.getKey() == null || entry.getValue() == o) continue; 
 				
 				if (this.prettyPrint) {
 					ap.append('\n');
 					for (int j = 0; j < level+1; j++) ap.append('\t');
 				}
-				String key = (entry.getKey() != null) ? entry.getKey().toString() : "";
-				formatString(key, ap).append(':');
+				formatString(entry.getKey().toString(), ap).append(':');
 				if (this.prettyPrint) ap.append(' ');
 				format(entry.getValue(), ap, level+1);
 				if (i.hasNext()) ap.append(',');
