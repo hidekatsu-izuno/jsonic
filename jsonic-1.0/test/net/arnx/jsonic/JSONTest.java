@@ -148,7 +148,8 @@ public class JSONTest {
 		String sample1 = read(this.getClass().getResourceAsStream("Sample1.json"));
 		assertEquals(sample1, JSON.encode(doc));
 		
-		String sample2 = read(this.getClass().getResourceAsStream("Sample2.json"));
+		String sample2 = read(this.getClass().getResourceAsStream("Sample2.json")).replaceAll("\r\n", "\n");
+		String result = JSON.encode(doc, true);
 		assertEquals(sample2, JSON.encode(doc, true));
 
 		list = new ArrayList<Object>();
