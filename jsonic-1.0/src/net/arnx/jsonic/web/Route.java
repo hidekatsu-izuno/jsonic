@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
 public class Route {
@@ -226,14 +227,33 @@ public class Route {
 		parseParameter(pairs, params);
 	}
 	
-	private void parseMultipart(InputStream in, String encoding, String boundary) throws IOException {
+	private void parseMultipart(ServletInputStream in, String encoding, String boundary) throws IOException {
 		if (boundary == null || boundary.length() == 0) {
 			return; 
 		}
+		boundary = "--" + boundary;
 		
 		List<String> pairs = new ArrayList<String>();
 		
-		// TODO
+		int state = 0; // 0: seek; 1: header, 2: Contents
+		
+		byte[] buffer = new byte[255];
+		int pos = 0;
+		int size = -1;
+		while ((size = in.readLine(buffer, 0, buffer.length)) != -1) {
+			if (state == 0) {
+				buffer = byteAppend(buffer, pos, buffer, size);
+				pos += size;
+				if (buffer.length >= 2 && buffer[pos-2] == '\r' && buffer[pos-1] == '\n') {
+					if (equals(buffer, pos, boundary)) state = 1;
+					pos = 0;
+				}
+			} else if (state == 1) {
+				// header
+			} else {
+				// file
+			}
+		}
 		
 		parseParameter(pairs, params);
 	}
@@ -301,12 +321,26 @@ public class Route {
 	
 	private static byte[] byteAppend(byte[] array, int pos, int b) {
 		if (pos >= array.length) {
-			byte[] newArray = new byte[array.length*2];
+			byte[] newArray = new byte[(int)(array.length*1.5)];
 			System.arraycopy(array, 0, newArray, 0, array.length);
 			array = newArray;
 		}
 		array[pos] = (byte)b;
 		return array;
+	}
+	
+	private static byte[] byteAppend(byte[] array, int pos, byte[] bs, int length) {
+		if (pos >= array.length) {
+			byte[] newArray = new byte[(int)((array.length + length) *1.5)];
+			System.arraycopy(array, 0, newArray, 0, array.length);
+			array = newArray;
+		}
+		System.arraycopy(bs, 0, array, pos, length);
+		return array;
+	}
+	
+	private static boolean equals(byte[] data, int length, String target) {
+		return true;
 	}
 	
 	private static String getOption(String options, String attr) {
