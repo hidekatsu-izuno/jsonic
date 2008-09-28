@@ -937,6 +937,10 @@ public class JSONTest {
 		// URI
 		assertEquals(new URI("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URI.class));
 		assertEquals(new URI("/aaa/bbb.json"), json.convert("/aaa/bbb.json", URI.class));
+		List uris = new ArrayList();
+		uris.add("http://www.google.co.jp");
+		uris.add("/aaa/bbb.json");
+		assertEquals(new URI("http://www.google.co.jp"), json.convert(uris, URI.class));
 		
 		// URL
 		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));

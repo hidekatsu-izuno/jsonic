@@ -155,7 +155,6 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
-@SuppressWarnings("unchecked")
 public class JSON {
 	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
@@ -1517,6 +1516,35 @@ public class JSON {
 					map.putAll(src);
 				}
 				data = map;
+			} else if (Collection.class.isAssignableFrom(c) || c.isArray()) {
+				if (!(src instanceof SortedMap)) {
+					src = new TreeMap(src);
+				}
+				data = convert(key, src.values(), c, type);
+			} else if (c.isPrimitive() || c.isEnum()
+					|| Number.class.isAssignableFrom(c)
+					|| CharSequence.class.isAssignableFrom(c)
+					|| Appendable.class.isAssignableFrom(c)
+					|| Boolean.class.equals(c)
+					|| Character.class.equals(c)
+					|| Locale.class.equals(c)
+					|| TimeZone.class.equals(c)
+					|| Pattern.class.equals(c)
+					|| File.class.equals(c)
+					|| URL.class.equals(c)
+					|| URI.class.equals(c)
+					|| InetAddress.class.equals(c)
+					|| Charset.class.equals(c)
+					|| Class.class.equals(c)
+				) {
+				if (src.containsKey(null)) {
+					Object target = src.get(null);
+					if (target instanceof List) {
+						List list = (List)target;
+						target = (!list.isEmpty()) ? list.get(0) : null;
+					}
+					data = convert(key, target, c, type);
+				}
 			} else {
 				Object o = create(c);
 				if (o != null) {
