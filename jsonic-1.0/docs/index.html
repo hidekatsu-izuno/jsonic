@@ -737,6 +737,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>Decode/Format時にMapのkeyがnullだった場合、NullPointerExceptionが発生していた問題を修正しました（単に値を無視します）</li>
 <li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するように変更しました。</li>
 <li>Convert時にJSON arrayの変換がうまくいかない場合、先頭の値を対象として変換するように変更しました。</li>
+<li>Convert時にJSON objectの変換がうまくいかない場合、nullキーの値を対象として変換するように変更しました（主にWebServiceServletでの利用を想定しています）。</li>
+<li>Convert時にJSON objectからList/Arrayへの変換に対応しました。キー値の順番にソートされた値のリストとして扱います。</li>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>
 <li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
 <li>JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、従来は引数リストの扱いでしたが、JSON objectの時と同様、第一引数に値として渡すよう変更しました。</li>
