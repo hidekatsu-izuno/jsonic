@@ -406,39 +406,7 @@ public class WebServiceServlet extends HttpServlet {
 					params.add(o);
 					params.add(route.getParameterMap());
 				} else if (o instanceof Map) {
-					Map<String, Object> contents = route.getParameterMap();
-					for (Map.Entry<String, Object> entry : ((Map<String, Object>)o).entrySet()) {
-						if (contents.containsKey(entry.getKey())) {
-							Object target = contents.get(entry.getKey());
-							
-							if (target instanceof Map) {
-								Map map = (Map)target;
-								if (map.containsKey(null)) {
-									target = map.get(null);
-									if (target instanceof List) {
-										((List)target).add(entry.getValue());
-									} else {
-										List list = new ArrayList();
-										list.add(target);
-										list.add(entry.getValue());
-										map.put(null, list);
-									}
-								} else {
-									map.put(null, entry.getValue());
-								}
-							} else  if (target instanceof List) {
-								((List)target).add(entry.getValue());
-							} else {
-								List<Object> list = new ArrayList<Object>();
-								list.add(target);
-								list.add(entry.getValue());
-								contents.put(entry.getKey(), list);
-							}
-						} else {
-							contents.put(entry.getKey(), entry.getValue());
-						}
-					}
-					params.add(contents);
+					params.add(route.mergeParameterMap((Map<String, Object>)o));
 				} else {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
@@ -479,7 +447,7 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		try {		
+		try {
 			response.setContentType((callback != null) ? "text/javascript" : "application/json");
 			if (res == null
 					|| res instanceof CharSequence

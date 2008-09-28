@@ -93,6 +93,41 @@ public class Route {
 		return params;
 	}
 	
+	public Map<String, Object> mergeParameterMap(Map<String, Object> newParams) {
+		for (Map.Entry<String, Object> entry : newParams.entrySet()) {
+			if (params.containsKey(entry.getKey())) {
+				Object target = params.get(entry.getKey());
+				
+				if (target instanceof Map) {
+					Map map = (Map)target;
+					if (map.containsKey(null)) {
+						target = map.get(null);
+						if (target instanceof List) {
+							((List)target).add(entry.getValue());
+						} else {
+							List list = new ArrayList();
+							list.add(target);
+							list.add(entry.getValue());
+							map.put(null, list);
+						}
+					} else {
+						map.put(null, entry.getValue());
+					}
+				} else  if (target instanceof List) {
+					((List)target).add(entry.getValue());
+				} else {
+					List<Object> list = new ArrayList<Object>();
+					list.add(target);
+					list.add(entry.getValue());
+					params.put(entry.getKey(), list);
+				}
+			} else {
+				params.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return params;
+	}
+	
 	public boolean hasJSONContent() {
 		return contentLength > 0;
 	}
