@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class Route {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
+	private static final Pattern OPTIONS_PATTERN = Pattern.compile(";\\s*([\\w!#$%&'*+.^_`|~-]+)\\s*=\\s*(?:([\\w!#$%&'*+.^_`|~-]+)|\"((?>[!-~&&[^\\\\\"]]*|\\\\\\p{ASCII}))\")\\s*");
 
 	private String target;
 	private String method;
@@ -53,9 +54,8 @@ public class Route {
 						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
 					} else if (contentType.startsWith("multipart/")) {
-						
-						
-						parseMultipart(request.getInputStream(), request.getCharacterEncoding());
+						String boundary = options.get("boundary");
+						parseMultipart(request.getInputStream(), request.getCharacterEncoding(), boundary);
 						contentLength = 0;
 					}
 				}
@@ -119,60 +119,9 @@ public class Route {
 	}
 	
 	private void parseContentTypeOptions(String text, Map<String, String> options) throws IOException {
-		int state = 0; // 0 ';' 1 'attribute' '=' 2 ( 3 'token' | '"' 4 'token' 5 '\\' 'token' '"') 
-		
-		String attr = null;
-
-		int start = 0;
-		for (int i = 0; i <= text.length(); i++) {
-			char c = (i == text.length()) ? text.charAt(i) : ';';
-			
-			switch (c) {
-			case ';':
-				if (state == 0) {
-					if (attr != null) {
-						options.put(attr, text.substring(start, i-1));
-					} else if (i > start){
-						options.put(text.substring(start, i-1).trim(), "");
-					}
-					start = i+1;
-					state = 1;
-					break;
-				}
-			case '=':
-				if (state == 1) {
-					attr = text.substring(start, i-1).trim();
-					start = i+1;
-					state = 2;
-					break;
-				}
-			case '"':
-				if (state == 2) {
-					state = 4;
-					break;
-				} else if (state == 4) {
-					state = 0;
-					break;
-				}
-			case '\\':
-				if (state == 4) {
-					state = 5;
-					break;
-				}
-			case ' ':
-			case '\t':
-			case '\r':
-			case '\n':
-				if (state == 2) {
-					start++;
-				}
-			default:
-				if (state == 2) {
-					state = 3; 
-				} else if (state == 5) {
-					state = 4;
-				}
-			}
+		Matcher m = OPTIONS_PATTERN.matcher(text);
+		while (m.find()) {
+			options.put(m.group(1), (m.group(2) != null) ? m.group(2) : m.group(3));
 		}
 	}
 	
@@ -250,8 +199,14 @@ public class Route {
 		parseParameter(pairs, params);
 	}
 	
-	private void parseMultipart(InputStream in, String encoding) throws IOException {
+	private void parseMultipart(InputStream in, String encoding, String boundary) throws IOException {
+		if (boundary == null || boundary.length() == 0) {
+			return; 
+		}
+		
 		List<String> pairs = new ArrayList<String>();
+		
+		// TODO
 		
 		parseParameter(pairs, params);
 	}
