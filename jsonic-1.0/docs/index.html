@@ -539,7 +539,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><td>array</td><td>一番目の引数に送信されたJSON arrayが、二番目の引数にパス変数、クエリ変数の値が順に追加されたJSON objectが設定されます。</td></tr>
 </table>
 <div class="caption">
-(※10) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=メソッド名」を指定することもできます。<br />
+(※10) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
 (※11) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
 (※12) Content-Typeが「application/x-www-form-urlencoded」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
 </div>
