@@ -1,4 +1,8 @@
-["html", {"lang": "ja", "xmlns:hoge": "aaa"},
+["html",
+	{
+		"lang": "ja",
+		"xmlns:hoge": "aaa"
+	},
 	"\n",
 	["head",
 		"\n\t",
@@ -18,7 +22,8 @@
 			"サンプル2"
 		],
 		"\n\t本文\n\t",
-		["hoge:p", {"hoge:x": "aaa"},
+		["hoge:p",
+			{"hoge:x": "aaa"},
 			"サンプル3"
 		],
 		"\n"

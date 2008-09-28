@@ -670,15 +670,22 @@ public class JSON {
 			Element elem = (Element)o;
 			ap.append('[');
 			formatString(elem.getTagName(), ap);
+			
 			if (elem.hasAttributes()) {
-				ap.append(',');
-				if (this.prettyPrint) ap.append(' ');
-				ap.append('{');
 				NamedNodeMap names = elem.getAttributes();
+				ap.append(',');
+				if (this.prettyPrint) {
+					ap.append('\n');
+					for (int j = 0; j < level+1; j++) ap.append('\t');
+				}
+				ap.append('{');
 				for (int i = 0; i < names.getLength(); i++) {
 					if (i != 0) {
 						ap.append(',');
-						if (this.prettyPrint) ap.append(' ');
+					}
+					if (this.prettyPrint && names.getLength() > 1) {
+						ap.append('\n');
+						for (int j = 0; j < level+2; j++) ap.append('\t');
 					}
 					Node node = names.item(i);
 					if (node instanceof Attr) {
@@ -687,6 +694,10 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 						formatString(node.getNodeValue(), ap);
 					}
+				}
+				if (this.prettyPrint && names.getLength() > 1) {
+					ap.append('\n');
+					for (int j = 0; j < level+1; j++) ap.append('\t');
 				}
 				ap.append('}');
 			}
