@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public class Route {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
-	private static final Pattern OPTIONS_PATTERN = Pattern.compile(";\\s*([\\w!#$%&'*+.^_`|~-]+)\\s*=\\s*(?:([\\w!#$%&'*+.^_`|~-]+)|\"((?>[!-~&&[^\\\\\"]]*|\\\\\\p{ASCII}))\")\\s*");
+	private static final Pattern OPTION_PATTERN = Pattern.compile(";\\s*(\\w+)\\s*=\\s*([^\\s\"=]+|\"(?:[^\\\\\"]|\\\\.)*\")");
 
 	private String target;
 	private String method;
@@ -41,12 +40,12 @@ public class Route {
 				contentLength = request.getContentLength();
 				
 				String type = request.getContentType();
-				Map<String, String> options = new HashMap<String, String>();
+				String options = "";
 				
 				if (type != null) {
 					int index = type.indexOf(';');
 					contentType = ((index != -1) ? type.substring(0, index) : type).trim().toLowerCase();
-					if (index != -1) parseContentTypeOptions(contentType.substring(index), options);
+					if (index != -1) options = contentType.substring(index);
 				}
 				
 				if (contentLength > 0) {
@@ -54,7 +53,7 @@ public class Route {
 						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
 					} else if (contentType.startsWith("multipart/")) {
-						String boundary = options.get("boundary");
+						String boundary = getOption(options, "boundary");
 						parseMultipart(request.getInputStream(), request.getCharacterEncoding(), boundary);
 						contentLength = 0;
 					}
@@ -151,13 +150,6 @@ public class Route {
 		}
 		m.appendTail(sb);
 		return sb.toString();
-	}
-	
-	private void parseContentTypeOptions(String text, Map<String, String> options) throws IOException {
-		Matcher m = OPTIONS_PATTERN.matcher(text);
-		while (m.find()) {
-			options.put(m.group(1), (m.group(2) != null) ? m.group(2) : m.group(3));
-		}
 	}
 	
 	private void parseQueryString(InputStream in, String encoding) throws IOException {
@@ -315,6 +307,31 @@ public class Route {
 		}
 		array[pos] = (byte)b;
 		return array;
+	}
+	
+	private static String getOption(String options, String attr) {
+		Matcher m = OPTION_PATTERN.matcher(options);
+		while (m.find()) {
+			if (m.group(1).equalsIgnoreCase(attr)) {
+				String value = m.group(2);
+				if (value.startsWith("\"")) {
+					StringBuilder sb = new StringBuilder(value.length());
+					boolean escape = false;
+					for (int i = 1; i < value.length()-1; i++) {
+						char c = value.charAt(i);
+						if (escape || c != '\\') {
+							sb.append(c);
+							escape = false;
+						} else {
+							escape = true;
+						}
+					}
+					value = sb.toString();
+				}
+				return value;
+			}
+		}
+		return null;
 	}
 	
 	private String toUpperCamel(String name) {
