@@ -340,6 +340,15 @@ public class Route {
 	}
 	
 	private static boolean equals(byte[] data, int length, String target) {
+		if (target.length() != length) {
+			return false;
+		}
+		
+		for (int i = 0; i < length; i++) {
+			if (target.charAt(i) != (char)data[i]) {
+				return false;
+			}
+		}
 		return true;
 	}
 	
