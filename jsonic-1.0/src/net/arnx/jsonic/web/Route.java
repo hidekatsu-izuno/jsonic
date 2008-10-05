@@ -47,6 +47,8 @@ public class Route {
 					if (contentType.equals("application/x-www-form-urlencoded")) {
 						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
+					} else if (contentType.startsWith("multipart/")) {
+						contentLength = 0;
 					}
 				}
 			}
@@ -282,7 +284,7 @@ public class Route {
 		
 		Map<String, String> map = new HashMap<String, String>();
 		map.put(null, "");
-		
+		//TODO
 		return map;
 	}
 	
