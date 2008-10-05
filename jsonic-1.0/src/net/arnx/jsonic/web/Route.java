@@ -3,23 +3,23 @@ package net.arnx.jsonic.web;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
 public class Route {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
-	private static final Pattern OPTION_PATTERN = Pattern.compile(";\\s*(\\w+)\\s*=\\s*([^\\s\"=]+|\"(?:[^\\\\\"]|\\\\.)*\")");
 
 	private String target;
 	private String method;
-	private String contentType = "";
 	private int contentLength = 0;
 	private Map<String, Object> params;
 	
@@ -40,22 +40,12 @@ public class Route {
 			if (!request.getMethod().equalsIgnoreCase("GET")) {
 				contentLength = request.getContentLength();
 				
-				String type = request.getContentType();
-				String options = "";
-				
-				if (type != null) {
-					int index = type.indexOf(';');
-					contentType = ((index != -1) ? type.substring(0, index) : type).trim().toLowerCase();
-					if (index != -1) options = contentType.substring(index);
-				}
-				
-				if (contentLength > 0) {
+				Map<String, String> options = parseOptions(request.getContentType());
+				String contentType = options.get(null);
+
+				if (contentLength > 0 && contentType != null) {
 					if (contentType.equals("application/x-www-form-urlencoded")) {
 						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
-						contentLength = 0;
-					} else if (contentType.startsWith("multipart/")) {
-						String boundary = getOption(options, "boundary");
-						parseMultipart(request.getInputStream(), request.getCharacterEncoding(), boundary);
 						contentLength = 0;
 					}
 				}
@@ -154,46 +144,45 @@ public class Route {
 	}
 	
 	private void parseQueryString(InputStream in, String encoding) throws IOException {
-		List<String> pairs = new ArrayList<String>();
+		List<Object> pairs = new ArrayList<Object>();
 
 		int state = 0; // 0 '%' 1 'N' 2 ('N' | '=' | '&')
 		
-		byte[] buf = new byte[128];
-		int length = 0;
+		ByteBuilder bb = new ByteBuilder(50);
 		
 		int before = 0;
 		while (true) {
 			int c = in.read();
 			if (c == -1) {
-				if (state == 2) buf = byteAppend(buf, length++, before);
+				if (state == 2) bb.append((byte)before);
 				if (pairs.size()%2 == 1){
-					pairs.add(new String(buf, 0, length, encoding));
+					pairs.add(bb.toString(encoding));
 				} else {
-					pairs.add(new String(buf, 0, length, encoding));
+					pairs.add(bb.toString(encoding));
 					pairs.add("");
 				}
 				break;
 			}
 			
 			if (c == '&') {
-				if (state == 2) buf = byteAppend(buf, length++, before);
+				if (state == 2) bb.append((byte)before);
 				
 				if (pairs.size()%2 == 1){
-					pairs.add(new String(buf, 0, length, encoding));
+					pairs.add(bb.toString(encoding));
 				} else {
-					pairs.add(new String(buf, 0, length, encoding));
+					pairs.add(bb.toString(encoding));
 					pairs.add("");
 				}
-				length = 0;
+				bb.setLength(0);
 				state = 0;
 			} else if (c == '=') {
-				if (state == 2) buf = byteAppend(buf, length++, before);
+				if (state == 2) bb.append((byte)before);
 				
 				if (pairs.size()%2 == 1){
-					buf = byteAppend(buf, length++, c);
+					bb.append((byte)c);
 				} else {
-					pairs.add(new String(buf, 0, length, encoding));
-					length = 0;
+					pairs.add(bb.toString(encoding));
+					bb.setLength(0);
 				}
 				state = 0;
 			} else if (state == 2){
@@ -201,22 +190,22 @@ public class Route {
 				int d2 = Character.digit(c, 16);
 					
 				if (d1 != -1 && d2 != -1) {
-					buf = byteAppend(buf, length++, (d1 << 4) | d2);
+					bb.append((byte)((d1 << 4) | d2));
 				} else {
-					buf = byteAppend(buf, length++, before);
-					buf = byteAppend(buf, length++, c);
+					bb.append((byte)before);
+					bb.append((byte)c);
 				}
 				state = 0;
 			} else if (state == 1) {
 				state = 2;
 			} else {
 				if (c == '+') {
-					buf = byteAppend(buf, length++, ' ');
+					bb.append((byte)' ');
 					state = 0;
 				} else if (c == '%') {
 					state = 1;
 				} else {
-					buf = byteAppend(buf, length++, c);
+					bb.append((byte)c);
 					state = 0;
 				}
 			}
@@ -227,41 +216,10 @@ public class Route {
 		parseParameter(pairs, params);
 	}
 	
-	private void parseMultipart(ServletInputStream in, String encoding, String boundary) throws IOException {
-		if (boundary == null || boundary.length() == 0) {
-			return; 
-		}
-		boundary = "--" + boundary + "\r\n";
-		
-		List<String> pairs = new ArrayList<String>();
-		
-		int state = 0; // 0: seek; 1: header, 2: Contents
-		
-		byte[] buffer = new byte[255];
-		int pos = 0;
-		int size = -1;
-		while ((size = in.readLine(buffer, 0, buffer.length)) != -1) {
-			if (state == 0) {
-				buffer = byteAppend(buffer, pos, buffer, size);
-				pos += size;
-				if (buffer.length >= 2 && buffer[pos-2] == '\r' && buffer[pos-1] == '\n') {
-					if (equals(buffer, pos, boundary)) state = 1;
-					pos = 0;
-				}
-			} else if (state == 1) {
-				// header
-			} else {
-				// file
-			}
-		}
-		
-		parseParameter(pairs, params);
-	}
-	
-	private static void parseParameter(List<String> pairs, Map<String, Object> params) {
+	private static void parseParameter(List<Object> pairs, Map<String, Object> params) {
 		for (int i = 0; i < pairs.size(); i+= 2) {
-			String name = pairs.get(i);
-			String value = pairs.get(i+1);
+			String name = (String)pairs.get(i);
+			Object value = pairs.get(i+1);
 			
 			int start = 0;
 			char old = '\0';
@@ -319,62 +277,13 @@ public class Route {
 		}		
 	}
 	
-	private static byte[] byteAppend(byte[] array, int pos, int b) {
-		if (pos >= array.length) {
-			byte[] newArray = new byte[(int)(array.length*1.5)];
-			System.arraycopy(array, 0, newArray, 0, array.length);
-			array = newArray;
-		}
-		array[pos] = (byte)b;
-		return array;
-	}
-	
-	private static byte[] byteAppend(byte[] array, int pos, byte[] bs, int length) {
-		if (pos >= array.length) {
-			byte[] newArray = new byte[(int)((array.length + length) *1.5)];
-			System.arraycopy(array, 0, newArray, 0, array.length);
-			array = newArray;
-		}
-		System.arraycopy(bs, 0, array, pos, length);
-		return array;
-	}
-	
-	private static boolean equals(byte[] data, int length, String target) {
-		if (target.length() != length) {
-			return false;
-		}
+	private static Map<String, String> parseOptions(String options) {
+		if (options == null) return Collections.EMPTY_MAP;
 		
-		for (int i = 0; i < length; i++) {
-			if (target.charAt(i) != (char)data[i]) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	private static String getOption(String options, String attr) {
-		Matcher m = OPTION_PATTERN.matcher(options);
-		while (m.find()) {
-			if (m.group(1).equalsIgnoreCase(attr)) {
-				String value = m.group(2);
-				if (value.startsWith("\"")) {
-					StringBuilder sb = new StringBuilder(value.length());
-					boolean escape = false;
-					for (int i = 1; i < value.length()-1; i++) {
-						char c = value.charAt(i);
-						if (escape || c != '\\') {
-							sb.append(c);
-							escape = false;
-						} else {
-							escape = true;
-						}
-					}
-					value = sb.toString();
-				}
-				return value;
-			}
-		}
-		return null;
+		Map<String, String> map = new HashMap<String, String>();
+		map.put(null, "");
+		
+		return map;
 	}
 	
 	private String toUpperCamel(String name) {
@@ -392,5 +301,93 @@ public class Route {
 			}
 		}
 		return sb.toString();
+	}
+}
+
+class ByteBuilder {
+	private int length = 0;
+	private byte[] array;
+	
+	public ByteBuilder() {
+		this(1024);
+	}
+	
+	public ByteBuilder(int length) {
+		array = new byte[length];
+	}
+	
+	public void append(byte b) {
+		if (length+1 > array.length) {
+			byte[] newArray = new byte[(int)(array.length*1.5)];
+			System.arraycopy(array, 0, newArray, 0, array.length);
+			array = newArray;
+		}
+		array[length++] = (byte)b;
+	}
+	
+	public void append(byte[] bytes) {
+		append(bytes, 0, bytes.length);
+	}
+	
+	public void append(byte[] bytes, int offset, int len) {
+		if ((length + bytes.length) > array.length) {
+			byte[] newArray = new byte[(int)((array.length + bytes.length)*1.5)];
+			System.arraycopy(array, 0, newArray, 0, array.length);
+			array = newArray;
+		}
+		System.arraycopy(bytes, offset, array, length, len);
+		length += len;
+	}
+	
+	public boolean startsWith(String str) {
+		if (length < str.length()) return false;
+		
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) != array[i]) return false;
+		}
+		return true;
+	}
+	
+	public boolean endsWith(String str) {
+		if (length < str.length()) return false;
+		
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(str.length()-i-1) != array[length-i-1]) return false;
+		}
+		return true;
+	}
+
+	public boolean matches(String str) {
+		if (length != str.length()) return false;
+		
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) != array[i]) return false;
+		}
+		return true;
+	}
+	
+	public byte byteAt(int pos) {
+		return array[pos];
+	}
+	
+	public String cutTo(int start, char c, String encoding) throws UnsupportedEncodingException {
+		for (int i = start; i < length; i++) {
+			if (array[i] == c) {
+				return new String(array, start, i-start, encoding);
+			}
+		}
+		return new String(array, start, length-start, encoding);
+	}
+	
+	public void setLength(int length) {
+		this.length = length;
+	}
+	
+	public int length() {
+		return length;
+	}
+	
+	public String toString(String encoding) throws UnsupportedEncodingException {
+		return new String(array, 0, length, encoding);
 	}
 }
