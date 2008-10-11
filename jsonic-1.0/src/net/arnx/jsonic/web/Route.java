@@ -40,7 +40,7 @@ public class Route {
 			if (!request.getMethod().equalsIgnoreCase("GET")) {
 				contentLength = request.getContentLength();
 				
-				Map<String, String> options = parseOptions(request.getContentType());
+				Map<String, String> options = parseHeaderLine(request.getContentType());
 				String contentType = options.get(null);
 
 				if (contentLength > 0 && contentType != null) {
@@ -276,15 +276,87 @@ public class Route {
 			} else {
 				current.put(name, value);
 			}
-		}		
+		}
 	}
 	
-	private static Map<String, String> parseOptions(String options) {
-		if (options == null) return Collections.EMPTY_MAP;
+	private static Map<String, String> parseHeaderLine(String line) {
+		if (line == null) return Collections.EMPTY_MAP;
 		
 		Map<String, String> map = new HashMap<String, String>();
 		map.put(null, "");
-		//TODO
+		
+		int state = 0; // 0 LWS 1 <field value> 2 LWS ; 3 LWS 4 <key> 5 LWS = 6 LWS (7 <value> | " 8 <quoted value> ")   
+		
+		StringBuilder sb = new StringBuilder(line.length());
+		String key = null;
+		boolean escape = false;
+		
+		loop:for (int i = 0; i < line.length(); i++) {
+			char c = line.charAt(i);
+			
+			if (state == 8) {
+				if (escape) {
+					if (c < 128) {
+						sb.append(c);
+						escape = false;
+					} 
+					else break;
+				} 
+				else if (c == '\\') escape = true;
+				else if (c == '"') {
+					map.put(key, sb.toString());
+					sb.setLength(0);
+					state = 2;
+				}
+				else sb.append(c);
+				continue;
+			}
+			
+			switch (c) {
+			case '\t':
+			case ' ':
+				if (state == 1 || state == 4) state++;
+				else if (state == 7) state = 2;
+				break;
+			case ';':
+				if (state == 2) {
+					map.put(key, sb.toString());
+					sb.setLength(0);
+					state++;
+					break;
+				}
+				break loop;
+			case '=':
+				if (state == 5) {
+					key = sb.toString();
+					sb.setLength(0);
+					state++;
+					break;
+				}
+				break loop;
+			case '"':
+				if (state == 6) state = 8;
+				else break loop;
+				break;
+			default:
+				if (state == 0 || state == 3 || state == 6) {
+					state++;
+				}
+				
+				if (state == 1 || state == 4 || state == 7) {
+					if ((c >= '0' && c >= '9')
+						|| (c >= 'A' && c >= 'Z') 
+						|| (c >= 'a' && c >= 'z') 
+						|| "!#$%&'*+-.^_`|~".indexOf(c) != -1
+					) {
+						sb.append(c);
+						break;
+					}
+				}
+				break loop;
+			}
+		}
+		
 		return map;
 	}
 	
