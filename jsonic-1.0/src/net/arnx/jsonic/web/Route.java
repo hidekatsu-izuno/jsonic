@@ -283,7 +283,6 @@ public class Route {
 		if (line == null) return Collections.EMPTY_MAP;
 		
 		Map<String, String> map = new HashMap<String, String>();
-		map.put(null, "");
 		
 		int state = 0; // 0 LWS 1 <field value> 2 LWS ; 3 LWS 4 <key> 5 LWS = 6 LWS (7 <value> | " 8 <quoted value> ")   
 		
@@ -354,7 +353,7 @@ public class Route {
 			}
 		}
 		
-		if (state == 1 || state == 2 || state == 7) {
+		if (state <= 2 || state == 7) {
 			map.put(key, sb.toString());
 		}
 		
