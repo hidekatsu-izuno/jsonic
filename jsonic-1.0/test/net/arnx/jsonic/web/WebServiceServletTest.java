@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -123,7 +124,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
@@ -141,7 +142,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("PUT");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
@@ -150,7 +151,7 @@ public class WebServiceServletTest {
 		// DELETE
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setRequestMethod("DELETE");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
@@ -159,7 +160,7 @@ public class WebServiceServletTest {
 		// DELETE
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setRequestMethod("DELETE");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_NOT_FOUND, con.getResponseCode());
@@ -169,7 +170,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "[\"title\", \"text\"]");
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
@@ -179,7 +180,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
+		con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 		write(con, "title=title&text=text");
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
@@ -197,7 +198,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
@@ -217,7 +218,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=PUT").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
@@ -227,7 +228,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=DELETE").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{id:" + content.get(0).get("id") + "}");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
@@ -237,7 +238,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "[\"title\", \"text\"]");
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
@@ -340,9 +341,27 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 	}
 	
+	@Test
+	public void testParseHeaderLine() throws Exception {
+		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy "));
+		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy; "));
+		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine("aaa/bbb-yyy;"));
+		assertEquals(JSON.decode("{null:'aaa'}"), parseHeaderLine("aaa"));
+		assertEquals(JSON.decode("{null:'a','a':'b','d':'e'}"), parseHeaderLine("a; a=b; d=e"));
+		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = bcd ; def =efg;"));
+		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bcd\"; def =  \"efg\";"));
+		assertEquals(JSON.decode("{null:'abc','abc':'bc\"d','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bc\\\"d\"; def =  \"e\\fg\";"));
+	}
+	
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
 		return new Route(request, null, new LinkedHashMap<String, Object>()).getParameterMap();
+	}
+	
+	private static Map parseHeaderLine(String line) throws Exception {
+		Method m = Route.class.getDeclaredMethod("parseHeaderLine", String.class);
+		m.setAccessible(true);
+		return (Map<String, String>)m.invoke(null, line);
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {

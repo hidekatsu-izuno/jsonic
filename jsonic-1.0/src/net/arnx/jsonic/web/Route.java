@@ -303,11 +303,7 @@ public class Route {
 					else break;
 				} 
 				else if (c == '\\') escape = true;
-				else if (c == '"') {
-					map.put(key, sb.toString());
-					sb.setLength(0);
-					state = 2;
-				}
+				else if (c == '"') state = 2;
 				else sb.append(c);
 				continue;
 			}
@@ -319,18 +315,18 @@ public class Route {
 				else if (state == 7) state = 2;
 				break;
 			case ';':
-				if (state == 2) {
+				if (state == 1 || state == 2 || state == 7) {
 					map.put(key, sb.toString());
 					sb.setLength(0);
-					state++;
+					state = 3;
 					break;
 				}
 				break loop;
 			case '=':
-				if (state == 5) {
+				if (state == 4 || state == 5) {
 					key = sb.toString();
 					sb.setLength(0);
-					state++;
+					state = 6;
 					break;
 				}
 				break loop;
@@ -348,6 +344,7 @@ public class Route {
 						|| (c >= 'A' && c >= 'Z') 
 						|| (c >= 'a' && c >= 'z') 
 						|| "!#$%&'*+-.^_`|~".indexOf(c) != -1
+						|| (state == 1 && c == '/')
 					) {
 						sb.append(c);
 						break;
@@ -355,6 +352,10 @@ public class Route {
 				}
 				break loop;
 			}
+		}
+		
+		if (state == 1 || state == 2 || state == 7) {
+			map.put(key, sb.toString());
 		}
 		
 		return map;
