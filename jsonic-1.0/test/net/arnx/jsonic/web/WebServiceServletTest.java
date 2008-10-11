@@ -343,6 +343,9 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testParseHeaderLine() throws Exception {
+		assertEquals(JSON.decode("{null:''}"), parseHeaderLine(""));
+		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   "));
+		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   ;"));
 		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy "));
 		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy; "));
 		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine("aaa/bbb-yyy;"));
