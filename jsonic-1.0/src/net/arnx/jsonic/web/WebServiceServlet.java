@@ -404,13 +404,16 @@ public class WebServiceServlet extends HttpServlet {
 			} else {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
-					List list = (List)o;
-					params = new ArrayList(list.size() + 1);
-					params.add(route.getParameterMap());
-					params.addAll(list);
+					params = (List)o;
+					if (params.isEmpty()) {
+						params = new ArrayList(1);
+						params.add(route.getParameterMap());
+					} else if (params.get(0) instanceof Map) {
+						params.set(0, route.mergeParameterMap((Map<Object, Object>)params.get(0)));
+					}
 				} else if (o instanceof Map) {
 					params = new ArrayList(1);
-					params.add(route.mergeParameterMap((Map<String, Object>)o));
+					params.add(route.mergeParameterMap((Map<Object, Object>)o));
 				} else {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}

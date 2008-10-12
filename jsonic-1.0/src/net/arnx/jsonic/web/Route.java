@@ -21,7 +21,7 @@ public class Route {
 	private String target;
 	private String method;
 	private int contentLength = 0;
-	private Map<String, Object> params;
+	private Map params;
 	
 	private boolean isRpcMode;
 	
@@ -81,12 +81,12 @@ public class Route {
 		return (o instanceof String) ? (String)o : null;
 	}
 	
-	public Map<String, Object> getParameterMap() {
+	public Map<?, ?> getParameterMap() {
 		return params;
 	}
 	
-	public Map<String, Object> mergeParameterMap(Map<String, Object> newParams) {
-		for (Map.Entry<String, Object> entry : newParams.entrySet()) {
+	public Map<?, ?> mergeParameterMap(Map<Object, Object> newParams) {
+		for (Map.Entry<Object, Object> entry : newParams.entrySet()) {
 			if (params.containsKey(entry.getKey())) {
 				Object target = params.get(entry.getKey());
 				
@@ -218,14 +218,14 @@ public class Route {
 		parseParameter(pairs, params);
 	}
 	
-	private static void parseParameter(List<Object> pairs, Map<String, Object> params) {
+	private static void parseParameter(List<Object> pairs, Map<Object, Object> params) {
 		for (int i = 0; i < pairs.size(); i+= 2) {
 			String name = (String)pairs.get(i);
 			Object value = pairs.get(i+1);
 			
 			int start = 0;
 			char old = '\0';
-			Map<String, Object> current = params;
+			Map<Object, Object> current = params;
 			for (int j = 0; j < name.length(); j++) {
 				char c = name.charAt(j);
 				if (c == '.' || c == '[') {
@@ -233,12 +233,12 @@ public class Route {
 					Object target = current.get(key);
 					
 					if (!(target instanceof Map)) {
-						Map<String, Object> map = new LinkedHashMap<String, Object>();
+						Map<Object, Object> map = new LinkedHashMap<Object, Object>();
 						if (target != null) map.put(null, target);
 						current.put(key, map);
 						current = map;
 					} else {
-						current = (Map<String, Object>)target;
+						current = (Map<Object, Object>)target;
 					}
 					start = j+1;
 				}
