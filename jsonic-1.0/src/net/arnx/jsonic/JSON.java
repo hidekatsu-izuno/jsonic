@@ -1354,7 +1354,7 @@ public class JSON {
 					(c >= 'A' && c <= 'F') ? c-65+10 :
 					(c >= 'a' && c <= 'f') ? c-97+10 : -1;
 				if (hex != -1) {
-					escape |= (hex << ((5-point)*8));
+					escape |= (hex << ((5-point)*4));
 					if (point != 5) {
 						point++;
 					} else {

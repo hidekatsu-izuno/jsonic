@@ -1,5 +1,6 @@
 package net.arnx.jsonic.web;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,6 +50,8 @@ public class Route {
 						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
 					} else if (contentType.startsWith("multipart/")) {
+						parseMultipart(request.getInputStream(), request.getCharacterEncoding(),
+								options.get("boundary"));
 						contentLength = 0;
 					}
 				}
@@ -216,6 +220,44 @@ public class Route {
 		}
 		
 		parseParameter(pairs, params);
+	}
+	
+	private void parseMultipart(InputStream in, String encoding, String boundary) throws IOException {
+		if (boundary == null || boundary.length() == 0) return;
+		
+		Scanner sc = new Scanner(in, "US-ASCII");
+		try {
+			parseMultipart(sc, encoding, boundary);
+		} catch (Exception e) {
+			if (sc.ioException() != null) {
+				throw sc.ioException();
+			}
+		} finally {
+			sc.close();
+		}
+	}
+		
+	private static void parseMultipart(Scanner sc, String encoding, String boundary) throws IOException {
+/*		
+		Pattern bp = Pattern.compile("--" + Pattern.quote(boundary) + "(--)?\r\n");
+		sc.skip(bp);
+		String last = sc.match().group(1);
+		while (!"--".equals(last)) {
+			sc.useDelimiter("\r\n(?![ \t])");
+			while (sc.hasNextLine()) {
+				String line = sc.nextLine();
+				if (line.length() == 0) break;
+				int index = line.indexOf(':');
+				if (index != -1 && index+1 < line.length()) {			
+					String name = line.substring(0, index);
+					Map params = parseHeaderLine(line.substring(index+1));
+				}
+			}
+			while (sc(pattern)) {
+				
+			}
+		}
+*/
 	}
 	
 	private static void parseParameter(List<Object> pairs, Map<Object, Object> params) {
