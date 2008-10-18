@@ -732,19 +732,24 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/08/15 version 1.1.0</h3>
+<h3>2008/10/30 version 1.1.0</h3>
 <ul>
-<li>JSON stringとjava.io.Fileの相互変換に対応しました。</li>
 <li>[非互換] XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>形式に変更しました。</li>
+<li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
+<li>[非互換] JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、パス変数やクエリ変数は最後の引数として設定していましたが、1番目の引数にマージするようになりました（ただし、1番目の引数がJSON objectでない場合はマージされません）。</li>
+<li>[非互換] JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
+</ul>
+
+<h3>2008/10/19 version 1.0.3</h3>
+<ul>
+<li>Encode/Parse時にJSON stringにて\uXXXX形式で文字を指定した場合に変換に失敗していた問題を修正しました。</li>
+<li>JSON stringとjava.io.Fileの相互変換に対応しました。</li>
 <li>Decode/Format時にMapのkeyがnullだった場合、NullPointerExceptionが発生していた問題を修正しました（単に値を無視します）</li>
 <li>Encode/Parse時にJSON objectのキーとしてリテラルが指定された場合、値と同様に処理するように変更しました。</li>
 <li>Convert時にJSON arrayの変換がうまくいかない場合、先頭の値を対象として変換するように変更しました。</li>
 <li>Convert時にJSON objectの変換がうまくいかない場合、nullキーの値を対象として変換するように変更しました（主にWebServiceServletでの利用を想定しています）。</li>
 <li>Convert時にJSON objectからList/Arrayへの変換に対応しました。キー値の順番にソートされた値のリストとして扱います。</li>
 <li>Convert時にstatic inner classのインスタンス生成に失敗する問題を修正しました[bug:13459]</li>
-<li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
-<li>[非互換] JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、パス変数やクエリ変数は最後の引数として設定していましたが、1番目の引数にマージするようになりました（ただし、1番目の引数がJSON objectでない場合はマージされません）。</li>
-<li>JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
 <li><a href="http://commons.apache.org/beanutils/apidocs/org/apache/commons/beanutils/DynaBean.html">DynaBean</a>のformatに対応しました。リフレクションにより処理を行っているため、DynaBeanを利用しない場合commons beanutilsのライブラリをクラスパスに追加する必要はありません。</li>
 </ul>
 
@@ -774,8 +779,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>Collectionだけでなく、Iterable, Iterator, EnumerationからJSON arrayへの変換に対応しました。</li>
 </ul>
 </div>
-<div class="bar">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.
-</div>
+<div class="bar">Copyright (C) 2007-2008 Hidekatsu Izuno All right reserved.</div>
 <a href="http://sourceforge.jp/" style="position:absolute; top: 7px; left: 678px;"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" style=" border-width:0px;" alt="SourceForge.jp" /></a>
 </body>
 </html>
