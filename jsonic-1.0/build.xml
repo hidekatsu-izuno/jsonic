@@ -5,6 +5,9 @@
 
 	<property file="build.properties" />	
 	
+	<property name="jsonic_as3.home" location="../jsonic_as3" />
+	<property name="flex.home" location="Q:/Program Files/Adobe/Flex Builder 3 Plug-in/sdks/3.1.0" />
+	
 	<property name="webapps" location="sample"/>
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 	<property name="dist" location="." />
@@ -81,7 +84,7 @@
 			
 			<zipfileset dir="${tmp}/java/sample" prefix="${ant.project.name}-${version}/sample" />
 			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
-			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
+			<zipfileset dir="lib" includes="build.xml" prefix="${ant.project.name}-${version}" />
 			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />			
 		</zip>
 		<delete dir="${tmp}" />
