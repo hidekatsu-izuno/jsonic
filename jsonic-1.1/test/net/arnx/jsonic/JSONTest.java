@@ -145,10 +145,10 @@ public class JSONTest {
 			.newInstance()
 			.newDocumentBuilder()
 			.parse(this.getClass().getResourceAsStream("Sample.xml"));
-		String sample1 = read(this.getClass().getResourceAsStream("Sample1.json"));
+		String sample1 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample1.json"), "UTF-8"));
 		assertEquals(sample1, JSON.encode(doc));
 		
-		String sample2 = read(this.getClass().getResourceAsStream("Sample2.json")).replaceAll("\r\n", "\n");
+		String sample2 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample2.json"), "UTF-8")).replaceAll("\r\n", "\n");
 		String result = JSON.encode(doc, true);
 		assertEquals(sample2, JSON.encode(doc, true));
 
@@ -1115,21 +1115,9 @@ public class JSONTest {
 		assertEquals(listA, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
 		assertEquals(listB, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
 	}
-	
-	private static String read(InputStream in) throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-		StringBuilder sb = new StringBuilder();
-		char[] cb = new char[1024];
-		int length = 0; 
-		while ((length = reader.read(cb)) != -1) {
-			sb.append(cb, 0, length);
-		}
-		reader.close();
-		return sb.toString();
-	}
 }
 
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings("unchecked")
 class TestBean {
 	private int a;
 	public void setA(int a) { this.a = a; }
