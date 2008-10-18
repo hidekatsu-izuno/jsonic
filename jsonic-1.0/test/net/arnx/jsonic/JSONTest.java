@@ -241,7 +241,8 @@ public class JSONTest {
 		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));		
 		assertEquals(map4, JSON.decode("aaa: 1, bbb:\n "));
 		
-		System.out.println(JSON.decode("{\"sample1\":\"\\u30c6\\u30b9\\u30c81\",\"sample2\":\"\\u30c6\\u30b9\\u30c82\"}"));
+		assertEquals(JSON.decode("{\"sample1\":\"テスト1\",\"sample2\":\"テスト2\"}"),
+				JSON.decode("{\"sample1\":\"\\u30c6\\u30b9\\u30c81\",\"sample2\":\"\\u30c6\\u30b9\\u30c82\"}"));
 	}
 
 	@Test
