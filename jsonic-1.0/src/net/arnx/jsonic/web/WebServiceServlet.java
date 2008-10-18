@@ -372,7 +372,7 @@ public class WebServiceServlet extends HttpServlet {
 			status = SC_CREATED;
 		} else if ("put".equals(route.getMethod())) {
 			methodName = "update";
-		} else if ("delte".equals(route.getMethod())) {
+		} else if ("delete".equals(route.getMethod())) {
 			methodName = "delete";
 		}
 		

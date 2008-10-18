@@ -52,7 +52,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRPC() throws Exception {
-		URL url = new URL("http://localhost:8080/sample/rpc/rpc.json");
+		URL url = new URL("http://localhost:8080/rpc/rpc.json");
 		HttpURLConnection con = null;
 		
 		// GET
@@ -104,7 +104,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testREST() throws Exception {
-		String url = "http://localhost:8080/sample/rest/memo";
+		String url = "http://localhost:8080/rest/memo";
 		HttpURLConnection con = null;
 		
 		List<Map<String, Object>> content = null;
@@ -168,7 +168,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRESTWithMethod() throws Exception {
-		String url = "http://localhost:8080/sample/rest/memo.json";
+		String url = "http://localhost:8080/rest/memo.json";
 		HttpURLConnection con = null;
 		
 		List<Map<String, Object>> content = null;
