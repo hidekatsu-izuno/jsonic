@@ -33,12 +33,18 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import net.arnx.jsonic.JSON;
 
 import org.junit.Test;
+import org.seasar.framework.util.ReaderUtil;
 import org.w3c.dom.Document;
 
+import org.apache.commons.beanutils.BasicDynaClass;
+import org.apache.commons.beanutils.DynaBean;
+import org.apache.commons.beanutils.DynaClass;
+import org.apache.commons.beanutils.DynaProperty;
+
+@SuppressWarnings({"unchecked", "unused", "serial"})
 public class JSONTest {
 
 	@Test
-	@SuppressWarnings("unused")
 	public void testEncode() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		assertEquals("[]", JSON.encode(list));
@@ -148,13 +154,30 @@ public class JSONTest {
 		list.add(Charset.forName("UTF-8"));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list.iterator()));
-
+		
 		Vector v = new Vector(list);
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(v.elements()));
+
+		list = new ArrayList<Object>();
+		list.add(new File("./sample.txt"));
+		String sep = (File.separatorChar == '\\') ? File.separator + File.separator : File.separator;
+		assertEquals("[\"." + sep + "sample.txt\"]", JSON.encode(list));
+		
+		DynaClass dynaClass = new BasicDynaClass("TestDynaBean", null, new DynaProperty[] {
+				new DynaProperty("a", int.class),
+				new DynaProperty("b", String.class),
+				new DynaProperty("c", boolean.class),
+				new DynaProperty("d", Date.class),
+		});
+		DynaBean dynaBean = dynaClass.newInstance();
+		dynaBean.set("a", 100);
+		dynaBean.set("b", "string");
+		dynaBean.set("c", true);
+		assertEquals("{\"a\":100,\"b\":\"string\",\"c\":true,\"d\":null}", JSON.encode(dynaBean));
+
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testDecodeString() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap());
@@ -212,10 +235,12 @@ public class JSONTest {
 		
 		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));		
 		assertEquals(map4, JSON.decode("aaa: 1, bbb:\n "));
+		
+		assertEquals(JSON.decode("{\"sample1\":\"テスト1\",\"sample2\":\"テスト2\"}"),
+				JSON.decode("{\"sample1\":\"\\u30c6\\u30b9\\u30c81\",\"sample2\":\"\\u30c6\\u30b9\\u30c82\"}"));
 	}
 
 	@Test
-	@SuppressWarnings({ "unchecked", "serial" })
 	public void testDecodeStringClassOfQextendsT() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap());
@@ -290,7 +315,6 @@ public class JSONTest {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void testFormat() throws Exception {
 		JSON json = new JSON();
 		ArrayList<Object> list = new ArrayList<Object>();
@@ -352,7 +376,6 @@ public class JSONTest {
 	}
 	
 	@Test
-	@SuppressWarnings({ "unchecked", "serial" })
 	public void testParse() throws Exception {
 		Locale.setDefault(Locale.JAPANESE);
 		JSON json = new JSON();
@@ -459,11 +482,14 @@ public class JSONTest {
 		});
 		assertEquals(list, json.parse("[{float0   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 		
-		assertEquals(new HashMap() {{put("true", true);}}, json.parse("  true: true  "));
+		assertEquals(new HashMap() {{put(true, true);}}, json.parse("  true: true  "));
+		assertEquals(new HashMap() {{put(false, false);}}, json.parse("  false: false  "));
+		assertEquals(new HashMap() {{put(new BigDecimal("100"), new BigDecimal("100"));}}, json.parse("  100: 100  "));
+		assertEquals(new HashMap() {{put(null, null);}}, json.parse("  null: null  "));
 		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  "));
 		
 		try {
-			assertEquals(new HashMap() {{put("true", true);}}, json.parse("  {true: true  "));
+			assertEquals(new HashMap() {{put(true, true);}}, json.parse("  {true: true  "));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -584,7 +610,6 @@ public class JSONTest {
 		
 		json.setMaxDepth(32);
 		assertEquals(map2, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
-		//assertEquals(map, json.parse("emap:{}\n\n map: {string: \n int:}, elist:[]\nlist: [,string, ]"));
 		
 		Map map3 = new LinkedHashMap() {
 			{
@@ -632,7 +657,6 @@ public class JSONTest {
 	}
 
 	@Test
-	@SuppressWarnings({ "unchecked", "serial", "unused" })
 	public void testConvert() throws Exception {
 		JSON json = new JSON();
 		
@@ -911,9 +935,17 @@ public class JSONTest {
 		// URI
 		assertEquals(new URI("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URI.class));
 		assertEquals(new URI("/aaa/bbb.json"), json.convert("/aaa/bbb.json", URI.class));
+		List uris = new ArrayList();
+		uris.add("http://www.google.co.jp");
+		uris.add("/aaa/bbb.json");
+		assertEquals(new URI("http://www.google.co.jp"), json.convert(uris, URI.class));
 		
 		// URL
 		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));
+		
+		// File
+		assertEquals(new File("./hoge.txt"), json.convert("./hoge.txt", File.class));
+		assertEquals(new File("C:\\hoge.txt"), json.convert("C:\\hoge.txt", File.class));
 		
 		// InetAddress
 		assertEquals(InetAddress.getByName("localhost"), json.convert("localhost", InetAddress.class));
@@ -974,7 +1006,7 @@ public class JSONTest {
 		return sb.toString();
 	}
 	
-	@Test
+	//@Test
 	public void testDecodeTime() throws Exception {
 		JSON json = new JSON();
 		
@@ -1080,7 +1112,7 @@ public class JSONTest {
 	}
 }
 
-@SuppressWarnings({"unchecked","unused"})
+@SuppressWarnings("unchecked")
 class TestBean {
 	private int a;
 	public void setA(int a) { this.a = a; }
@@ -1321,6 +1353,7 @@ class GenericsBean {
 	}
 }
 
+
 class InheritedBean {
 	public Map<String, Object> map0;
 	public LinkedHashMap map1;
@@ -1384,10 +1417,12 @@ class InheritedBean {
 	}
 }
 
+@SuppressWarnings("unchecked")
 class SuperLinkedHashMap extends LinkedHashMap {
 	private static final long serialVersionUID = 1L;
 }
 
+@SuppressWarnings("unchecked")
 class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
 }

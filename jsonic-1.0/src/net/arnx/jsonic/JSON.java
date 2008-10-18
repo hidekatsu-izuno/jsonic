@@ -16,6 +16,7 @@
 package net.arnx.jsonic;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
@@ -147,11 +149,10 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.0.2
+ * @version 1.0.3
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
-@SuppressWarnings("unchecked")
 public class JSON {
 	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
@@ -160,6 +161,8 @@ public class JSON {
 
 	private static final Character ROOT_KEY = '$';
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
+	
+	private static Class<?>[] dynaBeanClasses = null;
 	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
@@ -170,6 +173,16 @@ public class JSON {
 		PRIMITIVE_MAP.put(float.class, 0.0f);
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
+		
+		try {
+			dynaBeanClasses = new Class<?>[] {
+				Class.forName("org.apache.commons.beanutils.DynaBean"),
+				Class.forName("org.apache.commons.beanutils.DynaClass"),
+				Class.forName("org.apache.commons.beanutils.DynaProperty")
+			};
+		} catch (Exception e ) {
+			// no handle
+		}
 	}
 	
 	private static JSON newInstance() {
@@ -210,7 +223,7 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, OutputStream out) throws IOException {
 		JSON.newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
@@ -222,7 +235,7 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException {
 		JSON json = JSON.newInstance();
@@ -235,7 +248,7 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, Appendable appendable) throws IOException {
 		JSON.newInstance().format(source, appendable);
@@ -247,7 +260,7 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
-	 * @exception IOException if I/O Error occured.
+	 * @exception IOException if I/O Error occurred.
 	 */
 	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException {
 		JSON json = JSON.newInstance();
@@ -293,11 +306,11 @@ public class JSON {
 	}
 
 	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 * 
 	 * @param in a json stream to decode
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(InputStream in) throws IOException, JSONParseException {
@@ -305,12 +318,12 @@ public class JSON {
 	}
 
 	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 * 
 	 * @param in a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONParseException {
@@ -318,12 +331,12 @@ public class JSON {
 	}
 
 	/**
-	 * Decodes a json stream into a object. (charcter encoding should be Unicode)
+	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 * 
 	 * @param in a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(InputStream in, Type type) throws IOException, JSONParseException {
@@ -335,7 +348,7 @@ public class JSON {
 	 * 
 	 * @param reader a json stream to decode
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(Reader reader) throws IOException, JSONParseException {
@@ -348,7 +361,7 @@ public class JSON {
 	 * @param reader a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONParseException {
@@ -361,7 +374,7 @@ public class JSON {
 	 * @param reader a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occured.
+	 * @exception IOException if I/O error occurred.
 	 * @exception JSONParseException if the beginning of the specified string cannot be parsed.
 	 */
 	public static Object decode(Reader reader, Type type) throws IOException, JSONParseException {
@@ -453,7 +466,7 @@ public class JSON {
 	 * Format a object into a json string.
 	 * 
 	 * @param source a object to encode.
-	 * @param ap a destination. ex: StringBuilder, Writer, ...
+	 * @param ap a destination. example: StringBuilder, Writer, ...
 	 * @return a json string
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
@@ -480,7 +493,8 @@ public class JSON {
 				|| o instanceof Type
 				|| o instanceof Member
 				|| o instanceof URL
-				|| o instanceof URI) {
+				|| o instanceof URI
+				|| o instanceof File) {
 			o = o.toString();
 		} else if (o instanceof Enum) {
 			o = ((Enum)o).ordinal();
@@ -682,6 +696,26 @@ public class JSON {
 			Map map = null;
 			if (o instanceof Map) {
 				map = (Map)o;
+			} else if (dynaBeanClasses != null && dynaBeanClasses[0].isAssignableFrom(o.getClass())) {
+				map = new TreeMap();
+				try {
+					Object dynaClass = dynaBeanClasses[0].getMethod("getDynaClass").invoke(o);
+					Object[] dynaProperties = (Object[])dynaBeanClasses[1].getMethod("getDynaProperties").invoke(dynaClass);
+					
+					Method getName = dynaBeanClasses[2].getMethod("getName");
+					Method get = dynaBeanClasses[0].getMethod("get", String.class);
+					
+					for (Object dp : dynaProperties) {
+						try {
+							Object name = getName.invoke(dp);
+							map.put(name, get.invoke(o, name));
+						} catch (InvocationTargetException ite) {
+							// no handle
+						}
+					}
+				} catch (Exception e) {
+					// no handle
+				}
 			} else {
 				Class<?> c = o.getClass();
 				
@@ -702,11 +736,11 @@ public class JSON {
 					}
 				}
 			}
-
+			
 			ap.append('{');
 			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 				Map.Entry entry = (Map.Entry)i.next();
-				if (entry.getValue() == o) continue; 
+				if (entry.getKey() == null || entry.getValue() == o) continue; 
 				
 				if (this.prettyPrint) {
 					ap.append('\n');
@@ -766,7 +800,7 @@ public class JSON {
 		try {
 			value = parse(new CharSequenceParserSource(cs));
 		} catch (IOException e) {
-			// never occure
+			// never occur
 		}
 		return value; 
 	}
@@ -782,7 +816,7 @@ public class JSON {
 		try {
 			value = parse(new CharSequenceParserSource(s), type);
 		} catch (IOException e) {
-			// never occure
+			// never occur
 		}
 		return value;
 	}
@@ -858,10 +892,10 @@ public class JSON {
 		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
-	private Map<String, Object> parseObject(ParserSource s, int level) throws IOException, JSONParseException {
+	private Map<Object, Object> parseObject(ParserSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
-		Map<String, Object> map = new LinkedHashMap<String, Object>();
-		String key = null;
+		Map<Object, Object> map = (level <= this.maxDepth) ? new LinkedHashMap<Object, Object>() : null;
+		Object key = null;
 		char start = '\0';
 		
 		int n = -1;
@@ -959,28 +993,12 @@ public class JSON {
 					point = 1;
 				} else if (point == 1 || point == 6) {
 					s.back();
-					key = parseLiteral(s);
+					key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
 					point = 2;
 				} else if (point == 3) {
-					if ((c == '-') || (c >= '0' && c <= '9')) {
-						s.back();
-						Number value = parseNumber(s);
-						if (level < this.maxDepth) map.put(key, value);
-					} else {
-						s.back();
-						String literal = parseLiteral(s);
-						if (level < this.maxDepth) {
-							if (literal.equals("null")) {
-								map.put(key, null);
-							} else if (literal.equals("true")) {
-								map.put(key, Boolean.TRUE);
-							} else if (literal.equals("false")) {
-								map.put(key, Boolean.FALSE);
-							} else {
-								map.put(key, literal);
-							}
-						}
-					}
+					s.back();
+					Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
+					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1004,7 +1022,7 @@ public class JSON {
 	
 	private List<Object> parseArray(ParserSource s, int level) throws IOException, JSONParseException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
-		List<Object> list = new ArrayList<Object>();
+		List<Object> list = (level <= this.maxDepth) ? new ArrayList<Object>() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1043,7 +1061,7 @@ public class JSON {
 				break;
 			case ']':
 				if (point == 1 || point == 2 || point == 3) {
-					if (point == 1 && !list.isEmpty() && level < this.maxDepth) {
+					if (level < this.maxDepth && point == 1 && !list.isEmpty()) {
 						list.add(null);
 					}
 				} else {
@@ -1053,7 +1071,7 @@ public class JSON {
 			case '{':
 				if (point == 1 || point == 3){
 					s.back();
-					Map<String, Object> value = parseObject(s, level+1);
+					Map<Object, Object> value = parseObject(s, level+1);
 					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
@@ -1081,25 +1099,9 @@ public class JSON {
 				break;
 			default:
 				if (point == 1 || point == 3) {
-					if ((c == '-') || (c >= '0' && c <= '9')) {
-						s.back();
-						Number value = parseNumber(s);
-						if (level < this.maxDepth) list.add(value);
-					} else {
-						s.back();
-						String literal = parseLiteral(s);
-						if (level < this.maxDepth) {
-							if (literal.equals("null")) {
-								list.add(null);
-							} else if (literal.equals("true")) {
-								list.add(Boolean.TRUE);
-							} else if (literal.equals("false")) {
-								list.add(Boolean.FALSE);
-							} else {
-								list.add(literal);
-							}
-						}
-					}
+					s.back();
+					Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
+					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1167,7 +1169,7 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private String parseLiteral(ParserSource s) throws IOException, JSONParseException {
+	private Object parseLiteral(ParserSource s) throws IOException, JSONParseException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 
@@ -1192,7 +1194,13 @@ public class JSON {
 			}
 		}
 		
-		return sb.toString();
+		String str = sb.toString();
+		
+		if ("null".equals(str)) return null;
+		if ("true".equals(str)) return true;
+		if ("false".equals(str)) return false;
+
+		return str;
 	}	
 	
 	private Number parseNumber(ParserSource s) throws IOException, JSONParseException {
@@ -1318,7 +1326,7 @@ public class JSON {
 					(c >= 'A' && c <= 'F') ? c-65+10 :
 					(c >= 'a' && c <= 'f') ? c-97+10 : -1;
 				if (hex != -1) {
-					escape |= (hex << ((5-point)*8));
+					escape |= (hex << ((5-point)*4));
 					if (point != 5) {
 						point++;
 					} else {
@@ -1491,6 +1499,35 @@ public class JSON {
 					map.putAll(src);
 				}
 				data = map;
+			} else if (Collection.class.isAssignableFrom(c) || c.isArray()) {
+				if (!(src instanceof SortedMap)) {
+					src = new TreeMap(src);
+				}
+				data = convert(key, src.values(), c, type);
+			} else if (c.isPrimitive() || c.isEnum()
+					|| Number.class.isAssignableFrom(c)
+					|| CharSequence.class.isAssignableFrom(c)
+					|| Appendable.class.isAssignableFrom(c)
+					|| Boolean.class.equals(c)
+					|| Character.class.equals(c)
+					|| Locale.class.equals(c)
+					|| TimeZone.class.equals(c)
+					|| Pattern.class.equals(c)
+					|| File.class.equals(c)
+					|| URL.class.equals(c)
+					|| URI.class.equals(c)
+					|| InetAddress.class.equals(c)
+					|| Charset.class.equals(c)
+					|| Class.class.equals(c)
+				) {
+				if (src.containsKey(null)) {
+					Object target = src.get(null);
+					if (target instanceof List) {
+						List list = (List)target;
+						target = (!list.isEmpty()) ? list.get(0) : null;
+					}
+					data = convert(key, target, c, type);
+				}
 			} else {
 				Object o = create(c);
 				if (o != null) {
@@ -1571,6 +1608,8 @@ public class JSON {
 				} else if (src.size() > 2) {
 					data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
 				}
+			} else if (!src.isEmpty()) {
+				data = convert(key, src.get(0), c, type);
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -1826,6 +1865,8 @@ public class JSON {
 				} else if (array.length > 2) {
 					data = new Locale(array[0], array[1], array[2]);
 				}
+			} else if (File.class.equals(c)) {
+				data = new File(value.toString().trim());
 			} else if (URL.class.equals(c)) {
 				data = new URL(value.toString().trim());
 			} else if (URI.class.equals(c)) {
@@ -1916,7 +1957,7 @@ public class JSON {
 			if (Calendar.class.equals(c)) {
 				instance = Calendar.getInstance();
 			}
-		} else if (c.isMemberClass() || c.isAnonymousClass()) {
+		} else if ((c.isMemberClass() || c.isAnonymousClass()) && !Modifier.isStatic(c.getModifiers())) {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
 			if(tryAccess(c)) con.setAccessible(true);

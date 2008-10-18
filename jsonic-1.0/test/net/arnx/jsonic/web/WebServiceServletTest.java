@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
@@ -14,6 +13,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -27,7 +27,28 @@ import org.seasar.framework.mock.servlet.MockServletContextImpl;
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
 
-public class WebServiceServletTest {
+import winstone.Launcher;
+
+@SuppressWarnings("unchecked")
+public class WebServiceServletTest {	
+	
+	private static Launcher winstone;
+	
+	@BeforeClass
+	public static void init() throws Exception {
+		Map args = new HashMap();
+		args.put("webroot", "sample");
+		args.put("controlPort", "8081");
+		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
+		
+		Launcher.initLogger(args);
+		winstone = new Launcher(args);
+	}
+	
+	@AfterClass
+	public static void destroy() throws Exception {
+		winstone.shutdown();
+	}
 	
 	@Test
 	public void testRPC() throws Exception {
@@ -45,6 +66,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		write(con, "");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), 
@@ -54,7 +76,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		write(con.getOutputStream(), "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
+		write(con, "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":3,\"error\":null,\"id\":1}"), 
@@ -65,6 +87,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("PUT");
+		write(con, "");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
@@ -73,6 +96,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("DELETE");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
@@ -89,8 +113,8 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
-		write(con.getOutputStream(), "{title:\"title\",text:\"text\"}");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
 		con.disconnect();
@@ -107,8 +131,8 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("PUT");
-		con.setRequestProperty("Content-type", "application/json");
-		write(con.getOutputStream(), "{title:\"title\",text:\"text\"}");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
 		con.disconnect();
@@ -116,7 +140,8 @@ public class WebServiceServletTest {
 		// DELETE
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setRequestMethod("DELETE");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
 		con.disconnect();
@@ -124,7 +149,8 @@ public class WebServiceServletTest {
 		// DELETE
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setRequestMethod("DELETE");
-		con.setRequestProperty("Content-type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_NOT_FOUND, con.getResponseCode());
 		con.disconnect();
@@ -133,8 +159,8 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
-		write(con.getOutputStream(), "[\"title\", \"text\"]");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "[\"title\", \"text\"]");
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
@@ -151,8 +177,8 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
-		write(con.getOutputStream(), "{title:\"title\",text:\"text\"}");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
 		con.disconnect();
@@ -161,6 +187,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=GET").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		content = (List<Map<String, Object>>)JSON.decode(read(con.getInputStream()));
@@ -170,8 +197,8 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=PUT").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
-		write(con.getOutputStream(), "{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{id:" + content.get(0).get("id") + ",title:\"title\",text:\"text\"}");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
 		con.disconnect();
@@ -180,8 +207,8 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=DELETE").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
-		write(con.getOutputStream(), "{id:" + content.get(0).get("id") + "}");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{id:" + content.get(0).get("id") + "}");
 		con.connect();
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
 		con.disconnect();
@@ -190,8 +217,8 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-type", "application/json");
-		write(con.getOutputStream(), "[\"title\", \"text\"]");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "[\"title\", \"text\"]");
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
@@ -242,8 +269,8 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), m.invoke(null, request));
 	}
 	
-	private static void write(OutputStream out, String text) throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+	private static void write(HttpURLConnection con, String text) throws IOException {
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream(), "UTF-8"));
 		writer.write(text);
 		writer.flush();
 		writer.close();
