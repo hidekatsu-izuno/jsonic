@@ -1,93 +1,94 @@
 <?xml version="1.0"?>
 
-<project name="jsonic" basedir="." default="dist">
-	<property name="version" value="1.0.2" />
+<project name="jsonic" basedir="." default="dist-all">
+	<property name="version" value="1.0.3" />
 
-	<property name="src" location="src" />
-	<property name="lib" location="lib" />
-	<property name="tmp" location="tmp" />
+	<property file="build.properties" />	
+	
+	<property name="webapps" location="sample"/>
+	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 	<property name="dist" location="." />
-	
-	<property name="jsonic_as3.src" location="../jsonic_as3/src" />
-	
-	<target name="clean">
-		<delete dir="${tmp}" failonerror="off" />
-		<delete file="jsonic-${version}.zip" failonerror="off" />
-	</target>
-	
+
 	<target name="init" depends="clean">
 		<tstamp />
+		<mkdir dir="${tmp}" />
 	</target>
-	
-	<target name="build" depends="build.java,build.as3">
+
+	<target name="build" depends="init">
+		<mkdir dir="${tmp}/build" />
+		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build">
+			<classpath>
+				<fileset dir="lib" includes="*.jar" />
+			</classpath>
+		</javac>
+
+		<jar destfile="${tmp}/${ant.project.name}-${version}.jar">
+			<fileset dir="${tmp}/build" includes="**/*.class" />
+			<fileset dir="src" excludes="**/*.java" />
+		</jar>
+		<delete dir="${tmp}/build" />
+		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
+			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+			<classpath>
+				<fileset dir="lib" includes="*.jar" />
+			</classpath>
+		</javadoc>
 	</target>
-	
-	<target name="dist" depends="dist.java,dist.as3">
-		<zip destfile="jsonic-${version}.zip">
-			<zipfileset dir="tmp" prefix="jsonic-${version}"/>
-			<zipfileset dir="docs" prefix="jsonic-${version}/docs"/>
-			<zipfileset dir="." includes="build.xml" prefix="jsonic-${version}"/>
-			<zipfileset dir="." includes="LICENSE.txt" prefix="jsonic-${version}"/>
+
+	<target name="build-sample" depends="build">
+		<mkdir dir="${tmp}/sample" />
+
+		<copy todir="${tmp}/sample">
+			<fileset dir="${webapps}" />
+		</copy>
+		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/WEB-INF/lib" />
+
+		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/WEB-INF/src" destdir="${tmp}/sample/WEB-INF/classes">
+			<classpath>
+				<fileset dir="lib" includes="*.jar" />
+				<fileset dir="${tmp}/sample/WEB-INF/lib" includes="*.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="dist" depends="build">
+		<zip destfile="${ant.project.name}-${version}.zip">
+			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}" />
+			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src" />
+			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
+			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
+			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />
 		</zip>
 		<delete dir="${tmp}" />
 	</target>
 	
-	<target name="build.java" depends="init">
-		<mkdir dir="${tmp}/build" />
-		<javac source="1.5" target="1.5" 
-			srcdir="${src}" destdir="${tmp}/build">
-			<classpath>
-				<fileset dir="${lib}" includes="*.jar"/>
-			</classpath>
-		</javac>
-		
-		<javadoc sourcepath="${src}" destdir="${tmp}/docs/java/api"
-			encoding="UTF-8" charset="UTF-8" docencoding="UTF-8"
-			author="true" locale="en_US">
-			<link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
-			<classpath>
-				<fileset dir="${lib}" includes="*.jar"/>
-			</classpath>
-		</javadoc>
-		
-		<jar destfile="${tmp}/jsonic-${version}.jar">
-			<fileset dir="${tmp}/build" includes="**/*.class" />
-			<fileset dir="${src}" excludes="**/*.java" />
-		</jar>
-		<delete dir="${tmp}/build" />
+	<target name="dist-all">
+		<antcall target="build-sample">
+			<param name="tmp" location="${tmp}/java" />
+		</antcall>
+		<ant antfile="${jsonic_as3.home}/build.xml" target="build" inheritall="false">
+			<property name="tmp" location="${tmp}/as3" />
+			<property name="flex.home" location="${flex.home}" />
+		</ant>
+		<zip destfile="${dist}/${ant.project.name}-${version}.zip">
+			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src/java" />
+			<zipfileset dir="${tmp}/java/docs" prefix="${ant.project.name}-${version}/docs/java" />
+			<zipfileset file="${tmp}/java/${ant.project.name}-${version}.jar" prefix="${ant.project.name}-${version}" />
+			
+			<zipfileset dir="${jsonic_as3.home}/src" prefix="${ant.project.name}-${version}/src/as3" />
+			<zipfileset dir="${tmp}/as3/docs" prefix="${ant.project.name}-${version}/docs/as3" />
+			<zipfileset file="${tmp}/as3/${ant.project.name}-${version}.swc" prefix="${ant.project.name}-${version}" />
+			
+			<zipfileset dir="${tmp}/java/sample" prefix="${ant.project.name}-${version}/sample" />
+			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
+			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
+			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />			
+		</zip>
+		<delete dir="${tmp}" />
 	</target>
-	
-	<target name="dist.java" depends="build.java">
-		<copy todir="${tmp}/src/java">
-			<fileset dir="${src}"  />
-		</copy>
-		<copy todir="${tmp}/sample">
-			<fileset dir="sample" />
-		</copy>
-		<copy file="${tmp}/jsonic-${version}.jar" todir="${tmp}/sample/WEB-INF/lib" />
-	</target>
-	
-	<target name="build.as3" depends="init">		
-		<compc output="${tmp}/jsonic-${version}.swc" locale="en_US,ja_JP"
-			allow-source-path-overlap="on">
-			<namespace uri="http://arnx.net/jsonic" manifest="${jsonic_as3.src}/manifest.xml"/>
-			<include-namespaces uri="http://arnx.net/jsonic"/>
-			<source-path path-element="${jsonic_as3.src}"/>
-			<source-path path-element="${jsonic_as3.src}/{locale}"/>
-			<include-classes>net.arnx.jsonic.web.mxml.WebService</include-classes>
-			<accessible>true</accessible>
-		</compc>
-		
-		<exec executable="${FLEX_HOME}/bin/asdoc.exe" dir="." failonerror="on">
-			<arg line="-output '${tmp}/docs/as3/api'"/>
-			<arg line="-source-path '${jsonic_as3.src}'"/>
-			<arg line="-doc-sources '${jsonic_as3.src}'" />
-		</exec>
-	</target>
-	
-	<target name="dist.as3" depends="build.as3">
-		<copy todir="${tmp}/src/as3">
-			<fileset dir="${jsonic_as3.src}"  />
-		</copy>
+
+	<target name="clean">
+		<delete dir="${tmp}" failonerror="off" />
+		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
 	</target>
 </project>
