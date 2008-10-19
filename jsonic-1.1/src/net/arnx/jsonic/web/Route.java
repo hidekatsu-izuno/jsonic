@@ -1,9 +1,14 @@
 package net.arnx.jsonic.web;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,7 +16,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +53,7 @@ public class Route {
 					if (contentType.equals("application/x-www-form-urlencoded")) {
 						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
 						contentLength = 0;
-					} else if (contentType.startsWith("multipart/")) {
+					} else if (contentType.startsWith("multipart/form-data")) {
 						parseMultipart(request.getInputStream(), request.getCharacterEncoding(),
 								options.get("boundary"));
 						contentLength = 0;
@@ -225,39 +229,117 @@ public class Route {
 	private void parseMultipart(InputStream in, String encoding, String boundary) throws IOException {
 		if (boundary == null || boundary.length() == 0) return;
 		
-		Scanner sc = new Scanner(in, "US-ASCII");
-		try {
-			parseMultipart(sc, encoding, boundary);
-		} catch (Exception e) {
-			if (sc.ioException() != null) {
-				throw sc.ioException();
-			}
-		} finally {
-			sc.close();
-		}
+		BufferedInputStream bin = new BufferedInputStream(in, Math.max(1024, boundary.length() + 8));
+		Map<String, Object> data = new HashMap<String, Object>();
+		parseMultipart(bin, encoding, boundary, null, data);
 	}
+	
+	private static void parseMultipart(BufferedInputStream in, String encoding, String boundary, String name, Map<String, Object> data) throws IOException {
+		boundary = "\r\n--" + boundary;
 		
-	private static void parseMultipart(Scanner sc, String encoding, String boundary) throws IOException {
-/*		
-		Pattern bp = Pattern.compile("--" + Pattern.quote(boundary) + "(--)?\r\n");
-		sc.skip(bp);
-		String last = sc.match().group(1);
-		while (!"--".equals(last)) {
-			sc.useDelimiter("\r\n(?![ \t])");
-			while (sc.hasNextLine()) {
-				String line = sc.nextLine();
-				if (line.length() == 0) break;
-				int index = line.indexOf(':');
-				if (index != -1 && index+1 < line.length()) {			
-					String name = line.substring(0, index);
-					Map params = parseHeaderLine(line.substring(index+1));
+		int state = 0; // 0 <boundary> (1 <header> 2 <value>)+ <last boundary>
+		
+		int d = -1;
+		int pos = 2;
+		
+		String disposition = null;
+		String dispositionName = null;
+		String dispositionFileName = null;
+		
+		String type = null;
+		String typeCharset = null;
+		String typeBoundary = null;
+		
+		ByteBuilder bb = new ByteBuilder(256);
+		
+		File file = null;
+		OutputStream out = null;
+		
+		while ((d = in.read()) != -1) {
+			if (pos == boundary.length()) {
+				if (d == '-' && in.read() == '-' && in.read() == '\r' && in.read() == '\n') {
+					break;
+				} else if (d == '\r' && in.read() == '\n') {					
+					data.put(dispositionName, (file != null) ? file : d);
+					
+					disposition = null;
+					dispositionName = null;
+					type = null;
+					typeCharset = null;
+					bb.setLength(0);
+					state = 1;
+				} else {
+					in.reset();
 				}
+				continue;
+			} else if (d == boundary.charAt(pos)) {
+				in.mark(boundary.length()+4);
+				pos++;
+				continue;
+			} else if (state == 0) {
+				// incorrect
+				break;
+			} else {
+				pos = 0;
 			}
-			while (sc(pattern)) {
+			
+			if (state == 1) { // Header Section
+				if (d == '\r') {
+					in.mark(3);
+					if (in.read() == '\n') {
+						d = in.read();
+						if (d == '\r') {
+							d = in.read();
+							if (d == '\n') {
+								if (type.equalsIgnoreCase("multipart/mixed")) {
+									parseMultipart(in, encoding, boundary, dispositionName, data);
+								} else if (dispositionFileName != null) {
+									file = new File(System.getProperty("java.io.tmpdir"), new File(dispositionFileName).getName());
+									out = new BufferedOutputStream(new FileOutputStream(file));
+								} else {
+									out = new ByteArrayOutputStream();
+								}
+
+								bb.setLength(0);
+								state = 2;
+							} else {
+								bb.append(' ');
+								bb.append(d);
+							}
+						} else if (d == ' ') {
+							bb.append(' ');
+						} else {
+							int index = bb.indexOf(':');
+							if (index != -1 && index+1 < bb.length()) {
+								String key = bb.substring(0, index, "US-ASCII");
+								Map<String, String> value = parseHeaderLine(bb.substring(index+1, bb.length(), "US-ASCII"));
+								
+								if ("Content-Disposition".equalsIgnoreCase(key)) {
+									disposition = value.get(null);
+									dispositionName = value.get("name");
+									dispositionFileName = value.get("filename");
+									
+									disposition = (disposition != null) ? disposition.toLowerCase() : "";
+								} else if ("Content-Type".equalsIgnoreCase(key)) {
+									type = value.get(null);
+									typeCharset = value.get("charset");
+									typeBoundary = value.get("boundary");
+									
+									type = (type != null) ? type.toLowerCase() : "";
+								}
+							}
+							bb.setLength(0);
+						}
+						continue;
+					}
+					in.reset();
+				}
 				
+				bb.append(d);
+			} else if (state == 2) { // Body Section
+				out.write(d);
 			}
 		}
-*/
 	}
 	
 	private static void parseParameter(List<Object> pairs, Map<Object, Object> params) {
@@ -365,7 +447,7 @@ public class Route {
 				break loop;
 			case '=':
 				if (state == 4 || state == 5) {
-					key = sb.toString();
+					key = sb.toString().toLowerCase();
 					sb.setLength(0);
 					state = 6;
 					break;
@@ -432,6 +514,14 @@ class ByteBuilder {
 		array = new byte[length];
 	}
 	
+	public void append(int c) {
+		append((byte)c);
+	}
+	
+	public void append(char c) {
+		append((byte)c);
+	}
+	
 	public void append(byte b) {
 		if (length+1 > array.length) {
 			byte[] newArray = new byte[(int)(array.length*1.5)];
@@ -485,14 +575,12 @@ class ByteBuilder {
 	public byte byteAt(int pos) {
 		return array[pos];
 	}
-	
-	public String cutTo(int start, char c, String encoding) throws UnsupportedEncodingException {
-		for (int i = start; i < length; i++) {
-			if (array[i] == c) {
-				return new String(array, start, i-start, encoding);
-			}
+
+	public int indexOf(char c) {
+		for (int i = 0; i < length; i++) {
+			if (array[i] == c) return i;
 		}
-		return new String(array, start, length-start, encoding);
+		return -1;
 	}
 	
 	public void setLength(int length) {
@@ -501,6 +589,14 @@ class ByteBuilder {
 	
 	public int length() {
 		return length;
+	}
+	
+	public String substring(int start, int end, String encoding) throws UnsupportedEncodingException {
+		return new String(array, start, end-start, encoding);
+	}
+	
+	public String substring(int start, String encoding) throws UnsupportedEncodingException {
+		return new String(array, start, length-start, encoding);
 	}
 	
 	public String toString(String encoding) throws UnsupportedEncodingException {
