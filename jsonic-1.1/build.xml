@@ -83,7 +83,7 @@
 			
 			<zipfileset dir="${tmp}/java/sample/basic" prefix="${ant.project.name}-${version}/sample" />
 			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
-			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
+			<zipfileset dir="lib" includes="build.xml" prefix="${ant.project.name}-${version}" />
 			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />			
 		</zip>
 		<delete dir="${tmp}" />
