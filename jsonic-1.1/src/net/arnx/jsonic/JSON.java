@@ -1896,9 +1896,21 @@ public class JSON {
 			} else if (File.class.equals(c)) {
 				data = new File(value.toString().trim());
 			} else if (URL.class.equals(c)) {
-				data = new URL(value.toString().trim());
+				if (value instanceof File) {
+					data = ((File)value).toURI().toURL();
+				} else if (value instanceof URI) {
+					data = ((URI)value).toURL();
+				} else {
+					data = new URL(value.toString().trim());
+				}
 			} else if (URI.class.equals(c)) {
-				data = new URI(value.toString().trim());
+				if (value instanceof File) {
+					data = ((File)value).toURI();
+				} else if (value instanceof URL) {
+					data = ((URL)value).toURI();
+				} else {
+					data = new URI(value.toString().trim());
+				}
 			} else if (InetAddress.class.equals(c)) {
 				data = InetAddress.getByName(value.toString().trim());
 			} else if (Charset.class.equals(c)) {
