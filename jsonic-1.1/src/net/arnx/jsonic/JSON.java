@@ -1485,7 +1485,7 @@ public class JSON {
 	 * Converts Map/List/Number/String/Boolean/null to other Java Objects. If you converts a lower level object in this method, 
 	 * You should call convertChild method.
 	 * 
-	 * @param key property key object. If root node is '$'. When the parent is a array, it is Integer, otherwise String. 
+	 * @param key property key object. Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
 	 * @param c class for converting
 	 * @param type generics type for converting. type equals to c if not generics.
