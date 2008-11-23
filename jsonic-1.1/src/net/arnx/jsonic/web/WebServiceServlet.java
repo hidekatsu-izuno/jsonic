@@ -125,8 +125,8 @@ public class WebServiceServlet extends HttpServlet {
 		
 		// set expiration
 		if (expire != null && expire) {
-			response.setHeader("Cache-Control","no-cache");
-			response.setHeader("Pragma","no-cache");
+			response.setHeader("Cache-Control", "no-cache");
+			response.setHeader("Pragma", "no-cache");
 			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
 		}
 		
