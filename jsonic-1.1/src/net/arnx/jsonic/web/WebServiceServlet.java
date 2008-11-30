@@ -424,12 +424,14 @@ public class WebServiceServlet extends HttpServlet {
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
 				response.sendError(SC_NOT_FOUND, "Not Found");				
-			} else if (cause instanceof IllegalArgumentException) {
-				response.sendError(SC_BAD_REQUEST, cause.getMessage());
-			} else {
-				response.sendError(SC_INTERNAL_SERVER_ERROR, cause.getMessage());
+				return;
+			} else if (cause instanceof Error) {
+				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+				return;
 			}
-			return;
+			
+			response.setStatus(SC_BAD_REQUEST);
+			res = cause;
 		} catch (Exception e) {
 			container.error(e.getMessage(), e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
