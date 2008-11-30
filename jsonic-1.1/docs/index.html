@@ -562,8 +562,9 @@ JSON stringなどその他の型であった場合や第二引数以降はその
 <td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
 </tr>
 </table>
-<div class="caption">(※13) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
-<div class="caption">(※14) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※13) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
+<div class="caption">(※14) Convertに失敗した場合だけでなく、メソッドからIllegalStateException、UnsupportedOperationException、Error<b>以外</b>の例外が発生した場合も同じエラーが返されます。
+なお、この場合、発生した例外がJSON objectとしてメッセージボディに設定されます（ただし、Throwableクラスのプロパティは除外されます）。</div>
 
 <h3>■ JSONP</h3>
 <p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
