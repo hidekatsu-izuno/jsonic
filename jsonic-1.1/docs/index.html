@@ -740,6 +740,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[非互換] JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、パス変数やクエリ変数は最後の引数として設定していましたが、1番目の引数にマージするようになりました（ただし、1番目の引数がJSON objectでない場合はマージされません）。</li>
 <li>[非互換] JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
 <li>JSON WebServiceでのmappingキーのフォーマットを[キー名]から{キー名}に変更しました（互換性維持のため、当面[キー名]も利用可能です）。</li>
+<li>[非互換] WebServiceServletのRESTモードにて、例外が発生した場合プロパティをメッセージボディに設定するようにしました。ただし、Throwableクラスのメソッドは対象になりません。</li>
 </ul>
 
 <h3>2008/10/19 version 1.0.3</h3>
