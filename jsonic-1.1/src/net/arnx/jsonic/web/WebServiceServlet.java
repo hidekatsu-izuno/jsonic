@@ -603,7 +603,7 @@ public class WebServiceServlet extends HttpServlet {
 }
 	
 class RouteMapping {
-	private static final Pattern PLACE_PATTERN = Pattern.compile("\\[(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\]");
+	private static final Pattern PLACE_PATTERN = Pattern.compile("[{\\[](\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)[\\]}]");
 	
 	private Pattern pattern;
 	private List<String> names;

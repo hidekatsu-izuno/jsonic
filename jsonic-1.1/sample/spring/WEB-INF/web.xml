@@ -26,9 +26,9 @@
 				container: 'net.arnx.jsonic.web.SpringContainer'
 				debug: true
 				mappings: {
-					'/[package]/[class]/[id].[ext]': 'sample.web.${package}.service.${class}Service'
-					'/[package]/[class].[ext]': 'sample.web.${package}.service.${class}Service'
-					'/[class].[ext]': 'sample.service.${class}Service'
+					'/{package}/{class}/{id}.{ext}': 'sample.web.${package}.service.${class}Service'
+					'/{package}/{class}.{ext}': 'sample.web.${package}.service.${class}Service'
+					'/{class}.{ext}': 'sample.service.${class}Service'
 				}
 			</param-value>
 		</init-param>
