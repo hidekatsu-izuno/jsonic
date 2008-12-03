@@ -733,7 +733,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2008/10/30 version 1.1.0</h3>
+<h3>2008/12/03 version 1.1.0 beta1</h3>
 <ul>
 <li>[非互換] XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>形式に変更しました。</li>
 <li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
@@ -741,6 +741,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[非互換] JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
 <li>JSON WebServiceでのmappingキーのフォーマットを[キー名]から{キー名}に変更しました（互換性維持のため、当面[キー名]も利用可能です）。</li>
 <li>[非互換] WebServiceServletのRESTモードにて、例外が発生した場合プロパティをメッセージボディに設定するようにしました。ただし、Throwableクラスのメソッドは対象になりません。</li>
+<li>jQueryを使ったRESTモードのサンプルを追加しました。</li>
 </ul>
 
 <h3>2008/10/19 version 1.0.3</h3>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <project name="jsonic" basedir="." default="dist-all">
-	<property name="version" value="1.1.0" />
+	<property name="version" value="1.1.0-beta1" />
 	
 	<property file="build.properties" />
 	
@@ -16,7 +16,7 @@
 
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
-		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build">
+		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" fork="true">
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 			</classpath>
@@ -45,7 +45,7 @@
 		<copy file="${webapps}/spring/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_spring.xml" />
 		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
-		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes">
+		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true">
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 				<fileset dir="${tmp}/sample/basic/WEB-INF/lib" includes="*.jar" />
