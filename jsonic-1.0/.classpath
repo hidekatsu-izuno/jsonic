@@ -5,7 +5,7 @@
 	<classpathentry kind="src" output="sample/WEB-INF/classes" path="sample/WEB-INF/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="lib/s2-framework-2.4.19.jar"/>
+	<classpathentry kind="lib" path="lib/s2-framework-2.4.19.jar" sourcepath="/jsonic-sample/wwwroot/sample/WEB-INF/lib/s2-framework-2.4.33-sources.jar"/>
 	<classpathentry kind="lib" path="lib/spring.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
 	<classpathentry kind="lib" path="lib/winstone-0.9.10.jar"/>
