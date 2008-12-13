@@ -27,6 +27,7 @@
 			<fileset dir="src" excludes="**/*.java" />
 		</jar>
 		<delete dir="${tmp}/build" />
+				
 		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<classpath>
@@ -89,6 +90,21 @@
 		<delete dir="${tmp}" />
 	</target>
 
+	<target name="build-debug">
+		<mkdir dir="${tmp}/build" />
+		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" debug="true" fork="true">
+			<classpath>
+				<fileset dir="lib" includes="*.jar" />
+			</classpath>
+		</javac>
+
+		<jar destfile="${dist}/${ant.project.name}-${version}-debug.jar">
+			<fileset dir="${tmp}/build" includes="**/*.class" />
+			<fileset dir="src" />
+		</jar>
+		<delete dir="${tmp}/build" />
+	</target>
+	
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
 		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
