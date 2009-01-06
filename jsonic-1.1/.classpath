@@ -14,7 +14,6 @@
 	<classpathentry kind="lib" path="lib/winstone_devloader.jar"/>
 	<classpathentry kind="lib" path="lib/winstone-0.9.10.jar"/>
 	<classpathentry kind="lib" path="lib/commons-fileupload-1.2.1.jar"/>
-	<classpathentry kind="lib" path="lib/scala-library.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

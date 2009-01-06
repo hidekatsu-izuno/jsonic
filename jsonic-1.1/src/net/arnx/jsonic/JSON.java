@@ -165,7 +165,6 @@ public class JSON {
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
 	private static Class<?>[] dynaBeanClasses = null;
-	private static Class<?> scalaClass = null;
 	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
@@ -183,12 +182,6 @@ public class JSON {
 				Class.forName("org.apache.commons.beanutils.DynaClass"),
 				Class.forName("org.apache.commons.beanutils.DynaProperty")
 			};
-		} catch (Exception e) {
-			// no handle
-		}
-		
-		try {
-			scalaClass = Class.forName("scala.ScalaObject");
 		} catch (Exception e) {
 			// no handle
 		}
@@ -2085,8 +2078,7 @@ public class JSON {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
 		boolean access = tryAccess(c);
-		boolean scala = (scalaClass != null && scalaClass.isAssignableFrom(c));
-
+		
 		for (Field f : c.getFields()) {
 			if (ignore(c, f)) continue;
 			if (access) f.setAccessible(true);
@@ -2110,12 +2102,6 @@ public class JSON {
 				&& m.getParameterTypes().length == 0
 				&& m.getReturnType().equals(boolean.class)) {
 				start = 2;
-			} else if (scala
-				&& !name.startsWith("$")
-				&& name.length() > 0
-				&& m.getParameterTypes().length == 0
-				&& !m.getReturnType().equals(void.class)) {
-				start = 0;
 			} else {
 				continue;
 			}
@@ -2135,7 +2121,6 @@ public class JSON {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
 		boolean access = tryAccess(c);
-		boolean scala = (scalaClass != null && scalaClass.isAssignableFrom(c));
 
 		for (Field f : c.getFields()) {
 			if (ignore(c, f)) continue;
@@ -2148,19 +2133,12 @@ public class JSON {
 
 			String name = m.getName();
 			int start = 0;
-			int end = name.length();
 			if (name.startsWith("set") 
 				&& name.length() > 3
 				&& Character.isUpperCase(name.charAt(3))
 				&& m.getParameterTypes().length == 1
 				&& m.getReturnType().equals(void.class)) {
 				start = 3;
-			} else if (scala
-				&& name.endsWith("_$eq")
-				&& name.length() > 4
-				&& m.getParameterTypes().length == 1
-				&& m.getReturnType().equals(void.class)) {		
-				end -= 4;
 			} else {
 				continue;
 			}
@@ -2170,7 +2148,7 @@ public class JSON {
 				cs[start] = Character.toLowerCase(cs[start]);
 			}
 			if (access) m.setAccessible(true);
-			props.put(new String(cs, start, end-start), m);
+			props.put(new String(cs, start, cs.length-start), m);
 		}
 		
 		return props;
