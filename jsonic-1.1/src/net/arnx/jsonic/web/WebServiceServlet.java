@@ -480,7 +480,7 @@ public class WebServiceServlet extends HttpServlet {
 		super.destroy();
 	}
 		
-	public Object invoke(JSON json, Object o, String methodName, List<Object> args) throws Exception {
+	protected Object invoke(JSON json, Object o, String methodName, List<Object> args) throws Exception {
 		if (args == null) {
 			args = Collections.EMPTY_LIST;
 		}
@@ -556,7 +556,7 @@ public class WebServiceServlet extends HttpServlet {
 		return sb.toString();
 	}
 	
-	static class DefaultJSON extends JSON {
+	private static class DefaultJSON extends JSON {
 		@Override
 		protected boolean ignore(Class<?> target, Member member) {
 			return member.getDeclaringClass().equals(Throwable.class)

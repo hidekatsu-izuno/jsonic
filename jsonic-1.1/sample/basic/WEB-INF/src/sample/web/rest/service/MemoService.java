@@ -30,7 +30,11 @@ public class MemoService {
 	private static int count = 0;
 	private static Map<Integer, Memo> list = Collections.synchronizedMap(new LinkedHashMap<Integer, Memo>());
 	
-	public void init(HttpServletRequest request, HttpServletResponse response) {
+	// injects request/response.
+	public HttpServletRequest request;
+	public HttpServletResponse response;
+	
+	public void init() {
 		response.setHeader("X-JSON", "[\"Helo. JSONIC!\"]");
 	}
 	
