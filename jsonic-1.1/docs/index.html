@@ -439,6 +439,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/()]+</code>が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
+<tr><td>processor</td><td><code>net.arnx.jsonic.web.DefaultJSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.DefaultJSON</code>です。</td></tr>
 </table>
 <div class="caption">
 (※7) 変数名のうち、classとpackageだけは特殊な扱いがされます。class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
