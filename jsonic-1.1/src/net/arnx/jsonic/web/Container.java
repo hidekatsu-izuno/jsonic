@@ -15,20 +15,27 @@
  */
 package net.arnx.jsonic.web;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 public class Container {
 	public Boolean debug = false;
 	public String init = "init";
 	public String destroy = "destroy";
 	
+	private ServletConfig config;
 	private ServletContext context;
 
-	public void init(ServletContext context) {
+	public void init(ServletConfig config, ServletContext context) {
+		this.config = config;
 		this.context = context;
 	}
 
@@ -36,10 +43,27 @@ public class Container {
 		return (debug != null) ? debug : false;
 	}
 	
-	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) 
+		throws Exception {
+		
 		Object o = Class.forName(className).newInstance();
 		
-		
+		for (Field field : o.getClass().getFields()) {
+			Class<?> c = field.getType();
+			if (ServletContext.class.equals(c) && "application".equals(field.getName())) {
+				field.set(o, context);
+			} else if (ServletConfig.class.equals(c) && "config".equals(field.getName())) {
+				field.set(o, config);
+			} else if ((ServletRequest.class.equals(c) || HttpServletRequest.class.equals(c))
+				&& "request".equals(field.getName())) {
+				field.set(o, request);
+			} else if ((ServletResponse.class.equals(c) || HttpServletResponse.class.equals(c))
+				&& "response".equals(field.getName())) {
+				field.set(o, response);
+			} else if (HttpSession.class.equals(c) && "session".equals(field.getName())) {
+				field.set(o, request.getSession(true));
+			}
+		}
 		
 		return o;
 	}

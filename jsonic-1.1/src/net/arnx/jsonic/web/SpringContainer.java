@@ -15,6 +15,7 @@
  */
 package net.arnx.jsonic.web;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +31,8 @@ public class SpringContainer extends Container {
 	
 	private ApplicationContext appContext;
 	
-	public void init(ServletContext context) {
+	@Override
+	public void init(ServletConfig config, ServletContext context) {
 		appContext = WebApplicationContextUtils.getWebApplicationContext(context);
 	}
 	
