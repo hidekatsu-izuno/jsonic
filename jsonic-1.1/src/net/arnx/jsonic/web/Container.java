@@ -32,9 +32,9 @@ public class Container {
 	private ServletConfig config;
 	private ServletContext context;
 
-	public void init(ServletConfig config, ServletContext context) {
+	public void init(ServletConfig config) {
 		this.config = config;
-		this.context = context;
+		this.context = config.getServletContext();
 	}
 
 	public boolean isDebugMode() {

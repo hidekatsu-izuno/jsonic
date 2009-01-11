@@ -79,7 +79,7 @@ public class WebServiceServlet extends HttpServlet {
 			if (config.container == null) config.container = Container.class;
 			
 			container = (Container)json.parse(configText, config.container);
-			container.init(servletConfig, getServletContext());
+			container.init(servletConfig);
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
