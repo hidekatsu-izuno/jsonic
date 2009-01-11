@@ -580,15 +580,12 @@ JSON stringなどその他の型であった場合や第二引数以降はその
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
 
-<h3>■ 初期化/Servletパラメータへのアクセス</h3>
-<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※15)</sup>
-このとき引数にServletContext, HttpServletRequest, HttpServletResponse, HttpSessionを受け取れるように設定するとそれぞれのインスタンスが設定されます。</p>
+<h3>■ 初期化/終了処理</h3>
+<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※15)</sup></p>
 <pre class="source">
 public class HogeService {
     <span class="comment">// 処理の前に呼び出されます。</span>
-    public void init(HttpServletRequest request, HttpServletResponse response) {
-        <span class="comment">// HttpServletRequest, HttpServletResponseにアクセス</span>
-        request.getInitParameter("test"); 
+    public void init() {
     }
     
     ...
@@ -622,6 +619,22 @@ public class HogeService {
 </pre>
 
 <p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>および<a href="http://www.springframework.org/">Spring Framework</a>に対応したContainerを標準添付しています。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+<p>デフォルトでは最低限の機能のみ持つnet.arnx.jsonic.web.Containerが使われます。このコンテナが持つ機能は次の通りです。</p>
+<ul>
+<li>オブジェクトはClass#newInstance()により毎回生成されます。</li>
+<li>JSPの暗黙オブジェクトライクなパブリックフィールドベースの簡易DIを提供します。
+<pre class="source">
+public class HogeService {
+    <span class="comment">// Servlet関係のオブジェクトを設定します。クラスだけでなくフィールド名も合わせる必要があります。</span>
+	public ServletConfig config;
+	public ServletContext application;
+	public HttpServletRequest request;
+	public HttpServletResponse response;
+	public HttpSession session;
+}
+</pre></li>
+<li>ログは、ServletContext#log()を使って書き出されます。</li>
+</ul>
 
 <h3>■ Gateway Filter</h3>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
@@ -732,6 +745,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>のトラッキング情報あるいはフォーラムまでご連絡ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2009/01/10 version 1.1.0 beta2</h3>
+<ul>
+<li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
+<li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
+<li>[非互換] メソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の挿入を廃止しました。</li>
+</ul>
 
 <h3>2008/12/03 version 1.1.0 beta1</h3>
 <ul>

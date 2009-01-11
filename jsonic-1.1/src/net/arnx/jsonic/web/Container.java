@@ -20,8 +20,6 @@ import java.lang.reflect.Method;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -54,11 +52,9 @@ public class Container {
 				field.set(o, context);
 			} else if (ServletConfig.class.equals(c) && "config".equals(field.getName())) {
 				field.set(o, config);
-			} else if ((ServletRequest.class.equals(c) || HttpServletRequest.class.equals(c))
-				&& "request".equals(field.getName())) {
+			} else if (HttpServletRequest.class.equals(c) && "request".equals(field.getName())) {
 				field.set(o, request);
-			} else if ((ServletResponse.class.equals(c) || HttpServletResponse.class.equals(c))
-				&& "response".equals(field.getName())) {
+			} else if (HttpServletResponse.class.equals(c)	&& "response".equals(field.getName())) {
 				field.set(o, response);
 			} else if (HttpSession.class.equals(c) && "session".equals(field.getName())) {
 				field.set(o, request.getSession(true));
