@@ -556,7 +556,7 @@ public class WebServiceServlet extends HttpServlet {
 		return sb.toString();
 	}
 	
-	private static class DefaultJSON extends JSON {
+	static class DefaultJSON extends JSON {
 		@Override
 		protected boolean ignore(Class<?> target, Member member) {
 			return member.getDeclaringClass().equals(Throwable.class)

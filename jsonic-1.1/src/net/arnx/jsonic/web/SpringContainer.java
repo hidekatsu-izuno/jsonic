@@ -33,6 +33,7 @@ public class SpringContainer extends Container {
 	
 	@Override
 	public void init(ServletConfig config, ServletContext context) {
+		super.init(config, context);
 		appContext = WebApplicationContextUtils.getWebApplicationContext(context);
 	}
 	
