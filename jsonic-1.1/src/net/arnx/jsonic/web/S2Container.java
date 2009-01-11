@@ -15,6 +15,9 @@
  */
 package net.arnx.jsonic.web;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
 import org.seasar.framework.env.Env;
 import org.seasar.framework.log.Logger;
@@ -23,7 +26,7 @@ public class S2Container extends Container {
 	private static Logger log = Logger.getLogger(S2Container.class);
 	
 	@Override
-	public Object getComponent(String className) throws Exception {
+	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		ClassLoader loader = Thread.currentThread().getContextClassLoader();
 		
 		return SingletonS2ContainerFactory

@@ -16,6 +16,8 @@
 package net.arnx.jsonic.web;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,7 +35,7 @@ public class SpringContainer extends Container {
 	}
 	
 	@Override
-	public Object getComponent(String className) throws Exception {
+	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		Object component = appContext.getBean(className);
 		
 		if (component instanceof ApplicationContextAware) {

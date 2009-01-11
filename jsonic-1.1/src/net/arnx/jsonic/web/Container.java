@@ -18,6 +18,8 @@ package net.arnx.jsonic.web;
 import java.lang.reflect.Method;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class Container {
 	public Boolean debug = false;
@@ -34,8 +36,12 @@ public class Container {
 		return (debug != null) ? debug : false;
 	}
 	
-	public Object getComponent(String className) throws Exception {
-		return Class.forName(className).newInstance();
+	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		Object o = Class.forName(className).newInstance();
+		
+		
+		
+		return o;
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {

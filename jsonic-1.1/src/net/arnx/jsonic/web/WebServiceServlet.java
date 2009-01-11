@@ -37,14 +37,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONConvertException;
@@ -232,7 +228,7 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 				
-		JSONInvoker json = new JSONInvoker(request, response);
+		JSONInvoker json = new JSONInvoker();
 		json.setLocale(request.getLocale());
 		
 		// request processing
@@ -254,7 +250,10 @@ public class WebServiceServlet extends HttpServlet {
 				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
 					throw new NoSuchMethodException(req.method);
 				} else {
-					Object component = container.getComponent(route.getComponentClass(req.method.substring(0, delimiter)));
+					Object component = container.getComponent(
+						route.getComponentClass(req.method.substring(0, delimiter)),
+						request, response
+					);
 					if (component == null) {
 						throw new NoSuchMethodException(req.method);
 					}
@@ -368,12 +367,12 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// request processing
-		JSONInvoker json = new JSONInvoker(request, response);
+		JSONInvoker json = new JSONInvoker();
 		json.setLocale(request.getLocale());
 		
 		Object res = null;
 		try {
-			Object component = container.getComponent(route.getComponentClass(null));
+			Object component = container.getComponent(route.getComponentClass(null), request, response);
 			if (component == null) {
 				response.sendError(SC_NOT_FOUND, "Not Found");
 				return;
@@ -468,15 +467,7 @@ public class WebServiceServlet extends HttpServlet {
 		super.destroy();
 	}
 	
-	class JSONInvoker extends JSON {
-		private HttpServletRequest request;
-		private HttpServletResponse response;
-		
-		public JSONInvoker(HttpServletRequest request, HttpServletResponse response) {
-			this.request = request;
-			this.response = response;
-		}
-		
+	class JSONInvoker extends JSON {		
 		public Object invoke(Object o, String methodName, List<Object> args) throws Exception {
 			if (args == null) {
 				args = Collections.EMPTY_LIST;
@@ -494,9 +485,7 @@ public class WebServiceServlet extends HttpServlet {
 			if (container.init == null) count++;
 			if (container.destroy == null) count++;
 			for (Method m : c.getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())) {
-					continue;
-				}				
+				if (Modifier.isStatic(m.getModifiers())) continue;
 				
 				if (container.init != null && m.getName().equals(container.init)) {
 					init = m;
@@ -528,33 +517,9 @@ public class WebServiceServlet extends HttpServlet {
 				params[i] = convert(args.get(i), paramTypes[i]);
 			}
 			
-			if (init != null) {
-				Class<?>[] sTypes = init.getParameterTypes();
-				if (sTypes.length > 0) {
-					Object[] sparams = new Object[sTypes.length];
-					for (int i = 0; i < sTypes.length; i++) {
-						sparams[i] = get(sTypes[i]);
-					}
-					init.invoke(o, sparams);
-				} else {
-					init.invoke(o);
-				}
-			}
-			
+			if (init != null) init.invoke(o);
 			Object ret = method.invoke(o, params);
-			
-			if (destroy != null) {
-				Class<?>[] sTypes = destroy.getParameterTypes();
-				if (sTypes.length > 0) {
-					Object[] sparams = new Object[sTypes.length];
-					for (int i = 0; i < sTypes.length; i++) {
-						sparams[i] = get(sTypes[i]);
-					}
-					destroy.invoke(o, sparams);
-				} else {
-					destroy.invoke(o);
-				}
-			}
+			if (destroy != null) destroy.invoke(o);
 			
 			return ret;
 		}
@@ -563,23 +528,6 @@ public class WebServiceServlet extends HttpServlet {
 		protected boolean ignore(Class<?> target, Member member) {
 			return member.getDeclaringClass().equals(Throwable.class)
 				|| super.ignore(target, member);
-		}
-		
-		private Object get(Type t) {
-			Class c = (t instanceof Class) ? (Class)t : null;
-			
-			if (c != null) {
-				if (ServletRequest.class.equals(c) || HttpServletRequest.class.equals(c)) {
-					return request;
-				} else if (ServletResponse.class.equals(c) || HttpServletResponse.class.equals(c)) {
-					return response;
-				} else if (ServletContext.class.equals(c)) {
-					return getServletContext();
-				} else if (HttpSession.class.equals(c)) {
-					return request.getSession(true);
-				}
-			}
-			return null;
 		}
 	}
 	
