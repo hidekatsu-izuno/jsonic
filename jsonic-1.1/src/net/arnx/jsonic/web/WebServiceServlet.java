@@ -53,6 +53,7 @@ public class WebServiceServlet extends HttpServlet {
 	
 	class Config {
 		public Class<? extends Container> container;
+		public Class<? extends JSON> processor;
 		public String encoding;
 		public Boolean expire;
 		public Map<String, String> mappings;
@@ -82,6 +83,8 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
+		
+		if (config.processor == null) config.processor = DefaultJSON.class;
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
@@ -228,7 +231,12 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 				
-		JSONInvoker json = new JSONInvoker();
+		JSON json = null;
+		try {
+			json = (JSON)config.processor.newInstance();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
 		json.setLocale(request.getLocale());
 		
 		// request processing
@@ -259,7 +267,7 @@ public class WebServiceServlet extends HttpServlet {
 					}
 					
 					json.setContext(component);
-					result = json.invoke(component, req.method.substring(delimiter+1), req.params);
+					result = invoke(json, component, req.method.substring(delimiter+1), req.params);
 				}
 			}
 		} catch (ClassNotFoundException e) {
@@ -367,7 +375,12 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// request processing
-		JSONInvoker json = new JSONInvoker();
+		JSON json = null;
+		try {
+			json = (JSON)config.processor.newInstance();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
 		json.setLocale(request.getLocale());
 		
 		Object res = null;
@@ -400,7 +413,7 @@ public class WebServiceServlet extends HttpServlet {
 				}
 			}
 			json.setContext(component);
-			res = json.invoke(component, methodName, params);
+			res = invoke(json, component, methodName, params);
 		} catch (ClassNotFoundException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND, "Not Found");
@@ -466,69 +479,61 @@ public class WebServiceServlet extends HttpServlet {
 		container.destory();
 		super.destroy();
 	}
-	
-	class JSONInvoker extends JSON {		
-		public Object invoke(Object o, String methodName, List<Object> args) throws Exception {
-			if (args == null) {
-				args = Collections.EMPTY_LIST;
-			}
-			
-			methodName = toLowerCamel(methodName);
-			
-			Class<?> c = o.getClass();
-			
-			Method init = null;
-			Method method = null;
-			Method destroy = null;
-			
-			int count = 0;
-			if (container.init == null) count++;
-			if (container.destroy == null) count++;
-			for (Method m : c.getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())) continue;
-				
-				if (container.init != null && m.getName().equals(container.init)) {
-					init = m;
-					count++;
-				} else if (container.destroy != null && m.getName().equals(container.destroy)) {
-					destroy = m;
-					count++;
-				} else if (m.getName().equals(methodName)) {
-					method = m;
-					count++;
-				}
-				
-				if (count > 3) break;
-			}
-			
-			if (method == null || container.limit(c, method)) {
-				StringBuilder sb = new StringBuilder(c.getName());
-				sb.append('#').append(methodName).append('(');
-				String json = JSON.encode(args);
-				sb.append(json, 1, json.length()-1);
-				sb.append(')');
-				throw new NoSuchMethodException("method missing: " + sb.toString());
-			}
-			
-			Type[] paramTypes = method.getGenericParameterTypes();
-			Object[] params = new Object[paramTypes.length];
-			int length = Math.min(args.size(), params.length);
-			for (int i = 0; i < length ; i++) {
-				params[i] = convert(args.get(i), paramTypes[i]);
-			}
-			
-			if (init != null) init.invoke(o);
-			Object ret = method.invoke(o, params);
-			if (destroy != null) destroy.invoke(o);
-			
-			return ret;
+		
+	public Object invoke(JSON json, Object o, String methodName, List<Object> args) throws Exception {
+		if (args == null) {
+			args = Collections.EMPTY_LIST;
 		}
 		
-		@Override
-		protected boolean ignore(Class<?> target, Member member) {
-			return member.getDeclaringClass().equals(Throwable.class)
-				|| super.ignore(target, member);
+		methodName = toLowerCamel(methodName);
+		
+		Class<?> c = o.getClass();
+		
+		Method init = null;
+		Method method = null;
+		Method destroy = null;
+		
+		int count = 0;
+		if (container.init == null) count++;
+		if (container.destroy == null) count++;
+		for (Method m : c.getMethods()) {
+			if (Modifier.isStatic(m.getModifiers())) continue;
+			
+			if (container.init != null && m.getName().equals(container.init)) {
+				init = m;
+				count++;
+			} else if (container.destroy != null && m.getName().equals(container.destroy)) {
+				destroy = m;
+				count++;
+			} else if (m.getName().equals(methodName)) {
+				method = m;
+				count++;
+			}
+			
+			if (count > 3) break;
 		}
+				
+		if (method == null || container.limit(c, method)) {
+			StringBuilder sb = new StringBuilder(c.getName());
+			sb.append('#').append(methodName).append('(');
+			String str = json.format(args);
+			sb.append(str, 1, str.length()-1);
+			sb.append(')');
+			throw new NoSuchMethodException("method missing: " + sb.toString());
+		}
+		
+		Type[] paramTypes = method.getGenericParameterTypes();
+		Object[] params = new Object[paramTypes.length];
+		int length = Math.min(args.size(), params.length);
+		for (int i = 0; i < length ; i++) {
+			params[i] = json.convert(args.get(i), paramTypes[i]);
+		}
+		
+		if (init != null) init.invoke(o);
+		Object ret = method.invoke(o, params);
+		if (destroy != null) destroy.invoke(o);
+		
+		return ret;
 	}
 	
 	private static String toLowerCamel(String name) {
@@ -549,6 +554,14 @@ public class WebServiceServlet extends HttpServlet {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
 		}
 		return sb.toString();
+	}
+	
+	static class DefaultJSON extends JSON {
+		@Override
+		protected boolean ignore(Class<?> target, Member member) {
+			return member.getDeclaringClass().equals(Throwable.class)
+				|| super.ignore(target, member);
+		}
 	}
 }
 	
