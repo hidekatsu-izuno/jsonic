@@ -490,7 +490,6 @@ public class WebServiceServlet extends HttpServlet {
 		Class<?> c = o.getClass();
 		
 		Method init = null;
-		Method validate = null;
 		Method method = null;
 		Method destroy = null;
 		
@@ -503,9 +502,6 @@ public class WebServiceServlet extends HttpServlet {
 			if (container.init != null && m.getName().equals(container.init)) {
 				init = m;
 				count++;
-			} else if (container.validate != null && m.getName().equals(container.validate)) {
-				validate = m;
-				count++;
 			} else if (container.destroy != null && m.getName().equals(container.destroy)) {
 				destroy = m;
 				count++;
@@ -514,7 +510,7 @@ public class WebServiceServlet extends HttpServlet {
 				count++;
 			}
 			
-			if (count > 4) break;
+			if (count > 3) break;
 		}
 				
 		if (method == null || container.limit(c, method)) {
@@ -534,7 +530,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		if (init != null) init.invoke(o);
-		if (validate != null) validate.invoke(o);
 		Object ret = method.invoke(o, params);
 		if (destroy != null) destroy.invoke(o);
 		
