@@ -1962,7 +1962,7 @@ public class JSON {
 		return (T)data;
 	}
 	
-	protected boolean ignore(Class<?> target, Member member) {
+	protected boolean ignore(Context context, Class<?> target, Member member) {
 		int modifiers = member.getModifiers();
 		if (Modifier.isStatic(modifiers)) return true;
 		if (Modifier.isTransient(modifiers)) return true;
@@ -2076,13 +2076,13 @@ public class JSON {
 		boolean access = tryAccess(context, c);
 		
 		for (Field f : c.getFields()) {
-			if (ignore(c, f)) continue;
+			if (ignore(context, c, f)) continue;
 			if (access) f.setAccessible(true);
 			props.put(f.getName(), f);
 		}
 		
 		for (Method m : c.getMethods()) {
-			if (ignore(c, m)) continue;
+			if (ignore(context, c, m)) continue;
 
 			String name = m.getName();
 			int start = 0;
@@ -2115,13 +2115,13 @@ public class JSON {
 		boolean access = tryAccess(context, c);
 
 		for (Field f : c.getFields()) {
-			if (ignore(c, f)) continue;
+			if (ignore(context, c, f)) continue;
 			if (access) f.setAccessible(true);
 			props.put(f.getName(), f);
 		}
 		
 		for (Method m : c.getMethods()) {
-			if (ignore(c, m)) continue;
+			if (ignore(context, c, m)) continue;
 
 			String name = m.getName();
 			int start = 0;

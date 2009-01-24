@@ -558,9 +558,9 @@ public class WebServiceServlet extends HttpServlet {
 	
 	static class DefaultJSON extends JSON {
 		@Override
-		protected boolean ignore(Class<?> target, Member member) {
+		protected boolean ignore(Context context, Class<?> target, Member member) {
 			return member.getDeclaringClass().equals(Throwable.class)
-				|| super.ignore(target, member);
+				|| super.ignore(context, target, member);
 		}
 	}
 }
