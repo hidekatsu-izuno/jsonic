@@ -161,8 +161,7 @@ public class JSON {
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
 	public static Class prototype = JSON.class;
-
-	private static final Character ROOT_KEY = '$';
+	
 	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
 	
 	private static Class<?>[] dynaBeanClasses = null;
@@ -474,7 +473,7 @@ public class JSON {
 		if (contextObject != null) context.scope = contextObject.getClass();
 		if (context.scope == null) context.scope = source.getClass().getEnclosingClass();
 		if (context.scope == null) context.scope = source.getClass();
-		context.enter(ROOT_KEY);
+		context.enter('$');
 		format(context, source, ap);
 		context.exit();
 		return ap;
@@ -485,7 +484,6 @@ public class JSON {
 			o = null;
 		}
 		
-		boolean escape = true;
 		if (o instanceof Class) {
 			o = ((Class)o).getName();
 		} else if (o instanceof Character
@@ -499,9 +497,6 @@ public class JSON {
 			o = ((Enum)o).ordinal();
 		} else if (o instanceof char[]) {
 			o = new String((char[])o);
-		} else if (o instanceof byte[]) {
-			escape = false;
-			o = Base64.encode((byte[])o);
 		} else if (o instanceof Iterable) {
 			o = ((Iterable)o).iterator();
 		} else if (o instanceof Object[]) {
@@ -543,11 +538,7 @@ public class JSON {
 		if (o == null) {
 			ap.append("null");
 		} else if (o instanceof CharSequence) {
-			if (escape) {
-				formatString((CharSequence)o, ap);
-			} else {
-				ap.append('"').append((CharSequence)o).append('"');
-			}
+			formatString((CharSequence)o, ap);
 		} else if (o instanceof Double || o instanceof Float) {
 			double d = ((Number)o).doubleValue();
 			if (Double.isNaN(d) || Double.isInfinite(d)) {
@@ -559,6 +550,8 @@ public class JSON {
 			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
 		} else if (o instanceof Number || o instanceof Boolean) {
 			ap.append(o.toString());
+		} else if (o instanceof byte[]) {
+			ap.append('"').append(Base64.encode((byte[])o)).append('"');
 		} else if (o.getClass().isArray()) {
 			ap.append('[');
 			if (o instanceof boolean[]) {
@@ -777,9 +770,9 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.level+1; j++) ap.append('\t');
 				}
-				context.enter(entry.getKey());
 				formatString(entry.getKey().toString(), ap).append(':');
 				if (this.prettyPrint) ap.append(' ');
+				context.enter(entry.getKey());
 				format(context, entry.getValue(), ap);
 				context.exit();
 				if (i.hasNext()) ap.append(',');
@@ -1443,7 +1436,7 @@ public class JSON {
 		return MessageFormat.format(bundle.getString(id), args);
 	}
 	
-	public final Object convert(Object value, Type type) throws JSONConvertException {
+	public Object convert(Object value, Type type) throws JSONConvertException {
 		Context context = new Context();
 		
 		Class<?> cls = getRawType(type);
@@ -1453,7 +1446,9 @@ public class JSON {
 		
 		Object result = null;
 		try {
+			context.enter('$');
 			result = convert(context, value, cls, type);
+			context.exit();
 		} catch (Exception e) {
 			throw new JSONConvertException(getMessage("json.convert.ConversionError", 
 					(value instanceof String) ? "\"" + value + "\"" : value, type, context), e);
@@ -1498,7 +1493,9 @@ public class JSON {
 					} else {
 						map = (Map)create(context, c);
 						for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
+							context.enter('.');
 							Object key = convert(context, entry.getKey(), pc0, pt0);
+							context.exit();
 							
 							context.enter(entry.getKey());
 							map.put(key, convert(context, entry.getValue(), pc1, pt1));
@@ -1610,7 +1607,9 @@ public class JSON {
 					Class<?> pc1 = getRawType(pt1);
 
 					for (int i = 0; i < src.size(); i++) {
+						context.enter('.');
 						Object key = convert(context, i, pc0, pt0);
+						context.exit();
 						
 						context.enter(i);
 						map.put(key, convert(context, src.get(i), pc1, pt1));
@@ -2078,7 +2077,8 @@ public class JSON {
 		for (Field f : c.getFields()) {
 			if (ignore(context, c, f)) continue;
 			if (access) f.setAccessible(true);
-			props.put(f.getName(), f);
+			JSONHint hint = f.getAnnotation(JSONHint.class);
+			props.put((hint == null || hint.name() == null) ? f.getName() : hint.name(), f);
 		}
 		
 		for (Method m : c.getMethods()) {
@@ -2103,7 +2103,8 @@ public class JSON {
 			}
 			
 			if (access) m.setAccessible(true);
-			props.put(Introspector.decapitalize(name.substring(start)), m);
+			JSONHint hint = m.getAnnotation(JSONHint.class);
+			props.put((hint == null || hint.name() == null) ? Introspector.decapitalize(name.substring(start)) : hint.name(), m);
 		}
 		
 		return props;
@@ -2285,6 +2286,8 @@ public class JSON {
 				Object key = path.get(i);
 				if (key instanceof Number) {
 					sb.append('[').append(key).append(']');
+				} else if (key instanceof Character) {
+					sb.append(key);
 				} else {
 					String str = key.toString();
 					boolean escape = false;
@@ -2306,8 +2309,7 @@ public class JSON {
 						}
 						sb.append(']');
 					} else {
-						if (i != 0) sb.append('.');
-						sb.append(str);
+						sb.append('.').append(str);
 					}
 				}
 			}
