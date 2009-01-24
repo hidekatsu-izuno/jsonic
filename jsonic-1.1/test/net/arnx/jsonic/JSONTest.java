@@ -859,56 +859,56 @@ public class JSONTest {
 		assertEquals(new BigDecimal("100.01"), json.convert("100.01", BigDecimal.class));
 		
 		// Date
-		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convertChild('$', "1", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "00", Date.class, Date.class));
-		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convertChild('$', "001", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "2000", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "200001", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "20000101", Date.class, Date.class));
+		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert("1", Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("00", Date.class));
+		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert("001", Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000", Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("200001", Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("20000101", Date.class));
 		
-		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convertChild('$', "2000010112", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convertChild('$', "200001011205", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convertChild('$', "20000101120506", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convertChild('$', "20000101120506+0900", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("2000010112", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("200001011205", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101120506", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101120506+0900", Date.class));
 		
-		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convertChild('$', "20000101T12", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convertChild('$', "20000101T1205", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convertChild('$', "20000101T120506", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convertChild('$', "20000101T120506+0900", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("20000101T12", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("20000101T1205", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101T120506", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101T120506+0900", Date.class));
 		
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "2000-01", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "2000-01-01", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convertChild('$', "2000-01-01T12", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convertChild('$', "2000-01-01T12:05", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convertChild('$', "2000-01-01T12:05+09:00", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convertChild('$', "2000-01-01T12:05:06", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convertChild('$', "2000-01-01T12:05:06+09:00", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convertChild('$', "2000-01-01T12:05:06.100", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convertChild('$', "2000-01-01T12:05:06.100+09:00", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "2000年1月1日", Date.class, Date.class));
-		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convertChild('$', "2000年1月1日(月)", Date.class, Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000-01", Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000-01-01", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("2000-01-01T12", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("2000-01-01T12:05", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("2000-01-01T12:05+09:00", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("2000-01-01T12:05:06", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("2000-01-01T12:05:06+09:00", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convert("2000-01-01T12:05:06.100", Date.class));
+		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convert("2000-01-01T12:05:06.100+09:00", Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000年1月1日", Date.class));
+		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000年1月1日(月)", Date.class));
 		
-		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convertChild('$', "Mon Dec 24 2007 20:13:15", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convertChild('$', "Mon Dec 24 2007 20:13:15 GMT+0900", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convertChild('$', "Mon, 24 Dec 2007 11:13:15 GMT", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convertChild('$', "Mon Dec 24 20:13:54 UTC+0900 2007", Date.class, Date.class));
-		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convertChild('$', "Mon, 24 Dec 2007 11:13:54 UTC", Date.class, Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon Dec 24 2007 20:13:15", Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon Dec 24 2007 20:13:15 GMT+0900", Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon, 24 Dec 2007 11:13:15 GMT", Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert("Mon Dec 24 20:13:54 UTC+0900 2007", Date.class));
+		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert("Mon, 24 Dec 2007 11:13:54 UTC", Date.class));
 
 		long t = toDate(2007, 12, 24, 20, 13, 15, 0).getTime();
-		assertEquals(new java.sql.Date(t), json.convertChild('$', "Mon Dec 24 2007 20:13:15", java.sql.Date.class, java.sql.Date.class));
-		assertEquals(new Timestamp(t), json.convertChild('$', "Mon Dec 24 2007 20:13:15", Timestamp.class, Timestamp.class));
+		assertEquals(new java.sql.Date(t), json.convert("Mon Dec 24 2007 20:13:15", java.sql.Date.class));
+		assertEquals(new Timestamp(t), json.convert("Mon Dec 24 2007 20:13:15", Timestamp.class));
 		t = toDate(1970, 1, 1, 20, 13, 15, 0).getTime();
-		assertEquals(new Time(t), json.convertChild('$', "20:13:15", Time.class, Time.class));
-		assertEquals(TimeZone.getTimeZone("JST"), json.convertChild('$', "JST", TimeZone.class, TimeZone.class));
+		assertEquals(new Time(t), json.convert("20:13:15", Time.class));
+		assertEquals(TimeZone.getTimeZone("JST"), json.convert("JST", TimeZone.class));
 		
-		assertEquals(ExampleEnum.Example1, json.convertChild('$', "Example1", ExampleEnum.class, ExampleEnum.class));
-		assertEquals(ExampleEnum.Example1, json.convertChild('$', 1, ExampleEnum.class, ExampleEnum.class));
-		assertEquals(ExampleEnum.Example1, json.convertChild('$', "1", ExampleEnum.class, ExampleEnum.class));
-		assertEquals(ExampleEnum.Example1, json.convertChild('$', true, ExampleEnum.class, ExampleEnum.class));
-		assertEquals(ExampleEnum.Example0, json.convertChild('$', false, ExampleEnum.class, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convert("Example1", ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convert(1, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convert("1", ExampleEnum.class));
+		assertEquals(ExampleEnum.Example1, json.convert(true, ExampleEnum.class));
+		assertEquals(ExampleEnum.Example0, json.convert(false, ExampleEnum.class));
 				
 		try {
-			json.convertChild('$', 5, ExampleEnum.class, ExampleEnum.class);
+			json.convert(5, ExampleEnum.class);
 			fail();		
 		} catch (JSONConvertException e) {
 			System.out.println(e);
@@ -916,7 +916,7 @@ public class JSONTest {
 		}
 		
 		try {
-			json.convertChild('$', "aaa", int.class, int.class);
+			json.convert("aaa", int.class);
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -930,7 +930,7 @@ public class JSONTest {
 			
 			Map map = new LinkedHashMap();
 			map.put("aaa", "aaa");
-			json.convertChild('$', map, test.getClass(), test.getClass());
+			json.convert(map, test.getClass());
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -969,7 +969,7 @@ public class JSONTest {
 			ArrayList list = new ArrayList();
 			list.add("aaa");
 			map.put("aaa", list);
-			json.convertChild('$', map, test.getClass(), test.getClass());
+			json.convert(map, test.getClass());
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);

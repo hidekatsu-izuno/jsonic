@@ -15,6 +15,7 @@
  */
 package net.arnx.jsonic;
 
+import java.beans.Introspector;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -383,12 +384,10 @@ public class JSON {
 		return JSON.newInstance().parse(reader, type);
 	}
 	
-	private Object context = null;
+	private Object contextObject = null;
 	private Locale locale;
 	private boolean prettyPrint = false;	
 	private int maxDepth = 32;
-	
-	private transient Class<?> scope = null;
 
 	public JSON() {
 	}
@@ -403,7 +402,7 @@ public class JSON {
 	 * @param value context object
 	 */
 	public void setContext(Object value) {
-		this.context = value;
+		this.contextObject = value;
 	}
 
 	
@@ -419,7 +418,6 @@ public class JSON {
 		this.locale = locale;
 	}
 	
-	
 	/**
 	 * Output json string is to human-readable format.
 	 * 
@@ -428,7 +426,6 @@ public class JSON {
 	public void setPrettyPrint(boolean value) {
 		this.prettyPrint = value;
 	}
-	
 	
 	/**
 	 * Sets maximum depth for the nest level.
@@ -472,19 +469,19 @@ public class JSON {
 	 * @return a json string
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		if (context != null) scope = context.getClass();
-		if (scope == null) scope = source.getClass().getEnclosingClass();
-		if (scope == null) scope = source.getClass();
-		try {
-			ap = format(source, ap, 0);
-		} finally {
-			scope = null;
-		}
+		Context context = new Context();
+		
+		if (contextObject != null) context.scope = contextObject.getClass();
+		if (context.scope == null) context.scope = source.getClass().getEnclosingClass();
+		if (context.scope == null) context.scope = source.getClass();
+		context.enter(ROOT_KEY);
+		format(context, source, ap);
+		context.exit();
 		return ap;
 	}
 	
-	private Appendable format(Object o, Appendable ap, int level) throws IOException {
-		if (level > this.maxDepth) {
+	private Appendable format(Context context, Object o, Appendable ap) throws IOException {
+		if (context.level > this.maxDepth) {
 			o = null;
 		}
 		
@@ -535,7 +532,7 @@ public class JSON {
 			}
 		}
 		
-		if (level == 0 && (o == null
+		if (context.level == 0 && (o == null
 				|| o instanceof CharSequence
 				|| o instanceof Boolean
 				|| o instanceof Number
@@ -629,41 +626,45 @@ public class JSON {
 			}
 			ap.append(']');
 		} else if (o instanceof Iterator) {
-			Iterator<?> i = (Iterator<?>)o;
+			Iterator<?> t = (Iterator<?>)o;
 			ap.append('[');
-			boolean isEmpty = !i.hasNext();
-			while (i.hasNext()) {
-				Object item = i.next();
+			boolean isEmpty = !t.hasNext();
+			for (int i = 0; t.hasNext(); i++) {
+				Object item = t.next();
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.level+1; j++) ap.append('\t');
 				}
 				if (item == o) item = null;
-				format(item, ap, level+1);
-				if (i.hasNext()) ap.append(',');
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
+				if (t.hasNext()) ap.append(',');
 			}
 			if (this.prettyPrint && !isEmpty) {
 				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
+				for (int j = 0; j < context.level; j++) ap.append('\t');
 			}
 			ap.append(']');
 		} else if (o instanceof Enumeration) {
 			Enumeration<?> e = (Enumeration<?>)o;
 			ap.append('[');
 			boolean isEmpty = !e.hasMoreElements();
-			while (e.hasMoreElements()) {
+			for (int i = 0; e.hasMoreElements(); i++) {
 				Object item = e.nextElement();
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.level+1; j++) ap.append('\t');
 				}
 				if (item == o) item = null;
-				format(item, ap, level+1);
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
 				if (e.hasMoreElements()) ap.append(',');
 			}
 			if (this.prettyPrint && !isEmpty) {
 				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
+				for (int j = 0; j < context.level; j++) ap.append('\t');
 			}
 			ap.append(']');
 		} else if (o instanceof Element) {
@@ -676,7 +677,7 @@ public class JSON {
 				ap.append(',');
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.level+1; j++) ap.append('\t');
 				}
 				ap.append('{');
 				for (int i = 0; i < names.getLength(); i++) {
@@ -685,7 +686,7 @@ public class JSON {
 					}
 					if (this.prettyPrint && names.getLength() > 1) {
 						ap.append('\n');
-						for (int j = 0; j < level+2; j++) ap.append('\t');
+						for (int j = 0; j < context.level+2; j++) ap.append('\t');
 					}
 					Node node = names.item(i);
 					if (node instanceof Attr) {
@@ -697,7 +698,7 @@ public class JSON {
 				}
 				if (this.prettyPrint && names.getLength() > 1) {
 					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.level+1; j++) ap.append('\t');
 				}
 				ap.append('}');
 			}
@@ -709,15 +710,17 @@ public class JSON {
 						ap.append(',');
 						if (this.prettyPrint) {
 							ap.append('\n');
-							for (int j = 0; j < level+1; j++) ap.append('\t');
+							for (int j = 0; j < context.level+1; j++) ap.append('\t');
 						}
-						format(node, ap, level+1);
+						context.enter(elem.hasAttributes() ? i+2 : i+1);
+						format(context, node, ap);
+						context.exit();
 					}
 				}
 			}
 			if (this.prettyPrint) {
 				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
+				for (int j = 0; j < context.level; j++) ap.append('\t');
 			}
 			ap.append(']');
 		} else {
@@ -748,7 +751,7 @@ public class JSON {
 				Class<?> c = o.getClass();
 				
 				map = new TreeMap();
-				for (Map.Entry<String, Member> entry : getGetProperties(c).entrySet()) {
+				for (Map.Entry<String, Member> entry : getGetProperties(context, c).entrySet()) {
 					Object value = null;
 					try {
 						if (entry.getValue() instanceof Method) {
@@ -772,16 +775,18 @@ public class JSON {
 				
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.level+1; j++) ap.append('\t');
 				}
+				context.enter(entry.getKey());
 				formatString(entry.getKey().toString(), ap).append(':');
 				if (this.prettyPrint) ap.append(' ');
-				format(entry.getValue(), ap, level+1);
+				format(context, entry.getValue(), ap);
+				context.exit();
 				if (i.hasNext()) ap.append(',');
 			}
 			if (this.prettyPrint && !map.isEmpty()) {
 				ap.append('\n');
-				for (int j = 0; j < level; j++) ap.append('\t');
+				for (int j = 0; j < context.level; j++) ap.append('\t');
 			}
 			ap.append('}');
 		}
@@ -1439,48 +1444,23 @@ public class JSON {
 	}
 	
 	public final Object convert(Object value, Type type) throws JSONConvertException {
+		Context context = new Context();
+		
 		Class<?> cls = getRawType(type);
-		if (context != null) scope = context.getClass();
-		if (scope == null) scope = cls.getEnclosingClass();
-		if (scope == null) scope = cls;
+		if (contextObject != null) context.scope = contextObject.getClass();
+		if (context.scope == null) context.scope = cls.getEnclosingClass();
+		if (context.scope == null) context.scope = cls;
+		
 		Object result = null;
 		try {
-			result = convertChild(ROOT_KEY, value, cls, type);
-		} finally {
-			scope = null;
-		}
-		return result;
-	}
-	
-	/**
-	 * If you converts a lower level object in this method, You should call this method.
-	 * 
-	 * @param key property key object. If the parent is a array, it is Integer. otherwise it is String. 
-	 * @param value null or the instance of Map, List, Number, String or Boolean.
-	 * @param c class for converting
-	 * @param type generics type for converting. type equals to c if not generics.
-	 * @return a converted object
-	 * @throws JSONConvertException if conversion failed.
-	 */
-	protected final <T> T convertChild(Object key, Object value, Class<? extends T> c, Type type) throws JSONConvertException {
-		T result = null;
-		Class cast = (c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c;
-		
-		try {
-			result = (T)cast.cast(convert(key, value, c, type));
-		} catch (JSONConvertException e) {
-			e.add(key);
-			throw e;
+			result = convert(context, value, cls, type);
 		} catch (Exception e) {
-			JSONConvertException ce = new JSONConvertException(getMessage("json.convert.ConversionError", 
-					(value instanceof String) ? "\"" + value + "\"" : value, type), e);
-			ce.add(key);
-			throw ce;
+			throw new JSONConvertException(getMessage("json.convert.ConversionError", 
+					(value instanceof String) ? "\"" + value + "\"" : value, type, context), e);
 		}
-
 		return result;
 	}
-	
+		
 	/**
 	 * Converts Map/List/Number/String/Boolean/null to other Java Objects. If you converts a lower level object in this method, 
 	 * You should call convertChild method.
@@ -1492,7 +1472,7 @@ public class JSON {
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
-	protected <T> T convert(Object key, Object value, Class<? extends T> c, Type type) throws Exception {
+	protected <T> T convert(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
 		if (value == null) {
@@ -1516,14 +1496,17 @@ public class JSON {
 							&& Object.class.equals(pc1)) {
 						map = (Map)value;
 					} else {
-						map = (Map)create(c);
+						map = (Map)create(context, c);
 						for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
-							map.put(convertChild(key, entry.getKey(), pc0, pt0), 
-									convertChild(entry.getKey(), entry.getValue(), pc1, pt1));
+							Object key = convert(context, entry.getKey(), pc0, pt0);
+							
+							context.enter(entry.getKey());
+							map.put(key, convert(context, entry.getValue(), pc1, pt1));
+							context.exit();
 						}
 					}
 				} else {
-					map = (Map)create(c);
+					map = (Map)create(context, c);
 					map.putAll(src);
 				}
 				data = map;
@@ -1531,7 +1514,7 @@ public class JSON {
 				if (!(src instanceof SortedMap)) {
 					src = new TreeMap(src);
 				}
-				data = convert(key, src.values(), c, type);
+				data = convert(context, src.values(), c, type);
 			} else if (c.isPrimitive() || c.isEnum()
 					|| Number.class.isAssignableFrom(c)
 					|| CharSequence.class.isAssignableFrom(c)
@@ -1554,24 +1537,27 @@ public class JSON {
 						List list = (List)target;
 						target = (!list.isEmpty()) ? list.get(0) : null;
 					}
-					data = convert(key, target, c, type);
+					data = convert(context, target, c, type);
 				}
 			} else {
-				Object o = create(c);
+				Object o = create(context, c);
 				if (o != null) {
-					Map<String, Member> props = getSetProperties(c);
+					Map<String, Member> props = getSetProperties(context, c);
 					for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
 						String name = entry.getKey().toString();
 						Member target = mapping(c, props, name);
 						if (target == null) continue;
 						
+						context.enter(name);
 						if (target instanceof Method) {
 							Method m = (Method)target;
-							m.invoke(o, convertChild(name, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+							m.invoke(o, convert(context, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 						} else {
 							Field f = (Field)target;
-							f.set(o, convertChild(name, entry.getValue(), f.getType(), f.getGenericType()));
+							context.enter(name);
+							f.set(o, convert(context, entry.getValue(), f.getType(), f.getGenericType()));
 						}
+						context.exit();
 					}
 					data = o;
 				} else {
@@ -1590,13 +1576,15 @@ public class JSON {
 					if (Object.class.equals(pc)) {
 						collection = src;
 					} else {
-						collection = (Collection)create(c);
+						collection = (Collection)create(context, c);
 						for (int i = 0; i < src.size(); i++) {
-							collection.add(convertChild(i, src.get(i), pc, pt));
+							context.enter(i);
+							collection.add(convert(context, src.get(i), pc, pt));
+							context.exit();
 						}
 					}
 				} else {
-					collection = (Collection)create(c);
+					collection = (Collection)create(context, c);
 					collection.addAll(src);
 				}
 				data = collection;
@@ -1607,11 +1595,13 @@ public class JSON {
 						((GenericArrayType)type).getGenericComponentType() : pc;
 				
 				for (int i = 0; i < src.size(); i++) {
-					Array.set(array, i, convertChild(i, src.get(i), pc, pt));
+					context.enter(i);
+					Array.set(array, i, convert(context, src.get(i), pc, pt));
+					context.exit();
 				}
 				data = array;
 			} else if (Map.class.isAssignableFrom(c)) {
-				Map map = (Map)create(c);
+				Map map = (Map)create(context, c);
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
@@ -1620,7 +1610,11 @@ public class JSON {
 					Class<?> pc1 = getRawType(pt1);
 
 					for (int i = 0; i < src.size(); i++) {
-						map.put(convertChild(key, i, pc0, pt0), convertChild(i, src.get(i), pc1, pt1));
+						Object key = convert(context, i, pc0, pt0);
+						
+						context.enter(i);
+						map.put(key, convert(context, src.get(i), pc1, pt1));
+						context.exit();
 					}
 				} else {
 					for (int i = 0; i < src.size(); i++) {
@@ -1637,7 +1631,7 @@ public class JSON {
 					data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
 				}
 			} else if (!src.isEmpty()) {
-				data = convert(key, src.get(0), c, type);
+				data = convert(context, src.get(0), c, type);
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -1836,7 +1830,7 @@ public class JSON {
 			} else if (CharSequence.class.isAssignableFrom(c)) {
 				data = value.toString();
 			} else if (Appendable.class.isAssignableFrom(c)) {
-				Appendable a = (Appendable)create(c);
+				Appendable a = (Appendable)create(context, c);
 				data = a.append(value.toString());
 			} else if (Enum.class.isAssignableFrom(c)) {
 				if (value instanceof Number) {
@@ -1857,26 +1851,26 @@ public class JSON {
 				data = Pattern.compile(value.toString());
 			} else if (Date.class.isAssignableFrom(c)) {
 				if (value instanceof Number) {
-					Date date = (Date)create(c);
+					Date date = (Date)create(context, c);
 					date.setTime(((Number)value).longValue());
 					data = date;
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						Date date = (Date)create(c);
+						Date date = (Date)create(context, c);
 						date.setTime(convertDate(str));
 						data = date;
 					}
 				}
 			} else if (Calendar.class.isAssignableFrom(c)) {
 				if (value instanceof Number) {
-					Calendar cal = (Calendar)create(c);
+					Calendar cal = (Calendar)create(context, c);
 					cal.setTimeInMillis(((Number)value).longValue());
 					data = cal;
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						Calendar cal = (Calendar)create(c);
+						Calendar cal = (Calendar)create(context, c);
 						cal.setTimeInMillis(convertDate(str));
 						data = cal;
 					}
@@ -1935,13 +1929,14 @@ public class JSON {
 					data = Class.forName(value.toString());
 				}
 			} else if (Collection.class.isAssignableFrom(c)) {
-				Collection collection = (Collection)create(c);
+				Collection collection = (Collection)create(context, c);
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Class<?> pc = getRawType(pt);
-
-					collection.add(convertChild(0, value, pc, pt));
+					context.enter(0);
+					collection.add(convert(context, value, pc, pt));
+					context.exit();
 				} else {
 					collection.add(value);
 				}
@@ -1954,8 +1949,9 @@ public class JSON {
 					Class<?> pc = c.getComponentType();
 					Type pt = (type instanceof GenericArrayType) ? 
 							((GenericArrayType)type).getGenericComponentType() : pc;
-							
-					Array.set(array, 0, convertChild(0, value, pc, pt));
+					context.enter(0);
+					Array.set(array, 0, convert(context, value, pc, pt));
+					context.exit();
 					data = array;
 				}
 			} else {
@@ -1974,7 +1970,7 @@ public class JSON {
 		return false;
 	}
 	
-	protected Object create(Class<?> c) throws Exception {
+	protected Object create(Context context, Class<?> c) throws Exception {
 		Object instance = null;
 		
 		if (c.isInterface()) {
@@ -2000,9 +1996,9 @@ public class JSON {
 		} else if ((c.isMemberClass() || c.isAnonymousClass()) && !Modifier.isStatic(c.getModifiers())) {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
-			if(tryAccess(c)) con.setAccessible(true);
-			if (context != null && eClass.isAssignableFrom(context.getClass())) {
-				instance = con.newInstance(context);
+			if(tryAccess(context, c)) con.setAccessible(true);
+			if (contextObject != null && eClass.isAssignableFrom(contextObject.getClass())) {
+				instance = con.newInstance(contextObject);
 			} else {
 				instance = con.newInstance((Object)null);
 			}
@@ -2010,7 +2006,7 @@ public class JSON {
 			if (Date.class.isAssignableFrom(c)) {
 				try {
 					Constructor con = c.getDeclaredConstructor(long.class);
-					if(tryAccess(c)) con.setAccessible(true);
+					if(tryAccess(context, c)) con.setAccessible(true);
 					instance = con.newInstance(0l);
 				} catch (NoSuchMethodException e) {
 					// no handle
@@ -2019,7 +2015,7 @@ public class JSON {
 			
 			if (instance == null) {
 				Constructor con = c.getDeclaredConstructor();
-				if(tryAccess(c)) con.setAccessible(true);
+				if(tryAccess(context, c)) con.setAccessible(true);
 				instance = con.newInstance();
 			}
 		}
@@ -2038,16 +2034,16 @@ public class JSON {
 		return target;
 	}
 	
-	private boolean tryAccess(Class<?> c) {
+	private boolean tryAccess(Context context, Class<?> c) {
 		int modifier = c.getModifiers();
-		if (scope != null && !Modifier.isPublic(modifier)) {
+		if (context.scope != null && !Modifier.isPublic(modifier)) {
 			if (Modifier.isPrivate(modifier)) {
-				return scope.equals(c.getEnclosingClass());
+				return context.scope.equals(c.getEnclosingClass());
 			}
 			int cpos = c.getName().lastIndexOf('.');
-			int ppos = scope.getName().lastIndexOf('.');
+			int ppos = context.scope.getName().lastIndexOf('.');
 			if (cpos == ppos 
-				&& (cpos == -1 || c.getName().substring(0, cpos).equals(scope.getName().substring(0, ppos)))) {
+				&& (cpos == -1 || c.getName().substring(0, cpos).equals(context.scope.getName().substring(0, ppos)))) {
 				return true;
 			}
 		}
@@ -2074,10 +2070,10 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private Map<String, Member> getGetProperties(Class<?> c) {
+	private Map<String, Member> getGetProperties(Context context, Class<?> c) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
-		boolean access = tryAccess(c);
+		boolean access = tryAccess(context, c);
 		
 		for (Field f : c.getFields()) {
 			if (ignore(c, f)) continue;
@@ -2106,21 +2102,17 @@ public class JSON {
 				continue;
 			}
 			
-			char[] cs = name.toCharArray();
-			if (cs.length < start+2 || Character.isLowerCase(cs[start+1])) {
-				cs[start] = Character.toLowerCase(cs[start]);
-			}
 			if (access) m.setAccessible(true);
-			props.put(new String(cs, start, cs.length-start), m);
+			props.put(Introspector.decapitalize(name.substring(start)), m);
 		}
 		
 		return props;
 	}
 	
-	private Map<String, Member> getSetProperties(Class<?> c) {
+	private Map<String, Member> getSetProperties(Context context, Class<?> c) {
 		Map<String, Member> props = new HashMap<String, Member>();
 		
-		boolean access = tryAccess(c);
+		boolean access = tryAccess(context, c);
 
 		for (Field f : c.getFields()) {
 			if (ignore(c, f)) continue;
@@ -2143,12 +2135,8 @@ public class JSON {
 				continue;
 			}
 			
-			char[] cs = name.toCharArray();
-			if (cs.length < start+2 || Character.isLowerCase(cs[start+1])) {
-				cs[start] = Character.toLowerCase(cs[start]);
-			}
 			if (access) m.setAccessible(true);
-			props.put(new String(cs, start, cs.length-start), m);
+			props.put(Introspector.decapitalize(name.substring(start)), m);
 		}
 		
 		return props;
@@ -2257,6 +2245,44 @@ public class JSON {
 		}
 		
 		return format.parse(value).getTime();
+	}
+	
+	public class Context {
+		List<Object> path = new ArrayList();
+		int level = -1;
+		Class<?> scope;
+		
+		public int getLevel() {
+			return level;
+		}
+		
+		public Class<?> getScope() {
+			return scope;
+		}
+		
+		void enter(Object key) {
+			path.add(key);
+			level++;
+		}
+		
+		void exit() {
+			path.remove(path.size()-1);
+			level--;
+		}
+		
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < path.size(); i++) {
+				Object key = path.get(i);
+				if (key instanceof Number) {
+					sb.append('[').append(key).append(']');
+				} else {
+					if (i != 0) sb.append('.');
+					sb.append(key);
+				}
+			}
+			return sb.toString();
+		}
 	}
 }
 
