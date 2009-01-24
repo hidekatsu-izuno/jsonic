@@ -155,7 +155,7 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
-public class JSON {
+public class JSON {	
 	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
