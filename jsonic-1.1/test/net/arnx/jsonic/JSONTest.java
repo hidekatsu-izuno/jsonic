@@ -179,7 +179,12 @@ public class JSONTest {
 		dynaBean.set("b", "string");
 		dynaBean.set("c", true);
 		assertEquals("{\"a\":100,\"b\":\"string\",\"c\":true,\"d\":null}", JSON.encode(dynaBean));
-
+		
+		AnnotationBean aBean = new AnnotationBean();
+		aBean.field = 1;
+		aBean.method = 2;
+		aBean.dummy = 3;
+		assertEquals("{\"a\":1,\"b\":2,\"method\":2}", JSON.encode(aBean));
 	}
 
 	@Test
@@ -317,6 +322,12 @@ public class JSONTest {
 		
 		GenericsBean out = JSON.decode("{\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
 		assertEquals(gb, out);
+		
+		AnnotationBean aBean = new AnnotationBean();
+		aBean.field = 1;
+		aBean.method = 2;
+		aBean.dummy = 0;
+		assertEquals(aBean, JSON.decode("{\"a\":1,\"b\":2,\"method\":2}", AnnotationBean.class));
 	}
 
 	@Test
@@ -1430,6 +1441,50 @@ class SuperLinkedHashMap extends LinkedHashMap {
 @SuppressWarnings("unchecked")
 class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
+}
+
+@SuppressWarnings("unchecked")
+class AnnotationBean {
+	@JSONHint(name="a")
+	public int field;
+	
+	public int method;
+	
+	@JSONHint(name="b")
+	public int getMethod() {
+		return method;
+	}
+	
+	@JSONHint(ignore=true)
+	public int dummy;
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + dummy;
+		result = prime * result + field;
+		result = prime * result + method;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AnnotationBean other = (AnnotationBean) obj;
+		if (dummy != other.dummy)
+			return false;
+		if (field != other.field)
+			return false;
+		if (method != other.method)
+			return false;
+		return true;
+	}
 }
 
 enum ExampleEnum {

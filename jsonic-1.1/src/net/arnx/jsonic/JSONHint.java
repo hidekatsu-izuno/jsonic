@@ -23,5 +23,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JSONHint {
-	String name();
+	String name() default "";
+	boolean ignore() default false;
 }

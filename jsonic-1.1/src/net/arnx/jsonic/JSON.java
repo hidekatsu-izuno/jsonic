@@ -2077,8 +2077,14 @@ public class JSON {
 		for (Field f : c.getFields()) {
 			if (ignore(context, c, f)) continue;
 			if (access) f.setAccessible(true);
-			JSONHint hint = f.getAnnotation(JSONHint.class);
-			props.put((hint == null || hint.name() == null) ? f.getName() : hint.name(), f);
+			
+			String name = f.getName();
+			if (f.isAnnotationPresent(JSONHint.class)) {
+				JSONHint hint = f.getAnnotation(JSONHint.class);
+				if (hint.ignore()) continue;
+				if (hint.name().length() > 0) name = hint.name();
+			}
+			props.put(name, f);
 		}
 		
 		for (Method m : c.getMethods()) {
@@ -2103,8 +2109,13 @@ public class JSON {
 			}
 			
 			if (access) m.setAccessible(true);
-			JSONHint hint = m.getAnnotation(JSONHint.class);
-			props.put((hint == null || hint.name() == null) ? Introspector.decapitalize(name.substring(start)) : hint.name(), m);
+			name = Introspector.decapitalize(name.substring(start));
+			if (m.isAnnotationPresent(JSONHint.class)) {
+				JSONHint hint = m.getAnnotation(JSONHint.class);
+				if (hint.ignore()) continue;
+				if (hint.name().length() > 0) name = hint.name();
+			}
+			props.put(name, m);
 		}
 		
 		return props;
@@ -2118,7 +2129,14 @@ public class JSON {
 		for (Field f : c.getFields()) {
 			if (ignore(context, c, f)) continue;
 			if (access) f.setAccessible(true);
-			props.put(f.getName(), f);
+			
+			String name = f.getName();
+			if (f.isAnnotationPresent(JSONHint.class)) {
+				JSONHint hint = f.getAnnotation(JSONHint.class);
+				if (hint.ignore()) continue;
+				if (hint.name().length() > 0) name = hint.name();
+			}
+			props.put(name, f);
 		}
 		
 		for (Method m : c.getMethods()) {
@@ -2137,7 +2155,13 @@ public class JSON {
 			}
 			
 			if (access) m.setAccessible(true);
-			props.put(Introspector.decapitalize(name.substring(start)), m);
+			name = Introspector.decapitalize(name.substring(start));
+			if (m.isAnnotationPresent(JSONHint.class)) {
+				JSONHint hint = m.getAnnotation(JSONHint.class);
+				if (hint.ignore()) continue;
+				if (hint.name().length() > 0) name = hint.name();
+			}
+			props.put(name, m);
 		}
 		
 		return props;
