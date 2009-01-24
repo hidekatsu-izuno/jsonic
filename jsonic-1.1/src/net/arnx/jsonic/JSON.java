@@ -2248,7 +2248,7 @@ public class JSON {
 	}
 	
 	public class Context {
-		List<Object> path = new ArrayList();
+		List<Object> path = new ArrayList(8);
 		int level = -1;
 		Class<?> scope;
 		
@@ -2258,6 +2258,15 @@ public class JSON {
 		
 		public Class<?> getScope() {
 			return scope;
+		}
+		
+		public Object getKey() {
+			return path.get(level);
+		}
+		
+		public Object getKey(int level) {
+			if (level < 0) level = this.level+level; 
+			return path.get(level);
 		}
 		
 		void enter(Object key) {
