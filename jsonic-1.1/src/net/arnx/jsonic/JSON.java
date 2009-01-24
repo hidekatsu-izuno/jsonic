@@ -2277,8 +2277,29 @@ public class JSON {
 				if (key instanceof Number) {
 					sb.append('[').append(key).append(']');
 				} else {
-					if (i != 0) sb.append('.');
-					sb.append(key);
+					String str = key.toString();
+					boolean escape = false;
+					for (int j = 0; j < str.length(); j++) {
+						if (j == 0) {
+							escape = !Character.isJavaIdentifierStart(str.charAt(j));
+						} else {
+							escape = !Character.isJavaIdentifierPart(str.charAt(j));
+						}
+						if (escape) break;
+					}
+					
+					if (escape) {
+						sb.append('[');
+						try {
+							formatString(str, sb);
+						} catch (IOException e) {
+							// no handle
+						}
+						sb.append(']');
+					} else {
+						if (i != 0) sb.append('.');
+						sb.append(str);
+					}
 				}
 			}
 			return sb.toString();
