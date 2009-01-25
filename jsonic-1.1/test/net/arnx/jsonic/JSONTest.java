@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -184,8 +185,16 @@ public class JSONTest {
 		aBean.field = 1;
 		aBean.method = 2;
 		aBean.dummy = 3;
-		aBean.c = toDate(2009, 1, 1, 0, 0, 0, 0);
-		assertEquals("{\"a\":1,\"b\":\"002.0\",\"c\":\"2009/01/01\",\"method\":2}", JSON.encode(aBean));
+		aBean.date = toDate(2009, 1, 1, 0, 0, 0, 0);
+		aBean.array1 = new int[] {1, 2, 3};
+		aBean.array2 = new Integer[] {1, 2, 3};
+		
+		List<Integer> array3 = new ArrayList<Integer>();
+		array3.add(1);
+		array3.add(2);
+		array3.add(3);
+		aBean.array3 = array3;
+		assertEquals("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2}", JSON.encode(aBean));
 	}
 
 	@Test
@@ -328,8 +337,16 @@ public class JSONTest {
 		aBean.field = 1;
 		aBean.method = 2;
 		aBean.dummy = 0;
-		aBean.c = toDate(2009, 1, 1, 0, 0, 0, 0);
-		assertEquals(aBean, JSON.decode("{\"a\":1,\"b\":\"2.01\",\"c\":\"2009/01/01\",\"method\":2}", AnnotationBean.class));
+		aBean.date = toDate(2009, 1, 1, 0, 0, 0, 0);
+		aBean.array1 = new int[] {1, 2, 3};
+		aBean.array2 = new Integer[] {1, 2, 3};
+		
+		List<Integer> array3 = new ArrayList<Integer>();
+		array3.add(1);
+		array3.add(2);
+		array3.add(3);
+		aBean.array3 = array3;
+		assertEquals(aBean, JSON.decode("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\",\"method\":2}", AnnotationBean.class));
 	}
 
 	@Test
@@ -1461,12 +1478,25 @@ class AnnotationBean {
 	public int dummy;
 	
 	@JSONHint(format="yyyy/MM/dd")
-	public Date c;
+	public Date date;
+	
+	@JSONHint(format="###,###,0.0")
+	public int[] array1;
+	
+	@JSONHint(format="###,###,0.0")
+	public Integer[] array2;
+	
+	@JSONHint(format="###,###,0.0")
+	public List<Integer> array3;
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + Arrays.hashCode(array1);
+		result = prime * result + Arrays.hashCode(array2);
+		result = prime * result + ((array3 == null) ? 0 : array3.hashCode());
+		result = prime * result + ((date == null) ? 0 : date.hashCode());
 		result = prime * result + dummy;
 		result = prime * result + field;
 		result = prime * result + method;
@@ -1482,6 +1512,20 @@ class AnnotationBean {
 		if (getClass() != obj.getClass())
 			return false;
 		AnnotationBean other = (AnnotationBean) obj;
+		if (!Arrays.equals(array1, other.array1))
+			return false;
+		if (!Arrays.equals(array2, other.array2))
+			return false;
+		if (array3 == null) {
+			if (other.array3 != null)
+				return false;
+		} else if (!array3.equals(other.array3))
+			return false;
+		if (date == null) {
+			if (other.date != null)
+				return false;
+		} else if (!date.equals(other.date))
+			return false;
 		if (dummy != other.dummy)
 			return false;
 		if (field != other.field)

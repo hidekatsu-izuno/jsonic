@@ -561,21 +561,29 @@ public class JSON {
 			ap.append(o.toString());
 		} else if (o instanceof byte[]) {
 			ap.append('"').append(Base64.encode((byte[])o)).append('"');
-		} else if (o.getClass().isArray()) {
+		} else if (o instanceof boolean[]) {
 			ap.append('[');
-			if (o instanceof boolean[]) {
-				boolean[] array = (boolean[])o;
-				for (int i = 0; i < array.length; i++) {
-					ap.append(String.valueOf(array[i]));
-					if (i != array.length-1) {
-						ap.append(',');
-						if (this.prettyPrint) ap.append(' ');
-					}
+			boolean[] array = (boolean[])o;
+			for (int i = 0; i < array.length; i++) {
+				ap.append(String.valueOf(array[i]));
+				if (i != array.length-1) {
+					ap.append(',');
+					if (this.prettyPrint) ap.append(' ');
 				}
-			} else if (o instanceof short[]) {
+			}
+			ap.append(']');
+		} else if (o.getClass().isArray()) {
+			NumberFormat f = context.format(NumberFormat.class);			
+			
+			ap.append('[');
+			if (o instanceof short[]) {
 				short[] array = (short[])o;
 				for (int i = 0; i < array.length; i++) {
-					ap.append(String.valueOf(array[i]));
+					if (f != null) {
+						formatString(f.format(array[i]), ap);
+					} else {
+						ap.append(String.valueOf(array[i]));
+					}
 					if (i != array.length-1) {
 						ap.append(',');
 						if (this.prettyPrint) ap.append(' ');
@@ -584,7 +592,11 @@ public class JSON {
 			} else if (o instanceof int[]) {
 				int[] array = (int[])o;
 				for (int i = 0; i < array.length; i++) {
-					ap.append(String.valueOf(array[i]));
+					if (f != null) {
+						formatString(f.format(array[i]), ap);
+					} else {
+						ap.append(String.valueOf(array[i]));
+					}
 					if (i != array.length-1) {
 						ap.append(',');
 						if (this.prettyPrint) ap.append(' ');
@@ -593,7 +605,11 @@ public class JSON {
 			} else if (o instanceof long[]) {
 				long[] array = (long[])o;
 				for (int i = 0; i < array.length; i++) {
-					ap.append(String.valueOf(array[i]));
+					if (f != null) {
+						formatString(f.format(array[i]), ap);
+					} else {
+						ap.append(String.valueOf(array[i]));
+					}
 					if (i != array.length-1) {
 						ap.append(',');
 						if (this.prettyPrint) ap.append(' ');
@@ -604,6 +620,8 @@ public class JSON {
 				for (int i = 0; i < array.length; i++) {
 					if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
 						ap.append('"').append(Float.toString(array[i])).append('"');
+					} else if (f != null) {
+						formatString(f.format(array[i]), ap);
 					} else {
 						ap.append(String.valueOf(array[i]));
 					}
@@ -617,6 +635,8 @@ public class JSON {
 				for (int i = 0; i < array.length; i++) {
 					if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
 						ap.append('"').append(Double.toString(array[i])).append('"');
+					} else if (f != null) {
+						formatString(f.format(array[i]), ap);
 					} else {
 						ap.append(String.valueOf(array[i]));
 					}
@@ -2212,7 +2232,7 @@ public class JSON {
 		}
 		
 		void enter(Object key) {
-			enter(key, null);
+			enter(key, (level >= 0) ? path.get(level).hint : null);
 		}
 		
 		void exit() {
