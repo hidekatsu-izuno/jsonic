@@ -1896,7 +1896,7 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						Date date = (Date)create(context, c);
-						date.setTime(convertDate(str));
+						date.setTime(convertDate(str, locale));
 						data = date;
 					}
 				}
@@ -1909,7 +1909,7 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						Calendar cal = (Calendar)create(context, c);
-						cal.setTimeInMillis(convertDate(str));
+						cal.setTimeInMillis(convertDate(str, locale));
 						data = cal;
 					}
 				}
@@ -2113,11 +2113,12 @@ public class JSON {
 		}
 	}
 	
-	private Long convertDate(String value) throws java.text.ParseException {
+	private static Long convertDate(String value, Locale locale) throws java.text.ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
 		}
+		if (locale == null) locale = Locale.getDefault();
 		value = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})")
 			.matcher(value)
 			.replaceFirst("GMT$1:$2");
@@ -2187,15 +2188,11 @@ public class JSON {
 				String pattern = "EEE MMM dd yyyy HH:mm:ss Z";
 				format = new SimpleDateFormat(
 						(value.length() < pattern.length()) ? pattern.substring(0, value.length()) : pattern, Locale.ENGLISH);
-			} else if (locale != null) {
+			} else  {
 				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, locale);
-			} else {
-				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 			}
-		} else if (locale != null) {
-			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
 		} else {
-			format = DateFormat.getDateInstance(DateFormat.MEDIUM);
+			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
 		}
 		
 		return format.parse(value).getTime();
