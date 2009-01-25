@@ -184,7 +184,8 @@ public class JSONTest {
 		aBean.field = 1;
 		aBean.method = 2;
 		aBean.dummy = 3;
-		assertEquals("{\"a\":1,\"b\":2,\"method\":2}", JSON.encode(aBean));
+		aBean.c = toDate(2009, 1, 1, 0, 0, 0, 0);
+		assertEquals("{\"a\":1,\"b\":\"002.0\",\"c\":\"2009/01/01\",\"method\":2}", JSON.encode(aBean));
 	}
 
 	@Test
@@ -327,7 +328,8 @@ public class JSONTest {
 		aBean.field = 1;
 		aBean.method = 2;
 		aBean.dummy = 0;
-		assertEquals(aBean, JSON.decode("{\"a\":1,\"b\":2,\"method\":2}", AnnotationBean.class));
+		aBean.c = toDate(2009, 1, 1, 0, 0, 0, 0);
+		assertEquals(aBean, JSON.decode("{\"a\":1,\"b\":\"2.01\",\"c\":\"2009/01/01\",\"method\":2}", AnnotationBean.class));
 	}
 
 	@Test
@@ -1450,13 +1452,16 @@ class AnnotationBean {
 	
 	public int method;
 	
-	@JSONHint(name="b")
+	@JSONHint(name="b", format="###,###,000.0")
 	public int getMethod() {
 		return method;
 	}
 	
 	@JSONHint(ignore=true)
 	public int dummy;
+	
+	@JSONHint(format="yyyy/MM/dd")
+	public Date c;
 
 	@Override
 	public int hashCode() {
