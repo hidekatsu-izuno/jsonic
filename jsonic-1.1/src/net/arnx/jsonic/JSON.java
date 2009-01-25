@@ -25,6 +25,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
@@ -37,7 +38,11 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.Format;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -480,7 +485,7 @@ public class JSON {
 	}
 	
 	private Appendable format(Context context, Object o, Appendable ap) throws IOException {
-		if (context.level > this.maxDepth) {
+		if (context.getLevel() > this.maxDepth) {
 			o = null;
 		}
 		
@@ -501,8 +506,12 @@ public class JSON {
 			o = ((Iterable)o).iterator();
 		} else if (o instanceof Object[]) {
 			o = Arrays.asList((Object[])o).iterator();
+		} else if (o instanceof Number) {
+			NumberFormat f = context.format(NumberFormat.class);
+			o = (f != null) ? f.format(o) : o;
 		} else if (o instanceof Date) {
-			o = ((Date)o).getTime();
+			DateFormat f = context.format(DateFormat.class);
+			o = (f != null) ? f.format(o) : ((Date)o).getTime();
 		} else if (o instanceof Calendar) {
 			o = ((Calendar)o).getTimeInMillis();
 		} else if (o instanceof Pattern) {
@@ -527,7 +536,7 @@ public class JSON {
 			}
 		}
 		
-		if (context.level == 0 && (o == null
+		if (context.getLevel() == 0 && (o == null
 				|| o instanceof CharSequence
 				|| o instanceof Boolean
 				|| o instanceof Number
@@ -626,7 +635,7 @@ public class JSON {
 				Object item = t.next();
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < context.level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
 				if (item == o) item = null;
 				context.enter(i);
@@ -636,7 +645,7 @@ public class JSON {
 			}
 			if (this.prettyPrint && !isEmpty) {
 				ap.append('\n');
-				for (int j = 0; j < context.level; j++) ap.append('\t');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
 		} else if (o instanceof Enumeration) {
@@ -647,7 +656,7 @@ public class JSON {
 				Object item = e.nextElement();
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < context.level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
 				if (item == o) item = null;
 				context.enter(i);
@@ -657,7 +666,7 @@ public class JSON {
 			}
 			if (this.prettyPrint && !isEmpty) {
 				ap.append('\n');
-				for (int j = 0; j < context.level; j++) ap.append('\t');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
 		} else if (o instanceof Element) {
@@ -670,7 +679,7 @@ public class JSON {
 				ap.append(',');
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < context.level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
 				ap.append('{');
 				for (int i = 0; i < names.getLength(); i++) {
@@ -679,7 +688,7 @@ public class JSON {
 					}
 					if (this.prettyPrint && names.getLength() > 1) {
 						ap.append('\n');
-						for (int j = 0; j < context.level+2; j++) ap.append('\t');
+						for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
 					}
 					Node node = names.item(i);
 					if (node instanceof Attr) {
@@ -691,7 +700,7 @@ public class JSON {
 				}
 				if (this.prettyPrint && names.getLength() > 1) {
 					ap.append('\n');
-					for (int j = 0; j < context.level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
 				ap.append('}');
 			}
@@ -703,7 +712,7 @@ public class JSON {
 						ap.append(',');
 						if (this.prettyPrint) {
 							ap.append('\n');
-							for (int j = 0; j < context.level+1; j++) ap.append('\t');
+							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 						}
 						context.enter(elem.hasAttributes() ? i+2 : i+1);
 						format(context, node, ap);
@@ -713,7 +722,7 @@ public class JSON {
 			}
 			if (this.prettyPrint) {
 				ap.append('\n');
-				for (int j = 0; j < context.level; j++) ap.append('\t');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
 		} else {
@@ -741,11 +750,16 @@ public class JSON {
 					// no handle
 				}
 			} else {
-				Class<?> c = o.getClass();
-				
-				map = new TreeMap();
-				for (Map.Entry<String, Member> entry : getGetProperties(context, c).entrySet()) {
-					Object value = null;
+				map = context.getGetProperties(o.getClass());
+			}
+			
+			ap.append('{');
+			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
+				Map.Entry entry = (Map.Entry)i.next();
+				Object value = entry.getValue();
+				JSONHint hint = null;
+				if (value instanceof AnnotatedElement) {
+					hint = ((AnnotatedElement)value).getAnnotation(JSONHint.class);
 					try {
 						if (entry.getValue() instanceof Method) {
 							Method m = (Method)entry.getValue();
@@ -754,32 +768,26 @@ public class JSON {
 							Field f = (Field)entry.getValue();
 							value =  f.get(o);
 						}
-						map.put(entry.getKey(), value);
 					} catch (Exception e) {
 						// no handle
 					}
 				}
-			}
-			
-			ap.append('{');
-			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
-				Map.Entry entry = (Map.Entry)i.next();
-				if (entry.getKey() == null || entry.getValue() == o) continue; 
+				if (entry.getKey() == null || value == o) continue; 
 				
 				if (this.prettyPrint) {
 					ap.append('\n');
-					for (int j = 0; j < context.level+1; j++) ap.append('\t');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
 				formatString(entry.getKey().toString(), ap).append(':');
 				if (this.prettyPrint) ap.append(' ');
-				context.enter(entry.getKey());
-				format(context, entry.getValue(), ap);
+				context.enter(entry.getKey(), hint);
+				format(context, value, ap);
 				context.exit();
 				if (i.hasNext()) ap.append(',');
 			}
 			if (this.prettyPrint && !map.isEmpty()) {
 				ap.append('\n');
-				for (int j = 0; j < context.level; j++) ap.append('\t');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append('}');
 		}
@@ -1539,13 +1547,13 @@ public class JSON {
 			} else {
 				Object o = create(context, c);
 				if (o != null) {
-					Map<String, Member> props = getSetProperties(context, c);
+					Map<String, AnnotatedElement> props = context.getSetProperties(c);
 					for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
 						String name = entry.getKey().toString();
-						Member target = mapping(c, props, name);
+						AnnotatedElement target = mapping(c, props, name);
 						if (target == null) continue;
 						
-						context.enter(name);
+						context.enter(name, target.getAnnotation(JSONHint.class));
 						if (target instanceof Method) {
 							Method m = (Method)target;
 							m.invoke(o, convert(context, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
@@ -1634,24 +1642,13 @@ public class JSON {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} else {
-			if (boolean.class.equals(c) || Boolean.class.equals(c)) {
-				if (value instanceof Number) {
-					data = !value.equals(0);
-				} else {
-					String s = value.toString().trim();
-					if (s.length() == 0
-						|| s.equalsIgnoreCase("f")
-						|| s.equalsIgnoreCase("false")
-						|| s.equalsIgnoreCase("no")
-						|| s.equalsIgnoreCase("off")
-						|| s.equals("NaN")) {
-						data = false;
-					} else {
-						data = true;
-					}
-				}
-			} else if (byte.class.equals(c) || Byte.class.equals(c)) {
+		} else if (Number.class.isAssignableFrom((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c)) {
+			if (value instanceof String) {
+				NumberFormat f = context.format(NumberFormat.class);
+				if (f != null) value = f.parse((String)value);
+			}
+			
+			if (byte.class.equals(c) || Byte.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1 : 0;
 				} else if (value instanceof BigDecimal) {
@@ -1789,6 +1786,8 @@ public class JSON {
 					data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
 				} else if (value instanceof BigDecimal) {
 					data = ((BigDecimal)value).toBigIntegerExact();
+				} else if (value instanceof Number) {
+					data = BigInteger.valueOf(((Number)value).longValue());
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
@@ -1811,6 +1810,26 @@ public class JSON {
 						data = new BigDecimal(str.substring(1));
 					} else {
 						data = new BigDecimal(str);
+					}
+				}
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		} else {
+			if (boolean.class.equals(c) || Boolean.class.equals(c)) {
+				if (value instanceof Number) {
+					data = !value.equals(0);
+				} else {
+					String s = value.toString().trim();
+					if (s.length() == 0
+						|| s.equalsIgnoreCase("f")
+						|| s.equalsIgnoreCase("false")
+						|| s.equalsIgnoreCase("no")
+						|| s.equalsIgnoreCase("off")
+						|| s.equals("NaN")) {
+						data = false;
+					} else {
+						data = true;
 					}
 				}
 			} else if (char.class.equals(c) || Character.class.equals(c)) {
@@ -1961,7 +1980,7 @@ public class JSON {
 		return (T)data;
 	}
 	
-	protected boolean ignore(Context context, Class<?> target, Member member) {
+	protected boolean ignore(Class<?> target, Member member) {
 		int modifiers = member.getModifiers();
 		if (Modifier.isStatic(modifiers)) return true;
 		if (Modifier.isTransient(modifiers)) return true;
@@ -1995,7 +2014,7 @@ public class JSON {
 		} else if ((c.isMemberClass() || c.isAnonymousClass()) && !Modifier.isStatic(c.getModifiers())) {
 			Class eClass = c.getEnclosingClass();
 			Constructor con = c.getDeclaredConstructor(eClass);
-			if(tryAccess(context, c)) con.setAccessible(true);
+			if(context.tryAccess(c)) con.setAccessible(true);
 			if (contextObject != null && eClass.isAssignableFrom(contextObject.getClass())) {
 				instance = con.newInstance(contextObject);
 			} else {
@@ -2005,7 +2024,7 @@ public class JSON {
 			if (Date.class.isAssignableFrom(c)) {
 				try {
 					Constructor con = c.getDeclaredConstructor(long.class);
-					if(tryAccess(context, c)) con.setAccessible(true);
+					if(context.tryAccess(c)) con.setAccessible(true);
 					instance = con.newInstance(0l);
 				} catch (NoSuchMethodException e) {
 					// no handle
@@ -2014,7 +2033,7 @@ public class JSON {
 			
 			if (instance == null) {
 				Constructor con = c.getDeclaredConstructor();
-				if(tryAccess(context, c)) con.setAccessible(true);
+				if(context.tryAccess(c)) con.setAccessible(true);
 				instance = con.newInstance();
 			}
 		}
@@ -2022,8 +2041,8 @@ public class JSON {
 		return instance;
 	}
 	
-	private Member mapping(Class c, Map<String, Member> props, String name) {
-		Member target = props.get(name);
+	private AnnotatedElement mapping(Class c, Map<String, AnnotatedElement> props, String name) {
+		AnnotatedElement target = props.get(name);
 		if (target == null) {
 			target = props.get(toLowerCamel(name));
 			if (target == null) {
@@ -2031,22 +2050,6 @@ public class JSON {
 			}
 		}
 		return target;
-	}
-	
-	private boolean tryAccess(Context context, Class<?> c) {
-		int modifier = c.getModifiers();
-		if (context.scope != null && !Modifier.isPublic(modifier)) {
-			if (Modifier.isPrivate(modifier)) {
-				return context.scope.equals(c.getEnclosingClass());
-			}
-			int cpos = c.getName().lastIndexOf('.');
-			int ppos = context.scope.getName().lastIndexOf('.');
-			if (cpos == ppos 
-				&& (cpos == -1 || c.getName().substring(0, cpos).equals(context.scope.getName().substring(0, ppos)))) {
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	private static String toLowerCamel(String name) {
@@ -2067,104 +2070,6 @@ public class JSON {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
 		}
 		return sb.toString();
-	}
-	
-	private Map<String, Member> getGetProperties(Context context, Class<?> c) {
-		Map<String, Member> props = new HashMap<String, Member>();
-		
-		boolean access = tryAccess(context, c);
-		
-		for (Field f : c.getFields()) {
-			if (ignore(context, c, f)) continue;
-			if (access) f.setAccessible(true);
-			
-			String name = f.getName();
-			if (f.isAnnotationPresent(JSONHint.class)) {
-				JSONHint hint = f.getAnnotation(JSONHint.class);
-				if (hint.ignore()) continue;
-				if (hint.name().length() > 0) name = hint.name();
-			}
-			props.put(name, f);
-		}
-		
-		for (Method m : c.getMethods()) {
-			if (ignore(context, c, m)) continue;
-
-			String name = m.getName();
-			int start = 0;
-			if (name.startsWith("get")
-				&& name.length() > 3
-				&& Character.isUpperCase(name.charAt(3))
-				&& m.getParameterTypes().length == 0
-				&& !m.getReturnType().equals(void.class)) {
-				start = 3;
-			} else if (name.startsWith("is")
-				&& name.length() > 2
-				&& Character.isUpperCase(name.charAt(2))
-				&& m.getParameterTypes().length == 0
-				&& m.getReturnType().equals(boolean.class)) {
-				start = 2;
-			} else {
-				continue;
-			}
-			
-			if (access) m.setAccessible(true);
-			name = Introspector.decapitalize(name.substring(start));
-			if (m.isAnnotationPresent(JSONHint.class)) {
-				JSONHint hint = m.getAnnotation(JSONHint.class);
-				if (hint.ignore()) continue;
-				if (hint.name().length() > 0) name = hint.name();
-			}
-			props.put(name, m);
-		}
-		
-		return props;
-	}
-	
-	private Map<String, Member> getSetProperties(Context context, Class<?> c) {
-		Map<String, Member> props = new HashMap<String, Member>();
-		
-		boolean access = tryAccess(context, c);
-
-		for (Field f : c.getFields()) {
-			if (ignore(context, c, f)) continue;
-			if (access) f.setAccessible(true);
-			
-			String name = f.getName();
-			if (f.isAnnotationPresent(JSONHint.class)) {
-				JSONHint hint = f.getAnnotation(JSONHint.class);
-				if (hint.ignore()) continue;
-				if (hint.name().length() > 0) name = hint.name();
-			}
-			props.put(name, f);
-		}
-		
-		for (Method m : c.getMethods()) {
-			if (ignore(context, c, m)) continue;
-
-			String name = m.getName();
-			int start = 0;
-			if (name.startsWith("set") 
-				&& name.length() > 3
-				&& Character.isUpperCase(name.charAt(3))
-				&& m.getParameterTypes().length == 1
-				&& m.getReturnType().equals(void.class)) {
-				start = 3;
-			} else {
-				continue;
-			}
-			
-			if (access) m.setAccessible(true);
-			name = Introspector.decapitalize(name.substring(start));
-			if (m.isAnnotationPresent(JSONHint.class)) {
-				JSONHint hint = m.getAnnotation(JSONHint.class);
-				if (hint.ignore()) continue;
-				if (hint.name().length() > 0) name = hint.name();
-			}
-			props.put(name, m);
-		}
-		
-		return props;
 	}
 	
 	private static Class<?> getRawType(Type t) {
@@ -2262,20 +2167,24 @@ public class JSON {
 				String pattern = "EEE MMM dd yyyy HH:mm:ss Z";
 				format = new SimpleDateFormat(
 						(value.length() < pattern.length()) ? pattern.substring(0, value.length()) : pattern, Locale.ENGLISH);
-			} else {
+			} else if (locale != null) {
 				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, locale);
+			} else {
+				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 			}
-		} else {
+		} else if (locale != null) {
 			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
+		} else {
+			format = DateFormat.getDateInstance(DateFormat.MEDIUM);
 		}
 		
 		return format.parse(value).getTime();
 	}
 	
 	public class Context {
-		List<Object> path = new ArrayList(8);
-		int level = -1;
 		Class<?> scope;
+		List<ContextState> path = new ArrayList(8);
+		int level = -1;
 		
 		public int getLevel() {
 			return level;
@@ -2286,28 +2195,172 @@ public class JSON {
 		}
 		
 		public Object getKey() {
-			return path.get(level);
+			return path.get(getLevel()).key;
 		}
 		
 		public Object getKey(int level) {
-			if (level < 0) level = this.level+level; 
-			return path.get(level);
+			if (level < 0) level = getLevel()+level; 
+			return path.get(level).key;
+		}
+		
+		void enter(Object key, JSONHint hint) {
+			level++;
+			if (level == path.size()) path.add(new ContextState());
+			ContextState state = path.get(getLevel());
+			state.key = key;
+			state.hint = hint;
 		}
 		
 		void enter(Object key) {
-			path.add(key);
-			level++;
+			enter(key, null);
 		}
 		
 		void exit() {
-			path.remove(path.size()-1);
+			ContextState state = path.get(getLevel());
+			state.key = null;
+			state.hint = null;
 			level--;
+		}
+		
+		Map<String, AnnotatedElement> getGetProperties(Class<?> c) {
+			Map<String, AnnotatedElement> props = new TreeMap<String, AnnotatedElement>();
+			
+			boolean access = tryAccess(c);
+			
+			for (Field f : c.getFields()) {
+				if (ignore(c, f)) continue;
+				
+				String name = f.getName();
+				if (f.isAnnotationPresent(JSONHint.class)) {
+					JSONHint hint = f.getAnnotation(JSONHint.class);
+					if (hint.ignore()) continue;
+					if (hint.name().length() > 0) name = hint.name();
+				}
+				if (access) f.setAccessible(true);
+				props.put(name, f);
+			}
+			
+			for (Method m : c.getMethods()) {
+				if (ignore(c, m)) continue;
+
+				String name = m.getName();
+				int start = 0;
+				if (name.startsWith("get")
+					&& name.length() > 3
+					&& Character.isUpperCase(name.charAt(3))
+					&& m.getParameterTypes().length == 0
+					&& !m.getReturnType().equals(void.class)) {
+					start = 3;
+				} else if (name.startsWith("is")
+					&& name.length() > 2
+					&& Character.isUpperCase(name.charAt(2))
+					&& m.getParameterTypes().length == 0
+					&& m.getReturnType().equals(boolean.class)) {
+					start = 2;
+				} else {
+					continue;
+				}
+				
+				name = Introspector.decapitalize(name.substring(start));
+				if (m.isAnnotationPresent(JSONHint.class)) {
+					JSONHint hint = m.getAnnotation(JSONHint.class);
+					if (hint.ignore()) continue;
+					if (hint.name().length() > 0) name = hint.name();
+				}
+				if (access) m.setAccessible(true);
+				props.put(name, m);
+			}
+			
+			return props;
+		}
+		
+		Map<String, AnnotatedElement> getSetProperties(Class<?> c) {
+			Map<String, AnnotatedElement> props = new HashMap<String, AnnotatedElement>();
+			
+			boolean access = tryAccess(c);
+
+			for (Field f : c.getFields()) {
+				if (ignore(c, f)) continue;
+				if (access) f.setAccessible(true);
+				
+				String name = f.getName();
+				if (f.isAnnotationPresent(JSONHint.class)) {
+					JSONHint hint = f.getAnnotation(JSONHint.class);
+					if (hint.ignore()) continue;
+					if (hint.name().length() > 0) name = hint.name();
+				}
+				props.put(name, f);
+			}
+			
+			for (Method m : c.getMethods()) {
+				if (ignore(c, m)) continue;
+
+				String name = m.getName();
+				int start = 0;
+				if (name.startsWith("set") 
+					&& name.length() > 3
+					&& Character.isUpperCase(name.charAt(3))
+					&& m.getParameterTypes().length == 1
+					&& m.getReturnType().equals(void.class)) {
+					start = 3;
+				} else {
+					continue;
+				}
+				
+				if (access) m.setAccessible(true);
+				name = Introspector.decapitalize(name.substring(start));
+				if (m.isAnnotationPresent(JSONHint.class)) {
+					JSONHint hint = m.getAnnotation(JSONHint.class);
+					if (hint.ignore()) continue;
+					if (hint.name().length() > 0) name = hint.name();
+				}
+				props.put(name, m);
+			}
+			
+			return props;
+		}
+		
+		boolean tryAccess(Class<?> c) {
+			int modifier = c.getModifiers();
+			if (scope != null && !Modifier.isPublic(modifier)) {
+				if (Modifier.isPrivate(modifier)) {
+					return scope.equals(c.getEnclosingClass());
+				}
+				int cpos = c.getName().lastIndexOf('.');
+				int ppos = scope.getName().lastIndexOf('.');
+				if (cpos == ppos 
+					&& (cpos == -1 || c.getName().substring(0, cpos).equals(scope.getName().substring(0, ppos)))) {
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		<T extends Format> T format(Class<? extends T> c) {
+			T format = null;
+			JSONHint hint = path.get(getLevel()).hint;
+			if (hint != null && hint.format().length() > 0) {
+				if (NumberFormat.class.isAssignableFrom(c)) {
+					if (locale != null) {
+						format = (T)new DecimalFormat(hint.format(), new DecimalFormatSymbols(locale));
+					} else {
+						format = (T)new DecimalFormat(hint.format());
+					}
+				} else if (DateFormat.class.isAssignableFrom(c)) {
+					if (locale != null) {
+						format = (T)new SimpleDateFormat(hint.format(), locale);
+					} else {
+						format = (T)new SimpleDateFormat(hint.format());
+					}
+				}
+			}
+			return format;
 		}
 		
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < path.size(); i++) {
-				Object key = path.get(i);
+				Object key = path.get(i).key;
 				if (key instanceof Number) {
 					sb.append('[').append(key).append(']');
 				} else if (key instanceof Character) {
@@ -2339,6 +2392,11 @@ public class JSON {
 			}
 			return sb.toString();
 		}
+	}
+	
+	static class ContextState {
+		Object key;
+		JSONHint hint;
 	}
 }
 
