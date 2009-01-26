@@ -859,13 +859,11 @@ public class JSON {
 		return value; 
 	}
 	
-	public <T> T parse(CharSequence s, Class<? extends T> cls)
-		throws JSONParseException {
+	public <T> T parse(CharSequence s, Class<? extends T> cls) throws JSONParseException {
 		return (T)parse(s, (Type)cls);
 	}
 	
-	public Object parse(CharSequence s, Type type)
-		throws JSONParseException {
+	public Object parse(CharSequence s, Type type) throws JSONParseException {
 		Object value = null;
 		try {
 			value = parse(new CharSequenceParserSource(s), type);
@@ -893,18 +891,15 @@ public class JSON {
 		return parse(new ReaderParserSource(reader));
 	}
 	
-	public <T> T parse(Reader reader, Class<? extends T> cls) 
-		throws IOException, JSONParseException {
+	public <T> T parse(Reader reader, Class<? extends T> cls) throws IOException, JSONParseException {
 		return (T)parse(reader, (Type)cls);
 	}
 	
-	public Object parse(Reader reader, Type type)
-		throws IOException, JSONParseException {
+	public Object parse(Reader reader, Type type) throws IOException, JSONParseException {
 		return parse(new ReaderParserSource(reader), type);
 	}
 	
-	private Object parse(ParserSource s, Type type) 
-		throws IOException, JSONParseException {
+	private Object parse(ParserSource s, Type type) throws IOException, JSONParseException {
 		return convert(parse(s), type);
 	}
 	
