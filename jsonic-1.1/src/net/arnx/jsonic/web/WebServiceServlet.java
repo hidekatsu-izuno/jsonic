@@ -42,7 +42,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONConvertException;
 import net.arnx.jsonic.JSONParseException;
 
@@ -53,7 +52,7 @@ public class WebServiceServlet extends HttpServlet {
 	
 	class Config {
 		public Class<? extends Container> container;
-		public Class<? extends JSON> processor;
+		public Class<? extends net.arnx.jsonic.JSON> processor;
 		public String encoding;
 		public Boolean expire;
 		public Map<String, String> mappings;
@@ -72,7 +71,7 @@ public class WebServiceServlet extends HttpServlet {
 		String configText = servletConfig.getInitParameter("config");
 		if (configText == null) configText = "";
 		 
-		JSON json = new JSON();
+		net.arnx.jsonic.JSON json = new net.arnx.jsonic.JSON();
 		
 		try {
 			config = json.parse(configText, Config.class);
@@ -84,7 +83,7 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.processor == null) config.processor = DefaultJSON.class;
+		if (config.processor == null) config.processor = WebServiceServlet.JSON.class;
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
@@ -231,9 +230,9 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 				
-		JSON json = null;
+		net.arnx.jsonic.JSON json = null;
 		try {
-			json = (JSON)config.processor.newInstance();
+			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -375,9 +374,9 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// request processing
-		JSON json = null;
+		net.arnx.jsonic.JSON json = null;
 		try {
-			json = (JSON)config.processor.newInstance();
+			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -480,7 +479,7 @@ public class WebServiceServlet extends HttpServlet {
 		super.destroy();
 	}
 		
-	protected Object invoke(JSON json, Object o, String methodName, List<Object> args) throws Exception {
+	protected Object invoke(net.arnx.jsonic.JSON json, Object o, String methodName, List<Object> args) throws Exception {
 		if (args == null) {
 			args = Collections.EMPTY_LIST;
 		}
@@ -556,11 +555,11 @@ public class WebServiceServlet extends HttpServlet {
 		return sb.toString();
 	}
 	
-	static class DefaultJSON extends JSON {
+	public static class JSON extends net.arnx.jsonic.JSON {
 		@Override
-		protected boolean ignore(Class<?> target, Member member) {
+		protected boolean ignore(Context context, Class<?> target, Member member) {
 			return member.getDeclaringClass().equals(Throwable.class)
-				|| super.ignore(target, member);
+				|| super.ignore(context, target, member);
 		}
 	}
 }

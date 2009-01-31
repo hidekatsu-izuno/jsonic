@@ -516,9 +516,9 @@ public class JSON {
 			|| value instanceof Iterator
 			|| value instanceof Enumeration
 			|| value instanceof Element
-		) return value;
-
-		if (value instanceof Number) {
+		) {
+			data = value;
+		} else if (value instanceof Number) {
 			NumberFormat f = context.format(NumberFormat.class);
 			data = (f != null) ? f.format(value) : value;
 		} else if (value instanceof Date) {
@@ -2038,7 +2038,7 @@ public class JSON {
 		return (T)data;
 	}
 	
-	protected boolean ignore(Class<?> target, Member member) {
+	protected boolean ignore(Context context, Class<?> target, Member member) {
 		int modifiers = member.getModifiers();
 		if (Modifier.isStatic(modifiers)) return true;
 		if (Modifier.isTransient(modifiers)) return true;
@@ -2046,7 +2046,7 @@ public class JSON {
 		return false;
 	}
 	
-	protected Object create(Context context, Class<?> c) throws Exception {
+	protected <T> T create(Context context, Class<? extends T> c) throws Exception {
 		Object instance = null;
 		
 		if (c.isInterface()) {
@@ -2096,7 +2096,7 @@ public class JSON {
 			}
 		}
 		
-		return instance;
+		return (T)instance;
 	}
 	
 	private static String toLowerCamel(String name) {
@@ -2283,7 +2283,7 @@ public class JSON {
 			boolean access = tryAccess(c);
 			
 			for (Field f : c.getFields()) {
-				if (ignore(c, f)) continue;
+				if (ignore(this, c, f)) continue;
 				
 				String name = f.getName();
 				if (f.isAnnotationPresent(JSONHint.class)) {
@@ -2296,7 +2296,7 @@ public class JSON {
 			}
 			
 			for (Method m : c.getMethods()) {
-				if (ignore(c, m)) continue;
+				if (ignore(this, c, m)) continue;
 
 				String name = m.getName();
 				int start = 0;
@@ -2335,7 +2335,7 @@ public class JSON {
 			boolean access = tryAccess(c);
 
 			for (Field f : c.getFields()) {
-				if (ignore(c, f)) continue;
+				if (ignore(this, c, f)) continue;
 				if (access) f.setAccessible(true);
 				
 				String name = f.getName();
@@ -2348,7 +2348,7 @@ public class JSON {
 			}
 			
 			for (Method m : c.getMethods()) {
-				if (ignore(c, m)) continue;
+				if (ignore(this, c, m)) continue;
 
 				String name = m.getName();
 				int start = 0;

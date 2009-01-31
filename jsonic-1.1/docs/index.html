@@ -27,7 +27,7 @@
 	.elem { font-weight: bold; color: #000099; }
 	.table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
 		margin: 0px 0px 1em 0px; }
-	.table th { background-color: silver; border: 1px solid gray; }
+	.table th { background-color: silver; border: 1px solid gray; white-space: nowrap; }
 	.table td { border: 1px solid gray; padding: 2px 2px;}
 	sup { font-size: 8pt; }
 	.caption { font: 8pt sans-serif; margin: 10px; }
@@ -216,7 +216,9 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
+<li><a href="#suppressnull">null値の抑制</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
+<li><a href="#jsonhint">変換時ヒントの付加</a></li>
 </ul>
 
 <h3 id="extends">■ 継承による機能拡張</h3>
@@ -244,29 +246,44 @@ Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">
 <pre class="source">
 JSON json = new JSON() {
   
-  <span class="comment">// 引数で指定された内容に従い変換します。例外が投げられた場合、
-  // JSONConvertExceptionでラップされ呼び出し元に通知されます。</span>
-  protected <span class="em">&lt;T&gt; T convert(Object key, Object value,
-    Class&lt;? extends T&gt; c, Type type)</span> throws Exception {
-    
-    <span class="comment">// JSON arrayをjava.awt.Pointに変換する例です。
-    // さらに下の階層を変換する場合はconvertChildメソッドを呼び出してください。</span>
-    if (c == Point.class &amp;&amp; value instanceof List) {
-      return (T)new Point(
-      	convertChild(0, ((List)value).get(0), int.class, int.class), 
-      	convertChild(1, ((List)value).get(1), int.class, int.class)
-      );
+  <span class="comment">// フォーマット可能なクラスに変換します（formatでのみ有効です）。
+  // 例外が発生した場合、nullに変換されます。</span>
+  protected <span class="em">Object preformat(Context context, Object value)</span> throws Exception {
+    <span class="comment">// java.awt.geom.Point2DをJSON arrayにフォーマットする例です。</span>
+    if (value instanceof Point2D) {
+      List<Double> list = new ArrayList<Double>();
+      list.add(value.getX());
+      list.add(value.getY());
+      return list;
     }
-    return super.convert(key, value, c, type);
+    return super.preformat(context, value);
   }
   
-  <span class="comment">// 型cに対するインスタンスを生成します</span>
-  protected <span class="em">Object create(Class c)</span> {
-    return super.create(c);
+  <span class="comment">// 解析されたデータを指定したクラスに変換します（parseでのみ有効です）。
+  // 例外が発生した場合、JSONConvertExceptionでラップされ呼び出し元に通知されます。</span>
+  protected <span class="em">&lt;T&gt; T postparse(Context context, Object value,
+    Class&lt;? extends T&gt; c, Type t)</span> throws Exception {
+    
+    <span class="comment">// JSON arrayをjava.awt.geom.Point2Dに変換する例です。</span>
+    if (Point2D.class.isAssignableFrom(c) &amp;&amp; value instanceof List) {
+      List list = (List)value;
+      Point2D p = create(context, c);
+      p.setLocation(
+      	super.postparse(context, list.get(0), double.class, double.class),
+      	super.postparse(context, list.get(1), double.class, double.class)
+      );
+      return (T)p;
+    }
+    return super.postparse(context, value, c, type);
+  }
+  
+  <span class="comment">// 型cに対するインスタンスを生成します（parseでのみ有効です）。</span>
+  protected <span class="em">&lt;T&gt; T create(Context context, Class&lt;? extends T&gt; c)</span> {
+    return super.create(context, c);
   }
       
-  <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）</span>
-  protected <span class="em">boolean ignore(Class c, Member m)</span> {
+  <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）。</span>
+  protected <span class="em">boolean ignore(Context context, Class c, Member m)</span> {
     <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言された
     // メンバの場合、trueを返します。</span>
     return super.ignore(c, m);
@@ -343,7 +360,7 @@ public class EnclosingClass {
     
     ic.accessEnclosingClass(); <span class="comment">// 実行時にNullPointerExceptionが発生</span>
     
-    json.setContext(this);  <span class="comment">// コンテキストを設定</span>
+    json.<span class="em">setContext(</span>this<span class="em">)</span>;  <span class="comment">// コンテキストを設定</span>
     ic = json.parse("{\"a\": 100}", InnerClass.class);
     
     ic.accessEnclosingClass(); <span class="comment">// 正常に動作</span>
@@ -370,6 +387,14 @@ public class EnclosingClass {
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
+<h3 id="suppressnull">■ setSuppressNull <span class="subtitle">- null値の抑制</span></h3>
+<p>JSONICでは、format時に値がnullになっているJSON objectのメンバの出力を抑制したり、parse時にnull値の代入を抑制することができます。初期値はfalseです。</p>
+<p>余計なメンバが大量に出力されてしまう、プロパティの初期値を優先したいなどの場合に有効です。</p>
+<pre class="source">
+<span class="comment">// null値の出力や代入を抑制します。</span>
+json<span class="em">.setSuppressNull(</span>true<span class="em">)</span>;
+</pre>
+
 <h3 id="xmltojson">■ XMLからJSONへの変換</h3>
 <p>JSONICでは、org.w3c.dom.Document/Elementから<a href="http://jsonml.org/">JsonML</a>への変換をサポートしています。
 方法は、通常と同じようにencode/formatの引数にorg.w3c.dom.Document/Elementのインスタンスを設定するだけです。</p>
@@ -394,6 +419,47 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 		["title", "Entry Title"],
 	]
 ]
+</pre>
+
+<h3 id="jsonhint">■ JSONHintアノテーション <span class="subtitle">- 変換時ヒントの付加</span></h3>
+<p>場合によってデフォルトの変換方式では不十分な場合があります。JSONICでは、メソッドやフィールドにJSONHintアノテーションを付加することで、
+動作を部分的に制御することが可能です。</p>
+<p>設定できる属性は次の通りです。</p>
+<table class="table" summary="JSONHintアノテーションの属性">
+<tr><th>属性名</th><th>値型</th><th>説明</th></tr>
+<tr><td>name</td><td>String</td><td>出力/代入するキー名を変更します</td></tr>
+<tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
+<tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。
+フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください。</td></tr>
+</table>
+<pre class="source">
+public class WithHintBean {
+  <span class="comment">// format/parse時のキー値を変更</span>
+  <span class="em">@JSONHint(</span>name="名前"<span class="em">)</span>
+  public int keyValue = 100;
+    
+  <span class="comment">// format/parse時に無視</span>
+  <span class="em">@JSONHint(</span>ignore=true<span class="em">)</span>
+  public int ignoreValue = 100;
+    
+  <span class="comment">// format/parse時のフォーマットを指定</span>
+  <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
+  public Date dateValue = new Date();
+    
+  <span class="comment">// 数値の時は、DecimalForamtとして認識される</span>
+  <span class="em">@JSONHint(</span>format="##0.00"<span class="em">)</span>
+  public int numberValue = 100;
+    
+  <span class="comment">// 配列やリストでもOK</span>
+  <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
+  public List<Date> dateArray;
+  
+  <span class="comment">// メソッドにも付与可能（getter/setterで別のヒントを与えることも可）</span>
+  <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
+  public int getMethodValue() {
+    return 100;
+  }
+}
 </pre>
 
 <h2 id="webservice">Web Service Servlet</h2>
@@ -439,7 +505,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/()]+</code>が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
-<tr><td>processor</td><td><code>net.arnx.jsonic.web.DefaultJSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.DefaultJSON</code>です。</td></tr>
+<tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>です。</td></tr>
 </table>
 <div class="caption">
 (※7) 変数名のうち、classとpackageだけは特殊な扱いがされます。class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
@@ -623,19 +689,19 @@ public class HogeService {
 <p>デフォルトでは最低限の機能のみ持つnet.arnx.jsonic.web.Containerが使われます。このコンテナが持つ機能は次の通りです。</p>
 <ul>
 <li>オブジェクトはClass#newInstance()により毎回生成されます。</li>
-<li>JSPの暗黙オブジェクトライクなパブリックフィールドベースの簡易DIを提供します。
+<li>ログは、ServletContext#log()を使って書き出されます。</li>
+<li>JSPの暗黙オブジェクトライクなパブリックフィールドベースの簡易DIを提供します（下記例を参照）。</li>
+</ul>
 <pre class="source">
 public class HogeService {
-    <span class="comment">// Servlet関係のオブジェクトを設定します。クラスだけでなくフィールド名も合わせる必要があります。</span>
-	public ServletConfig config;
-	public ServletContext application;
-	public HttpServletRequest request;
-	public HttpServletResponse response;
-	public HttpSession session;
+  <span class="comment">// Servlet関係のオブジェクトを設定します。クラスだけでなくフィールド名も合わせる必要があります。</span>
+  public ServletConfig config;
+  public ServletContext application;
+  public HttpServletRequest request;
+  public HttpServletResponse response;
+  public HttpSession session;
 }
-</pre></li>
-<li>ログは、ServletContext#log()を使って書き出されます。</li>
-</ul>
+</pre>
 
 <h3>■ Gateway Filter</h3>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
@@ -749,6 +815,10 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h3>2009/01/10 version 1.1.0 beta2</h3>
 <ul>
+<li>変換・代入の際のヒントを与えるJSONHintアノテーションを追加しました。</li>
+<li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました</li>
+<li>[非互換] convert, convertChildを廃止し、Format用の変換メソッドとしてpreformatをParse用の変換メソッドとしてpostparseを追加しました。</li>
+<li>[非互換] 継承して用いるpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
 <li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
 <li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
 <li>[非互換] メソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>
