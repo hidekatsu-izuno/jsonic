@@ -451,7 +451,7 @@ public class JSON {
 	 * 
 	 * @param value true to ignore the member of null value in JSON object.
 	 */
-	public void setSupressNull(boolean value) {
+	public void setSuppressNull(boolean value) {
 		this.suppressNull = value;
 	}
 	

@@ -419,7 +419,7 @@ public class JSONTest {
 				}
 			};
 		};
-		json.setSupressNull(true);
+		json.setSuppressNull(true);
 		assertEquals("{\"a\":100,\"list\":[100,null]}", json.format(obj));
 	}
 	
@@ -704,9 +704,9 @@ public class JSONTest {
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE_BOM.json")));
 
 		SuppressNullBean snb = new SuppressNullBean();
-		json.setSupressNull(true);
+		json.setSuppressNull(true);
 		assertEquals(snb, json.parse("{\"a\":null,\"b\":null,\"list\":null}", SuppressNullBean.class));
-		json.setSupressNull(false);
+		json.setSuppressNull(false);
 		snb.a = null;
 		snb.b = null;
 		snb.list = null;
