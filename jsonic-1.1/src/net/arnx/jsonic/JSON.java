@@ -392,6 +392,7 @@ public class JSON {
 	private Locale locale;
 	private boolean prettyPrint = false;	
 	private int maxDepth = 32;
+	private boolean suppressNull = false;
 
 	public JSON() {
 	}
@@ -442,6 +443,16 @@ public class JSON {
 			throw new IllegalArgumentException(getMessage("json.TooSmallArgumentError", "maxDepth", 0));
 		}
 		this.maxDepth = value;
+	}
+	
+	/**
+	 * If this property is true, the member of null value in JSON object is ignored.
+	 * default value is false.
+	 * 
+	 * @param value true to ignore the member of null value in JSON object.
+	 */
+	public void setSupressNull(boolean value) {
+		this.suppressNull = value;
 	}
 	
 	/**
@@ -777,22 +788,21 @@ public class JSON {
 			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 				Map.Entry entry = (Map.Entry)i.next();
 				Object value = entry.getValue();
+				
 				JSONHint hint = null;
 				if (value instanceof AnnotatedElement) {
 					hint = ((AnnotatedElement)value).getAnnotation(JSONHint.class);
 					try {
 						if (entry.getValue() instanceof Method) {
-							Method m = (Method)entry.getValue();
-							value = m.invoke(o);
+							value = ((Method)entry.getValue()).invoke(o);
 						} else {
-							Field f = (Field)entry.getValue();
-							value =  f.get(o);
+							value =  ((Field)entry.getValue()).get(o);
 						}
 					} catch (Exception e) {
 						// no handle
 					}
 				}
-				if (entry.getKey() == null || value == o) continue; 
+				if (entry.getKey() == null || value == o || (this.suppressNull && value == null)) continue; 
 				
 				if (this.prettyPrint) {
 					ap.append('\n');
@@ -983,7 +993,7 @@ public class JSON {
 				break;
 			case ',':
 				if (point == 3) {
-					if (level < this.maxDepth) map.put(key, null);
+					if (level < this.maxDepth && !this.suppressNull) map.put(key, null);
 					point = 1;
 				} else if (point == 5 || point == 6) {
 					point = 1;
@@ -994,7 +1004,7 @@ public class JSON {
 			case '}':
 				if (start == '{' && (point == 1 || point == 3 || point == 5 || point == 6)) {
 					if (point == 3) {
-						if (level < this.maxDepth) map.put(key, null);
+						if (level < this.maxDepth && !this.suppressNull) map.put(key, null);
 					}
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1047,7 +1057,9 @@ public class JSON {
 				} else if (point == 3) {
 					s.back();
 					Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
-					if (level < this.maxDepth) map.put(key, value);
+					if (level < this.maxDepth && (value != null || !this.suppressNull)) {
+						map.put(key, value);
+					}
 					point = 5;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
