@@ -495,63 +495,114 @@ public class JSON {
 		return ap;
 	}
 	
+	/**
+	 * Converts Any Java Object to JSON recognizable Java object before format.
+	 * 
+	 * @param context current context.
+	 * @param value source a object to format.
+	 * @return null or the instance of Map, Iterator(or Array, Enumerator), Number, CharSequence or Boolean.
+	 * @throws Exception if conversion failed.
+	 */
+	protected Object preformat(Context context, Object value) throws Exception {
+		Object data = null;
+		
+		if (value == null 
+			|| value instanceof CharSequence
+			|| value instanceof Character
+			|| value instanceof Boolean
+			|| value instanceof Map
+			|| value.getClass().isArray()
+			|| value instanceof Iterable
+			|| value instanceof Iterator
+			|| value instanceof Enumeration
+			|| value instanceof Element
+		) return value;
+
+		if (value instanceof Number) {
+			NumberFormat f = context.format(NumberFormat.class);
+			data = (f != null) ? f.format(value) : value;
+		} else if (value instanceof Date) {
+			DateFormat f = context.format(DateFormat.class);
+			data = (f != null) ? f.format(value) : ((Date)value).getTime();
+		} else if (value instanceof Class) {
+			data = ((Class)value).getName();
+		} else if (value instanceof Type
+				|| value instanceof Member
+				|| value instanceof URL
+				|| value instanceof URI
+				|| value instanceof File) {
+			data = value.toString();
+		} else if (value instanceof Enum) {
+			data = ((Enum)value).ordinal();
+		} else if (value instanceof Calendar) {
+			data = ((Calendar)value).getTimeInMillis();
+		} else if (value instanceof Pattern) {
+			data = ((Pattern)value).pattern();
+		} else if (value instanceof TimeZone) {
+			data = ((TimeZone)value).getID();
+		} else if (value instanceof InetAddress) {
+			data = ((InetAddress)value).getHostAddress();
+		} else if (value instanceof Charset) {
+			data = ((Charset)value).name();
+		} else if (value instanceof Locale) {
+			data = ((Locale)value).toString().replace('_', '-');
+		} else if (value instanceof Node) {
+			if (value instanceof Document) {
+				data = ((Document)value).getDocumentElement();
+			} else if (value instanceof Element) {
+				data = (Element)value;
+			} else if (value instanceof CharacterData && !(value instanceof Comment)) {
+				data = ((CharacterData)value).getData();
+			}
+		} else if (dynaBeanClasses != null && dynaBeanClasses[0].isAssignableFrom(value.getClass())) {
+			Map map = new TreeMap();
+			Object dynaClass = dynaBeanClasses[0].getMethod("getDynaClass").invoke(value);
+			Object[] dynaProperties = (Object[])dynaBeanClasses[1].getMethod("getDynaProperties").invoke(dynaClass);
+			
+			Method getName = dynaBeanClasses[2].getMethod("getName");
+			Method get = dynaBeanClasses[0].getMethod("get", String.class);
+			
+			for (Object dp : dynaProperties) {
+				try {
+					Object name = getName.invoke(dp);
+					map.put(name, get.invoke(value, name));
+				} catch (InvocationTargetException ite) {
+					// no handle
+				}
+			}
+			data = map;
+		} else {
+			data = value;
+		}
+		
+		return data;
+	}
+	
 	private Appendable format(Context context, Object o, Appendable ap) throws IOException {
 		if (context.getLevel() > this.maxDepth) {
 			o = null;
-		}
-		
-		if (o instanceof Class) {
-			o = ((Class)o).getName();
-		} else if (o instanceof Character
-				|| o instanceof Type
-				|| o instanceof Member
-				|| o instanceof URL
-				|| o instanceof URI
-				|| o instanceof File) {
-			o = o.toString();
-		} else if (o instanceof Enum) {
-			o = ((Enum)o).ordinal();
-		} else if (o instanceof char[]) {
-			o = new String((char[])o);
-		} else if (o instanceof Iterable) {
-			o = ((Iterable)o).iterator();
-		} else if (o instanceof Object[]) {
-			o = Arrays.asList((Object[])o).iterator();
-		} else if (o instanceof Number) {
-			NumberFormat f = context.format(NumberFormat.class);
-			o = (f != null) ? f.format(o) : o;
-		} else if (o instanceof Date) {
-			DateFormat f = context.format(DateFormat.class);
-			o = (f != null) ? f.format(o) : ((Date)o).getTime();
-		} else if (o instanceof Calendar) {
-			o = ((Calendar)o).getTimeInMillis();
-		} else if (o instanceof Pattern) {
-			o = ((Pattern)o).pattern();
-		} else if (o instanceof TimeZone) {
-			o = ((TimeZone)o).getID();
-		} else if (o instanceof InetAddress) {
-			o = ((InetAddress)o).getHostAddress();
-		} else if (o instanceof Charset) {
-			o = ((Charset)o).name();
-		} else if (o instanceof Locale) {
-			o = ((Locale)o).toString().replace('_', '-');
-		} else if (o instanceof Node) {
-			if (o instanceof Document) {
-				o = ((Document)o).getDocumentElement();
-			} else if (o instanceof Element) {
-				o = (Element)o;
-			} else if (o instanceof CharacterData && !(o instanceof Comment)) {
-				o = ((CharacterData)o).getData();
-			} else {
+		} else {
+			try {
+				o = preformat(context, o);
+			} catch (Exception e) {
 				o = null;
 			}
+		}
+		
+		if (o instanceof Iterable) {
+			o = ((Iterable)o).iterator();
+		} else if (o instanceof Character) {
+			o = o.toString();
+		} else if (o instanceof char[]) {
+			o = new String((char[])o);
+		} else if (o instanceof Object[]) {
+			o = Arrays.asList((Object[])o).iterator();
 		}
 		
 		if (context.getLevel() == 0 && (o == null
 				|| o instanceof CharSequence
 				|| o instanceof Boolean
-				|| o instanceof Number
-				|| o instanceof Date)) {
+				|| o instanceof Number)) {
 			throw new IllegalArgumentException(getMessage("json.format.IllegalRootTypeError"));
 		}
 		
@@ -757,33 +808,8 @@ public class JSON {
 			}
 			ap.append(']');
 		} else {
-			Map map = null;
-			if (o instanceof Map) {
-				map = (Map)o;
-			} else if (dynaBeanClasses != null && dynaBeanClasses[0].isAssignableFrom(o.getClass())) {
-				map = new TreeMap();
-				try {
-					Object dynaClass = dynaBeanClasses[0].getMethod("getDynaClass").invoke(o);
-					Object[] dynaProperties = (Object[])dynaBeanClasses[1].getMethod("getDynaProperties").invoke(dynaClass);
-					
-					Method getName = dynaBeanClasses[2].getMethod("getName");
-					Method get = dynaBeanClasses[0].getMethod("get", String.class);
-					
-					for (Object dp : dynaProperties) {
-						try {
-							Object name = getName.invoke(dp);
-							map.put(name, get.invoke(o, name));
-						} catch (InvocationTargetException ite) {
-							// no handle
-						}
-					}
-				} catch (Exception e) {
-					// no handle
-				}
-			} else {
-				map = context.getGetProperties(o.getClass());
-			}
-			
+			Map map = (o instanceof Map) ? (Map)o : context.getGetProperties(o.getClass());
+
 			ap.append('{');
 			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 				Map.Entry entry = (Map.Entry)i.next();
@@ -1482,7 +1508,7 @@ public class JSON {
 		Object result = null;
 		try {
 			context.enter('$');
-			result = convert(context, value, cls, type);
+			result = postparse(context, value, cls, type);
 			context.exit();
 		} catch (Exception e) {
 			throw new JSONConvertException(getMessage("json.convert.ConversionError", 
@@ -1492,17 +1518,16 @@ public class JSON {
 	}
 		
 	/**
-	 * Converts Map/List/Number/String/Boolean/null to other Java Objects. If you converts a lower level object in this method, 
-	 * You should call convertChild method.
+	 * Converts Map/List/Number/String/Boolean/null to other Java Objects after parsing. 
 	 * 
-	 * @param key property key object. Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
+	 * @param context current context.
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
 	 * @param c class for converting
 	 * @param type generics type for converting. type equals to c if not generics.
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
-	protected <T> T convert(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
+	protected <T> T postparse(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
 		if (value == null) {
@@ -1529,11 +1554,11 @@ public class JSON {
 						map = (Map)create(context, c);
 						for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
 							context.enter('.');
-							Object key = convert(context, entry.getKey(), pc0, pt0);
+							Object key = postparse(context, entry.getKey(), pc0, pt0);
 							context.exit();
 							
 							context.enter(entry.getKey());
-							map.put(key, convert(context, entry.getValue(), pc1, pt1));
+							map.put(key, postparse(context, entry.getValue(), pc1, pt1));
 							context.exit();
 						}
 					}
@@ -1546,7 +1571,7 @@ public class JSON {
 				if (!(src instanceof SortedMap)) {
 					src = new TreeMap(src);
 				}
-				data = convert(context, src.values(), c, type);
+				data = postparse(context, src.values(), c, type);
 			} else if (c.isPrimitive() || c.isEnum()
 					|| Number.class.isAssignableFrom(c)
 					|| CharSequence.class.isAssignableFrom(c)
@@ -1569,7 +1594,7 @@ public class JSON {
 						List list = (List)target;
 						target = (!list.isEmpty()) ? list.get(0) : null;
 					}
-					data = convert(context, target, c, type);
+					data = postparse(context, target, c, type);
 				}
 			} else {
 				Object o = create(context, c);
@@ -1577,17 +1602,23 @@ public class JSON {
 					Map<String, AnnotatedElement> props = context.getSetProperties(c);
 					for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
 						String name = entry.getKey().toString();
-						AnnotatedElement target = mapping(c, props, name);
+						AnnotatedElement target = props.get(name);
+						if (target == null) {
+							target = props.get(toLowerCamel(name));
+							if (target == null) {
+								target = props.get(name + "_");
+							}
+						}
 						if (target == null) continue;
 						
 						context.enter(name, target.getAnnotation(JSONHint.class));
 						if (target instanceof Method) {
 							Method m = (Method)target;
-							m.invoke(o, convert(context, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+							m.invoke(o, postparse(context, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
 						} else {
 							Field f = (Field)target;
 							context.enter(name);
-							f.set(o, convert(context, entry.getValue(), f.getType(), f.getGenericType()));
+							f.set(o, postparse(context, entry.getValue(), f.getType(), f.getGenericType()));
 						}
 						context.exit();
 					}
@@ -1611,7 +1642,7 @@ public class JSON {
 						collection = (Collection)create(context, c);
 						for (int i = 0; i < src.size(); i++) {
 							context.enter(i);
-							collection.add(convert(context, src.get(i), pc, pt));
+							collection.add(postparse(context, src.get(i), pc, pt));
 							context.exit();
 						}
 					}
@@ -1628,7 +1659,7 @@ public class JSON {
 				
 				for (int i = 0; i < src.size(); i++) {
 					context.enter(i);
-					Array.set(array, i, convert(context, src.get(i), pc, pt));
+					Array.set(array, i, postparse(context, src.get(i), pc, pt));
 					context.exit();
 				}
 				data = array;
@@ -1643,11 +1674,11 @@ public class JSON {
 
 					for (int i = 0; i < src.size(); i++) {
 						context.enter('.');
-						Object key = convert(context, i, pc0, pt0);
+						Object key = postparse(context, i, pc0, pt0);
 						context.exit();
 						
 						context.enter(i);
-						map.put(key, convert(context, src.get(i), pc1, pt1));
+						map.put(key, postparse(context, src.get(i), pc1, pt1));
 						context.exit();
 					}
 				} else {
@@ -1665,7 +1696,7 @@ public class JSON {
 					data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
 				}
 			} else if (!src.isEmpty()) {
-				data = convert(context, src.get(0), c, type);
+				data = postparse(context, src.get(0), c, type);
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -1980,7 +2011,7 @@ public class JSON {
 					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Class<?> pc = getRawType(pt);
 					context.enter(0);
-					collection.add(convert(context, value, pc, pt));
+					collection.add(postparse(context, value, pc, pt));
 					context.exit();
 				} else {
 					collection.add(value);
@@ -1995,7 +2026,7 @@ public class JSON {
 					Type pt = (type instanceof GenericArrayType) ? 
 							((GenericArrayType)type).getGenericComponentType() : pc;
 					context.enter(0);
-					Array.set(array, 0, convert(context, value, pc, pt));
+					Array.set(array, 0, postparse(context, value, pc, pt));
 					context.exit();
 					data = array;
 				}
@@ -2066,17 +2097,6 @@ public class JSON {
 		}
 		
 		return instance;
-	}
-	
-	private AnnotatedElement mapping(Class c, Map<String, AnnotatedElement> props, String name) {
-		AnnotatedElement target = props.get(name);
-		if (target == null) {
-			target = props.get(toLowerCamel(name));
-			if (target == null) {
-				target = props.get(name + "_");
-			}
-		}
-		return target;
 	}
 	
 	private static String toLowerCamel(String name) {
@@ -2207,42 +2227,53 @@ public class JSON {
 	
 	public class Context {
 		Class<?> scope;
-		List<ContextState> path = new ArrayList(8);
+		List<Object[]> path = new ArrayList(8);
 		int level = -1;
 		
+		/**
+		 * Returns the current level.
+		 * 
+		 * @return level number. Root node is 0.
+		 */
 		public int getLevel() {
 			return level;
 		}
 		
-		public Class<?> getScope() {
-			return scope;
-		}
-		
+		/**
+		 * Returns the current key object.
+		 * 
+		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
+		 */
 		public Object getKey() {
-			return path.get(getLevel()).key;
+			return path.get(getLevel())[0];
 		}
 		
+		/**
+		 * Returns the key object in any level. the negative value means relative to current level.
+		 * 
+		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
+		 */
 		public Object getKey(int level) {
 			if (level < 0) level = getLevel()+level; 
-			return path.get(level).key;
+			return path.get(level)[0];
 		}
 		
 		void enter(Object key, JSONHint hint) {
 			level++;
-			if (level == path.size()) path.add(new ContextState());
-			ContextState state = path.get(getLevel());
-			state.key = key;
-			state.hint = hint;
+			if (level == path.size()) path.add(new Object[2]);
+			Object[] state = path.get(getLevel());
+			state[0] = key;
+			state[1] = hint;
 		}
 		
 		void enter(Object key) {
-			enter(key, (level >= 0) ? path.get(level).hint : null);
+			enter(key, (JSONHint)((level >= 0) ? path.get(level)[1] : null));
 		}
 		
 		void exit() {
-			ContextState state = path.get(getLevel());
-			state.key = null;
-			state.hint = null;
+			Object[] state = path.get(getLevel());
+			state[0] = null;
+			state[1] = null;
 			level--;
 		}
 		
@@ -2362,7 +2393,7 @@ public class JSON {
 		
 		<T extends Format> T format(Class<? extends T> c) {
 			T format = null;
-			JSONHint hint = path.get(getLevel()).hint;
+			JSONHint hint = (JSONHint)path.get(getLevel())[1];
 			if (hint != null && hint.format().length() > 0) {
 				if (NumberFormat.class.isAssignableFrom(c)) {
 					if (locale != null) {
@@ -2384,7 +2415,7 @@ public class JSON {
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < path.size(); i++) {
-				Object key = path.get(i).key;
+				Object key = path.get(i)[0];
 				if (key instanceof Number) {
 					sb.append('[').append(key).append(']');
 				} else if (key instanceof Character) {
@@ -2416,11 +2447,6 @@ public class JSON {
 			}
 			return sb.toString();
 		}
-	}
-	
-	static class ContextState {
-		Object key;
-		JSONHint hint;
 	}
 }
 
