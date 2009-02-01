@@ -913,13 +913,11 @@ public class JSON {
 		return parse(new ReaderParserSource(in));
 	}
 	
-	public <T> T parse(InputStream in, Class<? extends T> cls)
-		throws IOException, JSONParseException, JSONConvertException {
+	public <T> T parse(InputStream in, Class<? extends T> cls) throws IOException, JSONParseException {
 		return (T)parse(in, (Type)cls);
 	}
 	
-	public Object parse(InputStream in, Type type)
-		throws IOException, JSONParseException, JSONConvertException {
+	public Object parse(InputStream in, Type type) throws IOException, JSONParseException {
 		return parse(new ReaderParserSource(in), type);
 	}
 	
@@ -1497,7 +1495,7 @@ public class JSON {
 		return MessageFormat.format(bundle.getString(id), args);
 	}
 	
-	public Object convert(Object value, Type type) throws JSONConvertException {
+	public Object convert(Object value, Type type) throws JSONParseException {
 		Context context = new Context();
 		
 		Class<?> cls = getRawType(type);
@@ -1511,7 +1509,9 @@ public class JSON {
 			result = postparse(context, value, cls, type);
 			context.exit();
 		} catch (Exception e) {
-			throw new JSONConvertException(getMessage("json.convert.ConversionError", 
+			throw new JSONParseException(
+				JSONParseException.ERROR_CONVERT_FAILED,
+				getMessage("json.convert.ConversionError",
 					(value instanceof String) ? "\"" + value + "\"" : value, type, context), e);
 		}
 		return result;

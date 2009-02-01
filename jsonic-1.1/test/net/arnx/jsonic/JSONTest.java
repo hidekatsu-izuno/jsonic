@@ -962,7 +962,7 @@ public class JSONTest {
 		try {
 			json.convert(5, ExampleEnum.class);
 			fail();		
-		} catch (JSONConvertException e) {
+		} catch (JSONParseException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}

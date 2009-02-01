@@ -42,7 +42,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.arnx.jsonic.JSONConvertException;
 import net.arnx.jsonic.JSONParseException;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -279,16 +278,16 @@ public class WebServiceServlet extends HttpServlet {
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
-		} catch (JSONConvertException e) {
-			container.debug(e.getMessage());
-			throwable = e;
-			errorCode = -32602;
-			errorMessage = "Invalid params.";
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
 			throwable = e;
-			errorCode = -32700;
-			errorMessage = "Parse error.";
+			if (e.getErrorCode() == JSONParseException.ERROR_CONVERT_FAILED) {
+				errorCode = -32602;
+				errorMessage = "Invalid params.";
+			} else  {
+				errorCode = -32700;
+				errorMessage = "Parse error.";
+			}
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 			container.debug(cause.toString());
@@ -420,10 +419,6 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (NoSuchMethodException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND, "Not Found");
-			return;
-		} catch (JSONConvertException e) {
-			container.debug(e.getMessage());
-			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			return;
 		} catch (JSONParseException e) {
 			container.debug(e.getMessage());
