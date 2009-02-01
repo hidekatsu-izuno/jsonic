@@ -2316,13 +2316,13 @@ public class JSON {
 					continue;
 				}
 				
+				if (access) m.setAccessible(true);
 				name = Introspector.decapitalize(name.substring(start));
 				if (m.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = m.getAnnotation(JSONHint.class);
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				if (access) m.setAccessible(true);
 				props.put(name, m);
 			}
 			
@@ -2362,7 +2362,7 @@ public class JSON {
 					continue;
 				}
 				
-				if (access) m.setAccessible(true);
+				if (access) m.setAccessible(true);				
 				name = Introspector.decapitalize(name.substring(start));
 				if (m.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = m.getAnnotation(JSONHint.class);
