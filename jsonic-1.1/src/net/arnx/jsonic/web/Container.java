@@ -27,7 +27,6 @@ import javax.servlet.http.HttpSession;
 public class Container {
 	public Boolean debug = false;
 	public String init = "init";
-	public String validate = "validate";
 	public String destroy = "destroy";
 	
 	private ServletConfig config;
