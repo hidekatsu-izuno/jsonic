@@ -38,6 +38,11 @@ public class JSONParseException extends RuntimeException {
 		this.errorCode = errorCode;
 	}
 	
+	public JSONParseException(int errorCode, String message) {
+		super(message);
+		this.errorCode = errorCode;
+	}
+	
 	public int getErrorCode() {
 		return errorCode;
 	}
