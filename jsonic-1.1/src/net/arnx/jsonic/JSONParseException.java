@@ -47,14 +47,23 @@ public class JSONParseException extends RuntimeException {
 		return errorCode;
 	}
 	
+	/**
+	 * Returns the line number where the error was found.
+	 */
 	public long getLineNumber() {
 		return lineNumber;
 	}
 	
+	/**
+	 * Returns the column number where the error was found.
+	 */
 	public long getColumnNumber() {
 		return columnNumber;
 	}
 	
+	/**
+	 * Returns the offset in line where the error was found.
+	 */
 	public long getErrorOffset() {
 		return offset;
 	}
