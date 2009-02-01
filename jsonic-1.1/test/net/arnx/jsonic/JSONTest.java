@@ -195,6 +195,20 @@ public class JSONTest {
 		array3.add(3);
 		aBean.array3 = array3;
 		assertEquals("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2}", JSON.encode(aBean));
+
+		try {
+			obj = new Object() {
+				public int noException = 0;
+				
+				public Object getException() {
+					throw new RuntimeException("エラー");
+				}
+			};
+			JSON.encode(obj);
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+		}		
 	}
 
 	@Test

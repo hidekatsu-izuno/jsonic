@@ -590,8 +590,7 @@ public class JSON {
 				o = preformat(context, o);
 			} catch (Exception e) {
 				throw new JSONException(JSONException.FORMAT_ERROR, 
-					getMessage("json.format.ConversionError",
-					(o instanceof CharSequence) ? "\"" + o + "\"" : o, context), e);
+					getMessage("json.format.ConversionError", o, context), e);
 			}
 		}
 		
