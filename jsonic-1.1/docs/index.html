@@ -83,6 +83,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 <p>通常の用途では、二つの静的メソッドencode/decodeだけ利用すれば事足ります。</p>
 <h3>■ encodeメソッド <span class="subtitle">- POJOからJSONへの変換</span></h3>
 <p>POJOからJSONに変換する場合は、encodeを使います。デフォルトでは、空白などを含まない可読性の低いJSONが出力されますが、二番目の引数をtrueにすることで可読性の高いJSONが出力されるようになります（Pretty Printモード）。</p>
+<p>なお、JSONのフォーマット中に何らかの例外が発生した場合は、JSONExceptionでラップされ通知されます（Beanからの取得時に例外発生など）。</p>
 <pre class="source">
 <span class="comment">// 変換対象のPOJOを準備</span>
 Hoge hoge = new Hoge();
@@ -139,7 +140,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 
 <h3>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h3>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
-<p>なお、JSON文字列が不正であったり、型の変換に失敗した場合はJSONParseExceptionが投げられます。</p>
+<p>なお、JSON文字列が不正であったり、型の変換に失敗した場合はJSONExceptionが投げられます。</p>
 <pre class="source">
 <span class="comment">// JSONをPOJOに変換します。戻り値としてサイズが4のArrayListが返されます</span>
 List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<span class="em">)</span>;
@@ -247,7 +248,7 @@ Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">
 JSON json = new JSON() {
   
   <span class="comment">// フォーマット可能なクラスに変換します（formatでのみ有効です）。
-  // 例外が発生した場合、nullに変換されます。</span>
+  // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。</span>
   protected <span class="em">Object preformat(Context context, Object value)</span> throws Exception {
     <span class="comment">// java.awt.geom.Point2DをJSON arrayにフォーマットする例です。</span>
     if (value instanceof Point2D) {
@@ -260,7 +261,7 @@ JSON json = new JSON() {
   }
   
   <span class="comment">// 解析されたデータを指定したクラスに変換します（parseでのみ有効です）。
-  // 例外が発生した場合、JSONParseExceptionでラップされ呼び出し元に通知されます。</span>
+  // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。</span>
   protected <span class="em">&lt;T&gt; T postparse(Context context, Object value,
     Class&lt;? extends T&gt; c, Type t)</span> throws Exception {
     
@@ -302,7 +303,7 @@ JSON.prototype = MyJSON.class;
 public class JSONConfigLoader {
   private Map&lt;String, Hoge&gt; config;
   
-  public Map load(Reader reader) throws JSONParseException, IOException {
+  public Map load(Reader reader) throws JSONException, IOException {
     JSON json = new JSON();
     
     <span class="comment">// これはコンパイルエラー</span>
@@ -817,9 +818,10 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>変換・代入の際のヒントを与えるJSONHintアノテーションを追加しました。</li>
 <li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました</li>
+<li>[非互換] format/encodeの場合でも変換に失敗した場合は、JSONExceptionでラップした例外を通知するよう変更しました。</li>
 <li>[非互換] convert, convertChildを廃止し、Format用の変換メソッドとしてpreformatをParse用の変換メソッドとしてpostparseを追加しました。</li>
 <li>[非互換] 継承で拡張するpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
-<li>[非互換] JSONConvertExceptionを廃止し、JSONParseExceptionに統合しました。エラー内容は、getErrorCode()で判別できます。</li>
+<li>[非互換] 各種JSON***Exceptionを廃止し、JSONExceptionに統合しました。エラー内容は、getErrorCode()で判別できます。</li>
 <li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
 <li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
 <li>[非互換] メソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>

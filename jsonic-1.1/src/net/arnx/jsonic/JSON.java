@@ -29,7 +29,6 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
@@ -207,8 +206,9 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @return a json string
+	 * @exception JSONException if error occurred when formating.
 	 */
-	public static String encode(Object source) {
+	public static String encode(Object source) throws JSONException {
 		return encode(source, false);
 	}
 	
@@ -218,8 +218,9 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param prettyPrint output a json string with indent, space or break.
 	 * @return a json string
+	 * @exception JSONException if error occurred when formating.
 	 */
-	public static String encode(Object source, boolean prettyPrint) {		
+	public static String encode(Object source, boolean prettyPrint) throws JSONException {		
 		JSON json = JSON.newInstance();
 		json.setPrettyPrint(prettyPrint);		
 		return json.format(source);
@@ -231,8 +232,9 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @exception IOException if I/O Error occurred.
+	 * @exception JSONException if error occurred when formating.
 	 */
-	public static void encode(Object source, OutputStream out) throws IOException {
+	public static void encode(Object source, OutputStream out) throws IOException, JSONException {
 		JSON.newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
 	}
 
@@ -243,8 +245,9 @@ public class JSON {
 	 * @param out a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
 	 * @exception IOException if I/O Error occurred.
+	 * @exception JSONException if error occurred when formating.
 	 */
-	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException {
+	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
 		json.setPrettyPrint(prettyPrint);		
 		json.format(source, new OutputStreamWriter(out, "UTF-8"));
@@ -256,8 +259,9 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
 	 * @exception IOException if I/O Error occurred.
+	 * @exception JSONException if error occurred when formating.
 	 */
-	public static void encode(Object source, Appendable appendable) throws IOException {
+	public static void encode(Object source, Appendable appendable) throws IOException, JSONException {
 		JSON.newInstance().format(source, appendable);
 	}
 
@@ -268,8 +272,9 @@ public class JSON {
 	 * @param appendable a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
 	 * @exception IOException if I/O Error occurred.
+	 * @exception JSONException if error occurred when formating.
 	 */
-	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException {
+	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
 		json.setPrettyPrint(prettyPrint);		
 		json.format(source, appendable);
@@ -280,7 +285,7 @@ public class JSON {
 	 * 
 	 * @param source a json string to decode
 	 * @return a decoded object
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static Object decode(String source) throws JSONException {
 		return JSON.newInstance().parse(source);
@@ -292,8 +297,7 @@ public class JSON {
 	 * @param source a json string to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
-	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(String source, Class<? extends T> cls) throws JSONException {
 		return JSON.newInstance().parse(source, cls);
@@ -305,8 +309,7 @@ public class JSON {
 	 * @param source a json string to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
-	 * @exception JSONConvertException if it cannot convert a class from a JSON value.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static Object decode(String source, Type type) throws JSONException {
 		return JSON.newInstance().parse(source, type);
@@ -318,7 +321,7 @@ public class JSON {
 	 * @param in a json stream to decode
 	 * @return a decoded object
 	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static Object decode(InputStream in) throws IOException, JSONException {
 		return JSON.newInstance().parse(in);
@@ -331,7 +334,7 @@ public class JSON {
 	 * @param cls class for converting
 	 * @return a decoded object
 	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONException {
 		return JSON.newInstance().parse(in, cls);
@@ -344,7 +347,7 @@ public class JSON {
 	 * @param type type for converting
 	 * @return a decoded object
 	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static Object decode(InputStream in, Type type) throws IOException, JSONException {
 		return JSON.newInstance().parse(in, type);
@@ -356,7 +359,7 @@ public class JSON {
 	 * @param reader a json stream to decode
 	 * @return a decoded object
 	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static Object decode(Reader reader) throws IOException, JSONException {
 		return JSON.newInstance().parse(reader);
@@ -369,7 +372,7 @@ public class JSON {
 	 * @param cls class for converting
 	 * @return a decoded object
 	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONException {
 		return JSON.newInstance().parse(reader, cls);
@@ -382,7 +385,7 @@ public class JSON {
 	 * @param type type for converting
 	 * @return a decoded object
 	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if the beginning of the specified string cannot be parsed.
+	 * @exception JSONException if error occurred when parsing.
 	 */
 	public static Object decode(Reader reader, Type type) throws IOException, JSONException {
 		return JSON.newInstance().parse(reader, type);
@@ -563,12 +566,13 @@ public class JSON {
 			Method get = dynaBeanClasses[0].getMethod("get", String.class);
 			
 			for (Object dp : dynaProperties) {
-				try {
-					Object name = getName.invoke(dp);
-					map.put(name, get.invoke(value, name));
-				} catch (InvocationTargetException ite) {
-					// no handle
-				}
+				context.enter('.');
+				Object name = getName.invoke(dp);
+				context.exit();
+				
+				context.enter(name);
+				map.put(name, get.invoke(value, name));
+				context.exit();
 			}
 			data = map;
 		} else {
@@ -585,7 +589,9 @@ public class JSON {
 			try {
 				o = preformat(context, o);
 			} catch (Exception e) {
-				o = null;
+				throw new JSONException(JSONException.FORMAT_ERROR, 
+					getMessage("json.format.ConversionError",
+					(o instanceof CharSequence) ? "\"" + o + "\"" : o, context), e);
 			}
 		}
 		
@@ -814,6 +820,7 @@ public class JSON {
 			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 				Map.Entry entry = (Map.Entry)i.next();
 				Object value = entry.getValue();
+				Exception cause = null; 
 				
 				JSONHint hint = null;
 				if (value instanceof AnnotatedElement) {
@@ -825,10 +832,11 @@ public class JSON {
 							value =  ((Field)entry.getValue()).get(o);
 						}
 					} catch (Exception e) {
-						// no handle
+						cause = e;
 					}
 				}
-				if (entry.getKey() == null || value == o || (this.suppressNull && value == null)) continue; 
+				if (entry.getKey() == null || value == o
+					|| (cause == null && this.suppressNull && value == null)) continue; 
 				
 				if (this.prettyPrint) {
 					ap.append('\n');
@@ -837,6 +845,11 @@ public class JSON {
 				formatString(entry.getKey().toString(), ap).append(':');
 				if (this.prettyPrint) ap.append(' ');
 				context.enter(entry.getKey(), hint);
+				if (cause != null) {
+					throw new JSONException(JSONException.FORMAT_ERROR, 
+							getMessage("json.format.ConversionError",
+							(o instanceof CharSequence) ? "\"" + o + "\"" : o, context), cause);					
+				}
 				format(context, value, ap);
 				context.exit();
 				if (i.hasNext()) ap.append(',');
@@ -1511,7 +1524,7 @@ public class JSON {
 		} catch (Exception e) {
 			throw new JSONException(
 				JSONException.CONVERT_ERROR,
-				getMessage("json.convert.ConversionError",
+				getMessage("json.parse.ConversionError",
 					(value instanceof String) ? "\"" + value + "\"" : value, type, context), e);
 		}
 		return result;

@@ -387,7 +387,7 @@ public class JSONTest {
 		try {
 			json.format(true, new StringBuilder());
 			fail();
-		} catch (IllegalArgumentException e) {
+		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
@@ -396,7 +396,7 @@ public class JSONTest {
 		try {
 			assertEquals("true", json.format(true, new StringBuilder()).toString());
 			fail();
-		} catch (IllegalArgumentException e) {
+		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
