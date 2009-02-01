@@ -139,7 +139,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 
 <h3>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h3>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
-<p>なお、JSON文字列が不正な場合にはJSONParseExceptionを投げ、型の変換に失敗した場合はJSONConvertExceptionを投げます。</p>
+<p>なお、JSON文字列が不正であったり、型の変換に失敗した場合はJSONParseExceptionが投げられます。</p>
 <pre class="source">
 <span class="comment">// JSONをPOJOに変換します。戻り値としてサイズが4のArrayListが返されます</span>
 List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<span class="em">)</span>;
@@ -260,7 +260,7 @@ JSON json = new JSON() {
   }
   
   <span class="comment">// 解析されたデータを指定したクラスに変換します（parseでのみ有効です）。
-  // 例外が発生した場合、JSONConvertExceptionでラップされ呼び出し元に通知されます。</span>
+  // 例外が発生した場合、JSONParseExceptionでラップされ呼び出し元に通知されます。</span>
   protected <span class="em">&lt;T&gt; T postparse(Context context, Object value,
     Class&lt;? extends T&gt; c, Type t)</span> throws Exception {
     
@@ -818,7 +818,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>変換・代入の際のヒントを与えるJSONHintアノテーションを追加しました。</li>
 <li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました</li>
 <li>[非互換] convert, convertChildを廃止し、Format用の変換メソッドとしてpreformatをParse用の変換メソッドとしてpostparseを追加しました。</li>
-<li>[非互換] 継承して用いるpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
+<li>[非互換] 継承で拡張するpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
+<li>[非互換] JSONConvertExceptionを廃止し、JSONParseExceptionに統合しました。エラー内容は、getErrorCode()で判別できます。</li>
 <li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
 <li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
 <li>[非互換] メソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>
