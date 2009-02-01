@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.arnx.jsonic.JSONParseException;
+import net.arnx.jsonic.JSONException;
 
 import static javax.servlet.http.HttpServletResponse.*;
 
@@ -278,10 +278,10 @@ public class WebServiceServlet extends HttpServlet {
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
-		} catch (JSONParseException e) {
+		} catch (JSONException e) {
 			container.debug(e.getMessage());
 			throwable = e;
-			if (e.getErrorCode() == JSONParseException.ERROR_CONVERT_FAILED) {
+			if (e.getErrorCode() == JSONException.CONVERT_ERROR) {
 				errorCode = -32602;
 				errorMessage = "Invalid params.";
 			} else  {
@@ -420,7 +420,7 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(e.getMessage());
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
-		} catch (JSONParseException e) {
+		} catch (JSONException e) {
 			container.debug(e.getMessage());
 			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			return;

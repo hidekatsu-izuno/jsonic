@@ -15,30 +15,31 @@
  */
 package net.arnx.jsonic;
 
-public class JSONParseException extends RuntimeException {
+public class JSONException extends RuntimeException {
 	private static final long serialVersionUID = -8323989588488596436L;
 
-	public static final int ERROR_PARSE_FAILED = 0;
-	public static final int ERROR_CONVERT_FAILED = 1;
+	public static final int PARSE_ERROR = 0;
+	public static final int FORMAT_ERROR = 1;
+	public static final int CONVERT_ERROR = 2;
 	
-	private int errorCode = ERROR_PARSE_FAILED;
+	private int errorCode = PARSE_ERROR;
 	private long lineNumber = -1l;
 	private long columnNumber = -1l;
 	private long offset = -1l;
 	
-	JSONParseException(String message, long lineNumber, long columnNumber, long offset) {
+	JSONException(String message, long lineNumber, long columnNumber, long offset) {
 		super(message);
 		this.lineNumber = lineNumber;
 		this.columnNumber = columnNumber;
 		this.offset = offset;
 	}
 	
-	public JSONParseException(int errorCode, String message, Throwable cause) {
+	public JSONException(int errorCode, String message, Throwable cause) {
 		super(message, cause);
 		this.errorCode = errorCode;
 	}
 	
-	public JSONParseException(int errorCode, String message) {
+	public JSONException(int errorCode, String message) {
 		super(message);
 		this.errorCode = errorCode;
 	}
