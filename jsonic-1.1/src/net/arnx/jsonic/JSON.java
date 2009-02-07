@@ -2061,6 +2061,9 @@ public class JSON {
 	protected <T> T create(Context context, Class<? extends T> c) throws Exception {
 		Object instance = null;
 		
+		JSONHint hint = context.getHint();
+		if (hint != null && hint.type() != Object.class) c = hint.type();
+		
 		if (c.isInterface()) {
 			if (SortedMap.class.equals(c)) {
 				instance = new TreeMap();
@@ -2245,7 +2248,7 @@ public class JSON {
 		/**
 		 * Returns the current level.
 		 * 
-		 * @return level number. Root node is 0.
+		 * @return level number. 0 is root node.
 		 */
 		public int getLevel() {
 			return level;
@@ -2268,6 +2271,15 @@ public class JSON {
 		public Object getKey(int level) {
 			if (level < 0) level = getLevel()+level; 
 			return path.get(level)[0];
+		}
+		
+		/**
+		 * Returns the current hint annotation.
+		 * 
+		 * @return the current annotation if present on this context, else null.
+		 */
+		public JSONHint getHint() {
+			return (JSONHint)path.get(getLevel())[1];
 		}
 		
 		void enter(Object key, JSONHint hint) {
@@ -2405,7 +2417,7 @@ public class JSON {
 		
 		<T extends Format> T format(Class<? extends T> c) {
 			T format = null;
-			JSONHint hint = (JSONHint)path.get(getLevel())[1];
+			JSONHint hint = getHint();
 			if (hint != null && hint.format().length() > 0) {
 				if (NumberFormat.class.isAssignableFrom(c)) {
 					if (locale != null) {
