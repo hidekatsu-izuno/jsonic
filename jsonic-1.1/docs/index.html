@@ -824,14 +824,14 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2009/01/10 version 1.1.0 beta2</h3>
+<h3>2009/02/08 version 1.1.0 beta2</h3>
 <ul>
 <li>変換・代入の際のヒントを与えるJSONHintアノテーションを追加しました。</li>
-<li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました</li>
-<li>[非互換] format/encodeの場合でも変換に失敗した場合は、JSONExceptionでラップした例外を通知するよう変更しました。</li>
+<li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました(AS3版も同様です)。</li>
 <li>[非互換] convert, convertChildを廃止し、Format用の変換メソッドとしてpreformatをParse用の変換メソッドとしてpostparseを追加しました。</li>
 <li>[非互換] 継承で拡張するpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
-<li>[非互換] 各種JSON***Exceptionを廃止し、JSONExceptionに統合しました。エラー内容は、getErrorCode()で判別できます。</li>
+<li>[非互換] 各種JSON***Exceptionを廃止し、JSONExceptionに統合しました。エラー内容は、getErrorCode()で判別できます(AS3版も同様にJSONParseErrorがJSONErrorに変更されています)。</li>
+<li>[非互換] format/encodeの場合でも変換に失敗した場合は、JSONExceptionでラップした例外を通知するよう変更しました。</li>
 <li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
 <li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
 <li>[非互換] メソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>
