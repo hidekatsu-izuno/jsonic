@@ -81,7 +81,7 @@ package net.arnx.jsonic {
 			if (level == 0) {
 				var type:String = typeof(o);
 				if (type == "number" || type == "boolean" || type == "string" || o is Date) {
-					throw new JSONError(getMessage("json.format.IllegalRootTypeError"));
+					throw new JSONError(getMessage("json.format.IllegalRootTypeError"), JSONError.FORMAT_ERROR);
 				}
 			}
 			
@@ -713,7 +713,8 @@ package net.arnx.jsonic {
 		}
 				
 		private function createParseException(message:String, s:IParserSource):Error {
-			return new JSONError("" + s.lineNumber + ": " + message + "\n" + s.toString() + " <- ?");
+			return new JSONError("" + s.lineNumber + ": " + message + "\n" + s.toString() + " <- ?",
+				JSONError.PARSE_ERROR, s.lineNumber, s.columnNumber, s.offset);
 		}
 	
 		private function getMessage(id:String, ... args:Array):String {
@@ -736,6 +737,7 @@ interface IParserSource {
 	function back():void;
 	function get lineNumber():int;
 	function get columnNumber():int;
+	function get offset():int;
 	function getCachedBuilder():ByteArray;
 	function toString():String;
 }
