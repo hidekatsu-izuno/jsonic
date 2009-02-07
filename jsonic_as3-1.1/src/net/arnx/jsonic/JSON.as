@@ -39,6 +39,7 @@ package net.arnx.jsonic {
 		
 		private var _prettyPrint:Boolean = false;
 		private var _maxDepth:int;
+		private var _suppressNull:Boolean = false;
 		
 		public function JSON(maxDepth:int = 32) {
 			this.maxDepth = maxDepth;
@@ -50,6 +51,10 @@ package net.arnx.jsonic {
 		
 		public function set maxDepth(value:int):void {
 			_maxDepth = value;
+		}
+		
+		public function set suppressNull(value:Boolean):void {
+			_suppressNull = value;
 		}
 		
 		public function format(o:Object):String {
@@ -76,7 +81,7 @@ package net.arnx.jsonic {
 			if (level == 0) {
 				var type:String = typeof(o);
 				if (type == "number" || type == "boolean" || type == "string" || o is Date) {
-					throw new ArgumentError(getMessage("json.format.IllegalRootTypeError"));
+					throw new JSONError(getMessage("json.format.IllegalRootTypeError"));
 				}
 			}
 			
@@ -120,7 +125,7 @@ package net.arnx.jsonic {
 				
 				var first:Boolean = true;
 				for each (var key:Object in classInfo.properties) {
-					if (o[key] === o) continue;
+					if (o[key] === o || (_suppressNull && !o[key])) continue;
 					
 					if (first) {
 						first = false;
@@ -255,7 +260,7 @@ package net.arnx.jsonic {
 					break;
 				case ',':
 					if (point == 3) {
-						if (level < _maxDepth) map[key] = null;
+						if (level < _maxDepth && !_suppressNull) map[key] = null;
 						point = 1;
 					} else if (point == 5 || point == 6) {
 						point = 1;
@@ -266,7 +271,7 @@ package net.arnx.jsonic {
 				case '}':
 					if (start == '{' && (point == 1 || point == 3 || point == 5 || point == 6)) {
 						if (point == 3) {
-							if (level < _maxDepth) map[key] = null;
+							if (level < _maxDepth && !_suppressNull) map[key] = null;
 						}
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -319,7 +324,9 @@ package net.arnx.jsonic {
 					} else if (point == 3) {
 						s.back();
 						value = ((c == '-') || (c >= '0' && c <= '9')) ? _parseNumber(s) : _parseLiteral(s);
-						if (level < _maxDepth) map[key] = value;
+						if (level < _maxDepth && (value != null || !_suppressNull)) {
+							map[key] = value;
+						}
 						point = 5;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -329,7 +336,7 @@ package net.arnx.jsonic {
 			
 			if (c == null) {
 				if (point == 3 || point == 4) {
-					if (level < _maxDepth) map[key] = null;
+					if (level < _maxDepth && !_suppressNull) map[key] = null;
 				} else if (point == 2) {
 					throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
 				}
@@ -706,7 +713,7 @@ package net.arnx.jsonic {
 		}
 				
 		private function createParseException(message:String, s:IParserSource):Error {
-			return new JSONParseError("" + s.lineNumber + ": " + message + "\n" + s.toString() + " <- ?");
+			return new JSONError("" + s.lineNumber + ": " + message + "\n" + s.toString() + " <- ?");
 		}
 	
 		private function getMessage(id:String, ... args:Array):String {

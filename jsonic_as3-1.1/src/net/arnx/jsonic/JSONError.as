@@ -1,10 +1,10 @@
 package net.arnx.jsonic {
-	public class JSONParseError extends Error {
+	public class JSONError extends Error {
 		private var _lineNumber:int = -1;
 		private var _columnNumber:int = -1;
 		private var _offset:int = -1;
 		
-		public function JSONParseError(message:String="", lineNumber:int=-1, columnNumber:int=-1, offset:int=-1) {
+		public function JSONError(message:String="", lineNumber:int=-1, columnNumber:int=-1, offset:int=-1) {
 			super(message);
 			_lineNumber = lineNumber;
 			_columnNumber = columnNumber;
