@@ -11,7 +11,7 @@
 		</mx:Panel>
 		<mx:Panel layout="absolute" label="Connection Test" width="100%" height="100%" paddingTop="5" paddingRight="5" paddingLeft="5" paddingBottom="5">
 			<mx:Label x="10" y="10" text="URL:" />
-			<mx:TextInput x="76" y="8" width="495" id="url2" text="http://localhost:8080/sample/rpc/rpc.json" />
+			<mx:TextInput x="76" y="8" width="495" id="url2" text="http://localhost:8080/basic/rpc/rpc.json" />
 			<mx:Label x="10" y="36" text="オブジェクト:"/>
 			<mx:TextInput x="76" y="34" width="65" id="object" text="edit"/>
 			<mx:Label x="148" y="36" text="メソッド:"/>
