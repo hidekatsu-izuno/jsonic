@@ -1105,7 +1105,7 @@ public class JSON {
 		
 		if (n == -1) {
 			if (point == 3 || point == 4) {
-				if (level < this.maxDepth) map.put(key, null);
+				if (level < this.maxDepth && !this.suppressNull) map.put(key, null);
 			} else if (point == 2) {
 				throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
 			}

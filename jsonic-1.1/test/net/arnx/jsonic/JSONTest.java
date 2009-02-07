@@ -735,11 +735,13 @@ public class JSONTest {
 		SuppressNullBean snb = new SuppressNullBean();
 		json.setSuppressNull(true);
 		assertEquals(snb, json.parse("{\"a\":null,\"b\":null,\"list\":null}", SuppressNullBean.class));
+		assertEquals(snb, json.parse("{\"a\":null,\"b\":,\"list\":}", SuppressNullBean.class));
 		json.setSuppressNull(false);
 		snb.a = null;
 		snb.b = null;
 		snb.list = null;
 		assertEquals(snb, json.parse("{\"a\":null,\"b\":null,\"list\":null}", SuppressNullBean.class));
+		assertEquals(snb, json.parse("{\"a\":null,\"b\":,\"list\":}", SuppressNullBean.class));
 	}
 
 	@Test
