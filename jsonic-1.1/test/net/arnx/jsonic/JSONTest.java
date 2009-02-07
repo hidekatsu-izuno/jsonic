@@ -17,6 +17,7 @@ package net.arnx.jsonic;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -42,6 +43,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 import java.util.regex.Pattern;
+import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.io.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -453,6 +456,11 @@ public class JSONTest {
 		};
 		json.setSuppressNull(true);
 		assertEquals("{\"a\":100,\"list\":[100,null]}", json.format(obj));
+		
+		json = new Point2DJSON();
+		assertEquals("[10.5,10.5]", json.format(new Point2D.Double(10.5, 10.5)));
+		assertEquals("[10.5,10.5]", json.format(new Point2D.Float(10.5f, 10.5f)));
+		assertEquals("[10.0,10.0]", json.format(new Point(10, 10)));
 	}
 	
 	@Test
@@ -745,6 +753,9 @@ public class JSONTest {
 		snb.list = null;
 		assertEquals(snb, json.parse("{\"a\":null,\"b\":null,\"list\":null}", SuppressNullBean.class));
 		assertEquals(snb, json.parse("{\"a\":null,\"b\":,\"list\":}", SuppressNullBean.class));
+		
+		json = new Point2DJSON();
+		assertEquals(new Point2D.Double(10.5, 10.5), json.parse("[10.5,10.5]", Point2D.class));
 	}
 
 	@Test
@@ -1663,4 +1674,41 @@ class KenAll {
 	public int complexNo;
 	public int updateNo;
 	public int reasonNo;
+}
+
+class Point2DJSON extends JSON {
+	protected Object preformat(Context context, Object value) throws Exception {
+		if (value instanceof Point2D) {
+			Point2D p = (Point2D) value;
+			List<Double> list = new ArrayList<Double>();
+			list.add(p.getX());
+			list.add(p.getY());
+			return list;
+		}
+		return super.preformat(context, value);
+	}
+
+	protected <T> T postparse(Context context, Object value,
+			Class<? extends T> c, Type t) throws Exception {
+		if (Point2D.class.isAssignableFrom(c) && value instanceof List) {
+			List list = (List) value;
+			Point2D p = (Point2D) create(context, c);
+			p.setLocation(context.convert(0, list.get(0), double.class),
+					context.convert(1, list.get(1), double.class));
+			return c.cast(p);
+		}
+		return super.postparse(context, value, c, t);
+	}
+
+	protected <T> T create(Context context, Class<? extends T> c)
+			throws Exception {
+		if (Point2D.class.isAssignableFrom(c)) {
+	    	return c.cast(new Point2D.Double());
+	    }
+		return super.create(context, c);
+	}
+	
+	protected boolean ignore(Context context, Class c, Member m) {
+		  return super.ignore(context, c, m);
+	}
 }

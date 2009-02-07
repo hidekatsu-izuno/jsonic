@@ -2298,7 +2298,7 @@ public class JSON {
 			enter(key);
 			T o = JSON.this.postparse(this, value, c, c);
 			exit();
-			return c.cast(o);
+			return (T)((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
@@ -2306,7 +2306,7 @@ public class JSON {
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
-			return c.cast(o);
+			return ((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
 		}
 		
 		void enter(Object key, JSONHint hint) {
@@ -2472,7 +2472,7 @@ public class JSON {
 				} else if (key instanceof Character) {
 					sb.append(key);
 				} else {
-					String str = key.toString();
+					String str = (key != null) ? key.toString() : "";
 					boolean escape = false;
 					for (int j = 0; j < str.length(); j++) {
 						if (j == 0) {

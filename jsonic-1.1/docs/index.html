@@ -252,9 +252,10 @@ JSON json = new JSON() {
   protected <span class="em">Object preformat(Context context, Object value)</span> throws Exception {
     <span class="comment">// java.awt.geom.Point2DをJSON arrayにフォーマットする例です。</span>
     if (value instanceof Point2D) {
+      Point2D p = (Point2D)value;
       List<Double> list = new ArrayList<Double>();
-      list.add(value.getX());
-      list.add(value.getY());
+      list.add(p.getX());
+      list.add(p.getY());
       return list;
     }
     return super.preformat(context, value);
@@ -262,25 +263,28 @@ JSON json = new JSON() {
   
   <span class="comment">// 解析されたデータを指定したクラスに変換します（parseでのみ有効です）。
   // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。
-  // さら下の階層を変換したい場合は、context.convert(キー、値、型)を呼び出してください。</span>
+  // さら下の階層を変換したい場合は、context.convert(キー, 値, 型)を呼び出してください。</span>
   protected <span class="em">&lt;T&gt; T postparse(Context context, Object value,
     Class&lt;? extends T&gt; c, Type t)</span> throws Exception {
     
     <span class="comment">// JSON arrayをjava.awt.geom.Point2Dに変換する例です。</span>
     if (Point2D.class.isAssignableFrom(c) &amp;&amp; value instanceof List) {
       List list = (List)value;
-      Point2D p = create(context, c);
+      Point2D p = (Point2D)create(context, c);;
       p.setLocation(
-      	context.convert(0, list.get(0), double.class),
-      	context.convert(1, list.get(1), double.class)
+        context.convert(0, list.get(0), double.class),
+        context.convert(1, list.get(1), double.class)
       );
-      return (T)p;
+      return c.cast(p);
     }
-    return super.postparse(context, value, c, type);
+    return super.postparse(context, value, c, t);
   }
   
   <span class="comment">// 型cに対するインスタンスを生成します（parseでのみ有効です）。</span>
-  protected <span class="em">&lt;T&gt; T create(Context context, Class&lt;? extends T&gt; c)</span> {
+  protected <span class="em">&lt;T&gt; T create(Context context, Class&lt;? extends T&gt; c)</span> throws Exception {
+    if (Point2D.class.isAssignableFrom(c)) {
+      return c.cast(new Point2D.Double());
+    }
     return super.create(context, c);
   }
       
@@ -288,7 +292,7 @@ JSON json = new JSON() {
   protected <span class="em">boolean ignore(Context context, Class c, Member m)</span> {
     <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言された
     // メンバの場合、trueを返します。</span>
-    return super.ignore(c, m);
+    return super.ignore(context, c, m);
   }    
 };
 </pre>
