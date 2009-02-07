@@ -429,8 +429,9 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <table class="table" summary="JSONHintアノテーションの属性">
 <tr><th>属性名</th><th>値型</th><th>説明</th></tr>
 <tr><td>name</td><td>String</td><td>出力/代入するキー名を変更します</td></tr>
+<tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。</td></tr>
+<tr><td>type</td><td>Class</td><td>parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。</td></tr>
 <tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
-<tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。
 フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください。</td></tr>
 </table>
 <pre class="source">
@@ -438,11 +439,7 @@ public class WithHintBean {
   <span class="comment">// format/parse時のキー値を変更</span>
   <span class="em">@JSONHint(</span>name="名前"<span class="em">)</span>
   public int keyValue = 100;
-    
-  <span class="comment">// format/parse時に無視</span>
-  <span class="em">@JSONHint(</span>ignore=true<span class="em">)</span>
-  public int ignoreValue = 100;
-    
+  
   <span class="comment">// format/parse時のフォーマットを指定</span>
   <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
   public Date dateValue = new Date();
@@ -460,6 +457,14 @@ public class WithHintBean {
   public int getMethodValue() {
     return 100;
   }
+  
+  <span class="comment">// ArrayListの代わりにLinkedListのインスタンスを生成</span>
+  <span class="em">@JSONHint(</span>type=LinkedList.class<span class="em">)</span>
+  public List<String> stringList;
+    
+  <span class="comment">// format/parse時に無視</span>
+  <span class="em">@JSONHint(</span>ignore=true<span class="em">)</span>
+  public int ignoreValue = 100;
 }
 </pre>
 

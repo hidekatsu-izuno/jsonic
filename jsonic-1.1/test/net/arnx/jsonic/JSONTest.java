@@ -375,7 +375,10 @@ public class JSONTest {
 		array3.add(2);
 		array3.add(3);
 		aBean.array3 = array3;
-		assertEquals(aBean, JSON.decode("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\",\"method\":2}", AnnotationBean.class));
+		
+		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\",\"method\":2}", AnnotationBean.class);
+		assertEquals(aBean, aBeanResult);
+		assertEquals(Vector.class, aBeanResult.array3.getClass());
 	}
 
 	@Test
@@ -1539,7 +1542,7 @@ class AnnotationBean {
 	@JSONHint(format="###,###,0.0")
 	public Integer[] array2;
 	
-	@JSONHint(format="###,###,0.0")
+	@JSONHint(format="###,###,0.0", type=Vector.class)
 	public List<Integer> array3;
 
 	@Override
