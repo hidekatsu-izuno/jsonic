@@ -261,7 +261,8 @@ JSON json = new JSON() {
   }
   
   <span class="comment">// 解析されたデータを指定したクラスに変換します（parseでのみ有効です）。
-  // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。</span>
+  // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。
+  // さら下の階層を変換したい場合は、context.convert(キー、値、型)を呼び出してください。</span>
   protected <span class="em">&lt;T&gt; T postparse(Context context, Object value,
     Class&lt;? extends T&gt; c, Type t)</span> throws Exception {
     
@@ -270,8 +271,8 @@ JSON json = new JSON() {
       List list = (List)value;
       Point2D p = create(context, c);
       p.setLocation(
-      	super.postparse(context, list.get(0), double.class, double.class),
-      	super.postparse(context, list.get(1), double.class, double.class)
+      	context.convert(0, list.get(0), double.class),
+      	context.convert(1, list.get(1), double.class)
       );
       return (T)p;
     }

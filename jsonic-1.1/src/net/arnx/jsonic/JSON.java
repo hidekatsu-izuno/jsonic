@@ -494,7 +494,7 @@ public class JSON {
 	 * @return a json string
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		Context context = new Context();
+		Context context = new Context(true);
 		
 		if (contextObject != null) context.scope = contextObject.getClass();
 		if (context.scope == null) context.scope = source.getClass().getEnclosingClass();
@@ -1516,7 +1516,7 @@ public class JSON {
 	}
 	
 	public Object convert(Object value, Type type) throws JSONException {
-		Context context = new Context();
+		Context context = new Context(false);
 		
 		Class<?> cls = getRawType(type);
 		if (contextObject != null) context.scope = contextObject.getClass();
@@ -2248,9 +2248,14 @@ public class JSON {
 	}
 	
 	public class Context {
+		boolean isInFormat;
 		Class<?> scope;
 		List<Object[]> path = new ArrayList(8);
 		int level = -1;
+		
+		Context(boolean isInFormat) {
+			this.isInFormat = isInFormat;
+		}
 		
 		/**
 		 * Returns the current level.
@@ -2287,6 +2292,21 @@ public class JSON {
 		 */
 		public JSONHint getHint() {
 			return (JSONHint)path.get(getLevel())[1];
+		}
+		
+		public <T> T convert(Object key, Object value, Class<? extends T> c) throws Exception {
+			enter(key);
+			T o = JSON.this.postparse(this, value, c, c);
+			exit();
+			return c.cast(o);
+		}
+		
+		public Object convert(Object key, Object value, Type t) throws Exception {
+			Class c = getRawType(t);
+			enter(key);
+			Object o = JSON.this.postparse(this, value, c, t);
+			exit();
+			return c.cast(o);
 		}
 		
 		void enter(Object key, JSONHint hint) {
