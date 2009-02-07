@@ -2467,12 +2467,14 @@ public class JSON {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < path.size(); i++) {
 				Object key = path.get(i)[0];
-				if (key instanceof Number) {
+				if (key == null) {
+					sb.append("[null]");
+				} else if (key instanceof Number) {
 					sb.append('[').append(key).append(']');
 				} else if (key instanceof Character) {
 					sb.append(key);
 				} else {
-					String str = (key != null) ? key.toString() : "";
+					String str = key.toString();
 					boolean escape = false;
 					for (int j = 0; j < str.length(); j++) {
 						if (j == 0) {
