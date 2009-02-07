@@ -474,6 +474,13 @@ public class JSON {
 		return text;
 	}
 	
+	/**
+	 * Format a object into a json string.
+	 * 
+	 * @param source a object to encode.
+	 * @param out a destination to output a json string.
+	 * @return a reference to 'out' object in parameters
+	 */
 	public OutputStream format(Object source, OutputStream out) throws IOException {
 		format(source, new OutputStreamWriter(out, "UTF-8"));
 		return out;
@@ -589,8 +596,8 @@ public class JSON {
 			try {
 				o = preformat(context, o);
 			} catch (Exception e) {
-				throw new JSONException(JSONException.FORMAT_ERROR, 
-					getMessage("json.format.ConversionError", o, context), e);
+				throw new JSONException(getMessage("json.format.ConversionError", o, context),
+					JSONException.FORMAT_ERROR, e);
 			}
 		}
 		
@@ -608,7 +615,8 @@ public class JSON {
 				|| o instanceof CharSequence
 				|| o instanceof Boolean
 				|| o instanceof Number)) {
-			throw new JSONException(JSONException.FORMAT_ERROR, getMessage("json.format.IllegalRootTypeError"));
+			throw new JSONException(getMessage("json.format.IllegalRootTypeError"),
+				JSONException.FORMAT_ERROR);
 		}
 		
 		if (o == null) {
@@ -845,9 +853,9 @@ public class JSON {
 				if (this.prettyPrint) ap.append(' ');
 				context.enter(entry.getKey(), hint);
 				if (cause != null) {
-					throw new JSONException(JSONException.FORMAT_ERROR, 
-							getMessage("json.format.ConversionError",
-							(o instanceof CharSequence) ? "\"" + o + "\"" : o, context), cause);					
+					throw new JSONException(getMessage("json.format.ConversionError",
+							(o instanceof CharSequence) ? "\"" + o + "\"" : o, context),
+							JSONException.FORMAT_ERROR, cause);					
 				}
 				format(context, value, ap);
 				context.exit();
@@ -1521,10 +1529,9 @@ public class JSON {
 			result = postparse(context, value, cls, type);
 			context.exit();
 		} catch (Exception e) {
-			throw new JSONException(
-				JSONException.CONVERT_ERROR,
-				getMessage("json.parse.ConversionError",
-					(value instanceof String) ? "\"" + value + "\"" : value, type, context), e);
+			throw new JSONException(getMessage("json.parse.ConversionError",
+					(value instanceof String) ? "\"" + value + "\"" : value, type, context),
+					JSONException.CONVERT_ERROR, e);
 		}
 		return result;
 	}
