@@ -1568,9 +1568,9 @@ public class JSON {
 		} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
 			data = value;
 		} else if (value instanceof Map) {
-			Map src = (Map)value;
+			Map<?, ?> src = (Map<?, ?>)value;
 			if (Map.class.isAssignableFrom(c)) {
-				Map map = null;
+				Map<Object, Object> map = null;
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
@@ -1580,10 +1580,10 @@ public class JSON {
 					
 					if ((Object.class.equals(pc0) || String.class.equals(pc0))
 							&& Object.class.equals(pc1)) {
-						map = (Map)value;
+						map = (Map<Object, Object>)value;
 					} else {
-						map = (Map)create(context, c);
-						for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
+						map = (Map<Object, Object>)create(context, c);
+						for (Map.Entry<?, ?> entry : src.entrySet()) {
 							context.enter('.');
 							Object key = postparse(context, entry.getKey(), pc0, pt0);
 							context.exit();
@@ -1594,13 +1594,13 @@ public class JSON {
 						}
 					}
 				} else {
-					map = (Map)create(context, c);
+					map = (Map<Object, Object>)create(context, c);
 					map.putAll(src);
 				}
 				data = map;
 			} else if (Collection.class.isAssignableFrom(c) || c.isArray()) {
 				if (!(src instanceof SortedMap)) {
-					src = new TreeMap(src);
+					src = new TreeMap<Object, Object>(src);
 				}
 				data = postparse(context, src.values(), c, type);
 			} else if (c.isPrimitive() || c.isEnum()
@@ -1622,7 +1622,7 @@ public class JSON {
 				if (src.containsKey(null)) {
 					Object target = src.get(null);
 					if (target instanceof List) {
-						List list = (List)target;
+						List<?> list = (List<?>)target;
 						target = (!list.isEmpty()) ? list.get(0) : null;
 					}
 					data = postparse(context, target, c, type);
@@ -1631,7 +1631,7 @@ public class JSON {
 				Object o = create(context, c);
 				if (o != null) {
 					Map<String, AnnotatedElement> props = context.getSetProperties(c);
-					for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
+					for (Map.Entry<?, ?> entry : src.entrySet()) {
 						String name = entry.getKey().toString();
 						AnnotatedElement target = props.get(name);
 						if (target == null) target = props.get(toLowerCamel(name));
@@ -1654,18 +1654,18 @@ public class JSON {
 				}
 			}
 		} else if (value instanceof List) {
-			List src = (List)value;
+			List<?> src = (List<?>)value;
 			if (Collection.class.isAssignableFrom(c)) {
-				Collection collection = null;
+				Collection<Object> collection = null;
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Class<?> pc = getRawType(pt);
 					
 					if (Object.class.equals(pc)) {
-						collection = src;
+						collection = (Collection<Object>)src;
 					} else {
-						collection = (Collection)create(context, c);
+						collection = (Collection<Object>)create(context, c);
 						for (int i = 0; i < src.size(); i++) {
 							context.enter(i);
 							collection.add(postparse(context, src.get(i), pc, pt));
@@ -1673,7 +1673,7 @@ public class JSON {
 						}
 					}
 				} else {
-					collection = (Collection)create(context, c);
+					collection = (Collection<Object>)create(context, c);
 					collection.addAll(src);
 				}
 				data = collection;
@@ -1690,7 +1690,7 @@ public class JSON {
 				}
 				data = array;
 			} else if (Map.class.isAssignableFrom(c)) {
-				Map map = (Map)create(context, c);
+				Map<Object, Object> map = (Map<Object, Object>)create(context, c);
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
@@ -2031,7 +2031,7 @@ public class JSON {
 					data = Class.forName(value.toString());
 				}
 			} else if (Collection.class.isAssignableFrom(c)) {
-				Collection collection = (Collection)create(context, c);
+				Collection<Object> collection = (Collection<Object>)create(context, c);
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
