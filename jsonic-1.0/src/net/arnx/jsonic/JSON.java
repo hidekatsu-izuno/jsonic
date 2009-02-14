@@ -481,7 +481,8 @@ public class JSON {
 		return ap;
 	}
 	
-	private Appendable format(Object o, Appendable ap, int level) throws IOException {
+	private Appendable format(Object src, Appendable ap, int level) throws IOException {
+		Object o = src;
 		if (level > this.maxDepth) {
 			o = null;
 		}
@@ -664,7 +665,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < level+1; j++) ap.append('\t');
 				}
-				if (item == o) item = null;
+				if (item == src) item = null;
 				format(item, ap, level+1);
 				if (i.hasNext()) ap.append(',');
 			}
@@ -683,7 +684,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < level+1; j++) ap.append('\t');
 				}
-				if (item == o) item = null;
+				if (item == src) item = null;
 				format(item, ap, level+1);
 				if (e.hasMoreElements()) ap.append(',');
 			}
@@ -693,7 +694,7 @@ public class JSON {
 			}
 			ap.append(']');
 		} else {
-			Map map = null;
+			Map<Object, Object> map = null;
 			if (o instanceof Map) {
 				map = (Map)o;
 			} else if (dynaBeanClasses != null && dynaBeanClasses[0].isAssignableFrom(o.getClass())) {
@@ -738,10 +739,12 @@ public class JSON {
 			}
 			
 			ap.append('{');
-			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
-				Map.Entry entry = (Map.Entry)i.next();
+			
+			int i = 0;
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
 				if (entry.getKey() == null || entry.getValue() == o) continue; 
 				
+				if (i > 0) ap.append(',');
 				if (this.prettyPrint) {
 					ap.append('\n');
 					for (int j = 0; j < level+1; j++) ap.append('\t');
@@ -749,7 +752,7 @@ public class JSON {
 				formatString(entry.getKey().toString(), ap).append(':');
 				if (this.prettyPrint) ap.append(' ');
 				format(entry.getValue(), ap, level+1);
-				if (i.hasNext()) ap.append(',');
+				i++;
 			}
 			if (this.prettyPrint && !map.isEmpty()) {
 				ap.append('\n');

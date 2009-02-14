@@ -66,6 +66,10 @@ public class JSONTest {
 		
 		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",0]", JSON.encode(list));
 		
+		list.add(list);
+		
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",0,null]", JSON.encode(list));
+		
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new long[] {1l,2l,3l}));
