@@ -836,8 +836,9 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2009/02/08 version 1.1.0 beta3</h3>
+<h3>2009/02/15 version 1.1.0 beta3</h3>
 <ul>
+<li>Decode/Format時にListの再帰抑制が正しく動作していなかった問題を修正しました。</li>
 <li>JSONHintアノテーションに値がJSONそのものであることを示す serialized を追加しました。</li>
 <li>コンパイル時の型チェックWarningを解消しました。</li>
 <li>[非互換] Parse時にキー名とプロパティ名を比較する際、予約語に対応するため末尾の「_」を削除して比較するという仕様がありましたが、JSONHint(name="予約語")で対応できるため廃止しました。</li>
