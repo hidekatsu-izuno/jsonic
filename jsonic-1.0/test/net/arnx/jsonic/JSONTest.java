@@ -375,8 +375,20 @@ public class JSONTest {
 		Date d = new Date();
 		assertEquals("[" + Long.toString(d.getTime()) + "]", json.format(new Date[] {d}, new StringBuilder()).toString());
 		
-		
 		assertEquals("[\"AQID\"]", json.format(new byte[][] {{1,2,3}}, new StringBuilder()).toString());
+
+		Object obj = new Object() {
+			public Object a = 100;
+			public Object b = null;
+			public List list = new ArrayList() {
+				{ 
+					add(100);
+					add(null);
+				}
+			};
+		};
+		json.setSuppressNull(true);
+		assertEquals("{\"a\":100,\"list\":[100,null]}", json.format(obj));
 	}
 	
 	@Test
@@ -658,6 +670,17 @@ public class JSONTest {
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE_BOM.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE_BOM.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE_BOM.json")));
+
+		SuppressNullBean snb = new SuppressNullBean();
+		json.setSuppressNull(true);
+		assertEquals(snb, json.parse("{\"a\":null,\"b\":null,\"list\":null}", SuppressNullBean.class));
+		assertEquals(snb, json.parse("{\"a\":null,\"b\":,\"list\":}", SuppressNullBean.class));
+		json.setSuppressNull(false);
+		snb.a = null;
+		snb.b = null;
+		snb.list = null;
+		assertEquals(snb, json.parse("{\"a\":null,\"b\":null,\"list\":null}", SuppressNullBean.class));
+		assertEquals(snb, json.parse("{\"a\":null,\"b\":,\"list\":}", SuppressNullBean.class));
 	}
 
 	@Test
@@ -1430,6 +1453,57 @@ class SuperLinkedHashMap extends LinkedHashMap {
 class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
 }
+
+@SuppressWarnings("unchecked")
+class SuppressNullBean {
+	public Object a = 100;
+	public Object b = null;
+	public List list = new ArrayList() {
+		{ 
+			add(100);
+			add(null);
+		}
+	};
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((a == null) ? 0 : a.hashCode());
+		result = prime * result + ((b == null) ? 0 : b.hashCode());
+		result = prime * result + ((list == null) ? 0 : list.hashCode());
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SuppressNullBean other = (SuppressNullBean) obj;
+		if (a == null) {
+			if (other.a != null)
+				return false;
+		} else if (!a.equals(other.a))
+			return false;
+		if (b == null) {
+			if (other.b != null)
+				return false;
+		} else if (!b.equals(other.b))
+			return false;
+		if (list == null) {
+			if (other.list != null)
+				return false;
+		} else if (!list.equals(other.list))
+			return false;
+		return true;
+	}
+	
+	public String toString() {
+		return JSON.encode(this);
+	}
+};
 
 enum ExampleEnum {
 	Example0, Example1, Example2
