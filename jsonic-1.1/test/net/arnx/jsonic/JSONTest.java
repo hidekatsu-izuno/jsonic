@@ -1537,7 +1537,6 @@ class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
 }
 
-@SuppressWarnings("unchecked")
 class AnnotationBean {
 	@JSONHint(name="a")
 	public int field;
@@ -1621,6 +1620,7 @@ class AnnotationBean {
 	}
 }
 
+@SuppressWarnings("unchecked")
 class SuppressNullBean {
 	public Object a = 100;
 	public Object b = null;
@@ -1709,7 +1709,7 @@ class Point2DJSON extends JSON {
 	protected <T> T postparse(Context context, Object value,
 			Class<? extends T> c, Type t) throws Exception {
 		if (Point2D.class.isAssignableFrom(c) && value instanceof List) {
-			List list = (List) value;
+			List<?> list = (List<?>)value;
 			Point2D p = (Point2D) create(context, c);
 			p.setLocation(context.convert(0, list.get(0), double.class),
 					context.convert(1, list.get(1), double.class));
@@ -1726,7 +1726,7 @@ class Point2DJSON extends JSON {
 		return super.create(context, c);
 	}
 	
-	protected boolean ignore(Context context, Class c, Member m) {
+	protected boolean ignore(Context context, Class<?> c, Member m) {
 		  return super.ignore(context, c, m);
 	}
 }

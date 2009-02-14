@@ -15,19 +15,21 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+//@SuppressWarnings("unchecked")
 public class Route {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
 	private String target;
 	private String method;
 	private int contentLength = 0;
-	private Map params;
+	private Map<Object, Object> params;
 	
 	private boolean isRpcMode;
 	
+	@SuppressWarnings("unchecked")
 	public Route(HttpServletRequest request, String target, Map<String, Object> params) throws IOException {
 		this.target = target;
-		this.params = params;
+		this.params = (Map)params;
 		
 		if ("rpc".equalsIgnoreCase(getParameter("class"))) {
 			isRpcMode = true;
@@ -68,12 +70,14 @@ public class Route {
 	public String getParameter(String name) {
 		Object o = params.get(name);
 		
-		if (o instanceof Map && ((Map)o).containsKey(null)) {
-			o = ((Map)o).get(null);
+		if (o instanceof Map) {
+			Map<?, ?> map = (Map<?, ?>)o;
+			if (map.containsKey(null)) o = map.get(null); 
 		}
 		
-		if (o instanceof List && !((List)o).isEmpty()) {
-			o = ((List)o).get(0);
+		if (o instanceof List) {
+			List<?> list = (List<?>)o;
+			if (!list.isEmpty()) o = list.get(0);
 		}
 		
 		return (o instanceof String) ? (String)o : null;
@@ -83,19 +87,20 @@ public class Route {
 		return params;
 	}
 	
-	public Map<?, ?> mergeParameterMap(Map<Object, Object> newParams) {
-		for (Map.Entry<Object, Object> entry : newParams.entrySet()) {
+	@SuppressWarnings("unchecked")
+	public Map<?, ?> mergeParameterMap(Map<?, ?> newParams) {
+		for (Map.Entry<?, ?> entry : newParams.entrySet()) {
 			if (params.containsKey(entry.getKey())) {
 				Object target = params.get(entry.getKey());
 				
 				if (target instanceof Map) {
-					Map map = (Map)target;
+					Map<Object, Object> map = (Map<Object, Object>)target;
 					if (map.containsKey(null)) {
 						target = map.get(null);
 						if (target instanceof List) {
-							((List)target).add(entry.getValue());
+							((List<Object>)target).add(entry.getValue());
 						} else {
-							List list = new ArrayList();
+							List<Object> list = new ArrayList<Object>();
 							list.add(target);
 							list.add(entry.getValue());
 							map.put(null, list);
@@ -104,7 +109,7 @@ public class Route {
 						map.put(null, entry.getValue());
 					}
 				} else  if (target instanceof List) {
-					((List)target).add(entry.getValue());
+					((List<Object>)target).add(entry.getValue());
 				} else {
 					List<Object> list = new ArrayList<Object>();
 					list.add(target);
@@ -216,6 +221,7 @@ public class Route {
 		parseParameter(pairs, params);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private static void parseParameter(List<Object> pairs, Map<Object, Object> params) {
 		for (int i = 0; i < pairs.size(); i+= 2) {
 			String name = (String)pairs.get(i);
@@ -230,13 +236,13 @@ public class Route {
 					String key = name.substring(start, (old == ']') ? j-1 : j);
 					Object target = current.get(key);
 					
-					if (!(target instanceof Map)) {
+					if (target instanceof Map) {
+						current = (Map<Object, Object>)target;
+					} else {
 						Map<Object, Object> map = new LinkedHashMap<Object, Object>();
 						if (target != null) map.put(null, target);
 						current.put(key, map);
 						current = map;
-					} else {
-						current = (Map<Object, Object>)target;
 					}
 					start = j+1;
 				}
@@ -249,13 +255,13 @@ public class Route {
 				Object target = current.get(name);
 				
 				if (target instanceof Map) {
-					Map map = (Map)target;
+					Map<Object, Object> map = (Map<Object, Object>)target;
 					if (map.containsKey(null)) {
 						target = map.get(null);
 						if (target instanceof List) {
-							((List)target).add(value);
+							((List<Object>)target).add(value);
 						} else {
-							List list = new ArrayList();
+							List<Object> list = new ArrayList<Object>();
 							list.add(target);
 							list.add(value);
 							map.put(null, list);
@@ -264,9 +270,9 @@ public class Route {
 						map.put(null, value);
 					}
 				} else if (target instanceof List) {
-					((List)target).add(value);
+					((List<Object>)target).add(value);
 				} else {
-					List list = new ArrayList();
+					List<Object> list = new ArrayList<Object>();
 					list.add(target);
 					list.add(value);
 					current.put(name, list);
@@ -278,7 +284,7 @@ public class Route {
 	}
 	
 	private static Map<String, String> parseHeaderLine(String line) {
-		if (line == null) return Collections.EMPTY_MAP;
+		if (line == null) return Collections.emptyMap();
 		
 		Map<String, String> map = new HashMap<String, String>();
 		

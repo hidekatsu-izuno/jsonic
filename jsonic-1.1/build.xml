@@ -17,6 +17,7 @@
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
 		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" fork="true">
+			<compilerarg value="-Xlint:unchecked"/>
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 			</classpath>

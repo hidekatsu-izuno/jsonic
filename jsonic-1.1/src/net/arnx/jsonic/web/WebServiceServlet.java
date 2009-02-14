@@ -222,7 +222,7 @@ public class WebServiceServlet extends HttpServlet {
 	
 	class RpcRequest {
 		public String method;
-		public List params;
+		public List<Object> params;
 		public Object id;
 	}
 	
@@ -353,6 +353,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
@@ -391,21 +392,21 @@ public class WebServiceServlet extends HttpServlet {
 			
 			List<Object> params = null;
 			if (!route.hasJSONContent()) {
-				params = new ArrayList(1);
+				params = new ArrayList<Object>(1);
 				params.add(route.getParameterMap());
 			} else {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List) {
-					params = (List)o;
+					params = (List<Object>)o;
 					if (params.isEmpty()) {
-						params = new ArrayList(1);
+						params = new ArrayList<Object>(1);
 						params.add(route.getParameterMap());
 					} else if (params.get(0) instanceof Map) {
-						params.set(0, route.mergeParameterMap((Map<Object, Object>)params.get(0)));
+						params.set(0, route.mergeParameterMap((Map<?, ?>)params.get(0)));
 					}
 				} else if (o instanceof Map) {
-					params = new ArrayList(1);
-					params.add(route.mergeParameterMap((Map<Object, Object>)o));
+					params = new ArrayList<Object>(1);
+					params.add(route.mergeParameterMap((Map<?, ?>)o));
 				} else {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
@@ -474,10 +475,8 @@ public class WebServiceServlet extends HttpServlet {
 		super.destroy();
 	}
 		
-	protected Object invoke(net.arnx.jsonic.JSON json, Object o, String methodName, List<Object> args) throws Exception {
-		if (args == null) {
-			args = Collections.EMPTY_LIST;
-		}
+	protected Object invoke(net.arnx.jsonic.JSON json, Object o, String methodName, List<?> args) throws Exception {
+		if (args == null) args = Collections.emptyList();
 		
 		methodName = toLowerCamel(methodName);
 		
@@ -583,6 +582,7 @@ class RouteMapping {
 		this.target = target;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public Route matches(HttpServletRequest request, String path) throws IOException {
 		Matcher m = pattern.matcher(path);
 		if (m.matches()) {
@@ -593,9 +593,9 @@ class RouteMapping {
 				if (params.containsKey(key)) {
 					Object target = params.get(key);
 					if (target instanceof List) {
-						((List)target).add(value);
+						((List<Object>)target).add(value);
 					} else {
-						List list = new ArrayList(2);
+						List<Object> list = new ArrayList<Object>(2);
 						list.add(target);
 						list.add(value);
 					}

@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 public @interface JSONHint {
 	String name() default "";
 	String format() default "";
-	Class type() default Object.class;
+	Class<?> type() default Object.class;
 	boolean ignore() default false;
 	boolean serialized() default false;
 }

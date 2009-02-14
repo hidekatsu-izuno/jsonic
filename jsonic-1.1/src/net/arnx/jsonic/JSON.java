@@ -164,9 +164,9 @@ public class JSON {
 	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
-	public static Class prototype = JSON.class;
+	public static Class<? extends JSON> prototype = JSON.class;
 	
-	private static final Map<Class, Object> PRIMITIVE_MAP = new IdentityHashMap<Class, Object>();
+	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
 	private static Class<?>[] dynaBeanClasses = null;
 	
@@ -535,7 +535,7 @@ public class JSON {
 			DateFormat f = context.format(DateFormat.class);
 			data = (f != null) ? f.format(value) : ((Date)value).getTime();
 		} else if (value instanceof Class) {
-			data = ((Class)value).getName();
+			data = ((Class<?>)value).getName();
 		} else if (value instanceof Type
 				|| value instanceof Member
 				|| value instanceof URL
@@ -543,7 +543,7 @@ public class JSON {
 				|| value instanceof File) {
 			data = value.toString();
 		} else if (value instanceof Enum) {
-			data = ((Enum)value).ordinal();
+			data = ((Enum<?>)value).ordinal();
 		} else if (value instanceof Calendar) {
 			data = ((Calendar)value).getTimeInMillis();
 		} else if (value instanceof Pattern) {
@@ -565,7 +565,7 @@ public class JSON {
 				data = ((CharacterData)value).getData();
 			}
 		} else if (dynaBeanClasses != null && dynaBeanClasses[0].isAssignableFrom(value.getClass())) {
-			Map map = new TreeMap();
+			Map<Object, Object> map = new TreeMap<Object, Object>();
 			Object dynaClass = dynaBeanClasses[0].getMethod("getDynaClass").invoke(value);
 			Object[] dynaProperties = (Object[])dynaBeanClasses[1].getMethod("getDynaProperties").invoke(dynaClass);
 			
@@ -602,7 +602,7 @@ public class JSON {
 		}
 		
 		if (o instanceof Iterable) {
-			o = ((Iterable)o).iterator();
+			o = ((Iterable<?>)o).iterator();
 		} else if (o instanceof Character) {
 			o = o.toString();
 		} else if (o instanceof char[]) {
@@ -825,11 +825,11 @@ public class JSON {
 			}
 			ap.append(']');
 		} else {
-			Map map = (o instanceof Map) ? (Map)o : context.getGetProperties(o.getClass());
-
+			Map<?, ?> map = (o instanceof Map<?, ?>) ? (Map<?, ?>)o : context.getGetProperties(o.getClass());
+			
 			ap.append('{');
-			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
-				Map.Entry entry = (Map.Entry)i.next();
+			int i = 0;
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
 				if (entry.getKey() == null) continue;
 				
 				Object value = entry.getValue();
@@ -847,6 +847,7 @@ public class JSON {
 				}
 				if (value == o || (cause == null && this.suppressNull && value == null)) continue; 
 				
+				if (i > 0) ap.append(',');
 				if (this.prettyPrint) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
@@ -861,7 +862,7 @@ public class JSON {
 				}
 				format(context, value, ap);
 				context.exit();
-				if (i.hasNext()) ap.append(',');
+				i++;
 			}
 			if (this.prettyPrint && !map.isEmpty()) {
 				ap.append('\n');
@@ -917,6 +918,7 @@ public class JSON {
 		return value; 
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence s, Class<? extends T> cls) throws JSONException {
 		return (T)parse(s, (Type)cls);
 	}
@@ -935,6 +937,7 @@ public class JSON {
 		return parse(new ReaderParserSource(in));
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Class<? extends T> cls) throws IOException, JSONException {
 		return (T)parse(in, (Type)cls);
 	}
@@ -947,6 +950,7 @@ public class JSON {
 		return parse(new ReaderParserSource(reader));
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Class<? extends T> cls) throws IOException, JSONException {
 		return (T)parse(reader, (Type)cls);
 	}
@@ -1077,7 +1081,7 @@ public class JSON {
 			case '[':
 				if (point == 3) {
 					s.back();
-					List value = parseArray(s, level+1);
+					List<Object> value = parseArray(s, level+1);
 					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
@@ -1548,6 +1552,7 @@ public class JSON {
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
+	@SuppressWarnings("unchecked")
 	protected <T> T postparse(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
@@ -2071,21 +2076,21 @@ public class JSON {
 		Object instance = null;
 		
 		JSONHint hint = context.getHint();
-		if (hint != null && hint.type() != Object.class) c = hint.type();
+		if (hint != null && hint.type() != Object.class) c = hint.type().asSubclass(c);
 		
 		if (c.isInterface()) {
 			if (SortedMap.class.equals(c)) {
-				instance = new TreeMap();
+				instance = new TreeMap<Object, Object>();
 			} else if (Map.class.equals(c)) {
-				instance = new LinkedHashMap();
+				instance = new LinkedHashMap<Object, Object>();
 			} else if (SortedSet.class.equals(c)) {
-				instance = new TreeSet();
+				instance = new TreeSet<Object>();
 			} else if (Set.class.equals(c)) {
-				instance = new LinkedHashSet();
+				instance = new LinkedHashSet<Object>();
 			} else if (List.class.equals(c)) {
-				instance = new ArrayList();
+				instance = new ArrayList<Object>();
 			} else if (Collection.class.equals(c)) {
-				instance = new ArrayList();
+				instance = new ArrayList<Object>();
 			} else if (Appendable.class.equals(c)) {
 				instance = new StringBuilder();
 			}
@@ -2094,8 +2099,8 @@ public class JSON {
 				instance = Calendar.getInstance();
 			}
 		} else if ((c.isMemberClass() || c.isAnonymousClass()) && !Modifier.isStatic(c.getModifiers())) {
-			Class eClass = c.getEnclosingClass();
-			Constructor con = c.getDeclaredConstructor(eClass);
+			Class<?> eClass = c.getEnclosingClass();
+			Constructor<?> con = c.getDeclaredConstructor(eClass);
 			if(context.tryAccess(c)) con.setAccessible(true);
 			if (contextObject != null && eClass.isAssignableFrom(contextObject.getClass())) {
 				instance = con.newInstance(contextObject);
@@ -2105,7 +2110,7 @@ public class JSON {
 		} else {
 			if (Date.class.isAssignableFrom(c)) {
 				try {
-					Constructor con = c.getDeclaredConstructor(long.class);
+					Constructor<?> con = c.getDeclaredConstructor(long.class);
 					if(context.tryAccess(c)) con.setAccessible(true);
 					instance = con.newInstance(0l);
 				} catch (NoSuchMethodException e) {
@@ -2114,13 +2119,13 @@ public class JSON {
 			}
 			
 			if (instance == null) {
-				Constructor con = c.getDeclaredConstructor();
+				Constructor<?> con = c.getDeclaredConstructor();
 				if(context.tryAccess(c)) con.setAccessible(true);
 				instance = con.newInstance();
 			}
 		}
 		
-		return (T)instance;
+		return c.cast(instance);
 	}
 	
 	private static String toLowerCamel(String name) {
@@ -2149,7 +2154,7 @@ public class JSON {
 		}else if (t instanceof ParameterizedType) {
 			return (Class<?>)((ParameterizedType)t).getRawType();
 		} else if (t instanceof GenericArrayType) {
-			Class cls = null;
+			Class<?> cls = null;
 			try {
 				cls = Array.newInstance(getRawType(((GenericArrayType)t).getGenericComponentType()), 0).getClass();
 			} catch (Exception e) {
@@ -2251,7 +2256,7 @@ public class JSON {
 	
 	public class Context {
 		Class<?> scope;
-		List<Object[]> path = new ArrayList(8);
+		List<Object[]> path = new ArrayList<Object[]>(8);
 		int level = -1;
 		
 		Context() {
@@ -2294,6 +2299,7 @@ public class JSON {
 			return (JSONHint)path.get(getLevel())[1];
 		}
 		
+		@SuppressWarnings("unchecked")
 		public <T> T convert(Object key, Object value, Class<? extends T> c) throws Exception {
 			enter(key);
 			T o = JSON.this.postparse(this, value, c, c);
@@ -2302,7 +2308,7 @@ public class JSON {
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
-			Class c = getRawType(t);
+			Class<?> c = getRawType(t);
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
@@ -2448,15 +2454,15 @@ public class JSON {
 			if (hint != null && hint.format().length() > 0) {
 				if (NumberFormat.class.isAssignableFrom(c)) {
 					if (locale != null) {
-						format = (T)new DecimalFormat(hint.format(), new DecimalFormatSymbols(locale));
+						format = c.cast(new DecimalFormat(hint.format(), new DecimalFormatSymbols(locale)));
 					} else {
-						format = (T)new DecimalFormat(hint.format());
+						format = c.cast(new DecimalFormat(hint.format()));
 					}
 				} else if (DateFormat.class.isAssignableFrom(c)) {
 					if (locale != null) {
-						format = (T)new SimpleDateFormat(hint.format(), locale);
+						format = c.cast(new SimpleDateFormat(hint.format(), locale));
 					} else {
-						format = (T)new SimpleDateFormat(hint.format());
+						format = c.cast(new SimpleDateFormat(hint.format()));
 					}
 				}
 			}
