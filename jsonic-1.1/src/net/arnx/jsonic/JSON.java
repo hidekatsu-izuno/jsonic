@@ -194,7 +194,7 @@ public class JSON {
 	private static JSON newInstance() {
 		JSON instance = null;
 		try {
-			instance = (JSON)prototype.newInstance();
+			instance = prototype.newInstance();
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
