@@ -742,7 +742,7 @@ public class JSON {
 			
 			int i = 0;
 			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				if (entry.getKey() == null || entry.getValue() == o) continue; 
+				if (entry.getKey() == null || entry.getValue() == src) continue; 
 				
 				if (i > 0) ap.append(',');
 				if (this.prettyPrint) {
