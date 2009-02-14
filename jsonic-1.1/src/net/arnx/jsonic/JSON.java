@@ -589,7 +589,8 @@ public class JSON {
 		return data;
 	}
 	
-	private Appendable format(Context context, Object o, Appendable ap) throws IOException {
+	private Appendable format(Context context, Object src, Appendable ap) throws IOException {
+		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
 			o = null;
 		} else {
@@ -736,7 +737,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				if (item == o) item = null;
+				if (item == src) item = null;
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
@@ -757,7 +758,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				if (item == o) item = null;
+				if (item == src) item = null;
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
@@ -845,7 +846,7 @@ public class JSON {
 				} else {
 					hint = null;
 				}
-				if (value == o || (cause == null && this.suppressNull && value == null)) continue; 
+				if (value == src || (cause == null && this.suppressNull && value == null)) continue; 
 				
 				if (i > 0) ap.append(',');
 				if (this.prettyPrint) {
@@ -857,7 +858,7 @@ public class JSON {
 				context.enter(entry.getKey(), hint);
 				if (cause != null) {
 					throw new JSONException(getMessage("json.format.ConversionError",
-							(o instanceof CharSequence) ? "\"" + o + "\"" : o, context),
+							(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
 							JSONException.FORMAT_ERROR, cause);					
 				}
 				format(context, value, ap);
