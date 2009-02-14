@@ -207,7 +207,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<
 <div class="caption">
 (※6) 対象となるインスタンスに対しパブリックなsetterメソッド、パブリックなフィールドの優先順で探索します。
 staticやtransientのメソッド/フィールドは対象となりません。
-なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較し、次に末尾に「_」を付けて比較します（これは、予約語に対応するためです）。
+なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較します。
 </div>
 
 <h2 id="usage_advanced">高度な使い方</h2>
@@ -435,11 +435,18 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <table class="table" summary="JSONHintアノテーションの属性">
 <tr><th>属性名</th><th>値型</th><th>説明</th></tr>
 <tr><td>name</td><td>String</td><td>出力/代入するキー名を変更します</td></tr>
-<tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。</td></tr>
+<tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。<br />
+フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください。</td></tr>
 <tr><td>type</td><td>Class</td><td>parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。</td></tr>
 <tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
-フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください。</td></tr>
+<tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。
+Format時はtoString()の値をそのまま出力<sup>(※7)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
 </table>
+<div class="caption">
+(※7) 出力される文字列は検証されないため妥当でないJSONとなる可能性があることに注意してください。
+逆に言えば、この機能を使うことでコメントやfunction呼び出しを出力することも可能です。
+</div>
+
 <pre class="source">
 public class WithHintBean {
   <span class="comment">// format/parse時のキー値を変更</span>
@@ -512,7 +519,7 @@ public class WithHintBean {
 <tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
 <tr><td>debug</td><td><code>java.lang.Boolean</code></td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
 <tr><td>mappings</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>URLパスとクラスのマッピングを行います。
-パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※7)</sup>。
+パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※8)</sup>。
 なお、RESTモードの場合、利用されなかった変数は引数としてメソッドに引き渡されます（RPCモードの場合は設定されません。詳しくはRESTモードの説明をご覧ください）。</td></tr>
 <tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/()]+</code>が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
@@ -520,7 +527,7 @@ public class WithHintBean {
 <tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>です。</td></tr>
 </table>
 <div class="caption">
-(※7) 変数名のうち、classとpackageだけは特殊な扱いがされます。class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
+(※8) 変数名のうち、classとpackageだけは特殊な扱いがされます。class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
 また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
@@ -566,7 +573,7 @@ public class WithHintBean {
 }</pre></td>
 </tr>
 <tr>
-<td>methodで指定したクラス/メソッドが見つからない<sup>(※8)</sup></td>
+<td>methodで指定したクラス/メソッドが見つからない<sup>(※9)</sup></td>
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32601,
@@ -574,7 +581,7 @@ public class WithHintBean {
 }</pre></td>
 </tr>
 <tr>
-<td>paramsが不適切<sup>(※9)</sup></td>
+<td>paramsが不適切<sup>(※10)</sup></td>
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32602,
@@ -599,15 +606,15 @@ public class WithHintBean {
 }</pre></td>
 </tr>
 </table>
-<div class="caption">(※8) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
-<div class="caption">(※9) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※9) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※10) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
 <h3>■ RESTモード</h3>
-<p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※10)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※11)</sup>。</p>
+<p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※11)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※12)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
 <tr><td>GET</td><td>find</td><td>クエリ変数名を「.」で区切られた階層構造とみなし引数の型に従い変換し設定</td></tr>
-<tr><td>POST</td><td>create</td><td rowspan="3">リクエストのメッセージボディを引数の型に従い変換し設定<sup>(※12)</sup></td></tr>
+<tr><td>POST</td><td>create</td><td rowspan="3">リクエストのメッセージボディを引数の型に従い変換し設定<sup>(※13)</sup></td></tr>
 <tr><td>PUT</td><td>update</td></tr>
 <tr><td>DELETE</td><td>delete</td></tr>
 </table>
@@ -620,20 +627,20 @@ public class WithHintBean {
 JSON stringなどその他の型であった場合や第二引数以降はそのまま設定されます。</td></tr>
 </table>
 <div class="caption">
-(※10) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
-(※11) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
-(※12) Content-Typeが「application/x-www-form-urlencoded」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
+(※11) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
+(※12) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
+(※13) Content-Typeが「application/x-www-form-urlencoded」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
 </div>
 
 <p>RESTモードでは、エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
 <table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
 <tr>
-<td>クラス/メソッドが見つからない<sup>(※13)</sup></td>
+<td>クラス/メソッドが見つからない<sup>(※14)</sup></td>
 <td>404&nbsp;Not&nbsp;found</td>
 </tr>
 <tr>
-<td>送信されたJSONの解析/変換に失敗した<sup>(※14)</sup></td>
+<td>送信されたJSONの解析/変換に失敗した<sup>(※15)</sup></td>
 <td>400&nbsp;Bad&nbsp;request</td>
 </tr>
 <tr>
@@ -641,8 +648,8 @@ JSON stringなどその他の型であった場合や第二引数以降はその
 <td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
 </tr>
 </table>
-<div class="caption">(※13) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
-<div class="caption">(※14) Convertに失敗した場合だけでなく、メソッドからIllegalStateException、UnsupportedOperationException、Error<b>以外</b>の例外が発生した場合も同じエラーが返されます。
+<div class="caption">(※14) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
+<div class="caption">(※15) Convertに失敗した場合だけでなく、メソッドからIllegalStateException、UnsupportedOperationException、Error<b>以外</b>の例外が発生した場合も同じエラーが返されます。
 なお、この場合、発生した例外がJSON objectとしてメッセージボディに設定されます（ただし、Throwableクラスのプロパティは除外されます）。</div>
 
 <h3>■ JSONP</h3>
@@ -660,7 +667,7 @@ JSON stringなどその他の型であった場合や第二引数以降はその
 </pre>
 
 <h3>■ 初期化/終了処理</h3>
-<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※15)</sup></p>
+<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※16)</sup></p>
 <pre class="source">
 public class HogeService {
     <span class="comment">// 処理の前に呼び出されます。</span>
@@ -674,7 +681,7 @@ public class HogeService {
     }
 }
 </pre>
-<div class="caption">(※15) 呼び出されるメソッド名は設定で変更可能です。</div>
+<div class="caption">(※16) 呼び出されるメソッド名は設定で変更可能です。</div>
 
 <h3>■ DI Container対応</h3>
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
@@ -824,6 +831,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2009/02/08 version 1.1.0 beta3</h3>
+<ul>
+<li>JSONHintアノテーションに値がJSONそのものであることを示す serialized を追加しました。</li>
+<li>[非互換] Parse時にキー名とプロパティ名を比較する際、予約語に対応するため末尾の「_」を削除して比較するという仕様がありましたが、JSONHint(name="予約語")で対応できるため廃止しました。</li>
+</ul>
 
 <h3>2009/02/08 version 1.1.0 beta2</h3>
 <ul>

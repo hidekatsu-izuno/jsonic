@@ -619,8 +619,12 @@ public class JSON {
 				JSONException.FORMAT_ERROR);
 		}
 		
+		JSONHint hint = context.getHint();
+		
 		if (o == null) {
 			ap.append("null");
+		} else if (hint != null && hint.serialized()) {
+			ap.append(o.toString());
 		} else if (o instanceof CharSequence) {
 			formatString((CharSequence)o, ap);
 		} else if (o instanceof Double || o instanceof Float) {
@@ -826,24 +830,22 @@ public class JSON {
 			ap.append('{');
 			for (Iterator<Map.Entry> i = map.entrySet().iterator(); i.hasNext(); ) {
 				Map.Entry entry = (Map.Entry)i.next();
+				if (entry.getKey() == null) continue;
+				
 				Object value = entry.getValue();
 				Exception cause = null; 
 				
-				JSONHint hint = null;
 				if (value instanceof AnnotatedElement) {
 					hint = ((AnnotatedElement)value).getAnnotation(JSONHint.class);
 					try {
-						if (entry.getValue() instanceof Method) {
-							value = ((Method)entry.getValue()).invoke(o);
-						} else {
-							value =  ((Field)entry.getValue()).get(o);
-						}
+						value = (value instanceof Method) ? ((Method)value).invoke(o) : ((Field)value).get(o);
 					} catch (Exception e) {
 						cause = e;
 					}
+				} else {
+					hint = null;
 				}
-				if (entry.getKey() == null || value == o
-					|| (cause == null && this.suppressNull && value == null)) continue; 
+				if (value == o || (cause == null && this.suppressNull && value == null)) continue; 
 				
 				if (this.prettyPrint) {
 					ap.append('\n');
@@ -1537,7 +1539,7 @@ public class JSON {
 	}
 		
 	/**
-	 * Converts Map/List/Number/String/Boolean/null to other Java Objects after parsing. 
+	 * Converts Map, List, Number, String, Boolean or null to other Java Objects after parsing. 
 	 * 
 	 * @param context current context.
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
@@ -1548,6 +1550,11 @@ public class JSON {
 	 */
 	protected <T> T postparse(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
+		
+		JSONHint hint = context.getHint();
+		if (hint != null && hint.serialized()) {
+			value = format(value);
+		}
 		
 		if (value == null) {
 			if (c.isPrimitive()) {
@@ -1622,12 +1629,7 @@ public class JSON {
 					for (Map.Entry entry : (Set<Map.Entry>)src.entrySet()) {
 						String name = entry.getKey().toString();
 						AnnotatedElement target = props.get(name);
-						if (target == null) {
-							target = props.get(toLowerCamel(name));
-							if (target == null) {
-								target = props.get(name + "_");
-							}
-						}
+						if (target == null) target = props.get(toLowerCamel(name));
 						if (target == null) continue;
 						
 						context.enter(name, target.getAnnotation(JSONHint.class));

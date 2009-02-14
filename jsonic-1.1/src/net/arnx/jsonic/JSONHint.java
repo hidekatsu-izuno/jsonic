@@ -27,4 +27,5 @@ public @interface JSONHint {
 	String format() default "";
 	Class type() default Object.class;
 	boolean ignore() default false;
+	boolean serialized() default false;
 }

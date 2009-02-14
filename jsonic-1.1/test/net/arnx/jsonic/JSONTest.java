@@ -158,7 +158,7 @@ public class JSONTest {
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class_\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(test));
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(test));
 
 		Document doc = DocumentBuilderFactory
 			.newInstance()
@@ -206,13 +206,17 @@ public class JSONTest {
 		aBean.date = toDate(2009, 1, 1, 0, 0, 0, 0);
 		aBean.array1 = new int[] {1, 2, 3};
 		aBean.array2 = new Integer[] {1, 2, 3};
+		aBean.json_data = "{\"a\": 100 /* ほげほげ */}";
 		
 		List<Integer> array3 = new ArrayList<Integer>();
 		array3.add(1);
 		array3.add(2);
 		array3.add(3);
 		aBean.array3 = array3;
-		assertEquals("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2}", JSON.encode(aBean));
+		assertEquals("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
+				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\","
+				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},"
+				+ "\"method\":2}", JSON.encode(aBean));
 
 		try {
 			obj = new Object() {
@@ -372,6 +376,7 @@ public class JSONTest {
 		aBean.date = toDate(2009, 1, 1, 0, 0, 0, 0);
 		aBean.array1 = new int[] {1, 2, 3};
 		aBean.array2 = new Integer[] {1, 2, 3};
+		aBean.json_data = "{\"a\":100}";
 		
 		List<Integer> array3 = new ArrayList<Integer>();
 		array3.add(1);
@@ -379,7 +384,9 @@ public class JSONTest {
 		array3.add(3);
 		aBean.array3 = array3;
 		
-		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\",\"method\":2}", AnnotationBean.class);
+		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\","
+				+ "json_data: {\"a\": 100 /* ほげほげ */},"
+				+ "\"method\":2}", AnnotationBean.class);
 		assertEquals(aBean, aBeanResult);
 		assertEquals(Vector.class, aBeanResult.array3.getClass());
 	}
@@ -1243,6 +1250,7 @@ class TestBean {
 	public TimeZone getH() { return h; }
 	public void setH(TimeZone h) { this.h = h; }
 
+	@JSONHint(name="class")
 	public Class class_;
 	
 	private String if_;
@@ -1555,6 +1563,9 @@ class AnnotationBean {
 	
 	@JSONHint(format="###,###,0.0", type=Vector.class)
 	public List<Integer> array3;
+	
+	@JSONHint(serialized=true)
+	public String json_data;
 
 	@Override
 	public int hashCode() {
@@ -1566,6 +1577,8 @@ class AnnotationBean {
 		result = prime * result + ((date == null) ? 0 : date.hashCode());
 		result = prime * result + dummy;
 		result = prime * result + field;
+		result = prime * result
+				+ ((json_data == null) ? 0 : json_data.hashCode());
 		result = prime * result + method;
 		return result;
 	}
@@ -1596,6 +1609,11 @@ class AnnotationBean {
 		if (dummy != other.dummy)
 			return false;
 		if (field != other.field)
+			return false;
+		if (json_data == null) {
+			if (other.json_data != null)
+				return false;
+		} else if (!json_data.equals(other.json_data))
 			return false;
 		if (method != other.method)
 			return false;
