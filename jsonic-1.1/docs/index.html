@@ -439,11 +439,11 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください。</td></tr>
 <tr><td>type</td><td>Class</td><td>parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。</td></tr>
 <tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
-<tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。
+<tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。デフォルトはfalseです。
 Format時はtoString()の値をそのまま出力<sup>(※7)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
 </table>
 <div class="caption">
-(※7) 出力される文字列は検証されないため妥当でないJSONとなる可能性があることに注意してください。
+(※7) 出力される文字列は検証されないため妥当でないJSONが出力されてしまう可能性があることに注意してください。
 逆に言えば、この機能を使うことでコメントやfunction呼び出しを出力することも可能です。
 </div>
 
@@ -478,6 +478,10 @@ public class WithHintBean {
   <span class="comment">// format/parse時に無視</span>
   <span class="em">@JSONHint(</span>ignore=true<span class="em">)</span>
   public int ignoreValue = 100;
+    
+  <span class="comment">// 値はJSON</span>
+  <span class="em">@JSONHint(</span>serialized=true<span class="em">)</span>
+  public String json = "{\"num\": 100, \"func\": sum(100, 200) /*illegal JSON*/}";
 }
 </pre>
 
