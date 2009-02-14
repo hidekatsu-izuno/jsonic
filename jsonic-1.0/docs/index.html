@@ -216,6 +216,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
+<li><a href="#suppressnull">null値の抑制</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 </ul>
 
@@ -368,6 +369,14 @@ public class EnclosingClass {
 <pre class="source">
 <span class="comment">// 5階層以下の情報は取得しない</span>
 json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
+</pre>
+
+<h3 id="suppressnull">■ setSuppressNull <span class="subtitle">- null値の抑制</span></h3>
+<p>JSONICでは、format時に値がnullになっているJSON objectのメンバの出力を抑制したり、parse時にnull値の代入を抑制することができます。初期値はfalseです。</p>
+<p>余計なメンバが大量に出力されてしまう、プロパティの初期値を優先したいなどの場合に有効です。</p>
+<pre class="source">
+<span class="comment">// null値の出力や代入を抑制します。</span>
+json<span class="em">.setSuppressNull(</span>true<span class="em">)</span>;
 </pre>
 
 <h3 id="xmltojson">■ XMLからJSONへの変換</h3>
@@ -731,6 +740,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2009/02/15 version 1.0.4</h3>
 <ul>
 <li>Decode/Format時にListの再帰抑制が正しく動作していなかった問題を修正しました。</li>
+<li>setSuppressNullを1.1.0ベータ2からバックポートしました。</li>
 </ul>
 
 <h3>2008/10/19 version 1.0.3</h3>
