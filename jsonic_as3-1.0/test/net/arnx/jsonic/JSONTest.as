@@ -15,6 +15,8 @@ package net.arnx.jsonic {
 			var suite:TestSuite = new TestSuite();
 			suite.addTest(new JSONTest("testEncode"));	
 			suite.addTest(new JSONTest("testDecode"));	
+			suite.addTest(new JSONTest("testFormat"));	
+			suite.addTest(new JSONTest("testParse"));
 			return suite;
 		}
 		
@@ -61,6 +63,27 @@ package net.arnx.jsonic {
 				'1': 1
 			};
 			assertEquals(map1, JSON.decode('{"map2": {"\'2\'": 2, "map3": {"\'3": 3}}, "1": 1}'));
+		}
+		
+		public function testFormat():void {
+			var json:JSON = new JSON();
+			var obj:Object = {
+				a: 100,
+				b: null,
+				list: [100, null]
+			};
+			json.suppressNull = true;
+			assertEquals('{"a":100,"list":[100,null]}', json.format(obj));
+		}
+		
+		public function testParse():void {
+			var json:JSON = new JSON();
+			var obj:Object = {
+				a: 100,
+				list: [100, null]
+			};
+			json.suppressNull = true;
+			assertEquals(obj, json.parse('{"a":100,"b":null,"list":[100,null]}'));
 		}
 		
 		public static function assertEquals(... rest):void {
