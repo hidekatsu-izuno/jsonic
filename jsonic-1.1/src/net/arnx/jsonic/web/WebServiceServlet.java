@@ -492,10 +492,18 @@ public class WebServiceServlet extends HttpServlet {
 		for (Method m : c.getMethods()) {
 			if (Modifier.isStatic(m.getModifiers())) continue;
 			
-			if (container.init != null && m.getName().equals(container.init)) {
+			if (container.init != null
+				&& m.getName().equals(container.init)
+				&& m.getParameterTypes().length == 0
+				&& m.getReturnType() == void.class
+			) {
 				init = m;
 				count++;
-			} else if (container.destroy != null && m.getName().equals(container.destroy)) {
+			} else if (container.destroy != null
+				&& m.getName().equals(container.destroy)
+				&& m.getParameterTypes().length == 0
+				&& m.getReturnType() == void.class
+			) {
 				destroy = m;
 				count++;
 			} else if (m.getName().equals(methodName)) {
@@ -518,8 +526,8 @@ public class WebServiceServlet extends HttpServlet {
 		Type[] paramTypes = method.getGenericParameterTypes();
 		Object[] params = new Object[paramTypes.length];
 		int length = Math.min(args.size(), params.length);
-		for (int i = 0; i < length ; i++) {
-			params[i] = json.convert(args.get(i), paramTypes[i]);
+		for (int i = 0; i < params.length; i++) {
+			params[i] = json.convert((i < length) ? args.get(i) : null, paramTypes[i]);
 		}
 		
 		if (init != null) init.invoke(o);
