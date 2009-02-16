@@ -495,14 +495,14 @@ public class WebServiceServlet extends HttpServlet {
 			if (container.init != null
 				&& m.getName().equals(container.init)
 				&& m.getParameterTypes().length == 0
-				&& m.getReturnType() == void.class
+				&& m.getReturnType().equals(void.class)
 			) {
 				init = m;
 				count++;
 			} else if (container.destroy != null
 				&& m.getName().equals(container.destroy)
 				&& m.getParameterTypes().length == 0
-				&& m.getReturnType() == void.class
+				&& m.getReturnType().equals(void.class)
 			) {
 				destroy = m;
 				count++;
