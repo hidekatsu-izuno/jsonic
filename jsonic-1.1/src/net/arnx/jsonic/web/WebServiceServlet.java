@@ -486,32 +486,20 @@ public class WebServiceServlet extends HttpServlet {
 		Method method = null;
 		Method destroy = null;
 		
-		int count = 0;
-		if (container.init == null) count++;
-		if (container.destroy == null) count++;
 		for (Method m : c.getMethods()) {
 			if (Modifier.isStatic(m.getModifiers())) continue;
 			
-			if (container.init != null
-				&& m.getName().equals(container.init)
-				&& m.getParameterTypes().length == 0
-				&& m.getReturnType().equals(void.class)
-			) {
-				init = m;
-				count++;
-			} else if (container.destroy != null
-				&& m.getName().equals(container.destroy)
-				&& m.getParameterTypes().length == 0
-				&& m.getReturnType().equals(void.class)
-			) {
-				destroy = m;
-				count++;
-			} else if (m.getName().equals(methodName)) {
+			if (m.getName().equals(methodName)) {
 				method = m;
-				count++;
+			} else if (m.getName().equals(container.init)
+				&& m.getParameterTypes().length == 0
+				&& m.getReturnType().equals(void.class)) {
+				init = m;
+			} else if (m.getName().equals(container.destroy)
+				&& m.getParameterTypes().length == 0
+				&& m.getReturnType().equals(void.class)) {
+				destroy = m;
 			}
-			
-			if (count > 3) break;
 		}
 		
 		if (method == null || container.limit(c, method)) {
@@ -525,9 +513,8 @@ public class WebServiceServlet extends HttpServlet {
 		
 		Type[] paramTypes = method.getGenericParameterTypes();
 		Object[] params = new Object[paramTypes.length];
-		int length = Math.min(args.size(), params.length);
 		for (int i = 0; i < params.length; i++) {
-			params[i] = json.convert((i < length) ? args.get(i) : null, paramTypes[i]);
+			params[i] = json.convert((i < args.size()) ? args.get(i) : null, paramTypes[i]);
 		}
 		
 		if (init != null) init.invoke(o);
