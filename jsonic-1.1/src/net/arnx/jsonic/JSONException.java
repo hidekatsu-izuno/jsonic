@@ -28,11 +28,11 @@ package net.arnx.jsonic;
  * <tr>
  *  <td>000-099</td><td>(all)</td><td>reserved.</td>
  *  <td rowspan="2">100-199</td><td>100</td><td>fails to format.</td>
- *                                  <td>150</td><td>fails to preformat.</td>
- *                                  <td>(others)</td><td>reserved.</td>
+ *                              <td>150</td><td>fails to preformat.</td>
+ *                              <td>(others)</td><td>reserved.</td>
  *  <td rowspan="2">200-299</td><td>200</td><td>fails to parse.</td>
- *                                  <td>250</td><td>fails to postparse.</td>
- *                                  <td>(others)</td><td>reserved.</td>
+ *                              <td>250</td><td>fails to postparse.</td>
+ *                              <td>(others)</td><td>reserved.</td>
  *  <td>300-899</td><td>(all)</td><td>reserved.</td>
  *  <td>900-</td><td>(all)</td><td>user's area.</td>
  * </tr>
