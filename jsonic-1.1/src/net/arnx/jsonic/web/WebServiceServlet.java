@@ -507,10 +507,10 @@ public class WebServiceServlet extends HttpServlet {
 			} else if (m.getName().equals(methodName)) {
 				Type[] pTypes = m.getGenericParameterTypes();
 				if (args.size() <= Math.max(1, pTypes.length)) {
-					if (method == null || Math.max(1, pTypes.length) < Math.max(1, paramTypes.length)) {
+					if (method == null || Math.abs(args.size() - pTypes.length) < Math.abs(args.size() - paramTypes.length)) {
 						method = m;
 						paramTypes = pTypes;
-					} else if (Math.max(1, pTypes.length) == Math.max(1, paramTypes.length)) {
+					} else if (pTypes.length == paramTypes.length) {
 						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, args));
 					}
 				}

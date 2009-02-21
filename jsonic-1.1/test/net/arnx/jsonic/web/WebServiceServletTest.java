@@ -79,6 +79,25 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{\"result\":3,\"error\":null,\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
+
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		write(con, "{\"method\":\"calc.init\",\"params\":[],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		write(con, "{\"method\":\"calc.destroy\",\"params\":[],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
 		
 		// PUT
 		con = (HttpURLConnection)url.openConnection();

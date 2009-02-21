@@ -16,6 +16,10 @@
 package sample.web.rpc.service;
 
 public class CalcService {
+	public void init() {
+		// initialize
+	}
+	
 	public int plus(int a, int b) {
 		return a + b;
 	}
@@ -26,5 +30,9 @@ public class CalcService {
 			result += n;
 		}
 		return result;
+	}
+	
+	public void destroy() {
+		// destruction
 	}
 }

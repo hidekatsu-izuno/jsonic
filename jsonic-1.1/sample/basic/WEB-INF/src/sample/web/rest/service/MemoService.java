@@ -43,12 +43,16 @@ public class MemoService {
 		throw new UnsupportedOperationException();
 	}
 	
+	public Collection<Memo> find() {
+		return list.values();
+	}
+	
 	public Collection<Memo> find(Memo memo) {
 		return list.values();
 	}
 	
 	public Collection<Memo> find(Memo memo, String str) {
-		throw new UnsupportedOperationException();
+		return list.values();
 	}
 	
 	public void create(Memo memo) {
