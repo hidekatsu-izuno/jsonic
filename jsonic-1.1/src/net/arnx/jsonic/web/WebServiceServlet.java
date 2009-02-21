@@ -484,34 +484,46 @@ public class WebServiceServlet extends HttpServlet {
 		
 		Method init = null;
 		Method method = null;
+		Type[] paramTypes = null;
 		Method destroy = null;
 		
+		boolean illegalInit = false;
+		boolean illegalDestroy = false;
 		for (Method m : c.getMethods()) {
 			if (Modifier.isStatic(m.getModifiers())) continue;
 			
 			if (m.getName().equals(methodName)) {
-				method = m;
-			} else if (m.getName().equals(container.init)
-				&& m.getParameterTypes().length == 0
-				&& m.getReturnType().equals(void.class)) {
-				init = m;
-			} else if (m.getName().equals(container.destroy)
-				&& m.getParameterTypes().length == 0
-				&& m.getReturnType().equals(void.class)) {
-				destroy = m;
+				Type[] pTypes = m.getGenericParameterTypes();
+				if (args.size() <= Math.max(1, pTypes.length)) {
+					if (method == null || pTypes.length > paramTypes.length) {
+						method = m;
+						paramTypes = pTypes;
+					} else if (pTypes.length == paramTypes.length) {
+						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, args));
+					}
+				}
+			} else if (m.getName().equals(container.init)) {
+				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
+					init = m;
+				} else {
+					illegalInit = false;
+				}
+			} else if (m.getName().equals(container.destroy)) {
+				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
+					destroy = m;
+				} else {
+					illegalDestroy = false;
+				}
 			}
 		}
 		
 		if (method == null || container.limit(c, method)) {
-			StringBuilder sb = new StringBuilder(c.getName());
-			sb.append('#').append(methodName).append('(');
-			String str = json.format(args);
-			sb.append(str, 1, str.length()-1);
-			sb.append(')');
-			throw new NoSuchMethodException("method missing: " + sb.toString());
+			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, args));
 		}
 		
-		Type[] paramTypes = method.getGenericParameterTypes();
+		if (init == null && illegalInit) throw new IllegalStateException("init method must have no arguments.");
+		if (destroy == null && illegalDestroy) throw new IllegalStateException("destroy method must have no arguments.");
+		
 		Object[] params = new Object[paramTypes.length];
 		for (int i = 0; i < params.length; i++) {
 			params[i] = json.convert((i < args.size()) ? args.get(i) : null, paramTypes[i]);
@@ -522,6 +534,15 @@ public class WebServiceServlet extends HttpServlet {
 		if (destroy != null) destroy.invoke(o);
 		
 		return ret;
+	}
+	
+	private String toPrintString(Class<?> c, String methodName, List<?> args) {
+		StringBuilder sb = new StringBuilder(c.getName());
+		sb.append('#').append(methodName).append('(');
+		String str = JSON.encode(args);
+		sb.append(str, 1, str.length()-1);
+		sb.append(')');
+		return sb.toString();
 	}
 	
 	private static String toLowerCamel(String name) {

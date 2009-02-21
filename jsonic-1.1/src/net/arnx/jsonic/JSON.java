@@ -1953,18 +1953,41 @@ public class JSON {
 			} else if (Pattern.class.equals(c)) {
 				data = Pattern.compile(value.toString());
 			} else if (Date.class.isAssignableFrom(c)) {
+				Date date = null;
+				long millis = -1;
 				if (value instanceof Number) {
-					Date date = (Date)create(context, c);
-					date.setTime(((Number)value).longValue());
-					data = date;
+					millis = ((Number)value).longValue();
+					date = (Date)create(context, c);
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						Date date = (Date)create(context, c);
-						date.setTime(convertDate(str, locale));
-						data = date;
+						millis = convertDate(str, locale);
+						date = (Date)create(context, c);						
 					}
 				}
+				
+				if (date != null) {
+					if (date instanceof java.sql.Date) {
+						Calendar cal = Calendar.getInstance();
+						cal.setTimeInMillis(millis);
+						cal.set(Calendar.HOUR_OF_DAY, 0);
+						cal.set(Calendar.MINUTE, 0);
+						cal.set(Calendar.SECOND, 0);
+						cal.set(Calendar.MILLISECOND, 0);
+						date.setTime(cal.getTimeInMillis());
+					} else if (date instanceof java.sql.Time) {
+						Calendar cal = Calendar.getInstance();
+						cal.setTimeInMillis(millis);
+						cal.set(Calendar.YEAR, 1970);
+						cal.set(Calendar.MONTH, Calendar.JANUARY);
+						cal.set(Calendar.DATE, 1);
+						date.setTime(cal.getTimeInMillis());
+					} else {
+						date.setTime(millis);
+					}
+				}
+				
+				data = date;
 			} else if (Calendar.class.isAssignableFrom(c)) {
 				if (value instanceof Number) {
 					Calendar cal = (Calendar)create(context, c);

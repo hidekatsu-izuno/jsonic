@@ -1001,8 +1001,9 @@ public class JSONTest {
 		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert("Mon Dec 24 20:13:54 UTC+0900 2007", Date.class));
 		assertEquals(toDate(2007, 12, 24, 20, 13, 54, 0), json.convert("Mon, 24 Dec 2007 11:13:54 UTC", Date.class));
 
-		long t = toDate(2007, 12, 24, 20, 13, 15, 0).getTime();
+		long t = toDate(2007, 12, 24, 0, 0, 0, 0).getTime();
 		assertEquals(new java.sql.Date(t), json.convert("Mon Dec 24 2007 20:13:15", java.sql.Date.class));
+		t = toDate(2007, 12, 24, 20, 13, 15, 0).getTime();
 		assertEquals(new Timestamp(t), json.convert("Mon Dec 24 2007 20:13:15", Timestamp.class));
 		t = toDate(1970, 1, 1, 20, 13, 15, 0).getTime();
 		assertEquals(new Time(t), json.convert("20:13:15", Time.class));
