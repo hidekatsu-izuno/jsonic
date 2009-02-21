@@ -492,17 +492,7 @@ public class WebServiceServlet extends HttpServlet {
 		for (Method m : c.getMethods()) {
 			if (Modifier.isStatic(m.getModifiers())) continue;
 			
-			if (m.getName().equals(methodName)) {
-				Type[] pTypes = m.getGenericParameterTypes();
-				if (args.size() <= Math.max(1, pTypes.length)) {
-					if (method == null || Math.max(1, pTypes.length) < Math.max(1, paramTypes.length)) {
-						method = m;
-						paramTypes = pTypes;
-					} else if (Math.max(1, pTypes.length) == Math.max(1, paramTypes.length)) {
-						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, args));
-					}
-				}
-			} else if (m.getName().equals(container.init)) {
+			if (m.getName().equals(container.init)) {
 				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
 					init = m;
 				} else {
@@ -513,6 +503,16 @@ public class WebServiceServlet extends HttpServlet {
 					destroy = m;
 				} else {
 					illegalDestroy = false;
+				}
+			} else if (m.getName().equals(methodName)) {
+				Type[] pTypes = m.getGenericParameterTypes();
+				if (args.size() <= Math.max(1, pTypes.length)) {
+					if (method == null || Math.max(1, pTypes.length) < Math.max(1, paramTypes.length)) {
+						method = m;
+						paramTypes = pTypes;
+					} else if (Math.max(1, pTypes.length) == Math.max(1, paramTypes.length)) {
+						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, args));
+					}
 				}
 			}
 		}
