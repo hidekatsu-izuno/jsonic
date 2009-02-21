@@ -35,11 +35,20 @@ public class MemoService {
 	public HttpServletResponse response;
 	
 	public void init() {
-		// response.setHeader("X-JSON", "[\"Helo. JSONIC!\"]");
+		// response.setHeader("X-JSON", "[\"Hello. JSONIC!\"]");
 	}
 	
-	public Collection<Memo> find() {
+	// This method ignored. Because init method has no arguments.
+	public void init(String str) {
+		throw new UnsupportedOperationException();
+	}
+	
+	public Collection<Memo> find(Memo memo) {
 		return list.values();
+	}
+	
+	public Collection<Memo> find(Memo memo, String str) {
+		throw new UnsupportedOperationException();
 	}
 	
 	public void create(Memo memo) {

@@ -177,16 +177,14 @@ public class WebServiceServletTest {
 		con.disconnect();
 		
 		// POST
-		/*
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
-		write(con, "[\"title\", \"text\"]");
+		write(con, "[\"title\"]");
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
-		*/
 		
 		// POST
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
@@ -256,17 +254,15 @@ public class WebServiceServletTest {
 		assertEquals(SC_NOT_FOUND, con.getResponseCode());
 		con.disconnect();
 		
-		/*
 		// POST
 		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
-		write(con, "[\"title\", \"text\"]");
+		write(con, "[\"title\"]");
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
-		*/
 	}
 	
 	@Test
