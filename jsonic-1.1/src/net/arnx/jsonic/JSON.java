@@ -598,7 +598,7 @@ public class JSON {
 				o = preformat(context, o);
 			} catch (Exception e) {
 				throw new JSONException(getMessage("json.format.ConversionError", o, context),
-					JSONException.FORMAT_ERROR, e);
+					JSONException.PREFORMAT_ERROR, e);
 			}
 		}
 		
@@ -1538,7 +1538,7 @@ public class JSON {
 		} catch (Exception e) {
 			throw new JSONException(getMessage("json.parse.ConversionError",
 					(value instanceof String) ? "\"" + value + "\"" : value, type, context),
-					JSONException.CONVERT_ERROR, e);
+					JSONException.POSTPARSE_ERROR, e);
 		}
 		return result;
 	}

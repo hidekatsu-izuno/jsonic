@@ -281,7 +281,7 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (JSONException e) {
 			container.debug(e.getMessage());
 			throwable = e;
-			if (e.getErrorCode() == JSONException.CONVERT_ERROR) {
+			if (e.getErrorCode() == JSONException.POSTPARSE_ERROR) {
 				errorCode = -32602;
 				errorMessage = "Invalid params.";
 			} else  {

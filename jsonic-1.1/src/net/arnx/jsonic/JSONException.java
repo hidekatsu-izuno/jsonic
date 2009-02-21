@@ -15,12 +15,38 @@
  */
 package net.arnx.jsonic;
 
+/**
+ * Signals that an error has been reached unexpectedly while formating or parsing.
+ * 
+ * <h4>Summary of error codes</h4>
+ * <table border="1" cellpadding="1" cellspacing="0">
+ * <tr>
+ * 	<th bgcolor="#CCCCFF" align="left">code(range)</th>
+ * 	<th bgcolor="#CCCCFF" align="left">error code</th>
+ * 	<th bgcolor="#CCCCFF" align="left">description</th>
+ * </tr>
+ * <tr>
+ *  <td>000-099</td><td>(all)</td><td>reserved.</td>
+ *  <td rowspan="2">100-199</td><td>100</td><td>fails to format.</td>
+ *                                  <td>150</td><td>fails to preformat.</td>
+ *                                  <td>(others)</td><td>reserved.</td>
+ *  <td rowspan="2">200-299</td><td>200</td><td>fails to parse.</td>
+ *                                  <td>250</td><td>fails to postparse.</td>
+ *                                  <td>(others)</td><td>reserved.</td>
+ *  <td>300-899</td><td>(all)</td><td>reserved.</td>
+ *  <td>900-</td><td>(all)</td><td>user's area.</td>
+ * </tr>
+ * </table>
+ * 
+ * @author izuno
+ */
 public class JSONException extends RuntimeException {
 	private static final long serialVersionUID = -8323989588488596436L;
 
-	public static final int FORMAT_ERROR = 10000;
-	public static final int PARSE_ERROR = 20000;
-	public static final int CONVERT_ERROR = 000;
+	public static final int FORMAT_ERROR = 100;
+	public static final int PREFORMAT_ERROR = 150;
+	public static final int PARSE_ERROR = 200;
+	public static final int POSTPARSE_ERROR = 250;
 	
 	private int errorID;
 	private long lineNumber = -1l;
