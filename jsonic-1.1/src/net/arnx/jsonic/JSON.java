@@ -1981,7 +1981,6 @@ public class JSON {
 						cal.set(Calendar.YEAR, 1970);
 						cal.set(Calendar.MONTH, Calendar.JANUARY);
 						cal.set(Calendar.DATE, 1);
-						cal.set(Calendar.MILLISECOND, 0);
 						date.setTime(cal.getTimeInMillis());
 					} else {
 						date.setTime(millis);
