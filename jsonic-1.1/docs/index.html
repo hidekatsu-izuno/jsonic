@@ -859,42 +859,34 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2009/02/28 version 1.1.0</h3>
-<ul>
-<li><a href="http://d.hatena.ne.jp/higayasuo/20090219/1235020303">java.sql.Date, java.sql.Timeの変換をきちんと</a>しました。</li>
-<li>[非互換] JSON WebServiceにてオーバーロードされたメソッドの呼び出しに対応しました。ただし、判断は引数の長さでのみ行われ、型での判断は行いません。</li>
-<li>[非互換] JSON WebServiceにて引数や戻り値の存在するinitやdestroyのみが定義されていた場合、IllegalStateExceptionを投げるようにしました。</li>
-</ul>
+<h3>2009/03/01 version 1.1.0</h3>
 
-<h3>2009/02/15 version 1.1.0 beta3</h3>
-<ul>
-<li>Decode/Format時にListの再帰抑制が正しく動作していなかった問題を修正しました。</li>
-<li>JSONHintアノテーションに値がJSONそのものであることを示す serialized を追加しました。</li>
-<li>コンパイル時の型チェックWarningを解消しました。</li>
-<li>[非互換] Parse時にキー名とプロパティ名を比較する際、予約語に対応するため末尾の「_」を削除して比較するという仕様がありましたが、JSONHint(name="予約語")で対応できるため廃止しました。</li>
-</ul>
-
-<h3>2009/02/08 version 1.1.0 beta2</h3>
+<p>JSONICの基本機能に関する1.0からの変更点：</p>
 <ul>
 <li>変換・代入の際のヒントを与えるJSONHintアノテーションを追加しました。</li>
-<li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました(AS3版も同様です)。</li>
+<li>[非互換] Parse時にキー名とプロパティ名を比較する際、予約語に対応するため末尾の「_」を削除して比較するという仕様がありましたが、JSONHint(name="予約語")で対応できるため廃止しました。</li>
 <li>[非互換] convert, convertChildを廃止し、Format用の変換メソッドとしてpreformatをParse用の変換メソッドとしてpostparseを追加しました。</li>
 <li>[非互換] 継承で拡張するpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
 <li>[非互換] 各種JSON***Exceptionを廃止し、JSONExceptionに統合しました。エラー内容は、getErrorCode()で判別できます(AS3版も同様にJSONParseErrorがJSONErrorに変更されています)。</li>
 <li>[非互換] format/encodeの場合でも変換に失敗した場合は、JSONExceptionでラップした例外を通知するよう変更しました。</li>
-<li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
-<li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
-<li>[非互換] メソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>
-<li>[非互換] net.arnx.jsonic.web.Containerのinitメソッドの引数をServletContextからServletConfigに変更しました。</li>
+<li>[非互換] XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>形式に変更しました。</li>
+<li><a href="http://d.hatena.ne.jp/higayasuo/20090219/1235020303">java.sql.Date, java.sql.Timeの変換をきちんと</a>しました。</li>
+<li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました(AS3版も同様です)。※1.0.4以降にバックポートされています</li>
+<li>Decode/Format時にListの再帰抑制が正しく動作していなかった問題を修正しました。※1.0.4以降にバックポートされています</li>
 </ul>
 
-<h3>2008/12/03 version 1.1.0 beta1</h3>
+<p>JSON Web Serviceに関する1.0からの変更点：</p>
 <ul>
-<li>[非互換] XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>形式に変更しました。</li>
+<li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
+<li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
+<li>[非互換] DI機能の追加に伴いメソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>
 <li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
+<li>JSON WebServiceでのmappingキーのフォーマットを[キー名]から{キー名}に変更しました（互換性維持のため、当面[キー名]も利用可能です）。</li>
+<li>[非互換] JSON WebServiceにてオーバーロードされたメソッドの呼び出しに対応しました。ただし、判断は引数の長さでのみ行われ、型での判断は行いません。</li>
+<li>[非互換] JSON WebServiceにて引数や戻り値の存在するinitやdestroyのみが定義されていた場合、IllegalStateExceptionを投げるようにしました。</li>
+<li>[非互換] net.arnx.jsonic.web.Containerのinitメソッドの引数をServletContextからServletConfigに変更しました。</li>
 <li>[非互換] JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、パス変数やクエリ変数は最後の引数として設定していましたが、1番目の引数にマージするようになりました（ただし、1番目の引数がJSON objectでない場合はマージされません）。</li>
 <li>[非互換] JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
-<li>JSON WebServiceでのmappingキーのフォーマットを[キー名]から{キー名}に変更しました（互換性維持のため、当面[キー名]も利用可能です）。</li>
 <li>[非互換] WebServiceServletのRESTモードにて、例外が発生した場合プロパティをメッセージボディに設定するようにしました。ただし、Throwableクラスのメソッドは対象になりません。</li>
 <li>jQueryを使ったRESTモードのサンプルを追加しました。</li>
 </ul>
