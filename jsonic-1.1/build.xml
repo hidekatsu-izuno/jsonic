@@ -4,6 +4,7 @@
 	<property name="version" value="1.1.0" />
 	
 	<property file="build.properties" />
+	<property name="debug" value="true" />
 	
 	<property name="webapps" location="sample"/>
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
@@ -23,7 +24,7 @@
 			</classpath>
 		</javac>
 		
-		<condition id="jar.excludes" value="**/*.java">
+		<condition property="jar.excludes" value="**/*.java">
 			<isfalse value="${debug}"/>
 		</condition>
 

@@ -48,8 +48,12 @@ public class SpringContainer extends Container {
 	}
 
 	@Override
-	public void debug(String message) {
-		log.debug(message);
+	public void debug(String message, Throwable e) {
+		if (e != null) {
+			log.debug(message, e);
+		} else {
+			log.debug(message);
+		}
 	}
 
 	@Override

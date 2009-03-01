@@ -269,17 +269,17 @@ public class WebServiceServlet extends HttpServlet {
 				}
 			}
 		} catch (ClassNotFoundException e) {
-			container.debug(e.getClass().getName() + ":" + e.getMessage());
+			container.debug(e.getMessage(), e);
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
-			container.debug(e.getClass().getName() + ":" + e.getMessage());
+			container.debug(e.getMessage(), e);
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (JSONException e) {
-			container.debug(e.getClass().getName() + ":" + e.getMessage());
+			container.debug(e.getMessage(), e);
 			throwable = e;
 			if (e.getErrorCode() == JSONException.POSTPARSE_ERROR) {
 				errorCode = -32602;
@@ -290,7 +290,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.debug(cause.getClass().getName() + ":" + cause.toString());
+			container.debug(cause.toString(), e);
 			throwable = cause;
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
@@ -414,20 +414,20 @@ public class WebServiceServlet extends HttpServlet {
 			json.setContext(component);
 			res = invoke(json, component, methodName, params);
 		} catch (ClassNotFoundException e) {
-			container.debug(e.getMessage());
+			container.debug(e.getMessage(), e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;			
 		} catch (NoSuchMethodException e) {
-			container.debug(e.getMessage());
+			container.debug(e.getMessage(), e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		} catch (JSONException e) {
-			container.debug(e.getMessage());
+			container.debug(e.getMessage(), e);
 			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			return;
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.debug(cause.toString());
+			container.debug(cause.toString(), cause);
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
 				response.sendError(SC_NOT_FOUND, "Not Found");				
@@ -530,15 +530,15 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		if (init != null) {
-			if (container.debug) container.debug("Execute: " + toPrintString(c, init.getName(), null));
+			if (container.isDebugMode()) container.debug("Execute: " + toPrintString(c, init.getName(), null));
 			init.invoke(o);
 		}
 		
-		if (container.debug) container.debug("Execute: " + toPrintString(c, methodName, args));
+		if (container.isDebugMode()) container.debug("Execute: " + toPrintString(c, methodName, args));
 		Object ret = method.invoke(o, params);
 		
 		if (destroy != null) {
-			if (container.debug) container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
+			if (container.isDebugMode()) container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
 			destroy.invoke(o);
 		}
 		

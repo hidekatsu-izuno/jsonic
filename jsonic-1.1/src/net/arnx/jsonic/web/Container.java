@@ -67,9 +67,17 @@ public class Container {
 	protected boolean limit(Class<?> c, Method method) {
 		return method.getDeclaringClass().equals(Object.class);
 	}
-
+	
 	public void debug(String message) {
-		if (isDebugMode()) {
+		debug(message, null);
+	}
+	
+	public void debug(String message, Throwable e) {
+		if (!isDebugMode()) return;
+		
+		if (e != null) {
+			context.log(message, e);
+		} else {
 			context.log(message);
 		}
 	}
