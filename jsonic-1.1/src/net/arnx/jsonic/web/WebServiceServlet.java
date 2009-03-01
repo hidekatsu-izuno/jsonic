@@ -269,17 +269,17 @@ public class WebServiceServlet extends HttpServlet {
 				}
 			}
 		} catch (ClassNotFoundException e) {
-			container.debug(e.getMessage(), e);
+			container.debug("Class Not Found.", e);
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
-			container.debug(e.getMessage(), e);
+			container.debug("Method Not Found.", e);
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (JSONException e) {
-			container.debug(e.getMessage(), e);
+			container.debug("Fails to parse JSON.", e);
 			throwable = e;
 			if (e.getErrorCode() == JSONException.POSTPARSE_ERROR) {
 				errorCode = -32602;
@@ -290,7 +290,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.debug(cause.toString(), e);
+			container.debug("Fails to invoke method.", e);
 			throwable = cause;
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
@@ -304,7 +304,7 @@ public class WebServiceServlet extends HttpServlet {
 				errorMessage = cause.getMessage();
 			}
 		} catch (Exception e) {
-			container.error(e.getMessage(), e);
+			container.error("Internal error occurred.", e);
 			throwable = e;
 			errorCode = -32603;
 			errorMessage = "Internal error.";
@@ -338,8 +338,10 @@ public class WebServiceServlet extends HttpServlet {
 			json.setContext(result);
 			json.setPrettyPrint(container.isDebugMode());
 			json.format(res, writer);
+		} catch (IOException e) {
+			throw e;
 		} catch (Exception e) {
-			container.error(e.getMessage(), e);
+			container.error("Fails to format", e);
 			res.clear();
 			res.put("result", null);
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
@@ -414,15 +416,15 @@ public class WebServiceServlet extends HttpServlet {
 			json.setContext(component);
 			res = invoke(json, component, methodName, params);
 		} catch (ClassNotFoundException e) {
-			container.debug(e.getMessage(), e);
+			container.debug("Class Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;			
 		} catch (NoSuchMethodException e) {
-			container.debug(e.getMessage(), e);
+			container.debug("Method Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		} catch (JSONException e) {
-			container.debug(e.getMessage(), e);
+			container.debug("Fails to parse JSON.", e);
 			response.sendError(SC_BAD_REQUEST, "Bad Request");
 			return;
 		} catch (InvocationTargetException e) {
@@ -440,7 +442,7 @@ public class WebServiceServlet extends HttpServlet {
 			response.setStatus(SC_BAD_REQUEST);
 			res = cause;
 		} catch (Exception e) {
-			container.error(e.getMessage(), e);
+			container.error("Internal error occurred.", e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}
@@ -462,8 +464,10 @@ public class WebServiceServlet extends HttpServlet {
 				json.format(res, writer);
 				if (callback != null) writer.append(");");
 			}
+		} catch (IOException e) {
+			throw e;
 		} catch (Exception e) {
-			container.error(e.getMessage(), e);
+			container.error("Fails to format.", e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}		
