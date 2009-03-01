@@ -161,7 +161,7 @@ public class WebServiceServlet extends HttpServlet {
 			return null;
 		}
 		
-		container.debug("route found: " + request.getMethod() + " " + uri);
+		container.debug("Route found: " + request.getMethod() + " " + uri);
 		return route;
 	}
 	
@@ -529,9 +529,18 @@ public class WebServiceServlet extends HttpServlet {
 			params[i] = json.convert((i < args.size()) ? args.get(i) : null, paramTypes[i]);
 		}
 		
-		if (init != null) init.invoke(o);
+		if (init != null) {
+			if (container.debug) container.debug("Execute: " + toPrintString(c, init.getName(), null));
+			init.invoke(o);
+		}
+		
+		if (container.debug) container.debug("Execute: " + toPrintString(c, methodName, args));
 		Object ret = method.invoke(o, params);
-		if (destroy != null) destroy.invoke(o);
+		
+		if (destroy != null) {
+			if (container.debug) container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
+			destroy.invoke(o);
+		}
 		
 		return ret;
 	}
