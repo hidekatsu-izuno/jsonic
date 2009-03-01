@@ -269,17 +269,17 @@ public class WebServiceServlet extends HttpServlet {
 				}
 			}
 		} catch (ClassNotFoundException e) {
-			container.debug(e.getMessage());
+			container.debug(e.getClass().getName() + ":" + e.getMessage());
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
-			container.debug(e.getMessage());
+			container.debug(e.getClass().getName() + ":" + e.getMessage());
 			throwable = e;
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (JSONException e) {
-			container.debug(e.getMessage());
+			container.debug(e.getClass().getName() + ":" + e.getMessage());
 			throwable = e;
 			if (e.getErrorCode() == JSONException.POSTPARSE_ERROR) {
 				errorCode = -32602;
@@ -290,7 +290,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
-			container.debug(cause.toString());
+			container.debug(cause.getClass().getName() + ":" + cause.toString());
 			throwable = cause;
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {

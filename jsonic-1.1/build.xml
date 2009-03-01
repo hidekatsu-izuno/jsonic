@@ -16,16 +16,20 @@
 
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
-		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" fork="true">
+		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" debug="${debug}" fork="true">
 			<compilerarg value="-Xlint:unchecked"/>
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 			</classpath>
 		</javac>
+		
+		<condition id="jar.excludes" value="**/*.java">
+			<isfalse value="${debug}"/>
+		</condition>
 
 		<jar destfile="${tmp}/${ant.project.name}-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
-			<fileset dir="src" excludes="**/*.java" />
+			<fileset dir="src" excludes="${jar.excludes}" />
 		</jar>
 		<delete dir="${tmp}/build" />
 				
@@ -89,21 +93,6 @@
 			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />			
 		</zip>
 		<delete dir="${tmp}" />
-	</target>
-
-	<target name="build-debug">
-		<mkdir dir="${tmp}/build" />
-		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" debug="true" fork="true">
-			<classpath>
-				<fileset dir="lib" includes="*.jar" />
-			</classpath>
-		</javac>
-
-		<jar destfile="${dist}/${ant.project.name}-${version}-debug.jar">
-			<fileset dir="${tmp}/build" includes="**/*.class" />
-			<fileset dir="src" />
-		</jar>
-		<delete dir="${tmp}/build" />
 	</target>
 	
 	<target name="clean">
