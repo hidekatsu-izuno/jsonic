@@ -552,8 +552,10 @@ public class WebServiceServlet extends HttpServlet {
 	private String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());
 		sb.append('#').append(methodName).append('(');
-		String str = JSON.encode(args);
-		sb.append(str, 1, str.length()-1);
+		if (args != null) {
+			String str = JSON.encode(args);
+			sb.append(str, 1, str.length()-1);
+		}
 		sb.append(')');
 		return sb.toString();
 	}
