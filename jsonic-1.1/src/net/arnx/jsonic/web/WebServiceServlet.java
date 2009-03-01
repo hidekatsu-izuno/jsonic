@@ -500,13 +500,13 @@ public class WebServiceServlet extends HttpServlet {
 				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
 					init = m;
 				} else {
-					illegalInit = false;
+					illegalInit = true;
 				}
 			} else if (m.getName().equals(container.destroy)) {
 				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
 					destroy = m;
 				} else {
-					illegalDestroy = false;
+					illegalDestroy = true;
 				}
 			} else if (m.getName().equals(methodName)) {
 				Type[] pTypes = m.getGenericParameterTypes();
@@ -525,8 +525,12 @@ public class WebServiceServlet extends HttpServlet {
 			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, args));
 		}
 		
-		if (init == null && illegalInit) throw new IllegalStateException("init method must have no arguments.");
-		if (destroy == null && illegalDestroy) throw new IllegalStateException("destroy method must have no arguments.");
+		if (container.isDebugMode() && init == null && illegalInit) {
+			container.debug("Notice: init method must have no arguments.");
+		}
+		if (container.isDebugMode() && destroy == null && illegalDestroy) {
+			container.debug("Notice: destroy method must have no arguments.");
+		}
 		
 		Object[] params = new Object[paramTypes.length];
 		for (int i = 0; i < params.length; i++) {
@@ -534,15 +538,21 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		if (init != null) {
-			if (container.isDebugMode()) container.debug("Execute: " + toPrintString(c, init.getName(), null));
+			if (container.isDebugMode()) {
+				container.debug("Execute: " + toPrintString(c, init.getName(), null));
+			}
 			init.invoke(o);
 		}
 		
-		if (container.isDebugMode()) container.debug("Execute: " + toPrintString(c, methodName, args));
+		if (container.isDebugMode()) {
+			container.debug("Execute: " + toPrintString(c, methodName, args));
+		}
 		Object ret = method.invoke(o, params);
 		
 		if (destroy != null) {
-			if (container.isDebugMode()) container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
+			if (container.isDebugMode()) {
+				container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
+			}
 			destroy.invoke(o);
 		}
 		

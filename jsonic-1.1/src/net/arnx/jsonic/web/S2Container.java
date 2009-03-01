@@ -23,7 +23,7 @@ import org.seasar.framework.env.Env;
 import org.seasar.framework.log.Logger;
 
 public class S2Container extends Container {
-	private static Logger log = Logger.getLogger(S2Container.class);
+	private static Logger log = Logger.getLogger(WebServiceServlet.class);
 	
 	@Override
 	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {

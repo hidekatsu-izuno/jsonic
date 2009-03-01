@@ -26,7 +26,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 public class SpringContainer extends Container {
-	private static Log log = LogFactory.getLog(SpringContainer.class);
+	private static Log log = LogFactory.getLog(WebServiceServlet.class);
 	
 	private ApplicationContext appContext;
 	
