@@ -619,7 +619,7 @@ class RouteMapping {
 			} else if (definitions.containsKey(name)) {
 				p = definitions.get(name);
 			}
-			m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:") + ")\\\\Q");
+			m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:").replace("\\", "\\\\") + ")\\\\Q");
 		}
 		m.appendTail(sb);
 		sb.append("\\E$");
