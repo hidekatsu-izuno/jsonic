@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 
 <project name="jsonic" basedir="." default="build-all">
-	<property name="version" value="1.1.0-beta1" />
+	<property name="version" value="1.1.0" />
 
+	<property name="debug" value="true" />
 	<property name="flex.home" location="C:/Program Files/Adobe/Flex Builder 3 Plug-in/sdks/3.1.0" />	
 	<property name="dist" location="." />
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
@@ -22,15 +23,19 @@
 		<get src="http://repo1.maven.org/maven2/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar" dest="${tmp}/lib/commons-logging-1.1.1.jar" />
 		
 		<mkdir dir="${tmp}/build" />
-		<javac source="1.5" target="1.5" srcdir="src/java" destdir="${tmp}/build" fork="true">
+		<javac source="1.5" target="1.5" srcdir="src/java" destdir="${tmp}/build" debug="${debug}" fork="true">
 			<classpath>
 				<fileset dir="${tmp}/lib" includes="*.jar" />
 			</classpath>
 		</javac>
+		
+		<condition property="jar.excludes" value="**/*.java">
+			<isfalse value="${debug}"/>
+		</condition>
 
 		<jar destfile="${dist}/${ant.project.name}-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
-			<fileset dir="src/java" excludes="**/*.java" />
+			<fileset dir="src/java" excludes="${jar.excludes}" />
 		</jar>
 		<delete dir="${tmp}/build" />
 	</target>
