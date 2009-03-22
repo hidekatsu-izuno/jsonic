@@ -599,7 +599,7 @@ public class WebServiceServlet extends HttpServlet {
 }
 
 class RouteMapping {
-	private static final Pattern PLACE_PATTERN = Pattern.compile("{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*(.*)\\s*)?}");
+	private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*(.*)\\s*)?\\}");
 	private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
 	
 	private Pattern pattern;
@@ -614,7 +614,7 @@ class RouteMapping {
 			String name = m.group(1);
 			names.add(name);
 			Pattern p = DEFAULT_PATTERN;
-			if (m.group(2) == null || m.group(2).length() == 0) {
+			if (m.group(2) != null) {
 				p = Pattern.compile(m.group(2));
 			} else if (definitions.containsKey(name)) {
 				p = definitions.get(name);
