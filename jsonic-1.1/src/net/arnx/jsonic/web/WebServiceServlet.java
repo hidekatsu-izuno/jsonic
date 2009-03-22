@@ -55,6 +55,7 @@ public class WebServiceServlet extends HttpServlet {
 		public String encoding;
 		public Boolean expire;
 		public Map<String, String> mappings;
+		public Map<String, Pattern> definitions;
 	}
 	
 	private Container container;
@@ -83,9 +84,12 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (config.processor == null) config.processor = WebServiceServlet.JSON.class;
 		
+		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
+		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
+		
 		if (config.mappings != null) {
 			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
-				mappings.add(new RouteMapping(entry.getKey(), entry.getValue()));
+				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
 			}
 		}
 	}
@@ -593,17 +597,16 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 }
-	
+
 class RouteMapping {
-	private static final Pattern PLACE_PATTERN = Pattern.compile("{\\s*(\\w[\\w\\.-]*)\\s*(?::\\s*(.*)\\s*)?}");
+	private static final Pattern PLACE_PATTERN = Pattern.compile("{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*(.*)\\s*)?}");
 	private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
-	private static final Pattern PACKAGE_PATTERN = Pattern.compile(".+");
 	
 	private Pattern pattern;
 	private List<String> names;
 	private String target;
 	
-	public RouteMapping(String path, String target) {
+	public RouteMapping(String path, String target, Map<String, Pattern> definitions) {
 		this.names = new ArrayList<String>();
 		StringBuffer sb = new StringBuffer("^\\Q");
 		Matcher m = PLACE_PATTERN.matcher(path);
@@ -613,8 +616,8 @@ class RouteMapping {
 			Pattern p = DEFAULT_PATTERN;
 			if (m.group(2) == null || m.group(2).length() == 0) {
 				p = Pattern.compile(m.group(2));
-			} else if ("package".equals(name)) {
-				p = PACKAGE_PATTERN;
+			} else if (definitions.containsKey(name)) {
+				p = definitions.get(name);
 			}
 			m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:") + ")\\\\Q");
 		}
