@@ -862,6 +862,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2009/03/31 version 1.1.1</h3>
 
 <ul>
+<li>build.xmlにdebug設定が漏れていた点を修正しました。</li>
 <li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があるため廃止しました）。</li>
 <li>JSON WebServiceでのmappingキーとして、JSR-311と同じく{キー名:正規表現}と記述できるようになりました。なお、definitionsによる指定も可能です。</li>
 </ul>
