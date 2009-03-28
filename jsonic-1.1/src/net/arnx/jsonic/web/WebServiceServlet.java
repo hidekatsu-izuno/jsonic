@@ -599,7 +599,7 @@ public class WebServiceServlet extends HttpServlet {
 }
 
 class RouteMapping {
-	private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*(.*)\\s*)?\\}");
+	private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
 	private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
 	
 	private Pattern pattern;
