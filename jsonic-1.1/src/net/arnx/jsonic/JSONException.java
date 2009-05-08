@@ -25,17 +25,15 @@ package net.arnx.jsonic;
  * 	<th bgcolor="#CCCCFF" align="left">error code</th>
  * 	<th bgcolor="#CCCCFF" align="left">description</th>
  * </tr>
- * <tr>
- *  <td>000-099</td><td>(all)</td><td>reserved.</td>
- *  <td rowspan="2">100-199</td><td>100</td><td>fails to format.</td>
- *                              <td>150</td><td>fails to preformat.</td>
- *                              <td>(others)</td><td>reserved.</td>
- *  <td rowspan="2">200-299</td><td>200</td><td>fails to parse.</td>
- *                              <td>250</td><td>fails to postparse.</td>
- *                              <td>(others)</td><td>reserved.</td>
- *  <td>300-899</td><td>(all)</td><td>reserved.</td>
- *  <td>900-</td><td>(all)</td><td>user's area.</td>
- * </tr>
+ * <tr><td>000-099</td><td>(all)</td><td>reserved.</td></tr>
+ * <tr><td rowspan="2">100-199</td><td>100</td><td>fails to format.</td></tr>
+ * <tr>                            <td>150</td><td>fails to preformat.</td></tr>
+ * <tr>                            <td>(others)</td><td>reserved.</td></tr>
+ * <tr><td rowspan="2">200-299</td><td>200</td><td>fails to parse.</td></tr>
+ * <tr>                            <td>250</td><td>fails to postparse.</td></tr>
+ * <tr>                            <td>(others)</td><td>reserved.</td></tr>
+ * <tr><td>300-899</td><td>(all)</td><td>reserved.</td></tr>
+ * <tr><td>900-</td><td>(all)</td><td>user's area.</td></tr>
  * </table>
  * 
  * @author izuno
@@ -53,8 +51,9 @@ public class JSONException extends RuntimeException {
 	private long columnNumber = -1l;
 	private long offset = -1l;
 	
-	JSONException(String message, long lineNumber, long columnNumber, long offset) {
+	JSONException(String message, int id, long lineNumber, long columnNumber, long offset) {
 		super(message);
+		this.errorID = id;
 		this.lineNumber = lineNumber;
 		this.columnNumber = columnNumber;
 		this.offset = offset;

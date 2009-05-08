@@ -1513,7 +1513,7 @@ public class JSON {
 	
 	private JSONException createParseException(String message, ParserSource s) {
 		return new JSONException("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?",
-				s.getLineNumber(), s.getColumnNumber(), s.getOffset());
+				JSONException.PARSE_ERROR, s.getLineNumber(), s.getColumnNumber(), s.getOffset());
 	}
 	
 	private String getMessage(String id, Object... args) {
