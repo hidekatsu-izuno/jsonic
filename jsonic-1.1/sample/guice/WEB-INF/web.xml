@@ -8,6 +8,7 @@
 	<description>guice jsonic sample</description>
 
 	<listener>
+		<!-- You need to replace your customized class. -->
 		<listener-class>sample.GuiceServletContextListener</listener-class>
 	</listener>
 		

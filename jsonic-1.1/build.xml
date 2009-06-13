@@ -51,6 +51,7 @@
 		</copy>
 		<copy file="${webapps}/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_seasar2.xml" />
 		<copy file="${webapps}/spring/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_spring.xml" />
+		<copy file="${webapps}/guice/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_guice.xml" />
 		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
 		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true">
