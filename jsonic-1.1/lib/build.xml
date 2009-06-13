@@ -21,6 +21,8 @@
 		<get src="http://maven.seasar.org/maven2/org/seasar/container/s2-framework/2.4.30/s2-framework-2.4.30.jar" dest="${tmp}/lib/s2-framework.jar" />
 		<get src="http://repo1.maven.org/maven2/springframework/spring/1.2/spring-1.2.jar" dest="${tmp}/lib/spring.jar" />
 		<get src="http://repo1.maven.org/maven2/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar" dest="${tmp}/lib/commons-logging-1.1.1.jar" />
+		<get src="http://guice-maven.googlecode.com/svn/trunk/com/google/code/guice/guice/2.0/guice-2.0.jar" dest="${tmp}/lib/guice-2.0.jar" />
+		<get src="http://guice-maven.googlecode.com/svn/trunk/com/google/code/guice/guice-servlet/2.0/guice-servlet-2.0.jar" dest="${tmp}/lib/guice-servlet-2.0.jar" />
 		
 		<mkdir dir="${tmp}/build" />
 		<javac source="1.5" target="1.5" srcdir="src/java" destdir="${tmp}/build" debug="${debug}" fork="true">
