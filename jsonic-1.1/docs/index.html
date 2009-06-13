@@ -725,13 +725,15 @@ public class HogeService {
       "container": "net.arnx.jsonic.web.S2Container" 
       <span class="comment">// Spring Framework対応Container</span>
       "container": "net.arnx.jsonic.web.SpringContainer"
+      <span class="comment">// Google Guice対応Container</span>
+      "container": "net.arnx.jsonic.web.GuiceContainer"
       ...
     <span class="elem">&lt;/param-value&gt;</span>
   <span class="elem">&lt;/init-param&gt;</span>
 <span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>および<a href="http://www.springframework.org/">Spring Framework</a>に対応したContainerを標準添付しています。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 <p>デフォルトでは最低限の機能のみ持つnet.arnx.jsonic.web.Containerが使われます。このコンテナが持つ機能は次の通りです。</p>
 <ul>
 <li>オブジェクトはClass#newInstance()により毎回生成されます。</li>
@@ -862,9 +864,11 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2009/03/31 version 1.1.1</h3>
 
 <ul>
+<li>配布用zipファイルに含まれるbuild.xmlにdebug設定が漏れていた点を修正しました。</li>
 <li>build.xmlにdebug設定が漏れていた点を修正しました。</li>
-<li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があるため廃止しました）。</li>
+<li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があると判断し廃止しました）。</li>
 <li>JSON WebServiceでのmappingキーとして、JSR-311と同じく{キー名:正規表現}と記述できるようになりました。なお、definitionsによる指定も可能です。</li>
+<li>JSON WebServiceにて<a href="http://code.google.com/p/google-guice/">Google Guice</a>をDI Containerとして用いるnet.arnx.jsonic.web.GuiceContainerを追加しました。</li>
 </ul>
 
 <h3>2009/03/01 version 1.1.0</h3>
