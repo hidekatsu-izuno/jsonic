@@ -182,9 +182,9 @@ public class JSON {
 		
 		try {
 			dynaBeanClasses = new Class<?>[] {
-				Class.forName("org.apache.commons.beanutils.DynaBean"),
-				Class.forName("org.apache.commons.beanutils.DynaClass"),
-				Class.forName("org.apache.commons.beanutils.DynaProperty")
+				findClass("org.apache.commons.beanutils.DynaBean"),
+				findClass("org.apache.commons.beanutils.DynaClass"),
+				findClass("org.apache.commons.beanutils.DynaProperty")
 			};
 		} catch (Exception e) {
 			// no handle
@@ -2052,7 +2052,7 @@ public class JSON {
 				} else if (s.equals("double")) {
 					data = double.class;
 				} else {
-					data = Class.forName(value.toString());
+					data = findClass(value.toString());
 				}
 			} else if (Collection.class.isAssignableFrom(c)) {
 				Collection<Object> collection = (Collection<Object>)create(context, c);
@@ -2191,6 +2191,17 @@ public class JSON {
 		} else {
 			return Object.class;
 		}
+	}
+	
+	private static Class<?> findClass(String name) throws ClassNotFoundException {
+		Class<?> c = null;
+		try {
+			c = Thread.currentThread().getContextClassLoader().loadClass(name);
+		} catch (ClassNotFoundException e) {
+			c = Class.forName(name);
+		}
+		
+		return c;
 	}
 	
 	private static Long convertDate(String value, Locale locale) throws java.text.ParseException {

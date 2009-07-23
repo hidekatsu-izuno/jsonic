@@ -35,6 +35,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Properties;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.List;
@@ -766,6 +767,30 @@ public class JSONTest {
 		
 		json = new Point2DJSON();
 		assertEquals(new Point2D.Double(10.5, 10.5), json.parse("[10.5,10.5]", Point2D.class));
+		
+		json = new JSON();
+		
+		Map<Object, Object> ssMap = new LinkedHashMap<Object, Object>();
+		ssMap.put("aaa", new BigDecimal("1"));
+		ssMap.put("bbb", new BigDecimal("2"));
+		ssMap.put("ccc.bbb", new BigDecimal("3"));
+		ssMap.put("ccc.ddd.0", new BigDecimal("4"));
+		ssMap.put("ccc.ddd.1", new BigDecimal("5"));
+		ssMap.put("ccc.ddd.2", new BigDecimal("6"));
+		ssMap.put("eee", false);
+		ssMap.put("fff.0.ggg", "x");
+		ssMap.put("fff.0.hhh", "y");
+		ssMap.put("fff.1.ggg", "z");
+		ssMap.put("fff.1.hhh", "0");
+		
+		Properties props = new Properties();
+		for (Map.Entry<Object, Object> entry : ssMap.entrySet()) {
+			props.setProperty(entry.getKey().toString(), entry.getValue().toString());
+		}
+		
+		assertEquals(props, json.parse("{aaa:1,bbb:2,ccc:{bbb:3,ddd:[4,5,6]},eee:false,"
+				+"fff:[{ggg:\"x\", hhh:\"y\"}, {ggg:\"z\", hhh:\"0\"}]}", 
+				Properties.class));
 	}
 
 	@Test

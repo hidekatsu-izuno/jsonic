@@ -242,6 +242,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="#maxdepth">最大深度の設定</a></li>
 <li><a href="#suppressnull">null値の抑制</a></li>
+<li><a href="#flatten">フラットな展開</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 <li><a href="#jsonhint">変換時ヒントの付加</a></li>
 </ul>
@@ -424,6 +425,8 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 <span class="comment">// null値の出力や代入を抑制します。</span>
 json<span class="em">.setSuppressNull(</span>true<span class="em">)</span>;
 </pre>
+
+<h3 id="flatten">■ フラットな展開</h3>
 
 <h3 id="xmltojson">■ XMLからJSONへの変換</h3>
 <p>JSONICでは、org.w3c.dom.Document/Elementから<a href="http://jsonml.org/">JsonML</a>への変換をサポートしています。
@@ -861,11 +864,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2009/03/31 version 1.1.1</h3>
+<h3>2009/07/30 version 1.1.1</h3>
 
 <ul>
 <li>配布用zipファイルに含まれるbuild.xmlにdebug設定が漏れていた点を修正しました。</li>
 <li>build.xmlにdebug設定が漏れていた点を修正しました。</li>
+<li>Encode/Parse時に、変換先としてPropertiesが指定された場合にMap&lt;Object, Object&gt;として扱われる問題を解消しました。キーと値は文字列に変換されます。</li>
+<li>Encode/Parse時に、キーをフラットに展開するsetFlatten()を追加しました。</li>
 <li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があると判断し廃止しました）。</li>
 <li>JSON WebServiceでのmappingキーとして、JSR-311と同じく{キー名:正規表現}と記述できるようになりました。なお、definitionsによる指定も可能です。</li>
 <li>JSON WebServiceにて<a href="http://code.google.com/p/google-guice/">Google Guice</a>をDI Containerとして用いるnet.arnx.jsonic.web.GuiceContainerを追加しました。</li>
