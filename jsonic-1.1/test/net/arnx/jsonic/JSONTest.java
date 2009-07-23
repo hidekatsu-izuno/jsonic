@@ -790,7 +790,15 @@ public class JSONTest {
 		
 		assertEquals(props, json.parse("{aaa:1,bbb:2,ccc:{bbb:3,ddd:[4,5,6]},eee:false,"
 				+"fff:[{ggg:\"x\", hhh:\"y\"}, {ggg:\"z\", hhh:\"0\"}]}", 
-				Properties.class));
+				Properties.class));	
+		
+		props.clear();
+		props.setProperty("0", "aaa");
+		props.setProperty("1.bbb", "1");
+		props.setProperty("1.ccc", "2");
+		props.setProperty("2", "false");
+		
+		assertEquals(props, json.parse("[\"aaa\",{bbb:1,ccc:2},false]", Properties.class));
 	}
 
 	@Test

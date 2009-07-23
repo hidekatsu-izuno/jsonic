@@ -54,6 +54,7 @@ import java.util.Date;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.LinkedHashMap;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.SortedMap;
@@ -1572,7 +1573,10 @@ public class JSON {
 			Map<?, ?> src = (Map<?, ?>)value;
 			if (Map.class.isAssignableFrom(c)) {
 				Map<Object, Object> map = null;
-				if (type instanceof ParameterizedType) {
+				if (Properties.class.isAssignableFrom(c)) {
+					map = (Map<Object, Object>)create(context, c);
+					flattenProperties(new StringBuilder(32), (Map<Object, Object>)value, (Properties)map);
+				} else if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
@@ -1692,7 +1696,9 @@ public class JSON {
 				data = array;
 			} else if (Map.class.isAssignableFrom(c)) {
 				Map<Object, Object> map = (Map<Object, Object>)create(context, c);
-				if (type instanceof ParameterizedType) {
+				if (Properties.class.isAssignableFrom(c)) {
+					flattenProperties(new StringBuilder(32), (List<Object>)value, (Properties)map);
+				} else if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
@@ -2190,6 +2196,29 @@ public class JSON {
 			return (types.length > 0) ? getRawType(types[0]) : Object.class;
 		} else {
 			return Object.class;
+		}
+	}
+	
+	private static void flattenProperties(StringBuilder key, Object value, Properties props) {
+		if (value instanceof Map) {
+			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
+				int pos = key.length();
+				if (pos > 0) key.append('.');
+				key.append(entry.getKey());
+				flattenProperties(key, entry.getValue(), props);
+				key.setLength(pos);
+			}
+		} else if (value instanceof List) {
+			List<?> list = (List<?>)value;
+			for (int i = 0; i < list.size(); i++) {
+				int pos = key.length();
+				if (pos > 0) key.append('.');
+				key.append(i);
+				flattenProperties(key, list.get(i), props);
+				key.setLength(pos);
+			}
+		} else {
+			props.setProperty(key.toString(), value.toString());
 		}
 	}
 	
