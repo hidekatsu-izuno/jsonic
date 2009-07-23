@@ -866,6 +866,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>配布用zipファイルに含まれるbuild.xmlにdebug設定が漏れていた点を修正しました。</li>
 <li>build.xmlにdebug設定が漏れていた点を修正しました。</li>
+<li>Encode/Parse時に文字列からClassへの変換でクラスローダがシステムクラスローダに固定される問題に対応しました。カレント・スレッドのクラスローダからロードに失敗した場合のみ、システムクラスローダからクラスをロードします。</li>
 <li>Encode/Parse時に、変換先としてPropertiesが指定された場合にMap&lt;Object, Object&gt;として扱われる問題を解消しました。キーはフラットに展開され、値と共に文字列に変換され設定されます。</li>
 <li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があると判断し廃止しました）。</li>
 <li>JSON WebServiceでのmappingキーとして、JSR-311と同じく{キー名:正規表現}と記述できるようになりました。なお、definitionsによる指定も可能です。</li>
