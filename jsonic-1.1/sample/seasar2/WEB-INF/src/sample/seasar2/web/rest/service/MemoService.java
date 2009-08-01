@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package sample.web.rest.service;
+package sample.seasar2.web.rest.service;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -22,6 +22,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import sample.seasar2.web.rest.service.Memo;
 
 public class MemoService {
 	

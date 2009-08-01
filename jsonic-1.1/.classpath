@@ -4,7 +4,7 @@
 	<classpathentry kind="src" output="sample/guice/WEB-INF/classes" path="sample/guice/WEB-INF/src"/>
 	<classpathentry kind="src" output="sample/spring/WEB-INF/classes" path="sample/spring/WEB-INF/src"/>
 	<classpathentry kind="src" output="sample/seasar2/WEB-INF/classes" path="sample/seasar2/WEB-INF/src"/>
-	<classpathentry kind="src" path="sample/basic/WEB-INF/src"/>
+	<classpathentry kind="src" output="sample/basic/WEB-INF/classes" path="sample/basic/WEB-INF/src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/spring.jar"/>

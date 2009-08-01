@@ -2227,7 +2227,11 @@ public class JSON {
 		try {
 			c = Thread.currentThread().getContextClassLoader().loadClass(name);
 		} catch (ClassNotFoundException e) {
-			c = Class.forName(name);
+			try {
+				c = prototype.getClassLoader().loadClass(name);
+			} catch (ClassNotFoundException e2) {
+				c = Class.forName(name);				
+			}
 		}
 		
 		return c;

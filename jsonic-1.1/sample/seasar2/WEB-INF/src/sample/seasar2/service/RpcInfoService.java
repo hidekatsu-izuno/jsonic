@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package sample.service;
+package sample.seasar2.service;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -22,7 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import sample.web.rpc.service.*;
+import sample.seasar2.web.rpc.service.CalcService;
+import sample.seasar2.web.rpc.service.EditService;
 
 public class RpcInfoService {
 	static List<Class<?>> rpcList = new ArrayList<Class<?>>();
