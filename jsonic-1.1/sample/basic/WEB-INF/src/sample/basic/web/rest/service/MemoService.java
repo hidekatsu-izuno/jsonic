@@ -23,8 +23,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import sample.basic.web.rest.service.Memo;
-
 public class MemoService {
 	
 	// it's incorrect use. you should use RDBMS.

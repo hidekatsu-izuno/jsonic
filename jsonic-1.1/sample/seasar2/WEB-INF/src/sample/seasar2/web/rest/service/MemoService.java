@@ -23,7 +23,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import sample.seasar2.web.rest.service.Memo;
 
 public class MemoService {
 	
