@@ -49,7 +49,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
-	class Config {
+	protected class Config {
 		public Class<? extends Container> container;
 		public Class<? extends net.arnx.jsonic.JSON> processor;
 		public String encoding;
@@ -73,7 +73,7 @@ public class WebServiceServlet extends HttpServlet {
 		net.arnx.jsonic.JSON json = new net.arnx.jsonic.JSON();
 		
 		try {
-			config = json.parse(configText, Config.class);
+			config = json.parse(configText, getConfigClass());
 			if (config.container == null) config.container = Container.class;
 			
 			container = (Container)json.parse(configText, config.container);
@@ -92,6 +92,10 @@ public class WebServiceServlet extends HttpServlet {
 				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
 			}
 		}
+	}
+	
+	protected Class<? extends Config> getConfigClass() {
+		return Config.class;
 	}
 
 	protected Route preprocess(HttpServletRequest request, HttpServletResponse response)
@@ -477,6 +481,18 @@ public class WebServiceServlet extends HttpServlet {
 		container.destory();
 		super.destroy();
 	}
+	
+	
+	/**
+	 * Called before invoking the target method.
+	 * 
+	 * @param target The target instance.
+	 * @param params The parameters of the target method.
+	 * @return The parameters before processing.
+	 */
+	protected Object[] preinvoke(Object target, Object... params) {
+		return params;
+	}
 		
 	protected Object invoke(net.arnx.jsonic.JSON json, Object o, String methodName, List<?> args) throws Exception {
 		if (args == null) args = Collections.emptyList();
@@ -546,7 +562,9 @@ public class WebServiceServlet extends HttpServlet {
 		if (container.isDebugMode()) {
 			container.debug("Execute: " + toPrintString(c, methodName, args));
 		}
+		params = preinvoke(o, params);
 		Object ret = method.invoke(o, params);
+		ret = postinvoke(o, ret);
 		
 		if (destroy != null) {
 			if (container.isDebugMode()) {
@@ -556,6 +574,17 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		return ret;
+	}
+	
+	/**
+	 * Called after invoked the target method.
+	 * 
+	 * @param target The target instance.
+	 * @param result The returned value of the target method call.
+	 * @return The returned value after processed.
+	 */
+	protected Object postinvoke(Object target, Object result) {
+		return result;
 	}
 	
 	private String toPrintString(Class<?> c, String methodName, List<?> args) {
