@@ -5,16 +5,16 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 	
-	<bean class="sample.service.RpcInfoService">
+	<bean class="sample.spring.service.RpcInfoService">
 	</bean>
 	
-	<bean class="sample.web.rest.service.MemoService">
+	<bean class="sample.spring.web.rest.service.MemoService">
 	</bean>
 	
-	<bean class="sample.web.rpc.service.CalcService">
+	<bean class="sample.spring.web.rpc.service.CalcService">
 	</bean>
 	
-	<bean class="sample.web.rpc.service.EditService">
+	<bean class="sample.spring.web.rpc.service.EditService">
 	</bean>
 </beans>
 
