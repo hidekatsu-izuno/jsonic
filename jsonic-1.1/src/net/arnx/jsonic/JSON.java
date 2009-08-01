@@ -2225,10 +2225,10 @@ public class JSON {
 	private static Class<?> findClass(String name) throws ClassNotFoundException {
 		Class<?> c = null;
 		try {
-			c = Thread.currentThread().getContextClassLoader().loadClass(name);
+			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
 		} catch (ClassNotFoundException e) {
 			try {
-				c = prototype.getClassLoader().loadClass(name);
+				c = Class.forName(name, true, prototype.getClassLoader());
 			} catch (ClassNotFoundException e2) {
 				c = Class.forName(name);				
 			}

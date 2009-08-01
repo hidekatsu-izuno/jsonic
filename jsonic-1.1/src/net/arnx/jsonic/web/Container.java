@@ -44,7 +44,7 @@ public class Container {
 	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) 
 		throws Exception {
 		
-		Object o = Class.forName(className).newInstance();
+		Object o = findClass(className).newInstance();
 		
 		for (Field field : o.getClass().getFields()) {
 			Class<?> c = field.getType();
@@ -62,6 +62,21 @@ public class Container {
 		}
 		
 		return o;
+	}
+	
+	public Class<?> findClass(String name) throws ClassNotFoundException {
+		Class<?> c = null;
+		try {
+			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
+		} catch (ClassNotFoundException e) {
+			try {
+				c = Class.forName(name, true, this.getClass().getClassLoader());
+			} catch (ClassNotFoundException e2) {
+				c = Class.forName(name);				
+			}
+		}
+		
+		return c;
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {

@@ -27,11 +27,9 @@ public class S2Container extends Container {
 	
 	@Override
 	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		
 		return SingletonS2ContainerFactory
 			.getContainer()
-			.getComponent(Class.forName(className, true, loader));
+			.getComponent(findClass(className));
 	}
 	
 	@Override
