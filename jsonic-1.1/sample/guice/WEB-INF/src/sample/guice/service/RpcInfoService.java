@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import sample.spring.web.rpc.service.CalcService;
-import sample.spring.web.rpc.service.EditService;
+import sample.guice.web.rpc.service.CalcService;
+import sample.guice.web.rpc.service.EditService;
 
 public class RpcInfoService {
 	static List<Class<?>> rpcList = new ArrayList<Class<?>>();
