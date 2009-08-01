@@ -9,7 +9,7 @@
 
 	<listener>
 		<!-- You need to replace your customized class. -->
-		<listener-class>sample.GuiceServletContextListener</listener-class>
+		<listener-class>sample.guice.GuiceServletContextListener</listener-class>
 	</listener>
 		
 	<filter>
@@ -32,9 +32,9 @@
 				container: 'net.arnx.jsonic.web.GuiceContainer'
 				debug: true
 				mappings: {
-					'/{package}/{class}/{id}.{ext}': 'sample.web.${package}.service.${class}Service'
-					'/{package}/{class}.{ext}': 'sample.web.${package}.service.${class}Service'
-					'/{class}.{ext}': 'sample.service.${class}Service'
+					'/{package}/{class}/{id}.{ext}': 'sample.guice.web.${package}.service.${class}Service'
+					'/{package}/{class}.{ext}': 'sample.guice.web.${package}.service.${class}Service'
+					'/{class}.{ext}': 'sample.guice.service.${class}Service'
 				}
 			</param-value>
 		</init-param>

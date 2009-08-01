@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package sample.seasar2.web.rest.service;
+package sample.spring.web.rest.service;
 
 import java.util.Collection;
 import java.util.Collections;
