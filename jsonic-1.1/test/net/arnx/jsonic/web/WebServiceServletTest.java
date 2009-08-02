@@ -2,6 +2,7 @@ package net.arnx.jsonic.web;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,9 +34,16 @@ public class WebServiceServletTest {
 	
 	@BeforeClass
 	public static void init() throws Exception {
+		new File("sample/basic/WEB-INF/database.dat").delete();
+		new File("sample/seasar2/WEB-INF/database.dat").delete();
+		new File("sample/spring/WEB-INF/database.dat").delete();
+		new File("sample/guice/WEB-INF/database.dat").delete();
+		
 		Map args = new HashMap();
 		args.put("webappsDir", "sample");
-		args.put("controlPort", "8081");
+		args.put("httpPort", "16001");
+		args.put("controlPort", "16002");
+		args.put("ajp13Port", "-1");
 		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
 		
 		Launcher.initLogger(args);
@@ -49,7 +57,7 @@ public class WebServiceServletTest {
 
 	@Test
 	public void testRPC() throws Exception {
-		URL url = new URL("http://localhost:8080/basic/rpc/rpc.json");
+		URL url = new URL("http://localhost:16001/basic/rpc/rpc.json");
 		HttpURLConnection con = null;
 		
 		// GET
@@ -133,8 +141,13 @@ public class WebServiceServletTest {
 		testREST("spring");
 	}
 	
+	@Test
+	public void testRESTwithGuice() throws Exception {
+		testREST("guice");
+	}
+	
 	public void testREST(String app) throws Exception {
-		String url = "http://localhost:8080/" + app + "/rest/memo";
+		String url = "http://localhost:16001/" + app + "/rest/memo";
 		HttpURLConnection con = null;
 		
 		List<Map<String, Object>> content = null;
@@ -218,7 +231,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRESTWithMethod() throws Exception {
-		String url = "http://localhost:8080/basic/rest/memo.json";
+		String url = "http://localhost:16001/basic/rest/memo.json";
 		HttpURLConnection con = null;
 		
 		List<Map<String, Object>> content = null;

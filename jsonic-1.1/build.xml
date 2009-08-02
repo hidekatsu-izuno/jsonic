@@ -105,7 +105,9 @@
 
 	<target name="start">
 		<java classname="winstone.Launcher" fork="true">
-			<arg value="--controlPort=8081" />
+			<arg value="--httpPort=16001" />
+			<arg value="--controlPort=16002" />
+			<arg value="--ajp13Port=-1" />
 			<arg value="--webappsDir=${webapps}" />
 			<arg value="--preferredClassLoader=winstone.classLoader.WebappDevLoader" />
 			<classpath>
@@ -117,7 +119,7 @@
 
 	<target name="stop">
 		<java classpath="lib/winstone-0.9.10.jar" classname="winstone.tools.WinstoneControl" fork="true">
-			<arg value="--controlPort=8081" />
+			<arg value="--controlPort=16002" />
 			<arg value="shutdown" />
 		</java>
 	</target>

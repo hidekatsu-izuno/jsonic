@@ -15,27 +15,52 @@
  */
 package sample.basic.web.rest.service;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class MemoService {
 	
 	// it's incorrect use. you should use RDBMS.
-	// and it's not work in a hot deploy.
-	private static int count = 0;
-	private static Map<Integer, Memo> list = Collections.synchronizedMap(new LinkedHashMap<Integer, Memo>());
+	public int count = 0;
+	public Map<Integer, Memo> list;
 	
-	// injects request/response. but default container only.
+	// injects context object. but default container only.
+	public ServletContext application;
 	public HttpServletRequest request;
 	public HttpServletResponse response;
 	
+	@SuppressWarnings("unchecked")
 	public void init() {
 		// response.setHeader("X-JSON", "[\"Hello. JSONIC!\"]");
+		
+		ObjectInputStream oin = null;
+		try {
+			InputStream in = application.getResourceAsStream("/WEB-INF/database.dat");
+			if (in != null) {
+				oin = new ObjectInputStream(in);
+				count = oin.readInt();
+				list = (Map<Integer, Memo>)oin.readObject();
+			} else {
+				list = new LinkedHashMap<Integer, Memo>();
+			}
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		} finally {
+			try {
+				if (oin != null) oin.close();
+			} catch (IOException e) {}
+		}
 	}
 	
 	// This method ignored. Because init method has no arguments.
@@ -80,10 +105,22 @@ public class MemoService {
 	}
 	
 	public void destroy() {
+		ObjectOutputStream oout = null;
+		try {
+			oout = new ObjectOutputStream(new FileOutputStream(application.getRealPath("/WEB-INF/database.dat")));
+			oout.writeInt(count);
+			oout.writeObject(list);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		} finally {
+			try {
+				if (oout != null) oout.close();
+			} catch (IOException e) {}
+		}
 	}
 }
 
-class Memo {
+class Memo implements Serializable {
 	public Integer id;
 	public String title;
 	public String text;
