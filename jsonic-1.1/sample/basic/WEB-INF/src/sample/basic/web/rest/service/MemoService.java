@@ -45,21 +45,23 @@ public class MemoService {
 		// response.setHeader("X-JSON", "[\"Hello. JSONIC!\"]");
 		
 		ObjectInputStream oin = null;
-		try {
-			InputStream in = application.getResourceAsStream("/WEB-INF/database.dat");
-			if (in != null) {
-				oin = new ObjectInputStream(in);
-				count = oin.readInt();
-				list = (Map<Integer, Memo>)oin.readObject();
-			} else {
-				list = new LinkedHashMap<Integer, Memo>();
-			}
-		} catch (Exception e) {
-			throw new IllegalStateException(e);
-		} finally {
+		synchronized(MemoService.class) {
 			try {
-				if (oin != null) oin.close();
-			} catch (IOException e) {}
+				InputStream in = application.getResourceAsStream("/WEB-INF/database.dat");
+				if (in != null) {
+					oin = new ObjectInputStream(in);
+					count = oin.readInt();
+					list = (Map<Integer, Memo>)oin.readObject();
+				} else {
+					list = new LinkedHashMap<Integer, Memo>();
+				}
+			} catch (Exception e) {
+				throw new IllegalStateException(e);
+			} finally {
+				try {
+					if (oin != null) oin.close();
+				} catch (IOException e) {}
+			}
 		}
 	}
 	
@@ -106,16 +108,19 @@ public class MemoService {
 	
 	public void destroy() {
 		ObjectOutputStream oout = null;
-		try {
-			oout = new ObjectOutputStream(new FileOutputStream(application.getRealPath("/WEB-INF/database.dat")));
-			oout.writeInt(count);
-			oout.writeObject(list);
-		} catch (Exception e) {
-			throw new IllegalStateException(e);
-		} finally {
+		synchronized(MemoService.class) {
 			try {
-				if (oout != null) oout.close();
-			} catch (IOException e) {}
+				oout = new ObjectOutputStream(new FileOutputStream(application.getRealPath("/WEB-INF/database.dat")));
+				oout.writeInt(count);
+				oout.writeObject(list);
+				oout.flush();
+			} catch (Exception e) {
+				throw new IllegalStateException(e);
+			} finally {
+				try {
+					if (oout != null) oout.close();
+				} catch (IOException e) {}
+			}
 		}
 	}
 }
