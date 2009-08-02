@@ -102,25 +102,4 @@
 		<delete dir="${tmp}" failonerror="off" />
 		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
 	</target>
-
-	<target name="start">
-		<java classname="winstone.Launcher" fork="true">
-			<arg value="--httpPort=16001" />
-			<arg value="--controlPort=16002" />
-			<arg value="--ajp13Port=-1" />
-			<arg value="--webappsDir=${webapps}" />
-			<arg value="--preferredClassLoader=winstone.classLoader.WebappDevLoader" />
-			<classpath>
-				<pathelement location="lib/winstone-0.9.10.jar" />
-				<pathelement location="lib/winstone_devloader.jar" />
-			</classpath>
-		</java>
-	</target>
-
-	<target name="stop">
-		<java classpath="lib/winstone-0.9.10.jar" classname="winstone.tools.WinstoneControl" fork="true">
-			<arg value="--controlPort=16002" />
-			<arg value="shutdown" />
-		</java>
-	</target>
 </project>
