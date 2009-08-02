@@ -15,9 +15,10 @@
  */
 package sample.spring.web.rest.service;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -49,9 +50,9 @@ public class MemoService implements ServletContextAware {
 		ObjectInputStream oin = null;
 		synchronized(MemoService.class) {
 			try {
-				InputStream in = application.getResourceAsStream("/WEB-INF/database.dat");
-				if (in != null) {
-					oin = new ObjectInputStream(in);
+				File file = new File(application.getRealPath("/WEB-INF/database.dat"));
+				if (file.exists()) {
+					oin = new ObjectInputStream(new FileInputStream(file));
 					count = oin.readInt();
 					list = (Map<Integer, Memo>)oin.readObject();
 				} else {
