@@ -25,6 +25,8 @@ div#list table td {
 </style>
 <script type="text/javascript" src="jquery-1.2.6.min.js"></script>
 <script type="text/javascript">
+$.ajaxSetup({ ifModified: true });
+
 function show() {
 	var request = $.getJSON('rest/memo.json', null, function(o) {
 		var content = '<table><tr><th width="30">ID</th><th width="50">Title</th><th width="300">Text</th><th width="50">&nbsp;</th></tr>';
