@@ -63,7 +63,7 @@ public class MemoService {
 		}
 	}
 	
-	// This method ignored. Because init method has no arguments.
+	// This method is ignored. Because init method has no arguments.
 	public void init(String str) {
 		throw new UnsupportedOperationException();
 	}

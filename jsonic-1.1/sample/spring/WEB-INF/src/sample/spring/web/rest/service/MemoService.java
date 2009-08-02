@@ -65,7 +65,7 @@ public class MemoService implements ServletContextAware {
 		}
 	}
 	
-	// This method ignored. Because init method has no arguments.
+	// This method is ignored. Because init method has no arguments.
 	public void init(String str) {
 		throw new UnsupportedOperationException();
 	}

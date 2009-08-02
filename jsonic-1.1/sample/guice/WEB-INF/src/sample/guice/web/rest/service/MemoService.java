@@ -71,7 +71,7 @@ public class MemoService {
 		}
 	}
 	
-	// This method ignored. Because init method has no arguments.
+	// This method is ignored. Because init method has no arguments.
 	public void init(String str) {
 		throw new UnsupportedOperationException();
 	}
@@ -102,7 +102,7 @@ public class MemoService {
 
 		Memo target = list.get(memo.id);
 		target.title = memo.title;
-		target.text = memo.text;
+		target.text = memo.text + "aaa";
 	}
 	
 	public void delete(Memo memo) {
