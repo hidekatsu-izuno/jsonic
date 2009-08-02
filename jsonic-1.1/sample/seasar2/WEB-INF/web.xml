@@ -6,26 +6,26 @@
 	version="2.4">
 	
 	<description>s2jsonic sample</description>
+    
+    <filter>
+        <filter-name>s2filter</filter-name>
+        <filter-class>org.seasar.framework.container.filter.S2ContainerFilter</filter-class>
+    </filter>
 	
 	<filter>
 		<filter-name>hotdeployfilter</filter-name>
 		<filter-class>org.seasar.framework.container.hotdeploy.HotdeployFilter</filter-class>
 	</filter>
     
-    <filter>
+    <filter-mapping>
         <filter-name>s2filter</filter-name>
-        <filter-class>org.seasar.framework.container.filter.S2ContainerFilter</filter-class>
-    </filter>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
 	<filter-mapping>
 		<filter-name>hotdeployfilter</filter-name>
 	    <url-pattern>/*</url-pattern>
 	</filter-mapping>
-    
-    <filter-mapping>
-        <filter-name>s2filter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
 	
 	<servlet>
 	    <servlet-name>s2servlet</servlet-name>
