@@ -25,10 +25,7 @@ div#list table td {
 </style>
 <script type="text/javascript" src="jquery-1.2.6.min.js"></script>
 <script type="text/javascript">
-$.ajaxSetup({
-	ifModified: true,
-	cache: false
-});
+$.ajaxSetup({ cache: false });
 
 function show() {
 	var request = $.getJSON('rest/memo.json', null, function(o) {
