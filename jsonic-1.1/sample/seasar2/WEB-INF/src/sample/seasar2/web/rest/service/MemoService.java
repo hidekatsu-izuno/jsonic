@@ -33,8 +33,8 @@ import javax.servlet.http.HttpServletResponse;
 public class MemoService {
 	
 	// it's incorrect use. you should use RDBMS.
-	public int count = 0;
-	public Map<Integer, Memo> list;
+	private int count = 0;
+	private Map<Integer, Memo> list;
 	
 	// injects context object.
 	

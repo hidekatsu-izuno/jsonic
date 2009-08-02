@@ -19,27 +19,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
-import org.seasar.framework.convention.NamingConvention;
 import org.seasar.framework.env.Env;
 import org.seasar.framework.log.Logger;
 
 public class S2Container extends Container {
 	private static Logger log = Logger.getLogger(WebServiceServlet.class);
 	
-	private NamingConvention convention;
-	
 	@Override
 	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
-		org.seasar.framework.container.S2Container container = SingletonS2ContainerFactory.getContainer();
-		
-		if (convention == null) {
-			convention = (NamingConvention)container.getComponent(NamingConvention.class);
-			if (convention != null && convention.isTargetClassName(className)) {
-				return container.getComponent(convention.fromClassNameToComponentName(className));
-			}
-		}
-		
-		return container.getComponent(findClass(className));
+		return SingletonS2ContainerFactory
+			.getContainer()
+			.getComponent(findClass(className));
 	}
 	
 	@Override
