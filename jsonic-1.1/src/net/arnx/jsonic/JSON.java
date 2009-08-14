@@ -392,11 +392,11 @@ public class JSON {
 		return JSON.newInstance().parse(reader, type);
 	}
 	
-	private Object contextObject = null;
-	private Locale locale;
-	private boolean prettyPrint = false;	
-	private int maxDepth = 32;
-	private boolean suppressNull = false;
+	Object contextObject = null;
+	Locale locale;
+	boolean prettyPrint = false;	
+	int maxDepth = 32;
+	boolean suppressNull = false;
 
 	public JSON() {
 	}
@@ -557,6 +557,8 @@ public class JSON {
 			data = ((Charset)value).name();
 		} else if (value instanceof Locale) {
 			data = ((Locale)value).toString().replace('_', '-');
+		} else if (value instanceof JSONObject) {
+			data = ((JSONObject)value).root;
 		} else if (value instanceof Node) {
 			if (value instanceof Document) {
 				data = ((Document)value).getDocumentElement();
@@ -913,7 +915,7 @@ public class JSON {
 	public Object parse(CharSequence cs) throws JSONException {
 		Object value = null;
 		try {
-			value = parse(new CharSequenceParserSource(cs));
+			value = parse(new CharSequenceParserSource(cs, 1000));
 		} catch (IOException e) {
 			// never occur
 		}
@@ -928,7 +930,7 @@ public class JSON {
 	public Object parse(CharSequence s, Type type) throws JSONException {
 		Object value = null;
 		try {
-			value = parse(new CharSequenceParserSource(s), type);
+			value = parse(new CharSequenceParserSource(s, 1000), type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -1571,7 +1573,12 @@ public class JSON {
 			data = value;
 		} else if (value instanceof Map) {
 			Map<?, ?> src = (Map<?, ?>)value;
-			if (Map.class.isAssignableFrom(c)) {
+			if (JSONObject.class.isAssignableFrom(c)) {
+				JSONObject jo = (JSONObject)create(context, c);
+				jo.root = value;
+				jo.current = value;
+				data = jo;
+			} if (Map.class.isAssignableFrom(c)) {
 				Map<Object, Object> map = null;
 				if (Properties.class.isAssignableFrom(c)) {
 					map = (Map<Object, Object>)create(context, c);
@@ -1660,7 +1667,12 @@ public class JSON {
 			}
 		} else if (value instanceof List) {
 			List<?> src = (List<?>)value;
-			if (Collection.class.isAssignableFrom(c)) {
+			if (JSONObject.class.isAssignableFrom(c)) {
+				JSONObject jo = (JSONObject)create(context, c);
+				jo.root = value;
+				jo.current = value;
+				data = jo;
+			} else if (Collection.class.isAssignableFrom(c)) {
 				Collection<Object> collection = null;
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
@@ -2146,6 +2158,14 @@ public class JSON {
 				} catch (NoSuchMethodException e) {
 					// no handle
 				}
+			} else if (JSONObject.class.isAssignableFrom(c)) {
+				try {
+					Constructor<?> con = c.getDeclaredConstructor(JSONObject.class);
+					if(context.tryAccess(c)) con.setAccessible(true);
+					instance = con.newInstance(this);
+				} catch (NoSuchMethodException e) {
+					// no handle
+				}
 			}
 			
 			if (instance == null) {
@@ -2501,19 +2521,7 @@ public class JSON {
 		}
 		
 		boolean tryAccess(Class<?> c) {
-			int modifier = c.getModifiers();
-			if (scope != null && !Modifier.isPublic(modifier)) {
-				if (Modifier.isPrivate(modifier)) {
-					return scope.equals(c.getEnclosingClass());
-				}
-				int cpos = c.getName().lastIndexOf('.');
-				int ppos = scope.getName().lastIndexOf('.');
-				if (cpos == ppos 
-					&& (cpos == -1 || c.getName().substring(0, cpos).equals(scope.getName().substring(0, ppos)))) {
-					return true;
-				}
-			}
-			return false;
+			return !Modifier.isPublic(c.getModifiers());
 		}
 		
 		<T extends Format> T format(Class<? extends T> c) {
@@ -2592,13 +2600,14 @@ class CharSequenceParserSource implements ParserSource {
 	private int offset = 0;
 	
 	private CharSequence cs;
-	private StringBuilder cache = new StringBuilder(1000);
+	private StringBuilder cache;
 	
-	public CharSequenceParserSource(CharSequence cs) {
+	public CharSequenceParserSource(CharSequence cs, int size) {
 		if (cs == null) {
 			throw new NullPointerException();
 		}
 		this.cs = cs;
+		this.cache = new StringBuilder(size);
 	}
 	
 	public int next() {

@@ -45,6 +45,7 @@ public class JSONException extends RuntimeException {
 	public static final int PREFORMAT_ERROR = 150;
 	public static final int PARSE_ERROR = 200;
 	public static final int POSTPARSE_ERROR = 250;
+	public static final int JSONPATH_ERROR = 300;
 	
 	private int errorID;
 	private long lineNumber = -1l;
