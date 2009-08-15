@@ -868,7 +868,7 @@ public class JSON {
 				context.exit();
 				i++;
 			}
-			if (this.prettyPrint && !map.isEmpty()) {
+			if (this.prettyPrint && i > 0) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
@@ -1578,7 +1578,7 @@ public class JSON {
 				jo.root = value;
 				jo.current = value;
 				data = jo;
-			} if (Map.class.isAssignableFrom(c)) {
+			} else if (Map.class.isAssignableFrom(c)) {
 				Map<Object, Object> map = null;
 				if (Properties.class.isAssignableFrom(c)) {
 					map = (Map<Object, Object>)create(context, c);
