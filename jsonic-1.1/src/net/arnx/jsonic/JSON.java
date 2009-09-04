@@ -557,8 +557,6 @@ public class JSON {
 			data = ((Charset)value).name();
 		} else if (value instanceof Locale) {
 			data = ((Locale)value).toString().replace('_', '-');
-		} else if (value instanceof JSONObject) {
-			data = ((JSONObject)value).root;
 		} else if (value instanceof Node) {
 			if (value instanceof Document) {
 				data = ((Document)value).getDocumentElement();
@@ -1573,12 +1571,7 @@ public class JSON {
 			data = value;
 		} else if (value instanceof Map) {
 			Map<?, ?> src = (Map<?, ?>)value;
-			if (JSONObject.class.isAssignableFrom(c)) {
-				JSONObject jo = (JSONObject)create(context, c);
-				jo.root = value;
-				jo.current = value;
-				data = jo;
-			} else if (Map.class.isAssignableFrom(c)) {
+			if (Map.class.isAssignableFrom(c)) {
 				Map<Object, Object> map = null;
 				if (Properties.class.isAssignableFrom(c)) {
 					map = (Map<Object, Object>)create(context, c);
@@ -1667,12 +1660,7 @@ public class JSON {
 			}
 		} else if (value instanceof List) {
 			List<?> src = (List<?>)value;
-			if (JSONObject.class.isAssignableFrom(c)) {
-				JSONObject jo = (JSONObject)create(context, c);
-				jo.root = value;
-				jo.current = value;
-				data = jo;
-			} else if (Collection.class.isAssignableFrom(c)) {
+			if (Collection.class.isAssignableFrom(c)) {
 				Collection<Object> collection = null;
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
@@ -2155,14 +2143,6 @@ public class JSON {
 					Constructor<?> con = c.getDeclaredConstructor(long.class);
 					if(context.tryAccess(c)) con.setAccessible(true);
 					instance = con.newInstance(0l);
-				} catch (NoSuchMethodException e) {
-					// no handle
-				}
-			} else if (JSONObject.class.isAssignableFrom(c)) {
-				try {
-					Constructor<?> con = c.getDeclaredConstructor(JSONObject.class);
-					if(context.tryAccess(c)) con.setAccessible(true);
-					instance = con.newInstance(this);
 				} catch (NoSuchMethodException e) {
 					// no handle
 				}
