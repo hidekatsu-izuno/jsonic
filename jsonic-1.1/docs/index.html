@@ -656,7 +656,7 @@ JSON stringなどその他の型であった場合や第二引数以降はその
 <div class="caption">
 (※11) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
 (※12) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
-(※13) Content-Typeが「application/x-www-form-urlencoded」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
+(※13) Content-Typeが「application/x-www-form-urlencoded」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います（ただし、この機能は、Seasar2と共に使う場合や一部ServletContainerでは相性の問題で利用できません）。
 </div>
 
 <p>RESTモードでは、エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
