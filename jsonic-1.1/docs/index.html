@@ -861,15 +861,15 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2009/07/30 version 1.1.1</h3>
+<h3>2009/09/05 version 1.1.1</h3>
 
 <ul>
+<li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があると判断し廃止しました）。</li>
 <li>publicでない内部クラスのインスタンスを変換する際、必ずsetContext(Object o)を呼ぶ必要がありましたが、Contextの設定有無に関わらず内部クラスを変換可能にしました。ただし、Decode/Parse時に内部クラスが親のインスタンスを参照している場合には、引き続きContextの設定が必要です。</li>
 <li>配布用zipファイルに含まれるbuild.xmlにdebug設定が漏れていた点を修正しました。</li>
 <li>build.xmlにdebug設定が漏れていた点を修正しました。</li>
 <li>Encode/Parse時に文字列からClassへの変換でクラスローダがシステムクラスローダに固定されるためjettyでクラスロードが失敗する問題を解消しました。カレント・スレッドのクラスローダからロードに失敗した場合のみ、システムクラスローダからクラスをロードします。</li>
 <li>Encode/Parse時に、変換先としてPropertiesが指定された場合にMap&lt;Object, Object&gt;として扱われる問題を解消しました。なお、キーは「.」で連結されたフラットな形式で格納されます。</li>
-<li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があると判断し廃止しました）。</li>
 <li>JSON WebServiceでのmappingキーとして、JSR-311と同じく{キー名:正規表現}と記述できるようになりました。なお、definitionsによる指定も可能です。</li>
 <li>JSON WebServiceにて<a href="http://code.google.com/p/google-guice/">Google Guice</a>をDI Containerとして用いるnet.arnx.jsonic.web.GuiceContainerを追加しました。</li>
 <li>WebServiceServletにてConfigクラスを拡張できるようgetConfigClass()メソッドを追加しました。</li>
