@@ -1407,11 +1407,6 @@ public class JSON {
 				}
 			} else if (point == 1) {
 				switch(c) {
-				case '"':
-				case '\\':
-				case '/':
-					escape = c;
-					break loop;
 				case 'b':
 					escape = '\b';
 					break loop;
