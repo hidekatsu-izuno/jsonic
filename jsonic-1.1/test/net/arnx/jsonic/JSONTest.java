@@ -234,7 +234,7 @@ public class JSONTest {
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
-		}		
+		}
 	}
 
 	@Test
