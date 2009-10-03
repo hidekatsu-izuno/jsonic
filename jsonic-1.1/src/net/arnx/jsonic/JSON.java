@@ -1240,15 +1240,18 @@ public class JSON {
 			case 0xFEFF: // BOM
 				break;
 			case '\\':
-				if (point == 1 || point == 2) {
+				if (point == 1) {
 					if (start == '"') {
 						s.back();
 						sb.append(parseEscape(s));
-					} else if (start == '\'' && point == 1) {
+					} else if (start == '\'') {
 						point = 2;
 					} else {
 						sb.append(c);
 					}
+				} else if (point == 2) {
+					sb.append('\\').append(c);
+					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -1259,22 +1262,29 @@ public class JSON {
 					start = c;
 					point = 1;
 					break;
-				} else if (point == 1 || point == 2) {
-					if (start == '\'' && point == 2) {
-						sb.append(c);
-						point = 1;
-					} else if (start == c) {
+				} else if (point == 1) {
+					if (start == c) {
 						break loop;						
 					} else {
 						sb.append(c);
 					}
+				} else if (point == 2) {
+					if (c == '\'') {
+						sb.append(c);
+					} else {
+						sb.append('\\').append(c);
+					}
+					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break;
 			default:
-				if (point == 1 || point == 2) {
+				if (point == 1) {
 					sb.append(c);
+				} else if (point == 2) {
+					sb.append('\\').append(c);
+					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}

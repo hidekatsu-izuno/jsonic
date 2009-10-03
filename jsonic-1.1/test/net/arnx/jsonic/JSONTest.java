@@ -517,25 +517,17 @@ public class JSONTest {
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertNotNull(e);			
-		}
-		
-		try {
-			assertEquals(list, json.parse("[{'\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
-			fail();
-		} catch (Exception e) {
-			System.out.println(e);
 			assertNotNull(e);
 		}
 		
-		assertEquals(list, json.parse("[{\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
+		assertEquals(list, json.parse("[{'maa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
 		
-		assertEquals(list, json.parse("[{\"\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
-
-		assertEquals(list, json.parse("[{'\u006Daa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
+		assertEquals(list, json.parse("[{\\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
+		
+		assertEquals(list, json.parse("[{\"\\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
 		
 		try {
-			assertEquals(list, json.parse("[{'\u006daa\": 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
+			assertEquals(list, json.parse("[{'\\u006daa\": 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -550,7 +542,7 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 
-		assertEquals(list, json.parse("[{   \t\u006da\u0061   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
+		assertEquals(list, json.parse("[{   \t\\u006da\\u0061   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 		
 		list.set(0, new HashMap() {
 			{
@@ -573,6 +565,20 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);			
 		}
+
+		list.set(0, new HashMap() {
+			{
+				put("\\u006daa", "bbb");
+			}
+		});
+		assertEquals(list, json.parse("[{'\\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
+
+		list.set(0, new HashMap() {
+			{
+				put("\\u006Daa", "bbb");
+			}
+		});		
+		assertEquals(list, json.parse("[{'\\u006Daa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 
 		list.set(0, new HashMap() {
 			{
