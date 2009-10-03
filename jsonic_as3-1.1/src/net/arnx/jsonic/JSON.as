@@ -458,15 +458,9 @@ package net.arnx.jsonic {
 						if (start == '"') {
 							s.back();
 							sb.writeUTFBytes(_parseEscape(s));
-						} else if (start == '\'') {
-							point = 2;
 						} else {
 							sb.writeUTFBytes(c);
 						}
-					} else if (point == 2) {
-						sb.writeUTFBytes('\\');
-						sb.writeUTFBytes(c);
-						point = 1;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
@@ -482,14 +476,6 @@ package net.arnx.jsonic {
 						} else {
 							sb.writeUTFBytes(c);
 						}
-					} else if (point == 2) {
-						if (c == '\'') {
-							sb.writeUTFBytes(c);
-						} else {
-							sb.writeUTFBytes('\\');
-							sb.writeUTFBytes(c);
-						}
-						point = 1;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
@@ -497,10 +483,6 @@ package net.arnx.jsonic {
 				default:
 					if (point == 1) {
 						sb.writeUTFBytes(c);
-					} else if (point == 2) {
-						sb.writeUTFBytes('\\');
-						sb.writeUTFBytes(c);
-						point = 1;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
