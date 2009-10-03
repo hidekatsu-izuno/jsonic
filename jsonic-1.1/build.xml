@@ -53,7 +53,7 @@
 		<mkdir dir="${tmp}/sample/basic" />
 
 		<copy todir="${tmp}/sample/basic">
-			<fileset dir="${webapps}/basic" excludesfile="${webapps}/basic/WEB-INF/database.dat"/>
+			<fileset dir="${webapps}/basic" excludes="**/*.dat"/>
 		</copy>
 		<copy file="${webapps}/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_seasar2.xml" />
 		<copy file="${webapps}/spring/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_spring.xml" />
