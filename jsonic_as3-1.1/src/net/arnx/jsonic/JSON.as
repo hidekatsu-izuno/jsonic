@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Hidekatsu Izuno
+ * Copyright 2009 Hidekatsu Izuno
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -444,7 +444,7 @@ package net.arnx.jsonic {
 		}
 		
 		private function _parseString(s:IParserSource):String {
-			var point:int = 0; // 0 '"|'' 1 'c' ... '"|'' E
+			var point:int = 0; // 0 '"|'' 1 'c' '\' 2 'c' ... '"|'' E
 			var sb:ByteArray = s.getCachedBuilder();
 			var start:String = '\0';
 			
@@ -458,9 +458,15 @@ package net.arnx.jsonic {
 						if (start == '"') {
 							s.back();
 							sb.writeUTFBytes(_parseEscape(s));
+						} else if (start == '\'') {
+							point = 2;
 						} else {
 							sb.writeUTFBytes(c);
 						}
+					} else if (point == 2) {
+						sb.writeUTFBytes('\\');
+						sb.writeUTFBytes(c);
+						point = 1;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
@@ -476,6 +482,14 @@ package net.arnx.jsonic {
 						} else {
 							sb.writeUTFBytes(c);
 						}
+					} else if (point == 2) {
+						if (c == '\'') {
+							sb.writeUTFBytes(c);
+						} else {
+							sb.writeUTFBytes('\\');
+							sb.writeUTFBytes(c);
+						}
+						point = 1;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
@@ -483,6 +497,10 @@ package net.arnx.jsonic {
 				default:
 					if (point == 1) {
 						sb.writeUTFBytes(c);
+					} else if (point == 2) {
+						sb.writeUTFBytes('\\');
+						sb.writeUTFBytes(c);
+						point = 1;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
@@ -617,11 +635,6 @@ package net.arnx.jsonic {
 					}
 				} else if (point == 1) {
 					switch(c) {
-					case '"':
-					case '\\':
-					case '/':
-						escape = c;
-						break loop;
 					case 'b':
 						escape = '\b';
 						break loop;
