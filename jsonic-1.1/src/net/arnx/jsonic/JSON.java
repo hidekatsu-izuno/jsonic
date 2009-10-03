@@ -1229,7 +1229,7 @@ public class JSON {
 	}
 	
 	private String parseString(ParserSource s) throws IOException, JSONException {
-		int point = 0; // 0 '"|'' 1 'c' '\' 2 'c' ... '"|'' E
+		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilder sb = s.getCachedBuilder();
 		char start = '\0';
 		
@@ -1244,14 +1244,9 @@ public class JSON {
 					if (start == '"') {
 						s.back();
 						sb.append(parseEscape(s));
-					} else if (start == '\'') {
-						point = 2;
 					} else {
 						sb.append(c);
 					}
-				} else if (point == 2) {
-					sb.append('\\').append(c);
-					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -1268,13 +1263,6 @@ public class JSON {
 					} else {
 						sb.append(c);
 					}
-				} else if (point == 2) {
-					if (c == '\'') {
-						sb.append(c);
-					} else {
-						sb.append('\\').append(c);
-					}
-					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -1282,9 +1270,6 @@ public class JSON {
 			default:
 				if (point == 1) {
 					sb.append(c);
-				} else if (point == 2) {
-					sb.append('\\').append(c);
-					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}

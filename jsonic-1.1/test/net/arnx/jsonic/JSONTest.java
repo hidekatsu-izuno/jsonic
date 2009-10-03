@@ -520,7 +520,13 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
-		assertEquals(list, json.parse("[{'maa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
+		try {
+			json.parse("[{'maa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]");
+			fail();
+		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 		
 		assertEquals(list, json.parse("[{\\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
 		
@@ -568,10 +574,10 @@ public class JSONTest {
 
 		list.set(0, new HashMap() {
 			{
-				put("\\u006daa", "bbb");
+				put("\\u006daa\\", "bbb");
 			}
 		});
-		assertEquals(list, json.parse("[{'\\u006daa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
+		assertEquals(list, json.parse("[{'\\u006daa\\': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 
 		list.set(0, new HashMap() {
 			{
