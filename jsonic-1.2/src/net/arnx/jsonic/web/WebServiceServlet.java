@@ -48,6 +48,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
+	private static final Object SELF_CONTROL = new Object();
 	
 	protected class Config {
 		public Class<? extends Container> container;
@@ -318,6 +319,10 @@ public class WebServiceServlet extends HttpServlet {
 			response.setStatus(SC_ACCEPTED);
 			return;
 		}
+		
+		if (result == SELF_CONTROL) {
+			return;
+		}
 
 		// response processing
 		response.setContentType("application/json");
@@ -451,8 +456,9 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		try {
-			response.setContentType((callback != null) ? "text/javascript" : "application/json");
-			if (res == null
+			if (res == SELF_CONTROL) {
+				return;
+			} else if (res == null
 					|| res instanceof CharSequence
 					|| res instanceof Boolean
 					|| res instanceof Number
@@ -460,6 +466,8 @@ public class WebServiceServlet extends HttpServlet {
 				if (status != SC_CREATED) status = SC_NO_CONTENT;
 				response.setStatus(status);
 			} else {
+				response.setContentType((callback != null) ? "text/javascript" : "application/json");
+				
 				Writer writer = response.getWriter();
 				json.setPrettyPrint(container.isDebugMode());
 				
@@ -571,6 +579,10 @@ public class WebServiceServlet extends HttpServlet {
 				container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
 			}
 			destroy.invoke(o);
+		}
+		
+		if (ret == null && method.getReturnType().equals(void.class)) {
+			return SELF_CONTROL;
 		}
 		
 		return ret;
