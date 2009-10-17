@@ -372,8 +372,8 @@ public class WebServiceServlet extends HttpServlet {
 		String callback = null;
 		
 		if ("GET".equals(route.getMethod())) {
-			methodName = "find";
 			callback = route.getParameter("callback");
+			methodName = (callback == null) ? "find" : "load";
 		} else if ("POST".equals(route.getMethod())) {
 			methodName = "create";
 			status = SC_CREATED;
@@ -579,10 +579,6 @@ public class WebServiceServlet extends HttpServlet {
 				container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
 			}
 			destroy.invoke(o);
-		}
-		
-		if (ret == null && method.getReturnType().equals(void.class)) {
-			return SELF_CONTROL;
 		}
 		
 		return ret;

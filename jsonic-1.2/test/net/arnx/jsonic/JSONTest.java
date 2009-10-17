@@ -51,6 +51,7 @@ import java.io.*;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.JSON.Context;
 
 import org.junit.Test;
 import org.seasar.framework.util.ReaderUtil;
@@ -235,6 +236,8 @@ public class JSONTest {
 		} catch (JSONException e) {
 			System.out.println(e);
 		}
+		
+		assertEquals("[100,200]", JSON.encode(new JSONablePoint(100, 200)));
 	}
 
 	@Test
@@ -298,6 +301,8 @@ public class JSONTest {
 		
 		assertEquals(JSON.decode("{\"sample1\":\"テスト1\",\"sample2\":\"テスト2\"}"),
 				JSON.decode("{\"sample1\":\"\\u30c6\\u30b9\\u30c81\",\"sample2\":\"\\u30c6\\u30b9\\u30c82\"}"));
+		
+		assertEquals(new JSONablePoint(100, 200), JSON.decode("[100,200]", JSONablePoint.class));
 	}
 
 	@Test
@@ -1777,5 +1782,33 @@ class Point2DJSON extends JSON {
 	
 	protected boolean ignore(Context context, Class<?> c, Member m) {
 		  return super.ignore(context, c, m);
+	}
+}
+
+class JSONablePoint extends Point implements JSONable {
+	public JSONablePoint() {
+		super();
+	}
+	
+	public JSONablePoint(int x, int y) {
+		super(x, y);
+	}
+
+	@Override
+	public Object preformat(Context context) {
+		return new int[] { x, y };
+	}
+
+	@Override
+	public void postparse(Context context, Object o) {
+		if (o instanceof List) {
+			List<?> list = (List<?>)o;
+			if (list.size() == 2) {
+				if (list.get(0) instanceof BigDecimal && list.get(1) instanceof BigDecimal) {
+					x = ((BigDecimal)list.get(0)).intValueExact();
+					y = ((BigDecimal)list.get(1)).intValueExact();
+				}
+			}
+		}
 	}
 }

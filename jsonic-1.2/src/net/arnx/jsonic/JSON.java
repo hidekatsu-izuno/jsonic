@@ -517,6 +517,10 @@ public class JSON {
 	protected Object preformat(Context context, Object value) throws Exception {
 		Object data = null;
 		
+		if (value instanceof JSONable) {
+			value = ((JSONable)value).preformat(context);
+		}
+		
 		if (value == null 
 			|| value instanceof CharSequence
 			|| value instanceof Character
@@ -1564,6 +1568,10 @@ public class JSON {
 			}
 		} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
 			data = value;
+		} else if (JSONable.class.isAssignableFrom(c)) {
+			JSONable jsonable = (JSONable)create(context, c);
+			jsonable.postparse(context, value);
+			data = jsonable;
 		} else if (value instanceof Map) {
 			Map<?, ?> src = (Map<?, ?>)value;
 			if (Map.class.isAssignableFrom(c)) {
