@@ -48,7 +48,6 @@ import static javax.servlet.http.HttpServletResponse.*;
 
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
-	private static final Object SELF_CONTROL = new Object();
 	
 	protected class Config {
 		public Class<? extends Container> container;
@@ -320,10 +319,6 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		if (result == SELF_CONTROL) {
-			return;
-		}
-
 		// response processing
 		response.setContentType("application/json");
 		
@@ -456,9 +451,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		try {
-			if (res == SELF_CONTROL) {
-				return;
-			} else if (res == null
+			if (res == null
 					|| res instanceof CharSequence
 					|| res instanceof Boolean
 					|| res instanceof Number
