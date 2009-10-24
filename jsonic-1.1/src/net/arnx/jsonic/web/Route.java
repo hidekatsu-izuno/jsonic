@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,35 +35,44 @@ public class Route {
 			
 			this.method = request.getMethod().toUpperCase();
 		} else {
-			Map<String, String[]> pmap = request.getParameterMap();
+			Map<String, String[]> pmap = Collections.emptyMap();
 			
-			if (!"application/x-www-form-urlencoded".equals(contentType)
-					&& request.getQueryString() != null 
-					&& request.getQueryString().trim().length() != 0) {
-					
-				Map<String, String[]> pairs = parseQueryString(request.getQueryString(), request.getCharacterEncoding());
+			if (hasJSONContent()) {
+				if (request.getQueryString() != null 
+						&& request.getQueryString().trim().length() != 0) {
+					pmap = parseQueryString(request.getQueryString(), request.getCharacterEncoding());
+				}
+			} else {
+				pmap = request.getParameterMap();
 				
-				for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
-					String[] values = pmap.get(entry.getKey());
-					if (values.length <= entry.getValue().length) continue;
+				if (!"application/x-www-form-urlencoded".equals(contentType)
+						&& request.getQueryString() != null 
+						&& request.getQueryString().trim().length() != 0) {
+						
+					Map<String, String[]> pairs = parseQueryString(request.getQueryString(), request.getCharacterEncoding());
 					
-					int size = values.length;
-					for (String estr : entry.getValue()) {
-						for (int i = 0; i < values.length; i++) {
-							if (estr.equals(values[i])) {
-								values[i] = null;
-								size--;
-								break;
+					for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
+						String[] values = pmap.get(entry.getKey());
+						if (values.length <= entry.getValue().length) continue;
+						
+						int size = values.length;
+						for (String estr : entry.getValue()) {
+							for (int i = 0; i < values.length; i++) {
+								if (estr.equals(values[i])) {
+									values[i] = null;
+									size--;
+									break;
+								}
 							}
 						}
+						
+						String[] newValues = new String[size];
+						int pos = 0;
+						for (String pstr : values) {
+							if (pstr != null) newValues[pos++] = pstr;
+						}
+						pmap.put(entry.getKey(), newValues);
 					}
-					
-					String[] newValues = new String[size];
-					int pos = 0;
-					for (String pstr : values) {
-						if (pstr != null) newValues[pos++] = pstr;
-					}
-					pmap.put(entry.getKey(), newValues);
 				}
 			}
 			
