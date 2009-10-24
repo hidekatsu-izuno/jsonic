@@ -13,11 +13,10 @@
 	<classpathentry kind="lib" path="lib/winstone_devloader.jar"/>
 	<classpathentry kind="lib" path="lib/winstone-0.9.10.jar" sourcepath="lib/winstone-src.zip"/>
 	<classpathentry kind="lib" path="lib/commons-fileupload-1.2.1.jar"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.34.jar" sourcepath="sample/seasar2/WEB-INF/lib/s2-framework-2.4.34-sources.jar"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.34-sources.jar"/>
 	<classpathentry kind="lib" path="sample/spring/WEB-INF/lib/spring.jar"/>
 	<classpathentry kind="lib" path="sample/guice/WEB-INF/lib/guice-2.0.jar"/>
 	<classpathentry kind="lib" path="sample/guice/WEB-INF/lib/guice-servlet-2.0.jar"/>
+	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.40-20090811.130147-2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
