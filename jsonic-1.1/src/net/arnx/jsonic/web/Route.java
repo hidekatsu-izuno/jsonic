@@ -18,10 +18,10 @@ public class Route {
 
 	private String target;
 	private String method;
-	private int contentLength = 0;
 	private Map<Object, Object> params;
 	
 	private boolean isRpcMode;
+	private String contentType;
 	
 	@SuppressWarnings("unchecked")
 	public Route(HttpServletRequest request, String target, Map<String, Object> params) throws IOException {
@@ -69,6 +69,7 @@ public class Route {
 			String m = getParameter("_method");
 			if (m == null) m = request.getMethod();
 			this.method = m.toUpperCase();
+			this.contentType = request.getContentType();
 		}
 	}
 	
@@ -137,7 +138,7 @@ public class Route {
 	}
 	
 	public boolean hasJSONContent() {
-		return contentLength > 0;
+		return "application/json".equals(contentType);
 	}
 	
 	public String getComponentClass(String sub) {
