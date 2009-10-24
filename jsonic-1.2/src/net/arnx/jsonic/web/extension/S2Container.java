@@ -13,38 +13,31 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package net.arnx.jsonic.web;
+package net.arnx.jsonic.web.extension;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.web.context.support.WebApplicationContextUtils;
+import net.arnx.jsonic.web.Container;
+import net.arnx.jsonic.web.WebServiceServlet;
 
-public class SpringContainer extends Container {
-	private static Log log = LogFactory.getLog(WebServiceServlet.class);
-	
-	private ApplicationContext appContext;
-	
-	@Override
-	public void init(ServletConfig config) {
-		super.init(config);
-		appContext = WebApplicationContextUtils.getWebApplicationContext(config.getServletContext());
-	}
+import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
+import org.seasar.framework.env.Env;
+import org.seasar.framework.log.Logger;
+
+public class S2Container extends Container {
+	private static Logger log = Logger.getLogger(WebServiceServlet.class);
 	
 	@Override
 	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
-		Object component = appContext.getBean(className);
-		
-		if (component instanceof ApplicationContextAware) {
-			((ApplicationContextAware)component).setApplicationContext(appContext);
-		}
-		
-		return component;
+		return SingletonS2ContainerFactory
+			.getContainer()
+			.getComponent(findClass(className));
+	}
+	
+	@Override
+	public boolean isDebugMode() {
+		return (debug != null) ? debug : Env.UT.equals(Env.getValue());
 	}
 
 	@Override
