@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -348,7 +347,7 @@ public class WebServiceServletTest {
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
 		request.addParameter("bbb", "bbb");
-		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null:['aaa', 'bbb']}}"), getParameterMap(request));
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null:'aaa'}, 'bbb':'bbb'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb");
 		request.addParameter("aaa.bbb", "aaa");
@@ -393,30 +392,9 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 	}
 	
-	@Test
-	public void testParseHeaderLine() throws Exception {
-		assertEquals(JSON.decode("{null:''}"), parseHeaderLine(""));
-		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   "));
-		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   ;"));
-		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy "));
-		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy; "));
-		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine("aaa/bbb-yyy;"));
-		assertEquals(JSON.decode("{null:'aaa'}"), parseHeaderLine("aaa"));
-		assertEquals(JSON.decode("{null:'a','a':'b','d':'e'}"), parseHeaderLine("a; a=b; d=e"));
-		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = bcd ; def =efg;"));
-		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bcd\"; def =  \"efg\";"));
-		assertEquals(JSON.decode("{null:'abc','abc':'bc\"d','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bc\\\"d\"; def =  \"e\\fg\";"));
-	}
-	
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
 		return new Route(request, null, new LinkedHashMap<String, Object>()).getParameterMap();
-	}
-	
-	private static Map parseHeaderLine(String line) throws Exception {
-		Method m = Route.class.getDeclaredMethod("parseHeaderLine", String.class);
-		m.setAccessible(true);
-		return (Map<String, String>)m.invoke(null, line);
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {

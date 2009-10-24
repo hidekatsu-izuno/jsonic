@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -161,16 +162,15 @@ public class Route {
 	}
 	
 	private Map<String, String[]> parseQueryString(String qs, String encoding) throws UnsupportedEncodingException {
+		if (qs == null) return Collections.emptyMap();
+		
 		Map<String, String[]> pairs = new HashMap<String, String[]>();
 		
 		int start = 0;
 		String key = null;
 		
-		for (int i = 0; i < qs.length(); i++) {
-			if (qs.charAt(i) == '=') {
-				key = URLDecoder.decode(qs.substring(start, i), encoding);
-				start = i;
-			} else if (qs.charAt(i) == '&') {
+		for (int i = 0; i <= qs.length(); i++) {
+			if (i == qs.length() || qs.charAt(i) == '&') {
 				String value = null;
 				String[] values = null;
 				
@@ -192,6 +192,11 @@ public class Route {
 				
 				pairs.put(key, values);
 				key = null;
+				
+				start = i+1;
+			} else if (qs.charAt(i) == '=') {
+				key = URLDecoder.decode(qs.substring(start, i), encoding);
+				start = i+1;
 			}
 		}
 		
@@ -207,10 +212,10 @@ public class Route {
 			int start = 0;
 			char old = '\0';
 			Map<Object, Object> current = params;
-			for (int j = 0; j < name.length(); j++) {
-				char c = name.charAt(j);
+			for (int i = 0; i < name.length(); i++) {
+				char c = name.charAt(i);
 				if (c == '.' || c == '[') {
-					String key = name.substring(start, (old == ']') ? j-1 : j);
+					String key = name.substring(start, (old == ']') ? i-1 : i);
 					Object target = current.get(key);
 					
 					if (target instanceof Map) {
@@ -221,7 +226,7 @@ public class Route {
 						current.put(key, map);
 						current = map;
 					}
-					start = j+1;
+					start = i+1;
 				}
 				old = c;
 			}
@@ -244,7 +249,7 @@ public class Route {
 							for (String value : values) list.add(value);
 							map.put(null, list);
 						}
-					} else if (values.length > 0) {
+					} else if (values.length > 1) {
 						List<Object> list = new ArrayList<Object>();
 						for (String value : values) list.add(value);
 						map.put(null, list);
@@ -260,12 +265,12 @@ public class Route {
 					for (String value : values) list.add(value);
 					current.put(name, list);
 				}
-			} else if (values.length > 0) {
+			} else if (values.length > 1) {
 				List<Object> list = new ArrayList<Object>();
 				for (String value : values) list.add(value);
 				current.put(name, list);
 			} else {
-				current.put(null, values[0]);						
+				current.put(name, values[0]);						
 			}
 		}
 	}
