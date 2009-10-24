@@ -29,7 +29,7 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				container: 'net.arnx.jsonic.web.GuiceContainer'
+				container: 'net.arnx.jsonic.web.extension.GuiceContainer'
 				debug: true
 				mappings: {
 					'/{package}/{class}/{id}.{ext}': 'sample.guice.web.${package}.service.${class}Service'

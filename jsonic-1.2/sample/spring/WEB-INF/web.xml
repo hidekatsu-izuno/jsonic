@@ -23,7 +23,7 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				container: 'net.arnx.jsonic.web.SpringContainer'
+				container: 'net.arnx.jsonic.web.extension.SpringContainer'
 				debug: true
 				mappings: {
 					'/{package}/{class}/{id}.{ext}': 'sample.spring.web.${package}.service.${class}Service'
