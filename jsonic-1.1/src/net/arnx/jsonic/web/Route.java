@@ -27,6 +27,7 @@ public class Route {
 	public Route(HttpServletRequest request, String target, Map<String, Object> params) throws IOException {
 		this.target = target;
 		this.params = (Map)params;
+		this.contentType = request.getContentType();
 		
 		if ("rpc".equalsIgnoreCase(getParameter("class"))) {
 			isRpcMode = true;
@@ -35,9 +36,10 @@ public class Route {
 		} else {
 			Map<String, String[]> pmap = request.getParameterMap();
 			
-			if (!request.getMethod().equalsIgnoreCase("GET")
-				&& request.getQueryString() != null && request.getQueryString().trim().length() != 0) {
-				
+			if (!"application/x-www-form-urlencoded".equals(contentType)
+					&& request.getQueryString() != null 
+					&& request.getQueryString().trim().length() != 0) {
+					
 				Map<String, String[]> pairs = parseQueryString(request.getQueryString(), request.getCharacterEncoding());
 				
 				for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
@@ -69,7 +71,6 @@ public class Route {
 			String m = getParameter("_method");
 			if (m == null) m = request.getMethod();
 			this.method = m.toUpperCase();
-			this.contentType = request.getContentType();
 		}
 	}
 	

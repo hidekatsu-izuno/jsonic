@@ -127,22 +127,30 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testREST() throws Exception {
+		System.out.println("\n<<BASIC REST START>>");
 		testREST("basic");
+		System.out.println("<<BASIC REST END>>\n");
 	}
 	
 	@Test
 	public void testRESTwithSeasar2() throws Exception {
+		System.out.println("\n<<Seasar2 REST START>>");
 		testREST("seasar2");
+		System.out.println("<<Seasar2 REST END>>\n");
 	}
 	
 	@Test
 	public void testRESTwithSpring() throws Exception {
+		System.out.println("\n<<Spring REST START>>");
 		testREST("spring");
+		System.out.println("<<Spring REST END>>\n");
 	}
 	
 	@Test
 	public void testRESTwithGuice() throws Exception {
+		System.out.println("\n<<Guice REST START>>");
 		testREST("guice");
+		System.out.println("<<Guice REST END>>\n");
 	}
 	
 	public void testREST(String app) throws Exception {
@@ -230,6 +238,8 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRESTWithMethod() throws Exception {
+		System.out.println("\n<<WithMethod REST START>>");
+		
 		String url = "http://localhost:16001/basic/rest/memo.json";
 		HttpURLConnection con = null;
 		
@@ -294,6 +304,8 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
+		
+		System.out.println("\n<<WithMethod REST END>>");
 	}
 	
 	@Test
