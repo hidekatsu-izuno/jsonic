@@ -653,10 +653,10 @@ public class WithHintBean {
 <p>引数には送信されたJSONが指定された型に従い変換されセットされます。引数への設定は、JSONの型によって次のような違いがあります。</p>
 <table class="table" summary="引数設定一覧">
 <tr><th>Request&nbsp;Type</th><th>説明</th></tr>
-<tr><td>object</td><td>一番目の引数にパス変数、クエリ変数、リクエストボディの値が順に追加されたJSON objectが設定されます（同じキーが複数出現した場合は配列化されます）。</td></tr>
+<tr><td>object</td><td>パス変数、クエリ変数、リクエストボディの値が順に上書きされたJSON objectが設定されます（同じキーが複数出現した場合は配列化されます）。</td></tr>
 <tr><td>array</td><td>送信されたJSON arrayを引数リストとして扱います。
-なお、第一引数がJSON objectである場合には、上記と同様にクエリ変数、パス変数、対象の引数の順でデータが追加された形で設定されます。
-JSON stringなどその他の型であった場合や第二引数以降はそのまま設定されます。</td></tr>
+なお、第一引数がJSON objectである場合には、上記と同様にパス変数、クエリ変数、第一引数の順でデータが上書きされる形で設定されます。
+その他の型であった場合や第二引数以降はそのまま設定されます。</td></tr>
 </table>
 <div class="caption">
 (※11) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
@@ -866,54 +866,10 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2009/10/03 version 1.1.1</h3>
+<h3>2009/10/03 version 1.2.0</h3>
 
+<p>JSON Web Serviceに関する1.1からの変更点：</p>
 <ul>
-<li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があると判断し廃止しました）。</li>
-<li>publicでない内部クラスのインスタンスを変換する際、必ずsetContext(Object o)を呼ぶ必要がありましたが、Contextの設定有無に関わらず内部クラスを変換可能にしました。ただし、Decode/Parse時に内部クラスが親のインスタンスを参照している場合には、引き続きContextの設定が必要です。</li>
-<li>配布用zipファイルに含まれるbuild.xmlにdebug設定が漏れていた点を修正しました。</li>
-<li>build.xmlにdebug設定が漏れていた点を修正しました。</li>
-<li>Decode/Parse時に文字列からClassへの変換でクラスローダがシステムクラスローダに固定されるためjettyでクラスロードが失敗する問題を解消しました。カレント・スレッドのクラスローダからロードに失敗した場合のみ、システムクラスローダからクラスをロードします。</li>
-<li>Decode/Parse時に、変換先としてPropertiesが指定された場合にMap&lt;Object, Object&gt;として扱われる問題を解消しました。なお、キーは「.」で連結されたフラットな形式で格納されます。</li>
-<li>JSON WebServiceでのmappingキーとして、JSR-311と同じく{キー名:正規表現}と記述できるようになりました。なお、definitionsによる指定も可能です。</li>
-<li>JSON WebServiceにて<a href="http://code.google.com/p/google-guice/">Google Guice</a>をDI Containerとして用いるnet.arnx.jsonic.web.GuiceContainerを追加しました。</li>
-<li>WebServiceServletにてConfigクラスを拡張できるようgetConfigClass()メソッドを追加しました。</li>
-<li>WebServiceServletに呼び出し処理の前処理、後処理を追加できるようにするため、preinvoke/postinvokeメソッドを追加しました。</li>
-<li>サンプルを多少マシにしました。</li>
-</ul>
-
-<h3>2009/03/01 version 1.1.0</h3>
-
-<p>JSONICの基本機能に関する1.0からの変更点：</p>
-<ul>
-<li>添付するライブラリJARを作成する際、Eclipseでのデバッグを容易にするため、コンパイルのデバッグモードをONにすると共に、ソースコードも同梱するようになりました。デバッグ情報などが不要な場合は、build.xmlのdebugプロパティをfalseに変更して再ビルドしてください。</li>
-<li>変換・代入の際のヒントを与えるJSONHintアノテーションを追加しました。</li>
-<li>[非互換] Parse時にキー名とプロパティ名を比較する際、予約語に対応するため末尾の「_」を削除して比較するという仕様がありましたが、JSONHint(name="予約語")で対応できるため廃止しました。</li>
-<li>[非互換] convert, convertChildを廃止し、Format用の変換メソッドとしてpreformatをParse用の変換メソッドとしてpostparseを追加しました。</li>
-<li>[非互換] 継承で拡張するpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
-<li>[非互換] 各種JSON***Exceptionを廃止し、JSONExceptionに統合しました。エラー内容は、getErrorCode()で判別できます(AS3版も同様にJSONParseErrorがJSONErrorに変更されています)。</li>
-<li>[非互換] format/encodeの場合でも変換に失敗した場合は、JSONExceptionでラップした例外を通知するよう変更しました。</li>
-<li>[非互換] XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>形式に変更しました。</li>
-<li><a href="http://d.hatena.ne.jp/higayasuo/20090219/1235020303">java.sql.Date, java.sql.Timeの変換をきちんと</a>しました。</li>
-<li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました(AS3版も同様です)。※1.0.4以降にバックポートされています</li>
-<li>Encode/Format時にListの再帰抑制が正しく動作していなかった問題を修正しました。※1.0.4以降にバックポートされています</li>
-</ul>
-
-<p>JSON Web Serviceに関する1.0からの変更点：</p>
-<ul>
-<li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
-<li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
-<li>[非互換] DI機能の追加に伴いメソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>
-<li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
-<li>JSON WebServiceでのmappingキーのフォーマットを[キー名]から{キー名}に変更しました（互換性維持のため、当面[キー名]も利用可能です）。</li>
-<li>[非互換] JSON WebServiceにてオーバーロードされたメソッドの呼び出しに対応しました。ただし、判断は引数の長さでのみ行われ、型での判断は行いません。</li>
-<li>[非互換] JSON WebServiceにて引数や戻り値の存在するinitやdestroyのみが定義されていた場合、IllegalStateExceptionを投げるようにしました。</li>
-<li>[非互換] net.arnx.jsonic.web.Containerのinitメソッドの引数をServletContextからServletConfigに変更しました。</li>
-<li>[非互換] JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、パス変数やクエリ変数は最後の引数として設定していましたが、1番目の引数にマージするようになりました（ただし、1番目の引数がJSON objectでない場合はマージされません）。</li>
-<li>[非互換] JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
-<li>[非互換] WebServiceServletのRESTモードにて、例外が発生した場合プロパティをメッセージボディに設定するようにしました。ただし、Throwableクラスのメソッドは対象になりません。</li>
-<li>例外発生時のデバッグメッセージをより詳細なものに変更しました。</li>
-<li>jQueryを使ったRESTモードのサンプルを追加しました。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />
