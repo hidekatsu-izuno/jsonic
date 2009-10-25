@@ -1757,7 +1757,7 @@ class Point2DJSON extends JSON {
 
 	protected <T> T postparse(Context context, Object value,
 			Class<? extends T> c, Type t) throws Exception {
-		if (Point2D.class.isAssignableFrom(c) && value instanceof List) {
+		if (Point2D.class.isAssignableFrom(c) && value instanceof List<?>) {
 			List<?> list = (List<?>)value;
 			Point2D p = (Point2D) create(context, c);
 			p.setLocation(context.convert(0, list.get(0), double.class),

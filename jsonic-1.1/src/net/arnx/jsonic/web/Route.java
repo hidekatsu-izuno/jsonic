@@ -95,12 +95,12 @@ public class Route {
 	public String getParameter(String name) {
 		Object o = params.get(name);
 		
-		if (o instanceof Map) {
+		if (o instanceof Map<?, ?>) {
 			Map<?, ?> map = (Map<?, ?>)o;
 			if (map.containsKey(null)) o = map.get(null); 
 		}
 		
-		if (o instanceof List) {
+		if (o instanceof List<?>) {
 			List<?> list = (List<?>)o;
 			if (!list.isEmpty()) o = list.get(0);
 		}
