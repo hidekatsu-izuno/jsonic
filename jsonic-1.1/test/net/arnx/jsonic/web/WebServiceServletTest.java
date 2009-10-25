@@ -13,10 +13,12 @@ import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import net.arnx.jsonic.*;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.*;
 import org.seasar.framework.mock.servlet.MockHttpServletRequest;
 import org.seasar.framework.mock.servlet.MockServletContextImpl;
@@ -24,12 +26,10 @@ import org.seasar.framework.mock.servlet.MockServletContextImpl;
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
 
-import winstone.Launcher;
-
 @SuppressWarnings("unchecked")
 public class WebServiceServletTest {	
 	
-	private static Launcher winstone;
+	private static Server server;
 	
 	@BeforeClass
 	public static void init() throws Exception {
@@ -37,21 +37,59 @@ public class WebServiceServletTest {
 		new File("sample/seasar2/WEB-INF/database.dat").delete();
 		new File("sample/spring/WEB-INF/database.dat").delete();
 		new File("sample/guice/WEB-INF/database.dat").delete();
+	
+		server = new Server(16001);
+
+		ContextHandlerCollection contexts = new ContextHandlerCollection();
 		
-		Map args = new HashMap();
-		args.put("webappsDir", "sample");
-		args.put("httpPort", "16001");
-		args.put("controlPort", "16002");
-		args.put("ajp13Port", "-1");
-		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
+		String[] systemClasses = new String[] {
+				"org.apache.commons.",
+				"org.aopalliance.",
+				"ognl.",
+				"javassist.",
+				"net.arnx.",	
+				"org.seasar.",
+				"org.springframework.",
+				"com.google.inject."
+		};
 		
-		Launcher.initLogger(args);
-		winstone = new Launcher(args);
+		String[] serverClasses = new String[] {
+		};
+		
+		WebAppContext basic = new WebAppContext("sample/basic", "/basic");
+		basic.setSystemClasses(concat(basic.getSystemClasses(), systemClasses));
+		basic.setServerClasses(concat(basic.getServerClasses(), serverClasses));
+		contexts.addHandler(basic);
+		
+		WebAppContext seasar2 = new WebAppContext("sample/seasar2", "/seasar2");
+		seasar2.setSystemClasses(concat(seasar2.getSystemClasses(), systemClasses));
+		seasar2.setServerClasses(concat(seasar2.getServerClasses(), serverClasses));
+		contexts.addHandler(seasar2);
+		
+		WebAppContext spring = new WebAppContext("sample/spring", "/spring");
+		spring.setSystemClasses(concat(spring.getSystemClasses(), systemClasses));
+		spring.setServerClasses(concat(spring.getServerClasses(), serverClasses));
+		contexts.addHandler(spring);
+		
+		WebAppContext guice = new WebAppContext("sample/guice", "/guice");
+		guice.setSystemClasses(concat(guice.getSystemClasses(), systemClasses));
+		guice.setServerClasses(concat(guice.getServerClasses(), serverClasses));
+		contexts.addHandler(guice);
+		
+		server.setHandler(contexts);
+		server.start();
+	}
+	
+	private static String[] concat(String[] a, String[] b) {
+		String[] result = new String[a.length + b.length];
+		System.arraycopy(a, 0, result, 0, a.length);
+		System.arraycopy(b, 0, result, a.length, b.length);
+		return result;
 	}
 	
 	@AfterClass
 	public static void destroy() throws Exception {
-		winstone.shutdown();
+		server.stop();
 	}
 
 	@Test
