@@ -1005,7 +1005,7 @@ public class JSONTest {
 		// BigDecimal
 		assertEquals(null, json.convert(null, BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100"), BigDecimal.class));
-		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100.00"), BigDecimal.class));
+		assertEquals(new BigDecimal("100.00"), json.convert(new BigDecimal("100.00"), BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert("100", BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert("+100", BigDecimal.class));
 		assertEquals(new BigDecimal("100.01"), json.convert("100.01", BigDecimal.class));

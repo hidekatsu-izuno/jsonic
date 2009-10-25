@@ -1841,11 +1841,7 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						if (str.charAt(0) == '+') {
-							data = Float.valueOf(str.substring(1));
-						} else {
-							data = Float.valueOf(str);
-						}
+						data = Float.valueOf(str);
 					} else if (c.isPrimitive()) {
 						data = 0.0f;
 					}						
@@ -1858,11 +1854,7 @@ public class JSON {
 				} else {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
-						if (str.charAt(0) == '+') {
-							data = Double.valueOf(str.substring(1));
-						} else {
-							data = Double.valueOf(str);
-						}
+						data = Double.valueOf(str);
 					} else if (c.isPrimitive()) {
 						data = 0.0;
 					}						
