@@ -56,6 +56,7 @@ public class WebServiceServlet extends HttpServlet {
 		public Boolean expire;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
+		public Map<String, String> restMappings;
 	}
 	
 	private Container container;
@@ -481,7 +482,6 @@ public class WebServiceServlet extends HttpServlet {
 		container.destory();
 		super.destroy();
 	}
-	
 	
 	/**
 	 * Called before invoking the target method.
