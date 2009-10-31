@@ -36,8 +36,8 @@ public class Route {
 		} else {
 			Map<String, String[]> pmap = request.getParameterMap();
 			
-			if (!"application/x-www-form-urlencoded".equals(contentType)
-					&& request.getQueryString() != null 
+			if (!"application/x-www-form-urlencoded".equalsIgnoreCase(contentType)
+					&& request.getQueryString() != null
 					&& request.getQueryString().trim().length() != 0) {
 					
 				Map<String, String[]> pairs = parseQueryString(request.getQueryString(), request.getCharacterEncoding());
