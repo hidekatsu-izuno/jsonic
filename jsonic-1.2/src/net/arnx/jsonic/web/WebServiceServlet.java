@@ -56,7 +56,6 @@ public class WebServiceServlet extends HttpServlet {
 		public Boolean expire;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
-		public Map<String, String> methods;
 	}
 	
 	private Container container;
@@ -93,12 +92,6 @@ public class WebServiceServlet extends HttpServlet {
 				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
 			}
 		}
-		
-		if (config.methods == null) config.methods = new HashMap<String, String>();
-		if (!config.methods.containsKey("GET")) config.methods.put("GET", "find");
-		if (!config.methods.containsKey("POST")) config.methods.put("POST", "create");
-		if (!config.methods.containsKey("PUT")) config.methods.put("PUT", "update");
-		if (!config.methods.containsKey("DELETE")) config.methods.put("DELETE", "delete");
 	}
 	
 	protected Class<? extends Config> getConfigClass() {
@@ -344,14 +337,20 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		String methodName = config.methods.get(route.getMethod());
+		String methodName = null;
 		int status = SC_OK;
 		String callback = null;
 		
 		if ("GET".equals(route.getMethod())) {
+			methodName = "find";
 			callback = route.getParameter("callback");
 		} else if ("POST".equals(route.getMethod())) {
+			methodName = "create";
 			status = SC_CREATED;
+		} else if ("PUT".equals(route.getMethod())) {
+			methodName = "update";
+		} else if ("DELETE".equals(route.getMethod())) {
+			methodName = "delete";
 		}
 		
 		if (methodName == null) {
