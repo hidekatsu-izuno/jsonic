@@ -57,7 +57,7 @@
 <body>
 <div class="sidebar">
 <h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
-<div class="bar">Version 1.1</div>
+<div class="bar">Version 1.2</div>
 <ul class="menu">
 	<li><a href="#introduction">JSONICとは</a></li>
 	<li><a href="#download">ダウンロード</a></li>
@@ -661,7 +661,7 @@ public class WithHintBean {
 <div class="caption">
 (※11) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
 (※12) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
-(※13) Content-Typeが「application/x-www-form-urlencoded」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います（ただし、この機能は、Seasar2と共に使う場合や一部ServletContainerでは相性の問題で利用できません）。
+(※13) Content-Typeが「<code>application/x-www-form-urlencoded</code>」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
 </div>
 
 <p>RESTモードでは、エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
@@ -727,18 +727,18 @@ public class HogeService {
     <span class="elem">&lt;param-value&gt;</span>
       <span class="comment">// "container": (net.arnx.jsonic.web.Containerを実装したクラス)</span>
       <span class="comment">// Seasar2対応Container</span>
-      "container": "net.arnx.jsonic.web.S2Container" 
+      "container": "net.arnx.jsonic.web.extension.S2Container" 
       <span class="comment">// Spring Framework対応Container</span>
-      "container": "net.arnx.jsonic.web.SpringContainer"
+      "container": "net.arnx.jsonic.web.extension.SpringContainer"
       <span class="comment">// Google Guice対応Container</span>
-      "container": "net.arnx.jsonic.web.GuiceContainer"
+      "container": "net.arnx.jsonic.web.extension.GuiceContainer"
       ...
     <span class="elem">&lt;/param-value&gt;</span>
   <span class="elem">&lt;/init-param&gt;</span>
 <span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています（※1.2よりパッケージ名が変更されています。ご注意ください）。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 <p>デフォルトでは最低限の機能のみ持つnet.arnx.jsonic.web.Containerが使われます。このコンテナが持つ機能は次の通りです。</p>
 <ul>
 <li>オブジェクトはClass#newInstance()により毎回生成されます。</li>
@@ -872,55 +872,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>ドキュメントのRESTモードの説明にてJSON arrayが送られた場合のパラメータ設定順の記載が誤っていた点を修正しました。クエリ変数、パス変数と記載されていましたが、実際にはパス変数、クエリ変数の順に設定されます。</li>
 </ul>
 
-<h3>2009/10/03 version 1.1.1</h3>
+<h3>2009/10/32 version 1.2.0</h3>
 
 <ul>
-<li>[非互換] JSON WebServiceでのmappingキーのフォーマットとして[キー名]の表記を廃止しました。{キー名}を利用してください（1.0との互換性のため残していましたが、[]はURL文字列として利用可能であり問題があると判断し廃止しました）。</li>
-<li>publicでない内部クラスのインスタンスを変換する際、必ずsetContext(Object o)を呼ぶ必要がありましたが、Contextの設定有無に関わらず内部クラスを変換可能にしました。ただし、Decode/Parse時に内部クラスが親のインスタンスを参照している場合には、引き続きContextの設定が必要です。</li>
-<li>配布用zipファイルに含まれるbuild.xmlにdebug設定が漏れていた点を修正しました。</li>
-<li>build.xmlにdebug設定が漏れていた点を修正しました。</li>
-<li>Decode/Parse時に文字列からClassへの変換でクラスローダがシステムクラスローダに固定されるためjettyでクラスロードが失敗する問題を解消しました。カレント・スレッドのクラスローダからロードに失敗した場合のみ、システムクラスローダからクラスをロードします。</li>
-<li>Decode/Parse時に、変換先としてPropertiesが指定された場合にMap&lt;Object, Object&gt;として扱われる問題を解消しました。なお、キーは「.」で連結されたフラットな形式で格納されます。</li>
-<li>JSON WebServiceでのmappingキーとして、JSR-311と同じく{キー名:正規表現}と記述できるようになりました。なお、definitionsによる指定も可能です。</li>
-<li>JSON WebServiceにて<a href="http://code.google.com/p/google-guice/">Google Guice</a>をDI Containerとして用いるnet.arnx.jsonic.web.GuiceContainerを追加しました。</li>
-<li>WebServiceServletにてConfigクラスを拡張できるようgetConfigClass()メソッドを追加しました。</li>
-<li>WebServiceServletに呼び出し処理の前処理、後処理を追加できるようにするため、preinvoke/postinvokeメソッドを追加しました。</li>
-<li>サンプルを多少マシにしました。</li>
-</ul>
-
-<h3>2009/03/01 version 1.1.0</h3>
-
-<p>JSONICの基本機能に関する1.0からの変更点：</p>
-<ul>
-<li>添付するライブラリJARを作成する際、Eclipseでのデバッグを容易にするため、コンパイルのデバッグモードをONにすると共に、ソースコードも同梱するようになりました。デバッグ情報などが不要な場合は、build.xmlのdebugプロパティをfalseに変更して再ビルドしてください。</li>
-<li>変換・代入の際のヒントを与えるJSONHintアノテーションを追加しました。</li>
-<li>[非互換] Parse時にキー名とプロパティ名を比較する際、予約語に対応するため末尾の「_」を削除して比較するという仕様がありましたが、JSONHint(name="予約語")で対応できるため廃止しました。</li>
-<li>[非互換] convert, convertChildを廃止し、Format用の変換メソッドとしてpreformatをParse用の変換メソッドとしてpostparseを追加しました。</li>
-<li>[非互換] 継承で拡張するpreformat, postparse, create, ignoreの引数として現在の位置を示すContextを設定するようにしました。</li>
-<li>[非互換] 各種JSON***Exceptionを廃止し、JSONExceptionに統合しました。エラー内容は、getErrorCode()で判別できます(AS3版も同様にJSONParseErrorがJSONErrorに変更されています)。</li>
-<li>[非互換] format/encodeの場合でも変換に失敗した場合は、JSONExceptionでラップした例外を通知するよう変更しました。</li>
-<li>[非互換] XMLからJSONへの変換を独自形式から<a href="http://jsonml.org/">JsonML</a>形式に変更しました。</li>
-<li><a href="http://d.hatena.ne.jp/higayasuo/20090219/1235020303">java.sql.Date, java.sql.Timeの変換をきちんと</a>しました。</li>
-<li>null値の出力や代入を抑制するsetSuppressNullメソッドを追加しました(AS3版も同様です)。※1.0.4以降にバックポートされています</li>
-<li>Encode/Format時にListの再帰抑制が正しく動作していなかった問題を修正しました。※1.0.4以降にバックポートされています</li>
-</ul>
-
-<p>JSON Web Serviceに関する1.0からの変更点：</p>
-<ul>
-<li>JSON WebServiceで用いるJSONクラスが差し替え可能になりました。</li>
-<li>net.arnx.jsonic.web.ContainerにJSP暗黙オブジェクトライクなパブリックフィールドベースのDI機能を追加しました。</li>
-<li>[非互換] DI機能の追加に伴いメソッド引数へのServlet関連オブジェクト（HttpServletRequestなど）の注入を廃止しました。</li>
-<li>JSON WebServiceのRESTモードにて、Content-Typeが「application/x-www-form-urlencoded」の場合、GETと同様にパラメータを解析した結果を引数にセットしてメソッドを呼び出すように変更しました。</li>
-<li>JSON WebServiceでのmappingキーのフォーマットを[キー名]から{キー名}に変更しました（互換性維持のため、当面[キー名]も利用可能です）。</li>
-<li>[非互換] JSON WebServiceにてオーバーロードされたメソッドの呼び出しに対応しました。ただし、判断は引数の長さでのみ行われ、型での判断は行いません。</li>
-<li>[非互換] JSON WebServiceにて引数や戻り値の存在するinitやdestroyのみが定義されていた場合、IllegalStateExceptionを投げるようにしました。</li>
-<li>[非互換] net.arnx.jsonic.web.Containerのinitメソッドの引数をServletContextからServletConfigに変更しました。</li>
-<li>[非互換] JSON WebServiceのRESTモードにて、JSON Arrayをサーバに対して送信した際、パス変数やクエリ変数は最後の引数として設定していましたが、1番目の引数にマージするようになりました（ただし、1番目の引数がJSON objectでない場合はマージされません）。</li>
-<li>[非互換] JSON WebServiceにてgetParameterを使用後、getInputStream/getReaderを使うことができないServletコンテナに対応しました。</li>
-<li>[非互換] WebServiceServletのRESTモードにて、例外が発生した場合プロパティをメッセージボディに設定するようにしました。ただし、Throwableクラスのメソッドは対象になりません。</li>
-<li>例外発生時のデバッグメッセージをより詳細なものに変更しました。</li>
-<li>jQueryを使ったRESTモードのサンプルを追加しました。</li>
-</ul>
+<li>[非互換] JSON WebServiceにて1.1までは送信されたContent-Typeに関わらずJSONとして処理されていましたが、1.2以降では送信時のContent-Typeが「<code>application/json</code>」の場合のみJSONとして処理されます。
+<li>[非互換] JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
+なお、この対応により<code>request.getParameter()</code>後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合を持つ一部Servletコンテナ（既知のものとしてはWinstone）で正しく動作しない場合があります。</ul>
+</li>
 
 <hr style="margin-top: 30px;" />
 <div class="copyright">Copyright (C) 2007-2009 Hidekatsu Izuno All right reserved.</div>

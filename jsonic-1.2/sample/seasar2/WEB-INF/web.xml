@@ -50,7 +50,7 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				container: 'net.arnx.jsonic.web.S2Container'
+				container: 'net.arnx.jsonic.web.extension.S2Container'
 				debug: true
 				mappings: {
 					'/{package}/{class}/{id}.{ext}': 'sample.seasar2.web.${package}.service.${class}Service'

@@ -96,7 +96,6 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (config.methods == null) config.methods = new HashMap<String, String>();
 		if (!config.methods.containsKey("GET")) config.methods.put("GET", "find");
-		if (!config.methods.containsKey("JSONP")) config.methods.put("JSONP", "find");
 		if (!config.methods.containsKey("POST")) config.methods.put("POST", "create");
 		if (!config.methods.containsKey("PUT")) config.methods.put("PUT", "update");
 		if (!config.methods.containsKey("DELETE")) config.methods.put("DELETE", "delete");
@@ -106,13 +105,13 @@ public class WebServiceServlet extends HttpServlet {
 		return Config.class;
 	}
 
-	protected Route preprocess(HttpServletRequest request, HttpServletResponse response)
+	protected void process(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		
 		String uri = (request.getContextPath().equals("/")) ?
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
-				
+		
 		String encoding = config.encoding;
 		Boolean expire = config.expire;
 		
@@ -151,7 +150,7 @@ public class WebServiceServlet extends HttpServlet {
 			} finally {
 				if (in != null) in.close();
 			}
-			return null;
+			return;
 		}
 		
 		Route route = null;
@@ -163,72 +162,46 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if (route == null) {
 			response.sendError(SC_NOT_FOUND, "Not Found");
-			return null;
+			return;
 		}
 		
-		String method = route.getMethod();
-		if (!method.equals("GET") && !method.equals("POST") && !method.equals("PUT") && !method.equals("DELETE")) {
-			response.sendError(SC_FORBIDDEN, "Method Not Allowed");
-			return null;
+		if (route.isRpcMode()) {
+			if ("POST".equals(route.getMethod())) {
+				container.debug("Route found: " + request.getMethod() + " " + uri);
+				doRPC(route, request, response);
+			} else {
+				response.addHeader("Allow", "POST");
+				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowd");
+			}
+		} else {
+			container.debug("Route found: " + request.getMethod() + " " + uri);
+			doREST(route, request, response);
 		}
 		
-		container.debug("Route found: " + request.getMethod() + " " + uri);
-		return route;
 	}
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {		
-		Route route = preprocess(request, response);
-		if (route == null) return;
-		
-		if (route.isRpcMode()) {
-			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowd");
-		} else {
-			doREST(route, request, response);
-		}
+		process(request, response);
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		Route route = preprocess(request, response);
-		if (route == null) return;
-
-		if (route.isRpcMode()) {
-			doRPC(route, request, response);
-		} else {
-			doREST(route, request, response);
-		}
+		process(request, response);
 	}
-
+	
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		Route route = preprocess(request, response);
-		if (route == null) return;
-		
-		if (route.isRpcMode()) {
-			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
-		} else {
-			doREST(route, request, response);
-		}
+		process(request, response);
 	}
 	
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
-		Route route = preprocess(request, response);
-		if (route == null) return;
-		
-		if (route.isRpcMode()) {
-			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
-		} else {
-			doREST(route, request, response);
-		}
+		process(request, response);
 	}
 	
 	class RpcRequest {
@@ -259,7 +232,9 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
-				throwable = new Throwable();
+				throwable = new IllegalArgumentException(
+						((req == null) ? "request" : (req.method == null) ? "method" : "params")
+						+ "is null.");
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
 			} else {
@@ -366,7 +341,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
@@ -376,12 +350,12 @@ public class WebServiceServlet extends HttpServlet {
 		
 		if ("GET".equals(route.getMethod())) {
 			callback = route.getParameter("callback");
-			if (callback != null) methodName = config.methods.get("JSONP");
 		} else if ("POST".equals(route.getMethod())) {
 			status = SC_CREATED;
 		}
 		
 		if (methodName == null) {
+			container.debug("Method mapping not found: " + route.getMethod());
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		}
@@ -399,6 +373,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			Object component = container.getComponent(route.getComponentClass(null), request, response);
 			if (component == null) {
+				container.debug("Component not found: " + route.getComponentClass(null));
 				response.sendError(SC_NOT_FOUND, "Not Found");
 				return;
 			}
@@ -409,15 +384,15 @@ public class WebServiceServlet extends HttpServlet {
 				params.add(route.getParameterMap());
 			} else {
 				Object o = json.parse(request.getReader());
-				if (o instanceof List) {
-					params = (List<Object>)o;
+				if (o instanceof List<?>) {
+					params = cast(o);
 					if (params.isEmpty()) {
 						params = new ArrayList<Object>(1);
 						params.add(route.getParameterMap());
-					} else if (params.get(0) instanceof Map) {
+					} else if (params.get(0) instanceof Map<?, ?>) {
 						params.set(0, route.mergeParameterMap((Map<?, ?>)params.get(0)));
 					}
-				} else if (o instanceof Map) {
+				} else if (o instanceof Map<?, ?>) {
 					params = new ArrayList<Object>(1);
 					params.add(route.mergeParameterMap((Map<?, ?>)o));
 				} else {
@@ -623,6 +598,11 @@ public class WebServiceServlet extends HttpServlet {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
 		}
 		return sb.toString();
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static <T> T cast(Object o) {
+		return (T)o;
 	}
 	
 	public static class JSON extends net.arnx.jsonic.JSON {

@@ -13,7 +13,7 @@
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package net.arnx.jsonic.web;
+package net.arnx.jsonic.web.extension;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,6 +22,9 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import net.arnx.jsonic.web.Container;
+import net.arnx.jsonic.web.WebServiceServlet;
 
 import com.google.inject.Injector;
 
