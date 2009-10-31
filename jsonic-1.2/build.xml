@@ -108,4 +108,20 @@
 		<delete dir="${tmp}" failonerror="off" />
 		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
 	</target>
+	
+	<target name="copy-samples">
+		<fileset id="samples" dir="sample/basic">
+			<include name="**/*" />
+			<exclude name="WEB-INF/**/*" />
+		</fileset>
+		<copy todir="sample/seasar2">
+			<fileset refid="samples"/>
+		</copy>
+		<copy todir="sample/spring">
+			<fileset refid="samples"/>
+		</copy>
+		<copy todir="sample/guice">
+			<fileset refid="samples"/>
+		</copy>
+	</target>
 </project>

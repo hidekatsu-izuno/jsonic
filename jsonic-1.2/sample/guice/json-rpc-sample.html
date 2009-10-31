@@ -1,3 +1,5 @@
+<!doctype html>
+
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -21,6 +23,7 @@
 			'rpc/rpc.json',
 			{
 				method: 'POST',
+				contentType: 'application/json',
 				postBody: Object.toJSON({
 					method: name + '.' + ds[name][$("method").value].name,
 					params: $('params').value.evalJSON(),
