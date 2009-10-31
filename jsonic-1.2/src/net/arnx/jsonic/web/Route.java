@@ -139,7 +139,7 @@ public class Route {
 	}
 	
 	public boolean hasJSONContent() {
-		return "application/json".equals(contentType);
+		return "application/json".equalsIgnoreCase(contentType);
 	}
 	
 	public String getComponentClass(String sub) {
