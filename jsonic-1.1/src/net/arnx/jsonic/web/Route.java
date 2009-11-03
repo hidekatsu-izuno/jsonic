@@ -1,9 +1,11 @@
 package net.arnx.jsonic.web;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,60 +15,43 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+//@SuppressWarnings("unchecked")
 public class Route {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
 	private String target;
 	private String method;
+	private int contentLength = 0;
 	private Map<Object, Object> params;
 	
 	private boolean isRpcMode;
-	private String contentType;
 	
 	@SuppressWarnings("unchecked")
 	public Route(HttpServletRequest request, String target, Map<String, Object> params) throws IOException {
 		this.target = target;
 		this.params = (Map)params;
-		this.contentType = request.getContentType();
 		
 		if ("rpc".equalsIgnoreCase(getParameter("class"))) {
 			isRpcMode = true;
 			
 			this.method = request.getMethod().toUpperCase();
 		} else {
-			Map<String, String[]> pmap = request.getParameterMap();
-			
-			if (!"application/x-www-form-urlencoded".equals(contentType)
-					&& request.getQueryString() != null 
-					&& request.getQueryString().trim().length() != 0) {
-					
-				Map<String, String[]> pairs = parseQueryString(request.getQueryString(), request.getCharacterEncoding());
+			if (request.getQueryString() != null) {
+				parseQueryString(new ByteArrayInputStream(request.getQueryString().getBytes("US-ASCII")), request.getCharacterEncoding());
+			}
+			if (!request.getMethod().equalsIgnoreCase("GET")) {
+				contentLength = request.getContentLength();
 				
-				for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
-					String[] values = pmap.get(entry.getKey());
-					if (values.length <= entry.getValue().length) continue;
-					
-					int size = values.length;
-					for (String estr : entry.getValue()) {
-						for (int i = 0; i < values.length; i++) {
-							if (estr.equals(values[i])) {
-								values[i] = null;
-								size--;
-								break;
-							}
-						}
+				Map<String, String> options = parseHeaderLine(request.getContentType());
+				String contentType = options.get(null);
+
+				if (contentLength > 0 && contentType != null) {
+					if (contentType.equals("application/x-www-form-urlencoded")) {
+						parseQueryString(request.getInputStream(), request.getCharacterEncoding());
+						contentLength = 0;
 					}
-					
-					String[] newValues = new String[size];
-					int pos = 0;
-					for (String pstr : values) {
-						if (pstr != null) newValues[pos++] = pstr;
-					}
-					pmap.put(entry.getKey(), newValues);
 				}
 			}
-			
-			parseParameter(pmap, this.params);
 			
 			String m = getParameter("_method");
 			if (m == null) m = request.getMethod();
@@ -85,12 +70,12 @@ public class Route {
 	public String getParameter(String name) {
 		Object o = params.get(name);
 		
-		if (o instanceof Map<?, ?>) {
+		if (o instanceof Map) {
 			Map<?, ?> map = (Map<?, ?>)o;
 			if (map.containsKey(null)) o = map.get(null); 
 		}
 		
-		if (o instanceof List<?>) {
+		if (o instanceof List) {
 			List<?> list = (List<?>)o;
 			if (!list.isEmpty()) o = list.get(0);
 		}
@@ -139,7 +124,7 @@ public class Route {
 	}
 	
 	public boolean hasJSONContent() {
-		return "application/json".equals(contentType);
+		return contentLength > 0;
 	}
 	
 	public String getComponentClass(String sub) {
@@ -163,59 +148,92 @@ public class Route {
 		return sb.toString();
 	}
 	
-	private Map<String, String[]> parseQueryString(String qs, String encoding) throws UnsupportedEncodingException {
-		Map<String, String[]> pairs = new HashMap<String, String[]>();
+	private void parseQueryString(InputStream in, String encoding) throws IOException {
+		List<Object> pairs = new ArrayList<Object>();
+
+		int state = 0; // 0 '%' 1 'N' 2 ('N' | '=' | '&')
 		
-		int start = 0;
-		String key = null;
+		ByteBuilder bb = new ByteBuilder(50);
 		
-		for (int i = 0; i <= qs.length(); i++) {
-			if (i == qs.length() || qs.charAt(i) == '&') {
-				String value = null;
-				String[] values = null;
-				
-				if (key == null) {
-					key = URLDecoder.decode(qs.substring(start, i), encoding);
-					value = "";
+		int before = 0;
+		while (true) {
+			int c = in.read();
+			if (c == -1) {
+				if (state == 2) bb.append((byte)before);
+				if (pairs.size()%2 == 1){
+					pairs.add(bb.toString(encoding));
 				} else {
-					value = URLDecoder.decode(qs.substring(start, i), encoding);
+					pairs.add(bb.toString(encoding));
+					pairs.add("");
 				}
-				
-				if (pairs.containsKey(key)) {
-					String[] tmp = pairs.get(key);
-					values = new String[tmp.length+1];
-					System.arraycopy(tmp, 0, values, 0, tmp.length);
-					values[tmp.length] = value;
-				} else {
-					values = new String[] { value };
-				}
-				
-				pairs.put(key, values);
-				key = null;
-				
-				start = i+1;
-			} else if (qs.charAt(i) == '=') {
-				key = URLDecoder.decode(qs.substring(start, i), encoding);
-				start = i+1;
+				break;
 			}
+			
+			if (c == '&') {
+				if (state == 2) bb.append((byte)before);
+				
+				if (pairs.size()%2 == 1){
+					pairs.add(bb.toString(encoding));
+				} else {
+					pairs.add(bb.toString(encoding));
+					pairs.add("");
+				}
+				bb.setLength(0);
+				state = 0;
+			} else if (c == '=') {
+				if (state == 2) bb.append((byte)before);
+				
+				if (pairs.size()%2 == 1){
+					bb.append((byte)c);
+				} else {
+					pairs.add(bb.toString(encoding));
+					bb.setLength(0);
+				}
+				state = 0;
+			} else if (state == 2){
+				int d1 = Character.digit(before, 16);
+				int d2 = Character.digit(c, 16);
+					
+				if (d1 != -1 && d2 != -1) {
+					bb.append((byte)((d1 << 4) | d2));
+				} else {
+					bb.append((byte)before);
+					bb.append((byte)c);
+				}
+				state = 0;
+			} else if (state == 1) {
+				state = 2;
+			} else {
+				if (c == '+') {
+					bb.append((byte)' ');
+					state = 0;
+				} else if (c == '%') {
+					state = 1;
+				} else {
+					bb.append((byte)c);
+					state = 0;
+				}
+			}
+			
+			before = c;
 		}
 		
-		return pairs;
+		parseParameter(pairs, params);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static void parseParameter(Map<String, String[]> pairs, Map<Object, Object> params) {
-		for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
-			String name = entry.getKey();
-			String[] values = entry.getValue();
+	private static void parseParameter(List<Object> pairs, Map<Object, Object> params) {
+		for (int i = 0; i < pairs.size(); i+= 2) {
+			String name = (String)pairs.get(i);
+			Object value = pairs.get(i+1);
 			
 			int start = 0;
 			char old = '\0';
 			Map<Object, Object> current = params;
-			for (int i = 0; i < name.length(); i++) {
-				char c = name.charAt(i);
+			for (int j = 0; j < name.length(); j++) {
+				char c = name.charAt(j);
 				if (c == '.' || c == '[') {
-					String key = name.substring(start, (old == ']') ? i-1 : i);
+					String key = name.substring(start, (old == ']') ? j-1 : j);
 					Object target = current.get(key);
 					
 					if (target instanceof Map) {
@@ -226,7 +244,7 @@ public class Route {
 						current.put(key, map);
 						current = map;
 					}
-					start = i+1;
+					start = j+1;
 				}
 				old = c;
 			}
@@ -241,40 +259,111 @@ public class Route {
 					if (map.containsKey(null)) {
 						target = map.get(null);
 						if (target instanceof List) {
-							List<Object> list = ((List<Object>)target);
-							for (String value : values) list.add(value);
+							((List<Object>)target).add(value);
 						} else {
 							List<Object> list = new ArrayList<Object>();
 							list.add(target);
-							for (String value : values) list.add(value);
+							list.add(value);
 							map.put(null, list);
 						}
-					} else if (values.length > 1) {
-						List<Object> list = new ArrayList<Object>();
-						for (String value : values) list.add(value);
-						map.put(null, list);
 					} else {
-						map.put(null, values[0]);						
+						map.put(null, value);
 					}
 				} else if (target instanceof List) {
-					List<Object> list = ((List<Object>)target);
-					for (String value : values) list.add(value);
+					((List<Object>)target).add(value);
 				} else {
 					List<Object> list = new ArrayList<Object>();
 					list.add(target);
-					for (String value : values) list.add(value);
+					list.add(value);
 					current.put(name, list);
 				}
-			} else if (values.length > 1) {
-				List<Object> list = new ArrayList<Object>();
-				for (String value : values) list.add(value);
-				current.put(name, list);
 			} else {
-				current.put(name, values[0]);						
+				current.put(name, value);
 			}
 		}
 	}
+	
+	private static Map<String, String> parseHeaderLine(String line) {
+		if (line == null) return Collections.emptyMap();
 		
+		Map<String, String> map = new HashMap<String, String>();
+		
+		int state = 0; // 0 LWS 1 <field value> 2 LWS ; 3 LWS 4 <key> 5 LWS = 6 LWS (7 <value> | " 8 <quoted value> ")   
+		
+		StringBuilder sb = new StringBuilder(line.length());
+		String key = null;
+		boolean escape = false;
+		
+		loop:for (int i = 0; i < line.length(); i++) {
+			char c = line.charAt(i);
+			
+			if (state == 8) {
+				if (escape) {
+					if (c < 128) {
+						sb.append(c);
+						escape = false;
+					} 
+					else break;
+				} 
+				else if (c == '\\') escape = true;
+				else if (c == '"') state = 2;
+				else sb.append(c);
+				continue;
+			}
+			
+			switch (c) {
+			case '\t':
+			case ' ':
+				if (state == 1 || state == 4) state++;
+				else if (state == 7) state = 2;
+				break;
+			case ';':
+				if (state == 1 || state == 2 || state == 7) {
+					map.put(key, sb.toString());
+					sb.setLength(0);
+					state = 3;
+					break;
+				}
+				break loop;
+			case '=':
+				if (state == 4 || state == 5) {
+					key = sb.toString().toLowerCase();
+					sb.setLength(0);
+					state = 6;
+					break;
+				}
+				break loop;
+			case '"':
+				if (state == 6) state = 8;
+				else break loop;
+				break;
+			default:
+				if (state == 0 || state == 3 || state == 6) {
+					state++;
+				}
+				
+				if (state == 1 || state == 4 || state == 7) {
+					if ((c >= '0' && c >= '9')
+						|| (c >= 'A' && c >= 'Z') 
+						|| (c >= 'a' && c >= 'z') 
+						|| "!#$%&'*+-.^_`|~".indexOf(c) != -1
+						|| (state == 1 && c == '/')
+					) {
+						sb.append(c);
+						break;
+					}
+				}
+				break loop;
+			}
+		}
+		
+		if (state <= 2 || state == 7) {
+			map.put(key, sb.toString());
+		}
+		
+		return map;
+	}
+	
 	private String toUpperCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = true;
@@ -290,5 +379,107 @@ public class Route {
 			}
 		}
 		return sb.toString();
+	}
+}
+
+class ByteBuilder {
+	private int length = 0;
+	private byte[] array;
+	
+	public ByteBuilder() {
+		this(1024);
+	}
+	
+	public ByteBuilder(int length) {
+		array = new byte[length];
+	}
+	
+	public void append(int c) {
+		append((byte)c);
+	}
+	
+	public void append(char c) {
+		append((byte)c);
+	}
+	
+	public void append(byte b) {
+		if (length+1 > array.length) {
+			byte[] newArray = new byte[(int)(array.length*1.5)];
+			System.arraycopy(array, 0, newArray, 0, array.length);
+			array = newArray;
+		}
+		array[length++] = (byte)b;
+	}
+	
+	public void append(byte[] bytes) {
+		append(bytes, 0, bytes.length);
+	}
+	
+	public void append(byte[] bytes, int offset, int len) {
+		if ((length + bytes.length) > array.length) {
+			byte[] newArray = new byte[(int)((array.length + bytes.length)*1.5)];
+			System.arraycopy(array, 0, newArray, 0, array.length);
+			array = newArray;
+		}
+		System.arraycopy(bytes, offset, array, length, len);
+		length += len;
+	}
+	
+	public boolean startsWith(String str) {
+		if (length < str.length()) return false;
+		
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) != array[i]) return false;
+		}
+		return true;
+	}
+	
+	public boolean endsWith(String str) {
+		if (length < str.length()) return false;
+		
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(str.length()-i-1) != array[length-i-1]) return false;
+		}
+		return true;
+	}
+
+	public boolean matches(String str) {
+		if (length != str.length()) return false;
+		
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) != array[i]) return false;
+		}
+		return true;
+	}
+	
+	public byte byteAt(int pos) {
+		return array[pos];
+	}
+
+	public int indexOf(char c) {
+		for (int i = 0; i < length; i++) {
+			if (array[i] == c) return i;
+		}
+		return -1;
+	}
+	
+	public void setLength(int length) {
+		this.length = length;
+	}
+	
+	public int length() {
+		return length;
+	}
+	
+	public String substring(int start, int end, String encoding) throws UnsupportedEncodingException {
+		return new String(array, start, end-start, encoding);
+	}
+	
+	public String substring(int start, String encoding) throws UnsupportedEncodingException {
+		return new String(array, start, length-start, encoding);
+	}
+	
+	public String toString(String encoding) throws UnsupportedEncodingException {
+		return new String(array, 0, length, encoding);
 	}
 }

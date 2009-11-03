@@ -8,26 +8,18 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-api.jar"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.8.0.jar"/>
+	<classpathentry kind="lib" path="lib/winstone-0.9.10.jar" sourcepath="lib/winstone-src.zip"/>
 	<classpathentry kind="lib" path="lib/commons-fileupload-1.2.1.jar"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.34.jar" sourcepath="sample/seasar2/WEB-INF/lib/s2-framework-2.4.34-sources.jar"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.34-sources.jar"/>
 	<classpathentry kind="lib" path="sample/spring/WEB-INF/lib/spring.jar"/>
 	<classpathentry kind="lib" path="sample/guice/WEB-INF/lib/guice-2.0.jar"/>
 	<classpathentry kind="lib" path="sample/guice/WEB-INF/lib/guice-servlet-2.0.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-server-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/servlet-api-2.5.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-util-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-http-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-io-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-continuation-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-servlet-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-webapp-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-security-7.0.0.v20091005.jar"/>
-	<classpathentry kind="lib" path="lib/jetty-xml-7.0.0.v20091005.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/javassist-3.4.ga.jar"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/ognl-2.6.9-patch-20070908.jar"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/aopalliance-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/devtools.jar"/>
+	<classpathentry kind="lib" path="lib/aopalliance-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/javassist-3.4.ga.jar"/>
+	<classpathentry kind="lib" path="lib/ognl-2.6.9-patch-20070908.jar"/>
+	<classpathentry kind="lib" path="lib/s2-framework-2.4.40.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

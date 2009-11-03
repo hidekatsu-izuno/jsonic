@@ -7,18 +7,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import net.arnx.jsonic.*;
 
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.*;
 import org.seasar.framework.mock.servlet.MockHttpServletRequest;
 import org.seasar.framework.mock.servlet.MockServletContextImpl;
@@ -26,10 +25,12 @@ import org.seasar.framework.mock.servlet.MockServletContextImpl;
 import static org.junit.Assert.*;
 import static javax.servlet.http.HttpServletResponse.*;
 
+import winstone.Launcher;
+
 @SuppressWarnings("unchecked")
 public class WebServiceServletTest {	
 	
-	private static Server server;
+	private static Launcher winstone;
 	
 	@BeforeClass
 	public static void init() throws Exception {
@@ -37,59 +38,22 @@ public class WebServiceServletTest {
 		new File("sample/seasar2/WEB-INF/database.dat").delete();
 		new File("sample/spring/WEB-INF/database.dat").delete();
 		new File("sample/guice/WEB-INF/database.dat").delete();
-	
-		server = new Server(16001);
-
-		ContextHandlerCollection contexts = new ContextHandlerCollection();
 		
-		String[] systemClasses = new String[] {
-				"org.apache.commons.",
-				"org.aopalliance.",
-				"ognl.",
-				"javassist.",
-				"net.arnx.",	
-				"org.seasar.",
-				"org.springframework.",
-				"com.google.inject."
-		};
+		Map args = new HashMap();
+		args.put("webappsDir", "sample");
+		args.put("httpPort", "16001");
+		args.put("controlPort", "16002");
+		args.put("commonLibFolder", "./docs");
+		args.put("ajp13Port", "-1");
+		args.put("preferredClassLoader", "winstone.classLoader.WebappDevLoader");
 		
-		String[] serverClasses = new String[] {
-		};
-		
-		WebAppContext basic = new WebAppContext("sample/basic", "/basic");
-		basic.setSystemClasses(concat(basic.getSystemClasses(), systemClasses));
-		basic.setServerClasses(concat(basic.getServerClasses(), serverClasses));
-		contexts.addHandler(basic);
-		
-		WebAppContext seasar2 = new WebAppContext("sample/seasar2", "/seasar2");
-		seasar2.setSystemClasses(concat(seasar2.getSystemClasses(), systemClasses));
-		seasar2.setServerClasses(concat(seasar2.getServerClasses(), serverClasses));
-		contexts.addHandler(seasar2);
-		
-		WebAppContext spring = new WebAppContext("sample/spring", "/spring");
-		spring.setSystemClasses(concat(spring.getSystemClasses(), systemClasses));
-		spring.setServerClasses(concat(spring.getServerClasses(), serverClasses));
-		contexts.addHandler(spring);
-		
-		WebAppContext guice = new WebAppContext("sample/guice", "/guice");
-		guice.setSystemClasses(concat(guice.getSystemClasses(), systemClasses));
-		guice.setServerClasses(concat(guice.getServerClasses(), serverClasses));
-		contexts.addHandler(guice);
-		
-		server.setHandler(contexts);
-		server.start();
-	}
-	
-	private static String[] concat(String[] a, String[] b) {
-		String[] result = new String[a.length + b.length];
-		System.arraycopy(a, 0, result, 0, a.length);
-		System.arraycopy(b, 0, result, a.length, b.length);
-		return result;
+		Launcher.initLogger(args);
+		winstone = new Launcher(args);
 	}
 	
 	@AfterClass
 	public static void destroy() throws Exception {
-		server.stop();
+		winstone.shutdown();
 	}
 
 	@Test
@@ -184,8 +148,6 @@ public class WebServiceServletTest {
 	}
 	
 	public void testREST(String app) throws Exception {
-		System.out.println("\n<<START testRest: " + app + ">>");
-		
 		String url = "http://localhost:16001/" + app + "/rest/memo";
 		HttpURLConnection con = null;
 		
@@ -266,14 +228,10 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
 		con.disconnect();
-		
-		System.out.println("<<END testRest: " + app + ">>\n");
 	}
 	
 	@Test
 	public void testRESTWithMethod() throws Exception {
-		System.out.println("\n<<START testRESTWithMethod>>");
-		
 		String url = "http://localhost:16001/basic/rest/memo.json";
 		HttpURLConnection con = null;
 		
@@ -338,8 +296,6 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
-		
-		System.out.println("\n<<END testRESTWithMethod>>");
 	}
 	
 	@Test
@@ -393,7 +349,7 @@ public class WebServiceServletTest {
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
 		request.addParameter("bbb", "bbb");
-		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null:'aaa'}, 'bbb':'bbb'}"), getParameterMap(request));
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null:['aaa', 'bbb']}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb");
 		request.addParameter("aaa.bbb", "aaa");
@@ -438,9 +394,30 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 	}
 	
+	@Test
+	public void testParseHeaderLine() throws Exception {
+		assertEquals(JSON.decode("{null:''}"), parseHeaderLine(""));
+		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   "));
+		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   ;"));
+		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy "));
+		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy; "));
+		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine("aaa/bbb-yyy;"));
+		assertEquals(JSON.decode("{null:'aaa'}"), parseHeaderLine("aaa"));
+		assertEquals(JSON.decode("{null:'a','a':'b','d':'e'}"), parseHeaderLine("a; a=b; d=e"));
+		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = bcd ; def =efg;"));
+		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bcd\"; def =  \"efg\";"));
+		assertEquals(JSON.decode("{null:'abc','abc':'bc\"d','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bc\\\"d\"; def =  \"e\\fg\";"));
+	}
+	
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
 		return new Route(request, null, new LinkedHashMap<String, Object>()).getParameterMap();
+	}
+	
+	private static Map parseHeaderLine(String line) throws Exception {
+		Method m = Route.class.getDeclaredMethod("parseHeaderLine", String.class);
+		m.setAccessible(true);
+		return (Map<String, String>)m.invoke(null, line);
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {
