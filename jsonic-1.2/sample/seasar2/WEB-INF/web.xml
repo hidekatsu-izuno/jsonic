@@ -17,12 +17,10 @@
 		<filter-class>org.seasar.framework.container.hotdeploy.HotdeployFilter</filter-class>
 	</filter>
     
-    <!-- 
     <filter-mapping>
         <filter-name>s2filter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
-	 -->
 	
 	<filter-mapping>
 		<filter-name>hotdeployfilter</filter-name>
