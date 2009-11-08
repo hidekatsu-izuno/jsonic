@@ -51,6 +51,7 @@
 				container: 'net.arnx.jsonic.web.extension.S2Container'
 				debug: true
 				mappings: {
+					'/{package}/{class}/print.json': ['sample.basic.web.${package}.service.${class}Service', {'GET': 'print'}]
 					'/{package}/{class}/{id}.{ext}': 'sample.seasar2.web.${package}.service.${class}Service'
 					'/{package}/{class}.{ext}': 'sample.seasar2.web.${package}.service.${class}Service'
 					'/{class}.{ext}': 'sample.seasar2.service.${class}Service'
