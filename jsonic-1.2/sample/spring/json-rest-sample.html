@@ -25,7 +25,7 @@ div#list table td {
 	font-size: 9pt;
 }
 </style>
-<script type="text/javascript" src="prototype-1.6.0.2.js"></script>
+<script type="text/javascript" src="prototype-1.6.1.js"></script>
 <script type="text/javascript">
 function show() {
 	var request = new Ajax.Request('rest/memo.json', {
@@ -85,5 +85,6 @@ function deleteRow(id) {
 <hr />
 <h2>Memo Service</h2>
 <div id="list"></div>
+<a href="rest/memo/print.json">ダウンロード</a>
 </body>
 </html>

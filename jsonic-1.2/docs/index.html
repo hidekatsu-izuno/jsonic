@@ -721,18 +721,32 @@ public class WithHintBean {
 <p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※16)</sup></p>
 <pre class="source">
 public class HogeService {
-    <span class="comment">// 処理の前に呼び出されます。</span>
-    public void init() {
-    }
-    
-    ...
-    
-    <span class="comment">// 処理の後に呼び出されます。</span>
-    public void destroy() {
-    }
+  <span class="comment">// 処理の前に呼び出されます。</span>
+  public void init() {
+  }
+  
+  ...
+  
+  <span class="comment">// 処理の後に呼び出されます。</span>
+  public void destroy() {
+  }
 }
 </pre>
 <div class="caption">(※16) 呼び出されるメソッド名は設定で変更可能です。</div>
+
+<h3>■ Produceアノテーション <span class="subtitle">- JSON以外のレスポンス</span></h3>
+<p>呼び出し先のメソッドにProduceアノテーションを付与することでレスポンスを自分で記述できるようになりJSON以外のレスポンスも返すことができるようになります。Produceアノテーションの引数には、出力するContent-Typeを指定します。</p>
+<pre class="source">
+public class HogeService {
+  <span class="comment">// format/parse時のキー値を変更</span>
+  <span class="em">@Produce(</span>"text/csv"<span class="em">)</span>
+  public void print() throws IOException {
+    response.setCharcterEncoding("MS932");
+    PrintWriter writer = response.getWriter();
+    writer.write("a,b,c\r\n");
+  }
+}
+</pre>
 
 <h3>■ DI Container対応</h3>
 <p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
@@ -890,9 +904,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>[非互換] JSON WebServiceにて1.1までは送信されたContent-Typeに関わらずJSONとして処理されていましたが、1.2以降では送信時のContent-Typeが「<code>application/json</code>」の場合のみJSONとして処理されます。</li>
 <li>[非互換] JSON WebServiceにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください。</li>
+<li>[非互換] JSON WebServiceにてWebServiceServletに存在したpreinvoke, invoke, postinvokeの各メソッドは機能をContainerクラスに移動しpreinvoke, findMethod, postinvokeとなりました。</li>
+<li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアトリビュートを追加しました。</li>
 <li>JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
 なお、Winstoneに限り、<code>request.getParameter(String name)</code>など呼び出し後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合があるため同状況では動作しません。</li>
 <li>ドキュメントのRESTモードの説明にてJSON arrayが送られた場合のパラメータ設定順の記載が誤っていた点を修正しました。クエリ変数、パス変数と記載されていましたが、実際にはパス変数、クエリ変数の順に設定されます。</li>
+<li>sampleに同梱のprototype.jsとjquery.jsをそれぞれ1.6.1と1.3.2に更新しました。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />

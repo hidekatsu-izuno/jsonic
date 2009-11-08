@@ -110,7 +110,6 @@ public class Container {
 			}			
 			
 			if (method != null) {
-				if (isDebugMode()) debug("Execute: " + toPrintString(c, method.getName(), null));
 				method.invoke(target);
 			} else if (illegal) {
 				debug("Notice: init method must have no arguments.");
@@ -174,10 +173,9 @@ public class Container {
 						illegal = true;
 					}
 				}
-			}			
+			}
 			
 			if (method != null) {
-				if (isDebugMode()) debug("Execute: " + toPrintString(c, method.getName(), null));
 				method.invoke(target);
 			} else if (illegal) {
 				debug("Notice: destroy method must have no arguments.");

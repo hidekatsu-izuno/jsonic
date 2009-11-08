@@ -111,15 +111,17 @@ public class MemoService {
 	
 	@Produce("text/csv")
 	public void print() throws IOException {
+		response.setCharacterEncoding("MS932");
+		response.setHeader("Content-Disposition", "attachment; filename=\"memos.csv\"");
 		PrintWriter writer = response.getWriter();
 		
 		for (Memo memo : list.values()) {
-			writer.write(memo.id);
-			writer.write(",");
-			writer.write(memo.title);
-			writer.write(",");
-			writer.write(memo.text);
-			writer.write("\r\n");
+			writer.print(memo.id);
+			writer.print(",");
+			writer.print(memo.title);
+			writer.print(",");
+			writer.print(memo.text);
+			writer.print("\r\n");
 		}
 	}
 	

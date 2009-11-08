@@ -232,29 +232,34 @@ public class WebServiceServlet extends HttpServlet {
 				int delimiter = req.method.lastIndexOf('.');
 				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
 					throw new NoSuchMethodException(req.method);
-				} else {
-					Object component = container.getComponent(
-						route.getComponentClass(req.method.substring(0, delimiter)),
-						request, response
-					);
-					if (component == null) {
-						throw new NoSuchMethodException(req.method);
-					}
-					
-					json.setContext(component);
-					
-					Method method = container.findMethod(component, req.method.substring(delimiter+1), req.params);
-					Type[] argTypes = method.getParameterTypes();
-					
-					Object[] args = new Object[argTypes.length];
-					for (int i = 0; i < args.length; i++) {
-						args[i] = json.convert((i < req.params.size()) ? req.params.get(i) : null, argTypes[i]);
-					}
-					
-					args = container.preinvoke(component, args);
-					result = method.invoke(component, args);
-					result = container.postinvoke(component, result);
 				}
+				
+				Object component = container.getComponent(
+					route.getComponentClass(req.method.substring(0, delimiter)),
+					request, response
+				);
+				if (component == null) {
+					throw new NoSuchMethodException(req.method);
+				}
+				
+				json.setContext(component);
+				
+				Method method = container.findMethod(component, req.method.substring(delimiter+1), req.params);
+				Type[] argTypes = method.getParameterTypes();
+				
+				Object[] args = new Object[argTypes.length];
+				for (int i = 0; i < args.length; i++) {
+					args[i] = json.convert((i < req.params.size()) ? req.params.get(i) : null, argTypes[i]);
+				}
+				
+				Produce produce = method.getAnnotation(Produce.class);
+				if (produce != null) response.setContentType(produce.value());
+				
+				args = container.preinvoke(component, args);
+				result = method.invoke(component, args);
+				result = container.postinvoke(component, result);
+				
+				if (produce != null) return;
 			}
 		} catch (ClassNotFoundException e) {
 			container.debug("Class Not Found.", e);
@@ -413,9 +418,14 @@ public class WebServiceServlet extends HttpServlet {
 				args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
 			}
 			
+			Produce produce = method.getAnnotation(Produce.class);
+			if (produce != null) response.setContentType(produce.value());
+			
 			args = container.preinvoke(component, args);
 			res = method.invoke(component, args);
 			res = container.postinvoke(component, res);
+			
+			if (produce != null) return;
 		} catch (ClassNotFoundException e) {
 			container.debug("Class Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
@@ -447,8 +457,6 @@ public class WebServiceServlet extends HttpServlet {
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}
-		
-		if (res instanceof Produce) return;
 		
 		try {
 			if (res == null

@@ -29,7 +29,12 @@ public class Route {
 		this.target = target;
 		this.restmap = restmap;
 		this.params = (Map)params;
-		this.contentType = request.getContentType();
+		
+		String contentType = request.getContentType();
+		if (contentType == null) contentType = "";
+		int index = contentType.indexOf(';');
+		
+		this.contentType = (index > -1) ? contentType.substring(0, index) : contentType;
 		
 		if ("rpc".equalsIgnoreCase(getParameter("class"))) {
 			isRpcMode = true;
