@@ -650,6 +650,25 @@ public class WithHintBean {
 <tr><td>PUT</td><td>update</td></tr>
 <tr><td>DELETE</td><td>delete</td></tr>
 </table>
+<p>なお、上記のメソッド名は変更することが可能です。その場合は対象のマッピングを配列化し、二番目の引数にHTTP Methodとメソッド名のマッピングを記載します。例えば、.csvに対してGETでアクセスされた場合にprintというメソッドを呼び出したい場合は次のようにします。</p>
+<pre class="source">
+<span class="elem">&lt;servlet&gt;</span>
+  ...
+  <span class="elem">&lt;init-param&gt;</span>
+    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+    <span class="elem">&lt;param-value&gt;</span>
+    {
+      "mappings": {
+      　<span class="comment">// GET *.csvにアクセスされた場合はprintメソッドを呼び出します。</span>
+        "/{package}/{class}.csv": ["sample.web.${package}.service.${class}Service", {"GET": "print"}]
+        "/{package}/{class}.{ext}": "sample.web.${package}.service.${class}Service"
+      }
+    }
+    <span class="elem">&lt;/param-value&gt;</span>
+  <span class="elem">&lt;/init-param&gt;</span>
+<span class="elem">&lt;/servlet&gt;</span>
+</pre>
+
 <p>引数には送信されたJSONが指定された型に従い変換されセットされます。引数への設定は、JSONの型によって次のような違いがあります。</p>
 <table class="table" summary="引数設定一覧">
 <tr><th>Request&nbsp;Type</th><th>説明</th></tr>
@@ -869,7 +888,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2009/10/24 version 1.2.0</h3>
 
 <ul>
-<li>[非互換] JSON WebServiceにて1.1までは送信されたContent-Typeに関わらずJSONとして処理されていましたが、1.2以降では送信時のContent-Typeが「<code>application/json</code>」の場合のみJSONとして処理されます。
+<li>[非互換] JSON WebServiceにて1.1までは送信されたContent-Typeに関わらずJSONとして処理されていましたが、1.2以降では送信時のContent-Typeが「<code>application/json</code>」の場合のみJSONとして処理されます。</li>
+<li>[非互換] JSON WebServiceにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください。</li>
 <li>JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
 なお、Winstoneに限り、<code>request.getParameter(String name)</code>など呼び出し後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合があるため同状況では動作しません。</li>
 <li>ドキュメントのRESTモードの説明にてJSON arrayが送られた場合のパラメータ設定順の記載が誤っていた点を修正しました。クエリ変数、パス変数と記載されていましたが、実際にはパス変数、クエリ変数の順に設定されます。</li>
