@@ -31,7 +31,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class MemoService {
-	
 	// it's incorrect use. you should use RDBMS.
 	private int count = 0;
 	private Map<Integer, Memo> list;

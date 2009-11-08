@@ -17,6 +17,7 @@ public class Route {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
 	private String target;
+	private Map<String, String> restmap;
 	private String method;
 	private Map<Object, Object> params;
 	
@@ -24,8 +25,9 @@ public class Route {
 	private String contentType;
 	
 	@SuppressWarnings("unchecked")
-	public Route(HttpServletRequest request, String target, Map<String, Object> params) throws IOException {
+	public Route(HttpServletRequest request, String target, Map<String, String> restmap, Map<String, Object> params) throws IOException {
 		this.target = target;
+		this.restmap = restmap;
 		this.params = (Map)params;
 		this.contentType = request.getContentType();
 		
@@ -76,6 +78,10 @@ public class Route {
 	
 	public String getMethod() {
 		return method;
+	}
+	
+	public String getRestMethod() {
+		return restmap.get(getMethod());
 	}
 	
 	public boolean isRpcMode() {

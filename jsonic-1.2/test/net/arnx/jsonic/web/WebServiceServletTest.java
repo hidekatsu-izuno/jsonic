@@ -440,7 +440,7 @@ public class WebServiceServletTest {
 	
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
-		return new Route(request, null, new LinkedHashMap<String, Object>()).getParameterMap();
+		return new Route(request, null, null, new LinkedHashMap<String, Object>()).getParameterMap();
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {

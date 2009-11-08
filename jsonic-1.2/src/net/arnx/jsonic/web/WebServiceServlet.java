@@ -54,7 +54,7 @@ public class WebServiceServlet extends HttpServlet {
 		public Class<? extends net.arnx.jsonic.JSON> processor;
 		public String encoding;
 		public Boolean expire;
-		public Map<String, String> mappings;
+		public Map<String, List<Object>> mappings;
 		public Map<String, Pattern> definitions;
 	}
 	
@@ -88,7 +88,7 @@ public class WebServiceServlet extends HttpServlet {
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
 		
 		if (config.mappings != null) {
-			for (Map.Entry<String, String> entry : config.mappings.entrySet()) {
+			for (Map.Entry<String, List<Object>> entry : config.mappings.entrySet()) {
 				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
 			}
 		}
@@ -337,22 +337,16 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		String methodName = null;
 		int status = SC_OK;
 		String callback = null;
 		
 		if ("GET".equals(route.getMethod())) {
-			methodName = "find";
 			callback = route.getParameter("callback");
 		} else if ("POST".equals(route.getMethod())) {
-			methodName = "create";
 			status = SC_CREATED;
-		} else if ("PUT".equals(route.getMethod())) {
-			methodName = "update";
-		} else if ("DELETE".equals(route.getMethod())) {
-			methodName = "delete";
 		}
 		
+		String methodName = route.getRestMethod();
 		if (methodName == null) {
 			container.debug("Method mapping not found: " + route.getMethod());
 			response.sendError(SC_NOT_FOUND, "Not Found");
@@ -417,7 +411,7 @@ public class WebServiceServlet extends HttpServlet {
 			container.debug(cause.toString(), cause);
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
-				response.sendError(SC_NOT_FOUND, "Not Found");				
+				response.sendError(SC_NOT_FOUND, "Not Found");
 				return;
 			} else if (cause instanceof Error) {
 				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
@@ -616,12 +610,22 @@ public class WebServiceServlet extends HttpServlet {
 class RouteMapping {
 	private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
 	private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
+	private static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
+	
+	static {
+		DEFAULT_RESTMAP.put("GET", "find");
+		DEFAULT_RESTMAP.put("POST", "create");
+		DEFAULT_RESTMAP.put("PUT", "update");
+		DEFAULT_RESTMAP.put("DELETE", "delete");
+	}
 	
 	private Pattern pattern;
 	private List<String> names;
 	private String target;
+	private Map<String, String> restmap = DEFAULT_RESTMAP;
 	
-	public RouteMapping(String path, String target, Map<String, Pattern> definitions) {
+	@SuppressWarnings("unchecked")
+	public RouteMapping(String path, List<Object> target, Map<String, Pattern> definitions) {
 		this.names = new ArrayList<String>();
 		StringBuffer sb = new StringBuffer("^\\Q");
 		Matcher m = PLACE_PATTERN.matcher(path);
@@ -639,7 +643,8 @@ class RouteMapping {
 		m.appendTail(sb);
 		sb.append("\\E$");
 		this.pattern = Pattern.compile(sb.toString());
-		this.target = target;
+		this.target = (String)target.get(0);
+		if (target.size() > 1) restmap = (Map<String, String>)target.get(1);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -663,8 +668,7 @@ class RouteMapping {
 					params.put(key, value);
 				}
 			}
-			Route route = new Route(request, target, params);
-			return route;
+			return new Route(request, target, restmap, params);
 		}
 		return null;
 	}

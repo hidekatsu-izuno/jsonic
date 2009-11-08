@@ -17,13 +17,14 @@
 				debug: true
 				mappings: {
 					'/{package}/{class}/{id}.{ext}': 'sample.basic.web.${package}.service.${class}Service'
+					'/{package}/{class}.csv': ['sample.basic.web.${package}.service.${class}Service', {'GET': 'export'}]
 					'/{package}/{class}.{ext}': 'sample.basic.web.${package}.service.${class}Service'
 					'/{class}.{ext}': 'sample.basic.service.${class}Service'
 				}
 			</param-value>
 		</init-param>
 	</servlet>
-
+	
 	<servlet-mapping>
 		<servlet-name>json-ws</servlet-name>
 		<url-pattern>*.json</url-pattern>
