@@ -4,7 +4,7 @@
 	<property name="version" value="1.2.0" />
 
 	<property name="debug" value="true" />
-	<property name="flex.home" location="C:/Program Files/Adobe/Flex Builder 3 Plug-in/sdks/3.1.0" />	
+	<property name="flex.home" location="C:/Program Files/Adobe/Flex Builder 3 Plug-in/sdks/3.2.0" />	
 	<property name="dist" location="." />
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 
@@ -18,7 +18,7 @@
 	<target name="build-java" depends="init">
 		<mkdir dir="${tmp}/lib" />
 		<get src="http://repo1.maven.org/maven2/servletapi/servlet-api/2.4/servlet-api-2.4.jar" dest="${tmp}/lib/servlet-api.jar" />
-		<get src="http://maven.seasar.org/maven2/org/seasar/container/s2-framework/2.4.30/s2-framework-2.4.30.jar" dest="${tmp}/lib/s2-framework.jar" />
+		<get src="http://maven.seasar.org/maven2/org/seasar/container/s2-framework/2.4.34/s2-framework-2.4.34.jar" dest="${tmp}/lib/s2-framework.jar" />
 		<get src="http://repo1.maven.org/maven2/springframework/spring/1.2/spring-1.2.jar" dest="${tmp}/lib/spring.jar" />
 		<get src="http://repo1.maven.org/maven2/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar" dest="${tmp}/lib/commons-logging-1.1.1.jar" />
 		<get src="http://guice-maven.googlecode.com/svn/trunk/com/google/code/guice/guice/2.0/guice-2.0.jar" dest="${tmp}/lib/guice-2.0.jar" />
