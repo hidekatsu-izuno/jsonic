@@ -15,6 +15,7 @@
 
 	<target name="build" depends="init">
 		<java taskname="compc" jar="${flex.home}/lib/compc.jar" fork="true" failonerror="true" dir="${flex.home}/frameworks">
+			<jvmarg line="-Dfile.encoding=UTF-8"/>
 			<arg line="-accessible=true" />
 			<arg line="-locale=en_US,ja_JP" />
 			<arg line="-namespace 'http://arnx.net/jsonic' '${basedir}/src/manifest.xml'" />
@@ -25,6 +26,7 @@
 			<arg line="-include-classes 'net.arnx.jsonic.web.mxml.WebService'" />
 		</java>
 		<java taskname="asdoc" jar="${flex.home}/lib/asdoc.jar" fork="true" failonerror="true" dir="${flex.home}/frameworks">
+			<jvmarg line="-Dfile.encoding=UTF-8"/>
 			<arg line="-output '${tmp}/docs/api'" />
 			<arg line="-source-path '${basedir}/src'" />
 			<arg line="-doc-sources '${basedir}/src'" />
