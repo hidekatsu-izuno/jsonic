@@ -217,6 +217,7 @@ public class WebServiceServlet extends HttpServlet {
 		Object result = null;
 		
 		int errorCode = 0;
+		String errorName = null;
 		String errorMessage = null;
 		Throwable throwable = null;
 		
@@ -227,6 +228,7 @@ public class WebServiceServlet extends HttpServlet {
 						((req == null) ? "request" : (req.method == null) ? "method" : "params")
 						+ "is null.");
 				errorCode = -32600;
+				errorName = "ReferenceError";
 				errorMessage = "Invalid Request.";
 			} else {
 				int delimiter = req.method.lastIndexOf('.');
@@ -264,21 +266,25 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (ClassNotFoundException e) {
 			container.debug("Class Not Found.", e);
 			throwable = e;
+			errorName = "ReferenceError";
 			errorCode = -32601;
 			errorMessage = "Method not found.";
 		} catch (NoSuchMethodException e) {
 			container.debug("Method Not Found.", e);
 			throwable = e;
 			errorCode = -32601;
+			errorName = "ReferenceError";
 			errorMessage = "Method not found.";
 		} catch (JSONException e) {
 			container.debug("Fails to parse JSON.", e);
 			throwable = e;
 			if (e.getErrorCode() == JSONException.POSTPARSE_ERROR) {
 				errorCode = -32602;
+				errorName = "TypeError";
 				errorMessage = "Invalid params.";
 			} else  {
 				errorCode = -32700;
+				errorName = "SyntaxError";
 				errorMessage = "Parse error.";
 			}
 		} catch (InvocationTargetException e) {
@@ -288,18 +294,22 @@ public class WebServiceServlet extends HttpServlet {
 			if (cause instanceof IllegalStateException
 				|| cause instanceof UnsupportedOperationException) {
 				errorCode = -32601;
+				errorName = "ReferenceError";
 				errorMessage = "Method not found.";
 			} else if (cause instanceof IllegalArgumentException) {
 				errorCode = -32602;
+				errorName = "SyntaxError";
 				errorMessage = "Invalid params.";
 			} else {
 				errorCode = -32603;
+				errorName = cause.getClass().getSimpleName();
 				errorMessage = cause.getMessage();
 			}
 		} catch (Exception e) {
 			container.error("Internal error occurred.", e);
 			throwable = e;
 			errorCode = -32603;
+			errorName = e.getClass().getSimpleName();
 			errorMessage = "Internal error.";
 		}
 		
@@ -321,6 +331,7 @@ public class WebServiceServlet extends HttpServlet {
 		} else {
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
 			error.put("code", errorCode);
+			error.put("name", errorName);
 			error.put("message", errorMessage);
 			error.put("data", throwable);
 			res.put("error", error);
