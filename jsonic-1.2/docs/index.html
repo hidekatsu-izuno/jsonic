@@ -282,7 +282,7 @@ JSON json = new JSON() {
     <span class="comment">// java.awt.geom.Point2DをJSON arrayにフォーマットする例です。</span>
     if (value instanceof Point2D) {
       Point2D p = (Point2D)value;
-      List<Double> list = new ArrayList<Double>();
+      List&lt;Double&gt; list = new ArrayList&lt;Double&gt;();
       list.add(p.getX());
       list.add(p.getY());
       return list;
@@ -491,7 +491,7 @@ public class WithHintBean {
     
   <span class="comment">// 配列やリストでもOK</span>
   <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
-  public List<Date> dateArray;
+  public List&lt;Date&gt; dateArray;
   
   <span class="comment">// メソッドにも付与可能（getter/setterで別のヒントを与えることも可）</span>
   <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
@@ -501,7 +501,7 @@ public class WithHintBean {
   
   <span class="comment">// ArrayListの代わりにLinkedListのインスタンスを生成</span>
   <span class="em">@JSONHint(</span>type=LinkedList.class<span class="em">)</span>
-  public List<String> stringList;
+  public List&lt;String&gt; stringList;
     
   <span class="comment">// format/parse時に無視</span>
   <span class="em">@JSONHint(</span>ignore=true<span class="em">)</span>
@@ -601,6 +601,7 @@ public class WithHintBean {
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32600,
+  "name": "ReferenceError",
   "message": "Invalid Request."
 }</pre></td>
 </tr>
@@ -609,6 +610,7 @@ public class WithHintBean {
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32601,
+  "name": "ReferenceError",
   "message": "Method not found."
 }</pre></td>
 </tr>
@@ -617,6 +619,7 @@ public class WithHintBean {
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32602,
+  "name": "TypeError",
   "message": "Invalid params."
 }</pre></td>
 </tr>
@@ -625,6 +628,7 @@ public class WithHintBean {
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32700,
+  "name": "SyntaxError",
   "message": "Parse error."
 }</pre></td>
 </tr>
@@ -633,8 +637,9 @@ public class WithHintBean {
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32603,
-  "message": "Internal error."
-             or Exception.getMessage()
+  "name": Class#getSimpleName(),
+  "message": "Internal error." or Throwable#getMessage()
+  "data": Throwable
 }</pre></td>
 </tr>
 </table>
@@ -909,6 +914,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアトリビュートを追加しました。</li>
 <li>JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
 なお、Winstoneに限り、<code>request.getParameter(String name)</code>など呼び出し後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合があるため同状況では動作しません。</li>
+<li>JSON WebServiceのRPCモードにてエラー返却時、nameパラメータにクラスの単純名を設定するように変更しました。</li>
 <li>ドキュメントのRESTモードの説明にてJSON arrayが送られた場合のパラメータ設定順の記載が誤っていた点を修正しました。クエリ変数、パス変数と記載されていましたが、実際にはパス変数、クエリ変数の順に設定されます。</li>
 <li>sampleに同梱のprototype.jsとjquery.jsをそれぞれ1.6.1と1.3.2に更新しました。</li>
 </ul>
