@@ -56,6 +56,7 @@
 					'/{package}/{class}.{ext}': 'sample.seasar2.web.${package}.service.${class}Service'
 					'/{class}.{ext}': 'sample.seasar2.service.${class}Service'
 				}
+				viewstate: '__VIEWSTATE__'
 			</param-value>
 		</init-param>
 	</servlet>

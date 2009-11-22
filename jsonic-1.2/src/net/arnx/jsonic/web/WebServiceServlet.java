@@ -259,10 +259,12 @@ public class WebServiceServlet extends HttpServlet {
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce != null) response.setContentType(produce.value());
 				
-				if (config.viewstate != null && req.viewstate != null) {
+				if (config.viewstate != null) {
 					try {
 						viewStateField = component.getClass().getField(config.viewstate);
-						viewStateField.set(component, json.convert(req.viewstate, viewStateField.getGenericType()));
+						if (req.viewstate != null) {
+							viewStateField.set(component, json.convert(req.viewstate, viewStateField.getGenericType()));
+						}
 					} catch (NoSuchFieldException e) {
 						// no handle
 					} catch (Exception e) {
