@@ -21,15 +21,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,6 +58,7 @@ public class WebServiceServlet extends HttpServlet {
 		public Boolean expire;
 		public Map<String, List<Object>> mappings;
 		public Map<String, Pattern> definitions;
+		public String viewstate;
 	}
 	
 	private Container container;
@@ -157,15 +161,6 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		JSON json = null;
-		try {
-			json = (JSON)config.processor.newInstance();
-		} catch (Exception e) {
-			throw new ServletException(e);
-		}
-		json.setLocale(request.getLocale());
-		request.setAttribute(JSON.class.getName(), json);
-		
 		if (route.isRpcMode()) {
 			if ("POST".equals(route.getMethod())) {
 				container.debug("Route found: " + request.getMethod() + " " + uri);
@@ -209,12 +204,13 @@ public class WebServiceServlet extends HttpServlet {
 		public String method;
 		public List<Object> params;
 		public Object id;
+		public Object viewstate;
 	}
 	
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		JSON json = (JSON)request.getAttribute(JSON.class.getName());
+		JSON json = newJSON(request.getLocale());
 		
 		// request processing
 		RpcRequest req = null;
@@ -224,6 +220,9 @@ public class WebServiceServlet extends HttpServlet {
 		String errorName = null;
 		String errorMessage = null;
 		Throwable throwable = null;
+		
+		Object component = null;
+		Field viewStateField = null;
 		
 		try {
 			req = json.parse(request.getReader(), RpcRequest.class);
@@ -240,7 +239,12 @@ public class WebServiceServlet extends HttpServlet {
 					throw new NoSuchMethodException(req.method);
 				}
 				
-				Object component = container.getComponent(
+				String methodName = req.method.substring(delimiter+1);
+				if (methodName.equals(container.init) || methodName.equals(container.destroy)) {
+					throw new NoSuchMethodException(req.method);
+				}
+				
+				component = container.getComponent(
 					route.getComponentClass(req.method.substring(0, delimiter)),
 					request, response
 				);
@@ -250,20 +254,23 @@ public class WebServiceServlet extends HttpServlet {
 				
 				json.setContext(component);
 				
-				Method method = container.findMethod(component, req.method.substring(delimiter+1), req.params);
-				Type[] argTypes = method.getParameterTypes();
-				
-				Object[] args = new Object[argTypes.length];
-				for (int i = 0; i < args.length; i++) {
-					args[i] = json.convert((i < req.params.size()) ? req.params.get(i) : null, argTypes[i]);
-				}
+				Method method = container.findMethod(component, methodName, req.params);
 				
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce != null) response.setContentType(produce.value());
 				
-				args = container.preinvoke(component, args);
-				result = method.invoke(component, args);
-				result = container.postinvoke(component, result);
+				if (config.viewstate != null && req.viewstate != null) {
+					try {
+						viewStateField = component.getClass().getField(config.viewstate);
+						viewStateField.set(component, json.convert(req.viewstate, viewStateField.getGenericType()));
+					} catch (NoSuchFieldException e) {
+						// no handle
+					} catch (Exception e) {
+						container.debug("fails to set viewstate.", e);
+					}
+				}
+				
+				result = invoke(json, component, method, req.params);
 				
 				if (produce != null) return;
 			}
@@ -341,6 +348,14 @@ public class WebServiceServlet extends HttpServlet {
 			res.put("error", error);
 		}
 		res.put("id", (req != null) ? req.id : null);
+		
+		if (viewStateField != null) {
+			try {
+				res.put("viewstate", viewStateField.get(component));
+			} catch (Exception e) {
+				container.debug("fails to get viewstate.", e);
+			}
+		}
 
 		Writer writer = response.getWriter();
 
@@ -369,7 +384,7 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		JSON json = (JSON)request.getAttribute(JSON.class.getName());
+		JSON json = newJSON(request.getLocale());
 		
 		int status = SC_OK;
 		String callback = null;
@@ -381,7 +396,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		String methodName = route.getRestMethod();
-		if (methodName == null) {
+		if (methodName == null || methodName.equals(container.init) || methodName.equals(container.destroy)) {
 			container.debug("Method mapping not found: " + route.getMethod());
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
@@ -420,19 +435,11 @@ public class WebServiceServlet extends HttpServlet {
 			json.setContext(component);
 			
 			Method method = container.findMethod(component, methodName, params);
-			Type[] argTypes = method.getParameterTypes();
-			
-			Object[] args = new Object[argTypes.length];
-			for (int i = 0; i < args.length; i++) {
-				args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
-			}
 			
 			Produce produce = method.getAnnotation(Produce.class);
 			if (produce != null) response.setContentType(produce.value());
 			
-			args = container.preinvoke(component, args);
-			res = method.invoke(component, args);
-			res = container.postinvoke(component, res);
+			res = invoke(json, component, method, params);
 			
 			if (produce != null) return;
 		} catch (ClassNotFoundException e) {
@@ -490,13 +497,99 @@ public class WebServiceServlet extends HttpServlet {
 			container.error("Fails to format.", e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
-		}		
+		}
+	}
+	
+	private Object invoke(JSON json, Object component, Method method, List<?> params) throws Exception {
+		Object result = null;
+		
+		Type[] argTypes = method.getParameterTypes();
+		
+		Object[] args = new Object[argTypes.length];
+		for (int i = 0; i < args.length; i++) {
+			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
+		}
+		
+		Method init = null;
+		Method destroy = null;
+		
+		if (container.init != null || container.destroy != null) {
+			boolean illegalInit = false;
+			boolean illegalDestroy = false;
+			
+			for (Method m : component.getClass().getMethods()) {
+				if (Modifier.isStatic(m.getModifiers())) continue;
+				
+				if (m.getName().equals(container.init)) {
+					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
+						init = m;
+					} else {
+						illegalInit = true;
+					}
+					continue;
+				}
+				if (m.getName().equals(container.destroy)) {
+					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
+						destroy = m;
+					} else {
+						illegalDestroy = true;
+					}
+					continue;
+				}
+			}
+	
+			if (illegalInit) container.debug("Notice: init method must have no arguments.");		
+			if (illegalDestroy) container.debug("Notice: destroy method must have no arguments.");
+		}
+		
+		if (init != null) {
+			if (container.isDebugMode()) {
+				container.debug("Execute: " + toPrintString(component, init, null));
+			}
+			init.invoke(component);
+		}
+		args = container.preinvoke(component, args);
+		if (container.isDebugMode()) {
+			container.debug("Execute: " + toPrintString(component, method, args));
+		}
+		result = method.invoke(component, args);
+		result = container.postinvoke(component, result);
+		if (destroy != null) {
+			if (container.isDebugMode()) {
+				container.debug("Execute: " + toPrintString(component, destroy, null));
+			}
+			destroy.invoke(component);
+		}
+		
+		return result;
 	}
 	
 	@Override
 	public void destroy() {
 		container.destory();
 		super.destroy();
+	}
+	
+	private JSON newJSON(Locale locale) throws ServletException {
+		JSON json = null;
+		try {
+			json = (JSON)config.processor.newInstance();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
+		json.setLocale(locale);		
+		return json;
+	}
+	
+	private String toPrintString(Object o, Method method, Object[] args) {
+		StringBuilder sb = new StringBuilder(o.getClass().getName());
+		sb.append('#').append(method.getName()).append('(');
+		if (args != null) {
+			String str = JSON.encode(args);
+			sb.append(str, 1, str.length()-1);
+		}
+		sb.append(')');
+		return sb.toString();
 	}
 	
 	@SuppressWarnings("unchecked")

@@ -37,7 +37,7 @@ public class Container {
 	
 	private ServletConfig config;
 	private ServletContext context;
-
+	
 	public void init(ServletConfig config) {
 		this.config = config;
 		this.context = config.getServletContext();
@@ -51,7 +51,7 @@ public class Container {
 		throws Exception {
 		
 		Object o = findClass(className).newInstance();
-		
+
 		for (Field field : o.getClass().getFields()) {
 			Class<?> c = field.getType();
 			if (ServletContext.class.equals(c) && "application".equals(field.getName())) {
@@ -70,13 +70,13 @@ public class Container {
 		return o;
 	}
 	
-	public Class<?> findClass(String name) throws ClassNotFoundException {
+	protected static Class<?> findClass(String name) throws ClassNotFoundException {
 		Class<?> c = null;
 		try {
 			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
 		} catch (ClassNotFoundException e) {
 			try {
-				c = Class.forName(name, true, this.getClass().getClassLoader());
+				c = Class.forName(name, true, Container.class.getClassLoader());
 			} catch (ClassNotFoundException e2) {
 				c = Class.forName(name);				
 			}
@@ -92,33 +92,11 @@ public class Container {
 	 * @param params The parameters of the target method.
 	 * @return The parameters before processing.
 	 */
-	protected Object[] preinvoke(Object target, Object... params) throws Exception {
-		if (init != null) {
-			Class<?> c = target.getClass();
-			Method method = null;
-			boolean illegal = false;
-			for (Method m : c.getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())) continue;
-				
-				if (m.getName().equals(init)) {
-					if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
-						method = m;
-					} else {
-						illegal = true;
-					}
-				}
-			}			
-			
-			if (method != null) {
-				method.invoke(target);
-			} else if (illegal) {
-				debug("Notice: init method must have no arguments.");
-			}
-		}
+	public Object[] preinvoke(Object target, Object... params) throws Exception {
 		return params;
 	}
 	
-	protected Method findMethod(Object o, String methodName, List<?> args) throws NoSuchMethodException {
+	public Method findMethod(Object o, String methodName, List<?> args) throws NoSuchMethodException {
 		if (args == null) args = Collections.emptyList();
 		
 		methodName = toLowerCamel(methodName);
@@ -158,37 +136,11 @@ public class Container {
 	 * @param result The returned value of the target method call.
 	 * @return The returned value after processed.
 	 */
-	protected Object postinvoke(Object target, Object result) throws Exception {
-		if (destroy != null) {
-			Class<?> c = target.getClass();
-			Method method = null;
-			boolean illegal = false;
-			for (Method m : c.getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())) continue;
-				
-				if (m.getName().equals(destroy)) {
-					if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
-						method = m;
-					} else {
-						illegal = true;
-					}
-				}
-			}
-			
-			if (method != null) {
-				method.invoke(target);
-			} else if (illegal) {
-				debug("Notice: destroy method must have no arguments.");
-			}
-		}
+	public Object postinvoke(Object target, Object result) throws Exception {
 		return result;
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {
-		String name = method.getName();
-		if (name.equals(init) || name.equals(destroy)) {
-			return true;
-		}
 		return method.getDeclaringClass().equals(Object.class);
 	}
 	

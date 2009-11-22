@@ -765,7 +765,7 @@ public class HogeService {
     <span class="elem">&lt;param-value&gt;</span>
       <span class="comment">// "container": (net.arnx.jsonic.web.Containerを実装したクラス)</span>
       <span class="comment">// Seasar2対応Container</span>
-      "container": "net.arnx.jsonic.web.extension.S2Container" 
+      "container": "net.arnx.jsonic.web.extension.Seasar2Container" 
       <span class="comment">// Spring Framework対応Container</span>
       "container": "net.arnx.jsonic.web.extension.SpringContainer"
       <span class="comment">// Google Guice対応Container</span>
@@ -776,7 +776,7 @@ public class HogeService {
 <span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています（※1.2よりパッケージ名が変更されています。ご注意ください）。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています（※1.2よりパッケージ名やクラス名が変更されています。ご注意ください）。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 <p>デフォルトでは最低限の機能のみ持つnet.arnx.jsonic.web.Containerが使われます。このコンテナが持つ機能は次の通りです。</p>
 <ul>
 <li>オブジェクトはClass#newInstance()により毎回生成されます。</li>
@@ -909,6 +909,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>[非互換] JSON WebServiceにて1.1までは送信されたContent-Typeに関わらずJSONとして処理されていましたが、1.2以降では送信時のContent-Typeが「<code>application/json</code>」の場合のみJSONとして処理されます。</li>
 <li>[非互換] JSON WebServiceにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください。</li>
+<li>[非互換] JSON WebServiceのSeasar2用コンテナの名称を<code>net.arnx.jsonic.web.S2Container</code>から<code>net.arnx.jsonic.web.extension.Seasar2Container</code>に変更しました。</li>
+<li>[非互換] JSON WebService用JSON Processorの名称を<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>から<code>net.arnx.jsonic.web.WebServiceServlet.WebServiceJSON</code>に変更しました。</li>
 <li>[非互換] JSON WebServiceにてWebServiceServletに存在したpreinvoke, invoke, postinvokeの各メソッドは機能をContainerクラスに移動しpreinvoke, findMethod, postinvokeとなりました。</li>
 <li>JSON WebServiceにて、HTTP Methodに対応して呼ばれるメソッドをルート単位で変更できるようにしました。</li>
 <li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアトリビュートを追加しました。</li>
