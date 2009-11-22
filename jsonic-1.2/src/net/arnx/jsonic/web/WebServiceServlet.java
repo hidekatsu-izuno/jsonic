@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -68,7 +69,7 @@ public class WebServiceServlet extends HttpServlet {
 		String configText = servletConfig.getInitParameter("config");
 		if (configText == null) configText = "";
 		 
-		net.arnx.jsonic.JSON json = new net.arnx.jsonic.JSON();
+		JSON json = new JSON();
 		
 		try {
 			config = json.parse(configText, getConfigClass());
@@ -80,7 +81,7 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.processor == null) config.processor = WebServiceServlet.JSON.class;
+		if (config.processor == null) config.processor = WebServiceJSON.class;
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
@@ -156,6 +157,15 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
+		JSON json = null;
+		try {
+			json = (JSON)config.processor.newInstance();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
+		json.setLocale(request.getLocale());
+		request.setAttribute(JSON.class.getName(), json);
+		
 		if (route.isRpcMode()) {
 			if ("POST".equals(route.getMethod())) {
 				container.debug("Route found: " + request.getMethod() + " " + uri);
@@ -203,14 +213,8 @@ public class WebServiceServlet extends HttpServlet {
 	
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
-				
-		net.arnx.jsonic.JSON json = null;
-		try {
-			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
-		} catch (Exception e) {
-			throw new ServletException(e);
-		}
-		json.setLocale(request.getLocale());
+		
+		JSON json = (JSON)request.getAttribute(JSON.class.getName());
 		
 		// request processing
 		RpcRequest req = null;
@@ -352,6 +356,7 @@ public class WebServiceServlet extends HttpServlet {
 			res.put("result", null);
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
 			error.put("code", -32603);
+			error.put("name", e.getClass().getSimpleName());
 			error.put("message", "Internal error.");
 			error.put("data", e);
 			res.put("error", error);
@@ -363,6 +368,8 @@ public class WebServiceServlet extends HttpServlet {
 	
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
+		
+		JSON json = (JSON)request.getAttribute(JSON.class.getName());
 		
 		int status = SC_OK;
 		String callback = null;
@@ -379,15 +386,6 @@ public class WebServiceServlet extends HttpServlet {
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		}
-		
-		// request processing
-		net.arnx.jsonic.JSON json = null;
-		try {
-			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
-		} catch (Exception e) {
-			throw new ServletException(e);
-		}
-		json.setLocale(request.getLocale());
 		
 		Object res = null;
 		try {
@@ -506,7 +504,7 @@ public class WebServiceServlet extends HttpServlet {
 		return (T)o;
 	}
 	
-	public static class JSON extends net.arnx.jsonic.JSON {
+	public static class WebServiceJSON extends JSON {
 		@Override
 		protected boolean ignore(Context context, Class<?> target, Member member) {
 			return member.getDeclaringClass().equals(Throwable.class)
