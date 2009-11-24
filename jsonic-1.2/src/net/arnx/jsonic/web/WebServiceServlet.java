@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -58,7 +57,6 @@ public class WebServiceServlet extends HttpServlet {
 		public Boolean expire;
 		public Map<String, List<Object>> mappings;
 		public Map<String, Pattern> definitions;
-		public String viewstate;
 	}
 	
 	private Container container;
@@ -178,33 +176,52 @@ public class WebServiceServlet extends HttpServlet {
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {		
-		process(request, response);
+			throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			process(request, response);
+		} finally {
+			container.end(request, response);
+		}
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		process(request, response);
+		container.start(request, response);
+		try {
+			process(request, response);
+		} finally {
+			container.end(request, response);
+		}
 	}
 	
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		process(request, response);
+		container.start(request, response);
+		try {
+			process(request, response);
+		} finally {
+			container.end(request, response);
+		}
 	}
 	
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
-		process(request, response);
+		container.start(request, response);
+		try {
+			process(request, response);
+		} finally {
+			container.end(request, response);
+		}
 	}
 	
 	class RpcRequest {
 		public String method;
 		public List<Object> params;
 		public Object id;
-		public Object viewstate;
 	}
 	
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
@@ -222,7 +239,6 @@ public class WebServiceServlet extends HttpServlet {
 		Throwable throwable = null;
 		
 		Object component = null;
-		Field viewStateField = null;
 		
 		try {
 			req = json.parse(request.getReader(), RpcRequest.class);
@@ -244,10 +260,7 @@ public class WebServiceServlet extends HttpServlet {
 					throw new NoSuchMethodException(req.method);
 				}
 				
-				component = container.getComponent(
-					route.getComponentClass(req.method.substring(0, delimiter)),
-					request, response
-				);
+				component = container.getComponent(route.getComponentClass(container, req.method.substring(0, delimiter)));
 				if (component == null) {
 					throw new NoSuchMethodException(req.method);
 				}
@@ -258,20 +271,7 @@ public class WebServiceServlet extends HttpServlet {
 				
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce != null) response.setContentType(produce.value());
-				
-				if (config.viewstate != null) {
-					try {
-						viewStateField = component.getClass().getField(config.viewstate);
-						if (req.viewstate != null) {
-							viewStateField.set(component, json.convert(req.viewstate, viewStateField.getGenericType()));
-						}
-					} catch (NoSuchFieldException e) {
-						// no handle
-					} catch (Exception e) {
-						container.debug("fails to set viewstate.", e);
-					}
-				}
-				
+								
 				result = invoke(json, component, method, req.params);
 				
 				if (produce != null) return;
@@ -351,14 +351,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		res.put("id", (req != null) ? req.id : null);
 		
-		if (viewStateField != null) {
-			try {
-				res.put("viewstate", viewStateField.get(component));
-			} catch (Exception e) {
-				container.debug("fails to get viewstate.", e);
-			}
-		}
-
 		Writer writer = response.getWriter();
 
 		try {
@@ -406,9 +398,9 @@ public class WebServiceServlet extends HttpServlet {
 		
 		Object res = null;
 		try {
-			Object component = container.getComponent(route.getComponentClass(null), request, response);
+			Object component = container.getComponent(route.getComponentClass(container, null));
 			if (component == null) {
-				container.debug("Component not found: " + route.getComponentClass(null));
+				container.debug("Component not found: " + route.getComponentClass(container, null));
 				response.sendError(SC_NOT_FOUND, "Not Found");
 				return;
 			}
@@ -493,6 +485,7 @@ public class WebServiceServlet extends HttpServlet {
 				json.format(res, writer);
 				if (callback != null) writer.append(");");
 			}
+			
 		} catch (IOException e) {
 			throw e;
 		} catch (Exception e) {
@@ -504,13 +497,6 @@ public class WebServiceServlet extends HttpServlet {
 	
 	private Object invoke(JSON json, Object component, Method method, List<?> params) throws Exception {
 		Object result = null;
-		
-		Type[] argTypes = method.getParameterTypes();
-		
-		Object[] args = new Object[argTypes.length];
-		for (int i = 0; i < args.length; i++) {
-			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
-		}
 		
 		Method init = null;
 		Method destroy = null;
@@ -544,18 +530,26 @@ public class WebServiceServlet extends HttpServlet {
 			if (illegalDestroy) container.debug("Notice: destroy method must have no arguments.");
 		}
 		
+		Type[] argTypes = method.getParameterTypes();
+		Object[] args = new Object[argTypes.length];
+		for (int i = 0; i < args.length; i++) {
+			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
+		}
+		if (container.isDebugMode()) {
+			container.debug("Execute: " + toPrintString(component, method, args));
+		}
+		
 		if (init != null) {
 			if (container.isDebugMode()) {
 				container.debug("Execute: " + toPrintString(component, init, null));
 			}
 			init.invoke(component);
 		}
-		args = container.preinvoke(component, args);
-		if (container.isDebugMode()) {
-			container.debug("Execute: " + toPrintString(component, method, args));
-		}
+		
+		args = container.preinvoke(component, method, args);
 		result = method.invoke(component, args);
-		result = container.postinvoke(component, result);
+		result = container.postinvoke(component, method, result);
+		
 		if (destroy != null) {
 			if (container.isDebugMode()) {
 				container.debug("Execute: " + toPrintString(component, destroy, null));

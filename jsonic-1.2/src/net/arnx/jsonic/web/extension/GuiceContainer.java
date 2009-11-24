@@ -20,9 +20,6 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import net.arnx.jsonic.web.Container;
 import net.arnx.jsonic.web.WebServiceServlet;
 
@@ -42,7 +39,7 @@ public class GuiceContainer extends Container {
 	}
 	
 	@Override
-	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public Object getComponent(String className) throws Exception {
 		return injector.getInstance(Class.forName(className));
 	}
 

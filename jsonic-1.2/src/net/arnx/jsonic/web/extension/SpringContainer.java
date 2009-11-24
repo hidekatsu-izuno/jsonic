@@ -16,8 +16,6 @@
 package net.arnx.jsonic.web.extension;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.web.Container;
 import net.arnx.jsonic.web.WebServiceServlet;
@@ -40,7 +38,7 @@ public class SpringContainer extends Container {
 	}
 	
 	@Override
-	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public Object getComponent(String className) throws Exception {
 		Object component = appContext.getBean(className);
 		
 		if (component instanceof ApplicationContextAware) {

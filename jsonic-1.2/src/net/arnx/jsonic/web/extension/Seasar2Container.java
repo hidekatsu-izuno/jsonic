@@ -15,9 +15,6 @@
  */
 package net.arnx.jsonic.web.extension;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import net.arnx.jsonic.web.Container;
 import net.arnx.jsonic.web.WebServiceServlet;
 
@@ -29,7 +26,7 @@ public class Seasar2Container extends Container {
 	private static Logger log = Logger.getLogger(WebServiceServlet.class);
 	
 	@Override
-	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public Object getComponent(String className) throws Exception {
 		return SingletonS2ContainerFactory
 			.getContainer()
 			.getComponent(findClass(className));

@@ -113,6 +113,27 @@ public class Route {
 		return params;
 	}
 	
+	public String getComponentClass(Container container, String sub) {
+		Matcher m = REPLACE_PATTERN.matcher(target);
+		StringBuffer sb = new StringBuffer();
+		while (m.find()) {
+			String key = m.group(1);
+			String value = getParameter(key);
+			
+			if (key.equals("class") && container.namingConversion) {
+				value = toUpperCamel((sub != null) ? sub 
+					: (value != null) ? value : "");
+			} else if (value == null) {
+				value = "";
+			} else if (key.equals("package")) {
+				value = value.replace('/', '.');
+			}
+			m.appendReplacement(sb, value);
+		}
+		m.appendTail(sb);
+		return sb.toString();
+	}
+	
 	@SuppressWarnings("unchecked")
 	public Map<?, ?> mergeParameterMap(Map<?, ?> newParams) {
 		for (Map.Entry<?, ?> entry : newParams.entrySet()) {
@@ -151,27 +172,6 @@ public class Route {
 	
 	public boolean hasJSONContent() {
 		return "application/json".equalsIgnoreCase(contentType);
-	}
-	
-	public String getComponentClass(String sub) {
-		Matcher m = REPLACE_PATTERN.matcher(target);
-		StringBuffer sb = new StringBuffer();
-		while (m.find()) {
-			String key = m.group(1);
-			String value = getParameter(key);
-			
-			if (key.equals("class")) {
-				value = toUpperCamel((sub != null) ? sub 
-					: (value != null) ? value : "");
-			} else if (value == null) {
-				value = "";
-			} else if (key.equals("package")) {
-				value = value.replace('/', '.');
-			}
-			m.appendReplacement(sb, value);
-		}
-		m.appendTail(sb);
-		return sb.toString();
 	}
 	
 	private Map<String, String[]> parseQueryString(String qs, String encoding) throws UnsupportedEncodingException {

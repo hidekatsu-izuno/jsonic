@@ -34,24 +34,26 @@ public class Container {
 	public Boolean debug = false;
 	public String init = "init";
 	public String destroy = "destroy";
+	public boolean namingConversion = true;
 	
-	private ServletConfig config;
-	private ServletContext context;
+	protected ServletConfig config;
+	protected ServletContext context;
+	protected HttpServletRequest request;
+	protected HttpServletResponse response;
 	
 	public void init(ServletConfig config) {
 		this.config = config;
 		this.context = config.getServletContext();
 	}
-
-	public boolean isDebugMode() {
-		return (debug != null) ? debug : false;
+	
+	public void start(HttpServletRequest request, HttpServletResponse response) {
+		this.request = request;
+		this.response = response;
 	}
 	
-	public Object getComponent(String className, HttpServletRequest request, HttpServletResponse response) 
-		throws Exception {
-		
+	public Object getComponent(String className) throws Exception {
 		Object o = findClass(className).newInstance();
-
+		
 		for (Field field : o.getClass().getFields()) {
 			Class<?> c = field.getType();
 			if (ServletContext.class.equals(c) && "application".equals(field.getName())) {
@@ -70,13 +72,13 @@ public class Container {
 		return o;
 	}
 	
-	protected static Class<?> findClass(String name) throws ClassNotFoundException {
+	protected Class<?> findClass(String name) throws ClassNotFoundException {
 		Class<?> c = null;
 		try {
 			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
 		} catch (ClassNotFoundException e) {
 			try {
-				c = Class.forName(name, true, Container.class.getClassLoader());
+				c = Class.forName(name, true, this.getClass().getClassLoader());
 			} catch (ClassNotFoundException e2) {
 				c = Class.forName(name);				
 			}
@@ -85,23 +87,12 @@ public class Container {
 		return c;
 	}
 	
-	/**
-	 * Called before invoking the target method.
-	 * 
-	 * @param target The target instance.
-	 * @param params The parameters of the target method.
-	 * @return The parameters before processing.
-	 */
-	public Object[] preinvoke(Object target, Object... params) throws Exception {
-		return params;
-	}
-	
-	public Method findMethod(Object o, String methodName, List<?> args) throws NoSuchMethodException {
-		if (args == null) args = Collections.emptyList();
+	public Method findMethod(Object target, String methodName, List<?> params) throws NoSuchMethodException {
+		if (params == null) params = Collections.emptyList();
 		
-		methodName = toLowerCamel(methodName);
+		if (namingConversion) methodName = toLowerCamel(methodName);
 		
-		Class<?> c = o.getClass();
+		Class<?> c = target.getClass();
 		
 		Method method = null;
 		Type[] paramTypes = null;
@@ -111,22 +102,33 @@ public class Container {
 			
 			if (m.getName().equals(methodName)) {
 				Type[] pTypes = m.getGenericParameterTypes();
-				if (args.size() <= Math.max(1, pTypes.length)) {
-					if (method == null || Math.abs(args.size() - pTypes.length) < Math.abs(args.size() - paramTypes.length)) {
+				if (params.size() <= Math.max(1, pTypes.length)) {
+					if (method == null || Math.abs(params.size() - pTypes.length) < Math.abs(params.size() - paramTypes.length)) {
 						method = m;
 						paramTypes = pTypes;
 					} else if (pTypes.length == paramTypes.length) {
-						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, args));
+						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, params));
 					}
 				}
 			}
 		}
 		
 		if (method == null || limit(c, method)) {
-			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, args));
+			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, params));
 		}
 		
 		return method;
+	}
+	
+	/**
+	 * Called before invoking the target method.
+	 * 
+	 * @param target The target instance.
+	 * @param params The parameters before processing of the target method.
+	 * @return The parameters before processing.
+	 */
+	public Object[] preinvoke(Object target, Method method, Object... params) throws Exception {
+		return params;
 	}
 	
 	/**
@@ -136,12 +138,24 @@ public class Container {
 	 * @param result The returned value of the target method call.
 	 * @return The returned value after processed.
 	 */
-	public Object postinvoke(Object target, Object result) throws Exception {
+	public Object postinvoke(Object target, Method method, Object result) throws Exception {
 		return result;
+	}
+	
+	public void end(HttpServletRequest request, HttpServletResponse response) {
+		request = null;
+		response = null;
+	}
+
+	public void destory() {
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {
 		return method.getDeclaringClass().equals(Object.class);
+	}
+
+	public boolean isDebugMode() {
+		return (debug != null) ? debug : false;
 	}
 	
 	public void debug(String message) {
@@ -166,8 +180,6 @@ public class Container {
 		}
 	}
 
-	public void destory() {
-	}
 	
 	private static String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());

@@ -16,19 +16,11 @@
 package sample.seasar2.web.rpc.service;
 
 public class EditService {
-	public String __VIEWSTATE__;
-	
 	public String concat(String a, String b) {
 		return a + b;
 	}
 	
 	public String[] split(String a, String b) {
 		return a.split(b);
-	}
-	
-	public String viewstate(String a) {
-		String result = __VIEWSTATE__ + a;
-		__VIEWSTATE__ = result;
-		return result;
 	}
 }
