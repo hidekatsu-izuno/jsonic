@@ -40,7 +40,7 @@ public class GuiceContainer extends Container {
 	
 	@Override
 	public Object getComponent(String className) throws Exception {
-		return injector.getInstance(Class.forName(className));
+		return injector.getInstance(findClass(className));
 	}
 
 	@Override
