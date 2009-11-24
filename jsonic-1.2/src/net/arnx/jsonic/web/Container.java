@@ -31,7 +31,7 @@ import javax.servlet.http.HttpSession;
 import net.arnx.jsonic.JSON;
 
 public class Container {
-	public Boolean debug = false;
+	public Boolean debug;
 	public String init = "init";
 	public String destroy = "destroy";
 	public boolean namingConversion = true;

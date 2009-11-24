@@ -19,7 +19,6 @@ import net.arnx.jsonic.web.Container;
 import net.arnx.jsonic.web.WebServiceServlet;
 
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
-import org.seasar.framework.env.Env;
 import org.seasar.framework.log.Logger;
 
 public class Seasar2Container extends Container {
@@ -34,7 +33,7 @@ public class Seasar2Container extends Container {
 	
 	@Override
 	public boolean isDebugMode() {
-		return (debug != null) ? debug : Env.UT.equals(Env.getValue());
+		return (debug != null) ? debug : log.isDebugEnabled();
 	}
 
 	@Override

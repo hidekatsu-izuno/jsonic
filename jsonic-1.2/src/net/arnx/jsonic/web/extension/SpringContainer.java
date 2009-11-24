@@ -47,6 +47,11 @@ public class SpringContainer extends Container {
 		
 		return component;
 	}
+	
+	@Override
+	public boolean isDebugMode() {
+		return (debug != null) ? debug : log.isDebugEnabled();
+	}
 
 	@Override
 	public void debug(String message, Throwable e) {

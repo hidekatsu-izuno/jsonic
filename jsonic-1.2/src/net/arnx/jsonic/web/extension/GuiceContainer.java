@@ -19,7 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
+
 import net.arnx.jsonic.web.Container;
 import net.arnx.jsonic.web.WebServiceServlet;
 
@@ -32,9 +32,6 @@ public class GuiceContainer extends Container {
 
 	public void init(ServletConfig config) {
 		super.init(config);
-		
-		ServletContext context = config.getServletContext();
-		
 		this.injector = (Injector)context.getAttribute(Injector.class.getName());
 	}
 	
@@ -42,7 +39,12 @@ public class GuiceContainer extends Container {
 	public Object getComponent(String className) throws Exception {
 		return injector.getInstance(findClass(className));
 	}
-
+	
+	@Override
+	public boolean isDebugMode() {
+		return (debug != null) ? debug : log.isLoggable(Level.FINE);
+	}
+	
 	@Override
 	public void debug(String message, Throwable e) {
 		if (e != null) {
