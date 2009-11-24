@@ -267,7 +267,7 @@ public class WebServiceServlet extends HttpServlet {
 				
 				json.setContext(component);
 				
-				Method method = container.findMethod(component, methodName, req.params);
+				Method method = container.getMethod(component, methodName, req.params);
 				
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce != null) response.setContentType(produce.value());
@@ -428,7 +428,7 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			json.setContext(component);
 			
-			Method method = container.findMethod(component, methodName, params);
+			Method method = container.getMethod(component, methodName, params);
 			
 			Produce produce = method.getAnnotation(Produce.class);
 			if (produce != null) response.setContentType(produce.value());

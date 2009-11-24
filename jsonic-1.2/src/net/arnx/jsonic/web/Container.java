@@ -72,12 +72,12 @@ public class Container {
 		return o;
 	}
 	
-	public Method findMethod(Object target, String methodName, List<?> params) throws NoSuchMethodException {
+	public Method getMethod(Object component, String methodName, List<?> params) throws NoSuchMethodException {
 		if (params == null) params = Collections.emptyList();
 		
 		if (namingConversion) methodName = toLowerCamel(methodName);
 		
-		Class<?> c = target.getClass();
+		Class<?> c = component.getClass();
 		
 		Method method = null;
 		Type[] paramTypes = null;
@@ -108,22 +108,22 @@ public class Container {
 	/**
 	 * Called before invoking the target method.
 	 * 
-	 * @param target The target instance.
+	 * @param component The target instance.
 	 * @param params The parameters before processing of the target method.
 	 * @return The parameters before processing.
 	 */
-	public Object[] preinvoke(Object target, Method method, Object... params) throws Exception {
+	public Object[] preinvoke(Object component, Method method, Object... params) throws Exception {
 		return params;
 	}
 	
 	/**
 	 * Called after invoked the target method.
 	 * 
-	 * @param target The target instance.
+	 * @param component The target instance.
 	 * @param result The returned value of the target method call.
 	 * @return The returned value after processed.
 	 */
-	public Object postinvoke(Object target, Method method, Object result) throws Exception {
+	public Object postinvoke(Object component, Method method, Object result) throws Exception {
 		return result;
 	}
 	
