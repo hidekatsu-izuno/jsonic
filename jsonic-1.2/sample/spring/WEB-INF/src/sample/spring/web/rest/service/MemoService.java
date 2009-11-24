@@ -21,12 +21,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import net.arnx.jsonic.web.Produce;
 
 import org.springframework.web.context.ServletContextAware;
 
@@ -36,21 +41,34 @@ public class MemoService implements ServletContextAware {
 	private int count = 0;
 	private Map<Integer, Memo> list;
 
-	public ServletContext application;
+	private ServletContext context;
+	private HttpServletRequest request;
+	private HttpServletResponse response;
 
 	@Override
 	public void setServletContext(ServletContext context) {
-		this.application = context;
+		this.context = context;
+	}
+	
+	
+	// JSONIC original injection
+	public void setRequest(HttpServletRequest request) {
+		this.request = request;
+	}
+	
+	// JSONIC original injection
+	public void setResponse(HttpServletResponse response) {
+		this.response = response;
 	}
 	
 	@SuppressWarnings("unchecked")
 	public void init() {
-		// response.setHeader("X-JSON", "[\"Hello. JSONIC!\"]");
+		response.setHeader("X-JSON", request.getHeader("X-JSON"));
 		
 		ObjectInputStream oin = null;
 		synchronized(MemoService.class) {
 			try {
-				File file = new File(application.getRealPath("/WEB-INF/database.dat"));
+				File file = new File(context.getRealPath("/WEB-INF/database.dat"));
 				if (file.exists()) {
 					oin = new ObjectInputStream(new FileInputStream(file));
 					count = oin.readInt();
@@ -109,11 +127,27 @@ public class MemoService implements ServletContextAware {
 		list.remove(memo.id);
 	}
 	
+	@Produce("text/csv")
+	public void print() throws IOException {
+		response.setCharacterEncoding("MS932");
+		response.setHeader("Content-Disposition", "attachment; filename=\"memos.csv\"");
+		PrintWriter writer = response.getWriter();
+		
+		for (Memo memo : list.values()) {
+			writer.print(memo.id);
+			writer.print(",");
+			writer.print(memo.title);
+			writer.print(",");
+			writer.print(memo.text);
+			writer.print("\r\n");
+		}
+	}
+	
 	public void destroy() {
 		ObjectOutputStream oout = null;
 		synchronized(MemoService.class) {
 			try {
-				oout = new ObjectOutputStream(new FileOutputStream(application.getRealPath("/WEB-INF/database.dat")));
+				oout = new ObjectOutputStream(new FileOutputStream(context.getRealPath("/WEB-INF/database.dat")));
 				oout.writeInt(count);
 				oout.writeObject(list);
 				oout.flush();

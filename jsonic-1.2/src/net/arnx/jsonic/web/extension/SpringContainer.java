@@ -18,10 +18,8 @@ package net.arnx.jsonic.web.extension;
 import java.lang.reflect.Method;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.web.Container;
 import net.arnx.jsonic.web.WebServiceServlet;
@@ -55,16 +53,10 @@ public class SpringContainer extends Container {
 			Class<?>[] params = method.getParameterTypes();
 			if (void.class.equals(method.getReturnType()) && params.length == 1) {
 				Class<?> c = params[0];
-				if (ServletContext.class.equals(c) && "setApplication".equals(method.getName())) {
-					method.invoke(component, context);
-				} else if (ServletConfig.class.equals(c) && "setConfig".equals(method.getName())) {
-					method.invoke(component, config);
-				} else if (HttpServletRequest.class.equals(c) && "setRequest".equals(method.getName())) {
+				if (HttpServletRequest.class.equals(c)) {
 					method.invoke(component, request);
-				} else if (HttpServletResponse.class.equals(c)	&& "setResponse".equals(method.getName())) {
+				} else if (HttpServletResponse.class.equals(c)) {
 					method.invoke(component, response);
-				} else if (HttpSession.class.equals(c) && "setSession".equals(method.getName())) {
-					method.invoke(component, request.getSession(true));
 				}
 			}
 		}
