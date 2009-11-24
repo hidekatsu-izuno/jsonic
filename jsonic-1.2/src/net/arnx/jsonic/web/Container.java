@@ -72,21 +72,6 @@ public class Container {
 		return o;
 	}
 	
-	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		Class<?> c = null;
-		try {
-			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
-		} catch (ClassNotFoundException e) {
-			try {
-				c = Class.forName(name, true, this.getClass().getClassLoader());
-			} catch (ClassNotFoundException e2) {
-				c = Class.forName(name);				
-			}
-		}
-		
-		return c;
-	}
-	
 	public Method findMethod(Object target, String methodName, List<?> params) throws NoSuchMethodException {
 		if (params == null) params = Collections.emptyList();
 		
@@ -150,6 +135,22 @@ public class Container {
 	public void destory() {
 	}
 	
+	
+	protected Class<?> findClass(String name) throws ClassNotFoundException {
+		Class<?> c = null;
+		try {
+			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
+		} catch (ClassNotFoundException e) {
+			try {
+				c = Class.forName(name, true, this.getClass().getClassLoader());
+			} catch (ClassNotFoundException e2) {
+				c = Class.forName(name);				
+			}
+		}
+		
+		return c;
+	}
+	
 	protected boolean limit(Class<?> c, Method method) {
 		return method.getDeclaringClass().equals(Object.class);
 	}
@@ -179,7 +180,6 @@ public class Container {
 			context.log(message);
 		}
 	}
-
 	
 	private static String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());
