@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,14 +93,14 @@ public class Container {
 						method = m;
 						paramTypes = pTypes;
 					} else if (pTypes.length == paramTypes.length) {
-						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, params));
+						throw new IllegalStateException("too many methods found: " + toPrintString(c, method, params));
 					}
 				}
 			}
 		}
 		
 		if (method == null || limit(c, method)) {
-			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, params));
+			throw new NoSuchMethodException("method missing: " + toPrintString(c, method, params));
 		}
 		
 		return method;
@@ -114,6 +115,71 @@ public class Container {
 	 */
 	public Object[] preinvoke(Object component, Method method, Object... params) throws Exception {
 		return params;
+	}
+	
+	public Object invoke(JSON json, Object component, Method method, List<?> params) throws Exception {
+		Object result = null;
+		
+		Method init = null;
+		Method destroy = null;
+		
+		if (this.init != null || this.destroy != null) {
+			boolean illegalInit = false;
+			boolean illegalDestroy = false;
+			
+			for (Method m : component.getClass().getMethods()) {
+				if (Modifier.isStatic(m.getModifiers())) continue;
+				
+				if (m.getName().equals(this.init)) {
+					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
+						init = m;
+					} else {
+						illegalInit = true;
+					}
+					continue;
+				}
+				if (m.getName().equals(this.destroy)) {
+					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
+						destroy = m;
+					} else {
+						illegalDestroy = true;
+					}
+					continue;
+				}
+			}
+	
+			if (illegalInit) this.debug("Notice: init method must have no arguments.");		
+			if (illegalDestroy) this.debug("Notice: destroy method must have no arguments.");
+		}
+		
+		Type[] argTypes = method.getParameterTypes();
+		Object[] args = new Object[argTypes.length];
+		for (int i = 0; i < args.length; i++) {
+			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
+		}
+		if (this.isDebugMode()) {
+			this.debug("Execute: " + toPrintString(component.getClass(), method, Arrays.asList(args)));
+		}
+		
+		if (init != null) {
+			if (this.isDebugMode()) {
+				this.debug("Execute: " + toPrintString(component.getClass(), init, null));
+			}
+			init.invoke(component);
+		}
+		
+		args = this.preinvoke(component, method, args);
+		result = method.invoke(component, args);
+		result = this.postinvoke(component, method, result);
+		
+		if (destroy != null) {
+			if (this.isDebugMode()) {
+				this.debug("Execute: " + toPrintString(component.getClass(), destroy, null));
+			}
+			destroy.invoke(component);
+		}
+		
+		return result;
 	}
 	
 	/**
@@ -181,9 +247,10 @@ public class Container {
 		}
 	}
 	
-	private static String toPrintString(Class<?> c, String methodName, List<?> args) {
+	
+	private static String toPrintString(Class<?> c, Method method, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());
-		sb.append('#').append(methodName).append('(');
+		sb.append('#').append(method.getName()).append('(');
 		if (args != null) {
 			String str = JSON.encode(args);
 			sb.append(str, 1, str.length()-1);

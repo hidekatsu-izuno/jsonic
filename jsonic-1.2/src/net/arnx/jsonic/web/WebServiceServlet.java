@@ -24,8 +24,6 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -272,7 +270,7 @@ public class WebServiceServlet extends HttpServlet {
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce != null) response.setContentType(produce.value());
 								
-				result = invoke(json, component, method, req.params);
+				result = container.invoke(json, component, method, req.params);
 				
 				if (produce != null) return;
 			}
@@ -433,7 +431,7 @@ public class WebServiceServlet extends HttpServlet {
 			Produce produce = method.getAnnotation(Produce.class);
 			if (produce != null) response.setContentType(produce.value());
 			
-			res = invoke(json, component, method, params);
+			res = container.invoke(json, component, method, params);
 			
 			if (produce != null) return;
 		} catch (ClassNotFoundException e) {
@@ -495,71 +493,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	private Object invoke(JSON json, Object component, Method method, List<?> params) throws Exception {
-		Object result = null;
-		
-		Method init = null;
-		Method destroy = null;
-		
-		if (container.init != null || container.destroy != null) {
-			boolean illegalInit = false;
-			boolean illegalDestroy = false;
-			
-			for (Method m : component.getClass().getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())) continue;
-				
-				if (m.getName().equals(container.init)) {
-					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
-						init = m;
-					} else {
-						illegalInit = true;
-					}
-					continue;
-				}
-				if (m.getName().equals(container.destroy)) {
-					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
-						destroy = m;
-					} else {
-						illegalDestroy = true;
-					}
-					continue;
-				}
-			}
-	
-			if (illegalInit) container.debug("Notice: init method must have no arguments.");		
-			if (illegalDestroy) container.debug("Notice: destroy method must have no arguments.");
-		}
-		
-		Type[] argTypes = method.getParameterTypes();
-		Object[] args = new Object[argTypes.length];
-		for (int i = 0; i < args.length; i++) {
-			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
-		}
-		if (container.isDebugMode()) {
-			container.debug("Execute: " + toPrintString(component, method, args));
-		}
-		
-		if (init != null) {
-			if (container.isDebugMode()) {
-				container.debug("Execute: " + toPrintString(component, init, null));
-			}
-			init.invoke(component);
-		}
-		
-		args = container.preinvoke(component, method, args);
-		result = method.invoke(component, args);
-		result = container.postinvoke(component, method, result);
-		
-		if (destroy != null) {
-			if (container.isDebugMode()) {
-				container.debug("Execute: " + toPrintString(component, destroy, null));
-			}
-			destroy.invoke(component);
-		}
-		
-		return result;
-	}
-	
 	@Override
 	public void destroy() {
 		container.destory();
@@ -575,17 +508,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		json.setLocale(locale);		
 		return json;
-	}
-	
-	private String toPrintString(Object o, Method method, Object[] args) {
-		StringBuilder sb = new StringBuilder(o.getClass().getName());
-		sb.append('#').append(method.getName()).append('(');
-		if (args != null) {
-			String str = JSON.encode(args);
-			sb.append(str, 1, str.length()-1);
-		}
-		sb.append(')');
-		return sb.toString();
 	}
 	
 	@SuppressWarnings("unchecked")
