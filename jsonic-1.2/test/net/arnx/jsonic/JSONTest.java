@@ -63,7 +63,6 @@ import org.apache.commons.beanutils.DynaProperty;
 
 @SuppressWarnings({"unchecked", "unused", "serial"})
 public class JSONTest {
-
 	@Test
 	public void testEncode() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
@@ -221,7 +220,7 @@ public class JSONTest {
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\","
 				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},"
 				+ "\"method\":2}", JSON.encode(aBean));
-
+		
 		try {
 			obj = new Object() {
 				public int noException = 0;

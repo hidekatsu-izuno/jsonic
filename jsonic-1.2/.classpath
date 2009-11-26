@@ -27,6 +27,7 @@
 	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/javassist-3.4.ga.jar"/>
 	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/ognl-2.6.9-patch-20070908.jar"/>
 	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/aopalliance-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/ojdbc6.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

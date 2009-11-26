@@ -17,14 +17,19 @@ package net.arnx.jsonic;
 
 import java.beans.Introspector;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -66,6 +71,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -170,6 +177,7 @@ public class JSON {
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
 	private static Class<?>[] dynaBeanClasses = null;
+	private static final Set<Class<?>> SERIALIZED_SET = new LinkedHashSet<Class<?>>();
 	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
@@ -180,6 +188,18 @@ public class JSON {
 		PRIMITIVE_MAP.put(float.class, 0.0f);
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
+		
+		try {
+			SERIALIZED_SET.add(findClass("java.sql.RowId"));
+		} catch (Exception e) {
+			// no handle
+		}
+		
+		try {
+			SERIALIZED_SET.add(findClass("oracle.sql.Datum"));
+		} catch (Exception e) {
+			// no handle
+		}
 		
 		try {
 			dynaBeanClasses = new Class<?>[] {
@@ -585,6 +605,19 @@ public class JSON {
 			data = map;
 		} else {
 			data = value;
+			if (!SERIALIZED_SET.isEmpty() && value.getClass().isAssignableFrom(Serializable.class)) {
+				for (Class<?> target : SERIALIZED_SET) {
+					if (target.isAssignableFrom(value.getClass())) {
+						JSONHint hint = context.getHint();
+						if (hint != null && hint.gzip()) {
+							data = serializeWithGZIP(value);
+						} else {
+							data = serialize(value);
+						}
+						break;
+					}
+				}
+			}
 		}
 		
 		return data;
@@ -2073,6 +2106,17 @@ public class JSON {
 					context.exit();
 					data = array;
 				}
+			} else if (c.isAssignableFrom(Serializable.class) && value instanceof String) {
+				try {
+					byte[] array = Base64.decode((String)value);
+					if (hint != null && hint.gzip()) {
+						data = deserializeWithGZIP(array);
+					} else {
+						data = deserialize(array);
+					}
+				} catch (Exception e) {
+					throw new UnsupportedOperationException(e);
+				}
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -2224,7 +2268,82 @@ public class JSON {
 		return c;
 	}
 	
-	private static Long convertDate(String value, Locale locale) throws java.text.ParseException {
+	static byte[] serialize(Object data) throws IOException {
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(array);
+		out.writeObject(data);
+		out.close();
+		return array.toByteArray();
+	}
+	
+	static byte[] gzip(byte[] data) throws IOException {
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+		GZIPOutputStream out = new GZIPOutputStream(array);
+		out.write(data);
+		out.close();
+		return array.toByteArray();
+	}
+	
+	static byte[] serializeWithGZIP(Object data) throws IOException {
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(array));
+		out.writeObject(data);
+		out.close();
+		return array.toByteArray();
+
+	}
+	
+	
+	static Object deserialize(byte[] array) throws IOException, ClassNotFoundException {
+		Object ret = null;
+		ObjectInputStream in = null;
+		try {
+			in = new ObjectInputStream(new ByteArrayInputStream(array));
+			ret = in.readObject();
+		} finally {
+			if (in != null) in.close();
+		}
+		return ret;
+	}
+	
+	static byte[] gunzip(byte[] data) throws IOException, ClassNotFoundException {
+		byte[] ret = new byte[1024];
+		int pos = 0;
+		GZIPInputStream in = null;
+		try {
+			in = new GZIPInputStream(new ByteArrayInputStream(data));
+			int len = -1;
+			byte[] buffer = new byte[1024];
+			while ((len = in.read(buffer, 0, ret.length)) != -1) {
+				if (pos + len > ret.length) {
+					byte[] tmp = new byte[(int)((pos+len)*1.5)];
+					System.arraycopy(ret, 0, tmp, 0, pos);
+					ret = tmp;
+				}
+				System.arraycopy(buffer, 0, ret, pos, len);
+				pos += len;
+			}
+		} finally {
+			if (in != null) in.close();
+		}
+		byte[] tmp2 = new byte[pos];
+		System.arraycopy(ret, 0, tmp2, 0, pos);
+		return tmp2;
+	}
+	
+	static Object deserializeWithGZIP(byte[] array) throws IOException, ClassNotFoundException {
+		Object ret = null;
+		ObjectInputStream in = null;
+		try {
+			in = new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(array)));
+			ret = in.readObject();
+		} finally {
+			if (in != null) in.close();
+		}
+		return ret;
+	}
+	
+	static Long convertDate(String value, Locale locale) throws java.text.ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;

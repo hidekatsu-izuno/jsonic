@@ -28,4 +28,5 @@ public @interface JSONHint {
 	Class<?> type() default Object.class;
 	boolean ignore() default false;
 	boolean serialized() default false;
+	boolean gzip() default false;
 }
