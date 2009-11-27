@@ -270,7 +270,7 @@ public class WebServiceServlet extends HttpServlet {
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce != null) response.setContentType(produce.value());
 								
-				result = container.invoke(json, component, method, req.params);
+				result = container.execute(json, component, method, req.params);
 				
 				if (produce != null) return;
 			}
@@ -431,7 +431,7 @@ public class WebServiceServlet extends HttpServlet {
 			Produce produce = method.getAnnotation(Produce.class);
 			if (produce != null) response.setContentType(produce.value());
 			
-			res = container.invoke(json, component, method, params);
+			res = container.execute(json, component, method, params);
 			
 			if (produce != null) return;
 		} catch (ClassNotFoundException e) {

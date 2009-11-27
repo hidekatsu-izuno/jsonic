@@ -71,8 +71,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -603,21 +601,18 @@ public class JSON {
 				context.exit();
 			}
 			data = map;
-		} else {
+		} else if (context.getHint() != null && Serializable.class.equals(context.getHint().type())) {
+			data = serialize(value);
+		} else if (value.getClass().isAssignableFrom(Serializable.class)) {
 			data = value;
-			if (!SERIALIZED_SET.isEmpty() && value.getClass().isAssignableFrom(Serializable.class)) {
-				for (Class<?> target : SERIALIZED_SET) {
-					if (target.isAssignableFrom(value.getClass())) {
-						JSONHint hint = context.getHint();
-						if (hint != null && hint.gzip()) {
-							data = serializeWithGZIP(value);
-						} else {
-							data = serialize(value);
-						}
-						break;
-					}
+			for (Class<?> target : SERIALIZED_SET) {
+				if (target.isAssignableFrom(value.getClass())) {
+					data = serialize(value);
+					break;
 				}
 			}
+		} else {
+			data = value;
 		}
 		
 		return data;
@@ -2108,12 +2103,7 @@ public class JSON {
 				}
 			} else if (c.isAssignableFrom(Serializable.class) && value instanceof String) {
 				try {
-					byte[] array = Base64.decode((String)value);
-					if (hint != null && hint.gzip()) {
-						data = deserializeWithGZIP(array);
-					} else {
-						data = deserialize(array);
-					}
+					data = deserialize(Base64.decode((String)value));
 				} catch (Exception e) {
 					throw new UnsupportedOperationException(e);
 				}
@@ -2274,68 +2264,13 @@ public class JSON {
 		out.writeObject(data);
 		out.close();
 		return array.toByteArray();
-	}
-	
-	static byte[] gzip(byte[] data) throws IOException {
-		ByteArrayOutputStream array = new ByteArrayOutputStream();
-		GZIPOutputStream out = new GZIPOutputStream(array);
-		out.write(data);
-		out.close();
-		return array.toByteArray();
-	}
-	
-	static byte[] serializeWithGZIP(Object data) throws IOException {
-		ByteArrayOutputStream array = new ByteArrayOutputStream();
-		ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(array));
-		out.writeObject(data);
-		out.close();
-		return array.toByteArray();
-
-	}
-	
+	}	
 	
 	static Object deserialize(byte[] array) throws IOException, ClassNotFoundException {
 		Object ret = null;
 		ObjectInputStream in = null;
 		try {
 			in = new ObjectInputStream(new ByteArrayInputStream(array));
-			ret = in.readObject();
-		} finally {
-			if (in != null) in.close();
-		}
-		return ret;
-	}
-	
-	static byte[] gunzip(byte[] data) throws IOException, ClassNotFoundException {
-		byte[] ret = new byte[1024];
-		int pos = 0;
-		GZIPInputStream in = null;
-		try {
-			in = new GZIPInputStream(new ByteArrayInputStream(data));
-			int len = -1;
-			byte[] buffer = new byte[1024];
-			while ((len = in.read(buffer, 0, ret.length)) != -1) {
-				if (pos + len > ret.length) {
-					byte[] tmp = new byte[(int)((pos+len)*1.5)];
-					System.arraycopy(ret, 0, tmp, 0, pos);
-					ret = tmp;
-				}
-				System.arraycopy(buffer, 0, ret, pos, len);
-				pos += len;
-			}
-		} finally {
-			if (in != null) in.close();
-		}
-		byte[] tmp2 = new byte[pos];
-		System.arraycopy(ret, 0, tmp2, 0, pos);
-		return tmp2;
-	}
-	
-	static Object deserializeWithGZIP(byte[] array) throws IOException, ClassNotFoundException {
-		Object ret = null;
-		ObjectInputStream in = null;
-		try {
-			in = new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(array)));
 			ret = in.readObject();
 		} finally {
 			if (in != null) in.close();

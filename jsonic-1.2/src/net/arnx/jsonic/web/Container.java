@@ -117,7 +117,7 @@ public class Container {
 		return params;
 	}
 	
-	public Object invoke(JSON json, Object component, Method method, List<?> params) throws Exception {
+	public Object execute(JSON json, Object component, Method method, List<?> params) throws Exception {
 		Object result = null;
 		
 		Method init = null;
