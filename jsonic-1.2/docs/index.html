@@ -807,6 +807,16 @@ public class HogeService {
   public HttpSession session;
 }
 </pre>
+<p>また、コンテナ自身にHttpServletRequestとHttpServletResponseのDI機能がないSpringContainerに関しては、setterによるインジェクション機能を提供しています（下記例を参照）。</p>
+<pre class="source">
+public class SpringDrivenService {
+  <span class="comment">// setterを用意すると自動で挿入します。プロパティ名を一致させる必要はありません。</span>
+  public void setRequest(HttpServletRequest request) {
+  }
+  public void setResponse(HttpServletResponse response) {
+  }
+}
+</pre>
 
 <h3>■ Gateway Filter</h3>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
