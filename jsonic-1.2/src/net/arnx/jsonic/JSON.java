@@ -2090,7 +2090,7 @@ public class JSON {
 					context.exit();
 					data = array;
 				}
-			} else if (c.isAssignableFrom(Serializable.class) && value instanceof String) {
+			} else if (hint != null && hint.type().equals(Serializable.class) && value instanceof String) {
 				try {
 					data = deserialize(Base64.decode((String)value));
 				} catch (Exception e) {

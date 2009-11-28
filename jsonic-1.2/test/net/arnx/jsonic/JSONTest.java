@@ -162,7 +162,12 @@ public class JSONTest {
 		test.setA(100);
 		test.e = Locale.ENGLISH;
 		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(test));
-
+		
+		TestBeanWrapper tbw = new TestBeanWrapper();
+		tbw.test = test;
+		String result = JSON.encode(tbw);
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(JSON.decode(result, TestBeanWrapper.class).test));
+		
 		Document doc = DocumentBuilderFactory
 			.newInstance()
 			.newDocumentBuilder()
@@ -171,7 +176,7 @@ public class JSONTest {
 		assertEquals(sample1, JSON.encode(doc));
 		
 		String sample2 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample2.json"), "UTF-8")).replaceAll("\r\n", "\n");
-		String result = JSON.encode(doc, true);
+		result = JSON.encode(doc, true);
 		assertEquals(sample2, JSON.encode(doc, true));
 
 		list = new ArrayList<Object>();
@@ -1269,8 +1274,13 @@ public class JSONTest {
 	}
 }
 
+class TestBeanWrapper {
+	@JSONHint(type=Serializable.class)
+	public TestBean test;
+}
+
 @SuppressWarnings("unchecked")
-class TestBean {
+class TestBean implements Serializable {
 	private int a;
 	public void setA(int a) { this.a = a; }
 	public int getA() { return a; }
