@@ -143,13 +143,15 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
 <tr><td>Map, DynaBean<sup>(※2)</sup></td><td rowspan="2">object</td></tr>
 <tr><td>Object<sup>(※3)</sup></td></tr>
-<tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="3">array</td></tr>
+<tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="4">array</td></tr>
 <tr><td>Iterable (Collection, Listなど)</td></tr>
 <tr><td>Iterator, Enumeration</td></tr>
+<tr><td>java.sql.Array, java.sql.Struct</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
 <tr><td>TimeZone, Pattern, File, URL, URI, Type, Member, Charset</td></tr>
-<tr><td>byte[]</td><td>string (BASE64)</td></tr>
+<tr><td>byte[]</td><td>string (BASE64エンコード)</td></tr>
+<tr><td>java.sql.RowId</td><td>string (シリアル化後、BASE64エンコード)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
 <tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※4)</sup></td></tr>
@@ -249,6 +251,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#suppressnull">null値の抑制</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 <li><a href="#jsonhint">変換時ヒントの付加</a></li>
+<li><a href="#serializable">データの部分シリアル化</a></li>
 </ul>
 
 <h3 id="extends">■ 継承による機能拡張</h3>
@@ -513,6 +516,16 @@ public class WithHintBean {
 }
 </pre>
 
+<h3 id="serializable">■ JSONHintによるSerializable指定 <span class="subtitle">- データの部分シリアル化</span></h3>
+<p>JSONHintアノテーションのtype属性に<code>java.io.Serializable</code>を指定することで、そのデータに関してはObjectInputStream/ObjectOutputStreamによりシリアル化されたバイト列データとして取り扱うことができます（バイト列はBase64でエンコードされJSON stringとして出力されます）。</p>
+<pre class="source">
+public class SerializableBean {
+  <span class="em">@JSONHint(</span>type=Serializable.class<span class="em">)</span>
+  public SerializableBean sb;
+}
+</pre>
+<p>この機能を使うことで、JSON化が困難なオブジェクトもJSON-RPCなどでやり取りすることが可能となります。</p>
+
 <h2 id="webservice">Web Service Servlet</h2>
 <p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
 
@@ -557,9 +570,10 @@ public class WithHintBean {
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
 <tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.WebServiceJSON</code>です。</td></tr>
+<tr><td>namingConversion</td><td>boolean</td><td>WebService呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
 </table>
 <div class="caption">
-(※8) 変数名のうち、classとpackageだけは特殊な扱いがされます。class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
+(※8) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
 また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
@@ -915,8 +929,11 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[非互換] JSON WebServiceのSeasar2用コンテナの名称を<code>net.arnx.jsonic.web.S2Container</code>から<code>net.arnx.jsonic.web.extension.Seasar2Container</code>に変更しました。</li>
 <li>[非互換] JSON WebService用JSON Processorの名称を<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>から<code>net.arnx.jsonic.web.WebServiceServlet.WebServiceJSON</code>に変更しました。</li>
 <li>[非互換] JSON WebServiceにてWebServiceServletに存在したpreinvoke, invoke, postinvokeの各メソッドは機能をContainerクラスに移動しpreinvoke, findMethod, postinvokeとなりました。</li>
+<li>[非互換] JSON WebServiceにてpreinvoke, postinvokeの各メソッドの引数に実行対象のメソッドを追加しました。</li>
 <li>JSON WebServiceにて、HTTP Methodに対応して呼ばれるメソッドをルート単位で変更できるようにしました。</li>
 <li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアノテーションを追加しました。</li>
+<li>JSON WebServiceにてContainerにリクエストの最初と最期にそれぞれ呼ばれるstartメソッドとendメソッドを追加しました。</li>
+<li>JSON WebServiceにてContainerに一連の実行処理を束ねるexecuteメソッドを追加しました。WebServiceServlet以外からJSON WebSerivceの処理ロジックを呼びたい場合に利用できます。</li>
 <li>JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
 なお、Winstoneに限り、<code>request.getParameter(String name)</code>など呼び出し後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合があるため同状況では動作しません。</li>
 <li>JSON WebServiceのRPCモードにてエラー返却時、nameパラメータにクラスの単純名を設定するように変更しました。</li>

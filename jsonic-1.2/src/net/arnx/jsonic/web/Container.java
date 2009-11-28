@@ -110,6 +110,7 @@ public class Container {
 	 * Called before invoking the target method.
 	 * 
 	 * @param component The target instance.
+	 * @param method The invoking method.
 	 * @param params The parameters before processing of the target method.
 	 * @return The parameters before processing.
 	 */
@@ -186,6 +187,7 @@ public class Container {
 	 * Called after invoked the target method.
 	 * 
 	 * @param component The target instance.
+	 * @param method The invoked method.
 	 * @param result The returned value of the target method call.
 	 * @return The returned value after processed.
 	 */
