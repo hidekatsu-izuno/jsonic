@@ -907,13 +907,16 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2009/10/24 version 1.2.0</h3>
 
 <ul>
+<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=Serializable.class)</code>を指定した場合には<code>ObjectInputStream/ObjectOutputStream</code>を使いシリアライズによる変換を行うようにしました。</li>
+<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>java.sql.RowId</code>の相互変換に対応しました。</li>
+<li>JSON.encode(or format)にて<code>java.sql.Array, java.sql.Struct</code>のJSON化に対応しました（逆方向には対応していません。相互変換が必要な場合は<code>JSONHint(type=Serializable.class)</code>を指定しシリアル化してください）。</li>
 <li>[非互換] JSON WebServiceにて1.1までは送信されたContent-Typeに関わらずJSONとして処理されていましたが、1.2以降では送信時のContent-Typeが「<code>application/json</code>」の場合のみJSONとして処理されます。</li>
 <li>[非互換] JSON WebServiceにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください。</li>
 <li>[非互換] JSON WebServiceのSeasar2用コンテナの名称を<code>net.arnx.jsonic.web.S2Container</code>から<code>net.arnx.jsonic.web.extension.Seasar2Container</code>に変更しました。</li>
 <li>[非互換] JSON WebService用JSON Processorの名称を<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>から<code>net.arnx.jsonic.web.WebServiceServlet.WebServiceJSON</code>に変更しました。</li>
 <li>[非互換] JSON WebServiceにてWebServiceServletに存在したpreinvoke, invoke, postinvokeの各メソッドは機能をContainerクラスに移動しpreinvoke, findMethod, postinvokeとなりました。</li>
 <li>JSON WebServiceにて、HTTP Methodに対応して呼ばれるメソッドをルート単位で変更できるようにしました。</li>
-<li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアトリビュートを追加しました。</li>
+<li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアノテーションを追加しました。</li>
 <li>JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
 なお、Winstoneに限り、<code>request.getParameter(String name)</code>など呼び出し後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合があるため同状況では動作しません。</li>
 <li>JSON WebServiceのRPCモードにてエラー返却時、nameパラメータにクラスの単純名を設定するように変更しました。</li>

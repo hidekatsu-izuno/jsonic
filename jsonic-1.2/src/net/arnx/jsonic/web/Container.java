@@ -93,14 +93,14 @@ public class Container {
 						method = m;
 						paramTypes = pTypes;
 					} else if (pTypes.length == paramTypes.length) {
-						throw new IllegalStateException("too many methods found: " + toPrintString(c, method, params));
+						throw new IllegalStateException("too many methods found: " + toPrintString(c, method.getName(), params));
 					}
 				}
 			}
 		}
 		
 		if (method == null || limit(c, method)) {
-			throw new NoSuchMethodException("method missing: " + toPrintString(c, method, params));
+			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, params));
 		}
 		
 		return method;
@@ -158,12 +158,12 @@ public class Container {
 			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
 		}
 		if (this.isDebugMode()) {
-			this.debug("Execute: " + toPrintString(component.getClass(), method, Arrays.asList(args)));
+			this.debug("Execute: " + toPrintString(component.getClass(), method.getName(), Arrays.asList(args)));
 		}
 		
 		if (init != null) {
 			if (this.isDebugMode()) {
-				this.debug("Execute: " + toPrintString(component.getClass(), init, null));
+				this.debug("Execute: " + toPrintString(component.getClass(), init.getName(), null));
 			}
 			init.invoke(component);
 		}
@@ -174,7 +174,7 @@ public class Container {
 		
 		if (destroy != null) {
 			if (this.isDebugMode()) {
-				this.debug("Execute: " + toPrintString(component.getClass(), destroy, null));
+				this.debug("Execute: " + toPrintString(component.getClass(), destroy.getName(), null));
 			}
 			destroy.invoke(component);
 		}
@@ -248,9 +248,9 @@ public class Container {
 	}
 	
 	
-	private static String toPrintString(Class<?> c, Method method, List<?> args) {
+	private static String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());
-		sb.append('#').append(method.getName()).append('(');
+		sb.append('#').append(methodName).append('(');
 		if (args != null) {
 			String str = JSON.encode(args);
 			sb.append(str, 1, str.length()-1);

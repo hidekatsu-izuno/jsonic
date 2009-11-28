@@ -41,6 +41,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -529,7 +530,10 @@ public class JSON {
 	protected Object preformat(Context context, Object value) throws Exception {
 		Object data = null;
 		
-		if (value == null 
+		JSONHint hint = context.getHint();
+		if (value != null && hint != null && Serializable.class.equals(hint.type())) {
+			data = serialize(value);
+		} else if (value == null 
 			|| value instanceof CharSequence
 			|| value instanceof Character
 			|| value instanceof Boolean
@@ -569,8 +573,6 @@ public class JSON {
 			data = ((Charset)value).name();
 		} else if (value instanceof Locale) {
 			data = ((Locale)value).toString().replace('_', '-');
-		} else if (value instanceof java.sql.Array) {
-			data = ((java.sql.Array)value).getArray();
 		} else if (value instanceof Node) {
 			if (value instanceof Document) {
 				data = ((Document)value).getDocumentElement();
@@ -597,9 +599,12 @@ public class JSON {
 				context.exit();
 			}
 			data = map;
-		} else if ((context.getHint() != null && Serializable.class.equals(context.getHint().type()))
-				|| (rowIdClass != null && rowIdClass.isAssignableFrom(value.getClass())) ) {
+		} else if (rowIdClass != null && rowIdClass.isAssignableFrom(value.getClass())) {
 			data = serialize(value);
+		} else if (value instanceof java.sql.Array) {
+			data = ((java.sql.Array)value).getArray();
+		} else if (value instanceof Struct) {
+			data = ((Struct)value).getAttributes();
 		} else {
 			data = value;
 		}
@@ -2090,12 +2095,16 @@ public class JSON {
 					context.exit();
 					data = array;
 				}
-			} else if (hint != null && hint.type().equals(Serializable.class) && value instanceof String) {
+			} else if ((hint != null && Serializable.class.equals(hint.type()))
+					|| (rowIdClass != null && rowIdClass.isAssignableFrom(c))) {
 				try {
 					data = deserialize(Base64.decode((String)value));
 				} catch (Exception e) {
 					throw new UnsupportedOperationException(e);
 				}
+			} else if (java.sql.Array.class.isAssignableFrom(c)
+					|| Struct.class.isAssignableFrom(c)) {
+				data = null; // ignored
 			} else {
 				throw new UnsupportedOperationException();
 			}
