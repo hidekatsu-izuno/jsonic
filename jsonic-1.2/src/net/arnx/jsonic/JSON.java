@@ -2365,6 +2365,7 @@ public class JSON {
 		Class<?> scope;
 		List<Object[]> path = new ArrayList<Object[]>(8);
 		int level = -1;
+		Map<Class<?>, Map<String, AnnotatedElement>> cache;
 		
 		Context() {
 		}
@@ -2442,7 +2443,14 @@ public class JSON {
 		}
 		
 		Map<String, AnnotatedElement> getGetProperties(Class<?> c) {
-			Map<String, AnnotatedElement> props = new TreeMap<String, AnnotatedElement>();
+			if (cache == null) cache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
+			
+			Map<String, AnnotatedElement> props = cache.get(c);
+			if (props != null) {
+				return props;
+			} else {
+				props = new TreeMap<String, AnnotatedElement>();
+			}
 			
 			boolean access = tryAccess(c);
 			
@@ -2490,11 +2498,19 @@ public class JSON {
 				props.put(name, m);
 			}
 			
+			cache.put(c, props);
 			return props;
 		}
 		
 		Map<String, AnnotatedElement> getSetProperties(Class<?> c) {
-			Map<String, AnnotatedElement> props = new HashMap<String, AnnotatedElement>();
+			if (cache == null) cache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
+			
+			Map<String, AnnotatedElement> props = cache.get(c);
+			if (props != null) {
+				return props;
+			} else {
+				props = new TreeMap<String, AnnotatedElement>();
+			}
 			
 			boolean access = tryAccess(c);
 
@@ -2536,6 +2552,7 @@ public class JSON {
 				props.put(name, m);
 			}
 			
+			cache.put(c, props);
 			return props;
 		}
 		
