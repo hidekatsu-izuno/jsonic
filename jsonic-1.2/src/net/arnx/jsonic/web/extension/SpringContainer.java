@@ -51,7 +51,9 @@ public class SpringContainer extends Container {
 		
 		for (Method method : component.getClass().getMethods()) {
 			Class<?>[] params = method.getParameterTypes();
-			if (void.class.equals(method.getReturnType()) && params.length == 1) {
+			if (void.class.equals(method.getReturnType())
+					&& method.getName().startsWith("set")
+					&& params.length == 1) {
 				Class<?> c = params[0];
 				if (HttpServletRequest.class.equals(c)) {
 					method.invoke(component, request);
