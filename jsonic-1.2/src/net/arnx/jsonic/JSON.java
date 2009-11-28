@@ -175,7 +175,7 @@ public class JSON {
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
 	private static Class<?>[] dynaBeanClasses = null;
-	private static final Set<Class<?>> SERIALIZED_SET = new LinkedHashSet<Class<?>>();
+	private static Class<?> rowIdClass = null;
 	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
@@ -188,13 +188,7 @@ public class JSON {
 		PRIMITIVE_MAP.put(char.class, '\0');
 		
 		try {
-			SERIALIZED_SET.add(findClass("java.sql.RowId"));
-		} catch (Exception e) {
-			// no handle
-		}
-		
-		try {
-			SERIALIZED_SET.add(findClass("oracle.sql.Datum"));
+			rowIdClass = findClass("java.sql.RowId");
 		} catch (Exception e) {
 			// no handle
 		}
@@ -575,6 +569,8 @@ public class JSON {
 			data = ((Charset)value).name();
 		} else if (value instanceof Locale) {
 			data = ((Locale)value).toString().replace('_', '-');
+		} else if (value instanceof java.sql.Array) {
+			data = ((java.sql.Array)value).getArray();
 		} else if (value instanceof Node) {
 			if (value instanceof Document) {
 				data = ((Document)value).getDocumentElement();
@@ -601,16 +597,9 @@ public class JSON {
 				context.exit();
 			}
 			data = map;
-		} else if (context.getHint() != null && Serializable.class.equals(context.getHint().type())) {
+		} else if ((context.getHint() != null && Serializable.class.equals(context.getHint().type()))
+				|| (rowIdClass != null && rowIdClass.isAssignableFrom(value.getClass())) ) {
 			data = serialize(value);
-		} else if (value.getClass().isAssignableFrom(Serializable.class)) {
-			data = value;
-			for (Class<?> target : SERIALIZED_SET) {
-				if (target.isAssignableFrom(value.getClass())) {
-					data = serialize(value);
-					break;
-				}
-			}
 		} else {
 			data = value;
 		}
