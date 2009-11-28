@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -50,7 +51,7 @@ public class WebServiceServlet extends HttpServlet {
 	
 	static class Config {
 		public Class<? extends Container> container;
-		public Class<? extends net.arnx.jsonic.JSON> processor;
+		public Class<? extends JSON> processor;
 		public String encoding;
 		public Boolean expire;
 		public Map<String, List<Object>> mappings;
@@ -68,7 +69,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		String configText = servletConfig.getInitParameter("config");
 		
-		net.arnx.jsonic.JSON json = new net.arnx.jsonic.JSON();
+		JSON json = new JSON();
 		
 		if (configText == null) {
 			Map<String, String> map = new HashMap<String, String>();
@@ -88,7 +89,7 @@ public class WebServiceServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.processor == null) config.processor = JSON.class;
+		if (config.processor == null) config.processor = WebServiceJSON.class;
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
@@ -228,7 +229,7 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		net.arnx.jsonic.JSON json = newJSON(request.getLocale());
+		JSON json = createJSON(request.getLocale());
 		
 		// request processing
 		RpcRequest req = null;
@@ -379,7 +380,7 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		net.arnx.jsonic.JSON json = newJSON(request.getLocale());
+		JSON json = createJSON(request.getLocale());
 		
 		int status = SC_OK;
 		String callback = null;
@@ -502,10 +503,10 @@ public class WebServiceServlet extends HttpServlet {
 		super.destroy();
 	}
 	
-	net.arnx.jsonic.JSON newJSON(Locale locale) throws ServletException {
-		net.arnx.jsonic.JSON json = null;
+	JSON createJSON(Locale locale) throws ServletException {
+		JSON json = null;
 		try {
-			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
+			json = (JSON)config.processor.newInstance();
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
@@ -518,7 +519,7 @@ public class WebServiceServlet extends HttpServlet {
 		return (T)o;
 	}
 	
-	public static class JSON extends net.arnx.jsonic.JSON {
+	public static class WebServiceJSON extends JSON {
 		@Override
 		protected boolean ignore(Context context, Class<?> target, Member member) {
 			return member.getDeclaringClass().equals(Throwable.class)
