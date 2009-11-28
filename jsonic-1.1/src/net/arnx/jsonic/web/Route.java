@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-//@SuppressWarnings("unchecked")
 public class Route {
 	private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
@@ -70,12 +69,12 @@ public class Route {
 	public String getParameter(String name) {
 		Object o = params.get(name);
 		
-		if (o instanceof Map) {
+		if (o instanceof Map<?,?>) {
 			Map<?, ?> map = (Map<?, ?>)o;
 			if (map.containsKey(null)) o = map.get(null); 
 		}
 		
-		if (o instanceof List) {
+		if (o instanceof List<?>) {
 			List<?> list = (List<?>)o;
 			if (!list.isEmpty()) o = list.get(0);
 		}

@@ -521,11 +521,11 @@ public class JSON {
 			|| value instanceof CharSequence
 			|| value instanceof Character
 			|| value instanceof Boolean
-			|| value instanceof Map
+			|| value instanceof Map<?, ?>
 			|| value.getClass().isArray()
-			|| value instanceof Iterable
-			|| value instanceof Iterator
-			|| value instanceof Enumeration
+			|| value instanceof Iterable<?>
+			|| value instanceof Iterator<?>
+			|| value instanceof Enumeration<?>
 			|| value instanceof Element
 		) {
 			data = value;
@@ -535,7 +535,7 @@ public class JSON {
 		} else if (value instanceof Date) {
 			DateFormat f = context.format(DateFormat.class);
 			data = (f != null) ? f.format(value) : ((Date)value).getTime();
-		} else if (value instanceof Class) {
+		} else if (value instanceof Class<?>) {
 			data = ((Class<?>)value).getName();
 		} else if (value instanceof Type
 				|| value instanceof Member
@@ -543,7 +543,7 @@ public class JSON {
 				|| value instanceof URI
 				|| value instanceof File) {
 			data = value.toString();
-		} else if (value instanceof Enum) {
+		} else if (value instanceof Enum<?>) {
 			data = ((Enum<?>)value).ordinal();
 		} else if (value instanceof Calendar) {
 			data = ((Calendar)value).getTimeInMillis();
@@ -603,7 +603,7 @@ public class JSON {
 			}
 		}
 		
-		if (o instanceof Iterable) {
+		if (o instanceof Iterable<?>) {
 			o = ((Iterable<?>)o).iterator();
 		} else if (o instanceof Character) {
 			o = o.toString();
@@ -728,7 +728,7 @@ public class JSON {
 				}
 			}
 			ap.append(']');
-		} else if (o instanceof Iterator) {
+		} else if (o instanceof Iterator<?>) {
 			Iterator<?> t = (Iterator<?>)o;
 			ap.append('[');
 			boolean isEmpty = !t.hasNext();
@@ -749,7 +749,7 @@ public class JSON {
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
-		} else if (o instanceof Enumeration) {
+		} else if (o instanceof Enumeration<?>) {
 			Enumeration<?> e = (Enumeration<?>)o;
 			ap.append('[');
 			boolean isEmpty = !e.hasMoreElements();
@@ -2174,7 +2174,7 @@ public class JSON {
 	}
 	
 	private static Class<?> getRawType(Type t) {
-		if (t instanceof Class) {
+		if (t instanceof Class<?>) {
 			return (Class<?>)t;
 		}else if (t instanceof ParameterizedType) {
 			return (Class<?>)((ParameterizedType)t).getRawType();
@@ -2195,7 +2195,7 @@ public class JSON {
 	}
 	
 	private static void flattenProperties(StringBuilder key, Object value, Properties props) {
-		if (value instanceof Map) {
+		if (value instanceof Map<?,?>) {
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				int pos = key.length();
 				if (pos > 0) key.append('.');
@@ -2203,7 +2203,7 @@ public class JSON {
 				flattenProperties(key, entry.getValue(), props);
 				key.setLength(pos);
 			}
-		} else if (value instanceof List) {
+		} else if (value instanceof List<?>) {
 			List<?> list = (List<?>)value;
 			for (int i = 0; i < list.size(); i++) {
 				int pos = key.length();
