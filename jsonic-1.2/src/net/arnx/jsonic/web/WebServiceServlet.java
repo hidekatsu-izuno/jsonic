@@ -48,7 +48,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
-	protected class Config {
+	static class Config {
 		public Class<? extends Container> container;
 		public Class<? extends net.arnx.jsonic.JSON> processor;
 		public String encoding;
@@ -57,10 +57,10 @@ public class WebServiceServlet extends HttpServlet {
 		public Map<String, Pattern> definitions;
 	}
 	
-	private Container container;
-	private Config config;
+	protected Container container;
 	
-	private List<RouteMapping> mappings = new ArrayList<RouteMapping>();
+	Config config;
+	List<RouteMapping> mappings = new ArrayList<RouteMapping>();
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
@@ -80,7 +80,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		try {
-			config = json.parse(configText, getConfigClass());
+			config = json.parse(configText, Config.class);
 			if (config.container == null) config.container = Container.class;
 			container = json.parse(configText, config.container);
 			container.init(servletConfig);
@@ -100,10 +100,6 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	protected Class<? extends Config> getConfigClass() {
-		return Config.class;
-	}
-
 	protected void process(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		
@@ -223,7 +219,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	class RpcRequest {
+	static class RpcRequest {
 		public String method;
 		public List<Object> params;
 		public Object id;
@@ -506,7 +502,7 @@ public class WebServiceServlet extends HttpServlet {
 		super.destroy();
 	}
 	
-	private net.arnx.jsonic.JSON newJSON(Locale locale) throws ServletException {
+	net.arnx.jsonic.JSON newJSON(Locale locale) throws ServletException {
 		net.arnx.jsonic.JSON json = null;
 		try {
 			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
@@ -518,7 +514,7 @@ public class WebServiceServlet extends HttpServlet {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static <T> T cast(Object o) {
+	static <T> T cast(Object o) {
 		return (T)o;
 	}
 	
@@ -543,10 +539,10 @@ class RouteMapping {
 		DEFAULT_RESTMAP.put("DELETE", "delete");
 	}
 	
-	private Pattern pattern;
-	private List<String> names;
-	private String target;
-	private Map<String, String> restmap = DEFAULT_RESTMAP;
+	Pattern pattern;
+	List<String> names;
+	String target;
+	Map<String, String> restmap = DEFAULT_RESTMAP;
 	
 	@SuppressWarnings("unchecked")
 	public RouteMapping(String path, List<Object> target, Map<String, Pattern> definitions) {
