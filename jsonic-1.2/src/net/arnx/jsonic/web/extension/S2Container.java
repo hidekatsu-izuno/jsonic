@@ -21,7 +21,7 @@ import net.arnx.jsonic.web.WebServiceServlet;
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
 import org.seasar.framework.log.Logger;
 
-public class Seasar2Container extends Container {
+public class S2Container extends Container {
 	private static Logger log = Logger.getLogger(WebServiceServlet.class);
 	
 	@Override
