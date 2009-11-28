@@ -26,6 +26,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,15 +68,22 @@ public class WebServiceServlet extends HttpServlet {
 		super.init(servletConfig);
 		
 		String configText = servletConfig.getInitParameter("config");
-		if (configText == null) configText = "";
-		 
+		
 		JSON json = new JSON();
+		
+		if (configText == null) {
+			Map<String, String> map = new HashMap<String, String>();
+			Enumeration<String> e =  cast(servletConfig.getInitParameterNames());
+			while (e.hasMoreElements()) {
+				map.put(e.nextElement(), servletConfig.getInitParameter(e.nextElement()));
+			}
+			configText = json.format(map);
+		}
 		
 		try {
 			config = json.parse(configText, getConfigClass());
 			if (config.container == null) config.container = Container.class;
-			
-			container = (Container)json.parse(configText, config.container);
+			container = json.parse(configText, config.container);
 			container.init(servletConfig);
 		} catch (Exception e) {
 			throw new ServletException(e);
