@@ -125,7 +125,7 @@ package net.arnx.jsonic {
 				
 				var first:Boolean = true;
 				for each (var key:Object in classInfo.properties) {
-					if (o[key] === o || (_suppressNull && !o[key])) continue;
+					if (key == 'mine' || o[key] === o || (_suppressNull && !o[key])) continue;
 					
 					if (first) {
 						first = false;

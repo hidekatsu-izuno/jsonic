@@ -1,8 +1,9 @@
 package net.arnx.jsonic {
 	public class EncodeTestClass1 {
 		public function EncodeTestClass1() {
+			
 		}
-		
+				
 		public function get publicValue():int {
 			return 1;
 		}

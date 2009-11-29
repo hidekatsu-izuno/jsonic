@@ -1,4 +1,5 @@
 package net.arnx.jsonic {
+	import flexunit.flexui.patterns.AssertEqualsPattern;
 	import flexunit.framework.AssertionFailedError;
 	import flexunit.framework.TestCase;
 	import flexunit.framework.TestSuite;
@@ -20,7 +21,7 @@ package net.arnx.jsonic {
 			return suite;
 		}
 		
-		public function testEncode():void {
+		public function testEncode():void {			
 			var list:Array = [];
 			assertEquals("[]", JSON.encode(list));
 			
@@ -43,6 +44,10 @@ package net.arnx.jsonic {
 			
 			assertEquals('{"publicValue":1}', JSON.encode(new EncodeTestClass1()));
 			assertEquals('{"publicValue":1}', JSON.encode(new EncodeTestClass2()));
+			
+			var etc3:EncodeTestClass3 = new EncodeTestClass3();
+			etc3.dynamicValue = 1;
+			assertEquals('{"dynamicValue":1,"publicValue":1}', JSON.encode(etc3));
 		}
 		
 		public function testDecode():void {

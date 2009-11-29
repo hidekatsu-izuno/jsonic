@@ -1,8 +1,8 @@
 package net.arnx.jsonic
 {
-	public class EncodeTestClass2
+	public dynamic class EncodeTestClass3
 	{
-		public function EncodeTestClass2() {
+		public function EncodeTestClass3() {
 		}
 		public var publicValue:int = 1;
 		
