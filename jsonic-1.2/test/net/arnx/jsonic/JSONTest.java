@@ -308,6 +308,11 @@ public class JSONTest {
 		
 		assertEquals(JSON.decode("{\"sample1\":\"テスト1\",\"sample2\":\"テスト2\"}"),
 				JSON.decode("{\"sample1\":\"\\u30c6\\u30b9\\u30c81\",\"sample2\":\"\\u30c6\\u30b9\\u30c82\"}"));
+		
+		StringBeanWrapper sbw = new StringBeanWrapper();
+		sbw.sbean = new StringBean("string");
+		
+		assertEquals(sbw, JSON.decode("{\"sbean\":\"string\"}", StringBeanWrapper.class));
 	}
 
 	@Test
@@ -1792,5 +1797,72 @@ class Point2DJSON extends JSON {
 	
 	protected boolean ignore(Context context, Class<?> c, Member m) {
 		  return super.ignore(context, c, m);
+	}
+}
+
+class StringBeanWrapper {
+	@JSONHint(type=String.class)
+	public StringBean sbean;
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((sbean == null) ? 0 : sbean.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		StringBeanWrapper other = (StringBeanWrapper) obj;
+		if (sbean == null) {
+			if (other.sbean != null)
+				return false;
+		} else if (!sbean.equals(other.sbean))
+			return false;
+		return true;
+	}
+}
+
+class StringBean {
+	private String str;
+	
+	public StringBean(String str) {
+		this.str = str;
+	}
+	
+	public String toString() {
+		return str;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((str == null) ? 0 : str.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		StringBean other = (StringBean) obj;
+		if (str == null) {
+			if (other.str != null)
+				return false;
+		} else if (!str.equals(other.str))
+			return false;
+		return true;
 	}
 }
