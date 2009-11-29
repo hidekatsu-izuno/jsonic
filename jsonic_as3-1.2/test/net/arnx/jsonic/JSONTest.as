@@ -1,10 +1,12 @@
 package net.arnx.jsonic {
-	import flexunit.flexui.patterns.AssertEqualsPattern;
+	import flash.utils.Dictionary;
+	
 	import flexunit.framework.AssertionFailedError;
 	import flexunit.framework.TestCase;
 	import flexunit.framework.TestSuite;
 	
 	import mx.resources.Locale;
+	import mx.utils.ObjectProxy;
 	import mx.utils.ObjectUtil;
 
 	public class JSONTest extends TestCase {
@@ -48,6 +50,13 @@ package net.arnx.jsonic {
 			var etc3:EncodeTestClass3 = new EncodeTestClass3();
 			etc3.dynamicValue = 1;
 			assertEquals('{"dynamicValue":1,"publicValue":1}', JSON.encode(etc3));
+			
+			var dic:Dictionary = new Dictionary();
+			dic["value"] = 1;
+			assertEquals('{"value":1}', JSON.encode(dic));
+			
+			var proxyObject:Object = new ObjectProxy(dic);
+			assertEquals('{"value":1}', JSON.encode(proxyObject));
 		}
 		
 		public function testDecode():void {
