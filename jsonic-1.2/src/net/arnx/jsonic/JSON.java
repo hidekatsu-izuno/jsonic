@@ -531,9 +531,8 @@ public class JSON {
 		Object data = null;
 		
 		JSONHint hint = context.getHint();
-		if (value != null && hint != null && Serializable.class.equals(hint.type())) {
-			data = serialize(value);
-		} else if (value == null 
+		
+		if (value == null 
 			|| value instanceof CharSequence
 			|| value instanceof Character
 			|| value instanceof Boolean
@@ -545,6 +544,10 @@ public class JSON {
 			|| value instanceof Element
 		) {
 			data = value;
+		} else if (hint != null && Serializable.class.equals(hint.type())) {
+			data = serialize(value);
+		} else if (hint != null && String.class.equals(hint.type())) {
+			data = value.toString();
 		} else if (value instanceof Number) {
 			NumberFormat f = context.format(NumberFormat.class);
 			data = (f != null) ? f.format(value) : value;
@@ -1576,14 +1579,13 @@ public class JSON {
 		Object data = null;
 		
 		JSONHint hint = context.getHint();
-		if (hint != null && hint.serialized()) {
-			value = format(value);
-		}
 		
 		if (value == null) {
 			if (c.isPrimitive()) {
 				data = PRIMITIVE_MAP.get(c);
 			}
+		} else if (hint != null && hint.serialized()) {
+			data = format(value);
 		} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
 			data = value;
 		} else if (value instanceof Map) {
@@ -2101,6 +2103,13 @@ public class JSON {
 					data = deserialize(Base64.decode((String)value));
 				} catch (Exception e) {
 					throw new UnsupportedOperationException(e);
+				}
+			} else if (hint != null && String.class.equals(hint.type())) {
+				try {
+					Constructor con = c.getConstructor(String.class);
+					data = con.newInstance(value.toString());
+				} catch (NoSuchMethodException e) {
+					data = null; // ignored
 				}
 			} else if (java.sql.Array.class.isAssignableFrom(c)
 					|| Struct.class.isAssignableFrom(c)) {
