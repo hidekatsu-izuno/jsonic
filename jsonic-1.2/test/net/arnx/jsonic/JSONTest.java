@@ -226,6 +226,12 @@ public class JSONTest {
 				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},"
 				+ "\"method\":2}", JSON.encode(aBean));
 		
+		obj = new Object() {
+			@JSONHint(type=String.class)
+			public int strnum = 1;
+		};
+		assertEquals("{\"strnum\":\"1\"}", JSON.encode(obj));
+		
 		try {
 			obj = new Object() {
 				public int noException = 0;
@@ -237,7 +243,7 @@ public class JSONTest {
 			JSON.encode(obj);
 			fail();
 		} catch (JSONException e) {
-			System.out.println(e);
+			assertNotNull(e);
 		}
 	}
 
