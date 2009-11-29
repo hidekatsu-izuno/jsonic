@@ -251,6 +251,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="#suppressnull">null値の抑制</a></li>
 <li><a href="#xmltojson">XMLからJSONへの変換</a></li>
 <li><a href="#jsonhint">変換時ヒントの付加</a></li>
+<li><a href="#tostring">データの文字列化</a></li>
 <li><a href="#serializable">データの部分シリアル化</a></li>
 </ul>
 
@@ -516,10 +517,31 @@ public class WithHintBean {
 }
 </pre>
 
-<h3 id="serializable">■ JSONHintによるSerializable指定 <span class="subtitle">- データの部分シリアル化</span></h3>
-<p>JSONHintアノテーションのtype属性に<code>java.io.Serializable</code>を指定することで、そのデータに関してはObjectInputStream/ObjectOutputStreamによりシリアル化されたバイト列データとして取り扱うことができます（バイト列はBase64でエンコードされJSON stringとして出力されます）。</p>
+<h3 id="tostring">■ JSONHintによるString指定 <span class="subtitle">- データの文字列化</span></h3>
+<p>JSONHintアノテーションのtype属性に<code>String</code>を指定することで、データをtoString()およびString型を引数にとるコンストラクタを取る文字列相当型として扱うことができるようになります。</p>
 <pre class="source">
-public class SerializableBean {
+public class TestBean {
+  <span class="em">@JSONHint(</span>type=String.class<span class="em">)</span>
+  public StringBean sb;
+}
+
+public class StringBean {
+  <span class="comment">// decode時は、String型を引数に取るコンストラクタが呼ばれます</span>
+  public StringBean(String str) {
+    ...
+  }
+  
+  <span class="comment">// encode時は、toStringが呼ばれます</span>
+  public String toString() {
+    ...
+  }
+}
+</pre>
+
+<h3 id="serializable">■ JSONHintによるSerializable指定 <span class="subtitle">- データの部分シリアル化</span></h3>
+<p>JSONHintアノテーションのtype属性に<code>java.io.Serializable</code>を指定することで、データをObjectInputStream/ObjectOutputStreamによりシリアル化されたバイト列データとして取り扱うことができます（バイト列はBase64でエンコードされJSON stringとして出力されます）。</p>
+<pre class="source">
+public class TestBean {
   <span class="em">@JSONHint(</span>type=Serializable.class<span class="em">)</span>
   public SerializableBean sb;
 }
