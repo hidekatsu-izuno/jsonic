@@ -1586,6 +1586,20 @@ public class JSON {
 			}
 		} else if (hint != null && hint.serialized()) {
 			data = format(value);
+		} else if ((hint != null && Serializable.class.equals(hint.type()))
+				|| (rowIdClass != null && rowIdClass.isAssignableFrom(c))) {
+			try {
+				data = deserialize(Base64.decode((String)value));
+			} catch (Exception e) {
+				throw new UnsupportedOperationException(e);
+			}
+		} else if (hint != null && String.class.equals(hint.type())) {
+			try {
+				Constructor con = c.getConstructor(String.class);
+				data = con.newInstance(value.toString());
+			} catch (NoSuchMethodException e) {
+				data = null; // ignored
+			}
 		} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
 			data = value;
 		} else if (value instanceof Map) {
@@ -2096,20 +2110,6 @@ public class JSON {
 					Array.set(array, 0, postparse(context, value, pc, pt));
 					context.exit();
 					data = array;
-				}
-			} else if ((hint != null && Serializable.class.equals(hint.type()))
-					|| (rowIdClass != null && rowIdClass.isAssignableFrom(c))) {
-				try {
-					data = deserialize(Base64.decode((String)value));
-				} catch (Exception e) {
-					throw new UnsupportedOperationException(e);
-				}
-			} else if (hint != null && String.class.equals(hint.type())) {
-				try {
-					Constructor con = c.getConstructor(String.class);
-					data = con.newInstance(value.toString());
-				} catch (NoSuchMethodException e) {
-					data = null; // ignored
 				}
 			} else if (java.sql.Array.class.isAssignableFrom(c)
 					|| Struct.class.isAssignableFrom(c)) {
