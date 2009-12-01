@@ -2089,11 +2089,13 @@ public class JSON {
 		return (T)data;
 	}
 	
-	protected boolean ignore(Context context, Class<?> target, Member member) {
+	protected boolean ignore(Context context, Class<?> target, Member member) {	
 		int modifiers = member.getModifiers();
 		if (Modifier.isStatic(modifiers)) return true;
 		if (Modifier.isTransient(modifiers)) return true;
 		if (member.getDeclaringClass().equals(Object.class)) return true;
+		if (member.isSynthetic()) return true;
+		if (member instanceof Method && ((Method)member).isBridge()) return true;
 		return false;
 	}
 	

@@ -32,6 +32,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -221,6 +222,8 @@ public class JSONTest {
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\","
 				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},"
 				+ "\"method\":2}", JSON.encode(aBean));
+		
+		assertEquals("{\"list\":[\"test\"]}", JSON.encode(new ImplClass()));
 
 		try {
 			obj = new Object() {
@@ -1777,5 +1780,17 @@ class Point2DJSON extends JSON {
 	
 	protected boolean ignore(Context context, Class<?> c, Member m) {
 		  return super.ignore(context, c, m);
+	}
+}
+
+
+interface BaseInterface {
+	Collection<?> getList();
+}
+
+class ImplClass implements BaseInterface {
+	
+	public List<?> getList() {
+		return Arrays.asList("test");
 	}
 }

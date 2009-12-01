@@ -509,7 +509,11 @@ public class WebServiceServlet extends HttpServlet {
 		boolean illegalInit = false;
 		boolean illegalDestroy = false;
 		for (Method m : c.getMethods()) {
-			if (Modifier.isStatic(m.getModifiers())) continue;
+			if (Modifier.isStatic(m.getModifiers())
+					|| m.isSynthetic()
+					|| m.isBridge()) {
+				continue;
+			}
 			
 			if (m.getName().equals(container.init)) {
 				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
