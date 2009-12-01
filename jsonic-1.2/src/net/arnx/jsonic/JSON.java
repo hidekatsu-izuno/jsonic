@@ -2123,9 +2123,7 @@ public class JSON {
 	}
 	
 	protected boolean ignore(Context context, Class<?> target, Member member) {
-		int modifiers = member.getModifiers();
-		if (Modifier.isStatic(modifiers)) return true;
-		if (Modifier.isTransient(modifiers)) return true;
+		if (Modifier.isTransient(member.getModifiers())) return true;
 		if (member.getDeclaringClass().equals(Object.class)) return true;
 		return false;
 	}
@@ -2464,7 +2462,11 @@ public class JSON {
 			boolean access = tryAccess(c);
 			
 			for (Field f : c.getFields()) {
-				if (ignore(this, c, f)) continue;
+				if (Modifier.isStatic(f.getModifiers())
+						|| f.isSynthetic()
+						|| ignore(this, c, f)) {
+					continue;
+				}
 				
 				String name = f.getName();
 				if (f.isAnnotationPresent(JSONHint.class)) {
@@ -2477,7 +2479,12 @@ public class JSON {
 			}
 			
 			for (Method m : c.getMethods()) {
-				if (ignore(this, c, m)) continue;
+				if (Modifier.isStatic(m.getModifiers())
+						|| m.isSynthetic()
+						|| m.isBridge()
+						|| ignore(this, c, m)) {
+					continue;
+				}
 
 				String name = m.getName();
 				int start = 0;
@@ -2524,8 +2531,11 @@ public class JSON {
 			boolean access = tryAccess(c);
 
 			for (Field f : c.getFields()) {
-				if (ignore(this, c, f)) continue;
-				if (access) f.setAccessible(true);
+				if (Modifier.isStatic(f.getModifiers())
+						|| f.isSynthetic()
+						|| ignore(this, c, f)) {
+					continue;
+				}
 				
 				String name = f.getName();
 				if (f.isAnnotationPresent(JSONHint.class)) {
@@ -2533,11 +2543,17 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
+				if (access) f.setAccessible(true);
 				props.put(name, f);
 			}
 			
 			for (Method m : c.getMethods()) {
-				if (ignore(this, c, m)) continue;
+				if (Modifier.isStatic(m.getModifiers())
+						|| m.isSynthetic()
+						|| m.isBridge()
+						|| ignore(this, c, m)) {
+					continue;
+				}
 
 				String name = m.getName();
 				int start = 0;
@@ -2551,13 +2567,13 @@ public class JSON {
 					continue;
 				}
 				
-				if (access) m.setAccessible(true);				
 				name = Introspector.decapitalize(name.substring(start));
 				if (m.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = m.getAnnotation(JSONHint.class);
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
+				if (access) m.setAccessible(true);				
 				props.put(name, m);
 			}
 			

@@ -84,7 +84,11 @@ public class Container {
 		Type[] paramTypes = null;
 		
 		for (Method m : c.getMethods()) {
-			if (Modifier.isStatic(m.getModifiers())) continue;
+			if (Modifier.isStatic(m.getModifiers())
+					|| m.isSynthetic()
+					|| m.isBridge()) {
+				continue;
+			}
 			
 			if (m.getName().equals(methodName)) {
 				Type[] pTypes = m.getGenericParameterTypes();
@@ -129,7 +133,11 @@ public class Container {
 			boolean illegalDestroy = false;
 			
 			for (Method m : component.getClass().getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())) continue;
+				if (Modifier.isStatic(m.getModifiers())
+						|| m.isSynthetic()
+						|| m.isBridge()) {
+					continue;
+				}
 				
 				if (m.getName().equals(this.init)) {
 					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
