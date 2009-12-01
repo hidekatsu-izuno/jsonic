@@ -32,6 +32,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -231,6 +232,8 @@ public class JSONTest {
 			public int strnum = 1;
 		};
 		assertEquals("{\"strnum\":\"1\"}", JSON.encode(obj));
+		
+		assertEquals("{\"list\":[\"test\"]}", JSON.encode(new ImplClass()));
 		
 		try {
 			obj = new Object() {
@@ -1864,5 +1867,16 @@ class StringBean {
 		} else if (!str.equals(other.str))
 			return false;
 		return true;
+	}
+}
+
+interface BaseInterface {
+	Collection<?> getList();
+}
+
+class ImplClass implements BaseInterface {
+	
+	public List<?> getList() {
+		return Arrays.asList("test");
 	}
 }
