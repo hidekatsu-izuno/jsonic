@@ -153,7 +153,7 @@ public class Container {
 			if (illegalDestroy) this.debug("Notice: destroy method must have no arguments.");
 		}
 		
-		Type[] argTypes = method.getParameterTypes();
+		Type[] argTypes = method.getGenericParameterTypes();
 		Object[] args = new Object[argTypes.length];
 		for (int i = 0; i < args.length; i++) {
 			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
