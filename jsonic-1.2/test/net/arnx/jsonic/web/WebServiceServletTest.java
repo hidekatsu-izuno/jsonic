@@ -244,7 +244,7 @@ public class WebServiceServletTest {
 		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "[\"title\", \"text\"]");
 		con.connect();
-		assertEquals(SC_NOT_FOUND, con.getResponseCode());
+		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
 		
 		// POST
@@ -326,7 +326,7 @@ public class WebServiceServletTest {
 		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "[\"title\", \"text\"]");
 		con.connect();
-		assertEquals(SC_NOT_FOUND, con.getResponseCode());
+		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
 		
 		// POST
@@ -348,47 +348,57 @@ public class WebServiceServletTest {
 		MockHttpServletRequest request = null;
 		
 		request = context.createRequest("/?aaa=");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa", "");
 		assertEquals(JSON.decode("{aaa:''}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa=aaa=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa", "aaa=bbb");
 		assertEquals(JSON.decode("{aaa:'aaa=bbb'}"), getParameterMap(request));
 
 		request = context.createRequest("/?&");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("", "");
 		request.addParameter("", "");
 		assertEquals(JSON.decode("{'':['','']}"), getParameterMap(request));
 
 		request = context.createRequest("/?=&=");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("", "");
 		request.addParameter("", "");
 		assertEquals(JSON.decode("{'':['','']}"),getParameterMap(request));
 		
 		request = context.createRequest("/");
+		request.setContentType("application/x-www-form-urlencoded");
 		assertEquals(JSON.decode("{}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		assertEquals(JSON.decode("{aaa:{bbb:'aaa'}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "UTF-8") + "=" + URLEncoder.encode("古今=東西", "UTF-8"));
+		request.setContentType("application/x-www-form-urlencoded");
 		request.setCharacterEncoding("UTF-8");
 		request.addParameter("諸行 無常", "古今=東西");
 		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "MS932") + "=" + URLEncoder.encode("古今=東西", "MS932"));
+		request.setContentType("application/x-www-form-urlencoded");
 		request.setCharacterEncoding("MS932");
 		request.addParameter("諸行 無常", "古今=東西");
 		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb&aaa=aaa");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null: 'aaa'}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb&aaa=aaa&aaa=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
@@ -396,42 +406,50 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null:'aaa'}, 'bbb':'bbb'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb.=aaa&aaa.bbb.=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb.", "aaa");
 		request.addParameter("aaa.bbb.", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?..=aaa&..=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("..", "aaa");
 		request.addParameter("..", "bbb");
 		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa[bbb]=aaa&aaa[bbb]=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa[bbb]", "aaa");
 		request.addParameter("aaa[bbb]", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), getParameterMap(request));
 
 		request = context.createRequest("/?aaa[bbb].ccc=aaa&aaa[bbb].ccc=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa[bbb].ccc", "aaa");
 		request.addParameter("aaa[bbb].ccc", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:{ccc:['aaa', 'bbb']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?[aaa].bbb=aaa&[aaa].bbb=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("[aaa].bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?.aaa.bbb=aaa&[aaa].bbb=bbb&[aaa].bbb=ccc");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?.aaa.bbb=aaa&.aaa.bbb=bbb&[aaa].bbb=ccc");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter(".aaa.bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
@@ -440,7 +458,7 @@ public class WebServiceServletTest {
 	
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
-		return new Route(request, null, null, new LinkedHashMap<String, Object>()).getParameterMap();
+		return new WebServiceServlet.Route(request, null, null, new LinkedHashMap<String, Object>()).getParameterMap();
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {

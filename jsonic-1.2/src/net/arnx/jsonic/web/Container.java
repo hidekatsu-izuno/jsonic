@@ -81,22 +81,20 @@ public class Container {
 		Class<?> c = component.getClass();
 		
 		Method method = null;
-		Type[] paramTypes = null;
+		Type[] lastPType = null;
 		
 		for (Method m : c.getMethods()) {
-			if (Modifier.isStatic(m.getModifiers())
-					|| m.isSynthetic()
-					|| m.isBridge()) {
+			if (Modifier.isStatic(m.getModifiers()) || m.isSynthetic() || m.isBridge()) {
 				continue;
 			}
 			
 			if (m.getName().equals(methodName)) {
 				Type[] pTypes = m.getGenericParameterTypes();
-				if (params.size() <= Math.max(1, pTypes.length)) {
-					if (method == null || Math.abs(params.size() - pTypes.length) < Math.abs(params.size() - paramTypes.length)) {
+				if (pTypes.length <= params.size()) {
+					if (method == null || (params.size() - pTypes.length) < (params.size() - lastPType.length)) {
 						method = m;
-						paramTypes = pTypes;
-					} else if (pTypes.length == paramTypes.length) {
+						lastPType = pTypes;
+					} else if (pTypes.length == lastPType.length) {
 						throw new IllegalStateException("too many methods found: " + toPrintString(c, method.getName(), params));
 					}
 				}
