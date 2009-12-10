@@ -964,6 +964,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[非互換] JSON WebServiceにてWebServiceServletに存在したpreinvoke, invoke, postinvokeの各メソッドは機能をContainerクラスに移動しpreinvoke, findMethod, postinvokeとなりました（引数も変更されています）。</li>
 <li>[非互換] JSON WebServiceで利用するデフォルトJSONクラスの名前を<code>WebServiceServlet.WebServiceJSON</code>に変更しました。</li>
 <li>JSON WebServiceにて、HTTP Methodに対応して呼ばれるメソッドをルート単位で変更できるようにしました。</li>
+<li>JSON WebServiceにて、1.1では、送信したパラメータより引数の多いメソッドのみを検索対象としていましたが、1.2では、送信したパラメータより引数の少ないメソッドのみ検索対象とするよう変更しました。</li>
 <li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアノテーションを追加しました。</li>
 <li>JSON WebServiceにてContainerにリクエストの最初と最期にそれぞれ呼ばれるstartメソッドとendメソッドを追加しました。</li>
 <li>JSON WebServiceにてContainerに一連の実行処理を束ねるexecuteメソッドを追加しました。WebServiceServlet以外からJSON WebSerivceの処理ロジックを呼びたい場合に利用できます。</li>
