@@ -2157,7 +2157,7 @@ public class JSON {
 		} else if ((c.isMemberClass() || c.isAnonymousClass()) && !Modifier.isStatic(c.getModifiers())) {
 			Class<?> eClass = c.getEnclosingClass();
 			Constructor<?> con = c.getDeclaredConstructor(eClass);
-			if(context.tryAccess(c)) con.setAccessible(true);
+			con.setAccessible(true);
 			if (contextObject != null && eClass.isAssignableFrom(contextObject.getClass())) {
 				instance = con.newInstance(contextObject);
 			} else {
@@ -2167,7 +2167,7 @@ public class JSON {
 			if (Date.class.isAssignableFrom(c)) {
 				try {
 					Constructor<?> con = c.getDeclaredConstructor(long.class);
-					if(context.tryAccess(c)) con.setAccessible(true);
+					con.setAccessible(true);
 					instance = con.newInstance(0l);
 				} catch (NoSuchMethodException e) {
 					// no handle
@@ -2176,7 +2176,7 @@ public class JSON {
 			
 			if (instance == null) {
 				Constructor<?> con = c.getDeclaredConstructor();
-				if(context.tryAccess(c)) con.setAccessible(true);
+				con.setAccessible(true);
 				instance = con.newInstance();
 			}
 		}
@@ -2459,8 +2459,6 @@ public class JSON {
 				props = new TreeMap<String, AnnotatedElement>();
 			}
 			
-			boolean access = tryAccess(c);
-			
 			for (Field f : c.getFields()) {
 				if (Modifier.isStatic(f.getModifiers())
 						|| f.isSynthetic()
@@ -2474,7 +2472,7 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				if (access) f.setAccessible(true);
+				f.setAccessible(true);
 				props.put(name, f);
 			}
 			
@@ -2504,7 +2502,7 @@ public class JSON {
 					continue;
 				}
 				
-				if (access) m.setAccessible(true);
+				m.setAccessible(true);
 				name = Introspector.decapitalize(name.substring(start));
 				if (m.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = m.getAnnotation(JSONHint.class);
@@ -2527,8 +2525,6 @@ public class JSON {
 			} else {
 				props = new TreeMap<String, AnnotatedElement>();
 			}
-			
-			boolean access = tryAccess(c);
 
 			for (Field f : c.getFields()) {
 				if (Modifier.isStatic(f.getModifiers())
@@ -2543,7 +2539,7 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				if (access) f.setAccessible(true);
+				f.setAccessible(true);
 				props.put(name, f);
 			}
 			
@@ -2573,16 +2569,12 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				if (access) m.setAccessible(true);				
+				m.setAccessible(true);				
 				props.put(name, m);
 			}
 			
 			cache.put(c, props);
 			return props;
-		}
-		
-		boolean tryAccess(Class<?> c) {
-			return !Modifier.isPublic(c.getModifiers());
 		}
 		
 		<T extends Format> T format(Class<? extends T> c) {
@@ -2931,4 +2923,3 @@ class Base64 {
 		return buffer;
 	}
 }
-
