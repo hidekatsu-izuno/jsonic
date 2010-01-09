@@ -76,6 +76,8 @@ package net.arnx.jsonic {
 				o = RegExp(o).source;
 			} else if (o is Locale) {
 				o = o.toString().replace(/_/g, '-');
+			} else if (o is ByteArray) {
+				o = Base64.encode(ByteArray(o));
 			}
 			
 			if (level == 0) {
@@ -788,5 +790,95 @@ class StringParserSource implements IParserSource {
 	
 	public function toString():String {
 		return _cs.substring(_offset-_columns+1, _offset);
+	}
+}
+
+class Base64 {
+	public static const BASE64_MAP:String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	
+	public static function encode(data:ByteArray):String {
+		if (!data) return null;
+				
+		var buffer:ByteArray = new ByteArray();
+		var length:int = data.length;
+		var buf:int = 0;
+		for (var i:int = 0; i < length; i++) {
+			var value:int = data.readByte();
+			switch (i % 3) {
+				case 0 :
+					buffer.writeUTFBytes(BASE64_MAP.charAt((value & 0xFC) >> 2));
+					buf = (value & 0x03) << 4;
+					if (i + 1 == length) {
+						buffer.writeUTFBytes(BASE64_MAP.charAt(buf));
+						buffer.writeUTFBytes('=');
+						buffer.writeUTFBytes('=');
+					}
+					break;
+				case 1 :
+					buf += (value & 0xF0) >> 4;
+					buffer.writeUTFBytes(BASE64_MAP.charAt(buf));
+					buf = (value & 0x0F) << 2;
+					if (i + 1 == length) {
+						buffer.writeUTFBytes(BASE64_MAP.charAt(buf));
+						buffer.writeUTFBytes('=');
+					}
+					break;
+				case 2 :
+					buf += (value & 0xC0) >> 6;
+					buffer.writeUTFBytes(BASE64_MAP.charAt(buf));
+					buffer.writeUTFBytes(BASE64_MAP.charAt(value & 0x3F));
+					break;
+			}
+		}
+		
+		return buffer.toString();
+	}
+	
+	public static function decode(cs:String):ByteArray {
+		var c:String;		
+		var buffer:ByteArray = new ByteArray();
+		
+		var pos:int = 0;
+		for (var i:int = 0; i < cs.length; i++) {
+			c = cs.charAt(i);
+			var n:Number = cs.charCodeAt(i);
+			
+			var data:int = 0;
+			if (c >= 'A' && c <= 'Z') {
+				data = n - 65;
+			} else if (c >= 'a' && c <= 'z') {
+				data = n - 97 + 26;
+			} else if (c >= '0' && c <= '9') {
+				data = n - 48 + 52;
+			} else if (c == '+') {
+				data = 62;
+			} else if (c == '/') {
+				data = 63;
+			} else if (c == '=') {
+				break;
+			} else {
+				continue;
+			}
+			
+			switch (pos % 4) {
+			case 0:
+				buffer.writeByte(data << 2);
+				break;
+			case 1:
+				buffer[pos / 4 * 3] += (data >> 4);
+				buffer.writeByte((data & 0xF) << 4);
+				break;
+			case 2:
+				buffer[pos / 4 * 3 + 1] += (data >> 2);
+				buffer.writeByte((data & 0x3) << 6);
+				break;
+			case 3:
+				buffer[pos / 4 * 3 + 2] += data;
+				break;
+			}
+			pos++;
+		}
+		
+		return buffer;
 	}
 }

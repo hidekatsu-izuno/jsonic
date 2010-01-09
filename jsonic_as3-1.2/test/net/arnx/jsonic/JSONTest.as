@@ -5,6 +5,7 @@ package net.arnx.jsonic {
 	import flexunit.framework.TestCase;
 	import flexunit.framework.TestSuite;
 	
+	import mx.collections.ArrayCollection;
 	import mx.resources.Locale;
 	import mx.utils.ObjectProxy;
 	import mx.utils.ObjectUtil;
@@ -51,6 +52,9 @@ package net.arnx.jsonic {
 			etc3.dynamicValue = 1;
 			assertEquals('{"dynamicValue":1,"publicValue":1}', JSON.encode(etc3));
 			
+			var array:ArrayCollection = new ArrayCollection([10, 20, 30]);
+			assertEquals('[10,20,30]', JSON.encode(array));
+						
 			var dic:Dictionary = new Dictionary();
 			dic["value"] = 1;
 			assertEquals('{"value":1}', JSON.encode(dic));
