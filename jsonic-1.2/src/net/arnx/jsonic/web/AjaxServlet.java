@@ -160,7 +160,7 @@ public class AjaxServlet extends HttpServlet {
 		JSON json = route.getProcessor();
 		
 		try {
-			if (route.getMethod() == null || route.getParams() == null) {
+			if (route.getMethod() == null || route.getParameters() == null) {
 				throwable = new IllegalArgumentException(((route.getMethod() == null) ? "method" : "params") + "is null.");
 				errorCode = -32600;
 				errorName = "ReferenceError";
@@ -177,12 +177,12 @@ public class AjaxServlet extends HttpServlet {
 				}
 				json.setContext(component);
 								
-				Method method = container.getMethod(component, methodName, route.getParams());
+				Method method = container.getMethod(component, methodName, route.getParameters());
 				
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce != null) response.setContentType(produce.value());
 				
-				result = container.execute(json, component, method, route.getParams());
+				result = container.execute(json, component, method, route.getParameters());
 				
 				if (produce != null) return;
 			}
@@ -373,8 +373,8 @@ public class AjaxServlet extends HttpServlet {
 		private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
 		private String target;
+		
 		private Map<String, Object> urlmap;
-		private String method;
 		private List<?> params;
 		private JSON processor;
 		
@@ -397,16 +397,11 @@ public class AjaxServlet extends HttpServlet {
 			contentType = contentType.toLowerCase();
 			
 			if (contentType.equals("application/x-www-form-urlencoded")) {
-				Map<String,Object[]> map = request.getParameterMap();
-				Object[] array = map.get("_method");
-				if (array != null && array.length > 0 && array[0] instanceof String) {
-					method = (String)array[0];
-					params = Arrays.asList(parseParameter(map));
-				}
+				Object o = parseParameter(request.getParameterMap());
+				params = (o instanceof List<?>) ? (List<?>)o :  Arrays.asList(o);
 			} else if (contentType.equals("application/json")) {
-				Map<?, ?> map = processor.parse(request.getInputStream(), Map.class);
-				method = map.get("method").toString();
-				params = (List<?>)map.get("params");
+				Object o = processor.parse(request.getInputStream());
+				params = (o instanceof List<?>) ? (List<?>)o :  Arrays.asList(o);
 			} else if (contentType.startsWith("multipart/")) {
 				Map<String, Object[]> map = new LinkedHashMap<String, Object[]>();
 				DiskFileItemFactory factory = new DiskFileItemFactory();
@@ -431,22 +426,16 @@ public class AjaxServlet extends HttpServlet {
 						}
 						map.put(item.getFieldName(), values);
 					}
-					Object[] array = map.get("_method");
-					if (array != null && array.length > 0 && array[0] instanceof String) {
-						method = (String)array[0];
-						params = Arrays.asList(parseParameter(map));
-					}
 				} catch (FileUploadException e) {
 					throw new ServletException(e);
 				}
+				
+				Object o = parseParameter(map);
+				params = (o instanceof List<?>) ? (List<?>)o :  Arrays.asList(o);
 			}
 		}
 		
-		public String getMethod() {
-			return method;
-		}
-		
-		public List<?> getParams() {
+		public List<?> getParameters() {
 			return params;
 		}
 		
@@ -471,6 +460,10 @@ public class AjaxServlet extends HttpServlet {
 			}
 			m.appendTail(sb);
 			return sb.toString();
+		}
+		
+		public String getMethod() {
+			return getParameter(urlmap, "method");
 		}
 		
 		@SuppressWarnings("unchecked")
