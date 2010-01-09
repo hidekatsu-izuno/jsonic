@@ -46,6 +46,7 @@ import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.FieldPosition;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
@@ -2617,9 +2618,9 @@ public class JSON {
 					}
 				} else if (DateFormat.class.isAssignableFrom(c)) {
 					if (locale != null) {
-						format = c.cast(new SimpleDateFormat(hint.format(), locale));
+						format = c.cast(new ComplexDateFormat(hint.format(), locale));
 					} else {
-						format = c.cast(new SimpleDateFormat(hint.format()));
+						format = c.cast(new ComplexDateFormat(hint.format()));
 					}
 				}
 			}
@@ -2949,5 +2950,64 @@ class Base64 {
 		}
 		
 		return buffer;
+	}
+}
+
+class ComplexDateFormat extends SimpleDateFormat {
+	private boolean escape = false;
+	
+	public ComplexDateFormat(String pattern, Locale locale) {
+		super(escape(pattern), locale);
+		escape = !pattern.equals(this.toPattern());
+	}
+	
+	public ComplexDateFormat(String pattern) {
+		super(escape(pattern));
+		escape = !pattern.equals(this.toPattern());
+	}
+	
+	
+	static String escape(String pattern) {
+		boolean skip = false;
+		int count = 0;
+		StringBuilder sb = null;
+		int last = 0;
+		for (int i = 0; i < pattern.length(); i++) {
+			char c = pattern.charAt(i);
+			if (c == '\'') {
+				skip = !skip;
+			} else if (c == 'Z' && !skip) {
+				count++;
+				if (count == 2) {
+					if (sb == null) sb = new StringBuilder(pattern.length() + 4);
+					sb.append(pattern, last, i-1);
+					sb.append("Z\0");
+					last = i+1;
+				}
+			} else {
+				count = 0;
+			}
+		}
+		if (sb != null) {
+			if (last < pattern.length()) sb.append(pattern, last, pattern.length());
+			return sb.toString();
+		} else {
+			return pattern;
+		}
+	}
+
+	@Override
+	public StringBuffer format(Date date, StringBuffer toAppendTo, FieldPosition pos) {
+		super.format(date, toAppendTo, pos);
+		if (escape) {
+			for (int i = 5; i < toAppendTo.length(); i++) {
+				if (toAppendTo.charAt(i) == '\0') {
+					toAppendTo.setCharAt(i, toAppendTo.charAt(i-1));
+					toAppendTo.setCharAt(i-1, toAppendTo.charAt(i-2));
+					toAppendTo.setCharAt(i-2, ':');
+				}
+			}
+		}
+		return toAppendTo;
 	}
 }

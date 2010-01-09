@@ -1291,6 +1291,21 @@ public class JSONTest {
 		assertEquals(listA, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
 		assertEquals(listB, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
 	}
+	
+	@Test
+	public void testComplexDateFormat() throws Exception {
+		assertEquals("Z\0", ComplexDateFormat.escape("ZZ"));
+		assertEquals("'ZZ'", ComplexDateFormat.escape("'ZZ'"));
+		assertEquals("Z\0'ZZ'", ComplexDateFormat.escape("ZZ'ZZ'"));
+		assertEquals("'ZZ'Z\0", ComplexDateFormat.escape("'ZZ'ZZ"));
+		
+		Date date = toDate(2000, 1, 1, 0, 0, 0, 0);
+		
+		assertEquals("2000/01/01 +0900", new ComplexDateFormat("yyyy/MM/dd Z").format(date));
+		assertEquals("2000/01/01 +09:00", new ComplexDateFormat("yyyy/MM/dd ZZ").format(date));
+		assertEquals(date, new ComplexDateFormat("yyyy/MM/dd Z").parse("2000/01/01 +0900"));
+		assertEquals(date, new ComplexDateFormat("yyyy/MM/dd ZZ").parse("2000/01/01 +09:00"));
+	}
 }
 
 class TestBeanWrapper {
