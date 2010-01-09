@@ -40,6 +40,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.sql.Struct;
 import java.text.DateFormat;
@@ -1678,11 +1679,23 @@ public class JSON {
 						context.enter(name, target.getAnnotation(JSONHint.class));
 						if (target instanceof Method) {
 							Method m = (Method)target;
-							m.invoke(o, postparse(context, entry.getValue(), m.getParameterTypes()[0], m.getGenericParameterTypes()[0]));
+							Type gptype = m.getGenericParameterTypes()[0];
+							Class<?> ptype = m.getParameterTypes()[0];
+							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
+								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								ptype = getRawType(gptype);
+							}
+							m.invoke(o, postparse(context, entry.getValue(), ptype, gptype));
 						} else {
 							Field f = (Field)target;
-							context.enter(name);
-							f.set(o, postparse(context, entry.getValue(), f.getType(), f.getGenericType()));
+							Type gptype = f.getGenericType();
+							Class<?> ptype =  f.getType();
+							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
+								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								ptype = getRawType(gptype);
+							}
+							
+							f.set(o, postparse(context, entry.getValue(), ptype, gptype));
 						}
 						context.exit();
 					}
@@ -2261,6 +2274,21 @@ public class JSON {
 		}
 		
 		return c;
+	}
+	
+	static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
+		Class<?> rawType = getRawType(parent);
+		if (rawType.equals(type.getGenericDeclaration())) {
+			String tvName = type.getName();
+			TypeVariable<?>[] rtypes = ((Class<?>)rawType).getTypeParameters();
+			Type[] atypes = parent.getActualTypeArguments();
+			
+			for (int i = 0; i < rtypes.length; i++) {
+				if (tvName.equals(rtypes[i].getName())) return atypes[i];
+			}
+		}
+		
+		return type.getBounds()[0];
 	}
 	
 	static byte[] serialize(Object data) throws IOException {

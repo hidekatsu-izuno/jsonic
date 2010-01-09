@@ -316,6 +316,11 @@ public class JSONTest {
 		sbw.sbean = new StringBean("string");
 		
 		assertEquals(sbw, JSON.decode("{\"sbean\":\"string\"}", StringBeanWrapper.class));
+		
+		GenericPropertyTestWrapper gptw = new GenericPropertyTestWrapper();
+		gptw.test.property = "test";
+		
+		assertEquals(gptw, JSON.decode("{\"test\":{\"property\":\"test\"}}", GenericPropertyTestWrapper.class));
 	}
 
 	@Test
@@ -1878,5 +1883,64 @@ class ImplClass implements BaseInterface {
 	
 	public List<?> getList() {
 		return Arrays.asList("test");
+	}
+}
+
+class GenericPropertyTest<T> {
+	public T property;
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((property == null) ? 0 : property.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GenericPropertyTest<?> other = (GenericPropertyTest<?>) obj;
+		if (property == null) {
+			if (other.property != null)
+				return false;
+		} else if (!property.equals(other.property))
+			return false;
+		return true;
+	}
+}
+
+class GenericPropertyTestWrapper {
+	public GenericPropertyTest<String> test = new GenericPropertyTest<String>();
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((test == null) ? 0 : test.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GenericPropertyTestWrapper other = (GenericPropertyTestWrapper) obj;
+		if (test == null) {
+			if (other.test != null)
+				return false;
+		} else if (!test.equals(other.test))
+			return false;
+		return true;
 	}
 }
