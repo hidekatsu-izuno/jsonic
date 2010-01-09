@@ -953,6 +953,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2009/12/02 version 1.2.0</h3>
 
 <ul>
+<li>[不具合] JSONクラスにて親の型変数を持つプロパティの取り扱いに失敗していた問題にある程度対応しました。</li>
 <li>[不具合] JSONクラスおよびWebServiceServletにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました[#19766]</li>
 <li>JSON encoder/decoderにて処理中に限りメソッド情報をキャッシュするように変更しました。</li>
 <li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=String.class)</code>を指定した場合には<code>toString</code>およびStringを引数に取るコンストラクタを使い文字列の相互変換を行うようにしました。</li>
