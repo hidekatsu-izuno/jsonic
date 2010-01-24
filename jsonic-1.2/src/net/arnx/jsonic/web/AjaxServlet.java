@@ -9,14 +9,17 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -371,7 +374,7 @@ public class AjaxServlet extends HttpServlet {
 	
 	static class Route {
 		private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
-
+		
 		private String target;
 		
 		private Map<String, Object> urlmap;
@@ -397,8 +400,7 @@ public class AjaxServlet extends HttpServlet {
 			contentType = contentType.toLowerCase();
 			
 			if (contentType.equals("application/x-www-form-urlencoded")) {
-				Object o = parseParameter(request.getParameterMap());
-				params = (o instanceof List<?>) ? (List<?>)o :  Arrays.asList(o);
+				params = parseParameter(request.getParameterMap());
 			} else if (contentType.equals("application/json")) {
 				Object o = processor.parse(request.getInputStream());
 				params = (o instanceof List<?>) ? (List<?>)o :  Arrays.asList(o);
@@ -430,8 +432,7 @@ public class AjaxServlet extends HttpServlet {
 					throw new ServletException(e);
 				}
 				
-				Object o = parseParameter(map);
-				params = (o instanceof List<?>) ? (List<?>)o :  Arrays.asList(o);
+				params = parseParameter(map);
 			}
 		}
 		
@@ -467,84 +468,268 @@ public class AjaxServlet extends HttpServlet {
 		}
 		
 		@SuppressWarnings("unchecked")
-		private static Map<?, ?> parseParameter(Map<String, Object[]> pairs) {
-			Map<Object, Object> params = new LinkedHashMap<Object, Object>();
+		private List<?> parseParameter(Map<String, Object[]> pairs) {
+			List<Object> result = new ArrayList<Object>();
+			Object[] pair = pairs.remove("__JSON__");
+			if (pair != null) {
+				for (int i = 0; i < pair.length; i ++) {
+					if (pair[i] instanceof String) {
+						String text = pair[i].toString();
+						result = margeParameter(result, getProcessor().parse(text));
+					}
+				}
+			}
+			
+			StringBuilder sb = new StringBuilder();
 			for (Map.Entry<String, Object[]> entry : pairs.entrySet()) {
-				String name = entry.getKey();
-				Object[] values = entry.getValue();
+				//List<?> names = parseParameterName(entry.getKey(), sb);
+				Object value = parseParameterValue(entry.getValue());
 				
-				if ("_method".equals(name)) continue;
-				
-				int start = 0;
-				char old = '\0';
-				Map<Object, Object> current = params;
-				for (int i = 0; i < name.length(); i++) {
-					char c = name.charAt(i);
-					if (c == '.' || c == '[') {
-						String key = name.substring(start, (old == ']') ? i-1 : i);
-						Object target = current.get(key);
-						
-						if (target instanceof Map) {
-							current = (Map<Object, Object>)target;
-						} else {
-							Map<Object, Object> map = new LinkedHashMap<Object, Object>();
-							if (target != null) map.put(null, target);
-							current.put(key, map);
-							current = map;
-						}
-						start = i+1;
-					}
-					old = c;
-				}
-				
-				name = name.substring(start, (old == ']') ? name.length()-1 : name.length());
-
-				if (current.containsKey(name)) {
-					Object target = current.get(name);
-					
-					if (target instanceof Map) {
-						Map<Object, Object> map = (Map<Object, Object>)target;
-						if (map.containsKey(null)) {
-							target = map.get(null);
-							if (target instanceof List) {
-								List<Object> list = ((List<Object>)target);
-								for (Object value : values) list.add(value);
-							} else {
-								List<Object> list = new ArrayList<Object>();
-								list.add(target);
-								for (Object value : values) list.add(value);
-								map.put(null, list);
-							}
-						} else if (values.length > 1) {
-							List<Object> list = new ArrayList<Object>();
-							for (Object value : values) list.add(value);
-							map.put(null, list);
-						} else {
-							map.put(null, values[0]);						
-						}
-					} else if (target instanceof List) {
-						List<Object> list = ((List<Object>)target);
-						for (Object value : values) list.add(value);
-					} else {
-						List<Object> list = new ArrayList<Object>();
-						list.add(target);
-						for (Object value : values) list.add(value);
-						current.put(name, list);
-					}
-				} else if (values.length > 1) {
-					List<Object> list = new ArrayList<Object>();
-					for (Object value : values) list.add(value);
-					current.put(name, list);
+				Map<Object, Object> map = null;
+				if (result.isEmpty()) {
+					map = new LinkedHashMap<Object, Object>();
+					result.add(map);
 				} else {
-					current.put(name, values[0]);						
+					map = (Map<Object, Object>)result.get(0);
 				}
+				map.put(entry.getKey(), value);
+				
+				/*
+				Object parent = null;
+				Object key = null;
+				Object current = result;
+				for (int i = 0; i < names.size(); i++) {
+					Object name = names.get(i);
+					if (i == names.size()-1) {
+						if (name instanceof BigDecimal) {
+							int pos = ((BigDecimal)name).intValueExact();
+							if (current instanceof Map) {
+								((Map)current).put(name, value);
+							} else {
+								List list = (List)current;
+								if (pos < list.size()) {
+									Object target = list.get(pos);
+									if (target == null) {
+										list.set(pos, value);
+									}
+								}
+							}
+						} else {
+							if (current instanceof Map) {
+								((Map)current).put(name, value);
+							} else {
+								Map map = new LinkedHashMap();
+								map.put(name, value);
+								map.put(null, current);
+								if (parent instanceof Map) {
+									((Map)parent).put(key, map);
+								} else {
+									int pos = ((BigDecimal)key).intValueExact();
+									((List)parent).set(pos, map);
+								}
+							}
+						}
+					} else {
+						parent = current;
+						key = name;
+						current = getChildNode(name, current);
+					}
+				}
+				*/
+			}
+			
+			result = margeParameter(result, params);
+			return result;
+		}
+		
+		List<?> parseParameterName(String name, StringBuilder sb) {
+			// 0 * 1 . 2 [ 3 ] 4
+			int point = 0;
+			
+			List<Object> list = new ArrayList<Object>();
+			
+			sb.setLength(0);
+			
+			int length = name.length();
+			if (name.endsWith("[]")) length -= 2;
+			for (int i = 0; i < length; i++) {
+				char c = name.charAt(i);
+				switch (c) {
+				case '.':
+					if (point == 1) {
+						if (list.isEmpty()) list.add(0);
+						list.add(sb.toString());
+						sb.setLength(0);
+						continue;
+					} else if (point == 4) {
+						point = 0;
+						continue;
+					}
+				case '[':
+					if (point == 0 || point == 2 || point == 4) {
+						point = 3;
+						continue;
+					} else if (point == 1) {
+						if (list.isEmpty()) list.add(0);
+						list.add(sb.toString());
+						sb.setLength(0);
+						point = 3;
+						continue;
+					}
+				case ']':
+					if (point == 3) {
+						String value = sb.toString();
+						if (value.length() > 1 && value.charAt(0) == '"' && value.charAt(value.length()-1) == '"') {
+							if (list.isEmpty()) list.add(0);
+							list.add(value.substring(1, value.length()-1));
+						} else if (value.matches("\\d+")) {
+							list.add(new BigDecimal(value).intValueExact());
+						} else {
+							if (list.isEmpty()) list.add(0);
+							list.add(value);
+						}
+						sb.setLength(0);
+						point = 4;
+						continue;
+					}
+				}
+				if(point == 0 || point == 4) point = 1;
+				sb.append(c);
+			}
+			if (sb.length() > 0) {
+				if (list.isEmpty()) list.add(0);
+				list.add(sb.toString());
+				sb.setLength(0);
+			}
+			
+			return list;
+		}
+		
+		Object parseParameterValue(Object[] values) {
+			if (values == null) return null;
+		
+			if (values.length > 1) {
+				List<Object> list = new ArrayList<Object>(values.length);
+				for (Object v : values) list.add(v);
+				return list;
+			}
+			return values[0];
+		}
+		
+		@SuppressWarnings("unchecked")
+		static List<Object> margeParameter(List<Object> params, Object target) {
+			List<?> params2 = (target instanceof List) ? (List)target : Arrays.asList(target);
+			
+			for (int i = 0; i < params2.size(); i++) {
+				Object p1 = null;
+				Object p2 = params2.get(i);
+				if (params.size() < i) {
+					p1 = params.get(i);
+				} else {
+					params.add(null);
+				}
+				
+				if (p1 == null) {
+					p1 = p2;
+				} else if (p1 instanceof Map) {
+					p1 = margeMap((Map)p1, p2);
+				} else if (p1 instanceof List<?>) {
+					if (p2 instanceof Map) {
+						p1 = margeMap((Map)p2, p1);
+					} else if (p2 instanceof List) {
+						((List)p1).addAll((List)p2);
+					} else {
+						((List)p1).add(p2);
+					}
+				} else {
+					if (p2 instanceof Map) {
+						p1 = margeMap((Map)p2, p1);
+					} else if (p2 instanceof List) {
+						((List)p2).add(p1);
+						p1 = p2;
+					} else {
+						List list = new ArrayList();
+						list.add(p1);
+						list.add(p2);
+						p1 = list;
+					}
+				}
+				
+				params.set(i, p1);
 			}
 			
 			return params;
 		}
 		
+		
+		@SuppressWarnings("unchecked")
+		private static Object margeMap(Map<Object, Object> p1, Object p2) {
+			if (p2 instanceof Map<?, ?>) {
+				for (Map.Entry<?, ?> entry : ((Map<?, ?>)p2).entrySet()) {
+					if (p1.containsKey(entry.getKey())) {
+						Object v1 = p1.get(entry.getKey());
+						Object v2 = entry.getValue();
+						if (v1 instanceof Map) {
+							v1 = margeMap((Map)v1, v2);
+						} else if (v1 instanceof List) {
+							if (v2 instanceof List<?>) {
+								((List)v1).addAll((List<?>)v2);
+							} else {
+								((List)v1).add(v2);
+							}
+						} else {
+							if (v2 instanceof Map) {
+								v1 = margeMap((Map)v2, v1);
+							} else if (v2 instanceof List) {
+								if (v2 instanceof List<?>) {
+									((List)v2).addAll((List<?>)v1);
+								} else {
+									((List)v2).add(p1);
+								}
+								v1 = v2;
+							} else {
+								List list = new ArrayList();
+								list.add(v1);
+								list.add(v2);
+								v1 = list;
+							}
+						}
+						p1.put(entry.getKey(), v1);
+					} else {
+						p1.put(entry.getKey(), entry.getValue());
+					}
+				}
+			} else {
+				if (p1.containsKey(null)) {
+					Object v1 = p1.get(null);
+					if (v1 instanceof List) {
+						if (p2 instanceof List<?>) {
+							((List)v1).addAll((List<?>)p2);
+						} else {
+							((List)v1).add(p2);
+						}
+					} else {
+						List<Object> list = new ArrayList<Object>();
+						list.add(v1);
+						if (p2 instanceof List<?>) {
+							list.addAll((List<?>)p2);
+						} else {
+							list.add(p2);
+						}
+						p1.put(null, list);
+					}
+				} else {
+					p1.put(null, p2);
+				}
+			}
+			
+			return p1;
+		}
+		
 		static String getParameter(Map<String, Object> params, String name) {
 			Object o = params.get(name);
+			
+			if (o == null) return null; 
 			
 			if (o instanceof Map<?, ?>) {
 				Map<?, ?> map = (Map<?, ?>)o;
