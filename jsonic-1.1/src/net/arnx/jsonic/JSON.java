@@ -1317,7 +1317,7 @@ public class JSON {
 	}	
 	
 	private Number parseNumber(ParserSource s) throws IOException, JSONException {
-		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
+		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = s.getCachedBuilder();
 		
 		int n = -1;
@@ -1367,18 +1367,18 @@ public class JSON {
 					if (point == 0 || point == 1) {
 						sb.append(c);
 						point = (c == '0') ? 3 : 2;
-					} else if (point == 2 || point == 5) {
+					} else if (point == 2 || point == 5 || point == 9) {
 						sb.append(c);
 					} else if (point == 4) {
 						sb.append(c);
 						point = 5;
 					} else if (point == 7 || point == 8) {
 						sb.append(c);
-						break loop;
+						point = 9;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 					}
-				} else if (point == 2 || point == 3 || point == 5 || point == 6) {
+				} else if (point == 2 || point == 3 || point == 5 || point == 6 || point == 9) {
 					s.back();
 					break loop;
 				} else {
