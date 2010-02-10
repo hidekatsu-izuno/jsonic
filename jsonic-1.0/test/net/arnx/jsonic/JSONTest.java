@@ -204,6 +204,14 @@ public class JSONTest {
 
 		assertEquals(list, JSON.decode("[-1.1, 1.11e1, 1.11E+1, 11.1e-1]"));
 		
+		list.clear();
+		list.add(new BigDecimal("-1.1000000000"));
+		list.add(new BigDecimal("11.1"));
+		list.add(new BigDecimal("11.1"));
+		list.add(new BigDecimal("1.11"));
+		
+		assertEquals(list, JSON.decode("[-11000000000e-10, 0.0000000000111E12, 11.1E+000, 11.1e-01]"));
+		
 		Map<String, Object> map1 = new LinkedHashMap<String, Object>();
 		Map<String, Object> map2 = new LinkedHashMap<String, Object>();
 		Map<String, Object> map3 = new LinkedHashMap<String, Object>();
@@ -875,7 +883,7 @@ public class JSONTest {
 		// BigDecimal
 		assertEquals(null, json.convert(null, BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100"), BigDecimal.class));
-		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100.00"), BigDecimal.class));
+		assertEquals(new BigDecimal("100.00"), json.convert(new BigDecimal("100.00"), BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert("100", BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert("+100", BigDecimal.class));
 		assertEquals(new BigDecimal("100.01"), json.convert("100.01", BigDecimal.class));

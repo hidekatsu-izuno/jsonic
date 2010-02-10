@@ -737,6 +737,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
+<h3>2010/02/11 version 1.0.5</h3>
+
+<ul>
+<li>JSONのデコード時に指数部が2桁以上ある数値の解析に失敗していた点を修正しました。[#20537]</li>
+<li>JSONクラスおよびWebServiceServletにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました[#19766]</li>
+</ul>
+
 <h3>2009/02/15 version 1.0.4</h3>
 <ul>
 <li>Decode/Format時にListの再帰抑制が正しく動作していなかった問題を修正しました。</li>
