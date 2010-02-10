@@ -1399,10 +1399,7 @@ public class JSON {
 					} else if (point == 4) {
 						sb.append(c);
 						point = 5;
-					} else if (point == 7) {
-						sb.append(c);
-						point = 9;
-					} else if (point == 8) {
+					} else if (point == 7 || point == 8) {
 						sb.append(c);
 						point = 9;
 					} else {
