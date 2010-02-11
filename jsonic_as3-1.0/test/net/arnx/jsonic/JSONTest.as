@@ -53,6 +53,9 @@ package net.arnx.jsonic {
 			list = [-1.1, 1.11e1, 1.11E+1, 11.1e-1];
 			assertEquals(list, JSON.decode("[-1.1, 1.11e1, 1.11E+1, 11.1e-1]"));
 			
+			list = [-1.1000000000, 1.11e1, 1.11E+1, 11.1e-1];
+			assertEquals(list, JSON.decode("[-11000000000e-10, 0.0000000000111E12, 11.1E+000, 11.1e-01]"));
+			
 			var map1:Object = {
 				map2: {
 					"'2'": 2,

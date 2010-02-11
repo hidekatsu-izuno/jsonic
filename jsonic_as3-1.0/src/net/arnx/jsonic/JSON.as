@@ -527,7 +527,7 @@ package net.arnx.jsonic {
 		}	
 		
 		private function _parseNumber(s:IParserSource):Number {
-			var point:int = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' E
+			var point:int = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 			var sb:ByteArray = s.getCachedBuilder();
 			
 			var c:String = null;
@@ -576,18 +576,18 @@ package net.arnx.jsonic {
 						if (point == 0 || point == 1) {
 							sb.writeUTFBytes(c);
 							point = (c == '0') ? 3 : 2;
-						} else if (point == 2 || point == 5) {
+						} else if (point == 2 || point == 5 || point == 9) {
 							sb.writeUTFBytes(c);
 						} else if (point == 4) {
 							sb.writeUTFBytes(c);
 							point = 5;
 						} else if (point == 7 || point == 8) {
 							sb.writeUTFBytes(c);
-							break loop;
+							point = 9;
 						} else {
 							throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 						}
-					} else if (point == 2 || point == 3 || point == 5 || point == 6) {
+					} else if (point == 2 || point == 3 || point == 5 || point == 6 || point == 9) {
 						s.back();
 						break loop;
 					} else {
