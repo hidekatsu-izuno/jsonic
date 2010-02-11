@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 
 <project name="jsonic" basedir="." default="dist-all">
-	<property name="version" value="1.0.4" />
+	<property name="version" value="1.0.5" />
 
 	<property file="build.properties" />	
 	
 	<property name="jsonic_as3.home" location="../jsonic_as3-1.0" />
-	<property name="flex.home" location="C:/Program Files/Adobe/Flex Builder 3 Plug-in/sdks/3.2.0" />
+	<property name="flex.home" location="C:/Program Files/Adobe/Flex Builder 3/sdks/3.2.0" />
 	
 	<property name="webapps" location="sample"/>
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
@@ -20,6 +20,7 @@
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
 		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build">
+			<compilerarg value="-Xlint:unchecked"/>
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 			</classpath>
