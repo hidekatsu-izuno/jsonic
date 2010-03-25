@@ -407,9 +407,9 @@ public class JSON {
 		return JSON.newInstance().parse(reader, type);
 	}
 	
-	Object contextObject = null;
+	Object contextObject;
 	Locale locale;
-	boolean prettyPrint = false;	
+	boolean prettyPrint = false;
 	int maxDepth = 32;
 	boolean suppressNull = false;
 

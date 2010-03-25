@@ -221,6 +221,7 @@ public class WebServiceServlet extends HttpServlet {
 	}
 	
 	static class RpcRequest {
+		public String jsonrpc;
 		public String method;
 		public List<Object> params;
 		public Object id;
@@ -244,7 +245,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		try {
 			req = json.parse(request.getReader(), RpcRequest.class);
-			if (req == null || req.method == null || req.params == null) {
+			if (req == null || req.method == null || req.params == null || req.jsonrpc != null) {
 				throwable = new IllegalArgumentException(
 						((req == null) ? "request" : (req.method == null) ? "method" : "params")
 						+ "is null.");
@@ -530,7 +531,7 @@ public class WebServiceServlet extends HttpServlet {
 	static class RouteMapping {
 		private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
 		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
-		private static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
+		static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
 		
 		static {
 			DEFAULT_RESTMAP.put("GET", "find");
@@ -598,8 +599,8 @@ public class WebServiceServlet extends HttpServlet {
 		private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
 		private String target;
-		private Map<String, String> restmap;
 		private String method;
+		private String restMethod;
 		private Map<Object, Object> params;
 		
 		private boolean isRpcMode;
@@ -608,8 +609,8 @@ public class WebServiceServlet extends HttpServlet {
 		@SuppressWarnings("unchecked")
 		public Route(HttpServletRequest request, String target, Map<String, String> restmap, Map<String, Object> params) throws IOException {
 			this.target = target;
-			this.restmap = restmap;
 			this.params = (Map)params;
+			this.restMethod = getParameter("method");
 			
 			String contentType = request.getContentType();
 			if (contentType == null) contentType = "";
@@ -659,6 +660,10 @@ public class WebServiceServlet extends HttpServlet {
 				String m = getParameter("_method");
 				if (m == null) m = request.getMethod();
 				this.method = m.toUpperCase();
+				
+				if (this.restMethod == null) {
+					this.restMethod = restmap.get(getMethod());
+				}
 			}
 		}
 		
@@ -667,7 +672,7 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		public String getRestMethod() {
-			return restmap.get(getMethod());
+			return restMethod;
 		}
 		
 		public boolean isRpcMode() {
@@ -861,7 +866,7 @@ public class WebServiceServlet extends HttpServlet {
 					for (String value : values) list.add(value);
 					current.put(name, list);
 				} else {
-					current.put(name, values[0]);						
+					current.put(name, values[0]);
 				}
 			}
 		}
