@@ -429,6 +429,11 @@ public class WebServiceServletTest {
 		request.addParameter("aaa[bbb]", "aaa");
 		request.addParameter("aaa[bbb]", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), getParameterMap(request));
+		
+		request = context.createRequest("/?aaa[bbb]=aaa&aaa[bbb]=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
+		request.addParameter("aaa[bbb][]", "aaa");
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa']}}"), getParameterMap(request));
 
 		request = context.createRequest("/?aaa[bbb].ccc=aaa&aaa[bbb].ccc=bbb");
 		request.setContentType("application/x-www-form-urlencoded");

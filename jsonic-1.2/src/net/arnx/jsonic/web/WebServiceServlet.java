@@ -20,12 +20,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -623,39 +621,7 @@ public class WebServiceServlet extends HttpServlet {
 				
 				this.method = request.getMethod().toUpperCase();
 			} else {
-				Map<String, String[]> pmap = request.getParameterMap();
-				
-				if ("application/x-www-form-urlencoded".equalsIgnoreCase(contentType)
-						&& request.getQueryString() != null
-						&& request.getQueryString().trim().length() != 0) {
-						
-					Map<String, String[]> pairs = parseQueryString(request.getQueryString(), request.getCharacterEncoding());
-					
-					for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
-						String[] values = pmap.get(entry.getKey());
-						if (values.length <= entry.getValue().length) continue;
-						
-						int size = values.length;
-						for (String estr : entry.getValue()) {
-							for (int i = 0; i < values.length; i++) {
-								if (estr.equals(values[i])) {
-									values[i] = null;
-									size--;
-									break;
-								}
-							}
-						}
-						
-						String[] newValues = new String[size];
-						int pos = 0;
-						for (String pstr : values) {
-							if (pstr != null) newValues[pos++] = pstr;
-						}
-						pmap.put(entry.getKey(), newValues);
-					}
-				}
-				
-				parseParameter(pmap, this.params);
+				parseParameter(request.getParameterMap(), this.params);
 				
 				String m = getParameter("_method");
 				if (m == null) m = request.getMethod();
@@ -759,50 +725,15 @@ public class WebServiceServlet extends HttpServlet {
 			return "application/json".equalsIgnoreCase(contentType);
 		}
 		
-		private Map<String, String[]> parseQueryString(String qs, String encoding) throws UnsupportedEncodingException {
-			Map<String, String[]> pairs = new HashMap<String, String[]>();
-			
-			int start = 0;
-			String key = null;
-			
-			for (int i = 0; i <= qs.length(); i++) {
-				if (i == qs.length() || qs.charAt(i) == '&') {
-					String value = null;
-					String[] values = null;
-					
-					if (key == null) {
-						key = URLDecoder.decode(qs.substring(start, i), encoding);
-						value = "";
-					} else {
-						value = URLDecoder.decode(qs.substring(start, i), encoding);
-					}
-					
-					if (pairs.containsKey(key)) {
-						String[] tmp = pairs.get(key);
-						values = new String[tmp.length+1];
-						System.arraycopy(tmp, 0, values, 0, tmp.length);
-						values[tmp.length] = value;
-					} else {
-						values = new String[] { value };
-					}
-					
-					pairs.put(key, values);
-					key = null;
-					
-					start = i+1;
-				} else if (qs.charAt(i) == '=') {
-					key = URLDecoder.decode(qs.substring(start, i), encoding);
-					start = i+1;
-				}
-			}
-			
-			return pairs;
-		}
-		
 		@SuppressWarnings("unchecked")
 		private static void parseParameter(Map<String, String[]> pairs, Map<Object, Object> params) {
 			for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
 				String name = entry.getKey();
+				boolean multiValue = false;
+				if (name.endsWith("[]")) {
+					name = name.substring(0, name.length()-2);
+					multiValue = true;
+				}
 				String[] values = entry.getValue();
 				
 				int start = 0;
@@ -840,13 +771,13 @@ public class WebServiceServlet extends HttpServlet {
 								List<Object> list = ((List<Object>)target);
 								for (String value : values) list.add(value);
 							} else {
-								List<Object> list = new ArrayList<Object>();
+								List<Object> list = new ArrayList<Object>(values.length+1);
 								list.add(target);
 								for (String value : values) list.add(value);
 								map.put(null, list);
 							}
-						} else if (values.length > 1) {
-							List<Object> list = new ArrayList<Object>();
+						} else if (multiValue || values.length > 1) {
+							List<Object> list = new ArrayList<Object>(values.length);
 							for (String value : values) list.add(value);
 							map.put(null, list);
 						} else {
@@ -856,13 +787,13 @@ public class WebServiceServlet extends HttpServlet {
 						List<Object> list = ((List<Object>)target);
 						for (String value : values) list.add(value);
 					} else {
-						List<Object> list = new ArrayList<Object>();
+						List<Object> list = new ArrayList<Object>(values.length+1);
 						list.add(target);
 						for (String value : values) list.add(value);
 						current.put(name, list);
 					}
-				} else if (values.length > 1) {
-					List<Object> list = new ArrayList<Object>();
+				} else if (multiValue || values.length > 1) {
+					List<Object> list = new ArrayList<Object>(values.length);
 					for (String value : values) list.add(value);
 					current.put(name, list);
 				} else {
