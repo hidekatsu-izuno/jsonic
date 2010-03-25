@@ -24,6 +24,7 @@
 			<arg line="-allow-source-path-overlap=true" />
 			<arg line="-include-namespaces 'http://arnx.net/jsonic'" />
 			<arg line="-include-classes 'net.arnx.jsonic.web.mxml.WebService'" />
+			<arg line="-compatibility-version=3.0" />
 		</java>
 		<java taskname="asdoc" jar="${flex.home}/lib/asdoc.jar" fork="true" failonerror="true" dir="${flex.home}/frameworks">
 			<jvmarg line="-Dfile.encoding=UTF-8"/>
