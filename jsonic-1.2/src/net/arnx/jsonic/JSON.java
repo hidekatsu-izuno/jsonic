@@ -465,6 +465,13 @@ public class JSON {
 	}
 	
 	/**
+	 * Gets maximum depth for the nest level.
+	 */
+	public int getMaxDepth() {
+		return this.maxDepth;
+	}
+	
+	/**
 	 * If this property is true, the member of null value in JSON object is ignored.
 	 * default value is false.
 	 * 
