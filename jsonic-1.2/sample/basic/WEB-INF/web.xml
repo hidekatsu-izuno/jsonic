@@ -8,9 +8,9 @@
 	<description>jsonic sample</description>
  
 	<servlet>
-		<description>JSON-WebService</description>
-		<servlet-name>json-ws</servlet-name>
-		<servlet-class>net.arnx.jsonic.web.WebServiceServlet</servlet-class>
+		<description>JSON REST Service</description>
+		<servlet-name>restServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RESTServlet</servlet-class>
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
@@ -24,9 +24,24 @@
 			</param-value>
 		</init-param>
 	</servlet>
-	
+ 
+	<servlet>
+		<description>JSON RPC Service</description>
+		<servlet-name>rpcServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RPCServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				debug: true
+				mappings: {
+					'/{package}/rpc.{ext}': 'sample.basic.web.${package}.service.${class}Service'
+					'/rpc.{ext}': 'sample.basic.service.${class}Service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>	
 	<servlet-mapping>
-		<servlet-name>json-ws</servlet-name>
+		<servlet-name>restServlet</servlet-name>
 		<url-pattern>*.json</url-pattern>
 	</servlet-mapping>
 </web-app>

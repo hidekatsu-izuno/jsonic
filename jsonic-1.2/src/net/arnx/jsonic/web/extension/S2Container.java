@@ -15,14 +15,22 @@
  */
 package net.arnx.jsonic.web.extension;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+
 import net.arnx.jsonic.web.Container;
-import net.arnx.jsonic.web.WebServiceServlet;
 
 import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
 import org.seasar.framework.log.Logger;
 
 public class S2Container extends Container {
-	private static Logger log = Logger.getLogger(WebServiceServlet.class);
+	private Logger log;
+	
+	@Override
+	public void init(HttpServlet servlet) throws ServletException {
+		super.init(servlet);
+		this.log = Logger.getLogger(servlet.getClass());
+	}
 	
 	@Override
 	public Object getComponent(String className) throws Exception {

@@ -17,12 +17,12 @@ package net.arnx.jsonic.web.extension;
 
 import java.lang.reflect.Method;
 
-import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.web.Container;
-import net.arnx.jsonic.web.WebServiceServlet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,13 +31,13 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 public class SpringContainer extends Container {
-	private static Log log = LogFactory.getLog(WebServiceServlet.class);
-	
+	private Log log;
 	private ApplicationContext appContext;
 	
 	@Override
-	public void init(ServletConfig config) {
-		super.init(config);
+	public void init(HttpServlet servlet) throws ServletException {
+		super.init(servlet);
+		this.log = LogFactory.getLog(servlet.getClass());		
 		appContext = WebApplicationContextUtils.getWebApplicationContext(context);
 	}
 	

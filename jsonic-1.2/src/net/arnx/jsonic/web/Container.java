@@ -15,16 +15,21 @@
  */
 package net.arnx.jsonic.web;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -35,21 +40,72 @@ public class Container {
 	public Boolean debug;
 	public String init = "init";
 	public String destroy = "destroy";
+	public String encoding;
+	public Boolean expire;
 	public boolean namingConversion = true;
+	public Class<? extends JSON> processor;
 	
 	protected ServletConfig config;
 	protected ServletContext context;
+	protected HttpServlet servlet;
 	protected HttpServletRequest request;
 	protected HttpServletResponse response;
 	
-	public void init(ServletConfig config) {
-		this.config = config;
-		this.context = config.getServletContext();
+	public void init(HttpServlet servlet) throws ServletException {
+		this.servlet = servlet;
+		this.config = servlet.getServletConfig();
+		this.context = servlet.getServletContext();
 	}
 	
-	public void start(HttpServletRequest request, HttpServletResponse response) {
+	public void start(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		this.request = request;
 		this.response = response;
+		
+		String encoding = this.encoding;
+		Boolean expire = this.expire;
+				
+		GatewayFilter.Config gconfig = (GatewayFilter.Config)request.getAttribute(GatewayFilter.GATEWAY_KEY);
+		if (gconfig != null) {
+			if (encoding == null) encoding = gconfig.encoding;
+			if (expire == null) expire = gconfig.expire;
+		}
+		
+		if (encoding == null) encoding = "UTF-8";
+		if (expire == null) expire = true;
+		
+		// set encoding
+		if (encoding != null) {
+			request.setCharacterEncoding(encoding);
+			response.setCharacterEncoding(encoding);
+		}
+		
+		// set expiration
+		if (expire != null && expire) {
+			response.setHeader("Cache-Control", "no-cache");
+			response.setHeader("Pragma", "no-cache");
+			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
+		}
+	}
+	
+	public JSON createJSON(Locale locale) throws ServletException  {
+		try {
+			if (processor == null) processor = WebServiceJSON.class;
+			
+			JSON json = processor.newInstance();
+			json.setLocale(locale);
+			return json;
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
+	}
+	
+	
+	public static class WebServiceJSON extends JSON {
+		@Override
+		protected boolean ignore(Context context, Class<?> target, Member member) {
+			return member.getDeclaringClass().equals(Throwable.class)
+				|| super.ignore(context, target, member);
+		}
 	}
 	
 	public Object getComponent(String className) throws Exception {
@@ -201,14 +257,13 @@ public class Container {
 		return result;
 	}
 	
-	public void end(HttpServletRequest request, HttpServletResponse response) {
+	public void end(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		request = null;
 		response = null;
 	}
 
 	public void destory() {
 	}
-	
 	
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
 		Class<?> c = null;
@@ -256,7 +311,7 @@ public class Container {
 	}
 	
 	
-	private static String toPrintString(Class<?> c, String methodName, List<?> args) {
+	static String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());
 		sb.append('#').append(methodName).append('(');
 		if (args != null) {
@@ -267,7 +322,7 @@ public class Container {
 		return sb.toString();
 	}
 	
-	private static String toLowerCamel(String name) {
+	static String toLowerCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = false;
 		for (int i = 0; i < name.length(); i++) {
@@ -285,5 +340,28 @@ public class Container {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
 		}
 		return sb.toString();
+	}
+	
+	static String toUpperCamel(String name) {
+		StringBuilder sb = new StringBuilder(name.length());
+		boolean toUpperCase = true;
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	static <T> T cast(Object o) {
+		return (T)o;
 	}
 }

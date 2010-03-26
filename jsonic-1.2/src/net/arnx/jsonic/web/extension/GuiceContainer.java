@@ -18,20 +18,21 @@ package net.arnx.jsonic.web.extension;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 
 import net.arnx.jsonic.web.Container;
-import net.arnx.jsonic.web.WebServiceServlet;
 
 import com.google.inject.Injector;
 
 public class GuiceContainer extends Container {
-	private static Logger log = Logger.getLogger(WebServiceServlet.class.getName());
-	
+	private Logger log;
 	private Injector injector;
-
-	public void init(ServletConfig config) {
-		super.init(config);
+	
+	@Override
+	public void init(HttpServlet servlet)  throws ServletException {
+		super.init(servlet);
+		this.log = Logger.getLogger(servlet.getClass().getName());
 		this.injector = (Injector)context.getAttribute(Injector.class.getName());
 	}
 	

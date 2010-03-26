@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,7 +29,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,13 +43,11 @@ import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 
 import static javax.servlet.http.HttpServletResponse.*;
+import static net.arnx.jsonic.web.Container.*;
 
-public class WebServiceServlet extends HttpServlet {	
+public class RESTServlet extends HttpServlet {	
 	static class Config {
 		public Class<? extends Container> container;
-		public Class<? extends JSON> processor;
-		public String encoding;
-		public Boolean expire;
 		public Map<String, List<Object>> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -82,12 +78,10 @@ public class WebServiceServlet extends HttpServlet {
 			config = json.parse(configText, Config.class);
 			if (config.container == null) config.container = Container.class;
 			container = json.parse(configText, config.container);
-			container.init(servletConfig);
+			container.init(this);
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
-		
-		if (config.processor == null) config.processor = WebServiceJSON.class;
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
@@ -99,37 +93,56 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
-	protected void process(HttpServletRequest request, HttpServletResponse response)
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			doREST(request, response);
+		} finally {
+			container.end(request, response);
+		}
+	}
+	
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			doREST(request, response);
+		} finally {
+			container.end(request, response);
+		}
+	}
+	
+	@Override
+	protected void doPut(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			doREST(request, response);
+		} finally {
+			container.end(request, response);
+		}
+	}
+	
+	@Override
+	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
+		throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			doREST(request, response);
+		} finally {
+			container.end(request, response);
+		}
+	}
+	
+	protected void doREST(HttpServletRequest request, HttpServletResponse response)
+		throws ServletException, IOException {
 		
 		String uri = (request.getContextPath().equals("/")) ?
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
-		
-		String encoding = config.encoding;
-		Boolean expire = config.expire;
-		
-		GatewayFilter.Config gconfig = (GatewayFilter.Config)request.getAttribute(GatewayFilter.GATEWAY_KEY);
-		if (gconfig != null) {
-			if (encoding == null) encoding = gconfig.encoding;
-			if (expire == null) expire = gconfig.expire;
-		}
-		
-		if (encoding == null) encoding = "UTF-8";
-		if (expire == null) expire = true;
-		
-		// set encoding
-		if (encoding != null) {
-			request.setCharacterEncoding(encoding);
-			response.setCharacterEncoding(encoding);
-		}
-		
-		// set expiration
-		if (expire != null && expire) {
-			response.setHeader("Cache-Control", "no-cache");
-			response.setHeader("Pragma", "no-cache");
-			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
-		}
 		
 		File file = new File(getServletContext().getRealPath(uri));
 		if (file.exists()) {
@@ -142,7 +155,11 @@ public class WebServiceServlet extends HttpServlet {
 					out.write(buffer, 0, count);
 				}
 			} finally {
-				if (in != null) in.close();
+				try {
+					if (in != null) in.close();
+				} catch (IOException e2) {
+					// no handle
+				}
 			}
 			return;
 		}
@@ -150,6 +167,7 @@ public class WebServiceServlet extends HttpServlet {
 		Route route = null;
 		for (RouteMapping m : mappings) {
 			if ((route = m.matches(request, uri)) != null) {
+				container.debug("Route found: " + request.getMethod() + " " + uri);
 				break;
 			}
 		}
@@ -159,249 +177,31 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		if (route.isRpcMode()) {
-			if ("POST".equals(route.getMethod())) {
-				container.debug("Route found: " + request.getMethod() + " " + uri);
-				doRPC(route, request, response);
-			} else {
-				response.addHeader("Allow", "POST");
-				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowd");
-			}
-		} else {
-			container.debug("Route found: " + request.getMethod() + " " + uri);
-			doREST(route, request, response);
-		}
-		
-	}
-	
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			process(request, response);
-		} finally {
-			container.end(request, response);
-		}
-	}
-	
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			process(request, response);
-		} finally {
-			container.end(request, response);
-		}
-	}
-	
-	@Override
-	protected void doPut(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			process(request, response);
-		} finally {
-			container.end(request, response);
-		}
-	}
-	
-	@Override
-	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
-		throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			process(request, response);
-		} finally {
-			container.end(request, response);
-		}
-	}
-	
-	static class RpcRequest {
-		public String jsonrpc;
-		public String method;
-		public List<Object> params;
-		public Object id;
-	}
-	
-	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
-		throws ServletException, IOException {
-		
-		JSON json = createJSON(request.getLocale());
-		
-		// request processing
-		RpcRequest req = null;
-		Object result = null;
-		
-		int errorCode = 0;
-		String errorName = null;
-		String errorMessage = null;
-		Throwable throwable = null;
-		
-		Object component = null;
-		
-		try {
-			req = json.parse(request.getReader(), RpcRequest.class);
-			if (req == null || req.method == null || req.params == null || req.jsonrpc != null) {
-				throwable = new IllegalArgumentException(
-						((req == null) ? "request" : (req.method == null) ? "method" : "params")
-						+ "is null.");
-				errorCode = -32600;
-				errorName = "ReferenceError";
-				errorMessage = "Invalid Request.";
-			} else {
-				int delimiter = req.method.lastIndexOf('.');
-				if (delimiter <= 0 && delimiter+1 == req.method.length()) {
-					throw new NoSuchMethodException(req.method);
-				}
-				
-				String methodName = req.method.substring(delimiter+1);
-				if (methodName.equals(container.init) || methodName.equals(container.destroy)) {
-					throw new NoSuchMethodException(req.method);
-				}
-				
-				component = container.getComponent(route.getComponentClass(container, req.method.substring(0, delimiter)));
-				if (component == null) {
-					throw new NoSuchMethodException(req.method);
-				}
-				
-				json.setContext(component);
-				
-				Method method = container.getMethod(component, methodName, req.params);
-				
-				Produce produce = method.getAnnotation(Produce.class);
-				if (produce != null) response.setContentType(produce.value());
-								
-				result = container.execute(json, component, method, req.params);
-				
-				if (produce != null) return;
-			}
-		} catch (ClassNotFoundException e) {
-			container.debug("Class Not Found.", e);
-			throwable = e;
-			errorName = "ReferenceError";
-			errorCode = -32601;
-			errorMessage = "Method not found.";
-		} catch (NoSuchMethodException e) {
-			container.debug("Method Not Found.", e);
-			throwable = e;
-			errorCode = -32601;
-			errorName = "ReferenceError";
-			errorMessage = "Method not found.";
-		} catch (JSONException e) {
-			container.debug("Fails to parse JSON.", e);
-			throwable = e;
-			if (e.getErrorCode() == JSONException.POSTPARSE_ERROR) {
-				errorCode = -32602;
-				errorName = "TypeError";
-				errorMessage = "Invalid params.";
-			} else  {
-				errorCode = -32700;
-				errorName = "SyntaxError";
-				errorMessage = "Parse error.";
-			}
-		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-			container.debug("Fails to invoke method.", e);
-			throwable = cause;
-			if (cause instanceof IllegalStateException
-				|| cause instanceof UnsupportedOperationException) {
-				errorCode = -32601;
-				errorName = "ReferenceError";
-				errorMessage = "Method not found.";
-			} else if (cause instanceof IllegalArgumentException) {
-				errorCode = -32602;
-				errorName = "SyntaxError";
-				errorMessage = "Invalid params.";
-			} else {
-				errorCode = -32603;
-				errorName = cause.getClass().getSimpleName();
-				errorMessage = cause.getMessage();
-			}
-		} catch (Exception e) {
-			container.error("Internal error occurred.", e);
-			throwable = e;
-			errorCode = -32603;
-			errorName = e.getClass().getSimpleName();
-			errorMessage = "Internal error.";
-		}
-		
-		// it's notification when id was null
-		if (req != null && req.method != null && req.params != null && req.id == null) {
-			response.setStatus(SC_ACCEPTED);
-			return;
-		}
-		
-		if (result instanceof Produce) return;
-
-		// response processing
-		response.setContentType("application/json");
-		
-		Map<String, Object> res = new LinkedHashMap<String, Object>();
-		res.put("result", result);
-		if (errorCode == 0) {
-			res.put("error", null);
-		} else {
-			Map<String, Object> error = new LinkedHashMap<String, Object>();
-			error.put("code", errorCode);
-			error.put("name", errorName);
-			error.put("message", errorMessage);
-			error.put("data", throwable);
-			res.put("error", error);
-		}
-		res.put("id", (req != null) ? req.id : null);
-		
-		Writer writer = response.getWriter();
-
-		try {
-			json.setContext(result);
-			json.setPrettyPrint(container.isDebugMode());
-			json.format(res, writer);
-		} catch (IOException e) {
-			throw e;
-		} catch (Exception e) {
-			container.error("Fails to format", e);
-			res.clear();
-			res.put("result", null);
-			Map<String, Object> error = new LinkedHashMap<String, Object>();
-			error.put("code", -32603);
-			error.put("name", e.getClass().getSimpleName());
-			error.put("message", "Internal error.");
-			error.put("data", e);
-			res.put("error", error);
-			res.put("id", (req != null) ? req.id : null);
-			json.format(res, writer);
-			return;
-		}
-	}
-	
-	protected void doREST(Route route, HttpServletRequest request, HttpServletResponse response)
-		throws ServletException, IOException {
-		
-		JSON json = createJSON(request.getLocale());
 		
 		int status = SC_OK;
 		String callback = null;
 		
-		if ("GET".equals(route.getMethod())) {
+		if ("GET".equals(request.getMethod())) {
 			callback = route.getParameter("callback");
-		} else if ("POST".equals(route.getMethod())) {
+		} else if ("POST".equals(request.getMethod())) {
 			status = SC_CREATED;
 		}
 		
 		String methodName = route.getRestMethod();
 		if (methodName == null || methodName.equals(container.init) || methodName.equals(container.destroy)) {
-			container.debug("Method mapping not found: " + route.getMethod());
+			container.debug("Method mapping not found: " + request.getMethod());
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		}
 		
-		Object res = null;
+		Object result = null;
+		
+		JSON json = container.createJSON(request.getLocale());
+		
 		try {
-			Object component = container.getComponent(route.getComponentClass(container, null));
+			Object component = container.getComponent(route.getComponentClass(container));
 			if (component == null) {
-				container.debug("Component not found: " + route.getComponentClass(container, null));
+				container.debug("Component not found: " + route.getComponentClass(container));
 				response.sendError(SC_NOT_FOUND, "Not Found");
 				return;
 			}
@@ -427,16 +227,18 @@ public class WebServiceServlet extends HttpServlet {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
 			}
-			json.setContext(component);
-			
 			Method method = container.getMethod(component, methodName, params);
 			
 			Produce produce = method.getAnnotation(Produce.class);
-			if (produce != null) response.setContentType(produce.value());
-			
-			res = container.execute(json, component, method, params);
-			
-			if (produce != null) return;
+			if (produce == null) {
+				json.setContext(component);
+				result = container.execute(json, component, method, params);
+			} else {
+				response.setContentType(produce.value());
+				json.setContext(component);
+				container.execute(json, component, method, params);
+				return;
+			}
 		} catch (ClassNotFoundException e) {
 			container.debug("Class Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
@@ -462,37 +264,28 @@ public class WebServiceServlet extends HttpServlet {
 			}
 			
 			response.setStatus(SC_BAD_REQUEST);
-			res = cause;
+			result = cause;
 		} catch (Exception e) {
 			container.error("Internal error occurred.", e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
 		}
 		
-		try {
-			if (res == null
-					|| res instanceof CharSequence
-					|| res instanceof Boolean
-					|| res instanceof Number
-					|| res instanceof Date) {
-				if (status != SC_CREATED) status = SC_NO_CONTENT;
-				response.setStatus(status);
-			} else {
-				response.setContentType((callback != null) ? "text/javascript" : "application/json");
-				Writer writer = response.getWriter();
-				json.setPrettyPrint(container.isDebugMode());
-				
-				if (callback != null) writer.append(callback).append("(");
-				json.format(res, writer);
-				if (callback != null) writer.append(");");
-			}
+		if (result == null
+				|| result instanceof CharSequence
+				|| result instanceof Boolean
+				|| result instanceof Number
+				|| result instanceof Date) {
+			if (status != SC_CREATED) status = SC_NO_CONTENT;
+			response.setStatus(status);
+		} else {
+			response.setContentType((callback != null) ? "text/javascript" : "application/json");
+			Writer writer = response.getWriter();
+			json.setPrettyPrint(container.isDebugMode());
 			
-		} catch (IOException e) {
-			throw e;
-		} catch (Exception e) {
-			container.error("Fails to format.", e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
-			return;
+			if (callback != null) writer.append(callback).append("(");
+			json.format(result, writer);
+			if (callback != null) writer.append(");");
 		}
 	}
 	
@@ -502,33 +295,10 @@ public class WebServiceServlet extends HttpServlet {
 		super.destroy();
 	}
 	
-	JSON createJSON(Locale locale) throws ServletException {
-		JSON json = null;
-		try {
-			json = (JSON)config.processor.newInstance();
-		} catch (Exception e) {
-			throw new ServletException(e);
-		}
-		json.setLocale(locale);		
-		return json;
-	}
-	
-	@SuppressWarnings("unchecked")
-	static <T> T cast(Object o) {
-		return (T)o;
-	}
-	
-	public static class WebServiceJSON extends JSON {
-		@Override
-		protected boolean ignore(Context context, Class<?> target, Member member) {
-			return member.getDeclaringClass().equals(Throwable.class)
-				|| super.ignore(context, target, member);
-		}
-	}
-	
 	static class RouteMapping {
 		private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
 		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
+		
 		static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
 		
 		static {
@@ -541,9 +311,8 @@ public class WebServiceServlet extends HttpServlet {
 		Pattern pattern;
 		List<String> names;
 		String target;
-		Map<String, String> restmap = DEFAULT_RESTMAP;
+		Map<?, ?> options;
 		
-		@SuppressWarnings("unchecked")
 		public RouteMapping(String path, List<Object> target, Map<String, Pattern> definitions) {
 			this.names = new ArrayList<String>();
 			StringBuffer sb = new StringBuffer("^\\Q");
@@ -563,7 +332,10 @@ public class WebServiceServlet extends HttpServlet {
 			sb.append("\\E$");
 			this.pattern = Pattern.compile(sb.toString());
 			this.target = (String)target.get(0);
-			if (target.size() > 1) restmap = (Map<String, String>)target.get(1);
+			this.target = (String)target.get(0);
+			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
+				options = cast(target.get(1));
+			}
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -587,7 +359,22 @@ public class WebServiceServlet extends HttpServlet {
 						params.put(key, value);
 					}
 				}
-				return new Route(request, target, restmap, params);
+				
+				if (params.get("method") == null) {
+					String httpMethod = request.getParameter("_method");
+					if (httpMethod == null) httpMethod = request.getMethod();
+					
+					Object restMethod = options.get(httpMethod);
+					if (restMethod instanceof String) {
+						params.put("method", restMethod);
+					} else {
+						params.put("method", DEFAULT_RESTMAP.get(httpMethod));
+					}
+				}
+				
+				if (params.get("method") != null) {
+					return new Route(request, target, options, params);
+				}
 			}
 			return null;
 		}
@@ -595,17 +382,15 @@ public class WebServiceServlet extends HttpServlet {
 	
 	static class Route {
 		private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
-
+		
 		private String target;
-		private String method;
 		private String restMethod;
 		private Map<Object, Object> params;
 		
-		private boolean isRpcMode;
 		private String contentType;
 		
 		@SuppressWarnings("unchecked")
-		public Route(HttpServletRequest request, String target, Map<String, String> restmap, Map<String, Object> params) throws IOException {
+		public Route(HttpServletRequest request, String target, Map<?, ?> options, Map<String, Object> params) throws IOException {
 			this.target = target;
 			this.params = (Map)params;
 			this.restMethod = getParameter("method");
@@ -616,33 +401,11 @@ public class WebServiceServlet extends HttpServlet {
 			
 			this.contentType = (index > -1) ? contentType.substring(0, index) : contentType;
 			
-			if ("rpc".equalsIgnoreCase(getParameter("class"))) {
-				isRpcMode = true;
-				
-				this.method = request.getMethod().toUpperCase();
-			} else {
-				parseParameter(request.getParameterMap(), this.params);
-				
-				String m = getParameter("_method");
-				if (m == null) m = request.getMethod();
-				this.method = m.toUpperCase();
-				
-				if (this.restMethod == null) {
-					this.restMethod = restmap.get(getMethod());
-				}
-			}
-		}
-		
-		public String getMethod() {
-			return method;
+			parseParameter(request.getParameterMap(), this.params);
 		}
 		
 		public String getRestMethod() {
 			return restMethod;
-		}
-		
-		public boolean isRpcMode() {
-			return isRpcMode;
 		}
 		
 		public String getParameter(String name) {
@@ -665,7 +428,7 @@ public class WebServiceServlet extends HttpServlet {
 			return params;
 		}
 		
-		public String getComponentClass(Container container, String sub) {
+		public String getComponentClass(Container container) {
 			Matcher m = REPLACE_PATTERN.matcher(target);
 			StringBuffer sb = new StringBuffer();
 			while (m.find()) {
@@ -673,8 +436,8 @@ public class WebServiceServlet extends HttpServlet {
 				String value = getParameter(key);
 				
 				if (key.equals("class") && container.namingConversion) {
-					value = toUpperCamel((sub != null) ? sub 
-						: (value != null) ? value : "");
+					value = toUpperCamel(value);
+					if (value.indexOf('.') != -1) return "";
 				} else if (key.equals("package")) {
 					value = value.replace('/', '.');
 				}
@@ -800,23 +563,6 @@ public class WebServiceServlet extends HttpServlet {
 					current.put(name, values[0]);
 				}
 			}
-		}
-			
-		private String toUpperCamel(String name) {
-			StringBuilder sb = new StringBuilder(name.length());
-			boolean toUpperCase = true;
-			for (int i = 0; i < name.length(); i++) {
-				char c = name.charAt(i);
-				if (c == ' ' || c == '_' || c == '-') {
-					toUpperCase = true;
-				} else if (toUpperCase) {
-					sb.append(Character.toUpperCase(c));
-					toUpperCase = false;
-				} else {
-					sb.append(c);
-				}
-			}
-			return sb.toString();
 		}
 	}
 }
