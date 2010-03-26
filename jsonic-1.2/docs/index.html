@@ -591,7 +591,7 @@ public class TestBean {
 <tr><td>mappings</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>URLパスとクラスのマッピングを行います。
 パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※9)</sup>。
 なお、RESTモードの場合、利用されなかった変数は引数としてメソッドに引き渡されます（RPCモードの場合は設定されません。詳しくはRESTモードの説明をご覧ください）。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、JSR-311同様パターンを設定することができます。</td></tr>
-<tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/()]+</code>が設定されたものと扱われます。</td></tr>
+<tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/().]+</code>が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
 <tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.WebServiceJSON</code>です。</td></tr>
@@ -972,6 +972,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[非互換] JSON WebServiceのRESTモードにて、1.1では、パス変数、クエリ変数、メッセージボディ部の順に上書きされていましたが、1.2ではパス変数、パラメータ変数（クエリとメッセージボディは区別しない）の順に上書きされます。</li>
 <li>[非互換] JSON WebServiceにて、1.1では、送信したパラメータより引数の多いメソッドのみを検索対象としていましたが、1.2では、送信したパラメータより引数の少ないメソッドのみ検索対象とするよう変更しました。</li>
 <li>JSON WebServiceにて、HTTP Methodに対応して呼ばれるメソッドをルート単位で変更できるようにしました。</li>
+<li>JSON WebServiceにて、definitionsの初期値を<code>[^/()]</code>から<code>[^/().]</code>に変更しました。</li>
 <li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアノテーションを追加しました。</li>
 <li>JSON WebServiceにてContainerにリクエストの最初と最期にそれぞれ呼ばれるstartメソッドとendメソッドを追加しました。</li>
 <li>JSON WebServiceにてContainerに一連の実行処理を束ねるexecuteメソッドを追加しました。WebServiceServlet以外からJSON WebSerivceの処理ロジックを呼びたい場合に利用できます。</li>

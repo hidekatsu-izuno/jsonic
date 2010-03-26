@@ -297,7 +297,7 @@ public class RESTServlet extends HttpServlet {
 	
 	static class RouteMapping {
 		private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
-		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
+		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/().]+");
 		
 		static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
 		
@@ -437,7 +437,6 @@ public class RESTServlet extends HttpServlet {
 				
 				if (key.equals("class") && container.namingConversion) {
 					value = toUpperCamel(value);
-					if (value.indexOf('.') != -1) return "";
 				} else if (key.equals("package")) {
 					value = value.replace('/', '.');
 				}

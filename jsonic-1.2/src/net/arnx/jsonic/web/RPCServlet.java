@@ -231,14 +231,19 @@ public class RPCServlet extends HttpServlet {
 				} else {
 					throw new IllegalArgumentException("id must be string, number or null.");
 				}
-	
-				int sep = rmethod.lastIndexOf('.');
-				String methodName = (sep != -1) ? rmethod.substring(sep+1) : rmethod;
+				
+				String subcompName = null;
+				String methodName = rmethod;
+				if (route.getParameter("class") == null) {
+					int sep = rmethod.lastIndexOf('.');
+					subcompName = (sep != -1) ? rmethod.substring(0, sep) : null;
+					methodName = (sep != -1) ? rmethod.substring(sep+1) : rmethod;
+				}
 				if (methodName.equals(container.init) || methodName.equals(container.destroy)) {
 					throw new NoSuchMethodException(rmethod);
 				}
 				
-				component = container.getComponent(route.getComponentClass(container, (sep != -1) ? rmethod.substring(0, sep) : null));
+				component = container.getComponent(route.getComponentClass(container, subcompName));
 				if (component == null) {
 					throw new NoSuchMethodException(rmethod);
 				}
@@ -333,7 +338,7 @@ public class RPCServlet extends HttpServlet {
 	
 	static class RouteMapping {
 		private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
-		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/()]+");
+		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/().]+");
 		
 		Pattern pattern;
 		List<String> names;
@@ -439,8 +444,7 @@ public class RPCServlet extends HttpServlet {
 				String value = getParameter(key);
 				
 				if (key.equals("class") && container.namingConversion) {
-					value = toUpperCamel((value != null) ? value  : (sub != null) ? sub : ".");
-					if (value.indexOf('.') != -1) return "";
+					value = toUpperCamel((value != null) ? value  : (sub != null) ? sub : "?");
 				} else if (key.equals("package")) {
 					value = value.replace('/', '.');
 				}
