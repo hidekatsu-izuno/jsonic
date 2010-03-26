@@ -978,7 +978,6 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>JSON WebServiceにてContainerに一連の実行処理を束ねるexecuteメソッドを追加しました。WebServiceServlet以外からJSON WebSerivceの処理ロジックを呼びたい場合に利用できます。</li>
 <li>JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
 なお、Winstoneに限り、<code>request.getParameter(String name)</code>など呼び出し後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合があるため同状況では動作しません。</li>
-<li>JSON WebServiceのRPCモードにてエラー返却時、nameパラメータにクラスの単純名を設定するように変更しました。</li>
 <li>sampleに同梱のprototype.jsとjquery.jsをそれぞれ1.6.1と1.3.2に更新しました。</li>
 <li>AS3版JSONICにて、JSON.encode(or format)時にmine変数を無視するように変更しました。</li>
 </ul>
