@@ -16,10 +16,11 @@
 			<param-value>
 				debug: true
 				mappings: {
-					'/{package}/{class}.{method}.json': ['sample.basic.web.${package}.service.${class}Service', {
+					'/{package}/{class}.{method}.json': {
+						'target': 'sample.basic.web.${package}.service.${class}Service', 
 						'methods': {'DELETE': 'remove'},
 						'verb': 'GET'
-					}],
+					},
 					'/{package}/{class}/{id}.json': 'sample.basic.web.${package}.service.${class}Service',
 					'/{package}/{class}.json': 'sample.basic.web.${package}.service.${class}Service'
 				}

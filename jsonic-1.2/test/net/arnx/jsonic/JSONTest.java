@@ -419,8 +419,9 @@ public class JSONTest {
 		array3.add(3);
 		aBean.array3 = array3;
 		
-		Map<String, String> anonymMap = new LinkedHashMap<String, String>();
-		anonymMap.put("anonym", "test");
+		AnonymTest anonymMap = new AnonymTest();
+		anonymMap.anonym = "test";
+		aBean.anonymMap = anonymMap;
 		
 		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"anonymMap\":\"test\",\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\","
 				+ "json_data: {\"a\": 100 /* ほげほげ */},"
@@ -1670,7 +1671,7 @@ class AnnotationBean {
 	public String json_data;
 	
 	@JSONHint(anonym="anonym")
-	public Map<String, String> anonymMap;
+	public AnonymTest anonymMap;
 
 	@Override
 	public int hashCode() {
@@ -1732,6 +1733,48 @@ class AnnotationBean {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "AnnotationBean [anonymMap=" + anonymMap + ", array1="
+				+ Arrays.toString(array1) + ", array2="
+				+ Arrays.toString(array2) + ", array3=" + array3 + ", date="
+				+ date + ", dummy=" + dummy + ", field=" + field
+				+ ", json_data=" + json_data + ", method=" + method + "]";
+	}
+}
+
+class AnonymTest {
+	public String anonym;
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((anonym == null) ? 0 : anonym.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AnonymTest other = (AnonymTest) obj;
+		if (anonym == null) {
+			if (other.anonym != null)
+				return false;
+		} else if (!anonym.equals(other.anonym))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "AnonymTest [anonym=" + anonym + "]";
+	}
 }
 
 @SuppressWarnings("unchecked")

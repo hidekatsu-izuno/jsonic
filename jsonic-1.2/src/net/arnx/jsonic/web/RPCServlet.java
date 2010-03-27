@@ -42,6 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
+import net.arnx.jsonic.JSONHint;
 
 import static javax.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
@@ -49,7 +50,10 @@ import static net.arnx.jsonic.web.Container.*;
 public class RPCServlet extends HttpServlet {	
 	static class Config {
 		public Class<? extends Container> container;
-		public Map<String, List<Object>> mappings;
+		
+		@JSONHint(anonym="target")
+		public Map<String, RouteMapping> mappings;
+		
 		public Map<String, Pattern> definitions;
 		public Map<Class<? extends Exception>, Integer> errors;
 	}
@@ -57,7 +61,6 @@ public class RPCServlet extends HttpServlet {
 	protected Container container;
 	
 	Config config;
-	List<RouteMapping> mappings = new ArrayList<RouteMapping>();
 	
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
@@ -88,13 +91,12 @@ public class RPCServlet extends HttpServlet {
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
 		
-		if (config.mappings != null) {
-			for (Map.Entry<String, List<Object>> entry : config.mappings.entrySet()) {
-				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config));
-			}
-		}
-		
 		if (config.errors == null) config.errors = Collections.emptyMap();
+		
+		if (config.mappings == null) config.mappings = Collections.emptyMap();
+		for (Map.Entry<String, RouteMapping> entry : config.mappings.entrySet()) {
+			entry.getValue().init(entry.getKey(), config);
+		}
 	}
 	
 	@Override
@@ -136,7 +138,7 @@ public class RPCServlet extends HttpServlet {
 		}
 		
 		Route route = null;
-		for (RouteMapping m : mappings) {
+		for (RouteMapping m : config.mappings.values()) {
 			if ((route = m.matches(request, uri)) != null) {
 				container.debug("Route found: " + request.getMethod() + " " + uri);
 				break;
@@ -347,22 +349,19 @@ public class RPCServlet extends HttpServlet {
 		private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
 		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/().]+");
 		
+		public String target;
+		public Map<String, Pattern> definitions;
+		
+		Config config;
 		Pattern pattern;
 		List<String> names;
-		String target;
-		Map<?, ?> options;
-		Config config;
 		
-		public RouteMapping(String path, List<Object> target, Config config) {
+		public RouteMapping() {
+		}
+		
+		public void init(String path, Config config) {
 			this.config = config;
-			this.target = (String)target.get(0);
 			
-			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
-				this.options = cast(target.get(1));
-			} else {
-				this.options = Collections.emptyMap();
-			}
-
 			this.names = new ArrayList<String>();
 			StringBuffer sb = new StringBuffer("^\\Q");
 			Matcher m = PLACE_PATTERN.matcher(path);
@@ -370,9 +369,8 @@ public class RPCServlet extends HttpServlet {
 				String name = m.group(1);
 				names.add(name);
 				Pattern p = (m.group(2) != null) ?  Pattern.compile(m.group(2)) : null;
-				if (p == null && this.options.get("definitions") instanceof Map<?,?>) {
-					Object o = ((Map<?,?>)this.options.get("definitions")).get(name);
-					if (o instanceof String) p = Pattern.compile((String)o);
+				if (p == null && definitions != null) {
+					p = definitions.get(name);
 				}
 				if (p == null && config.definitions.containsKey(name)) {
 					p = config.definitions.get(name);
@@ -406,7 +404,7 @@ public class RPCServlet extends HttpServlet {
 						params.put(key, value);
 					}
 				}
-				return new Route(target, options, params);
+				return new Route(target, params);
 			}
 			return null;
 		}
@@ -417,12 +415,10 @@ public class RPCServlet extends HttpServlet {
 
 		private String target;
 		private Map<Object, Object> params;
-		private Map<?,?> options;
 		
-		public Route(String target, Map<?, ?> options, Map<String, Object> params) throws IOException {
+		public Route(String target, Map<String, Object> params) throws IOException {
 			this.target = target;
 			this.params = cast(params);
-			this.options = options;
 		}
 		
 		public String getParameter(String name) {
@@ -443,10 +439,6 @@ public class RPCServlet extends HttpServlet {
 		
 		public Map<?, ?> getParameterMap() {
 			return params;
-		}
-		
-		public Object getOption(String key) {
-			return options.get(key);
 		}
 		
 		public String getComponentClass(Container container, String sub) {
