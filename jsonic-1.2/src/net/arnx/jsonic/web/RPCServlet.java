@@ -155,17 +155,13 @@ public class RPCServlet extends HttpServlet {
 		try {
 			// request processing
 			Object value = json.parse(request.getReader());
-			if (value == null) {
-				throw new IllegalArgumentException("request is empty.");
-			} else if (value instanceof List<?>) {
-				if (!((List<?>)value).isEmpty()) {
-					requestList = cast(value);					
-					isBatch = true;
-				} else {
-					throw new IllegalArgumentException("request is empty.");
-				}
-			} else {
+			if (value instanceof List<?> && !((List<?>)value).isEmpty()) {
+				requestList = cast(value);					
+				isBatch = true;
+			} else if (value instanceof Map<?,?> && !((Map<?,?>)value).isEmpty()) {
 				requestList = Arrays.asList(value);
+			} else {
+				throw new IllegalArgumentException("Request is empty.");
 			}
 		} catch (Exception e) {
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
@@ -240,12 +236,12 @@ public class RPCServlet extends HttpServlet {
 					methodName = (sep != -1) ? rmethod.substring(sep+1) : rmethod;
 				}
 				if (methodName.equals(container.init) || methodName.equals(container.destroy)) {
-					throw new NoSuchMethodException(rmethod);
+					throw new NoSuchMethodException("Method not found: " + rmethod);
 				}
 				
 				component = container.getComponent(route.getComponentClass(container, subcompName));
 				if (component == null) {
-					throw new NoSuchMethodException(rmethod);
+					throw new NoSuchMethodException("Method not found: " + rmethod);
 				}
 				
 				List<?> params = (rparams instanceof List<?>) ? (List<?>)rparams : Arrays.asList(rparams);
@@ -256,7 +252,7 @@ public class RPCServlet extends HttpServlet {
 					json.setContext(component);
 					result = container.execute(json, component, method, params);
 				} else {
-					throw new NoSuchMethodException(rmethod);
+					throw new NoSuchMethodException("Method not found: " + rmethod);
 				}
 			} catch (Exception e) {
 				error = new LinkedHashMap<String, Object>();
@@ -300,7 +296,7 @@ public class RPCServlet extends HttpServlet {
 			}
 			
 			// it's notification when id was null
-			if ((rjsonrpc == null && rid == null) || (rjsonrpc != null && req != null && !req.containsKey("id"))) {
+			if (rmethod != null && (rjsonrpc == null && rid == null) || (rjsonrpc != null && req != null && !req.containsKey("id"))) {
 				continue;
 			}
 			

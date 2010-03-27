@@ -99,12 +99,22 @@ public class Container {
 		}
 	}
 	
-	
 	public static class WebServiceJSON extends JSON {
+		private static final Method THROWABLE_GETMESSAGE;
+		static {
+			try {
+				THROWABLE_GETMESSAGE = Throwable.class.getDeclaredMethod("getMessage");
+			} catch (Exception e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		
 		@Override
 		protected boolean ignore(Context context, Class<?> target, Member member) {
-			return member.getDeclaringClass().equals(Throwable.class)
-				|| super.ignore(context, target, member);
+			if (member.getDeclaringClass().equals(Throwable.class)) {
+				return !member.equals(THROWABLE_GETMESSAGE);
+			}
+			return super.ignore(context, target, member);
 		}
 	}
 	

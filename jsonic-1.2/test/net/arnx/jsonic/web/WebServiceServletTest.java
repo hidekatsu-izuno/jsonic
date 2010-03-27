@@ -91,10 +91,32 @@ public class WebServiceServletTest {
 	public static void destroy() throws Exception {
 		server.stop();
 	}
-
+	
+	
 	@Test
 	public void testRPC() throws Exception {
-		URL url = new URL("http://localhost:16001/basic/rpc/rpc.json");
+		testRPC("basic");
+	}
+	
+	@Test
+	public void testRPCwithSeasar2() throws Exception {
+		testRPC("seasar2");
+	}
+	
+	@Test
+	public void testRPCwithSpring() throws Exception {
+		testRPC("spring");
+	}
+	
+	@Test
+	public void testRPCwithGuice() throws Exception {
+		testRPC("guice");
+	}
+	
+	public void testRPC(String app) throws Exception {
+		System.out.println("\n<<START testRPC: " + app + ">>");
+		
+		URL url = new URL("http://localhost:16001/" + app + "/rpc/rpc.json");
 		HttpURLConnection con = null;
 		
 		// GET
@@ -111,7 +133,7 @@ public class WebServiceServletTest {
 		write(con, "");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"name\":\"ReferenceError\",\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), 
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{\"message\":\"Request is empty.\"}},\"id\":null}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 
@@ -131,7 +153,7 @@ public class WebServiceServletTest {
 		write(con, "{\"method\":\"calc.init\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"name\":\"ReferenceError\",\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{\"message\":\"Method not found: calc.init\"}},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		con = (HttpURLConnection)url.openConnection();
@@ -140,7 +162,7 @@ public class WebServiceServletTest {
 		write(con, "{\"method\":\"calc.destroy\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"name\":\"ReferenceError\",\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{\"message\":\"Method not found: calc.destroy\"}},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
@@ -161,6 +183,8 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
+		
+		System.out.println("<<END testRPC: " + app + ">>\n");
 	}
 	
 	@Test

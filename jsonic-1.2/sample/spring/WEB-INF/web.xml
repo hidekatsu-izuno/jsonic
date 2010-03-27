@@ -20,10 +20,11 @@
 		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
 	</listener>
 	
+ 
 	<servlet>
-		<description>JSON-WebService</description>
-		<servlet-name>json-ws</servlet-name>
-		<servlet-class>net.arnx.jsonic.web.WebServiceServlet</servlet-class>
+		<description>JSON REST Service</description>
+		<servlet-name>restServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RESTServlet</servlet-class>
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
@@ -31,16 +32,37 @@
 				debug: true
 				mappings: {
 					'/{package}/{class}/print.json': ['sample.spring.web.${package}.service.${class}Service', {'GET': 'print'}]
-					'/{package}/{class}/{id}.{ext}': 'sample.spring.web.${package}.service.${class}Service'
-					'/{package}/{class}.{ext}': 'sample.spring.web.${package}.service.${class}Service'
-					'/{class}.{ext}': 'sample.spring.service.${class}Service'
+					'/{package}/{class}/{id}.json': 'sample.spring.web.${package}.service.${class}Service'
+					'/{package}/{class}.json': 'sample.spring.web.${package}.service.${class}Service'
 				}
 			</param-value>
 		</init-param>
 	</servlet>
-
+ 
+	<servlet>
+		<description>JSON RPC Service</description>
+		<servlet-name>rpcServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RPCServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: 'net.arnx.jsonic.web.extension.SpringContainer'
+				debug: true
+				mappings: {
+					'/{package}/rpc.json': 'sample.spring.web.${package}.service.${class}Service'
+					'/rpc.json': 'sample.spring.service.${class}Service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+	
 	<servlet-mapping>
-		<servlet-name>json-ws</servlet-name>
-		<url-pattern>*.json</url-pattern>
+		<servlet-name>restServlet</servlet-name>
+		<url-pattern>/rest/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>rpcServlet</servlet-name>
+		<url-pattern>/rpc/*</url-pattern>
 	</servlet-mapping>
 </web-app>

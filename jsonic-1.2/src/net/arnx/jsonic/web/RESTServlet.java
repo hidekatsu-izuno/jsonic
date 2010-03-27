@@ -364,7 +364,7 @@ public class RESTServlet extends HttpServlet {
 					String httpMethod = request.getParameter("_method");
 					if (httpMethod == null) httpMethod = request.getMethod();
 					
-					Object restMethod = options.get(httpMethod);
+					Object restMethod = (options != null) ? options.get(httpMethod) : null;
 					if (restMethod instanceof String) {
 						params.put("method", restMethod);
 					} else {
