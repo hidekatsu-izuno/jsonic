@@ -2,6 +2,7 @@ package net.arnx.jsonic.web;
 
 import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
@@ -150,12 +151,23 @@ public class RPCServletTest {
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":null}");
+		con.connect();
+		assertEquals(SC_ACCEPTED, con.getResponseCode());
+		assertEquals(0, con.getContentLength());
+		con.disconnect();
+
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{\"method\":\"calc.init\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
+		
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
@@ -185,6 +197,87 @@ public class RPCServletTest {
 		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
+		con.disconnect();
+		
+		// JSON-RPC 2.0モード POST
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "[]");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"result\":3,\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{\"jsonrpc\":\"2.0\",\"method\":\"calc.init\",\"params\":[],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{\"jsonrpc\":\"2.0\",\"method\":\"calc.destroy\",\"params\":[],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "["
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.init\",\"params\":[2,2],\"id\":2},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[3,2],\"id\":3},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[4,2],\"id\":null},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[4,2]}"
+			+ "]");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("["
+				+ "{\"jsonrpc\":\"2.0\",\"result\":3,\"id\":1},"
+				+ "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":2},"
+				+ "{\"jsonrpc\":\"2.0\",\"result\":5,\"id\":3},"
+				+ "{\"jsonrpc\":\"2.0\",\"result\":6,\"id\":null}"
+			+ "]"), JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "["
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[1,2]},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.init\",\"params\":[2,2]},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[3,2]},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[4,2]},"
+				+ "{\"jsonrpc\":\"2.0\",\"method\":\"calc.plus\",\"params\":[4,2]}"
+			+ "]");
+		con.connect();
+		assertEquals(SC_ACCEPTED, con.getResponseCode());
+		assertEquals(0, con.getContentLength());
 		con.disconnect();
 		
 		System.out.println("<<END testRPC: " + app + ">>\n");
