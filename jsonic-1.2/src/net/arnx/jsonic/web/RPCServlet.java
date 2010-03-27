@@ -90,7 +90,7 @@ public class RPCServlet extends HttpServlet {
 		
 		if (config.mappings != null) {
 			for (Map.Entry<String, List<Object>> entry : config.mappings.entrySet()) {
-				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
+				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config));
 			}
 		}
 		
@@ -351,31 +351,39 @@ public class RPCServlet extends HttpServlet {
 		List<String> names;
 		String target;
 		Map<?, ?> options;
+		Config config;
 		
-		public RouteMapping(String path, List<Object> target, Map<String, Pattern> definitions) {
+		public RouteMapping(String path, List<Object> target, Config config) {
+			this.config = config;
+			this.target = (String)target.get(0);
+			
+			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
+				this.options = cast(target.get(1));
+			} else {
+				this.options = Collections.emptyMap();
+			}
+
 			this.names = new ArrayList<String>();
 			StringBuffer sb = new StringBuffer("^\\Q");
 			Matcher m = PLACE_PATTERN.matcher(path);
 			while (m.find()) {
 				String name = m.group(1);
 				names.add(name);
-				Pattern p = DEFAULT_PATTERN;
-				if (m.group(2) != null) {
-					p = Pattern.compile(m.group(2));
-				} else if (definitions.containsKey(name)) {
-					p = definitions.get(name);
+				Pattern p = (m.group(2) != null) ?  Pattern.compile(m.group(2)) : null;
+				
+				if (p == null && this.options.get("definitions") instanceof Map<?,?>) {
+					Object o = ((Map<?,?>)this.options.get("definitions")).get(name);
+					if (o instanceof String) p = Pattern.compile((String)o);
 				}
+				if (p == null && config.definitions.containsKey(name)) {
+					p = config.definitions.get(name);
+				}
+				if (p == null) p = DEFAULT_PATTERN; 
 				m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:").replace("\\", "\\\\") + ")\\\\Q");
 			}
 			m.appendTail(sb);
 			sb.append("\\E$");
 			this.pattern = Pattern.compile(sb.toString());
-			this.target = (String)target.get(0);
-			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
-				this.options = cast(target.get(1));
-			} else {
-				this.options = Collections.emptyMap();
-			}
 		}
 		
 		@SuppressWarnings("unchecked")

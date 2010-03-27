@@ -328,24 +328,6 @@ public class RESTServlet extends HttpServlet {
 		
 		public RouteMapping(String path, List<Object> target, Config config) {
 			this.config = config;
-			
-			this.names = new ArrayList<String>();
-			StringBuffer sb = new StringBuffer("^\\Q");
-			Matcher m = PLACE_PATTERN.matcher(path);
-			while (m.find()) {
-				String name = m.group(1);
-				names.add(name);
-				Pattern p = DEFAULT_PATTERN;
-				if (m.group(2) != null) {
-					p = Pattern.compile(m.group(2));
-				} else if (config.definitions.containsKey(name)) {
-					p = config.definitions.get(name);
-				}
-				m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:").replace("\\", "\\\\") + ")\\\\Q");
-			}
-			m.appendTail(sb);
-			sb.append("\\E$");
-			this.pattern = Pattern.compile(sb.toString());
 			this.target = (String)target.get(0);
 			
 			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
@@ -353,6 +335,28 @@ public class RESTServlet extends HttpServlet {
 			} else {
 				this.options = Collections.emptyMap();
 			}
+			
+			this.names = new ArrayList<String>();
+			StringBuffer sb = new StringBuffer("^\\Q");
+			Matcher m = PLACE_PATTERN.matcher(path);
+			while (m.find()) {
+				String name = m.group(1);
+				names.add(name);
+				Pattern p = (m.group(2) != null) ?  Pattern.compile(m.group(2)) : null;
+				
+				if (p == null && this.options.get("definitions") instanceof Map<?,?>) {
+					Object o = ((Map<?,?>)this.options.get("definitions")).get(name);
+					if (o instanceof String) p = Pattern.compile((String)o);
+				}
+				if (p == null && config.definitions.containsKey(name)) {
+					p = config.definitions.get(name);
+				}
+				if (p == null) p = DEFAULT_PATTERN; 
+				m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:").replace("\\", "\\\\") + ")\\\\Q");
+			}
+			m.appendTail(sb);
+			sb.append("\\E$");
+			this.pattern = Pattern.compile(sb.toString());
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -381,12 +385,12 @@ public class RESTServlet extends HttpServlet {
 				if (httpMethod == null) httpMethod = request.getMethod();
 				
 				Object restMethod = params.get("method");
-				if (restMethod == null && options.get("methods") instanceof Map<?, ?>) {
+				if (!(restMethod instanceof String) && options.get("methods") instanceof Map<?, ?>) {
 					restMethod = ((Map<?,?>)options.get("methods")).get(httpMethod);
-				} else {
+				}
+				if (!(restMethod instanceof String)) {
 					restMethod = config.methods.get(httpMethod);
 				}
-				
 				if (restMethod instanceof String) {
 					parseParameter(request.getParameterMap(), (Map)params);
 					return new Route(httpMethod, (String)restMethod, target, options, params);
