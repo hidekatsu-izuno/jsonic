@@ -141,7 +141,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-Type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
 		write(con, "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
@@ -267,7 +267,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-Type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
 		write(con, "[\"title\", \"text\"]");
 		con.connect();
 		assertEquals(SC_NOT_FOUND, con.getResponseCode());

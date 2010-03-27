@@ -119,7 +119,6 @@ public class RPCServletTest {
 		// GET
 		con = (HttpURLConnection)url.openConnection();
 		con.setRequestMethod("GET");
-		con.setRequestProperty("Content-Type", "application/json");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
@@ -139,7 +138,7 @@ public class RPCServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
-		con.setRequestProperty("Content-Type", "application/json");
+		con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
 		write(con, "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
