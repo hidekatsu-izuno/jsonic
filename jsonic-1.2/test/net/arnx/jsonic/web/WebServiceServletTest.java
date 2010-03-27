@@ -123,6 +123,7 @@ public class WebServiceServletTest {
 		// GET
 		con = (HttpURLConnection)url.openConnection();
 		con.setRequestMethod("GET");
+		con.setRequestProperty("Content-Type", "application/json");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
@@ -131,6 +132,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
@@ -141,6 +143,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
@@ -151,6 +154,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{\"method\":\"calc.init\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
@@ -160,6 +164,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "{\"method\":\"calc.destroy\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
@@ -171,6 +176,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("PUT");
+		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
@@ -180,6 +186,7 @@ public class WebServiceServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("DELETE");
+		con.setRequestProperty("Content-Type", "application/json");
 		con.setRequestProperty("Content-Length", "0");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());

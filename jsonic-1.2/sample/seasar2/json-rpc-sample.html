@@ -18,27 +18,24 @@
 	
 	function submit() {
 		var name = $('name').value;
-		var ajax = new Ajax.Updater(
-			{success: 'result'},
-			'rpc/rpc.json',
-			{
+		var ajax = new Ajax.Request('rpc/rpc.json', {
 				method: 'POST',
 				contentType: 'application/json',
 				postBody: Object.toJSON({
 					method: name + '.' + ds[name][$("method").value].name,
 					params: $('params').value.evalJSON(),
-					id: (new Date()).getTime(),
-					viewstate: viewstate
+					id: (new Date()).getTime()
 				}),
-				onFailure: reportError
+				onSuccess: function(req) {
+					Element.update($("result"), req.responseText);
+				},
+				onFailure: function(req) {
+					Element.update($("result"), "error!");
+				}
 			}
 		);
 	}
-	
-	function reportError(request) {
-		Element.update($("result"), "error!");
-	}
-	
+		
 	function changeName(value) {
 		var method = $('method');
 		var params = $('params');
