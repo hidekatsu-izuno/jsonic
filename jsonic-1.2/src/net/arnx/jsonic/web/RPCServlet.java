@@ -139,7 +139,7 @@ public class RPCServlet extends HttpServlet {
 			}
 		}
 		
-		if (route == null) {
+		if (route == null || !isJSONType(request.getContentType())) {
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		}
