@@ -370,7 +370,6 @@ public class RPCServlet extends HttpServlet {
 				String name = m.group(1);
 				names.add(name);
 				Pattern p = (m.group(2) != null) ?  Pattern.compile(m.group(2)) : null;
-				
 				if (p == null && this.options.get("definitions") instanceof Map<?,?>) {
 					Object o = ((Map<?,?>)this.options.get("definitions")).get(name);
 					if (o instanceof String) p = Pattern.compile((String)o);

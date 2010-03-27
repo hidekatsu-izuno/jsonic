@@ -2136,12 +2136,8 @@ public class JSON {
 					|| Struct.class.isAssignableFrom(c)) {
 				data = null; // ignored
 			} else if (Map.class.isAssignableFrom(c)) {
-				Map<String, AnnotatedElement> props = context.getGetProperties(c);
-				Map<String, Object> map = new LinkedHashMap<String, Object>();
-				for (Map.Entry<String, AnnotatedElement> entry : props.entrySet()) {
-					AnnotatedElement member = entry.getValue();
-					map.put(entry.getKey(), (member instanceof Method) ? ((Method)member).invoke(value) : ((Field)member).get(value));
-				}
+				Map<Object, Object> map = (Map)create(context, c);
+				map.put((hint.anonym().length() > 0) ? hint.anonym() : null, value);
 				data = map;
 			} else {
 				throw new UnsupportedOperationException();

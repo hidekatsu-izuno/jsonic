@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -49,6 +50,7 @@ import static net.arnx.jsonic.web.Container.*;
 
 public class RESTServlet extends HttpServlet {
 	static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
+	static final List<String> DEFAULT_VERB = Arrays.asList("GET", "POST", "PUT", "DELETE");
 	
 	static {
 		DEFAULT_RESTMAP.put("GET", "find");
@@ -62,6 +64,7 @@ public class RESTServlet extends HttpServlet {
 		public Map<String, List<Object>> mappings;
 		public Map<String, Pattern> definitions;
 		public Map<String, String> methods;
+		public List<String> verb;
 	}
 	
 	protected Container container;
@@ -99,6 +102,7 @@ public class RESTServlet extends HttpServlet {
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
 		
 		if (config.methods == null) config.methods = DEFAULT_RESTMAP;
+		if (config.verb == null) config.verb = DEFAULT_VERB;
 		
 		if (config.mappings != null) {
 			for (Map.Entry<String, List<Object>> entry : config.mappings.entrySet()) {
@@ -343,7 +347,6 @@ public class RESTServlet extends HttpServlet {
 				String name = m.group(1);
 				names.add(name);
 				Pattern p = (m.group(2) != null) ?  Pattern.compile(m.group(2)) : null;
-				
 				if (p == null && this.options.get("definitions") instanceof Map<?,?>) {
 					Object o = ((Map<?,?>)this.options.get("definitions")).get(name);
 					if (o instanceof String) p = Pattern.compile((String)o);
@@ -383,6 +386,9 @@ public class RESTServlet extends HttpServlet {
 				
 				String httpMethod = request.getParameter("_method");
 				if (httpMethod == null) httpMethod = request.getMethod();
+				if (!config.verb.contains(httpMethod)) {
+					return null;
+				}
 				
 				Object restMethod = params.get("method");
 				if (!(restMethod instanceof String) && options.get("methods") instanceof Map<?, ?>) {
@@ -391,10 +397,12 @@ public class RESTServlet extends HttpServlet {
 				if (!(restMethod instanceof String)) {
 					restMethod = config.methods.get(httpMethod);
 				}
-				if (restMethod instanceof String) {
-					parseParameter(request.getParameterMap(), (Map)params);
-					return new Route(httpMethod, (String)restMethod, target, options, params);
+				if (!(restMethod instanceof String)) {
+					return null;
 				}
+				
+				parseParameter(request.getParameterMap(), (Map)params);
+				return new Route(httpMethod, (String)restMethod, target, options, params);
 			}
 			return null;
 		}
