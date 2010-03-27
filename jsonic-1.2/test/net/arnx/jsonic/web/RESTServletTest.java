@@ -1,5 +1,12 @@
 package net.arnx.jsonic.web;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_CREATED;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static org.junit.Assert.assertEquals;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -7,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -15,20 +21,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.arnx.jsonic.*;
+import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.web.RESTServlet.RouteMapping;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.seasar.framework.mock.servlet.MockHttpServletRequest;
 import org.seasar.framework.mock.servlet.MockServletContextImpl;
 
-import static org.junit.Assert.*;
-import static javax.servlet.http.HttpServletResponse.*;
-
 @SuppressWarnings("unchecked")
-public class WebServiceServletTest {	
+public class RESTServletTest {
 	
 	private static Server server;
 	
@@ -92,77 +98,6 @@ public class WebServiceServletTest {
 	public static void destroy() throws Exception {
 		server.stop();
 	}
-
-	@Test
-	public void testRPC() throws Exception {
-		URL url = new URL("http://localhost:16001/basic/rpc/rpc.json");
-		HttpURLConnection con = null;
-		
-		// GET
-		con = (HttpURLConnection)url.openConnection();
-		con.setRequestMethod("GET");
-		con.connect();
-		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
-		con.disconnect();
-		
-		// POST
-		con = (HttpURLConnection)url.openConnection();
-		con.setDoOutput(true);
-		con.setRequestMethod("POST");
-		write(con, "");
-		con.connect();
-		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), 
-				JSON.decode(read(con.getInputStream())));
-		con.disconnect();
-
-		con = (HttpURLConnection)url.openConnection();
-		con.setDoOutput(true);
-		con.setRequestMethod("POST");
-		write(con, "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
-		con.connect();
-		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":3,\"error\":null,\"id\":1}"), 
-				JSON.decode(read(con.getInputStream())));
-		con.disconnect();
-
-		con = (HttpURLConnection)url.openConnection();
-		con.setDoOutput(true);
-		con.setRequestMethod("POST");
-		write(con, "{\"method\":\"calc.init\",\"params\":[],\"id\":1}");
-		con.connect();
-		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
-				JSON.decode(read(con.getInputStream())));
-		con.disconnect();
-		con = (HttpURLConnection)url.openConnection();
-		con.setDoOutput(true);
-		con.setRequestMethod("POST");
-		write(con, "{\"method\":\"calc.destroy\",\"params\":[],\"id\":1}");
-		con.connect();
-		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
-				JSON.decode(read(con.getInputStream())));
-		con.disconnect();
-		
-		// PUT
-		con = (HttpURLConnection)url.openConnection();
-		con.setDoOutput(true);
-		con.setRequestMethod("PUT");
-		write(con, "");
-		con.connect();
-		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
-		con.disconnect();
-		
-		// DELETE
-		con = (HttpURLConnection)url.openConnection();
-		con.setDoOutput(true);
-		con.setRequestMethod("DELETE");
-		con.setRequestProperty("Content-Length", "0");
-		con.connect();
-		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
-		con.disconnect();
-	}
 	
 	@Test
 	public void testREST() throws Exception {
@@ -185,6 +120,8 @@ public class WebServiceServletTest {
 	}
 	
 	public void testREST(String app) throws Exception {
+		System.out.println("\n<<START testRest: " + app + ">>");
+		
 		String url = "http://localhost:16001/" + app + "/rest/memo";
 		HttpURLConnection con = null;
 		
@@ -243,7 +180,7 @@ public class WebServiceServletTest {
 		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "[\"title\", \"text\"]");
 		con.connect();
-		assertEquals(SC_NOT_FOUND, con.getResponseCode());
+		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
 		
 		// POST
@@ -265,10 +202,14 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
 		con.disconnect();
+		
+		System.out.println("<<END testRest: " + app + ">>\n");
 	}
 	
 	@Test
 	public void testRESTWithMethod() throws Exception {
+		System.out.println("\n<<START testRESTWithMethod>>");
+		
 		String url = "http://localhost:16001/basic/rest/memo.json";
 		HttpURLConnection con = null;
 		
@@ -321,7 +262,7 @@ public class WebServiceServletTest {
 		con.setRequestProperty("Content-Type", "application/json");
 		write(con, "[\"title\", \"text\"]");
 		con.connect();
-		assertEquals(SC_NOT_FOUND, con.getResponseCode());
+		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
 		
 		// POST
@@ -333,6 +274,8 @@ public class WebServiceServletTest {
 		con.connect();
 		assertEquals(SC_BAD_REQUEST, con.getResponseCode());
 		con.disconnect();
+		
+		System.out.println("\n<<END testRESTWithMethod>>");
 	}
 	
 	@Test
@@ -341,122 +284,124 @@ public class WebServiceServletTest {
 		MockHttpServletRequest request = null;
 		
 		request = context.createRequest("/?aaa=");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa", "");
 		assertEquals(JSON.decode("{aaa:''}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa=aaa=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa", "aaa=bbb");
 		assertEquals(JSON.decode("{aaa:'aaa=bbb'}"), getParameterMap(request));
 
 		request = context.createRequest("/?&");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("", "");
 		request.addParameter("", "");
 		assertEquals(JSON.decode("{'':['','']}"), getParameterMap(request));
 
 		request = context.createRequest("/?=&=");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("", "");
 		request.addParameter("", "");
 		assertEquals(JSON.decode("{'':['','']}"),getParameterMap(request));
 		
 		request = context.createRequest("/");
+		request.setContentType("application/x-www-form-urlencoded");
 		assertEquals(JSON.decode("{}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		assertEquals(JSON.decode("{aaa:{bbb:'aaa'}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "UTF-8") + "=" + URLEncoder.encode("古今=東西", "UTF-8"));
+		request.setContentType("application/x-www-form-urlencoded");
 		request.setCharacterEncoding("UTF-8");
 		request.addParameter("諸行 無常", "古今=東西");
 		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?" + URLEncoder.encode("諸行 無常", "MS932") + "=" + URLEncoder.encode("古今=東西", "MS932"));
+		request.setContentType("application/x-www-form-urlencoded");
 		request.setCharacterEncoding("MS932");
 		request.addParameter("諸行 無常", "古今=東西");
 		assertEquals(JSON.decode("{'諸行 無常':'古今=東西'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb&aaa=aaa");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null: 'aaa'}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb&aaa=aaa&aaa=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		request.addParameter("aaa", "aaa");
 		request.addParameter("bbb", "bbb");
-		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null:['aaa', 'bbb']}}"), getParameterMap(request));
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb'], null:'aaa'}, 'bbb':'bbb'}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb=aaa&aaa.bbb=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb", "aaa");
 		request.addParameter("aaa.bbb", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa.bbb.=aaa&aaa.bbb.=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa.bbb.", "aaa");
 		request.addParameter("aaa.bbb.", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:{'':['aaa', 'bbb']}}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?..=aaa&..=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("..", "aaa");
 		request.addParameter("..", "bbb");
 		assertEquals(JSON.decode("{'':{'':{'':['aaa', 'bbb']}}}"), getParameterMap(request));
 		
 		request = context.createRequest("/?aaa[bbb]=aaa&aaa[bbb]=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa[bbb]", "aaa");
 		request.addParameter("aaa[bbb]", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:['aaa', 'bbb']}}"), getParameterMap(request));
+		
+		request = context.createRequest("/?aaa[bbb]=aaa&aaa[bbb]=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
+		request.addParameter("aaa[bbb][]", "aaa");
+		assertEquals(JSON.decode("{aaa:{bbb:['aaa']}}"), getParameterMap(request));
 
 		request = context.createRequest("/?aaa[bbb].ccc=aaa&aaa[bbb].ccc=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("aaa[bbb].ccc", "aaa");
 		request.addParameter("aaa[bbb].ccc", "bbb");
 		assertEquals(JSON.decode("{aaa:{bbb:{ccc:['aaa', 'bbb']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?[aaa].bbb=aaa&[aaa].bbb=bbb");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter("[aaa].bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?.aaa.bbb=aaa&[aaa].bbb=bbb&[aaa].bbb=ccc");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter("[aaa].bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 
 		request = context.createRequest("/?.aaa.bbb=aaa&.aaa.bbb=bbb&[aaa].bbb=ccc");
+		request.setContentType("application/x-www-form-urlencoded");
 		request.addParameter(".aaa.bbb", "aaa");
 		request.addParameter(".aaa.bbb", "bbb");
 		request.addParameter("[aaa].bbb", "ccc");
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 	}
 	
-	@Test
-	public void testParseHeaderLine() throws Exception {
-		assertEquals(JSON.decode("{null:''}"), parseHeaderLine(""));
-		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   "));
-		assertEquals(JSON.decode("{null:''}"), parseHeaderLine("   ;"));
-		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy "));
-		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine(" aaa/bbb-yyy; "));
-		assertEquals(JSON.decode("{null:'aaa/bbb-yyy'}"), parseHeaderLine("aaa/bbb-yyy;"));
-		assertEquals(JSON.decode("{null:'aaa'}"), parseHeaderLine("aaa"));
-		assertEquals(JSON.decode("{null:'a','a':'b','d':'e'}"), parseHeaderLine("a; a=b; d=e"));
-		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = bcd ; def =efg;"));
-		assertEquals(JSON.decode("{null:'abc','abc':'bcd','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bcd\"; def =  \"efg\";"));
-		assertEquals(JSON.decode("{null:'abc','abc':'bc\"d','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bc\\\"d\"; def =  \"e\\fg\";"));
-	}
-	
-	@SuppressWarnings("deprecation")
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
-		return new WebServiceServlet.Route(request, null, new LinkedHashMap<String, Object>()).getParameterMap();
-	}
-	
-	@SuppressWarnings("deprecation")
-	private static Map parseHeaderLine(String line) throws Exception {
-		Method m = WebServiceServlet.Route.class.getDeclaredMethod("parseHeaderLine", String.class);
-		m.setAccessible(true);
-		return (Map<String, String>)m.invoke(null, line);
+		Map map = new LinkedHashMap<Object, Object>();
+		RouteMapping.parseParameter((Map)request.getParameterMap(), map);
+		return map;
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {
