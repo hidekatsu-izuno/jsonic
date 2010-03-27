@@ -181,15 +181,15 @@ public class RESTServlet extends HttpServlet {
 		int status = SC_OK;
 		String callback = null;
 		
-		if ("GET".equals(request.getMethod())) {
+		if ("GET".equals(route.getHttpMethod())) {
 			callback = route.getParameter("callback");
-		} else if ("POST".equals(request.getMethod())) {
+		} else if ("POST".equals(route.getHttpMethod())) {
 			status = SC_CREATED;
 		}
 		
 		String methodName = route.getRestMethod();
 		if (methodName == null || methodName.equals(container.init) || methodName.equals(container.destroy)) {
-			container.debug("Method mapping not found: " + request.getMethod());
+			container.debug("Method mapping not found: " + route.getHttpMethod());
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
 		}
@@ -207,7 +207,7 @@ public class RESTServlet extends HttpServlet {
 			}
 			
 			List<Object> params = null;
-			if (!route.hasJSONContent()) {
+			if (!isJSONType(request.getContentType())) {
 				params = new ArrayList<Object>(1);
 				params.add(route.getParameterMap());
 			} else {
@@ -311,7 +311,7 @@ public class RESTServlet extends HttpServlet {
 		Pattern pattern;
 		List<String> names;
 		String target;
-		Map<?, ?> options;
+		Map<?, ?> options = DEFAULT_RESTMAP;
 		
 		public RouteMapping(String path, List<Object> target, Map<String, Pattern> definitions) {
 			this.names = new ArrayList<String>();
@@ -360,23 +360,98 @@ public class RESTServlet extends HttpServlet {
 					}
 				}
 				
-				if (params.get("method") == null) {
-					String httpMethod = request.getParameter("_method");
-					if (httpMethod == null) httpMethod = request.getMethod();
-					
-					Object restMethod = (options != null) ? options.get(httpMethod) : null;
-					if (restMethod instanceof String) {
-						params.put("method", restMethod);
-					} else {
-						params.put("method", DEFAULT_RESTMAP.get(httpMethod));
-					}
+				String httpMethod = request.getParameter("_method");
+				if (httpMethod == null) httpMethod = request.getMethod();
+				
+				Object restMethod = params.get("method");
+				if (restMethod == null) {
+					restMethod = options.get(httpMethod);
 				}
 				
-				if (params.get("method") != null) {
-					return new Route(request, target, options, params);
+				if (restMethod instanceof String) {
+					parseParameter(request.getParameterMap(), (Map)params);
+					return new Route(httpMethod, (String)restMethod, target, options, params);
 				}
 			}
 			return null;
+		}
+		
+		
+		@SuppressWarnings("unchecked")
+		static void parseParameter(Map<String, String[]> pairs, Map<Object, Object> params) {
+			for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
+				String name = entry.getKey();
+				boolean multiValue = false;
+				if (name.endsWith("[]")) {
+					name = name.substring(0, name.length()-2);
+					multiValue = true;
+				}
+				String[] values = entry.getValue();
+				
+				int start = 0;
+				char old = '\0';
+				Map<Object, Object> current = params;
+				for (int i = 0; i < name.length(); i++) {
+					char c = name.charAt(i);
+					if (c == '.' || c == '[') {
+						String key = name.substring(start, (old == ']') ? i-1 : i);
+						Object target = current.get(key);
+						
+						if (target instanceof Map) {
+							current = (Map<Object, Object>)target;
+						} else {
+							Map<Object, Object> map = new LinkedHashMap<Object, Object>();
+							if (target != null) map.put(null, target);
+							current.put(key, map);
+							current = map;
+						}
+						start = i+1;
+					}
+					old = c;
+				}
+				
+				name = name.substring(start, (old == ']') ? name.length()-1 : name.length());
+
+				if (current.containsKey(name)) {
+					Object target = current.get(name);
+					
+					if (target instanceof Map) {
+						Map<Object, Object> map = (Map<Object, Object>)target;
+						if (map.containsKey(null)) {
+							target = map.get(null);
+							if (target instanceof List) {
+								List<Object> list = ((List<Object>)target);
+								for (String value : values) list.add(value);
+							} else {
+								List<Object> list = new ArrayList<Object>(values.length+1);
+								list.add(target);
+								for (String value : values) list.add(value);
+								map.put(null, list);
+							}
+						} else if (multiValue || values.length > 1) {
+							List<Object> list = new ArrayList<Object>(values.length);
+							for (String value : values) list.add(value);
+							map.put(null, list);
+						} else {
+							map.put(null, values[0]);						
+						}
+					} else if (target instanceof List) {
+						List<Object> list = ((List<Object>)target);
+						for (String value : values) list.add(value);
+					} else {
+						List<Object> list = new ArrayList<Object>(values.length+1);
+						list.add(target);
+						for (String value : values) list.add(value);
+						current.put(name, list);
+					}
+				} else if (multiValue || values.length > 1) {
+					List<Object> list = new ArrayList<Object>(values.length);
+					for (String value : values) list.add(value);
+					current.put(name, list);
+				} else {
+					current.put(name, values[0]);
+				}
+			}
 		}
 	}
 	
@@ -384,24 +459,20 @@ public class RESTServlet extends HttpServlet {
 		private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 		
 		private String target;
+		private String httpMethod;
 		private String restMethod;
 		private Map<Object, Object> params;
 		
-		private String contentType;
-		
 		@SuppressWarnings("unchecked")
-		public Route(HttpServletRequest request, String target, Map<?, ?> options, Map<String, Object> params) throws IOException {
+		public Route(String httpMethod, String restMethod, String target, Map<?, ?> options, Map<String, Object> params) throws IOException {
+			this.httpMethod = httpMethod;
+			this.restMethod = restMethod;
 			this.target = target;
 			this.params = (Map)params;
-			this.restMethod = getParameter("method");
-			
-			String contentType = request.getContentType();
-			if (contentType == null) contentType = "";
-			int index = contentType.indexOf(';');
-			
-			this.contentType = (index > -1) ? contentType.substring(0, index) : contentType;
-			
-			parseParameter(request.getParameterMap(), this.params);
+		}
+		
+		public String getHttpMethod() {
+			return httpMethod;
 		}
 		
 		public String getRestMethod() {
@@ -481,87 +552,6 @@ public class RESTServlet extends HttpServlet {
 				}
 			}
 			return params;
-		}
-		
-		public boolean hasJSONContent() {
-			return "application/json".equalsIgnoreCase(contentType);
-		}
-		
-		@SuppressWarnings("unchecked")
-		private static void parseParameter(Map<String, String[]> pairs, Map<Object, Object> params) {
-			for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
-				String name = entry.getKey();
-				boolean multiValue = false;
-				if (name.endsWith("[]")) {
-					name = name.substring(0, name.length()-2);
-					multiValue = true;
-				}
-				String[] values = entry.getValue();
-				
-				int start = 0;
-				char old = '\0';
-				Map<Object, Object> current = params;
-				for (int i = 0; i < name.length(); i++) {
-					char c = name.charAt(i);
-					if (c == '.' || c == '[') {
-						String key = name.substring(start, (old == ']') ? i-1 : i);
-						Object target = current.get(key);
-						
-						if (target instanceof Map) {
-							current = (Map<Object, Object>)target;
-						} else {
-							Map<Object, Object> map = new LinkedHashMap<Object, Object>();
-							if (target != null) map.put(null, target);
-							current.put(key, map);
-							current = map;
-						}
-						start = i+1;
-					}
-					old = c;
-				}
-				
-				name = name.substring(start, (old == ']') ? name.length()-1 : name.length());
-
-				if (current.containsKey(name)) {
-					Object target = current.get(name);
-					
-					if (target instanceof Map) {
-						Map<Object, Object> map = (Map<Object, Object>)target;
-						if (map.containsKey(null)) {
-							target = map.get(null);
-							if (target instanceof List) {
-								List<Object> list = ((List<Object>)target);
-								for (String value : values) list.add(value);
-							} else {
-								List<Object> list = new ArrayList<Object>(values.length+1);
-								list.add(target);
-								for (String value : values) list.add(value);
-								map.put(null, list);
-							}
-						} else if (multiValue || values.length > 1) {
-							List<Object> list = new ArrayList<Object>(values.length);
-							for (String value : values) list.add(value);
-							map.put(null, list);
-						} else {
-							map.put(null, values[0]);						
-						}
-					} else if (target instanceof List) {
-						List<Object> list = ((List<Object>)target);
-						for (String value : values) list.add(value);
-					} else {
-						List<Object> list = new ArrayList<Object>(values.length+1);
-						list.add(target);
-						for (String value : values) list.add(value);
-						current.put(name, list);
-					}
-				} else if (multiValue || values.length > 1) {
-					List<Object> list = new ArrayList<Object>(values.length);
-					for (String value : values) list.add(value);
-					current.put(name, list);
-				} else {
-					current.put(name, values[0]);
-				}
-			}
 		}
 	}
 }

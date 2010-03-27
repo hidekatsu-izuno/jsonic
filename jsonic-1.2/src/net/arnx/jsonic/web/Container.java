@@ -320,6 +320,14 @@ public class Container {
 		}
 	}
 	
+	static boolean isJSONType(String contentType) {
+		if (contentType == null) contentType = "";
+		int index = contentType.indexOf(';');
+		
+		contentType = (index > -1) ? contentType.substring(0, index) : contentType;
+		return "application/json".equalsIgnoreCase(contentType);
+	}
+	
 	
 	static String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());

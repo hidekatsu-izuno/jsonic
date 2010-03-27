@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.arnx.jsonic.*;
+import net.arnx.jsonic.web.RESTServlet.RouteMapping;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -487,7 +488,9 @@ public class WebServiceServletTest {
 	
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
-		return new RESTServlet.Route(request, null, RESTServlet.RouteMapping.DEFAULT_RESTMAP, new LinkedHashMap<String, Object>()).getParameterMap();
+		Map map = new LinkedHashMap<Object, Object>();
+		RouteMapping.parseParameter((Map)request.getParameterMap(), map);
+		return map;
 	}
 	
 	private static void write(HttpURLConnection con, String text) throws IOException {

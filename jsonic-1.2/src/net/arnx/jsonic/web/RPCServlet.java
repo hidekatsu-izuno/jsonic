@@ -386,7 +386,7 @@ public class RPCServlet extends HttpServlet {
 						params.put(key, value);
 					}
 				}
-				return new Route(request, target, params);
+				return new Route(target, params);
 			}
 			return null;
 		}
@@ -398,18 +398,10 @@ public class RPCServlet extends HttpServlet {
 		private String target;
 		private Map<Object, Object> params;
 		
-		private String contentType;
-		
 		@SuppressWarnings("unchecked")
-		public Route(HttpServletRequest request, String target, Map<String, Object> params) throws IOException {
+		public Route(String target, Map<String, Object> params) throws IOException {
 			this.target = target;
 			this.params = (Map)params;
-			
-			String contentType = request.getContentType();
-			if (contentType == null) contentType = "";
-			int index = contentType.indexOf(';');
-			
-			this.contentType = (index > -1) ? contentType.substring(0, index) : contentType;
 		}
 		
 		public String getParameter(String name) {
@@ -485,10 +477,6 @@ public class RPCServlet extends HttpServlet {
 				}
 			}
 			return params;
-		}
-		
-		public boolean hasJSONContent() {
-			return "application/json".equalsIgnoreCase(contentType);
 		}
 	}
 }
