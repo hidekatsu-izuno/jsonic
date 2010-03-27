@@ -51,6 +51,7 @@ public class RPCServlet extends HttpServlet {
 		public Class<? extends Container> container;
 		public Map<String, List<Object>> mappings;
 		public Map<String, Pattern> definitions;
+		public Map<Class<? extends Exception>, Integer> errors;
 	}
 	
 	protected Container container;
@@ -92,6 +93,8 @@ public class RPCServlet extends HttpServlet {
 				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
 			}
 		}
+		
+		if (config.errors == null) config.errors = Collections.emptyMap();
 	}
 	
 	@Override
@@ -282,7 +285,14 @@ public class RPCServlet extends HttpServlet {
 							error.put("code", -32602);
 							error.put("message", "Invalid params.");
 						} else {
-							error.put("code", route.getErrorCode(e));
+							int errorCode = -32603;
+							for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
+								if (entry.getKey().isAssignableFrom(e.getClass()) && entry.getValue() != null) {
+									errorCode = entry.getValue();
+									break;
+								}
+							}
+							error.put("code", errorCode);
 							error.put("message", e.getMessage());
 						}
 					} else {
@@ -430,14 +440,6 @@ public class RPCServlet extends HttpServlet {
 		
 		public Object getOption(String key) {
 			return options.get(key);
-		}
-		
-		public int getErrorCode(Throwable t) {
-			Object option = options.get(t.getClass().getName());
-			if (option instanceof Number) {
-				return ((Number)option).intValue();
-			}
-			return -32603;
 		}
 		
 		public String getComponentClass(Container container, String sub) {
