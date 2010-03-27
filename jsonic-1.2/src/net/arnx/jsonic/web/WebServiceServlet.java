@@ -809,6 +809,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		private void parseQueryString(InputStream in, String encoding) throws IOException {
 			List<Object> pairs = new ArrayList<Object>();
+			if (encoding == null) encoding = "UTF-8";
 
 			int state = 0; // 0 '%' 1 'N' 2 ('N' | '=' | '&')
 			
