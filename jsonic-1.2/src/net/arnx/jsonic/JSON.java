@@ -2139,6 +2139,37 @@ public class JSON {
 				Map<Object, Object> map = (Map)create(context, c);
 				map.put((hint.anonym().length() > 0) ? hint.anonym() : null, value);
 				data = map;
+			} else if (hint.anonym().length() > 0) {
+				Object o = create(context, c);
+				if (o != null) {
+					Map<String, AnnotatedElement> props = context.getSetProperties(c);
+					AnnotatedElement target = props.get(hint.anonym());
+					if (target != null) {
+						context.enter(hint.anonym(), target.getAnnotation(JSONHint.class));
+						if (target instanceof Method) {
+							Method m = (Method)target;
+							Type gptype = m.getGenericParameterTypes()[0];
+							Class<?> ptype = m.getParameterTypes()[0];
+							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
+								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								ptype = getRawType(gptype);
+							}
+							m.invoke(o, postparse(context, value, ptype, gptype));
+						} else {
+							Field f = (Field)target;
+							Type gptype = f.getGenericType();
+							Class<?> ptype =  f.getType();
+							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
+								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								ptype = getRawType(gptype);
+							}
+							
+							f.set(o, postparse(context, value, ptype, gptype));
+						}
+						context.exit();
+					}
+				}
+				data = o;
 			} else {
 				throw new UnsupportedOperationException();
 			}
