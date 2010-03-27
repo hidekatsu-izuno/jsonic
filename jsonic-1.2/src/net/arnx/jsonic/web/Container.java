@@ -89,32 +89,16 @@ public class Container {
 	
 	public JSON createJSON(Locale locale) throws ServletException  {
 		try {
-			if (processor == null) processor = WebServiceJSON.class;
-			
-			JSON json = processor.newInstance();
+			JSON json = (processor != null) ? processor.newInstance() : new JSON() {
+				@Override
+				protected boolean ignore(Context context, Class<?> target, Member member) {
+					return member.getDeclaringClass().equals(Throwable.class)
+						|| super.ignore(context, target, member);
+				}			};
 			json.setLocale(locale);
 			return json;
 		} catch (Exception e) {
 			throw new ServletException(e);
-		}
-	}
-	
-	public static class WebServiceJSON extends JSON {
-		private static final Method THROWABLE_GETMESSAGE;
-		static {
-			try {
-				THROWABLE_GETMESSAGE = Throwable.class.getDeclaredMethod("getMessage");
-			} catch (Exception e) {
-				throw new IllegalStateException(e);
-			}
-		}
-		
-		@Override
-		protected boolean ignore(Context context, Class<?> target, Member member) {
-			if (member.getDeclaringClass().equals(Throwable.class)) {
-				return !member.equals(THROWABLE_GETMESSAGE);
-			}
-			return super.ignore(context, target, member);
 		}
 	}
 	

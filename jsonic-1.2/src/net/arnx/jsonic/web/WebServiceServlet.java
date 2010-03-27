@@ -24,7 +24,10 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -41,7 +44,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -53,6 +55,7 @@ public class WebServiceServlet extends HttpServlet {
 	
 	protected class Config {
 		public String container;
+		public Class<? extends net.arnx.jsonic.JSON> processor;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -84,6 +87,8 @@ public class WebServiceServlet extends HttpServlet {
 		} catch (Exception e) {
 			throw new ServletException(e);
 		}
+		
+		if (config.processor == null) config.processor = WebServiceServlet.JSON.class;
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
@@ -242,7 +247,13 @@ public class WebServiceServlet extends HttpServlet {
 	protected void doRPC(Route route, HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 				
-		JSON json = container.createJSON(request.getLocale());
+		net.arnx.jsonic.JSON json = null;
+		try {
+			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
+		json.setLocale(request.getLocale());
 		
 		// request processing
 		RpcRequest req = null;
@@ -268,19 +279,8 @@ public class WebServiceServlet extends HttpServlet {
 						throw new NoSuchMethodException("Method not found: " + req.method);
 					}
 					
-					String methodName = req.method.substring(delimiter+1);
-					Method method = container.getMethod(component, methodName, req.params);
-					if (method == null) {
-						throw new NoSuchMethodException("Method not found: " + req.method);					
-					}
-					
-					Produce produce = method.getAnnotation(Produce.class);
-					if (produce == null) {
-						json.setContext(component);
-						result = container.execute(json, component, method, req.params);
-					} else {
-						throw new NoSuchMethodException("Method not found: " + req.method);
-					}
+					json.setContext(component);
+					result = invoke(json, component, req.method.substring(delimiter+1), req.params);
 				}
 			}
 		} catch (ClassNotFoundException e) {
@@ -375,7 +375,13 @@ public class WebServiceServlet extends HttpServlet {
 		}
 		
 		// request processing
-		JSON json = container.createJSON(request.getLocale());
+		net.arnx.jsonic.JSON json = null;
+		try {
+			json = (net.arnx.jsonic.JSON)config.processor.newInstance();
+		} catch (Exception e) {
+			throw new ServletException(e);
+		}
+		json.setLocale(request.getLocale());
 		
 		Object res = null;
 		try {
@@ -406,21 +412,8 @@ public class WebServiceServlet extends HttpServlet {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
 			}
-			Method method = container.getMethod(component, methodName, params);
-			if (method == null) {
-				throw new NoSuchMethodException("Method not found: " + route.getMethod());					
-			}
-			
-			Produce produce = method.getAnnotation(Produce.class);
-			if (produce == null) {
-				json.setContext(component);
-				res = container.execute(json, component, method, params);
-			} else {
-				response.setContentType(produce.value());
-				json.setContext(component);
-				container.execute(json, component, method, params);
-				return;
-			}
+			json.setContext(component);
+			res = invoke(json, component, methodName, params);
 		} catch (ClassNotFoundException e) {
 			container.debug("Class Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
@@ -475,6 +468,154 @@ public class WebServiceServlet extends HttpServlet {
 	public void destroy() {
 		container.destory();
 		super.destroy();
+	}
+	
+	
+	/**
+	 * Called before invoking the target method.
+	 * 
+	 * @param target The target instance.
+	 * @param params The parameters of the target method.
+	 * @return The parameters before processing.
+	 */
+	protected Object[] preinvoke(Object target, Object... params) {
+		return params;
+	}
+		
+	protected Object invoke(net.arnx.jsonic.JSON json, Object o, String methodName, List<?> args) throws Exception {
+		if (args == null) args = Collections.emptyList();
+		
+		methodName = toLowerCamel(methodName);
+		
+		Class<?> c = o.getClass();
+		
+		Method init = null;
+		Method method = null;
+		Type[] paramTypes = null;
+		Method destroy = null;
+		
+		boolean illegalInit = false;
+		boolean illegalDestroy = false;
+		for (Method m : c.getMethods()) {
+			if (Modifier.isStatic(m.getModifiers())
+					|| m.isSynthetic()
+					|| m.isBridge()) {
+				continue;
+			}
+			
+			if (m.getName().equals(container.init)) {
+				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
+					init = m;
+				} else {
+					illegalInit = true;
+				}
+			} else if (m.getName().equals(container.destroy)) {
+				if (m.getParameterTypes().length == 0 && m.getReturnType().equals(void.class)) {
+					destroy = m;
+				} else {
+					illegalDestroy = true;
+				}
+			} else if (m.getName().equals(methodName)) {
+				Type[] pTypes = m.getGenericParameterTypes();
+				if (args.size() <= Math.max(1, pTypes.length)) {
+					if (method == null || Math.abs(args.size() - pTypes.length) < Math.abs(args.size() - paramTypes.length)) {
+						method = m;
+						paramTypes = pTypes;
+					} else if (pTypes.length == paramTypes.length) {
+						throw new IllegalStateException("too many methods found: " + toPrintString(c, methodName, args));
+					}
+				}
+			}
+		}
+		
+		if (method == null || container.limit(c, method)) {
+			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, args));
+		}
+		
+		if (container.isDebugMode() && init == null && illegalInit) {
+			container.debug("Notice: init method must have no arguments.");
+		}
+		if (container.isDebugMode() && destroy == null && illegalDestroy) {
+			container.debug("Notice: destroy method must have no arguments.");
+		}
+		
+		Object[] params = new Object[paramTypes.length];
+		for (int i = 0; i < params.length; i++) {
+			params[i] = json.convert((i < args.size()) ? args.get(i) : null, paramTypes[i]);
+		}
+		
+		if (init != null) {
+			if (container.isDebugMode()) {
+				container.debug("Execute: " + toPrintString(c, init.getName(), null));
+			}
+			init.invoke(o);
+		}
+		
+		if (container.isDebugMode()) {
+			container.debug("Execute: " + toPrintString(c, methodName, args));
+		}
+		params = preinvoke(o, params);
+		Object ret = method.invoke(o, params);
+		ret = postinvoke(o, ret);
+		
+		if (destroy != null) {
+			if (container.isDebugMode()) {
+				container.debug("Execute: " + toPrintString(c, destroy.getName(), null));
+			}
+			destroy.invoke(o);
+		}
+		
+		return ret;
+	}
+	
+	/**
+	 * Called after invoked the target method.
+	 * 
+	 * @param target The target instance.
+	 * @param result The returned value of the target method call.
+	 * @return The returned value after processed.
+	 */
+	protected Object postinvoke(Object target, Object result) {
+		return result;
+	}
+	
+	private String toPrintString(Class<?> c, String methodName, List<?> args) {
+		StringBuilder sb = new StringBuilder(c.getName());
+		sb.append('#').append(methodName).append('(');
+		if (args != null) {
+			String str = JSON.encode(args);
+			sb.append(str, 1, str.length()-1);
+		}
+		sb.append(')');
+		return sb.toString();
+	}
+	
+	private static String toLowerCamel(String name) {
+		StringBuilder sb = new StringBuilder(name.length());
+		boolean toUpperCase = false;
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
+		}
+		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
+			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+		}
+		return sb.toString();
+	}
+	
+	public static class JSON extends net.arnx.jsonic.JSON {
+		@Override
+		protected boolean ignore(Context context, Class<?> target, Member member) {
+			return member.getDeclaringClass().equals(Throwable.class)
+				|| super.ignore(context, target, member);
+		}
 	}
 	
 	static class RouteMapping {

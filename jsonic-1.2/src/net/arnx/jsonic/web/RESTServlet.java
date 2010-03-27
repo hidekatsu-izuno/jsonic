@@ -268,7 +268,11 @@ public class RESTServlet extends HttpServlet {
 			}
 			
 			response.setStatus(SC_BAD_REQUEST);
-			result = cause;
+			Map<String, Object> error = new LinkedHashMap<String, Object>();
+			error.put("name", cause.getClass().getSimpleName());
+			error.put("message", cause.getMessage());
+			error.put("data", cause);
+			result = error;
 		} catch (Exception e) {
 			container.error("Internal error occurred.", e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
