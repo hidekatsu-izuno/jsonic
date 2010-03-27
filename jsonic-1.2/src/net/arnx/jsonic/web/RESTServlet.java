@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -46,11 +47,21 @@ import net.arnx.jsonic.JSONException;
 import static javax.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
 
-public class RESTServlet extends HttpServlet {	
+public class RESTServlet extends HttpServlet {
+	static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
+	
+	static {
+		DEFAULT_RESTMAP.put("GET", "find");
+		DEFAULT_RESTMAP.put("POST", "create");
+		DEFAULT_RESTMAP.put("PUT", "update");
+		DEFAULT_RESTMAP.put("DELETE", "delete");
+	}
+	
 	static class Config {
 		public Class<? extends Container> container;
 		public Map<String, List<Object>> mappings;
 		public Map<String, Pattern> definitions;
+		public Map<String, String> methods;
 	}
 	
 	protected Container container;
@@ -87,9 +98,11 @@ public class RESTServlet extends HttpServlet {
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
 		
+		if (config.methods == null) config.methods = DEFAULT_RESTMAP;
+		
 		if (config.mappings != null) {
 			for (Map.Entry<String, List<Object>> entry : config.mappings.entrySet()) {
-				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config.definitions));
+				mappings.add(new RouteMapping(entry.getKey(), entry.getValue(), config));
 			}
 		}
 	}
@@ -307,21 +320,15 @@ public class RESTServlet extends HttpServlet {
 		private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
 		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/().]+");
 		
-		static final Map<String, String> DEFAULT_RESTMAP = new HashMap<String, String>();
-		
-		static {
-			DEFAULT_RESTMAP.put("GET", "find");
-			DEFAULT_RESTMAP.put("POST", "create");
-			DEFAULT_RESTMAP.put("PUT", "update");
-			DEFAULT_RESTMAP.put("DELETE", "delete");
-		}
-		
 		Pattern pattern;
 		List<String> names;
 		String target;
 		Map<?, ?> options;
+		Config config;
 		
-		public RouteMapping(String path, List<Object> target, Map<String, Pattern> definitions) {
+		public RouteMapping(String path, List<Object> target, Config config) {
+			this.config = config;
+			
 			this.names = new ArrayList<String>();
 			StringBuffer sb = new StringBuffer("^\\Q");
 			Matcher m = PLACE_PATTERN.matcher(path);
@@ -331,8 +338,8 @@ public class RESTServlet extends HttpServlet {
 				Pattern p = DEFAULT_PATTERN;
 				if (m.group(2) != null) {
 					p = Pattern.compile(m.group(2));
-				} else if (definitions.containsKey(name)) {
-					p = definitions.get(name);
+				} else if (config.definitions.containsKey(name)) {
+					p = config.definitions.get(name);
 				}
 				m.appendReplacement(sb, "\\\\E(" + p.pattern().replaceAll("\\((?!\\?)", "(?:").replace("\\", "\\\\") + ")\\\\Q");
 			}
@@ -340,11 +347,11 @@ public class RESTServlet extends HttpServlet {
 			sb.append("\\E$");
 			this.pattern = Pattern.compile(sb.toString());
 			this.target = (String)target.get(0);
-			this.target = (String)target.get(0);
+			
 			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
-				options = cast(target.get(1));
+				this.options = cast(target.get(1));
 			} else {
-				options = DEFAULT_RESTMAP;
+				this.options = Collections.emptyMap();
 			}
 		}
 		
@@ -374,8 +381,10 @@ public class RESTServlet extends HttpServlet {
 				if (httpMethod == null) httpMethod = request.getMethod();
 				
 				Object restMethod = params.get("method");
-				if (restMethod == null) {
-					restMethod = options.get(httpMethod);
+				if (restMethod == null && options.get("methods") instanceof Map<?, ?>) {
+					restMethod = ((Map<?,?>)options.get("methods")).get(httpMethod);
+				} else {
+					restMethod = config.methods.get(httpMethod);
 				}
 				
 				if (restMethod instanceof String) {

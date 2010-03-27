@@ -16,7 +16,7 @@
 			<param-value>
 				debug: true
 				mappings: {
-					'/{package}/{class}/print.json': ['sample.basic.web.${package}.service.${class}Service', {'GET': 'print'}]
+					'/{package}/{class}/print.json': ['sample.basic.web.${package}.service.${class}Service', {'methods': {'GET': 'print'}}]
 					'/{package}/{class}/{id}.json': 'sample.basic.web.${package}.service.${class}Service'
 					'/{package}/{class}.json': 'sample.basic.web.${package}.service.${class}Service'
 				}

@@ -372,9 +372,9 @@ public class RPCServlet extends HttpServlet {
 			this.pattern = Pattern.compile(sb.toString());
 			this.target = (String)target.get(0);
 			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
-				options = cast(target.get(1));
+				this.options = cast(target.get(1));
 			} else {
-				options = Collections.emptyMap();
+				this.options = Collections.emptyMap();
 			}
 		}
 		
