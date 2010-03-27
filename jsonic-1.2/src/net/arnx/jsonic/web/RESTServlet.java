@@ -319,7 +319,7 @@ public class RESTServlet extends HttpServlet {
 		Pattern pattern;
 		List<String> names;
 		String target;
-		Map<?, ?> options = DEFAULT_RESTMAP;
+		Map<?, ?> options;
 		
 		public RouteMapping(String path, List<Object> target, Map<String, Pattern> definitions) {
 			this.names = new ArrayList<String>();
@@ -343,6 +343,8 @@ public class RESTServlet extends HttpServlet {
 			this.target = (String)target.get(0);
 			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
 				options = cast(target.get(1));
+			} else {
+				options = DEFAULT_RESTMAP;
 			}
 		}
 		
@@ -479,13 +481,14 @@ public class RESTServlet extends HttpServlet {
 		private String httpMethod;
 		private String restMethod;
 		private Map<Object, Object> params;
+		private Map<?,?> options;
 		
-		@SuppressWarnings("unchecked")
 		public Route(String httpMethod, String restMethod, String target, Map<?, ?> options, Map<String, Object> params) throws IOException {
 			this.httpMethod = httpMethod;
 			this.restMethod = restMethod;
 			this.target = target;
-			this.params = (Map)params;
+			this.params = cast(params);
+			this.options = options;
 		}
 		
 		public String getHttpMethod() {
@@ -494,6 +497,10 @@ public class RESTServlet extends HttpServlet {
 		
 		public String getRestMethod() {
 			return restMethod;
+		}
+		
+		public Object getOption(String key) {
+			return options.get(key);
 		}
 		
 		public String getParameter(String name) {

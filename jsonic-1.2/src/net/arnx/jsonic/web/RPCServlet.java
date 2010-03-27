@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -274,16 +275,15 @@ public class RPCServlet extends HttpServlet {
 					container.debug("Fails to invoke method.", cause);
 					if (cause instanceof Exception) {
 						e = (Exception)cause;
-						if (e instanceof IllegalStateException
-							|| e instanceof UnsupportedOperationException) {
+						if (e instanceof IllegalStateException || e instanceof UnsupportedOperationException) {
 							error.put("code", -32601);
 							error.put("message", "Method not found.");
 						} else if (e instanceof IllegalArgumentException) {
 							error.put("code", -32602);
 							error.put("message", "Invalid params.");
 						} else {
-							error.put("code", -32603);
-							error.put("message", cause.getMessage());
+							error.put("code", route.getErrorCode(e));
+							error.put("message", e.getMessage());
 						}
 					} else {
 						throw (Error)cause;
@@ -363,6 +363,8 @@ public class RPCServlet extends HttpServlet {
 			this.target = (String)target.get(0);
 			if (target.size() > 1 && target.get(1) instanceof Map<?, ?>) {
 				options = cast(target.get(1));
+			} else {
+				options = Collections.emptyMap();
 			}
 		}
 		
@@ -387,7 +389,7 @@ public class RPCServlet extends HttpServlet {
 						params.put(key, value);
 					}
 				}
-				return new Route(target, params);
+				return new Route(target, options, params);
 			}
 			return null;
 		}
@@ -398,11 +400,12 @@ public class RPCServlet extends HttpServlet {
 
 		private String target;
 		private Map<Object, Object> params;
+		private Map<?,?> options;
 		
-		@SuppressWarnings("unchecked")
-		public Route(String target, Map<String, Object> params) throws IOException {
+		public Route(String target, Map<?, ?> options, Map<String, Object> params) throws IOException {
 			this.target = target;
-			this.params = (Map)params;
+			this.params = cast(params);
+			this.options = options;
 		}
 		
 		public String getParameter(String name) {
@@ -423,6 +426,18 @@ public class RPCServlet extends HttpServlet {
 		
 		public Map<?, ?> getParameterMap() {
 			return params;
+		}
+		
+		public Object getOption(String key) {
+			return options.get(key);
+		}
+		
+		public int getErrorCode(Throwable t) {
+			Object option = options.get(t.getClass().getName());
+			if (option instanceof Number) {
+				return ((Number)option).intValue();
+			}
+			return -32603;
 		}
 		
 		public String getComponentClass(Container container, String sub) {
