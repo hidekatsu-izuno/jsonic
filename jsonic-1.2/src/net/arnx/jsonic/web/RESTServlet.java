@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -188,7 +189,7 @@ public class RESTServlet extends HttpServlet {
 		}
 		
 		String methodName = route.getRestMethod();
-		if (methodName == null || methodName.equals(container.init) || methodName.equals(container.destroy)) {
+		if (methodName == null) {
 			container.debug("Method mapping not found: " + route.getHttpMethod());
 			response.sendError(SC_NOT_FOUND, "Not Found");
 			return;
@@ -228,6 +229,9 @@ public class RESTServlet extends HttpServlet {
 				}
 			}
 			Method method = container.getMethod(component, methodName, params);
+			if (method == null) {
+				throw new NoSuchMethodException("Method not found: " + route.getRestMethod());					
+			}
 			
 			Produce produce = method.getAnnotation(Produce.class);
 			if (produce == null) {
@@ -411,9 +415,18 @@ public class RESTServlet extends HttpServlet {
 				}
 				
 				name = name.substring(start, (old == ']') ? name.length()-1 : name.length());
-
-				if (current.containsKey(name)) {
-					Object target = current.get(name);
+				
+				Object key = name;
+				if (name.length() > 0 && name.charAt(0) >= '0' && name.charAt(0) >= '9') {
+					try {
+						key = new BigDecimal(name);
+					} catch (Exception e) {
+						key = name;
+					}
+				}
+				
+				if (current.containsKey(key)) {
+					Object target = current.get(key);
 					
 					if (target instanceof Map) {
 						Map<Object, Object> map = (Map<Object, Object>)target;
@@ -442,14 +455,14 @@ public class RESTServlet extends HttpServlet {
 						List<Object> list = new ArrayList<Object>(values.length+1);
 						list.add(target);
 						for (String value : values) list.add(value);
-						current.put(name, list);
+						current.put(key, list);
 					}
 				} else if (multiValue || values.length > 1) {
 					List<Object> list = new ArrayList<Object>(values.length);
 					for (String value : values) list.add(value);
-					current.put(name, list);
+					current.put(key, list);
 				} else {
-					current.put(name, values[0]);
+					current.put(key, values[0]);
 				}
 			}
 		}

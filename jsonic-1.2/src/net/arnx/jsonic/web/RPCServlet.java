@@ -235,9 +235,6 @@ public class RPCServlet extends HttpServlet {
 					subcompName = (sep != -1) ? rmethod.substring(0, sep) : null;
 					methodName = (sep != -1) ? rmethod.substring(sep+1) : rmethod;
 				}
-				if (methodName.equals(container.init) || methodName.equals(container.destroy)) {
-					throw new NoSuchMethodException("Method not found: " + rmethod);
-				}
 				
 				component = container.getComponent(route.getComponentClass(container, subcompName));
 				if (component == null) {
@@ -246,12 +243,16 @@ public class RPCServlet extends HttpServlet {
 				
 				List<?> params = (rparams instanceof List<?>) ? (List<?>)rparams : Arrays.asList(rparams);
 				Method method = container.getMethod(component, methodName, params);
+				if (method == null) {
+					throw new NoSuchMethodException("Method not found: " + rmethod);					
+				}
 				
 				Produce produce = method.getAnnotation(Produce.class);
 				if (produce == null) {
 					json.setContext(component);
 					result = container.execute(json, component, method, params);
 				} else {
+					container.debug("Procedure annotaion is not usable in RPCServlet.");
 					throw new NoSuchMethodException("Method not found: " + rmethod);
 				}
 			} catch (Exception e) {

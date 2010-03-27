@@ -52,7 +52,7 @@ public class WebServiceServlet extends HttpServlet {
 	private static final long serialVersionUID = -63348112220078595L;
 	
 	protected class Config {
-		public Class<? extends Container> container;
+		public String container;
 		public Map<String, String> mappings;
 		public Map<String, Pattern> definitions;
 	}
@@ -73,9 +73,13 @@ public class WebServiceServlet extends HttpServlet {
 		
 		try {
 			config = json.parse(configText, getConfigClass());
-			if (config.container == null) config.container = Container.class;
+			Class<?> containerClass =  Container.class;
+			if (config.container != null) {
+				config.container = config.container.replaceFirst("^(\\Qnet.arnx.jsonic.web.\\E)(.+Container)", "$1extension.$2");
+				containerClass = findClass(config.container);
+			}
 			
-			container = (Container)json.parse(configText, config.container);
+			container = (Container)json.parse(configText, containerClass);
 			container.init(this);
 		} catch (Exception e) {
 			throw new ServletException(e);
@@ -91,6 +95,20 @@ public class WebServiceServlet extends HttpServlet {
 		}
 	}
 	
+	protected Class<?> findClass(String name) throws ClassNotFoundException {
+		Class<?> c = null;
+		try {
+			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
+		} catch (ClassNotFoundException e) {
+			try {
+				c = Class.forName(name, true, this.getClass().getClassLoader());
+			} catch (ClassNotFoundException e2) {
+				c = Class.forName(name);				
+			}
+		}
+		
+		return c;
+	}	
 	protected Class<? extends Config> getConfigClass() {
 		return Config.class;
 	}
@@ -142,56 +160,76 @@ public class WebServiceServlet extends HttpServlet {
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {		
-		Route route = preprocess(request, response);
-		if (route == null) return;
-		
-		if (route.isRpcMode()) {
-			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowd");
-		} else {
-			doREST(route, request, response);
+			throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			Route route = preprocess(request, response);
+			if (route == null) return;
+			
+			if (route.isRpcMode()) {
+				response.addHeader("Allow", "POST");
+				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowd");
+			} else {
+				doREST(route, request, response);
+			}
+		} finally {
+			container.end(request, response);
 		}
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		Route route = preprocess(request, response);
-		if (route == null) return;
-
-		if (route.isRpcMode()) {
-			doRPC(route, request, response);
-		} else {
-			doREST(route, request, response);
+		container.start(request, response);
+		try {
+			Route route = preprocess(request, response);
+			if (route == null) return;
+	
+			if (route.isRpcMode()) {
+				doRPC(route, request, response);
+			} else {
+				doREST(route, request, response);
+			}
+		} finally {
+			container.end(request, response);
 		}
 	}
 
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		Route route = preprocess(request, response);
-		if (route == null) return;
-		
-		if (route.isRpcMode()) {
-			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
-		} else {
-			doREST(route, request, response);
+		container.start(request, response);
+		try {
+			Route route = preprocess(request, response);
+			if (route == null) return;
+			
+			if (route.isRpcMode()) {
+				response.addHeader("Allow", "POST");
+				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
+			} else {
+				doREST(route, request, response);
+			}
+		} finally {
+			container.end(request, response);
 		}
 	}
 	
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
-		Route route = preprocess(request, response);
-		if (route == null) return;
-		
-		if (route.isRpcMode()) {
-			response.addHeader("Allow", "POST");
-			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
-		} else {
-			doREST(route, request, response);
+		container.start(request, response);
+		try {
+			Route route = preprocess(request, response);
+			if (route == null) return;
+			
+			if (route.isRpcMode()) {
+				response.addHeader("Allow", "POST");
+				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
+			} else {
+				doREST(route, request, response);
+			}
+		} finally {
+			container.end(request, response);
 		}
 	}
 	
@@ -217,7 +255,7 @@ public class WebServiceServlet extends HttpServlet {
 		try {
 			req = json.parse(request.getReader(), RpcRequest.class);
 			if (req == null || req.method == null || req.params == null) {
-				throwable = new Throwable();
+				throwable = new IllegalArgumentException("Request is empty.");
 				errorCode = -32600;
 				errorMessage = "Invalid Request.";
 			} else {
@@ -230,7 +268,11 @@ public class WebServiceServlet extends HttpServlet {
 						throw new NoSuchMethodException("Method not found: " + req.method);
 					}
 					
-					Method method = container.getMethod(component, req.method.substring(delimiter+1), req.params);
+					String methodName = req.method.substring(delimiter+1);
+					Method method = container.getMethod(component, methodName, req.params);
+					if (method == null) {
+						throw new NoSuchMethodException("Method not found: " + req.method);					
+					}
 					
 					Produce produce = method.getAnnotation(Produce.class);
 					if (produce == null) {
@@ -306,26 +348,10 @@ public class WebServiceServlet extends HttpServlet {
 		res.put("id", (req != null) ? req.id : null);
 
 		Writer writer = response.getWriter();
-
-		try {
-			json.setContext(result);
-			json.setPrettyPrint(container.isDebugMode());
-			json.format(res, writer);
-		} catch (IOException e) {
-			throw e;
-		} catch (Exception e) {
-			container.error("Fails to format", e);
-			res.clear();
-			res.put("result", null);
-			Map<String, Object> error = new LinkedHashMap<String, Object>();
-			error.put("code", -32603);
-			error.put("message", "Internal error.");
-			error.put("data", e);
-			res.put("error", error);
-			res.put("id", (req != null) ? req.id : null);
-			json.format(res, writer);
-			return;
-		}
+		
+		json.setContext(result);
+		json.setPrettyPrint(container.isDebugMode());
+		json.format(res, writer);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -381,6 +407,9 @@ public class WebServiceServlet extends HttpServlet {
 				}
 			}
 			Method method = container.getMethod(component, methodName, params);
+			if (method == null) {
+				throw new NoSuchMethodException("Method not found: " + route.getMethod());					
+			}
 			
 			Produce produce = method.getAnnotation(Produce.class);
 			if (produce == null) {
@@ -424,30 +453,22 @@ public class WebServiceServlet extends HttpServlet {
 			return;
 		}
 		
-		try {
-			response.setContentType((callback != null) ? "text/javascript" : "application/json");
-			if (res == null
-					|| res instanceof CharSequence
-					|| res instanceof Boolean
-					|| res instanceof Number
-					|| res instanceof Date) {
-				if (status != SC_CREATED) status = SC_NO_CONTENT;
-				response.setStatus(status);
-			} else {
-				Writer writer = response.getWriter();
-				json.setPrettyPrint(container.isDebugMode());
-				
-				if (callback != null) writer.append(callback).append("(");
-				json.format(res, writer);
-				if (callback != null) writer.append(");");
-			}
-		} catch (IOException e) {
-			throw e;
-		} catch (Exception e) {
-			container.error("Fails to format.", e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
-			return;
-		}		
+		response.setContentType((callback != null) ? "text/javascript" : "application/json");
+		if (res == null
+				|| res instanceof CharSequence
+				|| res instanceof Boolean
+				|| res instanceof Number
+				|| res instanceof Date) {
+			if (status != SC_CREATED) status = SC_NO_CONTENT;
+			response.setStatus(status);
+		} else {
+			Writer writer = response.getWriter();
+			json.setPrettyPrint(container.isDebugMode());
+			
+			if (callback != null) writer.append(callback).append("(");
+			json.format(res, writer);
+			if (callback != null) writer.append(");");
+		}
 	}
 	
 	@Override

@@ -144,6 +144,11 @@ public class Container {
 		
 		if (namingConversion) methodName = toLowerCamel(methodName);
 		
+		if (methodName.equals(init) || methodName.equals(destroy)) {
+			debug("Method name is same init or destroy method name.");
+			return null;
+		}
+		
 		Class<?> c = component.getClass();
 		
 		Method method = null;
@@ -161,14 +166,16 @@ public class Container {
 						method = m;
 						lastPType = pTypes;
 					} else if (pTypes.length == lastPType.length) {
-						throw new IllegalStateException("too many methods found: " + toPrintString(c, method.getName(), params));
+						debug("too many methods found: " + toPrintString(c, method.getName(), params));
+						return null;
 					}
 				}
 			}
 		}
 		
 		if (method == null || limit(c, method)) {
-			throw new NoSuchMethodException("method missing: " + toPrintString(c, methodName, params));
+			debug("method missing: " + toPrintString(c, methodName, params));
+			return null;
 		}
 		
 		return method;
