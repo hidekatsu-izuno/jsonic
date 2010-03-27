@@ -51,6 +51,7 @@
 				debug: true
 				mappings: {
 					'/{package}/rpc.json': 'sample.guice.web.${package}.service.${class}Service'
+					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
 					'/rpc.json': 'sample.guice.service.${class}Service'
 				}
 			</param-value>

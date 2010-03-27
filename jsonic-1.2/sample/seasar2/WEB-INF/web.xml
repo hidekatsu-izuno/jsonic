@@ -70,6 +70,7 @@
 				debug: true
 				mappings: {
 					'/{package}/rpc.json': 'sample.seasar2.web.${package}.service.${class}Service'
+					'/{package}/{class}.json': 'sample.seasar2.web.${package}.service.${class}Service'
 					'/rpc.json': 'sample.seasar2.service.${class}Service'
 				}
 			</param-value>

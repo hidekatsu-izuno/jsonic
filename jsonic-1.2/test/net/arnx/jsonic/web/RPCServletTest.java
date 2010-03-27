@@ -147,6 +147,17 @@ public class RPCServletTest {
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 
+		con = (HttpURLConnection)new URL("http://localhost:16001/" + app + "/rpc/calc.json").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{\"method\":\"plus\",\"params\":[1,2],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":3,\"error\":null,\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");

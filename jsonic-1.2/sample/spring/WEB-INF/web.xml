@@ -50,6 +50,7 @@
 				debug: true
 				mappings: {
 					'/{package}/rpc.json': 'sample.spring.web.${package}.service.${class}Service'
+					'/{package}/{class}.json': 'sample.spring.web.${package}.service.${class}Service'
 					'/rpc.json': 'sample.spring.service.${class}Service'
 				}
 			</param-value>

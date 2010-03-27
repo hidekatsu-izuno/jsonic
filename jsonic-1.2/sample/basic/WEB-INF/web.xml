@@ -34,6 +34,7 @@
 				debug: true
 				mappings: {
 					'/{package}/rpc.json': 'sample.basic.web.${package}.service.${class}Service'
+					'/{package}/{class}.json': 'sample.basic.web.${package}.service.${class}Service'
 					'/rpc.json': 'sample.basic.service.${class}Service'
 				}
 			</param-value>
