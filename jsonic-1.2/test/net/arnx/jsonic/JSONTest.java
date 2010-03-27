@@ -222,7 +222,7 @@ public class JSONTest {
 		array3.add(2);
 		array3.add(3);
 		aBean.array3 = array3;
-		assertEquals("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
+		assertEquals("{\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\","
 				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},"
 				+ "\"method\":2}", JSON.encode(aBean));
@@ -419,7 +419,10 @@ public class JSONTest {
 		array3.add(3);
 		aBean.array3 = array3;
 		
-		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\","
+		Map<String, String> anonymMap = new LinkedHashMap<String, String>();
+		anonymMap.put("anonym", "test");
+		
+		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"anonymMap\":\"test\",\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\","
 				+ "json_data: {\"a\": 100 /* ほげほげ */},"
 				+ "\"method\":2}", AnnotationBean.class);
 		assertEquals(aBean, aBeanResult);
@@ -1665,11 +1668,16 @@ class AnnotationBean {
 	
 	@JSONHint(serialized=true)
 	public String json_data;
+	
+	@JSONHint(anonym="anonym")
+	public Map<String, String> anonymMap;
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result
+				+ ((anonymMap == null) ? 0 : anonymMap.hashCode());
 		result = prime * result + Arrays.hashCode(array1);
 		result = prime * result + Arrays.hashCode(array2);
 		result = prime * result + ((array3 == null) ? 0 : array3.hashCode());
@@ -1691,6 +1699,11 @@ class AnnotationBean {
 		if (getClass() != obj.getClass())
 			return false;
 		AnnotationBean other = (AnnotationBean) obj;
+		if (anonymMap == null) {
+			if (other.anonymMap != null)
+				return false;
+		} else if (!anonymMap.equals(other.anonymMap))
+			return false;
 		if (!Arrays.equals(array1, other.array1))
 			return false;
 		if (!Arrays.equals(array2, other.array2))
@@ -1718,6 +1731,7 @@ class AnnotationBean {
 			return false;
 		return true;
 	}
+
 }
 
 @SuppressWarnings("unchecked")
