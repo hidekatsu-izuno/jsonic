@@ -32,7 +32,7 @@
 				container: 'net.arnx.jsonic.web.extension.GuiceContainer'
 				debug: true
 				mappings: {
-					'/{package}/{class}/print.json': ['sample.guice.web.${package}.service.${class}Service', {'GET': 'print'}]
+					'/{package}/{class}/print.json': ['sample.guice.web.${package}.service.${class}Service', {'methods': {'GET': 'print'}}]
 					'/{package}/{class}/{id}.json': 'sample.guice.web.${package}.service.${class}Service'
 					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
 				}

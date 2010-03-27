@@ -31,7 +31,7 @@
 				container: 'net.arnx.jsonic.web.extension.SpringContainer'
 				debug: true
 				mappings: {
-					'/{package}/{class}/print.json': ['sample.spring.web.${package}.service.${class}Service', {'GET': 'print'}]
+					'/{package}/{class}/print.json': ['sample.spring.web.${package}.service.${class}Service', {'methods': {'GET': 'print'}}]
 					'/{package}/{class}/{id}.json': 'sample.spring.web.${package}.service.${class}Service'
 					'/{package}/{class}.json': 'sample.spring.web.${package}.service.${class}Service'
 				}
