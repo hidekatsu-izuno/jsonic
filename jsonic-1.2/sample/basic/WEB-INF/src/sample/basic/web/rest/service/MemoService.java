@@ -31,7 +31,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.arnx.jsonic.web.Produce;
+import net.arnx.jsonic.web.Produces;
 
 public class MemoService {
 	// it's incorrect use. you should use RDBMS.
@@ -109,7 +109,7 @@ public class MemoService {
 		list.remove(memo.id);
 	}
 	
-	@Produce("text/csv")
+	@Produces("text/csv")
 	public void print() throws IOException {
 		response.setCharacterEncoding("MS932");
 		response.setHeader("Content-Disposition", "attachment; filename=\"memos.csv\"");

@@ -252,12 +252,12 @@ public class RESTServlet extends HttpServlet {
 				throw new NoSuchMethodException("Method not found: " + route.getRestMethod());					
 			}
 			
-			Produce produce = method.getAnnotation(Produce.class);
-			if (produce == null) {
+			Produces produces = method.getAnnotation(Produces.class);
+			if (produces == null) {
 				json.setContext(component);
 				result = container.execute(json, component, method, params);
 			} else {
-				response.setContentType(produce.value());
+				if (produces.value().length == 0) response.setContentType(produces.value()[0]);
 				json.setContext(component);
 				container.execute(json, component, method, params);
 				return;

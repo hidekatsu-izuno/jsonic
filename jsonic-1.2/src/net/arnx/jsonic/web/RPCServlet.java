@@ -253,12 +253,12 @@ public class RPCServlet extends HttpServlet {
 					throw new NoSuchMethodException("Method not found: " + rmethod);					
 				}
 				
-				Produce produce = method.getAnnotation(Produce.class);
-				if (produce == null) {
+				Produces produces = method.getAnnotation(Produces.class);
+				if (produces == null) {
 					json.setContext(component);
 					result = container.execute(json, component, method, params);
 				} else {
-					container.debug("Procedure annotaion is not usable in RPCServlet.");
+					container.debug("Produces annotaion is not usable in RPCServlet.");
 					throw new NoSuchMethodException("Method not found: " + rmethod);
 				}
 			} catch (Exception e) {
