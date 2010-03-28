@@ -114,6 +114,17 @@ public class RESTServlet extends HttpServlet {
 	}
 	
 	@Override
+	protected void doHead(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			doREST(request, response);
+		} finally {
+			container.end(request, response);
+		}
+	}
+	
+	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		container.start(request, response);
@@ -149,6 +160,17 @@ public class RESTServlet extends HttpServlet {
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
+		container.start(request, response);
+		try {
+			doREST(request, response);
+		} finally {
+			container.end(request, response);
+		}
+	}
+	
+	@Override
+	protected void doOptions(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		container.start(request, response);
 		try {
 			doREST(request, response);
