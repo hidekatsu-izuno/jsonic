@@ -31,8 +31,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 public class SpringContainer extends Container {
-	private Log log;
-	private ApplicationContext appContext;
+	Log log;
+	ApplicationContext appContext;
 	
 	@Override
 	public void init(HttpServlet servlet) throws ServletException {

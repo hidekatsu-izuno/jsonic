@@ -346,8 +346,8 @@ public class RPCServlet extends HttpServlet {
 	}
 	
 	static class RouteMapping {
-		private static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
-		private static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/().]+");
+		static final Pattern PLACE_PATTERN = Pattern.compile("\\{\\s*(\\p{javaJavaIdentifierStart}[\\p{javaJavaIdentifierPart}\\.-]*)\\s*(?::\\s*((?:[^{}]|\\{[^{}]*\\})*)\\s*)?\\}");
+		static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/().]+");
 		
 		public String target;
 		public Map<String, Pattern> definitions;
@@ -411,10 +411,10 @@ public class RPCServlet extends HttpServlet {
 	}
 	
 	static class Route {
-		private static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
+		static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
-		private String target;
-		private Map<Object, Object> params;
+		String target;
+		Map<Object, Object> params;
 		
 		public Route(String target, Map<String, Object> params) throws IOException {
 			this.target = target;

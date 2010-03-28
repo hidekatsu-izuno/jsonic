@@ -175,10 +175,10 @@ public class JSON {
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
 	
-	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
+	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
-	private static Class<?>[] dynaBeanClasses = null;
-	private static Class<?> rowIdClass = null;
+	static Class<?>[] dynaBeanClasses = null;
+	static Class<?> rowIdClass = null;
 	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
@@ -207,7 +207,7 @@ public class JSON {
 		}
 	}
 	
-	private static JSON newInstance() {
+	static JSON newInstance() {
 		JSON instance = null;
 		try {
 			instance = prototype.newInstance();
@@ -624,7 +624,7 @@ public class JSON {
 		return data;
 	}
 	
-	private Appendable format(Context context, Object src, Appendable ap) throws IOException {
+	Appendable format(Context context, Object src, Appendable ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
 			o = null;
@@ -911,7 +911,7 @@ public class JSON {
 		return ap;
 	}
 	
-	private Appendable formatString(CharSequence s, Appendable ap) throws IOException {
+	Appendable formatString(CharSequence s, Appendable ap) throws IOException {
 		ap.append('"');
 		for (int i = 0; i < s.length(); i++) {
 			char c = s.charAt(i);
@@ -995,11 +995,11 @@ public class JSON {
 		return parse(new ReaderParserSource(reader), type);
 	}
 	
-	private Object parse(ParserSource s, Type type) throws IOException, JSONException {
+	Object parse(ParserSource s, Type type) throws IOException, JSONException {
 		return convert(parse(s), type);
 	}
 	
-	private Object parse(ParserSource s) throws IOException, JSONException {
+	Object parse(ParserSource s) throws IOException, JSONException {
 		Object o = null;
 
 		int n = -1;
@@ -1037,7 +1037,7 @@ public class JSON {
 		return (o == null) ? new LinkedHashMap<String, Object>() : o;
 	}	
 	
-	private Map<Object, Object> parseObject(ParserSource s, int level) throws IOException, JSONException {
+	Map<Object, Object> parseObject(ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<Object, Object> map = (level <= this.maxDepth) ? new LinkedHashMap<Object, Object>() : null;
 		Object key = null;
@@ -1167,7 +1167,7 @@ public class JSON {
 		return map;
 	}
 	
-	private List<Object> parseArray(ParserSource s, int level) throws IOException, JSONException {
+	List<Object> parseArray(ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
 		List<Object> list = (level <= this.maxDepth) ? new ArrayList<Object>() : null;
 		
@@ -1262,7 +1262,7 @@ public class JSON {
 		return list;
 	}
 	
-	private String parseString(ParserSource s) throws IOException, JSONException {
+	String parseString(ParserSource s) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilder sb = s.getCachedBuilder();
 		char start = '\0';
@@ -1316,7 +1316,7 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private Object parseLiteral(ParserSource s) throws IOException, JSONException {
+	Object parseLiteral(ParserSource s) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 
@@ -1350,7 +1350,7 @@ public class JSON {
 		return str;
 	}	
 	
-	private Number parseNumber(ParserSource s) throws IOException, JSONException {
+	Number parseNumber(ParserSource s) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = s.getCachedBuilder();
 		
@@ -1424,7 +1424,7 @@ public class JSON {
 		return new BigDecimal(sb.toString());
 	}
 	
-	private char parseEscape(ParserSource s) throws IOException, JSONException {
+	char parseEscape(ParserSource s) throws IOException, JSONException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -1483,7 +1483,7 @@ public class JSON {
 		return escape;
 	}
 	
-	private void skipComment(ParserSource s) throws IOException, JSONException {
+	void skipComment(ParserSource s) throws IOException, JSONException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -1541,12 +1541,12 @@ public class JSON {
 		}	
 	}
 	
-	private JSONException createParseException(String message, ParserSource s) {
+	JSONException createParseException(String message, ParserSource s) {
 		return new JSONException("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?",
 				JSONException.PARSE_ERROR, s.getLineNumber(), s.getColumnNumber(), s.getOffset());
 	}
 	
-	private String getMessage(String id, Object... args) {
+	String getMessage(String id, Object... args) {
 		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);
@@ -2240,7 +2240,7 @@ public class JSON {
 		return c.cast(instance);
 	}
 	
-	private static String toLowerCamel(String name) {
+	static String toLowerCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = false;
 		for (int i = 0; i < name.length(); i++) {
@@ -2260,7 +2260,7 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	private static Class<?> getRawType(Type t) {
+	static Class<?> getRawType(Type t) {
 		if (t instanceof Class<?>) {
 			return (Class<?>)t;
 		}else if (t instanceof ParameterizedType) {
@@ -2281,7 +2281,7 @@ public class JSON {
 		}
 	}
 	
-	private static void flattenProperties(StringBuilder key, Object value, Properties props) {
+	static void flattenProperties(StringBuilder key, Object value, Properties props) {
 		if (value instanceof Map<?,?>) {
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				int pos = key.length();
@@ -2304,7 +2304,7 @@ public class JSON {
 		}
 	}
 	
-	private static Class<?> findClass(String name) throws ClassNotFoundException {
+	static Class<?> findClass(String name) throws ClassNotFoundException {
 		Class<?> c = null;
 		try {
 			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
@@ -2719,12 +2719,12 @@ interface ParserSource {
 }
 
 class CharSequenceParserSource implements ParserSource {
-	private int lines = 1;
-	private int columns = 1;
-	private int offset = 0;
+	int lines = 1;
+	int columns = 1;
+	int offset = 0;
 	
-	private CharSequence cs;
-	private StringBuilder cache;
+	CharSequence cs;
+	StringBuilder cache;
 	
 	public CharSequenceParserSource(CharSequence cs, int size) {
 		if (cs == null) {
@@ -2776,15 +2776,15 @@ class CharSequenceParserSource implements ParserSource {
 }
 
 class ReaderParserSource implements ParserSource {
-	private long lines = 1l;
-	private long columns = 1l;
-	private long offset = 0;
+	long lines = 1l;
+	long columns = 1l;
+	long offset = 0;
 
-	private Reader reader;
-	private char[] buf = new char[256];
-	private int start = 0;
-	private int end = 0;
-	private StringBuilder cache = new StringBuilder(1000);
+	Reader reader;
+	char[] buf = new char[256];
+	int start = 0;
+	int end = 0;
+	StringBuilder cache = new StringBuilder(1000);
 	
 	public ReaderParserSource(InputStream in) throws IOException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
@@ -2841,7 +2841,7 @@ class ReaderParserSource implements ParserSource {
 		return cache;
 	}
 	
-	private String determineEncoding(InputStream in) throws IOException {
+	String determineEncoding(InputStream in) throws IOException {
 		String encoding = "UTF-8";
 
 		in.mark(4);
@@ -2884,7 +2884,7 @@ class ReaderParserSource implements ParserSource {
 }
 
 class Base64 {
-	private static final String BASE64_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	static final String BASE64_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	
 	public static String encode(byte[] data) {
 		if (data == null) return null;
@@ -2996,7 +2996,7 @@ class Base64 {
 }
 
 class ComplexDateFormat extends SimpleDateFormat {
-	private boolean escape = false;
+	boolean escape = false;
 	
 	public ComplexDateFormat(String pattern, Locale locale) {
 		super(escape(pattern), locale);

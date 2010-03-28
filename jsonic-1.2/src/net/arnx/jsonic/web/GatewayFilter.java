@@ -49,8 +49,8 @@ import net.arnx.jsonic.JSON;
 public class GatewayFilter implements Filter {
 	public static final String GATEWAY_KEY = Config.class.getName();
 	
-	private Map<Pattern, Config> locations = new LinkedHashMap<Pattern, Config>();
-	private ServletContext context;
+	Map<Pattern, Config> locations = new LinkedHashMap<Pattern, Config>();
+	ServletContext context;
 	
 	class Config {
 		public String encoding = null;
@@ -204,8 +204,8 @@ public class GatewayFilter implements Filter {
 	}
 	
 	class GZIPResponse extends HttpServletResponseWrapper {
-		private ServletOutputStream out = null;
-		private PrintWriter writer = null;
+		ServletOutputStream out = null;
+		PrintWriter writer = null;
 		
 		public GZIPResponse(HttpServletResponse response) {
 			super(response);
@@ -215,7 +215,7 @@ public class GatewayFilter implements Filter {
 		public ServletOutputStream getOutputStream() throws IOException {
 			if (out == null) {
 				out = new ServletOutputStream() {
-					private GZIPOutputStream cout = new GZIPOutputStream(GZIPResponse.super.getOutputStream());
+					GZIPOutputStream cout = new GZIPOutputStream(GZIPResponse.super.getOutputStream());
 					
 					@Override
 					public void write(byte[] b, int off, int len) throws IOException {

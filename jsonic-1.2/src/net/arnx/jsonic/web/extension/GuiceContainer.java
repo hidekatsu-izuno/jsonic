@@ -26,8 +26,8 @@ import net.arnx.jsonic.web.Container;
 import com.google.inject.Injector;
 
 public class GuiceContainer extends Container {
-	private Logger log;
-	private Injector injector;
+	Logger log;
+	Injector injector;
 	
 	@Override
 	public void init(HttpServlet servlet)  throws ServletException {

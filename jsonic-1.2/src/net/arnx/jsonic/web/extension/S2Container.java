@@ -24,7 +24,7 @@ import org.seasar.framework.container.factory.SingletonS2ContainerFactory;
 import org.seasar.framework.log.Logger;
 
 public class S2Container extends Container {
-	private Logger log;
+	Logger log;
 	
 	@Override
 	public void init(HttpServlet servlet) throws ServletException {
