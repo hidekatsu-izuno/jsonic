@@ -473,6 +473,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
 <tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。デフォルトはfalseです。
 Format時はtoString()の値をそのまま出力<sup>(※8)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
+<tr><td>anonym</td><td>String</td><td>単純値型からMapや複合型に変換するときに単純値型を設定するプロパティ名を指定します。anonymを指定しない場合、Mapの場合はnullキーの値として設定されますが、複合型を指定した場合はエラーとなります。</td></tr>
 </table>
 <div class="caption">
 (※7) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
@@ -953,33 +954,24 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2009/12/02 version 1.2.0</h3>
+<h3>2009/03/28 version 1.2.0</h3>
 
 <ul>
-<li>[不具合] JSONクラスにて親の型変数を持つプロパティの取り扱いに失敗していた問題にある程度対応しました。</li>
+<li>[不具合] JSONクラスにて親クラスの型パラメータ変数を持つプロパティの取り扱いに失敗していた問題にある程度対応しました。</li>
 <li>[不具合] JSONクラスおよびWebServiceServletにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました[#19766]</li>
 <li>[不具合] JSONのデコード時に指数部が2桁以上ある数値の解析に失敗していた点を修正しました（JSONIC AS3も同様です）。[#20537]</li>
+<li>[不具合] JSONWebServiceのパラメータに「.」を指定できるため意図せぬクラスの呼び出しが可能となっていた問題に対応するため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
 <li>JSONHintアノテーションにて、formatの日付書式でISO8601形式のタイムゾーンを扱うZZを指定できるようにしました。</li>
+<li>JSONHintアノテーションにanonymを追加し、単純値型からMapや複合型への変換を可能にしました。</li>
 <li>JSON encoder/decoderにて処理中に限りメソッド情報をキャッシュするように変更しました。</li>
 <li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=String.class)</code>を指定した場合には<code>toString</code>およびStringを引数に取るコンストラクタを使い文字列の相互変換を行うようにしました。</li>
 <li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=Serializable.class)</code>を指定した場合には<code>ObjectInputStream/ObjectOutputStream</code>を使いシリアライズによる変換を行うようにしました。</li>
 <li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>java.sql.RowId</code>の相互変換に対応しました。</li>
 <li>JSON.encode(or format)にて<code>java.sql.Array, java.sql.Struct</code>のJSON化に対応しました（逆方向には対応していません。相互変換が必要な場合は<code>JSONHint(type=Serializable.class)</code>を指定しシリアル化してください）。</li>
-<li>[非互換] JSON WebServiceにて1.1までは送信されたContent-Typeに関わらずJSONとして処理されていましたが、1.2以降では送信時のContent-Typeが「<code>application/json</code>」の場合のみJSONとして処理されます。</li>
-<li>[非互換] JSON WebServiceにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください。</li>
-<li>[非互換] JSON WebServiceにてWebServiceServletに存在したpreinvoke, invoke, postinvokeの各メソッドは機能をContainerクラスに移動しpreinvoke, findMethod, postinvokeとなりました（引数も変更されています）。</li>
-<li>[非互換] JSON WebServiceで利用するデフォルトJSONクラスの名前を<code>WebServiceServlet.WebServiceJSON</code>に変更しました。</li>
-<li>[非互換] JSON WebServiceのRESTモードにて、1.1では、パス変数、クエリ変数、メッセージボディ部の順に上書きされていましたが、1.2ではパス変数、パラメータ変数（クエリとメッセージボディは区別しない）の順に上書きされます。</li>
-<li>[非互換] JSON WebServiceにて、1.1では、送信したパラメータより引数の多いメソッドのみを検索対象としていましたが、1.2では、送信したパラメータより引数の少ないメソッドのみ検索対象とするよう変更しました。</li>
-<li>JSON WebServiceにて、HTTP Methodに対応して呼ばれるメソッドをルート単位で変更できるようにしました。</li>
-<li>JSON WebServiceにて、definitionsの初期値を<code>[^/()]</code>から<code>[^/().]</code>に変更しました。</li>
-<li>JSON WebServiceにJSON以外のレスポンスを返せるようHttpServletResponseを自分で操作できるProduceアノテーションを追加しました。</li>
-<li>JSON WebServiceにてContainerにリクエストの最初と最期にそれぞれ呼ばれるstartメソッドとendメソッドを追加しました。</li>
-<li>JSON WebServiceにてContainerに一連の実行処理を束ねるexecuteメソッドを追加しました。WebServiceServlet以外からJSON WebSerivceの処理ロジックを呼びたい場合に利用できます。</li>
-<li>JSON WebServiceにてFilterなど<code>WebServiceServlet</code>が呼ばれる前に<code>request.getParameter(String name)</code>などが呼ばれると、処理に失敗する問題に対応しました。
-なお、Winstoneに限り、<code>request.getParameter(String name)</code>など呼び出し後、<code>request.getInputStream()</code>の呼び出しに失敗する不具合があるため同状況では動作しません。</li>
-<li>sampleに同梱のprototype.jsとjquery.jsをそれぞれ1.6.1と1.3.2に更新しました。</li>
 <li>AS3版JSONICにて、JSON.encode(or format)時にmine変数を無視するように変更しました。</li>
+<li>JSON-RPC2.0をサポートするRPCServletと強化されたREST操作を可能にするRESTServletを新設しました。WebServiceServletは互換性のため残されていますが非推奨となり機能追加もほとんど行われていません（Version 1.1互換）。</li>
+<li>WebServiceServletにて、各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
+<li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />

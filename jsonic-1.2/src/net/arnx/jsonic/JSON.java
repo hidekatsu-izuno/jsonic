@@ -2140,11 +2140,11 @@ public class JSON {
 				map.put((hint.anonym().length() > 0) ? hint.anonym() : null, value);
 				data = map;
 			} else if (hint.anonym().length() > 0) {
-				Object o = create(context, c);
-				if (o != null) {
-					Map<String, AnnotatedElement> props = context.getSetProperties(c);
-					AnnotatedElement target = props.get(hint.anonym());
-					if (target != null) {
+				Map<String, AnnotatedElement> props = context.getSetProperties(c);
+				AnnotatedElement target = props.get(hint.anonym());
+				if (target != null) {
+					Object o = create(context, c);
+					if (o != null) {
 						context.enter(hint.anonym(), target.getAnnotation(JSONHint.class));
 						if (target instanceof Method) {
 							Method m = (Method)target;
@@ -2168,8 +2168,8 @@ public class JSON {
 						}
 						context.exit();
 					}
+					data = o;
 				}
-				data = o;
 			} else {
 				throw new UnsupportedOperationException();
 			}
