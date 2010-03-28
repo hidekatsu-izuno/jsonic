@@ -25,14 +25,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,13 +52,18 @@ import static net.arnx.jsonic.web.Container.*;
 
 public class RESTServlet extends HttpServlet {
 	static final Map<String, String> DEFAULT_METHODS = new HashMap<String, String>();
-	static final List<String> DEFAULT_VERB = Arrays.asList("GET", "POST", "PUT", "DELETE");
+	static final Set<String> DEFAULT_VERB = new HashSet<String>();
 	
 	static {
 		DEFAULT_METHODS.put("GET", "find");
 		DEFAULT_METHODS.put("POST", "create");
 		DEFAULT_METHODS.put("PUT", "update");
 		DEFAULT_METHODS.put("DELETE", "delete");
+		
+		DEFAULT_VERB.add("GET");
+		DEFAULT_VERB.add("POST");
+		DEFAULT_VERB.add("PUT");
+		DEFAULT_VERB.add("DELETE");		
 	}
 	
 	static class Config {
@@ -68,7 +74,7 @@ public class RESTServlet extends HttpServlet {
 		
 		public Map<String, Pattern> definitions;
 		public Map<String, String> methods;
-		public List<String> verb;
+		public Set<String> verb;
 	}
 	
 	protected Container container;
@@ -219,6 +225,11 @@ public class RESTServlet extends HttpServlet {
 			return;
 		}
 		
+		if (route.getHttpMethod() == null || route.getRestMethod() == null) {
+			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
+			return;			
+		}
+		
 		
 		int status = SC_OK;
 		String callback = null;
@@ -351,7 +362,7 @@ public class RESTServlet extends HttpServlet {
 		public String target;
 		public Map<String, Pattern> definitions;
 		public Map<String, String> methods;
-		public List<String> verb;
+		public Set<String> verb;
 		
 		Config config;
 		Pattern pattern;
@@ -408,19 +419,23 @@ public class RESTServlet extends HttpServlet {
 				
 				String httpMethod = request.getParameter("_method");
 				if (httpMethod == null) httpMethod = request.getMethod();
+				if (verb != null && !verb.contains(httpMethod)) {
+					httpMethod = null;
+				}
 				if (!config.verb.contains(httpMethod)) {
-					return null;
+					httpMethod = null;
 				}
 				
 				Object restMethod = params.get("method");
-				if (!(restMethod instanceof String) && methods != null) {
+				if (restMethod instanceof List<?>) {
+					List<?> list = ((List<?>)restMethod);
+					restMethod = !list.isEmpty() ? list.get(0) : null;
+				}
+				if (restMethod == null && methods != null) {
 					restMethod = methods.get(httpMethod);
 				}
-				if (!(restMethod instanceof String)) {
+				if (restMethod == null) {
 					restMethod = config.methods.get(httpMethod);
-				}
-				if (!(restMethod instanceof String)) {
-					return null;
 				}
 				
 				parseParameter(request.getParameterMap(), (Map)params);
@@ -428,7 +443,6 @@ public class RESTServlet extends HttpServlet {
 			}
 			return null;
 		}
-		
 		
 		@SuppressWarnings("unchecked")
 		static void parseParameter(Map<String, String[]> pairs, Map<Object, Object> params) {

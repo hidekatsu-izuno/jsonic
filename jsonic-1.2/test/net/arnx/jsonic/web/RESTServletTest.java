@@ -1,5 +1,6 @@
 package net.arnx.jsonic.web;
 
+import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_CREATED;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
@@ -201,6 +202,20 @@ public class RESTServletTest {
 		write(con, "title=title&text=text");
 		con.connect();
 		assertEquals(SC_CREATED, con.getResponseCode());
+		con.disconnect();
+		
+		// HEAD
+		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con.setRequestMethod("HEAD");
+		con.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
+		con.disconnect();
+		
+		// OPTIONS
+		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con.setRequestMethod("OPTIONS");
+		con.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
 		
 		System.out.println("<<END testRest: " + app + ">>\n");
