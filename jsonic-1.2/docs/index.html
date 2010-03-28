@@ -70,10 +70,11 @@
 	</li>
 	<li>Web サービス API
 		<ul>
-		<li><a href="webservice.html#rpcservlet">RPC Servlet</a></li>
-		<li><a href="webservice.html#restservlet">REST Servlet</a></li>
-		<li><a href="webservice.html#dicontainer">DI Container対応</a></li>
-		<li><a href="webservice.html#gatewayfilter">Gateway Filter</a></li>
+		<li><a href="webservice.html">基本的な説明</a></li>
+		<li><a href="webservice.html#rpcservlet">RPCサーブレット</a></li>
+		<li><a href="webservice.html#restservlet">RESTサーブレット</a></li>
+		<li><a href="webservice.html#dicontainer">DIコンテナ対応</a></li>
+		<li><a href="webservice.html#gatewayfilter">Gatewayフィルタ</a></li>
 		<li><a href="webservice_old.html">WebServiceServlet(旧)</a></li>
 		</ul>
 	</li>
@@ -110,7 +111,7 @@ String text = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</
 <span class="comment">// JSONをPOJOに変換します</span>
 Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em">)</span>;
 </pre>
-<p>JSONICには、JSON操作APIだけでなく、JSONを使ったWeb Serviceが簡単に構築できるサーブレットも用意されています。詳しくは<a href="RPCServlet.html">RPC Servlet</a>、<a href="RESTServlet.html">REST Servlet</a>のドキュメントを御覧ください。</p>
+<p>JSONICには、JSON操作APIだけでなく、JSONを使ったWeb Serviceが簡単に構築できるサーブレットも用意されています。詳しくは<a href="webservice.html">WebサービスAPI</a>のドキュメントを御覧ください。</p>
 
 <h2 id="download">ダウンロード</h2>
 <p><a href="http://sourceforge.jp/projects/jsonic">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Java 5.0以上が必要です。</p>
