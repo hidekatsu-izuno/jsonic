@@ -115,7 +115,7 @@
 <table class="table" summary="サーブレットの種類">
 <tr><th style="width: 20%">サーブレット</th><th style="width: 80%">説明</th></tr>
 <tr><td>RPCServlet</td><td><a href="http://json-rpc.org">JSON-RPC</a> <a href="http://json-rpc.org/wiki/specification">1.0</a>/<a href="http://groups.google.com/group/json-rpc/web/json-rpc-2-0">2.0</a> 仕様に対応したRPC(Remote Procedure Call)サービスを構築できます。</td></tr>
-<tr><td>RESTServlet</td><td>GET/POST/PUT/DELETEにより操作を行うRESTベースのサービスを構築できます。</td></tr>
+<tr><td>RESTServlet</td><td>GET/POST/PUT/DELETEなどHTTP Methodをベースに操作を行うRESTfullなWebサービスを構築できます。</td></tr>
 </table>
 
 <div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために以前同様の形で利用可能ですが、今後はRESTServletおよびRPCServletを利用してください。</div>
@@ -267,7 +267,11 @@ Content-Type: application/json
 </div>
 
 <h2 id="restservlet">RESTサーブレット</h2>
-<p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※12)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※13)</sup>。</p>
+<p>RESTサーブレットは、GET/POST/PUT/DELETEなどHTTP Methodをベースに操作を行うRESTfullなWebサービス構築用サーブレットです。</p>
+
+<h3>■ RESTサーブレットの概要</h3>
+
+<p>RESTサーブレットを使うと、GET/POST/PUT/DELETEなどのHTTP Methodに従い対象となったクラスのメソッドが呼び出されます<sup>(※12)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※13)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
 <tr><td>GET</td><td>find</td><td>リクエストパラメータのMapを「.」あるいは「[...]」で区切られた階層構造とみなし引数の型に従い変換し設定</td></tr>
@@ -285,7 +289,10 @@ Content-Type: application/json
     {
       "mappings": {
       　<span class="comment">// GET *.csvにアクセスされた場合はprintメソッドを呼び出します。</span>
-        "/{package}/{class}.csv": ["sample.web.${package}.service.${class}Service", {"GET": "print"}]
+        "/{package}/{class}.csv": {
+          "target": "sample.web.${package}.service.${class}Service", 
+          "method": {"GET": "print"}
+        },
         "/{package}/{class}.{ext}": "sample.web.${package}.service.${class}Service"
       }
     }
@@ -307,6 +314,8 @@ Content-Type: application/json
 (※13) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
 (※14) Content-Typeが「<code>application/x-www-form-urlencoded</code>」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
 </div>
+
+<h3>■ エラーオブジェクト</h3>
 
 <p>RESTモードでは、エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
 <table class="table" summary="RPC エラー一覧">
