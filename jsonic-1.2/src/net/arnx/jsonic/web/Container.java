@@ -87,21 +87,6 @@ public class Container {
 		}
 	}
 	
-	public JSON createJSON(Locale locale) throws ServletException  {
-		try {
-			JSON json = (processor != null) ? processor.newInstance() : new JSON() {
-				@Override
-				protected boolean ignore(Context context, Class<?> target, Member member) {
-					return member.getDeclaringClass().equals(Throwable.class)
-						|| super.ignore(context, target, member);
-				}			};
-			json.setLocale(locale);
-			return json;
-		} catch (Exception e) {
-			throw new ServletException(e);
-		}
-	}
-	
 	public Object getComponent(String className) throws Exception {
 		Object o = findClass(className).newInstance();
 		
@@ -308,6 +293,21 @@ public class Container {
 			context.log(message, e);
 		} else {
 			context.log(message);
+		}
+	}
+	
+	JSON createJSON(Locale locale) throws ServletException  {
+		try {
+			JSON json = (processor != null) ? processor.newInstance() : new JSON() {
+				@Override
+				protected boolean ignore(Context context, Class<?> target, Member member) {
+					return member.getDeclaringClass().equals(Throwable.class)
+						|| super.ignore(context, target, member);
+				}			};
+			json.setLocale(locale);
+			return json;
+		} catch (Exception e) {
+			throw new ServletException(e);
 		}
 	}
 	
