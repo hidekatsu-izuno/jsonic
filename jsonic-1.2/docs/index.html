@@ -63,7 +63,8 @@
 	<li><a href="index.html#download">ダウンロード</a></li>
 	<li>JSON API
 		<ul>
-			<li><a href="index.html#usage_basic">基本的な使い方</a></li>
+			<li><a href="index.html#encoder">JSONエンコーダー</a></li>
+			<li><a href="index.html#decoder">JSONデコーダー</a></li>
 			<li><a href="index.html#usage_advanced">高度な使い方</a></li>
 			<li><a href="index.html#as3">JSONIC for AS3</a></li>
 		</ul>
@@ -82,6 +83,12 @@
 		<ul>
 			<li><a href="java/api/index.html">javadoc</a></li>
 			<li><a href="as3/api/index.html">asdoc</a></li>
+		</ul>
+	</li>
+	<li>旧バージョン
+		<ul>
+			<li><a href="http://jsonic.sourceforge.jp/1.1/index.html">version 1.1</a></li>
+			<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
 		</ul>
 	</li>
 	<li><a href="index.html#license">ライセンス</a></li>
@@ -117,10 +124,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em"
 <p><a href="http://sourceforge.jp/projects/jsonic">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Java 5.0以上が必要です。</p>
 <div><script src="http://sourceforge.jp/projects/jsonic/files/compact.js" type="text/javascript" charset="utf-8"></script></div>
 
-<h2 id="usage_basic">基本的な使い方</h2>
-
-<p>通常の用途では、二つの静的メソッドencode/decodeだけ利用すれば事足ります。</p>
-<h3>■ encodeメソッド <span class="subtitle">- POJOからJSONへの変換</span></h3>
+<h2 id="encoder">JSONエンコーダー</h2>
 <p>POJOからJSONに変換する場合は、encodeを使います。デフォルトでは、空白などを含まない可読性の低いJSONが出力されますが、二番目の引数をtrueにすることで可読性の高いJSONが出力されるようになります（Pretty Printモード）。</p>
 <p>なお、JSONのフォーマット中に何らかの例外が発生した場合は、JSONExceptionでラップされ通知されます（Beanからの取得時に例外発生など）。</p>
 <pre class="source">
@@ -179,7 +183,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="index.html#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
 <p>なお、JSONはobjectかarrayで始まる必要があるため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合エラーとなります。</p>
 
-<h3>■ decodeメソッド <span class="subtitle">- JSONからPOJOへの変換</span></h3>
+<h2 id="decoder">JSONデコーダー</h2>
 <p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
 <p>なお、JSON文字列が不正であったり、型の変換に失敗した場合はJSONExceptionが投げられます。</p>
 <pre class="source">
