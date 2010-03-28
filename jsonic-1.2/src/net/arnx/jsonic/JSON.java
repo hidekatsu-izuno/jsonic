@@ -1333,7 +1333,7 @@ public class JSON {
 			if (point == 0 && Character.isJavaIdentifierStart(c)) {
 				sb.append(c);
 				point = 1;
-			} else if (point == 1 && Character.isJavaIdentifierPart(c)){
+			} else if (point == 1 && (Character.isJavaIdentifierPart(c) || c == '.' || c == '*' || c == '-')) {
 				sb.append(c);
 			} else {
 				s.back();

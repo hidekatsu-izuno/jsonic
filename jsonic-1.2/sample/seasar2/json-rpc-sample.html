@@ -14,26 +14,26 @@
 			name.options[name.options.length] = new Option(value[i].name, value[i].name);
 			ds[value[i].name] = value[i].methods;
 		}
+		changeName($('name').value);
 	}
 	
 	function submit() {
 		var name = $('name').value;
-		var ajax = new Ajax.Request('rpc/rpc.json', {
-				method: 'POST',
-				contentType: 'application/json',
-				postBody: Object.toJSON({
-					method: name + '.' + ds[name][$("method").value].name,
-					params: $('params').value.evalJSON(),
-					id: (new Date()).getTime()
-				}),
-				onSuccess: function(req) {
-					Element.update($("result"), req.responseText);
-				},
-				onFailure: function(req) {
-					Element.update($("result"), "error!");
-				}
+		var ajax = new Ajax.Request('rpc/rpc/rpc.json', {
+			method: 'POST',
+			contentType: 'application/json',
+			postBody: Object.toJSON({
+				method: name + '.' + ds[name][$("method").value].name,
+				params: $('params').value.evalJSON(),
+				id: (new Date()).getTime()
+			}),
+			onSuccess: function(req) {
+				Element.update($("result"), req.responseText);
+			},
+			onFailure: function(req) {
+				Element.update($("result"), "error!");
 			}
-		);
+		});
 	}
 		
 	function changeName(value) {
@@ -56,7 +56,21 @@
 	}
 	
 	function init() {
-		changeName($('name').value);
+		var ajax = new Ajax.Request('rpc/rpc_info.json', {
+			method: 'POST',
+			contentType: 'application/json',
+			postBody: Object.toJSON({
+				method: 'find',
+				params: [],
+				id: (new Date()).getTime()
+			}),
+			onSuccess: function(req) {
+				setup(req.responseText.evalJSON().result);
+			},
+			onFailure: function(req) {
+				Element.update($("result"), "error!");
+			}
+		});
 	}
 </script>
 </head>
@@ -76,6 +90,5 @@ params: <input id="params" type="text" size="50" value=""/>
 
 <h2>result</h2>
 <pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
-<script type="text/javascript" src="rpc_info.json?callback=setup"></script>
 </body>
 </html>

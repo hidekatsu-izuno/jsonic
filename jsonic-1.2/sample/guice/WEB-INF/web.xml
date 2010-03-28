@@ -22,27 +22,6 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>	
  
-	<servlet>
-		<description>JSON REST Service</description>
-		<servlet-name>restServlet</servlet-name>
-		<servlet-class>net.arnx.jsonic.web.RESTServlet</servlet-class>
-		<init-param>
-			<param-name>config</param-name>
-			<param-value>
-				container: 'net.arnx.jsonic.web.extension.GuiceContainer'
-				debug: true
-				mappings: {
-					'/{package}/{class}.{method}.json': {
-						'target': 'sample.guice.web.${package}.service.${class}Service', 
-						'methods': {'DELETE': 'remove'},
-						'verb': 'GET'
-					}
-					'/{package}/{class}/{id}.json': 'sample.guice.web.${package}.service.${class}Service'
-					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
-				}
-			</param-value>
-		</init-param>
-	</servlet>
  
 	<servlet>
 		<description>JSON RPC Service</description>
@@ -51,24 +30,46 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				container: 'net.arnx.jsonic.web.extension.GuiceContainer'
+				container: net.arnx.jsonic.web.extension.GuiceContainer
 				debug: true
 				mappings: {
-					'/{package}/rpc.json': 'sample.guice.web.${package}.service.${class}Service'
+					'/rpc/{package}/rpc.json': 'sample.guice.web.${package}.service.${class}Service'
+					'/rpc/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
+					'/rpc/{class}.json': 'sample.guice.service.${class}Service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+ 
+	<servlet>
+		<description>JSON REST Service</description>
+		<servlet-name>restServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RESTServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.web.extension.GuiceContainer
+				debug: true
+				mappings: {
+					'/{package}/{class}.{method}.json': {
+						'target': 'sample.guice.web.${package}.service.${class}Service', 
+						'methods': {'DELETE': 'remove'},
+						'verb': 'GET'
+					},
+					'/{package}/{class}/{id}.json': 'sample.guice.web.${package}.service.${class}Service',
 					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
-					'/rpc.json': 'sample.guice.service.${class}Service'
 				}
 			</param-value>
 		</init-param>
 	</servlet>
 	
 	<servlet-mapping>
-		<servlet-name>restServlet</servlet-name>
-		<url-pattern>/rest/*</url-pattern>
+		<servlet-name>rpcServlet</servlet-name>
+		<url-pattern>/rpc/*</url-pattern>
 	</servlet-mapping>
 	
 	<servlet-mapping>
-		<servlet-name>rpcServlet</servlet-name>
-		<url-pattern>/rpc/*</url-pattern>
+		<servlet-name>restServlet</servlet-name>
+		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
 </web-app>
