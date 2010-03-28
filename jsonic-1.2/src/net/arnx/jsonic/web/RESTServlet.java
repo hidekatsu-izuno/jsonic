@@ -419,6 +419,8 @@ public class RESTServlet extends HttpServlet {
 				
 				String httpMethod = request.getParameter("_method");
 				if (httpMethod == null) httpMethod = request.getMethod();
+				if (httpMethod != null) httpMethod = httpMethod.toUpperCase();
+
 				if (verb != null && !verb.contains(httpMethod)) {
 					httpMethod = null;
 				}
