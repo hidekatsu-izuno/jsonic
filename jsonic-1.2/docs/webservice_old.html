@@ -60,26 +60,37 @@
 <h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
 <div class="bar">Version 1.2</div>
 <ul class="menu">
-	<li><a href="index.html#introduction">JSONICとは</a></li>
+	<li><a href="index.html">JSONICとは</a></li>
 	<li><a href="index.html#download">ダウンロード</a></li>
 	<li>JSON API
 		<ul>
-			<li><a href="index.html#usage_basic">基本的な使い方</a></li>
-			<li><a href="index.html#usage_advanced">高度な使い方</a></li>
-			<li><a href="index.html#as3">JSONIC for AS3</a></li>
+		<li><a href="index.html#usage_basic">基本的な使い方</a></li>
+		<li><a href="index.html#usage_advanced">高度な使い方</a></li>
+		<li><a href="index.html#as3">JSONIC for AS3</a></li>
 		</ul>
 	</li>
 	<li>Web サービス API
 		<ul>
-		<li><a href="RPCServlet.html">RPC Servlet</a></li>
-		<li><a href="RPCServlet.html">REST Servlet</a></li>
-		<li><a href="WebServiceServlet.html">WebServiceServlet(旧)</a></li>
+		<li><a href="webservice.html#rpcservlet">RPC Servlet</a></li>
+		<li><a href="webservice.html#restservlet">REST Servlet</a></li>
+		<li><a href="webservice.html#dicontainer">DIコンテナ対応</a></li>
+		<li><a href="webservice.html#gatewayfilter">Gateway Filter</a></li>
+		<li>WebServiceServlet(旧)
+			<ul>
+			<li><a href="webservice_old.html#configuration">設定方法</a></li>
+			<li><a href="webservice_old.html#rpcmode">RPCモード</a></li>
+			<li><a href="webservice_old.html#restmode">RESTモード</a></li>
+			<li><a href="webservice_old.html#jsonp">JSONP</a></li>
+			<li><a href="webservice_old.html#initdestroy">JSONP</a></li>
+			<li><a href="webservice_old.html#changes">1.1からの変更点</a></li>
+			</ul>
+		</li>
 		</ul>
 	</li>
 	<li>API リファレンス
 		<ul>
-			<li><a href="java/api/index.html">javadoc</a></li>
-			<li><a href="as3/api/index.html">asdoc</a></li>
+		<li><a href="java/api/index.html">javadoc</a></li>
+		<li><a href="as3/api/index.html">asdoc</a></li>
 		</ul>
 	</li>
 	<li><a href="index.html#license">ライセンス</a></li>
@@ -102,7 +113,7 @@
 
 <div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために残されており機能も変わらず利用可能ですが、今後はRESTServletおよびRPCServletを利用するようにお願いします。</div>
 
-<h3>■ 設定方法</h3>
+<h2 id="configuration">設定方法</h2>
 <p>JSON Web Service Servletの設定は簡単です。web.xmlにWebServiceServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
 <pre class="source">
 <span class="elem">&lt;servlet&gt;</span>
@@ -142,15 +153,14 @@
 <tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/().]+</code>が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
-<tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.WebServiceJSON</code>です。</td></tr>
-<tr><td>namingConversion</td><td>boolean</td><td>WebService呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
+<tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>です。</td></tr>
 </table>
 <div class="caption">
 (※9) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
 また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
-<h3>■ RPCモード</h3>
+<h2 id="rpcmode">RPCモード</h2>
 <p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSON Web Service Servletでは、class変数の値が<code>"rpc"</code>であった場合、RPCモードとなります。</p>
 
 <p>RPCモードでは、対象のパスに対し次のようなJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
@@ -233,7 +243,7 @@
 <div class="caption">(※10) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
 <div class="caption">(※11) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
-<h3>■ RESTモード</h3>
+<h2 id="restmode">RESTモード</h2>
 <p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※12)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※13)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
@@ -295,7 +305,7 @@
 <div class="caption">(※16) Convertに失敗した場合だけでなく、メソッドからIllegalStateException、UnsupportedOperationException、Error<b>以外</b>の例外が発生した場合も同じエラーが返されます。
 なお、この場合、発生した例外がJSON objectとしてメッセージボディに設定されます（ただし、Throwableクラスのプロパティは除外されます）。</div>
 
-<h3>■ JSONP</h3>
+<h2 id="jsonp">JSONP</h2>
 <p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
 <pre class="source">
 &lt;script type="text/javascript" &gt;
@@ -309,7 +319,7 @@
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
 
-<h3>■ 初期化/終了処理</h3>
+<h2 id="initdestroy">初期化/終了処理</h2>
 <p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※17)</sup></p>
 <pre class="source">
 public class HogeService {
@@ -326,121 +336,12 @@ public class HogeService {
 </pre>
 <div class="caption">(※17) 呼び出されるメソッド名は設定で変更可能です。</div>
 
-<h3>■ Producesアノテーション <span class="subtitle">- JSON以外のレスポンス</span></h3>
-<p>呼び出し先のメソッドにProducesアノテーションを付与することでレスポンスを自分で記述できるようになりJSON以外のレスポンスも返すことができるようになります。
-Producesアノテーションの引数には、出力するMIMEタイプを指定します。MIMEタイプは複数指定できますが、ひとつだけ指定した場合のみresponse.setContentType(value)に自動で設定されます。</p>
-<pre class="source">
-public class HogeService {
-  <span class="comment">// format/parse時のキー値を変更</span>
-  <span class="em">@Produces(</span>"text/csv"<span class="em">)</span>
-  public void print() throws IOException {
-    response.setCharcterEncoding("MS932");
-    PrintWriter writer = response.getWriter();
-    writer.write("a,b,c\r\n");
-  }
-}
-</pre>
-
-<h3>■ DI Container対応</h3>
-<p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
-
-<pre class="source">
-<span class="elem">&lt;servlet&gt;</span>
-  <span class="elem">&lt;servlet-name&gt;</span>JSON-WebService<span class="elem">&lt;/servlet-name&gt;</span>
-  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.WebServiceServlet<span class="elem">&lt;/servlet-class&gt;</span>
-  <span class="elem">&lt;init-param&gt;</span>
-    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
-    <span class="elem">&lt;param-value&gt;</span>
-      <span class="comment">// "container": (net.arnx.jsonic.web.Containerを実装したクラス)</span>
-      <span class="comment">// Seasar2対応Container</span>
-      "container": "net.arnx.jsonic.web.extension.S2Container" 
-      <span class="comment">// Spring Framework対応Container</span>
-      "container": "net.arnx.jsonic.web.extension.SpringContainer"
-      <span class="comment">// Google Guice対応Container</span>
-      "container": "net.arnx.jsonic.web.extension.GuiceContainer"
-      ...
-    <span class="elem">&lt;/param-value&gt;</span>
-  <span class="elem">&lt;/init-param&gt;</span>
-<span class="elem">&lt;/servlet&gt;</span>
-</pre>
-
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています（※1.2よりパッケージ名が変更されています。ご注意ください）。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
-<p>デフォルトでは最低限の機能のみ持つnet.arnx.jsonic.web.Containerが使われます。このコンテナが持つ機能は次の通りです。</p>
+<h2 id="changes">1.1からの変更点</h2>
 <ul>
-<li>オブジェクトはClass#newInstance()により毎回生成されます。</li>
-<li>ログは、ServletContext#log()を使って書き出されます。</li>
-<li>JSPの暗黙オブジェクトライクなパブリックフィールドベースの簡易DIを提供します（下記例を参照）。</li>
+<li>[不具合] JSONWebServiceのパラメータに「.」を指定できるため意図せぬクラスの呼び出しが可能となっていた問題に対応するため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
+<li>WebServiceServletにて、各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
+<li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 </ul>
-<pre class="source">
-public class HogeService {
-  <span class="comment">// Servlet関係のオブジェクトを設定します。クラスだけでなくフィールド名も合わせる必要があります。</span>
-  public ServletConfig config;
-  public ServletContext application;
-  public HttpServletRequest request;
-  public HttpServletResponse response;
-  public HttpSession session;
-}
-</pre>
-<p>また、コンテナ自身にHttpServletRequestとHttpServletResponseのDI機能がないSpringContainerに関しては、setterによるインジェクション機能を提供しています（下記例を参照）。</p>
-<pre class="source">
-public class SpringDrivenService {
-  <span class="comment">// setterを用意すると自動で挿入します。プロパティ名を一致させる必要はありません。</span>
-  public void setRequest(HttpServletRequest request) {
-  }
-  public void setResponse(HttpServletResponse response) {
-  }
-}
-</pre>
-
-<h3>■ Gateway Filter</h3>
-<p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
-<p>最初にマッチしたパスの設定が使われますが、そこで設定が行われなわれていない場合、ルートの設定が初期値として利用されます。パスには正規表現が利用できます。</p>
-<pre class="source">
-<span class="elem">&lt;filter&gt;</span>
-  <span class="elem">&lt;filter-name&gt;</span>Gateway Filter<span class="elem">&lt;/filter-name&gt;</span>
-  <span class="elem">&lt;filter-class&gt;</span>net.arnx.jsonic.web.GatewayFilter<span class="elem">&lt;/filter-class&gt;</span>
-  <span class="elem">&lt;init-param&gt;</span>
-    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
-    <span class="elem">&lt;param-value&gt;</span>
-      <span class="comment">// 共通設定</span>
-      encoding: 'UTF-8'          <span class="comment">// 文字コード設定</span>
-      locale: 'en'               <span class="comment">// Responseのロケールを設定</span>
-      compression: true          <span class="comment">// GZip圧縮</span>
-      
-      <span class="comment">// 拡張子がjsonのパスを対象</span>
-      '.+\.json': {
-        expire: true           <span class="comment">// クライアントキャッシュを無効化</span>
-      }
-      
-      <span class="comment">// 例：日本向け設定</span>
-      '/ja/([^.]+)': {
-        forward: '/$1.json'     <span class="comment">// JSON Web Serviceに転送</span>
-        encoding: 'SHIFT_JIS'
-        expire: true
-        locale: 'ja-JP'
-        access: ['jpuser']    <span class="comment">// アクセス可能なロール</span>
-      }
-    <span class="elem">&lt;/param-value&gt;</span>
-  <span class="elem">&lt;/init-param&gt;</span>
-<span class="elem">&lt;/filter&gt;</span>
-
-<span class="elem">&lt;filter-mapping&gt;</span>
-  <span class="elem">&lt;filter-name&gt;</span>Gateway Filter<span class="elem">&lt;/filter-name&gt;</span>
-  <span class="elem">&lt;url-pattern&gt;</span>/*<span class="elem">&lt;/url-pattern&gt;</span>
-<span class="elem">&lt;/filter-mapping&gt;</span>
-</pre>
-<p>configで設定できる値は次の通りです。なお、これらの設定はフィルタの設定に関わらず一度だけしか適用されません。</p>
-<table class="table" summary="Config設定">
-<tr><th>キー</th><th>値型</th><th>説明</th></tr>
-<tr><td>encoding</td><td><code>java.lang.String</code></td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはnullです。</td></tr>
-<tr><td>compression</td><td><code>java.lang.Boolean</code></td><td>クライアントから<code>Accept-Encoding: gzip or x-gzip</code>が送られる場合、ResponseをGZip圧縮します。</td></tr>
-<tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトは<code>false</code>です。</td></tr>
-<tr><td>forward</td><td><code>java.lang.String</code></td><td>指定されたパスに転送します（パスはコンテキストパス以下を指定します。正規表現の置換変数が利用できます）。</td></tr>
-<tr><td>access</td><td><code>java.util.Set&lt;String&gt;</code></td><td>アクセス可能なアプリケーションロールを配列で指定します（認証そのものはコンテナの機能などを使う必要があります）。</td></tr>
-<tr><td>locale</td><td><code>java.util.Locale</code></td><td>Responseのロケールを設定します。</td></tr>
-</table>
-<p>なお、encodingとexpireに関してはWebServiceServlet側にも同様の設定が用意されていますが、基本的にWebServiceServlet側の設定が優先されます。
-ただし、WebServiceServlet側が未設定の場合は、GatewayFilter側の設定が利用されます。</p>
 
 <hr style="margin-top: 30px;" />
 <div class="copyright">Copyright (C) 2007-2010 Hidekatsu Izuno All right reserved.</div>

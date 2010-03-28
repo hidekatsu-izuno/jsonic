@@ -59,7 +59,7 @@
 <h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
 <div class="bar">Version 1.2</div>
 <ul class="menu">
-	<li><a href="index.html#introduction">JSONICとは</a></li>
+	<li><a href="index.html">JSONICとは</a></li>
 	<li><a href="index.html#download">ダウンロード</a></li>
 	<li>JSON API
 		<ul>
@@ -70,9 +70,11 @@
 	</li>
 	<li>Web サービス API
 		<ul>
-		<li><a href="RPCServlet.html">RPC Servlet</a></li>
-		<li><a href="RPCServlet.html">REST Servlet</a></li>
-		<li><a href="WebServiceServlet.html">WebServiceServlet(旧)</a></li>
+		<li><a href="webservice.html#rpcservlet">RPC Servlet</a></li>
+		<li><a href="webservice.html#restservlet">REST Servlet</a></li>
+		<li><a href="webservice.html#dicontainer">DI Container対応</a></li>
+		<li><a href="webservice.html#gatewayfilter">Gateway Filter</a></li>
+		<li><a href="webservice_old.html">WebServiceServlet(旧)</a></li>
 		</ul>
 	</li>
 	<li>API リファレンス
@@ -623,8 +625,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <ul>
 <li>[不具合] JSONクラスにて親クラスの型パラメータ変数を持つプロパティの取り扱いに失敗していた問題にある程度対応しました。</li>
-<li>[不具合] JSONクラスおよびWebServiceServletにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました[#19766]</li>
-<li>[不具合] JSONのデコード時に指数部が2桁以上ある数値の解析に失敗していた点を修正しました（JSONIC AS3も同様です）。[#20537]</li>
+<li>[不具合] JSONクラスおよびWebServiceServletにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました（バージョン1.0.5、1.1.2でも修正/リリース済みです）[#19766]</li>
+<li>[不具合] JSONのデコード時に指数部が2桁以上ある数値の解析に失敗していた点を修正しました（JSONIC AS3およびバージョン1.0.5、1.1.3でも修正/リリース済みです）。[#20537]</li>
 <li>[不具合] JSONWebServiceのパラメータに「.」を指定できるため意図せぬクラスの呼び出しが可能となっていた問題に対応するため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
 <li>JSONHintアノテーションにて、formatの日付書式でISO8601形式のタイムゾーンを扱うZZを指定できるようにしました。</li>
 <li>JSONHintアノテーションにanonymを追加し、単純値型からMapや複合型への変換を可能にしました。</li>
