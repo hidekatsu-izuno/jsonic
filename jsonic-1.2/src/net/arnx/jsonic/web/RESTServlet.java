@@ -234,7 +234,7 @@ public class RESTServlet extends HttpServlet {
 		int status = SC_OK;
 		String callback = null;
 		
-		if ("GET".equals(route.getHttpMethod())) {
+		if ("GET".equals(request.getMethod())) {
 			callback = route.getParameter("callback");
 		} else if ("POST".equals(route.getHttpMethod())) {
 			status = SC_CREATED;

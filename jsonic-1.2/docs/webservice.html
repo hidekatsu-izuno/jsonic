@@ -123,98 +123,51 @@
 <h2 id="rpcservlet">RPCサーブレット</h2>
 <p>RPCサーブレットは、<a href="http://json-rpc.org/wiki/specification">JSON-RPC 1.0</a> および <a href="http://groups.google.com/group/json-rpc/web/json-rpc-2-0">JSON-RPC 2.0</a> の両方をサポートしたWEBサービス構築用サーブレットです。</p>
 
+<h3>■ RPCサーブレットの概要</h3>
+
+<p>RPCサーブレットを使うと、指定したパスに対しJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
 <pre class="console">
-POST http://foo/rpc.json HTTP/1.0
+POST /rpc.json HTTP/1.0
 ...
 Content-Type: application/json
 
-{ "method": "calc.sum", "params": [1, 2], "id": 1 }
+{ "method": "class.method", "params": [ arg1, arg2, ... ], "id": request_id }
 </pre>
+<p>class, methodにはそれぞれ変数の値、argNにはメソッドの引数を設定してください。requesst_idには送受信の同期確認用のキーとしてnull以外の任意の値を設定してください（HTTPでは、送信と受信は同期処理ですのでほとんど意味はありませんが、省略すると通知(Notification)モードとなりレスポンスのメッセージボディが返されませんので必ず値を指定してください）。</p>
+<p>例えば、mappingsに "/[package]/[class].[ext]": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/rpc.jsonというパスに次のJSONがPOSTすると、boo.foo.woo.CalcServiceクラスのint plus(int a, int b)のようなメソッドが呼び出されます。</p>
 <pre class="console">
-200 OK
+POST /foo/woo/rpc.json HTTP/1.0
 ...
+Content-Type: application/json
+
+{ "method": "calc.plus", "params": [1,2], "id": 1 }
+</pre>
+<p>この時、レスポンスのメッセージボディとしては次のような結果が返されます。</p>
+<pre class="console">
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
 
 { "result": 3, "error": null, "id": 1 }
 </pre>
 
-<h3 id="configuration">■ 設定方法</h3>
-<p>JSON Web Service Servletの設定は簡単です。web.xmlにWebServiceServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
-<pre class="source">
-<span class="elem">&lt;servlet&gt;</span>
-  <span class="elem">&lt;servlet-name&gt;</span>json-ws<span class="elem">&lt;/servlet-name&gt;</span>
-  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.WebServiceServlet<span class="elem">&lt;/servlet-class&gt;</span>
-  <span class="elem">&lt;init-param&gt;</span>
-    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
-    <span class="elem">&lt;param-value&gt;</span>
-    {
-      "debug": true,
-      "encoding": "UTF-8",
-      "expire": true,
-      "mappings": {
-        "/{package}/{class}.{ext}": "sample.web.${package}.service.${class}Service",
-        "/{class}.{ext}": "sample.${class}Service"
-      }
-    }
-    <span class="elem">&lt;/param-value&gt;</span>
-  <span class="elem">&lt;/init-param&gt;</span>
-<span class="elem">&lt;/servlet&gt;</span>
+<p>各パラメータの意味は次の通りです。</p>
 
-<span class="elem">&lt;servlet-mapping&gt;</span>
-  <span class="elem">&lt;servlet-name&gt;</span>json-ws<span class="elem">&lt;/servlet-name&gt;</span>
-  <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
-<span class="elem">&lt;/servlet-mapping&gt;</span>
-</pre>
-<p>configで設定できる値は次の通りです。</p>
-<table class="table" summary="Config設定">
-<tr><th>キー</th><th>値型</th><th>説明</th></tr>
-<tr><td>container</td><td><code>net.arnx.jsonic.web.Container</code></td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、<code>net.arnx.jsonic.web.Container</code>です。</td></tr>
-<tr><td>encoding</td><td><code>java.lang.String</code></td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
-<tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
-<tr><td>debug</td><td><code>java.lang.Boolean</code></td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
-<tr><td>mappings</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>URLパスとクラスのマッピングを行います。
-パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※9)</sup>。
-なお、RESTモードの場合、利用されなかった変数は引数としてメソッドに引き渡されます（RPCモードの場合は設定されません。詳しくはRESTモードの説明をご覧ください）。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、JSR-311同様パターンを設定することができます。</td></tr>
-<tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/().]+</code>が設定されたものと扱われます。</td></tr>
-<tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
-<tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
-<tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>です。</td></tr>
-<tr><td>namingConversion</td><td>boolean</td><td>WebService呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
+<table class="table" summary="パラメータの意味">
+<tr><th style="width: 10%">方向</th><th style="width: 10%">パラメータ</th><th style="width: 80%">説明</th></tr>
+<tr><td rowspan="4">リクエスト</td><td>jsonrpc</td><td>JSON-RPC 2.0で接続する時のみ"2.0"を指定します。1.0の時は設定不要です。</td></tr>
+<tr><td>method</td><td>メソッド名を指定します。パス変数で<code>class</code>が指定されている場合はメソッド名を、指定していない場合はクラス名とメソッド名を「<code>class.method</code>」の形式で指定します。なお、クラス名はパッケージを含んだ完全名ではなく、後述で設定するマッピングに対応した名前を指定してください。</td></tr>
+<tr><td>params</td><td>パラメータを指定します。JSON arrayを指定した場合はメソッドの引数に指定された型に変換され引渡されます。JSON objectを指定した場合は、第一引数に引渡されます。</td></tr>
+<tr><td>id</td><td>設定するとレスポンスのid値として同じ値が戻されます。なお、JSON-RPC 1.0ではidがnullの時、2.0ではidが未指定の時、通知モードとみなされレスポンスが返されませんので、結果を受け取る場合はタイムスタンプなど、必ず何らかの値を設定してださい。</td></tr>
+<tr><td rowspan="4">レスポンス</td><td>jsonrpc</td><td>JSON-RPC 2.0で接続した時のみ"2.0"が返されます。1.0では設定されません。</td></tr>
+<tr><td>result</td><td>成功した時には、結果が設定されます。JSON-RPC 2.0では成功した時のみ設定されます。</td></tr>
+<tr><td>error</td><td>エラーの時にはエラー情報が設定されます。JSON-RPC 2.0ではエラーの時のみ設定されます。</td></tr>
+<tr><td>id</td><td>リクエストで設定されたidの値がそのまま戻されます。</td></tr>
 </table>
-<div class="caption">
-(※9) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
-また、URLパスにはコンテキストパスを含める必要はありません。
-</div>
 
-<h3 id="rpcmode">■ RPCモード</h3>
-<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSON Web Service Servletでは、class変数の値が<code>"rpc"</code>であった場合、RPCモードとなります。</p>
+<h3>■ エラーオブジェクト</h3>
 
-<p>RPCモードでは、対象のパスに対し次のようなJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
-<pre class="source">
-{
-  "method": "class.method",
-  "params": [ arg1, arg2, ... ],
-  "id": request_id
-}
-</pre>
-<p>class, methodにはそれぞれ変数の値、argNにはメソッドの引数を設定してください。requesst_idには送受信の同期確認用のキーとしてnull以外の任意の値を設定してください（HTTPでは、送信と受信は同期処理ですのでほとんど意味はありませんが、省略すると通知(Notification)モードとなりレスポンスのメッセージボディが返されませんので必ず値を指定してください）。</p>
-<p>例えば、mappingsに "/[package]/[class].[ext]": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/rpc.jsonというパスに次のJSONがPOSTすると、boo.foo.woo.CalcServiceクラスのint plus(int a, int b)のようなメソッドが呼び出されます。</p>
-<pre class="source">
-{
-  "method": "calc.plus",
-  "params": [1,2],
-  "id": 1
-}
-</pre>
-<p>この時、レスポンスのメッセージボディとしては次のような結果が返されます。</p>
-<pre class="source">
-{
-  "result": 3,
-  "error": null,
-  "id": 1
-}
-</pre>
-
-<p>RPCモードでエラーが発生した場合にはレスポンスのメッセージボディでクライアントに通知されます。ステータスコードは、エラーの有無に関わらず200 OKが返されます。</p>
+<p>RPCサーブレットでエラーが発生した場合にはレスポンスのメッセージボディでクライアントに通知されます。ステータスコードは、エラーの有無に関わらず200 OKが返されます。</p>
 <p>errorの値には code, message, dataの三つのキーを持つJSON objectが設定されます。codeとmessageについては次表を参照してください。dataには投げられた例外のプロパティがセットされます（ただし、Throwableクラスのプロパティは除外されます）。</p>
 <table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th><th>JSON error</th></tr>
@@ -223,8 +176,8 @@ Content-Type: application/json
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32600,
-  "name": "ReferenceError",
-  "message": "Invalid Request."
+  "message": "Invalid Request.",
+  "data": {}
 }</pre></td>
 </tr>
 <tr>
@@ -232,8 +185,8 @@ Content-Type: application/json
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32601,
-  "name": "ReferenceError",
-  "message": "Method not found."
+  "message": "Method not found.",
+  "data": {}
 }</pre></td>
 </tr>
 <tr>
@@ -241,8 +194,8 @@ Content-Type: application/json
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32602,
-  "name": "TypeError",
-  "message": "Invalid params."
+  "message": "Invalid params.",
+  "data": {}
 }</pre></td>
 </tr>
 <tr>
@@ -250,8 +203,8 @@ Content-Type: application/json
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32700,
-  "name": "SyntaxError",
-  "message": "Parse error."
+  "message": "Parse error.",
+  "data": {}
 }</pre></td>
 </tr>
 <tr>
@@ -259,7 +212,6 @@ Content-Type: application/json
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32603,
-  "name": Class#getSimpleName(),
   "message": "Internal error." or Throwable#getMessage()
   "data": Throwable
 }</pre></td>
@@ -268,7 +220,53 @@ Content-Type: application/json
 <div class="caption">(※10) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
 <div class="caption">(※11) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
-<h3 id="restmode">■ RESTモード</h3>
+<h3 id="configuration">■ 設定方法</h3>
+<p>RPC サーブレットは、web.xmlにRPCServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
+<pre class="source">
+<span class="elem">&lt;servlet&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>rpcServlet<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.RPCServlet<span class="elem">&lt;/servlet-class&gt;</span>
+  <span class="elem">&lt;init-param&gt;</span>
+    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+    <span class="elem">&lt;param-value&gt;</span>
+    {
+      "debug": true,
+      "mappings": {
+        "/{package}/{class}.json": "sample.web.${package}.service.${class}Service",
+        "/rpc.json": "sample.${class}Service"
+      }
+    }
+    <span class="elem">&lt;/param-value&gt;</span>
+  <span class="elem">&lt;/init-param&gt;</span>
+<span class="elem">&lt;/servlet&gt;</span>
+
+<span class="elem">&lt;servlet-mapping&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>rpcServlet<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
+<span class="elem">&lt;/servlet-mapping&gt;</span>
+</pre>
+<p>configで設定できる値は次の通りです。</p>
+<table class="table" summary="Config設定">
+<tr><th style="width:15%">キー</th><th style="width:25%">値型</th><th style="width:60%">説明</th></tr>
+<tr><td>container</td><td><code>net.arnx.jsonic.web.Container</code></td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、<code>net.arnx.jsonic.web.Container</code>です。</td></tr>
+<tr><td>encoding</td><td><code>java.lang.String</code></td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
+<tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
+<tr><td>debug</td><td><code>java.lang.Boolean</code></td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
+<tr><td>mappings</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>URLパスとクラスのマッピングを行います。
+パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※9)</sup>。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、変数の定義を設定することができます（definitionsより優先します）。</td></tr>
+<tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/().]+</code>が設定されたものと扱われます。</td></tr>
+<tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
+<tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
+<tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトではThrowableのメソッドのみ無視するJSONクラスが設定されます。</td></tr>
+<tr><td>errors</td><td><code>java.util.Map&lt;Class&lt; extends Exception&gt;, Integer&gt;</code></td><td>Exceptionクラスとエラーコードのマッピングを行います。</td></tr>
+<tr><td>namingConversion</td><td>boolean</td><td>呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
+</table>
+<div class="caption">
+(※9) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
+また、URLパスにはコンテキストパスを含める必要はありません。
+</div>
+
+<h2 id="restservlet">RESTサーブレット</h2>
 <p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※12)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※13)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
@@ -331,7 +329,7 @@ Content-Type: application/json
 なお、この場合、発生した例外がJSON objectとしてメッセージボディに設定されます（ただし、Throwableクラスのプロパティは除外されます）。</div>
 
 <h3 id="jsonp">■ JSONP</h3>
-<p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
+<p>HTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
 <pre class="source">
 &lt;script type="text/javascript" &gt;
   function call(value) {
@@ -343,23 +341,6 @@ Content-Type: application/json
 
 &lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
 </pre>
-
-<h3 id="initdestroy">■ 初期化/終了処理</h3>
-<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※17)</sup></p>
-<pre class="source">
-public class HogeService {
-  <span class="comment">// 処理の前に呼び出されます。</span>
-  public void init() {
-  }
-  
-  ...
-  
-  <span class="comment">// 処理の後に呼び出されます。</span>
-  public void destroy() {
-  }
-}
-</pre>
-<div class="caption">(※17) 呼び出されるメソッド名は設定で変更可能です。</div>
 
 <h3 id="produces">■ Producesアノテーション <span class="subtitle">- JSON以外のレスポンス</span></h3>
 <p>呼び出し先のメソッドにProducesアノテーションを付与することでレスポンスを自分で記述できるようになりJSON以外のレスポンスも返すことができるようになります。
@@ -376,13 +357,14 @@ public class HogeService {
 }
 </pre>
 
-<h3 id="dicontainer">■ DI Container対応</h3>
-<p>JSONRPCServletは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDI Containerにて管理することが可能です。</p>
+<h2 id="dicontainer">DIコンテナ対応</h2>
+<p>RPCサーブレット、RESTサーブレットは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDIコンテナにて管理することが可能です。</p>
+<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています（※1.2よりパッケージ名が変更されています。ご注意ください）。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 
 <pre class="source">
 <span class="elem">&lt;servlet&gt;</span>
-  <span class="elem">&lt;servlet-name&gt;</span>JSON-WebService<span class="elem">&lt;/servlet-name&gt;</span>
-  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.WebServiceServlet<span class="elem">&lt;/servlet-class&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>rpcServlet or restServlet<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.RPCServlet or RESTServlet<span class="elem">&lt;/servlet-class&gt;</span>
   <span class="elem">&lt;init-param&gt;</span>
     <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
     <span class="elem">&lt;param-value&gt;</span>
@@ -399,16 +381,16 @@ public class HogeService {
 <span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています（※1.2よりパッケージ名が変更されています。ご注意ください）。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
 <p>デフォルトでは最低限の機能のみ持つnet.arnx.jsonic.web.Containerが使われます。このコンテナが持つ機能は次の通りです。</p>
 <ul>
 <li>オブジェクトはClass#newInstance()により毎回生成されます。</li>
 <li>ログは、ServletContext#log()を使って書き出されます。</li>
-<li>JSPの暗黙オブジェクトライクなパブリックフィールドベースの簡易DIを提供します（下記例を参照）。</li>
+<li>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、処理の前後に呼び出します（この機能は全コンテナ共通です）。<sup>(※9)</sup></li>
+<li>JSPの暗黙オブジェクトライクなパブリックフィールドベースの簡易DIを提供します。</li>
 </ul>
+<p>暗黙オブジェクトは以下のように設定してください。クラスだけでなくフィールド名も合わせる必要があります。</p>
 <pre class="source">
 public class HogeService {
-  <span class="comment">// Servlet関係のオブジェクトを設定します。クラスだけでなくフィールド名も合わせる必要があります。</span>
   public ServletConfig config;
   public ServletContext application;
   public HttpServletRequest request;
@@ -416,7 +398,7 @@ public class HogeService {
   public HttpSession session;
 }
 </pre>
-<p>また、コンテナ自身にHttpServletRequestとHttpServletResponseのDI機能がないSpringContainerに関しては、setterによるインジェクション機能を提供しています（下記例を参照）。</p>
+<p>コンテナ自身にHttpServletRequestとHttpServletResponseのDI機能がないSpringContainerに関しては、setterによるインジェクション機能を提供しています（下記例を参照）。</p>
 <pre class="source">
 public class SpringDrivenService {
   <span class="comment">// setterを用意すると自動で挿入します。プロパティ名を一致させる必要はありません。</span>
@@ -426,8 +408,9 @@ public class SpringDrivenService {
   }
 }
 </pre>
+<div class="caption">(※9) 呼び出されるメソッド名は設定で変更可能です。</div>
 
-<h3 id="gatewayfilter">■ Gateway Filter</h3>
+<h2 id="gatewayfilter">Gatewayフィルタ</h2>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
 <p>最初にマッチしたパスの設定が使われますが、そこで設定が行われなわれていない場合、ルートの設定が初期値として利用されます。パスには正規表現が利用できます。</p>
 <pre class="source">
@@ -474,8 +457,7 @@ public class SpringDrivenService {
 <tr><td>access</td><td><code>java.util.Set&lt;String&gt;</code></td><td>アクセス可能なアプリケーションロールを配列で指定します（認証そのものはコンテナの機能などを使う必要があります）。</td></tr>
 <tr><td>locale</td><td><code>java.util.Locale</code></td><td>Responseのロケールを設定します。</td></tr>
 </table>
-<p>なお、encodingとexpireに関してはWebServiceServlet側にも同様の設定が用意されていますが、基本的にWebServiceServlet側の設定が優先されます。
-ただし、WebServiceServlet側が未設定の場合は、GatewayFilter側の設定が利用されます。</p>
+<p>なお、encodingとexpireに関してはRPCサーブレットやRESTサーブレット側にも同様の設定が用意されており、そちら側の設定が優先されます。</p>
 
 <hr style="margin-top: 30px;" />
 <div class="copyright">Copyright (C) 2007-2010 Hidekatsu Izuno All right reserved.</div>

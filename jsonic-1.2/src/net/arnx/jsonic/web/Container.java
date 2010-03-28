@@ -317,7 +317,8 @@ public class Container {
 				protected boolean ignore(Context context, Class<?> target, Member member) {
 					return member.getDeclaringClass().equals(Throwable.class)
 						|| super.ignore(context, target, member);
-				}			};
+				}
+			};
 			json.setLocale(locale);
 			return json;
 		} catch (Exception e) {
