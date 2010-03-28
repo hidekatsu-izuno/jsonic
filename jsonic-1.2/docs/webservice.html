@@ -107,9 +107,15 @@
 
 <div class="main">
 
-<h2 id="webservice" style="margin-top: 5px;">Web Service Servlet</h2>
+<h2 id="webservice" style="margin-top: 5px;">基本的な説明</h2>
 
-<p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
+<p>JSONICには、JSONを使ったWebサービスが簡単に構築できるサーブレットが二種類用意されています。</p>
+
+<table class="table" summary="サーブレットの種類">
+<tr><th style="width: 20%">サーブレット</th><th style="width: 80%">説明</th></tr>
+<tr><td>RPCServlet</td><td>JSON-RPC <a href="http://json-rpc.org/wiki/specification">1.0</a>/<a href="http://groups.google.com/group/json-rpc/web/json-rpc-2-0">2.0</a>仕様に対応したRPC(Remote Procedure Call)サービスを構築できます。</td></tr>
+<tr><td>RESTServlet</td><td>GET/POST/PUT/DELETEにより操作を行うRESTベースのサービスを構築できます。</td></tr>
+</table>
 
 <div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために残されており機能も変わらず利用可能ですが、今後はRESTServletおよびRPCServletを利用するようにお願いします。</div>
 

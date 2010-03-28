@@ -52,6 +52,15 @@ public class S2Container extends Container {
 			log.debug(message);
 		}
 	}
+	
+	@Override
+	public void warn(String message, Throwable e) {
+		if (e != null) {
+			log.warn(message, e);
+		} else {
+			log.warn(message);
+		}
+	}
 
 	@Override
 	public void error(String message, Throwable e) {

@@ -54,6 +54,15 @@ public class GuiceContainer extends Container {
 			log.log(Level.FINE, message);
 		}
 	}
+	
+	@Override
+	public void warn(String message, Throwable e) {
+		if (e != null) {
+			log.log(Level.WARNING, message, e);
+		} else {
+			log.log(Level.WARNING, message);
+		}
+	}
 
 	@Override
 	public void error(String message, Throwable e) {

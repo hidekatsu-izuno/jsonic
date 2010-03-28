@@ -282,17 +282,31 @@ public class Container {
 		if (!isDebugMode()) return;
 		
 		if (e != null) {
-			context.log(message, e);
+			context.log("[DEBUG] " + message, e);
 		} else {
-			context.log(message);
+			context.log("[DEBUG] " + message);
+		}
+	}
+	
+	public void warn(String message) {
+		warn(message, null);
+	}
+	
+	public void warn(String message, Throwable e) {
+		if (!isDebugMode()) return;
+		
+		if (e != null) {
+			context.log("[WARNING] " + message, e);
+		} else {
+			context.log("[WARNING] " + message);
 		}
 	}
 	
 	public void error(String message, Throwable e) {
 		if (e != null) {
-			context.log(message, e);
+			context.log("[ERROR] " + message, e);
 		} else {
-			context.log(message);
+			context.log("[ERROR] " + message);
 		}
 	}
 	

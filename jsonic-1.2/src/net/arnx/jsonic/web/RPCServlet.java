@@ -216,6 +216,9 @@ public class RPCServlet extends HttpServlet {
 				
 				if (req.get("method") instanceof String) {
 					rmethod = (String)req.get("method");
+					if (rjsonrpc != null && rmethod.startsWith("rpc.")) {
+						container.warn("Method names that begin with 'rpc.' are reserved for system extensions.");
+					}
 				} else {
 					throw new IllegalArgumentException("method must " + ((req.get("method") == null) ? "not be null." : "be string."));
 				}
