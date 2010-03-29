@@ -37,7 +37,9 @@
 	h3 .subtitle { font: 9pt sans-serif; padding: 1px; line-height: 1.0; }
 	a { color: darkblue; }
 	p { margin: 0px 0px 1em 0px; padding: 0px; }
+	.warning { border: 1px solid red; background-color: #FFFF66; padding: 5px; }
 	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
+	.console { border: 1px solid black; font: 9pt monospace; color: white; padding: 16px; background-color: navy; }
 	.comment { color: #0066FF; font-family: monospace; }
 	.em { font-weight: bold; color: #000099; font-family: monospace; }
 	.elem { font-weight: bold; color: #000099; }
@@ -629,11 +631,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h3>2009/03/28 version 1.2.0</h3>
 
+<div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために以前同様の形で利用可能ですが、今後はRESTServletおよびRPCServletを利用してください。</div>
+
 <ul>
 <li>[不具合] JSONクラスにて親クラスの型パラメータ変数を持つプロパティの取り扱いに失敗していた問題にある程度対応しました。</li>
-<li>[不具合] JSONクラスおよびWebServiceServletにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました（バージョン1.0.5、1.1.2でも修正/リリース済みです）[#19766]</li>
+<li>[不具合] JSONクラスおよびWebサービスAPIにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました（バージョン1.0.5、1.1.2でも修正/リリース済みです）[#19766]</li>
 <li>[不具合] JSONのデコード時に指数部が2桁以上ある数値の解析に失敗していた点を修正しました（JSONIC AS3およびバージョン1.0.5、1.1.3でも修正/リリース済みです）。[#20537]</li>
-<li>[不具合] JSONWebServiceのパラメータに「.」を指定できるため意図せぬクラスの呼び出しが可能となっていた問題に対応するため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
+<li>[不具合] WebサービスAPIにて、パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
 <li>JSONHintアノテーションにて、formatの日付書式でISO8601形式のタイムゾーンを扱うZZを指定できるようにしました。</li>
 <li>JSONHintアノテーションにanonymを追加し、単純値型からMapや複合型への変換を可能にしました。</li>
 <li>JSON encoder/decoderにて１処理中に限りメソッド情報をキャッシュするように変更しました。</li>
@@ -643,8 +647,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>JSON.encode(or format)にて<code>java.sql.Array, java.sql.Struct</code>のJSON化に対応しました（逆方向には対応していません。相互変換が必要な場合は<code>JSONHint(type=Serializable.class)</code>を指定しシリアル化してください）。</li>
 <li>AS3版JSONICにて、JSON.encode(or format)時にmine変数を無視するように変更しました。</li>
 <li>JSON-RPC2.0をサポートするRPCServletと強化されたREST操作を可能にするRESTServletを新設しました。WebServiceServletは互換性のため残されていますが非推奨となり機能追加もほとんど行われていません（Version 1.1互換）。RPCServletやRESTServletとWebServiceServletの各モードとの違いは、それぞれのドキュメントを参照してください。</li>
-<li>WebServiceServletにて、各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
-<li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
+<li>WebサービスAPIにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
+<li>WebサービスAPIにてContainerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />

@@ -134,13 +134,23 @@ Content-Type: application/json
 { "method": "class.method", "params": [ arg1, arg2, ... ], "id": request_id }
 </pre>
 <p>class, methodにはそれぞれ変数の値、argNにはメソッドの引数を設定してください。requesst_idには送受信の同期確認用のキーとしてnull以外の任意の値を設定してください（HTTPでは、送信と受信は同期処理ですのでほとんど意味はありませんが、省略すると通知(Notification)モードとなりレスポンスのメッセージボディが返されませんので必ず値を指定してください）。</p>
-<p>例えば、mappingsに "/[package]/[class].[ext]": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/rpc.jsonというパスに次のJSONがPOSTすると、boo.foo.woo.CalcServiceクラスのint plus(int a, int b)のようなメソッドが呼び出されます。</p>
+<p>例えば、mappingsに "/{package}/{class}.{ext}": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/rpc.jsonというパスに次のJSONがPOSTすると、boo.foo.woo.CalcServiceクラスのplusメソッドが呼び出されます。</p>
 <pre class="console">
 POST /foo/woo/rpc.json HTTP/1.0
 ...
 Content-Type: application/json
 
 { "method": "calc.plus", "params": [1,2], "id": 1 }
+</pre>
+<p>boo.foo.woo.CalcServiceは次のように実装されていたとします。</p>
+<pre class="source">
+package boo.foo.woo;
+
+public class CalcService {
+    public int plus(int a, int b) {
+        return a + b;
+    }
+}
 </pre>
 <p>この時、レスポンスのメッセージボディとしては次のような結果が返されます。</p>
 <pre class="console">
@@ -155,10 +165,10 @@ Content-Type: application/json
 
 <table class="table" summary="パラメータの意味">
 <tr><th style="width: 10%">方向</th><th style="width: 10%">パラメータ</th><th style="width: 80%">説明</th></tr>
-<tr><td rowspan="4">リクエスト</td><td>jsonrpc</td><td>JSON-RPC 2.0で接続する時のみ"2.0"を指定します。1.0の時は設定不要です。</td></tr>
-<tr><td>method</td><td>メソッド名を指定します。パス変数で<code>class</code>が指定されている場合はメソッド名を、指定していない場合はクラス名とメソッド名を「<code>class.method</code>」の形式で指定します。なお、クラス名はパッケージを含んだ完全名ではなく、後述で設定するマッピングに対応した名前を指定してください。</td></tr>
-<tr><td>params</td><td>パラメータを指定します。JSON arrayを指定した場合はメソッドの引数に指定された型に変換され引渡されます。JSON objectを指定した場合は、第一引数に引渡されます。</td></tr>
-<tr><td>id</td><td>設定するとレスポンスのid値として同じ値が戻されます。なお、JSON-RPC 1.0ではidがnullの時、2.0ではidが未指定の時、通知モードとみなされレスポンスが返されませんので、結果を受け取る場合はタイムスタンプなど、必ず何らかの値を設定してださい。</td></tr>
+<tr><td rowspan="4">リクエスト</td><td>jsonrpc</td><td>JSON-RPC 2.0で接続する時のみ"2.0"を指定します。1.0で接続する時は指定しません。</td></tr>
+<tr><td>method</td><td>メソッド名を指定します。パス変数で<code>class</code>が指定されている場合はメソッド名を、指定していない場合はクラス名とメソッド名を「<code>class.method</code>」の形式で指定する必要があります。なお、クラス名はパッケージを含んだ完全名ではなく、後述で設定するマッピングに対応した名前を指定してください。</td></tr>
+<tr><td>params</td><td>パラメータを指定します。JSON arrayを指定した場合はメソッドの引数に指定された型に変換され引渡されます。JSON-RPC 2.0ではJSON objectを指定できますが、その場合は、第一引数に指定された型に変換され引渡されます。</td></tr>
+<tr><td>id</td><td>設定するとレスポンスのid値として同じ値が戻されます。なお、JSON-RPC 1.0ではidがnullの時、2.0ではidを省略すると通知(Notification)モードとなりレスポンスのメッセージボディが返されませんので必ず値を指定してください。</td></tr>
 <tr><td rowspan="4">レスポンス</td><td>jsonrpc</td><td>JSON-RPC 2.0で接続した時のみ"2.0"が返されます。1.0では設定されません。</td></tr>
 <tr><td>result</td><td>成功した時には、結果が設定されます。JSON-RPC 2.0では成功した時のみ設定されます。</td></tr>
 <tr><td>error</td><td>エラーの時にはエラー情報が設定されます。JSON-RPC 2.0ではエラーの時のみ設定されます。</td></tr>
@@ -168,6 +178,13 @@ Content-Type: application/json
 <h3>■ エラーオブジェクト</h3>
 
 <p>RPCサーブレットでエラーが発生した場合にはレスポンスのメッセージボディでクライアントに通知されます。ステータスコードは、エラーの有無に関わらず200 OKが返されます。</p>
+<pre class="console">
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+
+{ "result": null, "error": { "code": -32600, "message": "Invalid Request.", "data": {} }, "id": 1 }
+</pre>
 <p>errorの値には code, message, dataの三つのキーを持つJSON objectが設定されます。codeとmessageについては次表を参照してください。dataには投げられた例外のプロパティがセットされます（ただし、Throwableクラスのプロパティは除外されます）。</p>
 <table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th><th>JSON error</th></tr>
@@ -211,9 +228,9 @@ Content-Type: application/json
 <td>その他のエラー</td>
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
-  "code": -32603,
-  "message": "Internal error." or Throwable#getMessage()
-  "data": Throwable
+  "code": -32603 あるいは errorsで設定した値,
+  "message": "Internal error." あるいは Throwable#getMessage() の値,
+  "data": 例外オブジェクト（ただし、Throwableクラスに定義されているプロパティは除く）
 }</pre></td>
 </tr>
 </table>
@@ -224,25 +241,25 @@ Content-Type: application/json
 <p>RPC サーブレットは、web.xmlにRPCServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
 <pre class="source">
 <span class="elem">&lt;servlet&gt;</span>
-  <span class="elem">&lt;servlet-name&gt;</span>rpcServlet<span class="elem">&lt;/servlet-name&gt;</span>
-  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.RPCServlet<span class="elem">&lt;/servlet-class&gt;</span>
-  <span class="elem">&lt;init-param&gt;</span>
-    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
-    <span class="elem">&lt;param-value&gt;</span>
-    {
-      "debug": true,
-      "mappings": {
-        "/{package}/{class}.json": "sample.web.${package}.service.${class}Service",
-        "/rpc.json": "sample.${class}Service"
-      }
-    }
-    <span class="elem">&lt;/param-value&gt;</span>
-  <span class="elem">&lt;/init-param&gt;</span>
+    <span class="elem">&lt;servlet-name&gt;</span>rpcServlet<span class="elem">&lt;/servlet-name&gt;</span>
+    <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.RPCServlet<span class="elem">&lt;/servlet-class&gt;</span>
+    <span class="elem">&lt;init-param&gt;</span>
+        <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+        <span class="elem">&lt;param-value&gt;</span>
+        {
+            "debug": true,
+            "mappings": {
+                "/{package}/{class}.json": "sample.web.${package}.service.${class}Service",
+                "/rpc.json": "sample.${class}Service"
+            }
+        }
+        <span class="elem">&lt;/param-value&gt;</span>
+    <span class="elem">&lt;/init-param&gt;</span>
 <span class="elem">&lt;/servlet&gt;</span>
 
 <span class="elem">&lt;servlet-mapping&gt;</span>
-  <span class="elem">&lt;servlet-name&gt;</span>rpcServlet<span class="elem">&lt;/servlet-name&gt;</span>
-  <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
+    <span class="elem">&lt;servlet-name&gt;</span>rpcServlet<span class="elem">&lt;/servlet-name&gt;</span>
+    <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
 <span class="elem">&lt;/servlet-mapping&gt;</span>
 </pre>
 <p>configで設定できる値は次の通りです。</p>
@@ -266,58 +283,113 @@ Content-Type: application/json
 また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
+<p>なお、<code>definitions</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
+<pre class="source">
+    ...
+    "mappings": {
+        "/{package}/{class}.json": {
+            "target": "sample.web.${package}.service.${class}Service",
+            "definitions": { "class": "[a-z]+" }
+        },
+        ...
+    }
+    ...
+</pre>
+
+<h3>JSONIC 1.1 RPCモードからの変更点</h3>
+<ul>
+<li>JSON-RPC 2.0に対応しました。</li>
+<li>[不具合] パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
+<li>[非互換] リクエスト時に必ず <code>Content-Type: application/json</code>の指定が必要となりました。</li>
+<li>[非互換] 各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。</li>
+<li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
+<li>WebServiceServletにあったpreinvokeやpostinvokeがContainerに移動し引数も変更されました。</li>
+<li>errors を設定することで例外とエラーコードのマッピングができるようになりました。</li>
+</ul>
+
+
 <h2 id="restservlet">RESTサーブレット</h2>
 <p>RESTサーブレットは、GET/POST/PUT/DELETEなどHTTP Methodをベースに操作を行うRESTfullなWebサービス構築用サーブレットです。</p>
 
 <h3>■ RESTサーブレットの概要</h3>
 
-<p>RESTサーブレットを使うと、GET/POST/PUT/DELETEなどのHTTP Methodに従い対象となったクラスのメソッドが呼び出されます<sup>(※12)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※13)</sup>。</p>
+<p>RESTサーブレットを使うと、GET/POST/PUT/DELETEなどのHTTP Methodに従って、対象となったクラスのメソッドが呼び出されます。その後、戻り値がJSONに変換されクライアントに返されます<sup>(※13)</sup>。</p>
+<p>HTTP MethodとJava メソッド名のデフォルトのマッピングは次の通りです<sup>(※12)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
-<tr><td>GET</td><td>find</td><td>リクエストパラメータのMapを「.」あるいは「[...]」で区切られた階層構造とみなし引数の型に従い変換し設定</td></tr>
-<tr><td>POST</td><td>create</td><td rowspan="3">メッセージボディのJSON文字列を引数の型に従い変換し設定<sup>(※14)</sup></td></tr>
+<tr><td>GET</td><td>find</td><td>リクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし引数の型に従い変換し設定。</td></tr>
+<tr><td>POST</td><td>create</td><td rowspan="3">Content-Typeが「<code>application/json</code>」の時は、メッセージボディのJSON文字列を引数の型に従い変換し設定。<br />
+Content-Typeが「<code>application/x-www-form-urlencoded</code>」の時はリクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし引数の型に従い変換し設定。</td></tr>
 <tr><td>PUT</td><td>update</td></tr>
 <tr><td>DELETE</td><td>delete</td></tr>
 </table>
-<p>なお、上記のメソッド名は変更することが可能です。その場合は対象のマッピングを配列化し、二番目の引数にHTTP Methodとメソッド名のマッピングを記載します。例えば、.csvに対してGETでアクセスされた場合にprintというメソッドを呼び出したい場合は次のようにします。</p>
+<div class="caption">
+(※12) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
+</div>
+
+<p>例えば、mappingsに "/{package}/{class}.{ext}": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/resource.jsonというパスをGETすると、boo.foo.woo.ResourceServiceクラスのfindが呼び出されます。</p>
+<pre class="console">
+GET /foo/woo/resource.json HTTP/1.0
+...
+</pre>
+<p>boo.foo.woo.ResourceServiceは次のように実装されていたとします。</p>
 <pre class="source">
-<span class="elem">&lt;servlet&gt;</span>
-  ...
-  <span class="elem">&lt;init-param&gt;</span>
-    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
-    <span class="elem">&lt;param-value&gt;</span>
-    {
-      "mappings": {
-      　<span class="comment">// GET *.csvにアクセスされた場合はprintメソッドを呼び出します。</span>
-        "/{package}/{class}.csv": {
-          "target": "sample.web.${package}.service.${class}Service", 
-          "method": {"GET": "print"}
-        },
-        "/{package}/{class}.{ext}": "sample.web.${package}.service.${class}Service"
-      }
-    }
-    <span class="elem">&lt;/param-value&gt;</span>
-  <span class="elem">&lt;/init-param&gt;</span>
-<span class="elem">&lt;/servlet&gt;</span>
+package boo.foo.woo;
+
+public class ResourceService {
+	public Object find(Map params) {
+	    List&lt;Map&gt; list = Database.select("select * from resource", params);
+	    return list;
+	}
+}
+</pre>
+<p>この時、レスポンスのメッセージボディとしては次のような結果が返されるかもしれません。</p>
+<pre class="console">
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+
+[
+  { "id": 1, "name": "boo", "age": 10 },
+  { "id": 2, "name": "foo", "age": 12 },
+  { "id": 3, "name": "woo", "age": 14 }
+]
 </pre>
 
-<p>引数には送信されたJSONが指定された型に従い変換されセットされます。引数への設定は、JSONの型によって次のような違いがあります。</p>
+<p>引数には送信されたJSONが指定された型に従い変換されセットされます。引数への設定は、データの送信方法によって次のような違いがあります。</p>
 <table class="table" summary="引数設定一覧">
-<tr><th>Request&nbsp;Type</th><th>説明</th></tr>
-<tr><td>object</td><td>パラメータ変数、パス変数の順に上書きされたJSON objectが設定されます（同じキーが複数出現した場合は配列化されます）。</td></tr>
-<tr><td>array</td><td>送信されたJSON arrayを引数リストとして扱います。
-なお、第一引数がJSON objectである場合には、上記と同様にパラメータ変数、パス変数、第一引数の順でデータが上書きされる形で設定されます。
-その他の型であった場合や第二引数以降はそのまま設定されます。</td></tr>
+<tr><th style="width: 15%">Request&nbsp;Type</th><th style="width: 85%">説明</th></tr>
+<tr><td>JSON object</td><td>URLパラメータ変数、パス変数の順に上書きされたJSON objectが設定されます（同じキーが複数出現した場合は配列化されます）。</td></tr>
+<tr><td>JSON array</td><td>送信されたJSON arrayを引数リストとして扱います。
+なお、第一引数がJSON objectである場合には、上記と同様にURLパラメータ変数、パス変数、第一引数の順でデータが上書きされます。
+その他の型や第二引数以降はそのまま設定されます。</td></tr>
+<tr><td>フォームパラメータ</td><td>URLパラメータ変数とフォームパラメータを結合したオブジェクトが設定されます。</td></tr>
 </table>
+<p>なお、URLパラメータ名やフォームパラメータ名にドットや配列表記がある場合には、区切り文字とみなしデータを階層化して扱います。</p>
 <div class="caption">
 (※12) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
 (※13) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
-(※14) Content-Typeが「<code>application/x-www-form-urlencoded</code>」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
 </div>
+
+<p>さきほどの例でidが3のデータを指定する場合はこのようなやりとりになるでしょう。</p>
+<pre class="console">
+GET /foo/woo/resource.json?id=3 HTTP/1.0
+...
+</pre>
+<p>この時、レスポンスのメッセージボディとしては次のような結果が返されるかもしれません。</p>
+<pre class="console">
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+
+[
+  { "id": 3, "name": "woo", "age": 14 }
+]
+</pre>
 
 <h3>■ エラーオブジェクト</h3>
 
-<p>RESTモードでは、エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
+<p>エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
 <table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
 <tr>

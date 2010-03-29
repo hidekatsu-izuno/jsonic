@@ -342,8 +342,8 @@ public class HogeService {
 
 <h2 id="changes">1.1からの変更点</h2>
 <ul>
-<li>[不具合] JSONWebServiceのパラメータに「.」を指定できるため意図せぬクラスの呼び出しが可能となっていた問題に対応するため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
-<li>WebServiceServletにて、各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ただし、WebServiceServletに限り互換性維持のため、以前のパッケージ名を指定しても動作します。</li>
+<li>[不具合] パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
+<li>各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ただし、WebServiceServletに限り互換性維持のため、以前のパッケージ名を指定しても動作します。</li>
 <li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 </ul>
 

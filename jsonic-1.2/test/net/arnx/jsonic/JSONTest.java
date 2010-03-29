@@ -329,6 +329,22 @@ public class JSONTest {
 		gptw.test.property = "test";
 		
 		assertEquals(gptw, JSON.decode("{\"test\":{\"property\":\"test\"}}", GenericPropertyTestWrapper.class));
+		
+	}
+	
+	public static class HogeList extends ArrayList<MyData> {
+		
+	}
+	
+	public static class MyData {
+		public String data1;
+		public String data2;
+		@Override
+		public String toString() {
+			return "MyData [data1=" + data1 + ", data2=" + data2 + "]";
+		}
+		
+		
 	}
 
 	@Test
