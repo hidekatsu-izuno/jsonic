@@ -187,7 +187,7 @@ Content-Type: application/json
 </pre>
 <p>errorの値には code, message, dataの三つのキーを持つJSON objectが設定されます。codeとmessageについては次表を参照してください。dataには投げられた例外のプロパティがセットされます（ただし、Throwableクラスのプロパティは除外されます）。</p>
 <table class="table" summary="RPC エラー一覧">
-<tr><th>エラー内容</th><th>HTTP Status Code</th><th>JSON error</th></tr>
+<tr><th>エラー内容</th><th>HTTP Status Code</th><th>Message Body</th></tr>
 <tr>
 <td>JSONリクエストがJSON-RPCのリクエストとして不正</td>
 <td>200&nbsp;OK</td>
@@ -229,7 +229,7 @@ Content-Type: application/json
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32603 あるいは errorsで設定した値,
-  "message": "Internal error." あるいは Throwable#getMessage() の値,
+  "message": "Internal error." あるいは 例外オブジェクト#getMessage() の値,
   "data": 例外オブジェクト（ただし、Throwableクラスに定義されているプロパティは除く）
 }</pre></td>
 </tr>
@@ -313,13 +313,13 @@ Content-Type: application/json
 
 <h3>■ RESTサーブレットの概要</h3>
 
-<p>RESTサーブレットを使うと、GET/POST/PUT/DELETEなどのHTTP Methodに従って、対象となったクラスのメソッドが呼び出されます。その後、戻り値がJSONに変換されクライアントに返されます<sup>(※13)</sup>。</p>
+<p>RESTサーブレットを使うと、GET/POST/PUT/DELETEなどのHTTP Methodに従って、対象となったクラスのメソッドが呼び出されます。その後、戻り値がJSONに変換されクライアントに返されます。</p>
 <p>HTTP MethodとJava メソッド名のデフォルトのマッピングは次の通りです<sup>(※12)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
-<tr><td>GET</td><td>find</td><td>リクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし引数の型に従い変換し設定。</td></tr>
-<tr><td>POST</td><td>create</td><td rowspan="3">Content-Typeが「<code>application/json</code>」の時は、メッセージボディのJSON文字列を引数の型に従い変換し設定。<br />
-Content-Typeが「<code>application/x-www-form-urlencoded</code>」の時はリクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし引数の型に従い変換し設定。</td></tr>
+<tr><td>GET</td><td>find</td><td>リクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし引数の型に従い変換し設定されます。</td></tr>
+<tr><td>POST</td><td>create</td><td rowspan="3">Content-Typeが「<code>application/json</code>」の時は、メッセージボディのJSON文字列を引数の型に従い変換し設定されます。<br />
+Content-Typeが「<code>application/x-www-form-urlencoded</code>」の時はリクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし引数の型に従い変換し設定されます。</td></tr>
 <tr><td>PUT</td><td>update</td></tr>
 <tr><td>DELETE</td><td>delete</td></tr>
 </table>
@@ -327,7 +327,7 @@ Content-Typeが「<code>application/x-www-form-urlencoded</code>」の時はリ�
 (※12) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
 </div>
 
-<p>例えば、mappingsに "/{package}/{class}.{ext}": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/resource.jsonというパスをGETすると、boo.foo.woo.ResourceServiceクラスのfindが呼び出されます。</p>
+<p>例えば、mappingsに <code>"/{package}/{class}.{ext}": "boo.${package}.${class}Service"</code> という指定があった場合、 <code>/foo/woo/resource.json</code>というパスをGETすると、<code>boo.foo.woo.ResourceService</code>クラスの<code>find</code>が呼び出されます。</p>
 <pre class="console">
 GET /foo/woo/resource.json HTTP/1.0
 ...
@@ -343,7 +343,7 @@ public class ResourceService {
 	}
 }
 </pre>
-<p>この時、レスポンスのメッセージボディとしては次のような結果が返されるかもしれません。</p>
+<p>この時、レスポンスのメッセージボディとしては次のような結果が返されるかもしれません<sup>(※13)</sup>。</p>
 <pre class="console">
 HTTP/1.0 200 OK
 ...
@@ -355,23 +355,19 @@ Content-Type: application/json
   { "id": 3, "name": "woo", "age": 14 }
 ]
 </pre>
-
-<p>引数には送信されたJSONが指定された型に従い変換されセットされます。引数への設定は、データの送信方法によって次のような違いがあります。</p>
-<table class="table" summary="引数設定一覧">
-<tr><th style="width: 15%">Request&nbsp;Type</th><th style="width: 85%">説明</th></tr>
-<tr><td>JSON object</td><td>URLパラメータ変数、パス変数の順に上書きされたJSON objectが設定されます（同じキーが複数出現した場合は配列化されます）。</td></tr>
-<tr><td>JSON array</td><td>送信されたJSON arrayを引数リストとして扱います。
-なお、第一引数がJSON objectである場合には、上記と同様にURLパラメータ変数、パス変数、第一引数の順でデータが上書きされます。
-その他の型や第二引数以降はそのまま設定されます。</td></tr>
-<tr><td>フォームパラメータ</td><td>URLパラメータ変数とフォームパラメータを結合したオブジェクトが設定されます。</td></tr>
-</table>
-<p>なお、URLパラメータ名やフォームパラメータ名にドットや配列表記がある場合には、区切り文字とみなしデータを階層化して扱います。</p>
 <div class="caption">
-(※12) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
 (※13) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
 </div>
+<p>引数には送信されたデータが指定された型に従い変換され設定されます。引数への設定は、データの送信方法によって次のような違いがあります。</p>
+<table class="table" summary="引数設定一覧">
+<tr><th style="width: 15%">Content&nbsp;Type</th><th style="width: 15%">Request&nbsp;Type</th><th style="width: 70%">説明</th></tr>
+<tr><td rowspan="2">application/json</td><td>JSON object</td><td>パス変数、リクエストパラメータの順に上書きされたJSON objectが設定されます（同じキーが複数出現した場合は配列化されます）。</td></tr>
+<tr><td>JSON array</td><td>送信されたJSON arrayを引数リストとして扱います。なお、第一引数がJSON objectである場合には、上記と同様にパス変数、リクエストパラメータ、第一引数の順でデータが上書きされます。
+その他の型や第二引数以降はそのまま設定されます。</td></tr>
+<tr><td colspan="2">URLパラメータ<br />application/x-www-form-urlencoded</td><td>リクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし変換したオブジェクトが設定されます。</td></tr>
+</table>
 
-<p>さきほどの例でidが3のデータを指定する場合はこのようなやりとりになるでしょう。</p>
+<p>さきほどの例でidが3のデータを指定する場合は次のようにします。</p>
 <pre class="console">
 GET /foo/woo/resource.json?id=3 HTTP/1.0
 ...
@@ -386,41 +382,53 @@ Content-Type: application/json
   { "id": 3, "name": "woo", "age": 14 }
 ]
 </pre>
+<p>よりREST的にしたいのであれば、mappingsのパスに <code>/{package}/{class}/{id}.{ext}</code> を定義するなどしてパラメータをURLに含めることなどもできます。</p>
 
 <h3>■ エラーオブジェクト</h3>
 
 <p>エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
 <table class="table" summary="RPC エラー一覧">
-<tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
+<tr><th>エラー内容</th><th>HTTP Status Code</th><th>Message Body</th></tr>
 <tr>
 <td>クラス/メソッドが見つからない<sup>(※15)</sup></td>
 <td>404&nbsp;Not&nbsp;found</td>
+<td>&nbsp;</td>
 </tr>
 <tr>
-<td>送信されたJSONの解析/変換に失敗した<sup>(※16)</sup></td>
+<td>送信されたJSONの解析/変換に失敗した</td>
 <td>400&nbsp;Bad&nbsp;request</td>
+<td>&nbsp;</td>
 </tr>
 <tr>
-<td>その他のエラー</td>
+<td>メソッドの実行中に例外が発生した<sup>(※16)</sup></td>
+<td>400&nbsp;Bad&nbsp;request</td>
+<td><pre style="margin:0;">{
+  "name": 例外オブジェクト#getClass().getSimpleName() の値.
+  "message":  例外オブジェクト#getMessage() の値,
+  "data": 例外オブジェクト（ただし、Throwableクラスに定義されているプロパティは除く）
+}</pre></td>
+</tr>
+<tr>
+<td>その他のエラー（Error例外含む）</td>
 <td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
+<td>&nbsp;</td>
 </tr>
 </table>
 <div class="caption">(※15) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
-<div class="caption">(※16) Convertに失敗した場合だけでなく、メソッドからIllegalStateException、UnsupportedOperationException、Error<b>以外</b>の例外が発生した場合も同じエラーが返されます。
-なお、この場合、発生した例外がJSON objectとしてメッセージボディに設定されます（ただし、Throwableクラスのプロパティは除外されます）。</div>
+<div class="caption">(※16) メソッドからIllegalStateException、UnsupportedOperationExceptionが発生した場合およびError例外が発生した場合は除きます。</div>
 
-<h3 id="jsonp">■ JSONP</h3>
+<h3 id="jsonp">■ JSONP <span class="subtitle">- JSON with padding</span></h3>
 <p>HTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
 <pre class="source">
-&lt;script type="text/javascript" &gt;
-  function call(value) {
-    alert(value);
-  }
-&lt;/script&gt;
+<span class="elem">&lt;script type="text/javascript"&gt;</span>
+    function call(value) {
+        alert(value);
+    }
+<span class="elem">&lt;/script&gt;</span>
 
 ...
 
-&lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
+<span class="elem">&lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;</span>
 </pre>
 
 <h3 id="produces">■ Producesアノテーション <span class="subtitle">- JSON以外のレスポンス</span></h3>
@@ -428,13 +436,16 @@ Content-Type: application/json
 Producesアノテーションの引数には、出力するMIMEタイプを指定します。MIMEタイプは複数指定できますが、ひとつだけ指定した場合のみresponse.setContentType(value)に自動で設定されます。</p>
 <pre class="source">
 public class HogeService {
-  <span class="comment">// format/parse時のキー値を変更</span>
-  <span class="em">@Produces(</span>"text/csv"<span class="em">)</span>
-  public void print() throws IOException {
-    response.setCharcterEncoding("MS932");
-    PrintWriter writer = response.getWriter();
-    writer.write("a,b,c\r\n");
-  }
+    <span class="comment">// 自動インジェクション</span>
+    public HttpServletResponse response;
+    
+    <span class="comment">// format/parse時のキー値を変更</span>
+    <span class="em">@Produces(</span>"text/csv"<span class="em">)</span>
+    public void print() throws IOException {
+        response.setCharcterEncoding("MS932");
+        PrintWriter writer = response.getWriter();
+        writer.write("a,b,c\r\n");
+    }
 }
 </pre>
 
@@ -444,21 +455,21 @@ public class HogeService {
 
 <pre class="source">
 <span class="elem">&lt;servlet&gt;</span>
-  <span class="elem">&lt;servlet-name&gt;</span>rpcServlet or restServlet<span class="elem">&lt;/servlet-name&gt;</span>
-  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.RPCServlet or RESTServlet<span class="elem">&lt;/servlet-class&gt;</span>
-  <span class="elem">&lt;init-param&gt;</span>
-    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
-    <span class="elem">&lt;param-value&gt;</span>
-      <span class="comment">// "container": (net.arnx.jsonic.web.Containerを実装したクラス)</span>
-      <span class="comment">// Seasar2対応Container</span>
-      "container": "net.arnx.jsonic.web.extension.S2Container" 
-      <span class="comment">// Spring Framework対応Container</span>
-      "container": "net.arnx.jsonic.web.extension.SpringContainer"
-      <span class="comment">// Google Guice対応Container</span>
-      "container": "net.arnx.jsonic.web.extension.GuiceContainer"
-      ...
-    <span class="elem">&lt;/param-value&gt;</span>
-  <span class="elem">&lt;/init-param&gt;</span>
+    <span class="elem">&lt;servlet-name&gt;</span>rpcServlet or restServlet<span class="elem">&lt;/servlet-name&gt;</span>
+    <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.RPCServlet or RESTServlet<span class="elem">&lt;/servlet-class&gt;</span>
+    <span class="elem">&lt;init-param&gt;</span>
+        <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+        <span class="elem">&lt;param-value&gt;</span>
+          <span class="comment">// "container": (net.arnx.jsonic.web.Containerを実装したクラス)</span>
+          <span class="comment">// Seasar2対応Container</span>
+          "container": "net.arnx.jsonic.web.extension.S2Container" 
+          <span class="comment">// Spring Framework対応Container</span>
+          "container": "net.arnx.jsonic.web.extension.SpringContainer"
+          <span class="comment">// Google Guice対応Container</span>
+          "container": "net.arnx.jsonic.web.extension.GuiceContainer"
+          ...
+        <span class="elem">&lt;/param-value&gt;</span>
+    <span class="elem">&lt;/init-param&gt;</span>
 <span class="elem">&lt;/servlet&gt;</span>
 </pre>
 
@@ -469,27 +480,31 @@ public class HogeService {
 <li>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、処理の前後に呼び出します（この機能は全コンテナ共通です）。<sup>(※9)</sup></li>
 <li>JSPの暗黙オブジェクトライクなパブリックフィールドベースの簡易DIを提供します。</li>
 </ul>
-<p>暗黙オブジェクトは以下のように設定してください。クラスだけでなくフィールド名も合わせる必要があります。</p>
+<div class="caption">(※9) 呼び出されるメソッド名は設定で変更可能です。</div>
+
+<p>暗黙オブジェクトは以下のように設定してください。クラスだけでなくフィールド名も合わせる必要があります（デフォルトコンテナのみの機能です）。</p>
 <pre class="source">
 public class HogeService {
-  public ServletConfig config;
-  public ServletContext application;
-  public HttpServletRequest request;
-  public HttpServletResponse response;
-  public HttpSession session;
+    public ServletConfig config;
+    public ServletContext application;
+    public HttpServletRequest request;
+    public HttpServletResponse response;
+    public HttpSession session;
 }
 </pre>
 <p>コンテナ自身にHttpServletRequestとHttpServletResponseのDI機能がないSpringContainerに関しては、setterによるインジェクション機能を提供しています（下記例を参照）。</p>
 <pre class="source">
 public class SpringDrivenService {
-  <span class="comment">// setterを用意すると自動で挿入します。プロパティ名を一致させる必要はありません。</span>
-  public void setRequest(HttpServletRequest request) {
-  }
-  public void setResponse(HttpServletResponse response) {
-  }
+    <span class="comment">// setterを用意すると自動で挿入します。プロパティ名を一致させる必要はありません。</span>
+    public void setRequest(HttpServletRequest request) {
+        ...
+    }
+    
+    public void setResponse(HttpServletResponse response) {
+        ...
+    }
 }
 </pre>
-<div class="caption">(※9) 呼び出されるメソッド名は設定で変更可能です。</div>
 
 <h2 id="gatewayfilter">Gatewayフィルタ</h2>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>

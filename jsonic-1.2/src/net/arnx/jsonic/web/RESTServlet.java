@@ -319,7 +319,10 @@ public class RESTServlet extends HttpServlet {
 				return;
 			}
 			
+			cause = container.handleError(cause);
+			
 			response.setStatus(SC_BAD_REQUEST);
+			
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
 			error.put("name", cause.getClass().getSimpleName());
 			error.put("message", cause.getMessage());
