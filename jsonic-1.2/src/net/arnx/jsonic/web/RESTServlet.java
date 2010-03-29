@@ -426,8 +426,7 @@ public class RESTServlet extends HttpServlet {
 
 				if (verb != null && !verb.contains(httpMethod)) {
 					httpMethod = null;
-				}
-				if (!config.verb.contains(httpMethod)) {
+				} else 	if (!config.verb.contains(httpMethod)) {
 					httpMethod = null;
 				}
 				
