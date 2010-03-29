@@ -522,7 +522,6 @@ public class HogeService {
 (※9) Producesアノテーションは、RPCServletでは利用できません。
 </div>
 
-
 <h3>JSONIC 1.1 RESTモードからの変更点</h3>
 <ul>
 <li>[不具合] パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
@@ -531,6 +530,8 @@ public class HogeService {
 <li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 <li>WebServiceServletにあったpreinvokeやpostinvokeがContainerに移動し引数も変更されました。</li>
 <li>呼び出し対象のメソッドを変更できるように設定項目にmethodsとverbを追加しました。</li>
+<li>任意のメソッドを呼び出すための機能を追加しました。</li>
+<li>エラーオブジェクトの形式を変更しました。</li>
 <li>JSON以外のレスポンスを返すことができるように Produces アノテーションを追加しました。</li>
 </ul>
 
