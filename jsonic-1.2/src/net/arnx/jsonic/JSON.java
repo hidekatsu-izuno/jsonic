@@ -1600,7 +1600,7 @@ public class JSON {
 			try {
 				data = deserialize(Base64.decode((String)value));
 			} catch (Exception e) {
-				throw new UnsupportedOperationException(e);
+				throw e;
 			}
 		} else if (hint != null && String.class.equals(hint.type())) {
 			try {

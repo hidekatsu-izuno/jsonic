@@ -122,67 +122,37 @@ public class RESTServlet extends HttpServlet {
 	@Override
 	protected void doHead(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			doREST(request, response);
-		} finally {
-			container.end(request, response);
-		}
+		doREST(request, response);
 	}
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			doREST(request, response);
-		} finally {
-			container.end(request, response);
-		}
+		doREST(request, response);
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			doREST(request, response);
-		} finally {
-			container.end(request, response);
-		}
+		doREST(request, response);
 	}
 	
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			doREST(request, response);
-		} finally {
-			container.end(request, response);
-		}
+		doREST(request, response);
 	}
 	
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			doREST(request, response);
-		} finally {
-			container.end(request, response);
-		}
+		doREST(request, response);
 	}
 	
 	@Override
 	protected void doOptions(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			doREST(request, response);
-		} finally {
-			container.end(request, response);
-		}
+		doREST(request, response);
 	}
 	
 	protected void doREST(HttpServletRequest request, HttpServletResponse response)
@@ -226,13 +196,15 @@ public class RESTServlet extends HttpServlet {
 		}
 		
 		if (route.getHttpMethod() == null || route.getRestMethod() == null) {
+			container.debug("Method mapping not found: " + route.getHttpMethod());
 			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
 			return;			
 		}
 		
-		
 		int status = SC_OK;
 		String callback = null;
+		Object result = null;
+		JSON json = container.createJSON(request.getLocale());
 		
 		if ("GET".equals(request.getMethod())) {
 			callback = route.getParameter("callback");
@@ -240,17 +212,7 @@ public class RESTServlet extends HttpServlet {
 			status = SC_CREATED;
 		}
 		
-		String methodName = route.getRestMethod();
-		if (methodName == null) {
-			container.debug("Method mapping not found: " + route.getHttpMethod());
-			response.sendError(SC_NOT_FOUND, "Not Found");
-			return;
-		}
-		
-		Object result = null;
-		
-		JSON json = container.createJSON(request.getLocale());
-		
+		container.start(request, response);
 		try {
 			Object component = container.getComponent(route.getComponentClass(container));
 			if (component == null) {
@@ -280,7 +242,7 @@ public class RESTServlet extends HttpServlet {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
 			}
-			Method method = container.getMethod(component, methodName, params);
+			Method method = container.getMethod(component, route.getRestMethod(), params);
 			if (method == null) {
 				throw new NoSuchMethodException("Method not found: " + route.getRestMethod());					
 			}
@@ -332,6 +294,8 @@ public class RESTServlet extends HttpServlet {
 			container.error("Internal error occurred.", e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
 			return;
+		} finally {
+			container.end(request, response);
 		}
 		
 		if (result == null

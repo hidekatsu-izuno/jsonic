@@ -102,12 +102,7 @@ public class RPCServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		container.start(request, response);
-		try {
-			doRPC(request, response);
-		} finally {
-			container.end(request, response);
-		}
+		doRPC(request, response);
 	}
 	
 	protected void doRPC(HttpServletRequest request, HttpServletResponse response)
@@ -157,7 +152,8 @@ public class RPCServlet extends HttpServlet {
 		Object component = null;
 		
 		JSON json = container.createJSON(request.getLocale());
-				
+		
+		container.start(request, response);
 		try {
 			// request processing
 			Object value = json.parse(request.getReader());
@@ -168,6 +164,135 @@ public class RPCServlet extends HttpServlet {
 				requestList = Arrays.asList(value);
 			} else {
 				throw new IllegalArgumentException("Request is empty.");
+			}
+			
+			for (int i = 0; i < requestList.size(); i++) {
+				Map<?,?> req = (Map<?,?>)requestList.get(i);
+				
+				String rjsonrpc = null;
+				String rmethod = null;
+				Object rparams = null;
+				Object rid = null;
+				
+				Object result = null;
+				Map<String, Object> error = null;
+	
+				try {
+					if (req.get("jsonrpc") == null || "2.0".equals(req.get("jsonrpc"))) {
+						rjsonrpc = (String)req.get("jsonrpc");
+					} else {
+						throw new IllegalArgumentException("jsonrpc is unrecognized version: " + req.get("jsonrpc"));
+					}
+					
+					if (req.get("method") instanceof String) {
+						rmethod = (String)req.get("method");
+						if (rjsonrpc != null && rmethod.startsWith("rpc.")) {
+							container.warn("Method names that begin with 'rpc.' are reserved for system extensions.");
+						}
+					} else {
+						throw new IllegalArgumentException("method must " + ((req.get("method") == null) ? "not be null." : "be string."));
+					}
+					
+					if (req.get("params") instanceof List<?> || (rjsonrpc != null && req.get("params") instanceof Map<?, ?>)) {
+						rparams = req.get("params");
+					} else if (rjsonrpc != null && req.get("params") == null) {
+						rparams = new ArrayList<Object>(0);
+					} else {
+						throw new IllegalArgumentException("params must be array" + ((rjsonrpc != null) ? " or object." : "."));
+					}
+					
+					if (rjsonrpc == null || (req.get("id") == null || req.get("id") instanceof String || req.get("id") instanceof Number)) {
+						rid = req.get("id");
+					} else {
+						throw new IllegalArgumentException("id must be string, number or null.");
+					}
+					
+					String subcompName = null;
+					String methodName = rmethod;
+					if (route.getParameter("class") == null) {
+						int sep = rmethod.lastIndexOf('.');
+						subcompName = (sep != -1) ? rmethod.substring(0, sep) : null;
+						methodName = (sep != -1) ? rmethod.substring(sep+1) : rmethod;
+					}
+					
+					component = container.getComponent(route.getComponentClass(container, subcompName));
+					if (component == null) {
+						throw new NoSuchMethodException("Method not found: " + rmethod);
+					}
+					
+					List<?> params = (rparams instanceof List<?>) ? (List<?>)rparams : Arrays.asList(rparams);
+					Method method = container.getMethod(component, methodName, params);
+					if (method == null) {
+						throw new NoSuchMethodException("Method not found: " + rmethod);					
+					}
+					
+					Produces produces = method.getAnnotation(Produces.class);
+					if (produces == null) {
+						json.setContext(component);
+						result = container.execute(json, component, method, params);
+					} else {
+						container.debug("Produces annotaion is not usable in RPCServlet.");
+						throw new NoSuchMethodException("Method not found: " + rmethod);
+					}
+				} catch (Exception e) {
+					error = new LinkedHashMap<String, Object>();
+					if (e instanceof IllegalArgumentException) {
+						container.debug("Invalid Request.", e);
+						error.put("code", -32600);
+						error.put("message", "Invalid Request.");
+					} else if (e instanceof ClassNotFoundException) {
+						container.debug("Class Not Found.", e);
+						error.put("code", -32601);
+						error.put("message", "Method not found.");
+					} else if (e instanceof NoSuchMethodException) {
+						container.debug("Method Not Found.", e);
+						error.put("code", -32601);
+						error.put("message", "Method not found.");
+					} else if (e instanceof InvocationTargetException) {
+						Throwable cause = e.getCause();
+						container.debug("Fails to invoke method.", cause);
+						if (cause instanceof Exception) {
+							if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
+								error.put("code", -32601);
+								error.put("message", "Method not found.");
+							} else if (cause instanceof IllegalArgumentException) {
+								error.put("code", -32602);
+								error.put("message", "Invalid params.");
+							} else {
+								cause = container.handleError(cause);
+								int errorCode = -32603;
+								for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
+									if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
+										errorCode = entry.getValue();
+										break;
+									}
+								}
+								error.put("code", errorCode);
+								error.put("message", cause.getMessage());
+							}
+						} else {
+							throw (Error)cause;
+						}
+					} else {
+						container.error("Internal error occurred.", e);
+						error.put("code", -32603);
+						error.put("message", "Internal error.");
+					}
+					error.put("data", e);
+				}
+				
+				// it's notification when id was null
+				if (rmethod != null && (rjsonrpc == null && rid == null) || (rjsonrpc != null && req != null && !req.containsKey("id"))) {
+					continue;
+				}
+				
+				Map<String, Object> responseData = new LinkedHashMap<String, Object>();
+				if (rjsonrpc != null) responseData.put("jsonrpc", rjsonrpc);
+				if (rjsonrpc == null || result != null) responseData.put("result", result);
+				if (rjsonrpc == null || error != null) responseData.put("error", error);
+				responseData.put("id", rid);
+				
+				responseList.add(responseData);
 			}
 		} catch (Exception e) {
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
@@ -194,135 +319,8 @@ public class RPCServlet extends HttpServlet {
 			responseData.put("id", null);
 			
 			responseList.add(responseData);
-		}
-		
-		for (int i = 0; i < requestList.size(); i++) {
-			Map<?,?> req = (Map<?,?>)requestList.get(i);
-			
-			String rjsonrpc = null;
-			String rmethod = null;
-			Object rparams = null;
-			Object rid = null;
-			
-			Object result = null;
-			Map<String, Object> error = null;
-
-			try {
-				if (req.get("jsonrpc") == null || "2.0".equals(req.get("jsonrpc"))) {
-					rjsonrpc = (String)req.get("jsonrpc");
-				} else {
-					throw new IllegalArgumentException("jsonrpc is unrecognized version: " + req.get("jsonrpc"));
-				}
-				
-				if (req.get("method") instanceof String) {
-					rmethod = (String)req.get("method");
-					if (rjsonrpc != null && rmethod.startsWith("rpc.")) {
-						container.warn("Method names that begin with 'rpc.' are reserved for system extensions.");
-					}
-				} else {
-					throw new IllegalArgumentException("method must " + ((req.get("method") == null) ? "not be null." : "be string."));
-				}
-				
-				if (req.get("params") instanceof List<?> || (rjsonrpc != null && req.get("params") instanceof Map<?, ?>)) {
-					rparams = req.get("params");
-				} else if (rjsonrpc != null && req.get("params") == null) {
-					rparams = new ArrayList<Object>(0);
-				} else {
-					throw new IllegalArgumentException("params must be array" + ((rjsonrpc != null) ? " or object." : "."));
-				}
-				
-				if (rjsonrpc == null || (req.get("id") == null || req.get("id") instanceof String || req.get("id") instanceof Number)) {
-					rid = req.get("id");
-				} else {
-					throw new IllegalArgumentException("id must be string, number or null.");
-				}
-				
-				String subcompName = null;
-				String methodName = rmethod;
-				if (route.getParameter("class") == null) {
-					int sep = rmethod.lastIndexOf('.');
-					subcompName = (sep != -1) ? rmethod.substring(0, sep) : null;
-					methodName = (sep != -1) ? rmethod.substring(sep+1) : rmethod;
-				}
-				
-				component = container.getComponent(route.getComponentClass(container, subcompName));
-				if (component == null) {
-					throw new NoSuchMethodException("Method not found: " + rmethod);
-				}
-				
-				List<?> params = (rparams instanceof List<?>) ? (List<?>)rparams : Arrays.asList(rparams);
-				Method method = container.getMethod(component, methodName, params);
-				if (method == null) {
-					throw new NoSuchMethodException("Method not found: " + rmethod);					
-				}
-				
-				Produces produces = method.getAnnotation(Produces.class);
-				if (produces == null) {
-					json.setContext(component);
-					result = container.execute(json, component, method, params);
-				} else {
-					container.debug("Produces annotaion is not usable in RPCServlet.");
-					throw new NoSuchMethodException("Method not found: " + rmethod);
-				}
-			} catch (Exception e) {
-				error = new LinkedHashMap<String, Object>();
-				if (e instanceof IllegalArgumentException) {
-					container.debug("Invalid Request.", e);
-					error.put("code", -32600);
-					error.put("message", "Invalid Request.");
-				} else if (e instanceof ClassNotFoundException) {
-					container.debug("Class Not Found.", e);
-					error.put("code", -32601);
-					error.put("message", "Method not found.");
-				} else if (e instanceof NoSuchMethodException) {
-					container.debug("Method Not Found.", e);
-					error.put("code", -32601);
-					error.put("message", "Method not found.");
-				} else if (e instanceof InvocationTargetException) {
-					Throwable cause = e.getCause();
-					container.debug("Fails to invoke method.", cause);
-					if (cause instanceof Exception) {
-						if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
-							error.put("code", -32601);
-							error.put("message", "Method not found.");
-						} else if (cause instanceof IllegalArgumentException) {
-							error.put("code", -32602);
-							error.put("message", "Invalid params.");
-						} else {
-							cause = container.handleError(cause);
-							int errorCode = -32603;
-							for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
-								if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
-									errorCode = entry.getValue();
-									break;
-								}
-							}
-							error.put("code", errorCode);
-							error.put("message", cause.getMessage());
-						}
-					} else {
-						throw (Error)cause;
-					}
-				} else {
-					container.error("Internal error occurred.", e);
-					error.put("code", -32603);
-					error.put("message", "Internal error.");
-				}
-				error.put("data", e);
-			}
-			
-			// it's notification when id was null
-			if (rmethod != null && (rjsonrpc == null && rid == null) || (rjsonrpc != null && req != null && !req.containsKey("id"))) {
-				continue;
-			}
-			
-			Map<String, Object> responseData = new LinkedHashMap<String, Object>();
-			if (rjsonrpc != null) responseData.put("jsonrpc", rjsonrpc);
-			if (rjsonrpc == null || result != null) responseData.put("result", result);
-			if (rjsonrpc == null || error != null) responseData.put("error", error);
-			responseData.put("id", rid);
-			
-			responseList.add(responseData);
+		} finally {
+			container.end(request, response);
 		}
 		
 		// it's notification when id was null for all requests.
