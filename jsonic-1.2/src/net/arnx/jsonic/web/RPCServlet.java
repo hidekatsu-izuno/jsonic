@@ -252,6 +252,7 @@ public class RPCServlet extends HttpServlet {
 						Throwable cause = e.getCause();
 						container.debug("Fails to invoke method.", cause);
 						if (cause instanceof Exception) {
+							cause = container.handleError(cause);
 							if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
 								error.put("code", -32601);
 								error.put("message", "Method not found.");
@@ -259,7 +260,6 @@ public class RPCServlet extends HttpServlet {
 								error.put("code", -32602);
 								error.put("message", "Invalid params.");
 							} else {
-								cause = container.handleError(cause);
 								int errorCode = -32603;
 								for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
 									if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
