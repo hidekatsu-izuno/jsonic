@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ import static net.arnx.jsonic.web.Container.*;
 
 public class RESTServlet extends HttpServlet {
 	static final Map<String, String> DEFAULT_METHOD = new HashMap<String, String>();
-	static final Set<String> DEFAULT_VERB;
+	static final Set<String> DEFAULT_VERB = new HashSet<String>();
 	
 	static {
 		DEFAULT_METHOD.put("GET", "find");
@@ -59,7 +60,12 @@ public class RESTServlet extends HttpServlet {
 		DEFAULT_METHOD.put("PUT", "update");
 		DEFAULT_METHOD.put("DELETE", "delete");
 		
-		DEFAULT_VERB = DEFAULT_METHOD.keySet();
+		DEFAULT_VERB.add("HEAD");
+		DEFAULT_VERB.add("GET");
+		DEFAULT_VERB.add("POST");
+		DEFAULT_VERB.add("PUT");
+		DEFAULT_VERB.add("DELETE");
+		DEFAULT_VERB.add("OPTIONS");
 	}
 	
 	static class Config {

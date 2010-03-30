@@ -442,7 +442,7 @@ Content-Type: application/json
     <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
 <span class="elem">&lt;/servlet-mapping&gt;</span>
 </pre>
-<p>configで設定できる値は次の通りです（verbを除き、RPCServletと同じです）。</p>
+<p>configで設定できる値は次の通りです（method, verbを除き、RPCServletと同じです）。</p>
 <table class="table" summary="Config設定">
 <tr><th style="width:15%">キー</th><th style="width:25%">値型</th><th style="width:60%">説明</th></tr>
 <tr><td>container</td><td><code>net.arnx.jsonic.web.Container</code></td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、<code>net.arnx.jsonic.web.Container</code>です。</td></tr>
@@ -456,18 +456,20 @@ Content-Type: application/json
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
 <tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトではThrowableのメソッドのみ無視するJSONクラスが設定されます。</td></tr>
 <tr><td>namingConversion</td><td>boolean</td><td>呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
-<tr><td>verb</td><td><code>java.util.Set&lt;String&gt;</code></td><td>使用できるHTTP Methodを制限します。デフォルトは、<code>["GET", "POST", "PUT", "DELETE"]</code>です。追加すれば HEAD、OPTIONS の利用も可能です。</td></tr>
+<tr><td>method</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>HTTP Methodに対応するメソッド名を設定します。デフォルトは、<code>{ "GET": "find", "POST": "create", "PUT": "update", "DELETE": "delete" }</code>です。なお、パス変数にmethodが設定されている場合は無視されます。</td></tr>
+<tr><td>verb</td><td><code>java.util.Set&lt;String&gt;</code></td><td>使用できるHTTP Methodを制限します。デフォルトは、<code>["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS"]</code>です。HEADとOPTIONSを使う場合は、methodも対応付ける必要があります。</td></tr>
 </table>
 <div class="caption">
 (※9) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
-<p>なお、<code>definitions, verb</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
+<p>なお、<code>definitions, method, verb</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
 <pre class="source">
     "mappings": {
         "/{package}/{class}.json": {
             "target": "sample.web.${package}.service.${class}Service",
             "definitions": { "class": "[a-z]+" },
+            "method": { "GET": "print" },
             "verb": [ "GET" ]
         },
         ...
