@@ -33,7 +33,7 @@
 			<param-value>
 				debug: true
 				mappings: {
-					'/{package}/{class}.{method}.json': {
+					'/{package}/{class}.{method:print}.json': {
 						'target': 'sample.basic.web.${package}.service.${class}Service', 
 						'verb': ['GET']
 					},

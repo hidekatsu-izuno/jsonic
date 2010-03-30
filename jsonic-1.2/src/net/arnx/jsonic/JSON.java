@@ -2137,7 +2137,25 @@ public class JSON {
 				data = null; // ignored
 			} else if (Map.class.isAssignableFrom(c)) {
 				Map<Object, Object> map = (Map)create(context, c);
-				map.put((hint.anonym().length() > 0) ? hint.anonym() : null, value);
+				Object key = (hint.anonym().length() > 0) ? hint.anonym() : value;
+				value = (hint.anonym().length() > 0) ? value : null;
+				if (type instanceof ParameterizedType) {
+					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
+					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
+					Class<?> pc0 = getRawType(pt0);
+					Class<?> pc1 = getRawType(pt1);
+					
+					context.enter('.');
+					key = postparse(context, key, pc0, pt0);
+					context.exit();
+					
+					context.enter(key);
+					map.put(key, postparse(context, value, pc1, pt1));
+					context.exit();
+				} else {
+					map.put(value, null);
+				}
 				data = map;
 			} else if (hint.anonym().length() > 0) {
 				Map<String, AnnotatedElement> props = context.getSetProperties(c);

@@ -53,8 +53,7 @@
 				mappings: {
 					'/{package}/{class}.{method}.json': {
 						'target': 'sample.guice.web.${package}.service.${class}Service', 
-						'methods': {'DELETE': 'remove'},
-						'verb': 'GET'
+						'verb': ['GET']
 					},
 					'/{package}/{class}/{id}.json': 'sample.guice.web.${package}.service.${class}Service',
 					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
