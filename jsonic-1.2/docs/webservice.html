@@ -197,7 +197,7 @@ Content-Type: application/json
 }</pre></td>
 </tr>
 <tr>
-<td>methodで指定したクラス/メソッドが見つからない<sup>(※10)</sup></td>
+<td>methodで指定したクラス/メソッドが見つからない<sup>(※1)</sup></td>
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32601,
@@ -205,7 +205,7 @@ Content-Type: application/json
 }</pre></td>
 </tr>
 <tr>
-<td>paramsが不適切<sup>(※11)</sup></td>
+<td>paramsが不適切<sup>(※2)</sup></td>
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
   "code": -32602,
@@ -235,8 +235,8 @@ Content-Type: application/json
 }</pre></td>
 </tr>
 </table>
-<div class="caption">(※10) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
-<div class="caption">(※11) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※1) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※2) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
 
 <h3 id="configuration">■ 設定方法</h3>
 <p>RPC サーブレットは、web.xmlにRPCServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
@@ -271,7 +271,7 @@ Content-Type: application/json
 <tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
 <tr><td>debug</td><td><code>java.lang.Boolean</code></td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
 <tr><td>mappings</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>URLパスとクラスのマッピングを行います。
-パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※9)</sup>。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、変数の定義を設定することができます（definitionsより優先します）。</td></tr>
+パス中の<code>{<i>name</i>}</code>で囲まれた部分はパス変数として、クラス名の<code>${<i>name</i>}</code>に置換されたりメソッドの引数に設定されます<sup>(※3)</sup>。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、変数の定義を設定することができます（definitionsより優先します）。</td></tr>
 <tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/().]+</code>が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
@@ -280,7 +280,7 @@ Content-Type: application/json
 <tr><td>errors</td><td><code>java.util.Map&lt;Class&lt; extends Exception&gt;, Integer&gt;</code></td><td>Exceptionクラスとエラーコードのマッピングを行います。</td></tr>
 </table>
 <div class="caption">
-(※9) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
+(※3) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
 また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
@@ -313,7 +313,7 @@ Content-Type: application/json
 <h3>■ RESTサーブレットの概要</h3>
 
 <p>RESTサーブレットを使うと、GET/POST/PUT/DELETEなどのHTTP Methodに従って、対象となったクラスのメソッドが呼び出されます。その後、戻り値がJSONに変換されクライアントに返されます。</p>
-<p>HTTP MethodとJava メソッド名のデフォルトのマッピングは次の通りです<sup>(※12)</sup>。</p>
+<p>HTTP MethodとJava メソッド名のデフォルトのマッピングは次の通りです<sup>(※4)</sup>。</p>
 <table class="table" summary="REST Method マッピング">
 <tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
 <tr><td>GET</td><td>find</td><td>リクエストパラメータを<code>.</code>あるいは<code>[]</code>で区切られた階層構造とみなし引数の型に従い変換し設定されます。</td></tr>
@@ -323,7 +323,7 @@ Content-Typeが「<code>application/x-www-form-urlencoded</code>」の時はリ�
 <tr><td>DELETE</td><td>delete</td></tr>
 </table>
 <div class="caption">
-(※12) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
+(※4) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
 </div>
 
 <p>例えば、mappingsに <code>"/{package}/{class}.{ext}": "boo.${package}.${class}Service"</code> という指定があった場合、 <code>/foo/woo/resource.json</code>というパスをGETすると、<code>boo.foo.woo.ResourceService</code>クラスの<code>find</code>が呼び出されます。</p>
@@ -342,7 +342,7 @@ public class ResourceService {
 	}
 }
 </pre>
-<p>この時、レスポンスのメッセージボディとしては次のような結果が返されるかもしれません<sup>(※13)</sup>。</p>
+<p>この時、レスポンスのメッセージボディとしては次のような結果が返されるかもしれません<sup>(※5)</sup>。</p>
 <pre class="console">
 HTTP/1.0 200 OK
 ...
@@ -355,7 +355,7 @@ Content-Type: application/json
 ]
 </pre>
 <div class="caption">
-(※13) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
+(※5) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
 </div>
 <p>引数には送信されたデータが指定された型に従い変換され設定されます。引数への設定は、データの送信方法によって次のような違いがあります。</p>
 <table class="table" summary="引数設定一覧">
@@ -389,7 +389,7 @@ Content-Type: application/json
 <table class="table" summary="RPC エラー一覧">
 <tr><th>エラー内容</th><th>HTTP Status Code</th><th>Message Body</th></tr>
 <tr>
-<td>クラス/メソッドが見つからない<sup>(※15)</sup></td>
+<td>クラス/メソッドが見つからない<sup>(※6)</sup></td>
 <td>404&nbsp;Not&nbsp;found</td>
 <td>&nbsp;</td>
 </tr>
@@ -399,7 +399,7 @@ Content-Type: application/json
 <td>&nbsp;</td>
 </tr>
 <tr>
-<td>メソッドの実行中に例外が発生した<sup>(※16)</sup></td>
+<td>メソッドの実行中に例外が発生した<sup>(※7)</sup></td>
 <td>400&nbsp;Bad&nbsp;request</td>
 <td><pre style="margin:0;">{
   "name": 例外オブジェクト#getClass().getSimpleName() の値.
@@ -413,8 +413,8 @@ Content-Type: application/json
 <td>&nbsp;</td>
 </tr>
 </table>
-<div class="caption">(※15) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
-<div class="caption">(※16) メソッドからIllegalStateException、UnsupportedOperationExceptionが発生した場合およびError例外が発生した場合は除きます。</div>
+<div class="caption">(※6) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
+<div class="caption">(※7) メソッドからIllegalStateException、UnsupportedOperationExceptionが発生した場合およびError例外が発生した場合は除きます。</div>
 
 <h3 id="configuration">■ 設定方法</h3>
 <p>REST サーブレットは、web.xmlにRESTServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
@@ -450,7 +450,7 @@ Content-Type: application/json
 <tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
 <tr><td>debug</td><td><code>java.lang.Boolean</code></td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
 <tr><td>mappings</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>URLパスとクラスのマッピングを行います。
-パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※9)</sup>。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、変数の定義を設定することができます（definitionsより優先します）。</td></tr>
+パス中の<code>{<i>name</i>}</code>で囲まれた部分はパス変数として、クラス名の<code>${<i>name</i>}</code>に置換されたりメソッドの引数に設定されます<sup>(※8)</sup>。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、変数の定義を設定することができます（definitionsより優先します）。</td></tr>
 <tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/().]+</code>が設定されたものと扱われます。</td></tr>
 <tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
@@ -460,7 +460,7 @@ Content-Type: application/json
 <tr><td>verb</td><td><code>java.util.Set&lt;String&gt;</code></td><td>使用できるHTTP Methodを制限します。デフォルトは、<code>["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS"]</code>です。HEADとOPTIONSを使う場合は、methodも対応付ける必要があります。</td></tr>
 </table>
 <div class="caption">
-(※9) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。また、URLパスにはコンテキストパスを含める必要はありません。
+(※8) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
 <p>なお、<code>definitions, method, verb</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
