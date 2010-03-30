@@ -2820,6 +2820,7 @@ class ReaderParserSource implements ParserSource {
 	}
 	
 	public void back() {
+		offset--;
 		columns--;
 		start = (start+buf.length-1) % buf.length;
 	}

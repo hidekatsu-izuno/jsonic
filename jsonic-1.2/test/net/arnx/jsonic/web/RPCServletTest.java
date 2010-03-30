@@ -131,7 +131,19 @@ public class RPCServletTest {
 		write(con, "");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), 
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\"},\"id\":null}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
+		// POST
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{a*");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"Parse error.\",\"data\":{\"columnNumber\":4,\"errorCode\":200,\"errorOffset\":3,\"lineNumber\":1}},\"id\":null}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 
@@ -164,7 +176,7 @@ public class RPCServletTest {
 		write(con, "{\"method\":\"calc.plus\",\"params\":[1,2],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\"},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
@@ -185,7 +197,7 @@ public class RPCServletTest {
 		write(con, "{\"method\":\"calc.init\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\"},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
@@ -196,7 +208,7 @@ public class RPCServletTest {
 		write(con, "{\"method\":\"calc.destroy\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+		assertEquals(JSON.decode("{\"result\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found.\"},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
@@ -228,7 +240,7 @@ public class RPCServletTest {
 		write(con, "[]");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\",\"data\":{}},\"id\":null}"), JSON.decode(read(con.getInputStream())));
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"Invalid Request.\"},\"id\":null}"), JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
 		con = (HttpURLConnection)url.openConnection();
@@ -249,7 +261,7 @@ public class RPCServletTest {
 		write(con, "{\"jsonrpc\":\"2.0\",\"method\":\"calc.init\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\"},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
@@ -260,7 +272,7 @@ public class RPCServletTest {
 		write(con, "{\"jsonrpc\":\"2.0\",\"method\":\"calc.destroy\",\"params\":[],\"id\":1}");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":1}"), 
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\"},\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
@@ -279,7 +291,7 @@ public class RPCServletTest {
 		assertEquals(SC_OK, con.getResponseCode());
 		assertEquals(JSON.decode("["
 				+ "{\"jsonrpc\":\"2.0\",\"result\":3,\"id\":1},"
-				+ "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\",\"data\":{}},\"id\":2},"
+				+ "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found.\"},\"id\":2},"
 				+ "{\"jsonrpc\":\"2.0\",\"result\":5,\"id\":3},"
 				+ "{\"jsonrpc\":\"2.0\",\"result\":6,\"id\":null}"
 			+ "]"), JSON.decode(read(con.getInputStream())));

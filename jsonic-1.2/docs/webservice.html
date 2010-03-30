@@ -218,7 +218,11 @@ Content-Type: application/json
 <td><pre style="margin:0;">{
   "code": -32700,
   "message": "Parse error.",
-  "data": {}
+  "data": {
+    "columnNumber": エラーが発生した列番号,
+    "errorOffset": エラーが発生した位置,
+    "lineNumber": エラーが発生した行番号
+  }
 }</pre></td>
 </tr>
 <tr>
