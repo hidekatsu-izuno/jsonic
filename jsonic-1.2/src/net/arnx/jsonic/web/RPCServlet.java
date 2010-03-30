@@ -248,6 +248,10 @@ public class RPCServlet extends HttpServlet {
 						container.debug("Method Not Found.", e);
 						error.put("code", -32601);
 						error.put("message", "Method not found.");
+					} else if (e instanceof JSONException) {
+						container.debug("Invalid params.", e);
+						error.put("code", -32602);
+						error.put("message", "Invalid params.");
 					} else if (e instanceof InvocationTargetException) {
 						Throwable cause = e.getCause();
 						container.debug("Fails to invoke method.", cause);
@@ -268,7 +272,7 @@ public class RPCServlet extends HttpServlet {
 									}
 								}
 								error.put("code", errorCode);
-								error.put("message", cause.getMessage());
+								error.put("message",  cause.getClass().getSimpleName() + ": " + cause.getMessage());
 							}
 						} else {
 							throw (Error)cause;
