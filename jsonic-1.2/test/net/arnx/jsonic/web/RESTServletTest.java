@@ -219,6 +219,15 @@ public class RESTServletTest {
 		con.disconnect();
 		
 		System.out.println("<<END testRest: " + app + ">>\n");
+		
+		// methods specified
+		con = (HttpURLConnection)new URL(url + ".print.json").openConnection();
+		con.setRequestMethod("GET");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		con.disconnect();
+		
+		System.out.println("<<END testRest: " + app + ">>\n");
 	}
 	
 	@Test

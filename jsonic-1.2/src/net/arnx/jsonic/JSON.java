@@ -2137,8 +2137,7 @@ public class JSON {
 				data = null; // ignored
 			} else if (Map.class.isAssignableFrom(c)) {
 				Map<Object, Object> map = (Map)create(context, c);
-				Object key = (hint.anonym().length() > 0) ? hint.anonym() : value;
-				value = (hint.anonym().length() > 0) ? value : null;
+				Object key = (hint.anonym().length() > 0) ? hint.anonym() : null;
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
