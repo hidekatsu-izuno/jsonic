@@ -273,6 +273,7 @@ public class RPCServlet extends HttpServlet {
 								}
 								error.put("code", errorCode);
 								error.put("message",  cause.getClass().getSimpleName() + ": " + cause.getMessage());
+								error.put("data", e);
 							}
 						} else {
 							throw (Error)cause;
@@ -282,7 +283,6 @@ public class RPCServlet extends HttpServlet {
 						error.put("code", -32603);
 						error.put("message", "Internal error.");
 					}
-					error.put("data", e);
 				}
 				
 				// it's notification when id was null
