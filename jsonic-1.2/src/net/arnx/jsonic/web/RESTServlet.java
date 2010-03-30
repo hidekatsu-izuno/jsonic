@@ -259,7 +259,7 @@ public class RESTServlet extends HttpServlet {
 				return;
 			}
 		} catch (ClassNotFoundException e) {
-			t = e;			
+			t = e;
 			container.debug("Class Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
 		} catch (NoSuchMethodException e) {
