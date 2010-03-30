@@ -222,10 +222,7 @@ public class RESTServlet extends HttpServlet {
 			}
 			
 			List<Object> params = null;
-			if (!isJSONType(request.getContentType())) {
-				params = new ArrayList<Object>(1);
-				params.add(route.getParameterMap());
-			} else {
+			if (isJSONType(request.getContentType())) {
 				Object o = json.parse(request.getReader());
 				if (o instanceof List<?>) {
 					params = cast(o);
@@ -241,7 +238,11 @@ public class RESTServlet extends HttpServlet {
 				} else {
 					throw new IllegalArgumentException("failed to convert parameters from JSON.");
 				}
+			} else {
+				params = new ArrayList<Object>(1);
+				params.add(route.getParameterMap());				
 			}
+			
 			Method method = container.getMethod(component, route.getRestMethod(), params);
 			if (method == null) {
 				throw new NoSuchMethodException("Method not found: " + route.getRestMethod());					
