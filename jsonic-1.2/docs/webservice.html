@@ -265,7 +265,7 @@ Content-Type: application/json
 </pre>
 <p>configで設定できる値は次の通りです（errorsを除き、RESTServletと同じです）。</p>
 <table class="table" summary="Config設定">
-<tr><th style="width:15%">キー</th><th style="width:25%">値型</th><th style="width:60%">説明</th></tr>
+<tr><th style="width:15%">キー</th><th style="width:30%">値型</th><th style="width:55%">説明</th></tr>
 <tr><td>container</td><td><code>net.arnx.jsonic.web.Container</code></td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、<code>net.arnx.jsonic.web.Container</code>です。</td></tr>
 <tr><td>encoding</td><td><code>java.lang.String</code></td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
 <tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
@@ -444,7 +444,7 @@ Content-Type: application/json
 </pre>
 <p>configで設定できる値は次の通りです（method, verbを除き、RPCServletと同じです）。</p>
 <table class="table" summary="Config設定">
-<tr><th style="width:15%">キー</th><th style="width:25%">値型</th><th style="width:60%">説明</th></tr>
+<tr><th style="width:15%">キー</th><th style="width:30%">値型</th><th style="width:55%">説明</th></tr>
 <tr><td>container</td><td><code>net.arnx.jsonic.web.Container</code></td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、<code>net.arnx.jsonic.web.Container</code>です。</td></tr>
 <tr><td>encoding</td><td><code>java.lang.String</code></td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
 <tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
@@ -514,7 +514,7 @@ public class HogeService {
         writer.write("a,b,c\r\n");
         
         <span class="comment">// バッファをフラッシュして、出力を確定させる</span>
-        response.flushBuffer();
+        <span class="elem">response.flushBuffer();</span>
     }
 }
 </pre>
