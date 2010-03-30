@@ -35,7 +35,7 @@
 				mappings: {
 					'/{package}/{class}.{method:print}.json': {
 						'target': 'sample.basic.web.${package}.service.${class}Service', 
-						'verb': ['GET']
+						'verb': 'GET'
 					},
 					'/{package}/{class}/{id}.json': {
 						'target': 'sample.basic.web.${package}.service.${class}Service',

@@ -156,6 +156,16 @@ public class RESTServletTest {
 		assertEquals(SC_NO_CONTENT, con.getResponseCode());
 		con.disconnect();
 		
+		// POST
+		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{title:\"title\",text:\"text\"}");
+		con.connect();
+		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
+		con.disconnect();
+		
 		// DELETE
 		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
 		con.setRequestMethod("DELETE");

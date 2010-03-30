@@ -70,11 +70,14 @@
 				container: net.arnx.jsonic.web.extension.S2Container
 				debug: true
 				mappings: {
-					'/{package}/{class}.{method}.json': {
+					'/{package}/{class}.{method:print}.json': {
 						'target': 'sample.seasar2.web.${package}.service.${class}Service', 
-						'verb': ['GET']
+						'verb': 'GET'
 					},
-					'/{package}/{class}/{id}.json': 'sample.seasar2.web.${package}.service.${class}Service',
+					'/{package}/{class}/{id}.json': {
+						'target': 'sample.seasar2.web.${package}.service.${class}Service',
+						'verb': ['GET', 'PUT', 'DELETE']
+					},
 					'/{package}/{class}.json': 'sample.seasar2.web.${package}.service.${class}Service'
 				}
 			</param-value>
