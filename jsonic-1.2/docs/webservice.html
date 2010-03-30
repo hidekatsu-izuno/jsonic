@@ -428,7 +428,7 @@ Content-Type: application/json
         {
             "debug": true,
             "mappings": {
-                "/{package}/{class}/{id:\d+}.json": "sample.web.${package}.service.${class}Service",
+                "/{package}/{class}/{id:[0-9]+}.json": "sample.web.${package}.service.${class}Service",
                 "/{package}/{class}.json": "sample.web.${package}.service.${class}Service",
                 "/{class}.json": "sample.${class}Service"
             }
