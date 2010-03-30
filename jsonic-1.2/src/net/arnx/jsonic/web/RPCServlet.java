@@ -226,14 +226,8 @@ public class RPCServlet extends HttpServlet {
 						throw new NoSuchMethodException("Method not found: " + rmethod);					
 					}
 					
-					Produces produces = method.getAnnotation(Produces.class);
-					if (produces == null) {
-						json.setContext(component);
-						result = container.execute(json, component, method, params);
-					} else {
-						container.debug("Produces annotaion is not usable in RPCServlet.");
-						throw new NoSuchMethodException("Method not found: " + rmethod);
-					}
+					json.setContext(component);
+					result = container.execute(json, component, method, params);
 				} catch (Exception e) {
 					error = new LinkedHashMap<String, Object>();
 					if (e instanceof IllegalArgumentException) {
@@ -320,6 +314,8 @@ public class RPCServlet extends HttpServlet {
 		} finally {
 			container.end(request, response);
 		}
+		
+		if (response.isCommitted()) return;
 		
 		// it's notification when id was null for all requests.
 		if (responseList.isEmpty()) {

@@ -29,11 +29,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,19 +49,13 @@ import static javax.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
 
 public class RESTServlet extends HttpServlet {
-	static final Map<String, String> DEFAULT_METHODS = new HashMap<String, String>();
-	static final Set<String> DEFAULT_VERB = new HashSet<String>();
+	static final Map<String, String> DEFAULT_VERB = new HashMap<String, String>();
 	
 	static {
-		DEFAULT_METHODS.put("GET", "find");
-		DEFAULT_METHODS.put("POST", "create");
-		DEFAULT_METHODS.put("PUT", "update");
-		DEFAULT_METHODS.put("DELETE", "delete");
-		
-		DEFAULT_VERB.add("GET");
-		DEFAULT_VERB.add("POST");
-		DEFAULT_VERB.add("PUT");
-		DEFAULT_VERB.add("DELETE");		
+		DEFAULT_VERB.put("GET", "find");
+		DEFAULT_VERB.put("POST", "create");
+		DEFAULT_VERB.put("PUT", "update");
+		DEFAULT_VERB.put("DELETE", "delete");
 	}
 	
 	static class Config {
@@ -73,8 +65,7 @@ public class RESTServlet extends HttpServlet {
 		public Map<String, RouteMapping> mappings;
 		
 		public Map<String, Pattern> definitions;
-		public Map<String, String> methods;
-		public Set<String> verb;
+		public Map<String, String> verb;
 	}
 	
 	protected Container container;
@@ -110,7 +101,6 @@ public class RESTServlet extends HttpServlet {
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
 		
-		if (config.methods == null) config.methods = DEFAULT_METHODS;
 		if (config.verb == null) config.verb = DEFAULT_VERB;
 		
 		if (config.mappings == null) config.mappings = Collections.emptyMap();
@@ -204,8 +194,6 @@ public class RESTServlet extends HttpServlet {
 		int status = SC_OK;
 		String callback = null;
 		Object result = null;
-		Throwable t = null;
-		JSON json = container.createJSON(request.getLocale());
 		
 		if ("GET".equals(request.getMethod())) {
 			callback = route.getParameter("callback");
@@ -214,6 +202,9 @@ public class RESTServlet extends HttpServlet {
 		}
 		
 		container.start(request, response);
+		
+		JSON json = container.createJSON(request.getLocale());
+		
 		try {
 			String className = route.getComponentClass(container);
 			Object component = container.getComponent(className);
@@ -248,58 +239,51 @@ public class RESTServlet extends HttpServlet {
 				throw new NoSuchMethodException("Method not found: " + route.getRestMethod());					
 			}
 			
-			Produces produces = method.getAnnotation(Produces.class);
-			if (produces == null) {
-				json.setContext(component);
-				result = container.execute(json, component, method, params);
-			} else {
-				if (produces.value().length == 0) response.setContentType(produces.value()[0]);
-				json.setContext(component);
-				container.execute(json, component, method, params);
-				return;
-			}
-		} catch (ClassNotFoundException e) {
-			t = e;
-			container.debug("Class Not Found.", e);
-			response.sendError(SC_NOT_FOUND, "Not Found");
-		} catch (NoSuchMethodException e) {
-			t = e;
-			container.debug("Method Not Found.", e);
-			response.sendError(SC_NOT_FOUND, "Not Found");
-		} catch (JSONException e) {
-			t = e;
-			container.debug("Fails to parse JSON.", e);
-			response.sendError(SC_BAD_REQUEST, "Bad Request");
-		} catch (InvocationTargetException e) {
-			t = e.getCause();
-			container.debug("Cause error on invocation.", t);
-			if (t instanceof IllegalStateException
-				|| t instanceof UnsupportedOperationException) {
-				response.sendError(SC_NOT_FOUND, "Not Found");
-			} else if (t instanceof Error) {
-				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
-			} else {		
-				t = container.handleError(t);
-				
-				response.setStatus(SC_BAD_REQUEST);
-				
-				Map<String, Object> error = new LinkedHashMap<String, Object>();
-				error.put("name", t.getClass().getSimpleName());
-				error.put("message", t.getMessage());
-				error.put("data", t);
-				result = error;
-			}
+			json.setContext(component);
+			result = container.execute(json, component, method, params);
 		} catch (Exception e) {
-			t = e;
-			container.error("Internal error occurred.", e);
-			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+			if (e instanceof ClassNotFoundException) {
+				container.debug("Class Not Found.", e);
+				response.sendError(SC_NOT_FOUND, "Not Found");
+				response.flushBuffer();
+			} else if (e instanceof NoSuchMethodException) {
+				container.debug("Method Not Found.", e);
+				response.sendError(SC_NOT_FOUND, "Not Found");
+				response.flushBuffer();
+			} else if (e instanceof JSONException) {
+				container.debug("Fails to parse JSON.", e);
+				response.sendError(SC_BAD_REQUEST, "Bad Request");
+				response.flushBuffer();
+			} else if (e instanceof InvocationTargetException) {
+				Throwable t = e.getCause();
+				container.debug("Cause error on invocation.", t);
+				if (t instanceof IllegalStateException || t instanceof UnsupportedOperationException) {
+					response.sendError(SC_NOT_FOUND, "Not Found");
+					response.flushBuffer();
+				} else if (t instanceof Error) {
+					response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+					response.flushBuffer();
+				} else {
+					t = container.handleError(t);
+					
+					response.setStatus(SC_BAD_REQUEST);
+					
+					Map<String, Object> error = new LinkedHashMap<String, Object>();
+					error.put("name", t.getClass().getSimpleName());
+					error.put("message", t.getMessage());
+					error.put("data", t);
+					result = error;
+				}
+			} else {
+				container.error("Internal error occurred.", e);
+				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");				
+				response.flushBuffer();
+			}
 		} finally {
 			container.end(request, response);
 		}
 		
-		if (result == null && t != null) {
-			return;
-		}
+		if (response.isCommitted()) return;
 		
 		if (result == null
 				|| result instanceof CharSequence
@@ -331,8 +315,7 @@ public class RESTServlet extends HttpServlet {
 		
 		public String target;
 		public Map<String, Pattern> definitions;
-		public Map<String, String> methods;
-		public Set<String> verb;
+		public Map<String, String> verb;
 		
 		Config config;
 		Pattern pattern;
@@ -390,23 +373,25 @@ public class RESTServlet extends HttpServlet {
 				String httpMethod = request.getParameter("_method");
 				if (httpMethod == null) httpMethod = request.getMethod();
 				if (httpMethod != null) httpMethod = httpMethod.toUpperCase();
-
-				if (verb != null && !verb.contains(httpMethod)) {
-					httpMethod = null;
-				} else 	if (!config.verb.contains(httpMethod)) {
-					httpMethod = null;
-				}
 				
 				Object restMethod = params.get("method");
-				if (restMethod instanceof List<?>) {
-					List<?> list = ((List<?>)restMethod);
-					restMethod = !list.isEmpty() ? list.get(0) : null;
-				}
-				if (restMethod == null && methods != null) {
-					restMethod = methods.get(httpMethod);
-				}
-				if (restMethod == null) {
-					restMethod = config.methods.get(httpMethod);
+				if (restMethod != null) {
+					if (restMethod instanceof List<?>) {
+						List<?> list = ((List<?>)restMethod);
+						restMethod = !list.isEmpty() ? list.get(0) : null;
+					}
+					
+					if (verb != null) {
+						if (!verb.containsKey(httpMethod)) restMethod = null;
+					} else {
+						if (!config.verb.containsKey(httpMethod)) restMethod = null;
+					}
+				} else {
+					if (verb != null) {
+						restMethod = verb.get(httpMethod);
+					} else {
+						restMethod = config.verb.get(httpMethod);
+					}
 				}
 				
 				parseParameter(request.getParameterMap(), (Map)params);
