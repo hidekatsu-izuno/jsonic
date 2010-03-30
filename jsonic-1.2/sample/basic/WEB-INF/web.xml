@@ -37,7 +37,10 @@
 						'target': 'sample.basic.web.${package}.service.${class}Service', 
 						'verb': ['GET']
 					},
-					'/{package}/{class}/{id}.json': 'sample.basic.web.${package}.service.${class}Service',
+					'/{package}/{class}/{id}.json': {
+						'target': 'sample.basic.web.${package}.service.${class}Service',
+						'verb': ['GET', 'PUT', 'DELETE']
+					},
 					'/{package}/{class}.json': 'sample.basic.web.${package}.service.${class}Service'
 				}
 			</param-value>

@@ -295,7 +295,7 @@ Content-Type: application/json
     }
 </pre>
 
-<h3>JSONIC 1.1 RPCモードからの変更点</h3>
+<h3 id="changerpc">JSONIC 1.1 RPCモードからの変更点</h3>
 <ul>
 <li>JSON-RPC 2.0に対応しました。</li>
 <li>[不具合] パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
@@ -442,7 +442,7 @@ Content-Type: application/json
     <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
 <span class="elem">&lt;/servlet-mapping&gt;</span>
 </pre>
-<p>configで設定できる値は次の通りです（methods、verbを除き、RPCServletと同じです）。</p>
+<p>configで設定できる値は次の通りです（verbを除き、RPCServletと同じです）。</p>
 <table class="table" summary="Config設定">
 <tr><th style="width:15%">キー</th><th style="width:25%">値型</th><th style="width:60%">説明</th></tr>
 <tr><td>container</td><td><code>net.arnx.jsonic.web.Container</code></td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、<code>net.arnx.jsonic.web.Container</code>です。</td></tr>
@@ -456,20 +456,18 @@ Content-Type: application/json
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
 <tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトではThrowableのメソッドのみ無視するJSONクラスが設定されます。</td></tr>
 <tr><td>namingConversion</td><td>boolean</td><td>呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
-<tr><td>methods</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>HTTP MethodとJavaメソッド名のマッピングを行います。デフォルトは、<code>{ "GET": "find", "POST": "create", "PUT": "update", "DELETE": "delete" }</code>です。</td></tr>
 <tr><td>verb</td><td><code>java.util.Set&lt;String&gt;</code></td><td>使用できるHTTP Methodを制限します。デフォルトは、<code>["GET", "POST", "PUT", "DELETE"]</code>です。追加すれば HEAD、OPTIONS の利用も可能です。</td></tr>
 </table>
 <div class="caption">
 (※9) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
-<p>なお、<code>definitions, methods, verb</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
+<p>なお、<code>definitions, verb</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
 <pre class="source">
     "mappings": {
         "/{package}/{class}.json": {
             "target": "sample.web.${package}.service.${class}Service",
             "definitions": { "class": "[a-z]+" },
-            "methods": { "GET": "print" },
             "verb": ["GET"]
         },
         ...
@@ -484,7 +482,7 @@ Content-Type: application/json
         "/{package}/{class}.{method}.json": "sample.web.${package}.service.${class}Service"
     }
 </pre>
-<p>なお、このような使い方をする際は、verbやmethodsと組み合わせてHTTP Methodを制限して使うことが推奨されます（GETで更新処理などを行うと、検索エンジンのクロールでデータが削除されるなどの問題が発生する可能性があります）。</p>
+<p>なお、このような使い方をする際は、verbと組み合わせてHTTP Methodを制限して使うことが推奨されます（GETで更新処理などを行うと、検索エンジンのクロールでデータが削除されるなどの問題が発生する可能性があります）。</p>
 
 <h3 id="jsonp">■ JSONP <span class="subtitle">- JSON with padding</span></h3>
 <p>HTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
@@ -500,28 +498,26 @@ Content-Type: application/json
 <span class="elem">&lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;</span>
 </pre>
 
-<h3 id="produces">■ Producesアノテーション <span class="subtitle">- JSON以外のレスポンス</span></h3>
-<p>呼び出し先のメソッドにProducesアノテーションを付与することでレスポンスを自分で記述できるようになりJSON以外のレスポンスも返すことができるようになります<sup>(※9)</sup>。
-Producesアノテーションの引数には、出力するMIMEタイプを指定します。MIMEタイプは複数指定できますが、ひとつだけ指定した場合のみresponse.setContentType(value)に自動で設定されます。</p>
+<h3 id="response">■ JSON以外のレスポンス</h3>
+<p>CSVやXMLなどJSON以外のレスポンスを返したい場合やリダイレクトしたい場合は、処理の最後でHttpServletResponse#flushBuffer()を実行して出力をコミットしてください。ステータスコードやコンテントタイプの設定、JSONの出力などJSONIC側の後続処理を抑制することができます。</p>
 <pre class="source">
 public class HogeService {
     <span class="comment">// 自動インジェクション</span>
     public HttpServletResponse response;
     
-    <span class="comment">// format/parse時のキー値を変更</span>
-    <span class="em">@Produces(</span>"text/csv"<span class="em">)</span>
+    <span class="comment">// CSVを出力する</span>
     public void print() throws IOException {
         response.setCharcterEncoding("MS932");
         PrintWriter writer = response.getWriter();
         writer.write("a,b,c\r\n");
+        
+        <span class="comment">// バッファをフラッシュして、出力を確定させる</span>
+        response.flushBuffer();
     }
 }
 </pre>
-<div class="caption">
-(※9) Producesアノテーションは、RPCServletでは利用できません。
-</div>
 
-<h3>JSONIC 1.1 RESTモードからの変更点</h3>
+<h3 id="changerest">JSONIC 1.1 RESTモードからの変更点</h3>
 <ul>
 <li>[不具合] パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
 <li>[非互換] メッセージボディにJSONを設定しリクエストする時には、<code>Content-Type: application/json</code>の指定が必須になりました。</li>
@@ -529,10 +525,9 @@ public class HogeService {
 <li>[非互換] 1.1では、送信したパラメータより引数の多いメソッドのみを検索対象としていましたが、1.2では、送信したパラメータより引数の少ないメソッドのみ検索対象とするよう変更しました。</li>
 <li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 <li>WebServiceServletにあったpreinvokeやpostinvokeがContainerに移動し引数も変更されました。</li>
-<li>呼び出し対象のメソッドを変更できるように設定項目にmethodsとverbを追加しました。</li>
+<li>呼び出し対象のメソッドを変更できるように設定項目にverbを追加しました。</li>
 <li>任意のメソッドを呼び出すための機能を追加しました。</li>
 <li>エラーオブジェクトの形式を変更しました。</li>
-<li>JSON以外のレスポンスを返すことができるように Produces アノテーションを追加しました。</li>
 </ul>
 
 <h2 id="dicontainer">DIコンテナ対応</h2>

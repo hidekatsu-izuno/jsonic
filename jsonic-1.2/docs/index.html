@@ -659,7 +659,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>java.sql.RowId</code>の相互変換に対応しました。</li>
 <li>JSON.encode(or format)にて<code>java.sql.Array, java.sql.Struct</code>のJSON化に対応しました（逆方向には対応していません。相互変換が必要な場合は<code>JSONHint(type=Serializable.class)</code>を指定しシリアル化してください）。</li>
 <li>AS3版JSONICにて、JSON.encode(or format)時にmine変数を無視するように変更しました。</li>
-<li>JSON-RPC2.0をサポートするRPCServletと強化されたREST操作を可能にするRESTServletを新設しました。WebServiceServletは互換性のため残されていますが非推奨となり機能追加もほとんど行われていません（Version 1.1互換）。RPCServletやRESTServletとWebServiceServletの各モードとの違いは、それぞれのドキュメントを参照してください。</li>
+<li>JSON-RPC2.0をサポートするRPCServletと強化されたREST操作を可能にするRESTServletを新設しました。WebServiceServletは互換性のため残されていますが非推奨となり機能追加もほとんど行われていません（Version 1.1互換）。RPCServletやRESTServletとWebServiceServletの各モードとの違いは、<a href="webservice.html#changerpc">JSONIC 1.1 RPCモードからの変更点</a>、<a href="webservice.html#changerest">JSONIC 1.1 RESTモードからの変更点</a>を参照してください。</li>
 <li>WebサービスAPIにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
 <li>WebサービスAPIにてContainerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 </ul>
