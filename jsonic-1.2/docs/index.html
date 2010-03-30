@@ -353,24 +353,36 @@ JSON.prototype = MyJSON.class;
 </pre>
 
 <h3 id="generics">■ 総称型を指定してのdecode/parse</h3>
-<p>Java 5.0で追加された総称型は動的な情報としては利用できないため、decode/parseメソッドのClass型引数として直接指定することができません。その代わり、FieldやMethodを利用することで間接的に指定することができます。</p>
+<p>decodeやparseの引数にはJava 5.0で追加された総称型も指定できます。しかし、総称型はコンパイル時に削除されてしまうため、decode/parseメソッドの引数として直接的に指定することができません。総称型を使う場合はルート要素をJSON objectにして、対応するクラス定義の中で総称型を使うことをおすすめします。</p>
 <pre class="source">
-public class JSONConfigLoader {
-  private Map&lt;String, Hoge&gt; config;
-  
-  public Map load(Reader reader) throws JSONException, IOException {
-    JSON json = new JSON();
+public class Config() {
     
-    <span class="comment">// これはコンパイルエラー</span>
-    config = json.<span class="em">parse(</span>reader, Map&lt;String, Hoge&gt;.class<span class="em">)</span>;
+    public static class RowData {
+        public String id;
+        public String name;
+    }
     
-    <span class="comment">// これならOK</span>
-    config = (Map&lt;String, Hoge&gt;)json.<span class="em">parse(</span>reader,
-        getClass().getField("config").getGenericType()<span class="em">)</span>;
-        
-    return config;
-  }
+    public List&lt;RowData&gt; rows;
+    
+    public static Config load(Reader reader) throws IOException {
+        return JSON.decode(reader, Config.class);
+    }
 }
+</pre>
+
+<p>多少トリッキーですが、FieldやMethodや無名クラスからリフレクションで総称型を取得することで間接的に指定する方法もあります。</p>
+<pre class="source">
+    private Map&lt;String, Hoge&gt; config;
+    
+    public Map load(Reader reader) throws IOException {
+        return (Map&lt;String, Hoge&gt;)JSON.<span class="em">decode(</span>reader, 
+            this.getClass().getField("config").getGenericType()<span class="em">)</span>;
+    }
+    
+    public List&lt;RowData&gt; load(Reader reader) throws IOException {
+	    return (List&lt;RowData&gt;)JSON.<span class="em">decode(</span>"[ { ... }, { ... } ]", 
+	        (new ArrayList&lt;RowData&gt;() {}).getClass().getGenericSuperclass())
+    }
 </pre>
 
 <h3 id="liberalparsing">■ 柔軟な読み込み <span class="subtitle">- 妥当でないJSONのデコード</span></h3>
