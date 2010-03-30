@@ -302,19 +302,13 @@ public class RPCServlet extends HttpServlet {
 			Map<String, Object> error = new LinkedHashMap<String, Object>();
 			if (e instanceof JSONException) {
 				container.debug("Fails to parse JSON.", e);
-				if (((JSONException)e).getErrorCode() == JSONException.POSTPARSE_ERROR) {
-					error.put("code",  -32602);
-					error.put("message", "Invalid params.");
-				} else  {
-					error.put("code", -32700);
-					error.put("message", "Parse error.");
-				}
+				error.put("code", -32700);
+				error.put("message", "Parse error.");
 				error.put("data", e);
 			} else {
 				container.debug("Invalid Request.", e);
 				error.put("code", -32600);
 				error.put("message", "Invalid Request.");
-				error.put("data", e);
 			}
 			
 			Map<String, Object> responseData = new LinkedHashMap<String, Object>();
