@@ -662,6 +662,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>JSON-RPC2.0をサポートするRPCServletと強化されたREST操作を可能にするRESTServletを新設しました。WebServiceServletは互換性のため残されていますが非推奨となり機能追加もほとんど行われていません（Version 1.1互換）。RPCServletやRESTServletとWebServiceServletの各モードとの違いは、<a href="webservice.html#changerpc">JSONIC 1.1 RPCモードからの変更点</a>、<a href="webservice.html#changerest">JSONIC 1.1 RESTモードからの変更点</a>を参照してください。</li>
 <li>WebサービスAPIにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
 <li>WebサービスAPIにてContainerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
+<li>sampleに付属のjquery.jsのバージョンを1.4.2に更新しました。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />
