@@ -204,6 +204,7 @@ public class RESTServlet extends HttpServlet {
 		int status = SC_OK;
 		String callback = null;
 		Object result = null;
+		Throwable t = null;
 		JSON json = container.createJSON(request.getLocale());
 		
 		if ("GET".equals(request.getMethod())) {
@@ -214,11 +215,10 @@ public class RESTServlet extends HttpServlet {
 		
 		container.start(request, response);
 		try {
-			Object component = container.getComponent(route.getComponentClass(container));
+			String className = route.getComponentClass(container);
+			Object component = container.getComponent(className);
 			if (component == null) {
-				container.debug("Component not found: " + route.getComponentClass(container));
-				response.sendError(SC_NOT_FOUND, "Not Found");
-				return;
+				throw new ClassNotFoundException("Component not found: " + className);
 			}
 			
 			List<Object> params = null;
@@ -258,44 +258,46 @@ public class RESTServlet extends HttpServlet {
 				return;
 			}
 		} catch (ClassNotFoundException e) {
+			t = e;			
 			container.debug("Class Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
-			return;			
 		} catch (NoSuchMethodException e) {
+			t = e;
 			container.debug("Method Not Found.", e);
 			response.sendError(SC_NOT_FOUND, "Not Found");
-			return;
 		} catch (JSONException e) {
+			t = e;
 			container.debug("Fails to parse JSON.", e);
 			response.sendError(SC_BAD_REQUEST, "Bad Request");
-			return;
 		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-			container.debug(cause.toString(), cause);
-			if (cause instanceof IllegalStateException
-				|| cause instanceof UnsupportedOperationException) {
+			t = e.getCause();
+			container.debug("Cause error on invocation.", t);
+			if (t instanceof IllegalStateException
+				|| t instanceof UnsupportedOperationException) {
 				response.sendError(SC_NOT_FOUND, "Not Found");
-				return;
-			} else if (cause instanceof Error) {
+			} else if (t instanceof Error) {
 				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
-				return;
+			} else {		
+				t = container.handleError(t);
+				
+				response.setStatus(SC_BAD_REQUEST);
+				
+				Map<String, Object> error = new LinkedHashMap<String, Object>();
+				error.put("name", t.getClass().getSimpleName());
+				error.put("message", t.getMessage());
+				error.put("data", t);
+				result = error;
 			}
-			
-			cause = container.handleError(cause);
-			
-			response.setStatus(SC_BAD_REQUEST);
-			
-			Map<String, Object> error = new LinkedHashMap<String, Object>();
-			error.put("name", cause.getClass().getSimpleName());
-			error.put("message", cause.getMessage());
-			error.put("data", cause);
-			result = error;
 		} catch (Exception e) {
+			t = e;
 			container.error("Internal error occurred.", e);
 			response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
-			return;
 		} finally {
 			container.end(request, response);
+		}
+		
+		if (result == null && t != null) {
+			return;
 		}
 		
 		if (result == null
