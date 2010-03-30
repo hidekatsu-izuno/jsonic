@@ -382,9 +382,9 @@ public class RESTServlet extends HttpServlet {
 					}
 					
 					if (verb != null) {
-						if (!verb.containsKey(httpMethod)) restMethod = null;
+						if (!verb.containsValue(httpMethod)) restMethod = null;
 					} else {
-						if (!config.verb.containsKey(httpMethod)) restMethod = null;
+						if (!config.verb.containsValue(httpMethod)) restMethod = null;
 					}
 				} else {
 					if (verb != null) {
