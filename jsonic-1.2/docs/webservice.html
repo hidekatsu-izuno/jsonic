@@ -284,17 +284,6 @@ Content-Type: application/json
 また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
-<p>なお、<code>definitions</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
-<pre class="source">
-    "mappings": {
-        "/{package}/{class}.json": {
-            "target": "sample.web.${package}.service.${class}Service",
-            "definitions": { "class": "[a-z]+" }
-        },
-        ...
-    }
-</pre>
-
 <h3 id="changerpc">JSONIC 1.1 RPCモードからの変更点</h3>
 <ul>
 <li>JSON-RPC 2.0に対応しました。</li>
@@ -463,12 +452,11 @@ Content-Type: application/json
 (※8) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。また、URLパスにはコンテキストパスを含める必要はありません。
 </div>
 
-<p>なお、<code>definitions, method, verb</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
+<p>なお、<code>method, verb</code>に関しては、<code>mappings</code>の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は<code>target</code>にしてください）。</p>
 <pre class="source">
     "mappings": {
         "/{package}/{class}.json": {
             "target": "sample.web.${package}.service.${class}Service",
-            "definitions": { "class": "[a-z]+" },
             "method": { "GET": "print" },
             "verb": [ "GET" ]
         },

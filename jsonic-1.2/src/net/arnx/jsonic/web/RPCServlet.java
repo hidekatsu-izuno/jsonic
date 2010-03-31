@@ -345,7 +345,6 @@ public class RPCServlet extends HttpServlet {
 		static final Pattern DEFAULT_PATTERN = Pattern.compile("[^/().]+");
 		
 		public String target;
-		public Map<String, Pattern> definitions;
 		
 		Config config;
 		Pattern pattern;
@@ -364,9 +363,6 @@ public class RPCServlet extends HttpServlet {
 				String name = m.group(1);
 				names.add(name);
 				Pattern p = (m.group(2) != null) ?  Pattern.compile(m.group(2)) : null;
-				if (p == null && definitions != null) {
-					p = definitions.get(name);
-				}
 				if (p == null && config.definitions.containsKey(name)) {
 					p = config.definitions.get(name);
 				}
