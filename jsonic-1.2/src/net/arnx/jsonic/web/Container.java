@@ -243,16 +243,6 @@ public class Container {
 		return result;
 	}
 	
-	/**
-	 * Called after caused error.
-	 * 
-	 * @param t caused error object.
-	 * @return The returned error object after processed.
-	 */
-	public Throwable handleError(Throwable t) {
-		return t;
-	}
-	
 	public void end(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		request = null;
 		response = null;

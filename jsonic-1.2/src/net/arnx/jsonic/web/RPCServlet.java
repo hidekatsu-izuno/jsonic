@@ -250,7 +250,6 @@ public class RPCServlet extends HttpServlet {
 						Throwable cause = e.getCause();
 						container.debug("Fails to invoke method.", cause);
 						if (cause instanceof Exception) {
-							cause = container.handleError(cause);
 							if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
 								error.put("code", -32601);
 								error.put("message", "Method not found.");
