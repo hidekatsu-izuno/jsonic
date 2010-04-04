@@ -577,6 +577,25 @@ public class SpringDrivenService {
 }
 </pre>
 
+<h3>処理エラーの取り扱い</h3>
+<p>処理でエラーが発生した場合、特殊なログを取ったり、トランザクションをロールバックしたいなどあるかもしれません。その場合は、コンテナを継承してexecuteメソッドをオーバーライドします。</p>
+<pre class="source">
+public class TransactionalContainer extends Container {
+    ...
+
+    <span class="comment">// 処理実行時によばれます。</span>
+    public Object execute(JSON json, Object component, Method method, List&lt;?&gt; params) throws Exception {
+        Object ret = null;
+        try {
+            ret = super.execute(json, component, method, params);
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        }
+    }
+}
+</pre>
+
 <h2 id="gatewayfilter">Gatewayフィルタ</h2>
 <p>JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各種の機能を実装したFilterを提供しています。JSONICの書式を使えるため手軽に設定が可能です。</p>
 <p>最初にマッチしたパスの設定が使われますが、そこで設定が行われなわれていない場合、ルートの設定が初期値として利用されます。パスには正規表現が利用できます。</p>
