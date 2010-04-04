@@ -33,7 +33,7 @@
 			<param-value>
 				debug: true
 				mappings: {
-					'/{package}/{class}.{method:print}.json': {
+					'/{package}/{class}.{method:print|exception}.json': {
 						'target': 'sample.basic.web.${package}.service.${class}Service', 
 						'verb': 'GET'
 					},
@@ -42,6 +42,9 @@
 						'verb': ['GET', 'PUT', 'DELETE']
 					},
 					'/{package}/{class}.json': 'sample.basic.web.${package}.service.${class}Service'
+				},
+				errors: {
+					'sample.basic.web.rest.service.MemoException': 406
 				}
 			</param-value>
 		</init-param>

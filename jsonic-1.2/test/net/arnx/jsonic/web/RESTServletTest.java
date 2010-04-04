@@ -1,11 +1,6 @@
 package net.arnx.jsonic.web;
 
-import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_CREATED;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static javax.servlet.http.HttpServletResponse.*;
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
@@ -228,13 +223,19 @@ public class RESTServletTest {
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
 		
-		System.out.println("<<END testRest: " + app + ">>\n");
-		
 		// methods specified
 		con = (HttpURLConnection)new URL(url + ".print.json").openConnection();
 		con.setRequestMethod("GET");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
+		con.disconnect();
+		
+		con = (HttpURLConnection)new URL(url + ".exception.json").openConnection();
+		con.setRequestMethod("GET");
+		con.connect();
+		assertEquals(SC_NOT_ACCEPTABLE, con.getResponseCode());
+		assertEquals(JSON.decode("{\"name\":\"MemoException\",\"message\":\"memo error!\",\"data\":{\"extensionProperty\":\"extension property\"}}"), 
+				JSON.decode(read(con.getErrorStream())));
 		con.disconnect();
 		
 		System.out.println("<<END testRest: " + app + ">>\n");

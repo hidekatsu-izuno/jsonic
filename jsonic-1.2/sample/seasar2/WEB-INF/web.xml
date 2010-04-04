@@ -70,7 +70,7 @@
 				container: net.arnx.jsonic.web.extension.S2Container
 				debug: true
 				mappings: {
-					'/{package}/{class}.{method:print}.json': {
+					'/{package}/{class}.{method:print|exception}.json': {
 						'target': 'sample.seasar2.web.${package}.service.${class}Service', 
 						'verb': 'GET'
 					},
@@ -79,6 +79,9 @@
 						'verb': ['GET', 'PUT', 'DELETE']
 					},
 					'/{package}/{class}.json': 'sample.seasar2.web.${package}.service.${class}Service'
+				},
+				errors: {
+					'sample.basic.web.rest.service.MemoException': 406
 				}
 			</param-value>
 		</init-param>

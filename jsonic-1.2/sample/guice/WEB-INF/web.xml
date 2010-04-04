@@ -51,7 +51,7 @@
 				container: net.arnx.jsonic.web.extension.GuiceContainer
 				debug: true
 				mappings: {
-					'/{package}/{class}.{method:print}.json': {
+					'/{package}/{class}.{method:print|exception}.json': {
 						'target': 'sample.guice.web.${package}.service.${class}Service', 
 						'verb': 'GET'
 					},
@@ -60,6 +60,9 @@
 						'verb': ['GET', 'PUT', 'DELETE']
 					},
 					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
+				},
+				errors: {
+					'sample.basic.web.rest.service.MemoException': 406
 				}
 			</param-value>
 		</init-param>

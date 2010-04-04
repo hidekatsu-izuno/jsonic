@@ -124,6 +124,10 @@ public class MemoService {
 		response.flushBuffer();
 	}
 	
+	public void exception() {
+		throw new MemoException("memo error!");
+	}
+	
 	public void destroy() {
 		ObjectOutputStream oout = null;
 		synchronized(MemoService.class) {

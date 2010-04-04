@@ -31,6 +31,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import sample.basic.web.rest.service.MemoException;
+
 import com.google.inject.Inject;
 
 public class MemoService {
@@ -131,6 +133,10 @@ public class MemoService {
 		}
 		
 		response.flushBuffer();
+	}
+	
+	public void exception() {
+		throw new MemoException("memo error!");
 	}
 	
 	public void destroy() {
