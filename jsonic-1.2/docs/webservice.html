@@ -301,6 +301,7 @@ Content-Type: application/json
 <li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
 <li>WebServiceServletにあったpreinvokeやpostinvokeがContainerに移動し引数も変更されました。</li>
 <li>errors を設定することで例外とエラーコードのマッピングができるようになりました。</li>
+<li>[非互換] errorsに設定された例外が発生した場合のみdataにオブジェクトを設定するように変更しました。</li>
 </ul>
 
 
@@ -411,7 +412,7 @@ Content-Type: application/json
 </tr>
 </table>
 <div class="caption">(※6) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
-<div class="caption">(※7) メソッドからIllegalStateException、UnsupportedOperationExceptionが発生した場合およびError例外が発生した場合は除きます。</div>
+<div class="caption">(※7) メソッドからIllegalStateException、UnsupportedOperationExceptionが発生した場合は除きます。</div>
 
 <h3 id="configuration">■ 設定方法</h3>
 <p>REST サーブレットは、web.xmlにRESTServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
@@ -526,7 +527,8 @@ public class HogeService {
 <li>WebServiceServletにあったpreinvokeやpostinvokeがContainerに移動し引数も変更されました。</li>
 <li>呼び出し対象のメソッドを変更できるように設定項目にverbを追加しました。</li>
 <li>任意のメソッドを呼び出すための機能を追加しました。</li>
-<li>エラーオブジェクトの形式を変更しました。</li>
+<li>[非互換] エラーオブジェクトの形式を変更しました。</li>
+<li>[非互換] errorsに設定された例外が発生した場合のみdataにオブジェクトを設定するように変更しました。</li>
 </ul>
 
 <h2 id="dicontainer">DIコンテナ対応</h2>
