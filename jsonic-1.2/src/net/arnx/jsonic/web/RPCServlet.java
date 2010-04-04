@@ -249,27 +249,31 @@ public class RPCServlet extends HttpServlet {
 					} else if (e instanceof InvocationTargetException) {
 						Throwable cause = e.getCause();
 						container.debug("Fails to invoke method.", cause);
-						if (cause instanceof Exception) {
-							if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
-								error.put("code", -32601);
-								error.put("message", "Method not found.");
-							} else if (cause instanceof IllegalArgumentException) {
-								error.put("code", -32602);
-								error.put("message", "Invalid params.");
-							} else {
-								int errorCode = -32603;
-								for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
-									if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
-										errorCode = entry.getValue();
-										break;
-									}
+						if (cause instanceof Error) {
+							throw (Error)cause;
+						} else 	if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
+							error.put("code", -32601);
+							error.put("message", "Method not found.");
+						} else if (cause instanceof IllegalArgumentException) {
+							error.put("code", -32602);
+							error.put("message", "Invalid params.");
+						} else {
+							Integer errorCode = null;
+							for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
+								if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
+									errorCode = entry.getValue();
+									break;
 								}
+							}
+							if (errorCode != null) {
 								error.put("code", errorCode);
 								error.put("message",  cause.getClass().getSimpleName() + ": " + cause.getMessage());
-								error.put("data", e);
+								error.put("data", cause);
+							} else {
+								container.error("Internal error occurred.", cause);
+								error.put("code", -32603);
+								error.put("message", "Internal error.");
 							}
-						} else {
-							throw (Error)cause;
 						}
 					} else {
 						container.error("Internal error occurred.", e);

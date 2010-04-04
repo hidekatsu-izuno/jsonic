@@ -75,6 +75,7 @@ public class RESTServlet extends HttpServlet {
 		public Map<String, RouteMapping> mappings;
 		
 		public Map<String, Pattern> definitions;
+		public Map<Class<? extends Exception>, Integer> errors;
 		public Map<String, String> method;
 		public Set<String> verb;
 	}
@@ -111,6 +112,8 @@ public class RESTServlet extends HttpServlet {
 		
 		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
+		
+		if (config.errors == null) config.errors = Collections.emptyMap();
 		
 		if (config.method == null) config.method = DEFAULT_METHOD;
 		if (config.verb == null) config.verb = DEFAULT_VERB;
@@ -267,22 +270,36 @@ public class RESTServlet extends HttpServlet {
 				response.sendError(SC_BAD_REQUEST, "Bad Request");
 				response.flushBuffer();
 			} else if (e instanceof InvocationTargetException) {
-				Throwable t = e.getCause();
-				container.debug("Cause error on invocation.", t);
-				if (t instanceof IllegalStateException || t instanceof UnsupportedOperationException) {
+				Throwable cause = e.getCause();
+				container.debug("Cause error on invocation.", cause);
+				if (cause instanceof Error) {
+					throw (Error)cause;
+				} else if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
 					response.sendError(SC_NOT_FOUND, "Not Found");
 					response.flushBuffer();
-				} else if (t instanceof Error) {
-					response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+				} else if (cause instanceof IllegalArgumentException) {
+					response.sendError(SC_BAD_REQUEST, "Bad Request");
 					response.flushBuffer();
 				} else {
-					response.setStatus(SC_BAD_REQUEST);
-					
-					Map<String, Object> error = new LinkedHashMap<String, Object>();
-					error.put("name", t.getClass().getSimpleName());
-					error.put("message", t.getMessage());
-					error.put("data", t);
-					result = error;
+					Integer errorCode = null;
+					for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
+						if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
+							errorCode = entry.getValue();
+							break;
+						}
+					}
+					if (errorCode != null) {
+						response.setStatus(errorCode);
+						
+						Map<String, Object> error = new LinkedHashMap<String, Object>();
+						error.put("name", cause.getClass().getSimpleName());
+						error.put("message", cause.getMessage());
+						error.put("data", cause);
+						result = error;
+					} else {
+						response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");				
+						response.flushBuffer();
+					}
 				}
 			} else {
 				container.error("Internal error occurred.", e);

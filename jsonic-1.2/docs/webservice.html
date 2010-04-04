@@ -226,12 +226,20 @@ Content-Type: application/json
 }</pre></td>
 </tr>
 <tr>
-<td>その他のエラー</td>
+<td>errorsに設定された例外が発生した</td>
 <td>200&nbsp;OK</td>
 <td><pre style="margin:0;">{
-  "code": -32603 あるいは errorsで設定した値,
-  "message": "Internal error." あるいは 例外オブジェクト#getMessage() の値,
+  "code": errorsで設定した値,
+  "message": 例外オブジェクトの単純クラス名 + ": " + getMessage()の値,
   "data": 例外オブジェクト（ただし、Throwableクラスに定義されているプロパティは除く）
+}</pre></td>
+</tr>
+<tr>
+<td>その他の例外が発生した</td>
+<td>200&nbsp;OK</td>
+<td><pre style="margin:0;">{
+  "code": -32603,
+  "message": "Internal error."
 }</pre></td>
 </tr>
 </table>
@@ -277,7 +285,7 @@ Content-Type: application/json
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
 <tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトではThrowableのメソッドのみ無視するJSONクラスが設定されます。</td></tr>
 <tr><td>namingConversion</td><td>boolean</td><td>呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
-<tr><td>errors</td><td><code>java.util.Map&lt;Class&lt; extends Exception&gt;, Integer&gt;</code></td><td>Exceptionクラスとエラーコードのマッピングを行います。</td></tr>
+<tr><td>errors</td><td><code>java.util.Map&lt;Class&lt; extends Exception&gt;, Integer&gt;</code></td><td>Exceptionクラスとエラーコードのマッピングを行います（継承したクラスも対象になります）。</td></tr>
 </table>
 <div class="caption">
 (※3) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
@@ -388,17 +396,17 @@ Content-Type: application/json
 <td>&nbsp;</td>
 </tr>
 <tr>
-<td>メソッドの実行中に例外が発生した<sup>(※7)</sup></td>
-<td>400&nbsp;Bad&nbsp;request</td>
+<td>errorsに設定された例外が発生した</td>
+<td>errorsで設定したステータスコード</td>
 <td><pre style="margin:0;">{
-  "name": 例外オブジェクト#getClass().getSimpleName() の値.
-  "message":  例外オブジェクト#getMessage() の値,
+  "name": 例外オブジェクトの単純クラス名
+  "message": 例外オブジェクトのgetMessage()の値,
   "data": 例外オブジェクト（ただし、Throwableクラスに定義されているプロパティは除く）
 }</pre></td>
 </tr>
 <tr>
-<td>その他のエラー（Error例外含む）</td>
-<td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
+<td>その他の例外が発生した</td>
+<td>500&nbsp;Internal Server Error</td>
 <td>&nbsp;</td>
 </tr>
 </table>
@@ -445,6 +453,7 @@ Content-Type: application/json
 <tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
 <tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトではThrowableのメソッドのみ無視するJSONクラスが設定されます。</td></tr>
 <tr><td>namingConversion</td><td>boolean</td><td>呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。</td></tr>
+<tr><td>errors</td><td><code>java.util.Map&lt;Class&lt; extends Exception&gt;, Integer&gt;</code></td><td>ExceptionクラスとHTTP Status Codeのマッピングを行います（継承したクラスも対象になります）。</td></tr>
 <tr><td>method</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>HTTP Methodに対応するメソッド名を設定します。デフォルトは、<code>{ "GET": "find", "POST": "create", "PUT": "update", "DELETE": "delete" }</code>です。なお、パス変数にmethodが設定されている場合は無視されます。</td></tr>
 <tr><td>verb</td><td><code>java.util.Set&lt;String&gt;</code></td><td>使用できるHTTP Methodを制限します。デフォルトは、<code>["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS"]</code>です。HEADとOPTIONSを使う場合は、methodも対応付ける必要があります。</td></tr>
 </table>
@@ -578,7 +587,7 @@ public class SpringDrivenService {
 </pre>
 
 <h3>処理エラーの取り扱い</h3>
-<p>処理でエラーが発生した場合、特殊なログを取ったり、トランザクションをロールバックしたいなどあるかもしれません。その場合は、コンテナを継承してexecuteメソッドをオーバーライドします。</p>
+<p>処理でエラーが発生した場合、専用のログを取ったり、、トランザクションをロールバックしたいなどあるかもしれません。その場合は、コンテナを継承してexecuteメソッドをオーバーライドします。</p>
 <pre class="source">
 public class TransactionalContainer extends Container {
     ...
@@ -591,6 +600,7 @@ public class TransactionalContainer extends Container {
             tx.commit();
         } catch (Exception e) {
             tx.rollback();
+            throw e;
         }
     }
 }
