@@ -62,6 +62,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.LinkedHashMap;
 import java.util.Properties;
+import java.util.RandomAccess;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.SortedMap;
@@ -69,7 +70,6 @@ import java.util.SortedSet;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -637,14 +637,10 @@ public class JSON {
 			}
 		}
 		
-		if (o instanceof Iterable<?>) {
-			o = ((Iterable<?>)o).iterator();
-		} else if (o instanceof Character) {
+		if (o instanceof Character) {
 			o = o.toString();
 		} else if (o instanceof char[]) {
 			o = new String((char[])o);
-		} else if (o instanceof Object[]) {
-			o = Arrays.asList((Object[])o).iterator();
 		}
 		
 		if (context.getLevel() == 0 && (o == null
@@ -676,22 +672,20 @@ public class JSON {
 			ap.append(o.toString());
 		} else if (o instanceof byte[]) {
 			ap.append('"').append(Base64.encode((byte[])o)).append('"');
-		} else if (o instanceof boolean[]) {
-			ap.append('[');
-			boolean[] array = (boolean[])o;
-			for (int i = 0; i < array.length; i++) {
-				ap.append(String.valueOf(array[i]));
-				if (i != array.length-1) {
-					ap.append(',');
-					if (this.prettyPrint) ap.append(' ');
-				}
-			}
-			ap.append(']');
 		} else if (o.getClass().isArray()) {
-			NumberFormat f = context.format(NumberFormat.class);			
-			
 			ap.append('[');
-			if (o instanceof short[]) {
+			if (o instanceof boolean[]) {
+				boolean[] array = (boolean[])o;
+				for (int i = 0; i < array.length; i++) {
+					ap.append(String.valueOf(array[i]));
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+				}
+			} else if (o instanceof short[]) {
+				NumberFormat f = context.format(NumberFormat.class);
+				
 				short[] array = (short[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (f != null) {
@@ -705,6 +699,8 @@ public class JSON {
 					}
 				}
 			} else if (o instanceof int[]) {
+				NumberFormat f = context.format(NumberFormat.class);
+				
 				int[] array = (int[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (f != null) {
@@ -718,6 +714,8 @@ public class JSON {
 					}
 				}
 			} else if (o instanceof long[]) {
+				NumberFormat f = context.format(NumberFormat.class);
+				
 				long[] array = (long[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (f != null) {
@@ -731,6 +729,8 @@ public class JSON {
 					}
 				}
 			} else if (o instanceof float[]) {
+				NumberFormat f = context.format(NumberFormat.class);
+				
 				float[] array = (float[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
@@ -746,6 +746,8 @@ public class JSON {
 					}
 				}
 			} else if (o instanceof double[]) {
+				NumberFormat f = context.format(NumberFormat.class);
+				
 				double[] array = (double[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
@@ -760,10 +762,48 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 					}
 				}
+			} else {
+				Object[] array = (Object[])o;
+				for (int i = 0; i < array.length; i++) {
+					Object item = array[i];
+					if (this.prettyPrint) {
+						ap.append('\n');
+						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+					}
+					if (item == src) item = null;
+					context.enter(i);
+					format(context, item, ap);
+					context.exit();
+					if (i != array.length-1) ap.append(',');
+				}
+				if (this.prettyPrint && array.length > 0) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+				}
 			}
 			ap.append(']');
-		} else if (o instanceof Iterator<?>) {
-			Iterator<?> t = (Iterator<?>)o;
+		} else if (o instanceof List<?> && o instanceof RandomAccess) {
+			List<?> list = (List<?>)o;
+			ap.append('[');
+			for (int i = 0; i < list.size(); i++) {
+				Object item = list.get(i);
+				if (this.prettyPrint) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+				if (item == src) item = null;
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
+				if (i != list.size()-1) ap.append(',');
+			}
+			if (this.prettyPrint && !list.isEmpty()) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append(']');
+		} else if (o instanceof Iterable<?> || o instanceof Iterator<?>) {
+			Iterator<?> t = (o instanceof Iterable<?>) ? ((Iterable<?>)o).iterator() : (Iterator<?>)o;
 			ap.append('[');
 			boolean isEmpty = !t.hasNext();
 			for (int i = 0; t.hasNext(); i++) {
