@@ -1623,7 +1623,7 @@ public class JSON {
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected <T> T postparse(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
@@ -1644,7 +1644,7 @@ public class JSON {
 			}
 		} else if (hint != null && String.class.equals(hint.type())) {
 			try {
-				Constructor con = c.getConstructor(String.class);
+				Constructor<?> con = c.getConstructor(String.class);
 				data = con.newInstance(value.toString());
 			} catch (NoSuchMethodException e) {
 				data = null; // ignored
