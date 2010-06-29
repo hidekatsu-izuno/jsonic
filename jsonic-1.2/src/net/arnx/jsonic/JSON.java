@@ -412,6 +412,7 @@ public class JSON {
 	boolean prettyPrint = false;
 	int maxDepth = 32;
 	boolean suppressNull = false;
+	boolean javascriptFriendly = false;
 
 	public JSON() {
 	}
@@ -479,6 +480,17 @@ public class JSON {
 	 */
 	public void setSuppressNull(boolean value) {
 		this.suppressNull = value;
+	}
+	
+	/**
+	 * If this property is true, the encoded JSON text will be friendly format for javascript.
+	 * For example, java.util.Data won't be encoded long but new Date(long), and
+	 * simple value of the root can be encoded.
+	 * 
+	 * @param value true to be friendly format for javascript.
+	 */
+	public void setJavascriptFriendly(boolean value) {
+		this.javascriptFriendly = value;
 	}
 	
 	/**
@@ -643,10 +655,12 @@ public class JSON {
 			o = new String((char[])o);
 		}
 		
-		if (context.getLevel() == 0 && (o == null
+		if (context.getLevel() == 0 
+				&& (o == null
 				|| o instanceof CharSequence
 				|| o instanceof Boolean
-				|| o instanceof Number)) {
+				|| o instanceof Number)
+				&& !javascriptFriendly) {
 			throw new JSONException(getMessage("json.format.IllegalRootTypeError"),
 				JSONException.FORMAT_ERROR);
 		}
@@ -662,14 +676,26 @@ public class JSON {
 		} else if (o instanceof Double || o instanceof Float) {
 			double d = ((Number)o).doubleValue();
 			if (Double.isNaN(d) || Double.isInfinite(d)) {
-				ap.append('"').append(o.toString()).append('"');
+				if (!javascriptFriendly) {
+					ap.append('"').append(o.toString()).append('"');
+				} else if (Double.isNaN(d)) {
+					ap.append("Number.NaN");
+				} else {
+					ap.append("Number.").append((d > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+				}
 			} else {
 				ap.append(o.toString());
 			}
 		} else if (o instanceof Byte) {
 			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
 		} else if (o instanceof Number || o instanceof Boolean) {
-			ap.append(o.toString());
+			if (!javascriptFriendly) {
+				ap.append(o.toString());
+			} else if (src instanceof Date || src instanceof Calendar) {
+				ap.append("new Date(").append(o.toString()).append(")");
+			} else {
+				ap.append(o.toString());
+			}
 		} else if (o instanceof byte[]) {
 			ap.append('"').append(Base64.encode((byte[])o)).append('"');
 		} else if (o.getClass().isArray()) {
@@ -734,7 +760,13 @@ public class JSON {
 				float[] array = (float[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
-						ap.append('"').append(Float.toString(array[i])).append('"');
+						if (!javascriptFriendly) {
+							ap.append('"').append(Float.toString(array[i])).append('"');
+						} else if (Double.isNaN(array[i])) {
+							ap.append("Number.NaN");
+						} else {
+							ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+						}
 					} else if (f != null) {
 						formatString(f.format(array[i]), ap);
 					} else {
@@ -751,7 +783,13 @@ public class JSON {
 				double[] array = (double[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
-						ap.append('"').append(Double.toString(array[i])).append('"');
+						if (!javascriptFriendly) {
+							ap.append('"').append(Double.toString(array[i])).append('"');
+						} else if (Double.isNaN(array[i])) {
+							ap.append("Number.NaN");
+						} else {
+							ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+						}
 					} else if (f != null) {
 						formatString(f.format(array[i]), ap);
 					} else {
@@ -849,14 +887,14 @@ public class JSON {
 			ap.append('[');
 			formatString(elem.getTagName(), ap);
 			
+			ap.append(',');
+			if (this.prettyPrint) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+			}
+			ap.append('{');
 			if (elem.hasAttributes()) {
 				NamedNodeMap names = elem.getAttributes();
-				ap.append(',');
-				if (this.prettyPrint) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				ap.append('{');
 				for (int i = 0; i < names.getLength(); i++) {
 					if (i != 0) {
 						ap.append(',');
@@ -877,8 +915,8 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				ap.append('}');
 			}
+			ap.append('}');
 			if (elem.hasChildNodes()) {
 				NodeList nodes = elem.getChildNodes();
 				for (int i = 0; i < nodes.getLength(); i++) {

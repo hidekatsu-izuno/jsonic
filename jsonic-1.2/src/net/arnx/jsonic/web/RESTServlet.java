@@ -372,7 +372,7 @@ public class RESTServlet extends HttpServlet {
 			this.pattern = Pattern.compile(sb.toString());
 		}
 		
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({"unchecked", "rawtypes"})
 		public Route matches(HttpServletRequest request, String path) throws IOException {
 			Matcher m = pattern.matcher(path);
 			if (m.matches()) {

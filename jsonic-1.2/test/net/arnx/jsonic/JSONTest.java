@@ -62,7 +62,7 @@ import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaClass;
 import org.apache.commons.beanutils.DynaProperty;
 
-@SuppressWarnings({"unchecked", "unused", "serial"})
+@SuppressWarnings({"unchecked", "unused", "serial", "rawtypes"})
 public class JSONTest {
 	@Test
 	public void testEncode() throws Exception {
@@ -523,6 +523,17 @@ public class JSONTest {
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Double(10.5, 10.5)));
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Float(10.5f, 10.5f)));
 		assertEquals("[10.0,10.0]", json.format(new Point(10, 10)));
+		
+		
+		json.setJavascriptFriendly(true);
+		
+		assertEquals("1000", json.format(1000, new StringBuilder()).toString());
+		assertEquals("\"test\"", json.format("test", new StringBuilder()).toString());
+		assertEquals("[Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", json.format(
+				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
+		
+		assertEquals("new Date(" + Long.toString(d.getTime()) + ")", json.format(d, new StringBuilder()).toString());
+
 	}
 	
 	@Test
@@ -1341,7 +1352,7 @@ class TestBeanWrapper {
 	public TestBean test;
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class TestBean implements Serializable {
 	private int a;
 	public void setA(int a) { this.a = a; }
@@ -1583,7 +1594,7 @@ class GenericsBean {
 	}
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class InheritedBean {
 	public Map<String, Object> map0;
 	public LinkedHashMap map1;
@@ -1647,12 +1658,12 @@ class InheritedBean {
 	}
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class SuperLinkedHashMap extends LinkedHashMap {
 	private static final long serialVersionUID = 1L;
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
 }
@@ -1793,7 +1804,7 @@ class AnonymTest {
 	}
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"rawtypes", "unchecked"})
 class SuppressNullBean {
 	public Object a = 100;
 	public Object b = null;

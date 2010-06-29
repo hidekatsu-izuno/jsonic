@@ -685,7 +685,7 @@ public class WebServiceServlet extends HttpServlet {
 		
 		private boolean isRpcMode;
 		
-		@SuppressWarnings("unchecked")
+		@SuppressWarnings({"unchecked", "rawtypes"})
 		public Route(HttpServletRequest request, String target, Map<String, Object> params) throws IOException {
 			this.target = target;
 			this.params = (Map)params;
