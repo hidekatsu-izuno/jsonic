@@ -473,13 +473,13 @@ public class WebServiceServletTest {
 		assertEquals(JSON.decode("{null:'abc','abc':'bc\"d','def':'efg'}"), parseHeaderLine(" abc ; abc = \"bc\\\"d\"; def =  \"e\\fg\";"));
 	}
 	
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "rawtypes" })
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
 		return new WebServiceServlet.Route(request, null, new LinkedHashMap<String, Object>()).getParameterMap();
 	}
 	
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "rawtypes" })
 	private static Map parseHeaderLine(String line) throws Exception {
 		Method m = WebServiceServlet.Route.class.getDeclaredMethod("parseHeaderLine", String.class);
 		m.setAccessible(true);

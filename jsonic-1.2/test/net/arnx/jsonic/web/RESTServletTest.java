@@ -432,6 +432,7 @@ public class RESTServletTest {
 		assertEquals(JSON.decode("{'':{aaa:{bbb:['aaa', 'bbb', 'ccc']}}}"), getParameterMap(request));
 	}
 	
+	@SuppressWarnings("rawtypes")
 	private static Map getParameterMap(MockHttpServletRequest request) throws IOException {
 		if (request.getCharacterEncoding() == null) request.setCharacterEncoding("UTF-8");
 		Map map = new LinkedHashMap<Object, Object>();
