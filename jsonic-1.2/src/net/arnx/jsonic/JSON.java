@@ -485,7 +485,7 @@ public class JSON {
 	/**
 	 * If this property is true, the encoded JSON text will be friendly format for javascript.
 	 * For example, java.util.Data won't be encoded long but new Date(long), and
-	 * simple value of the root can be encoded.
+	 * simple value on root can be encoded. But you should note that encoded one is not valid JSON.
 	 * 
 	 * @param value true to be friendly format for javascript.
 	 */
