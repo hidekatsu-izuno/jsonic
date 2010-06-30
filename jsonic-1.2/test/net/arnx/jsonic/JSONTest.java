@@ -527,6 +527,7 @@ public class JSONTest {
 		
 		json.setJavascriptFriendly(true);
 		
+		assertEquals("null", json.format(null, new StringBuilder()).toString());
 		assertEquals("1000", json.format(1000, new StringBuilder()).toString());
 		assertEquals("\"test\"", json.format("test", new StringBuilder()).toString());
 		assertEquals("[Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", json.format(

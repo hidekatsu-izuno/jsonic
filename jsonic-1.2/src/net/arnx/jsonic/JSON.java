@@ -532,8 +532,10 @@ public class JSON {
 		Context context = new Context();
 		
 		if (contextObject != null) context.scope = contextObject.getClass();
-		if (context.scope == null) context.scope = source.getClass().getEnclosingClass();
-		if (context.scope == null) context.scope = source.getClass();
+		if (source != null) {
+			if (context.scope == null) context.scope = source.getClass().getEnclosingClass();
+			if (context.scope == null) context.scope = source.getClass();
+		}
 		context.enter('$');
 		format(context, source, ap);
 		context.exit();
