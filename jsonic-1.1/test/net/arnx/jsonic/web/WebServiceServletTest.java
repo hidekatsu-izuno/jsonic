@@ -27,7 +27,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 
 import winstone.Launcher;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class WebServiceServletTest {	
 	
 	private static Launcher winstone;

@@ -62,7 +62,7 @@ import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaClass;
 import org.apache.commons.beanutils.DynaProperty;
 
-@SuppressWarnings({"unchecked", "unused", "serial"})
+@SuppressWarnings({"unchecked", "unused", "serial", "rawtypes"})
 public class JSONTest {
 
 	@Test
@@ -1281,7 +1281,7 @@ public class JSONTest {
 	}
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class TestBean {
 	private int a;
 	public void setA(int a) { this.a = a; }
@@ -1523,7 +1523,7 @@ class GenericsBean {
 	}
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class InheritedBean {
 	public Map<String, Object> map0;
 	public LinkedHashMap map1;
@@ -1587,12 +1587,12 @@ class InheritedBean {
 	}
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class SuperLinkedHashMap extends LinkedHashMap {
 	private static final long serialVersionUID = 1L;
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 class SuperArrayList extends ArrayList {
 	private static final long serialVersionUID = 1L;
 }
@@ -1680,7 +1680,7 @@ class AnnotationBean {
 	}
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 class SuppressNullBean {
 	public Object a = 100;
 	public Object b = null;

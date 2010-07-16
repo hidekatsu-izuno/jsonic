@@ -1549,7 +1549,7 @@ public class JSON {
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected <T> T postparse(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
 		Object data = null;
 		
