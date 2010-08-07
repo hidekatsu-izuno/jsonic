@@ -920,6 +920,30 @@ public class JSONTest {
 		}
 		
 		try {
+			json.parse("[100,]");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}		
+		
+		try {
+			json.parse("{\"aaa\":}");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.parse("{\"aaa\":,\"bbb\":\"ccc\"}");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
 			json.parse("{} #aaa");
 			fail();
 		} catch (JSONException e) {
@@ -962,6 +986,22 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}		
+		
+		try {
+			json.parse("{\"aaa\":}");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.parse("{\"aaa\":,\"bbb\":\"ccc\"}");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 		
 		try {
 			json.parse("{} #aaa");

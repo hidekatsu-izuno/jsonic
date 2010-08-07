@@ -1205,10 +1205,10 @@ public class JSON {
 				}
 				continue;
 			case ',':
-				if (point == 3) {
-					if (level < this.maxDepth && !this.suppressNull) map.put(key, null);
-					point = 1;
-				} else if (point == 5 || point == 6) {
+				if (point == 5 || point == 6 || (mode == Mode.TRADITIONAL && point == 3)) {
+					if (point == 3 && level < this.maxDepth && !this.suppressNull) {
+						map.put(key, null);
+					}
 					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1216,7 +1216,9 @@ public class JSON {
 				continue;
 			case '}':
 				if (start == '{' && (point == 1 || point == 5 || point == 6 || (mode == Mode.TRADITIONAL && point == 3))) {
-					if (point == 3 && level < this.maxDepth && !this.suppressNull) map.put(key, null);
+					if (point == 3 && level < this.maxDepth && !this.suppressNull) {
+						map.put(key, null);
+					}
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -1337,7 +1339,7 @@ public class JSON {
 				}
 				continue;
 			case ']':
-				if (point == 1 || point == 2 || point == 3 || (mode != Mode.STRICT && point == 4)) {
+				if (point == 1 || point == 2 || point == 3 || (mode == Mode.TRADITIONAL && point == 4)) {
 					if (level < this.maxDepth && (point == 1 || point == 4) && !list.isEmpty()) {
 						list.add(null);
 					}
