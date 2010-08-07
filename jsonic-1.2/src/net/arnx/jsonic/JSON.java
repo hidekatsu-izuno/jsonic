@@ -393,6 +393,27 @@ public class JSON {
 		return JSON.newInstance().parse(reader, type);
 	}
 	
+	public static void validate(CharSequence cs) throws JSONException {
+		JSON json = JSON.newInstance();
+		json.setMode(Mode.STRICT);
+		json.setMaxDepth(0);
+		json.parse(cs);
+	}
+	
+	public static void validate(InputStream in) throws IOException, JSONException {
+		JSON json = JSON.newInstance();
+		json.setMode(Mode.STRICT);
+		json.setMaxDepth(0);
+		json.parse(in);
+	}
+	
+	public static void validate(Reader reader) throws IOException, JSONException {
+		JSON json = JSON.newInstance();
+		json.setMode(Mode.STRICT);
+		json.setMaxDepth(0);
+		json.parse(reader);
+	}
+	
 	Object contextObject;
 	Locale locale;
 	boolean prettyPrint = false;
@@ -992,25 +1013,24 @@ public class JSON {
 			case '"':
 			case '\\': 
 				ap.append('\\').append(c);
-				break;
+				continue;
 			case '\b':
 				ap.append("\\b");
-				break;
+				continue;
 			case '\f':
 				ap.append("\\f");
-				break;
+				continue;
 			case '\n':
 				ap.append("\\n");
-				break;
+				continue;
 			case '\r':
 				ap.append("\\r");
-				break;
+				continue;
 			case '\t':
 				ap.append("\\t");
-				break;
-			default: 
-				ap.append(c);
+				continue;
 			}
+			ap.append(c);
 		}
 		ap.append('"');
 		
@@ -1262,7 +1282,7 @@ public class JSON {
 	}
 	
 	List<Object> parseArray(ParserSource s, int level) throws IOException, JSONException {
-		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' ... ']' E
+		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' 4  ... ']' E
 		List<Object> list = (level <= this.maxDepth) ? new ArrayList<Object>() : null;
 		
 		int n = -1;
@@ -1282,7 +1302,7 @@ public class JSON {
 			case '[':
 				if (point == 0) {
 					point = 1;
-				} else if (point == 1 || point == 3) {
+				} else if (point == 1 || point == 3 || point == 4) {
 					s.back();
 					List<Object> value = parseArray(s, level+1);
 					if (level < this.maxDepth) list.add(value);
@@ -1292,17 +1312,17 @@ public class JSON {
 				}
 				continue;
 			case ',':
-				if (mode == Mode.TRADITIONAL && point == 1) {
+				if (mode == Mode.TRADITIONAL && (point == 1 || point == 4)) {
 					if (level < this.maxDepth) list.add(null);
 				} else if (point == 2 || point == 3) {
-					point = 1;
+					point = 4;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				continue;
 			case ']':
-				if (point == 1 || point == 2 || point == 3) {
-					if (level < this.maxDepth && point == 1 && !list.isEmpty()) {
+				if (point == 1 || point == 2 || point == 3 || (mode != Mode.STRICT && point == 4)) {
+					if (level < this.maxDepth && (point == 1 || point == 4) && !list.isEmpty()) {
 						list.add(null);
 					}
 				} else {
@@ -1310,7 +1330,7 @@ public class JSON {
 				}
 				break loop;					
 			case '{':
-				if (point == 1 || point == 3){
+				if (point == 1 || point == 3 || point == 4){
 					s.back();
 					Map<Object, Object> value = parseObject(s, level+1);
 					if (level < this.maxDepth) list.add(value);
@@ -1324,7 +1344,7 @@ public class JSON {
 					break;
 				}
 			case '"':
-				if (point == 1 || point == 3) {
+				if (point == 1 || point == 3 || point == 4) {
 					s.back();
 					String value = parseString(s);
 					if (level < this.maxDepth) list.add(value);
@@ -1345,7 +1365,7 @@ public class JSON {
 				}
 			}
 			
-			if (point == 1 || point == 3) {
+			if (point == 1 || point == 3 || point == 4) {
 				s.back();
 				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, mode == Mode.TRADITIONAL);
 				if (level < this.maxDepth) list.add(value);
@@ -1371,7 +1391,7 @@ public class JSON {
 			char c = (char)n;
 			switch(c) {
 			case 0xFEFF: // BOM
-				break;
+				continue;
 			case '\\':
 				if (point == 1) {
 					if (mode != Mode.TRADITIONAL || start == '"') {
@@ -1383,16 +1403,16 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case '\'':
 				if (mode == Mode.STRICT) {
-					break;
+					continue;
 				}
 			case '"':
 				if (point == 0) {
 					start = c;
 					point = 1;
-					break;
+					continue;
 				} else if (point == 1) {
 					if (start == c) {
 						break loop;						
@@ -1402,14 +1422,13 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
-			default:
-				if (point == 1) {
-					sb.append(c);
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
+				continue;
 			}
+			if (point == 1 && (mode != Mode.STRICT  || c >= 0x20)) {
+				sb.append(c);
+				continue;
+			}
+			throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 		}
 		
 		if (n != start) {

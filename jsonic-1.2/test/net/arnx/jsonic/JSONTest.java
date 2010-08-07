@@ -909,7 +909,17 @@ public class JSONTest {
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
-		}		
+		}
+		
+		assertEquals(JSON.decode("[]"), json.parse("[\n]"));
+		
+		try {
+			json.parse("[100\n200]");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 		
 		try {
 			json.parse("{} #aaa");
@@ -923,6 +933,32 @@ public class JSONTest {
 		
 		try {
 			json.parse("");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}		
+		
+		assertEquals(JSON.decode("[]"), json.parse("[\n]"));
+		
+		try {
+			json.parse("[100\n200]");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}		
+		
+		try {
+			json.parse("[100,]");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}		
+		
+		try {
+			json.parse("[\"\0\"]");
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
