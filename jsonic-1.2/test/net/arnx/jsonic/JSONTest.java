@@ -962,6 +962,7 @@ public class JSONTest {
 		}		
 		
 		assertEquals(JSON.decode("[]"), json.parse("[\n]"));
+		assertEquals(JSON.decode("[\" \"]"), json.parse("[\n\" \"]"));
 		
 		try {
 			json.parse("[100\n200]");
