@@ -164,7 +164,7 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.1.0
+ * @version 1.2.0
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -177,9 +177,6 @@ public class JSON {
 	
 	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
-	static Class<?>[] dynaBeanClasses = null;
-	static Class<?> rowIdClass = null;
-	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
 		PRIMITIVE_MAP.put(byte.class, (byte)0);
@@ -189,22 +186,6 @@ public class JSON {
 		PRIMITIVE_MAP.put(float.class, 0.0f);
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
-		
-		try {
-			rowIdClass = findClass("java.sql.RowId");
-		} catch (Exception e) {
-			// no handle
-		}
-		
-		try {
-			dynaBeanClasses = new Class<?>[] {
-				findClass("org.apache.commons.beanutils.DynaBean"),
-				findClass("org.apache.commons.beanutils.DynaClass"),
-				findClass("org.apache.commons.beanutils.DynaProperty")
-			};
-		} catch (Exception e) {
-			// no handle
-		}
 	}
 	
 	static JSON newInstance() {
@@ -607,25 +588,29 @@ public class JSON {
 			} else if (value instanceof CharacterData && !(value instanceof Comment)) {
 				data = ((CharacterData)value).getData();
 			}
-		} else if (dynaBeanClasses != null && dynaBeanClasses[0].isAssignableFrom(value.getClass())) {
+		} else if (isInstance(value.getClass(), "org.apache.commons.beanutils.DynaBean")) {
+			Class<?> dynaBeanClass = findClass("org.apache.commons.beanutils.DynaBean", value.getClass());
+			
 			Map<Object, Object> map = new TreeMap<Object, Object>();
-			Object dynaClass = dynaBeanClasses[0].getMethod("getDynaClass").invoke(value);
-			Object[] dynaProperties = (Object[])dynaBeanClasses[1].getMethod("getDynaProperties").invoke(dynaClass);
+			Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(value);
+			Object[] dynaProperties = (Object[])dynaClass.getClass().getMethod("getDynaProperties").invoke(dynaClass);
 			
-			Method getName = dynaBeanClasses[2].getMethod("getName");
-			Method get = dynaBeanClasses[0].getMethod("get", String.class);
-			
-			for (Object dp : dynaProperties) {
-				context.enter('.');
-				Object name = getName.invoke(dp);
-				context.exit();
+			if (dynaProperties != null && dynaProperties.length > 0) {
+				Method getName = dynaProperties[0].getClass().getMethod("getName");
+				Method get = dynaBeanClass.getMethod("get", String.class);
 				
-				context.enter(name);
-				map.put(name, get.invoke(value, name));
-				context.exit();
+				for (Object dp : dynaProperties) {
+					context.enter('.');
+					Object name = getName.invoke(dp);
+					context.exit();
+					
+					context.enter(name);
+					map.put(name, get.invoke(value, name));
+					context.exit();
+				}
 			}
 			data = map;
-		} else if (rowIdClass != null && rowIdClass.isAssignableFrom(value.getClass())) {
+		} else if (isInstance(value.getClass(), "java.sql.RowId")) {
 			data = serialize(value);
 		} else if (value instanceof java.sql.Array) {
 			data = ((java.sql.Array)value).getArray();
@@ -1664,19 +1649,22 @@ public class JSON {
 	 * @throws Exception if conversion failed.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected <T> T postparse(Context context, Object value, Class<? extends T> c, Type type) throws Exception {
+	protected <T> T postparse(Context context, Object value, Class<? extends T> cls, Type type) throws Exception {
 		Object data = null;
 		
 		JSONHint hint = context.getHint();
+		Class<?> c = cls;
+		
+		if (c.isPrimitive()) {
+			data = PRIMITIVE_MAP.get(c);
+			c = data.getClass();
+		}
 		
 		if (value == null) {
-			if (c.isPrimitive()) {
-				data = PRIMITIVE_MAP.get(c);
-			}
+			// no handle
 		} else if (hint != null && hint.serialized()) {
 			data = format(value);
-		} else if ((hint != null && Serializable.class.equals(hint.type()))
-				|| (rowIdClass != null && rowIdClass.isAssignableFrom(c))) {
+		} else if ((hint != null && Serializable.class.equals(hint.type())) || isInstance(c, "java.sql.RowId")) {
 			try {
 				data = deserialize(Base64.decode((String)value));
 			} catch (Exception e) {
@@ -1730,7 +1718,7 @@ public class JSON {
 					src = new TreeMap<Object, Object>(src);
 				}
 				data = postparse(context, src.values(), c, type);
-			} else if (c.isPrimitive() || c.isEnum()
+			} else if (c.isEnum()
 					|| Number.class.isAssignableFrom(c)
 					|| CharSequence.class.isAssignableFrom(c)
 					|| Appendable.class.isAssignableFrom(c)
@@ -1867,13 +1855,13 @@ public class JSON {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} else if (Number.class.isAssignableFrom((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c)) {
+		} else if (Number.class.isAssignableFrom(c)) {
 			if (value instanceof String) {
 				NumberFormat f = context.format(NumberFormat.class);
 				if (f != null) value = f.parse((String)value);
 			}
 			
-			if (byte.class.equals(c) || Byte.class.equals(c)) {
+			if (Byte.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1 : 0;
 				} else if (value instanceof BigDecimal) {
@@ -1896,11 +1884,9 @@ public class JSON {
 						}
 						
 						data = (byte)((num > 127) ? num-256 : num);
-					} else if (c.isPrimitive()) {
-						data = (byte)0;
 					}
 				}
-			} else if (short.class.equals(c) || Short.class.equals(c)) {
+			} else if (Short.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1 : 0;
 				} else if (value instanceof BigDecimal) {
@@ -1920,8 +1906,6 @@ public class JSON {
 						} else {
 							data = (short)Integer.parseInt(str.substring(start));
 						}
-					} else if (c.isPrimitive()) {
-						data = (short)0;
 					}
 				}				
 			} else if (int.class.equals(c) || Integer.class.equals(c)) {
@@ -1944,11 +1928,9 @@ public class JSON {
 						} else {
 							data = Integer.parseInt(str.substring(start));
 						}
-					} else if (c.isPrimitive()) {
-						data = 0;
-					}						
+					}				
 				}
-			} else if (long.class.equals(c) || Long.class.equals(c)) {
+			} else if (Long.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1l : 0l;
 				} else if (value instanceof BigDecimal) {
@@ -1968,11 +1950,9 @@ public class JSON {
 						} else {
 							data = Long.parseLong(str.substring(start));
 						}
-					} else if (c.isPrimitive()) {
-						data = 0l;
-					}						
+					}					
 				}
-			} else if (float.class.equals(c) || Float.class.equals(c)) {
+			} else if (Float.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
 				} else if (value instanceof Number) {
@@ -1981,11 +1961,9 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						data = Float.valueOf(str);
-					} else if (c.isPrimitive()) {
-						data = 0.0f;
-					}						
+					}					
 				}
-			} else if (double.class.equals(c) || Double.class.equals(c)) {
+			} else if (Double.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
 				} else if (value instanceof Number) {
@@ -1994,9 +1972,7 @@ public class JSON {
 					String str = value.toString().trim();
 					if (str.length() > 0) {
 						data = Double.valueOf(str);
-					} else if (c.isPrimitive()) {
-						data = 0.0;
-					}						
+					}				
 				}
 			} else if (BigInteger.class.equals(c)) {				
 				if (value instanceof Boolean) {
@@ -2049,7 +2025,7 @@ public class JSON {
 						data = true;
 					}
 				}
-			} else if (char.class.equals(c) || Character.class.equals(c)) {
+			} else if (Character.class.equals(c)) {
 				if (value instanceof Boolean) {
 					data = (((Boolean)value).booleanValue()) ? '1' : '0';
 				} else if (value instanceof Number) {
@@ -2058,9 +2034,7 @@ public class JSON {
 					String s = value.toString();
 					if (s.length() > 0) {
 						data = s.charAt(0);
-					} else if (c.isPrimitive()) {
-						data = '\0';
-					}						
+					}				
 				}
 			} else if (CharSequence.class.isAssignableFrom(c)) {
 				data = value.toString();
@@ -2402,18 +2376,31 @@ public class JSON {
 	}
 	
 	static Class<?> findClass(String name) throws ClassNotFoundException {
+		return findClass(name, prototype);
+	}
+	
+	static Class<?> findClass(String name, Class<?> location) throws ClassNotFoundException {
 		Class<?> c = null;
 		try {
 			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
 		} catch (ClassNotFoundException e) {
 			try {
-				c = Class.forName(name, true, prototype.getClassLoader());
+				c = Class.forName(name, true, location.getClassLoader());
 			} catch (ClassNotFoundException e2) {
 				c = Class.forName(name);				
 			}
 		}
 		
 		return c;
+	}
+	
+	static boolean isInstance(Class<?> c, String name) {
+		try {
+			Class<?> target = Class.forName(name, true, c.getClassLoader());
+			return target.isAssignableFrom(c);
+		} catch (ClassNotFoundException e) {
+			return false;
+		}
 	}
 	
 	static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
