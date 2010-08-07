@@ -469,7 +469,7 @@ public class JSON {
 	 * @param value maximum depth for the nest level.
 	 */
 	public void setMaxDepth(int value) {
-		if (value <= 0) {
+		if (value < 0) {
 			throw new IllegalArgumentException(getMessage("json.TooSmallArgumentError", "maxDepth", 0));
 		}
 		this.maxDepth = value;
@@ -477,6 +477,8 @@ public class JSON {
 	
 	/**
 	 * Gets maximum depth for the nest level.
+	 * 
+	 * @return a maximum depth
 	 */
 	public int getMaxDepth() {
 		return this.maxDepth;
@@ -493,6 +495,7 @@ public class JSON {
 	}
 	
 	/**
+	 * Sets JSON interpreter mode.
 	 * 
 	 * @param mode JSON interpreter mode
 	 */
@@ -501,6 +504,15 @@ public class JSON {
 			throw new NullPointerException();
 		}
 		this.mode = mode;
+	}
+	
+	/**
+	 * Gets JSON interpreter mode.
+	 * 
+	 * @return JSON interpreter mode
+	 */
+	public Mode getMode() {
+		return mode;
 	}
 	
 	/**
@@ -1093,8 +1105,9 @@ public class JSON {
 	}
 	
 	Object parse(ParserSource s) throws IOException, JSONException {
+		boolean isEmpty = true;
 		Object o = null;
-
+		
 		int n = -1;
 		while ((n = s.next()) != -1) {
 			char c = (char)n;
@@ -1106,17 +1119,19 @@ public class JSON {
 			case 0xFEFF: // BOM
 				continue;
 			case '{':
-				if (o == null) {
+				if (isEmpty) {
 					s.back();
 					o = parseObject(s, 1);
+					isEmpty = false;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				continue;
 			case '[':
-				if (o == null) {
+				if (isEmpty) {
 					s.back();
 					o = parseArray(s, 1);
+					isEmpty = false;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -1129,15 +1144,16 @@ public class JSON {
 					continue;
 				}
 			}
-			if (mode == Mode.TRADITIONAL && o == null) {
+			if (mode == Mode.TRADITIONAL && isEmpty) {
 				s.back();
 				o = parseObject(s, 1);
+				isEmpty = false;
 			} else {
 				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
 		
-		if (o == null) {
+		if (isEmpty) {
 			if (mode == Mode.TRADITIONAL) {
 				o = new LinkedHashMap<String, Object>();
 			} else {
@@ -1146,7 +1162,7 @@ public class JSON {
 		}
 		
 		return o;
-	}	
+	}
 	
 	Map<Object, Object> parseObject(ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E

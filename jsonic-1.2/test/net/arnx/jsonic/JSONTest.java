@@ -344,8 +344,6 @@ public class JSONTest {
 		public String toString() {
 			return "MyData [data1=" + data1 + ", data2=" + data2 + "]";
 		}
-		
-		
 	}
 
 	@Test
@@ -1443,6 +1441,11 @@ public class JSONTest {
 		assertEquals("2000/01/01 +09:00", new ComplexDateFormat("yyyy/MM/dd ZZ").format(date));
 		assertEquals(date, new ComplexDateFormat("yyyy/MM/dd Z").parse("2000/01/01 +0900"));
 		//assertEquals(date, new ComplexDateFormat("yyyy/MM/dd ZZ").parse("2000/01/01 +09:00"));
+	}
+	
+	@Test
+	public void testValidate() throws Exception {
+		JSON.validate(this.getClass().getResourceAsStream("Sample1.json"));
 	}
 }
 
