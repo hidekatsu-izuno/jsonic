@@ -419,7 +419,6 @@ public class JSON {
 	public void setContext(Object value) {
 		this.contextObject = value;
 	}
-
 	
 	/**
 	 * Sets locale for conversion or message.
@@ -1118,7 +1117,15 @@ public class JSON {
 			}
 		}
 		
-		return (o == null) ? new LinkedHashMap<String, Object>() : o;
+		if (o == null) {
+			if (mode == Mode.TRADITIONAL) {
+				o = new LinkedHashMap<String, Object>();
+			} else {
+				throw createParseException(getMessage("json.parse.EmptyInputError"), s);
+			}
+		}
+		
+		return o;
 	}	
 	
 	Map<Object, Object> parseObject(ParserSource s, int level) throws IOException, JSONException {

@@ -52,6 +52,7 @@ import java.io.*;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.JSON.Mode;
 
 import org.junit.Test;
 import org.seasar.framework.util.ReaderUtil;
@@ -535,8 +536,26 @@ public class JSONTest {
 		
 		assertEquals("new Date(" + Long.toString(d.getTime()) + ")", json.format(d, new StringBuilder()).toString());
 		
+		json.setMode(Mode.STRICT);
+		
 		try {
-			json.parse("{} #aaa");
+			json.format(null, new StringBuilder());
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.format(1000, new StringBuilder());
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.format("test", new StringBuilder());
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
@@ -881,6 +900,42 @@ public class JSONTest {
 		props.setProperty("2", "false");
 		
 		assertEquals(props, json.parse("[\"aaa\",{bbb:1,ccc:2},false]", Properties.class));
+		
+		json.setMode(JSON.Mode.SCRIPT);
+		
+		try {
+			json.parse("");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}		
+		
+		try {
+			json.parse("{} #aaa");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		json.setMode(JSON.Mode.STRICT);
+		
+		try {
+			json.parse("");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}		
+		
+		try {
+			json.parse("{} #aaa");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 	}
 
 	@Test
