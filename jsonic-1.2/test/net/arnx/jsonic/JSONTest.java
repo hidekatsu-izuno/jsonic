@@ -525,7 +525,7 @@ public class JSONTest {
 		assertEquals("[10.0,10.0]", json.format(new Point(10, 10)));
 		
 		
-		json.setJavascriptFriendly(true);
+		json.setMode(JSON.Mode.SCRIPT);
 		
 		assertEquals("null", json.format(null, new StringBuilder()).toString());
 		assertEquals("1000", json.format(1000, new StringBuilder()).toString());
@@ -534,7 +534,14 @@ public class JSONTest {
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
 		
 		assertEquals("new Date(" + Long.toString(d.getTime()) + ")", json.format(d, new StringBuilder()).toString());
-
+		
+		try {
+			json.parse("{} #aaa");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
 	}
 	
 	@Test

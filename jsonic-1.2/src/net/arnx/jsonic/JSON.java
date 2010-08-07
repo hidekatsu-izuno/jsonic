@@ -169,11 +169,16 @@ import org.w3c.dom.NodeList;
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 public class JSON {
+	public enum Mode {
+		TRADITIONAL,
+		STRICT,
+		SCRIPT
+	}
+	
 	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
-	
 	
 	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
@@ -393,13 +398,17 @@ public class JSON {
 	boolean prettyPrint = false;
 	int maxDepth = 32;
 	boolean suppressNull = false;
-	boolean javascriptFriendly = false;
+	Mode mode = Mode.TRADITIONAL;
 
 	public JSON() {
 	}
 	
 	public JSON(int maxDepth) {
 		setMaxDepth(maxDepth);
+	}
+	
+	public JSON(Mode mode) {
+		setMode(mode);
 	}
 	
 	/**
@@ -464,14 +473,14 @@ public class JSON {
 	}
 	
 	/**
-	 * If this property is true, the encoded JSON text will be friendly format for javascript.
-	 * For example, java.util.Data won't be encoded long but new Date(long), and
-	 * simple value on root can be encoded. But you should note that encoded one is not valid JSON.
 	 * 
-	 * @param value true to be friendly format for javascript.
+	 * @param mode JSON interpreter mode
 	 */
-	public void setJavascriptFriendly(boolean value) {
-		this.javascriptFriendly = value;
+	public void setMode(Mode mode) {
+		if (mode == null) {
+			throw new NullPointerException();
+		}
+		this.mode = mode;
 	}
 	
 	/**
@@ -647,7 +656,7 @@ public class JSON {
 				|| o instanceof CharSequence
 				|| o instanceof Boolean
 				|| o instanceof Number)
-				&& !javascriptFriendly) {
+				&& mode != Mode.SCRIPT) {
 			throw new JSONException(getMessage("json.format.IllegalRootTypeError"),
 				JSONException.FORMAT_ERROR);
 		}
@@ -663,7 +672,7 @@ public class JSON {
 		} else if (o instanceof Double || o instanceof Float) {
 			double d = ((Number)o).doubleValue();
 			if (Double.isNaN(d) || Double.isInfinite(d)) {
-				if (!javascriptFriendly) {
+				if (mode != Mode.SCRIPT) {
 					ap.append('"').append(o.toString()).append('"');
 				} else if (Double.isNaN(d)) {
 					ap.append("Number.NaN");
@@ -676,7 +685,7 @@ public class JSON {
 		} else if (o instanceof Byte) {
 			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
 		} else if (o instanceof Number || o instanceof Boolean) {
-			if (!javascriptFriendly) {
+			if (mode != Mode.SCRIPT) {
 				ap.append(o.toString());
 			} else if (src instanceof Date || src instanceof Calendar) {
 				ap.append("new Date(").append(o.toString()).append(")");
@@ -747,7 +756,7 @@ public class JSON {
 				float[] array = (float[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
-						if (!javascriptFriendly) {
+						if (mode != Mode.SCRIPT) {
 							ap.append('"').append(Float.toString(array[i])).append('"');
 						} else if (Double.isNaN(array[i])) {
 							ap.append("Number.NaN");
@@ -770,7 +779,7 @@ public class JSON {
 				double[] array = (double[])o;
 				for (int i = 0; i < array.length; i++) {
 					if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
-						if (!javascriptFriendly) {
+						if (mode != Mode.SCRIPT) {
 							ap.append('"').append(Double.toString(array[i])).append('"');
 						} else if (Double.isNaN(array[i])) {
 							ap.append("Number.NaN");
@@ -1076,25 +1085,35 @@ public class JSON {
 			case ' ':
 			case '\t':
 			case 0xFEFF: // BOM
-				break;
+				continue;
+			case '{':
+				if (o == null) {
+					s.back();
+					o = parseObject(s, 1);
+				} else {
+					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+				}
+				continue;
 			case '[':
 				if (o == null) {
 					s.back();
 					o = parseArray(s, 1);
-					break;
+				} else {
+					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+				continue;
 			case '/':
 			case '#':
-				s.back();
-				skipComment(s);
-				break;
-			default:
-				if (o == null) {
+				if (mode != Mode.STRICT) {
 					s.back();
-					o = parseObject(s, 1);
-					break;
+					skipComment(s);
+					continue;
 				}
+			}
+			if (mode == Mode.TRADITIONAL && o == null) {
+				s.back();
+				o = parseObject(s, 1);
+			} else {
 				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
@@ -1114,14 +1133,14 @@ public class JSON {
 			switch(c) {
 			case '\r':
 			case '\n':
-				if (point == 5) {
+				if (mode == Mode.TRADITIONAL && point == 5) {
 					point = 6;
 				}
-				break;
+				continue;
 			case ' ':
 			case '\t':
 			case 0xFEFF: // BOM
-				break;
+				continue;
 			case '{':
 				if (point == 0) {
 					start = '{';
@@ -1134,14 +1153,14 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case ':':
 				if (point == 2) {
 					point = 3;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case ',':
 				if (point == 3) {
 					if (level < this.maxDepth && !this.suppressNull) map.put(key, null);
@@ -1151,17 +1170,28 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case '}':
-				if (start == '{' && (point == 1 || point == 3 || point == 5 || point == 6)) {
-					if (point == 3) {
-						if (level < this.maxDepth && !this.suppressNull) map.put(key, null);
-					}
+				if (start == '{' && (point == 1 || point == 5 || point == 6 || (mode == Mode.TRADITIONAL && point == 3))) {
+					if (point == 3 && level < this.maxDepth && !this.suppressNull) map.put(key, null);
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
 				break loop;
+			case '[':
+				if (point == 3) {
+					s.back();
+					List<Object> value = parseArray(s, level+1);
+					if (level < this.maxDepth) map.put(key, value);
+					point = 5;
+				} else {
+					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+				}
+				continue;
 			case '\'':
+				if (mode == Mode.STRICT) {
+					break;
+				}
 			case '"':
 				if (point == 0) {
 					s.back();
@@ -1178,43 +1208,35 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
-			case '[':
-				if (point == 3) {
-					s.back();
-					List<Object> value = parseArray(s, level+1);
-					if (level < this.maxDepth) map.put(key, value);
-					point = 5;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
+				continue;
 			case '/':
 			case '#':
-				s.back();
-				skipComment(s);
-				if (point == 5) {
-					point = 6;
-				}
-				break;
-			default:
-				if (point == 0) {
+				if (mode != Mode.STRICT) {
 					s.back();
-					point = 1;
-				} else if (point == 1 || point == 6) {
-					s.back();
-					key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
-					point = 2;
-				} else if (point == 3) {
-					s.back();
-					Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
-					if (level < this.maxDepth && (value != null || !this.suppressNull)) {
-						map.put(key, value);
+					skipComment(s);
+					if (point == 5) {
+						point = 6;
 					}
-					point = 5;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					continue;
 				}
+			}
+			
+			if (point == 0) {
+				s.back();
+				point = 1;
+			} else if (point == 1 || point == 6) {
+				s.back();
+				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, mode != Mode.STRICT);
+				point = 2;
+			} else if (point == 3) {
+				s.back();
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, mode == Mode.TRADITIONAL);
+				if (level < this.maxDepth && (value != null || !this.suppressNull)) {
+					map.put(key, value);
+				}
+				point = 5;
+			} else {
+				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
 		
@@ -1242,14 +1264,14 @@ public class JSON {
 			switch(c) {
 			case '\r':
 			case '\n':
-				if (point == 2) {
+				if (mode == Mode.TRADITIONAL && point == 2) {
 					point = 3;
 				}
-				break;
+				continue;
 			case ' ':
 			case '\t':
 			case 0xFEFF: // BOM
-				break;
+				continue;
 			case '[':
 				if (point == 0) {
 					point = 1;
@@ -1261,16 +1283,16 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case ',':
-				if (point == 1) {
+				if (mode == Mode.TRADITIONAL && point == 1) {
 					if (level < this.maxDepth) list.add(null);
 				} else if (point == 2 || point == 3) {
 					point = 1;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case ']':
 				if (point == 1 || point == 2 || point == 3) {
 					if (level < this.maxDepth && point == 1 && !list.isEmpty()) {
@@ -1289,8 +1311,11 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case '\'':
+				if (mode == Mode.STRICT) {
+					break;
+				}
 			case '"':
 				if (point == 1 || point == 3) {
 					s.back();
@@ -1300,24 +1325,26 @@ public class JSON {
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				break;
+				continue;
 			case '/':
 			case '#':
-				s.back();
-				skipComment(s);
-				if (point == 2) {
-					point = 3;
-				}
-				break;
-			default:
-				if (point == 1 || point == 3) {
+				if (mode != Mode.STRICT) {
 					s.back();
-					Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s);
-					if (level < this.maxDepth) list.add(value);
-					point = 2;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					skipComment(s);
+					if (point == 2) {
+						point = 3;
+					}
+					continue;
 				}
+			}
+			
+			if (point == 1 || point == 3) {
+				s.back();
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, mode == Mode.TRADITIONAL);
+				if (level < this.maxDepth) list.add(value);
+				point = 2;
+			} else {
+				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 			}
 		}
 		
@@ -1340,7 +1367,7 @@ public class JSON {
 				break;
 			case '\\':
 				if (point == 1) {
-					if (start == '"') {
+					if (mode != Mode.TRADITIONAL || start == '"') {
 						s.back();
 						sb.append(parseEscape(s));
 					} else {
@@ -1351,6 +1378,9 @@ public class JSON {
 				}
 				break;
 			case '\'':
+				if (mode == Mode.STRICT) {
+					break;
+				}
 			case '"':
 				if (point == 0) {
 					start = c;
@@ -1381,7 +1411,7 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	Object parseLiteral(ParserSource s) throws IOException, JSONException {
+	Object parseLiteral(ParserSource s, boolean any) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 
@@ -1411,7 +1441,11 @@ public class JSON {
 		if ("null".equals(str)) return null;
 		if ("true".equals(str)) return true;
 		if ("false".equals(str)) return false;
-
+		
+		if (!any) {
+			throw createParseException(getMessage("json.parse.UnrecognizedLiteral", str), s);
+		}
+		
 		return str;
 	}	
 	
@@ -1588,14 +1622,16 @@ public class JSON {
 				}
 				break;
 			case '#':
-				if (point == 0) {
-					point = 4;
-				} else if (point == 3) {
-					point = 2;
-				} else if (!(point == 2 || point == 4)) {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+				if (mode == Mode.TRADITIONAL) {
+					if (point == 0) {
+						point = 4;
+					} else if (point == 3) {
+						point = 2;
+					} else if (!(point == 2 || point == 4)) {
+						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					}
+					break;
 				}
-				break;
 			default:
 				if (point == 3) {
 					point = 2;
