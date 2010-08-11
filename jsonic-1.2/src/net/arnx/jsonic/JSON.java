@@ -1138,12 +1138,13 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (mode != Mode.STRICT) {
+				if (mode == Mode.TRADITIONAL || (mode == Mode.SCRIPT && c == '/')) {
 					s.back();
 					skipComment(s);
 					continue;
 				}
 			}
+			
 			if (mode == Mode.TRADITIONAL && isEmpty) {
 				s.back();
 				o = parseObject(s, 1);
@@ -1256,7 +1257,7 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (mode != Mode.STRICT) {
+				if (mode == Mode.TRADITIONAL || (mode == Mode.SCRIPT && c == '/')) {
 					s.back();
 					skipComment(s);
 					if (point == 5) {
@@ -1373,7 +1374,7 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (mode != Mode.STRICT) {
+				if (mode == Mode.TRADITIONAL || (mode == Mode.SCRIPT && c == '/')) {
 					s.back();
 					skipComment(s);
 					if (point == 2) {

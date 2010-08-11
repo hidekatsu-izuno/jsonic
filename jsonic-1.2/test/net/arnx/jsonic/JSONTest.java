@@ -943,6 +943,8 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
+		json.parse("{} /**/");
+		
 		try {
 			json.parse("{} #aaa");
 			fail();
@@ -998,6 +1000,14 @@ public class JSONTest {
 		
 		try {
 			json.parse("{\"aaa\":,\"bbb\":\"ccc\"}");
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.parse("{} /**/");
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
