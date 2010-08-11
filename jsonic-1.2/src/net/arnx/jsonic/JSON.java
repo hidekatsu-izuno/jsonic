@@ -182,6 +182,13 @@ public class JSON {
 	
 	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
+	static final String[] CONTRON_CHARS = {
+		"\\u0000", "\\u0001", "\\u0002", "\\u0003", "\\u0004", "\\u0005", "\\u0006", "\\u0007",
+		"\\b", "\\t", "\\n", "\\u000B", "\\f","\\r", "\\u000E", "\\u000F",
+		"\\u0010", "\\u0011", "\\u0012", "\\u0013", "\\u0014", "\\u0015", "\\u0016", "\\u0017", 
+		"\\u0018", "\\u0019", "\\u001A", "\\u001B", "\\u001C", "\\u001D", "\\u001E", "\\u001F"
+	};
+	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
 		PRIMITIVE_MAP.put(byte.class, (byte)0);
@@ -1032,28 +1039,7 @@ public class JSON {
 				start = i+1;
 			} else if (c < ' ') {
 				if (start < i) ap.append(s, start, i);
-				switch (c) {
-				case '\b':
-					ap.append("\\b");
-					break;
-				case '\f':
-					ap.append("\\f");
-					break;
-				case '\n':
-					ap.append("\\n");
-					break;
-				case '\r':
-					ap.append("\\r");
-					break;
-				case '\t':
-					ap.append("\\t");
-					break;
-				default:
-					String hex = Integer.toHexString((int)c);
-					ap.append("\\u00");
-					if (hex.length() == 1) ap.append('0');
-					ap.append(hex.toUpperCase());
-				}				
+				ap.append(CONTRON_CHARS[c]);
 				start = i+1;
 			}
 		}
