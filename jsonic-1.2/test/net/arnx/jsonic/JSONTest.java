@@ -70,6 +70,16 @@ public class JSONTest {
 		ArrayList<Object> list = new ArrayList<Object>();
 		assertEquals("[]", JSON.encode(list));
 		
+		list.clear();
+		list.add("\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009\n\u000B\u000C\r\u000E\u000F");
+		
+		assertEquals("[\"\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000B\\f\\r\\u000E\\u000F\"]", JSON.encode(list));
+		
+		list.clear();
+		list.add("\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001A\u001B\u001C\u001D\u001E\u001F\u0020");
+		assertEquals("[\"\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F \"]", JSON.encode(list));
+		
+		list.clear();
 		list.add("");
 		list.add(1);
 		list.add(1.0);
@@ -1374,19 +1384,29 @@ public class JSONTest {
 		return sb.toString();
 	}
 	
-	//@Test
+	@Test
 	public void testDecodeTime() throws Exception {
 		JSON json = new JSON();
 		
-		long start = System.currentTimeMillis();
+		long start = 0;
+		Object o = null;
+		start = System.currentTimeMillis();
 		json.setMaxDepth(1);
-		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
-		System.out.println("time: " + (System.currentTimeMillis()-start));
+		o =json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
+		System.out.println("parse time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.format(o, new NullAppendable());
+		System.out.println("format time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
 		json.setMaxDepth(32);
 		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.format(o, new NullAppendable());
+		System.out.println("format time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
 		json.setMaxDepth(32);
@@ -1394,19 +1414,35 @@ public class JSONTest {
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
+		json.format(o, new NullAppendable());
+		System.out.println("format time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
 		json.setMaxDepth(1);
 		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
+		json.format(o, new NullAppendable());
+		System.out.println("format time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
 		json.setMaxDepth(32);
 		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"));
 		System.out.println("time: " + (System.currentTimeMillis()-start));
 		
 		start = System.currentTimeMillis();
+		json.format(o, new NullAppendable());
+		System.out.println("format time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
 		json.setMaxDepth(32);
 		json.parse(this.getClass().getResourceAsStream("KEN_ALL_Object.json"), KenAll[].class);
 		System.out.println("time: " + (System.currentTimeMillis()-start));
+		
+		start = System.currentTimeMillis();
+		json.format(o, new NullAppendable());
+		System.out.println("format time: " + (System.currentTimeMillis()-start));
 	}
 	
 	public List<List<Object>> t1;
@@ -2203,4 +2239,24 @@ class GenericPropertyTestWrapper {
 			return false;
 		return true;
 	}
+}
+
+class NullAppendable implements Appendable {
+
+	@Override
+	public Appendable append(CharSequence cs) throws IOException {
+		return this;
+	}
+
+	@Override
+	public Appendable append(char c) throws IOException {
+		return this;
+	}
+
+	@Override
+	public Appendable append(CharSequence cs, int start, int length)
+			throws IOException {
+		return this;
+	}
+	
 }

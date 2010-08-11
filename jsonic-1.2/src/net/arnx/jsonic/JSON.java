@@ -351,7 +351,7 @@ public class JSON {
 	 * @exception IOException if I/O error occurred.
 	 * @exception JSONException if error occurred when parsing.
 	 */
-	public static Object decode(InputStream in, Type type) throws IOException, JSONException {
+	public static <T> T decode(InputStream in, Type type) throws IOException, JSONException {
 		return JSON.newInstance().parse(in, type);
 	}
 	
@@ -363,7 +363,7 @@ public class JSON {
 	 * @exception IOException if I/O error occurred.
 	 * @exception JSONException if error occurred when parsing.
 	 */
-	public static Object decode(Reader reader) throws IOException, JSONException {
+	public static <T> T decode(Reader reader) throws IOException, JSONException {
 		return JSON.newInstance().parse(reader);
 	}
 
@@ -389,7 +389,7 @@ public class JSON {
 	 * @exception IOException if I/O error occurred.
 	 * @exception JSONException if error occurred when parsing.
 	 */
-	public static Object decode(Reader reader, Type type) throws IOException, JSONException {
+	public static <T> T decode(Reader reader, Type type) throws IOException, JSONException {
 		return JSON.newInstance().parse(reader, type);
 	}
 	
@@ -1019,44 +1019,59 @@ public class JSON {
 	
 	Appendable formatString(CharSequence s, Appendable ap) throws IOException {
 		ap.append('"');
+		int start = 0;
 		for (int i = 0; i < s.length(); i++) {
 			char c = s.charAt(i);
-			switch (c) {
-			case '"':
-			case '\\': 
-				ap.append('\\').append(c);
-				continue;
-			case '\b':
-				ap.append("\\b");
-				continue;
-			case '\f':
-				ap.append("\\f");
-				continue;
-			case '\n':
-				ap.append("\\n");
-				continue;
-			case '\r':
-				ap.append("\\r");
-				continue;
-			case '\t':
-				ap.append("\\t");
-				continue;
+			if (c == '\\') {
+				if (start < i) ap.append(s, start, i);
+				ap.append("\\\\");
+				start = i+1;
+			} else if (c == '"') {
+				if (start < i) ap.append(s, start, i);
+				ap.append("\\\"");
+				start = i+1;
+			} else if (c < ' ') {
+				if (start < i) ap.append(s, start, i);
+				switch (c) {
+				case '\b':
+					ap.append("\\b");
+					break;
+				case '\f':
+					ap.append("\\f");
+					break;
+				case '\n':
+					ap.append("\\n");
+					break;
+				case '\r':
+					ap.append("\\r");
+					break;
+				case '\t':
+					ap.append("\\t");
+					break;
+				default:
+					String hex = Integer.toHexString((int)c);
+					ap.append("\\u00");
+					if (hex.length() == 1) ap.append('0');
+					ap.append(hex.toUpperCase());
+				}				
+				start = i+1;
 			}
-			ap.append(c);
 		}
+		if (start < s.length()) ap.append(s, start, s.length());
 		ap.append('"');
 		
 		return ap;
 	}
 
-	public Object parse(CharSequence cs) throws JSONException {
+	@SuppressWarnings("unchecked")
+	public <T> T parse(CharSequence cs) throws JSONException {
 		Object value = null;
 		try {
 			value = parse(new CharSequenceParserSource(cs, 1000));
 		} catch (IOException e) {
 			// never occur
 		}
-		return value; 
+		return (T)value; 
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1064,18 +1079,20 @@ public class JSON {
 		return (T)parse(s, (Type)cls);
 	}
 	
-	public Object parse(CharSequence s, Type type) throws JSONException {
+	@SuppressWarnings("unchecked")
+	public <T> T parse(CharSequence s, Type type) throws JSONException {
 		Object value = null;
 		try {
 			value = parse(new CharSequenceParserSource(s, 1000), type);
 		} catch (IOException e) {
 			// never occur
 		}
-		return value;
+		return (T)value;
 	}
 	
-	public Object parse(InputStream in) throws IOException, JSONException {
-		return parse(new ReaderParserSource(in));
+	@SuppressWarnings("unchecked")
+	public <T> T parse(InputStream in) throws IOException, JSONException {
+		return (T)parse(new ReaderParserSource(in));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1083,12 +1100,14 @@ public class JSON {
 		return (T)parse(in, (Type)cls);
 	}
 	
-	public Object parse(InputStream in, Type type) throws IOException, JSONException {
-		return parse(new ReaderParserSource(in), type);
+	@SuppressWarnings("unchecked")
+	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
+		return (T)parse(new ReaderParserSource(in), type);
 	}
 	
-	public Object parse(Reader reader) throws IOException, JSONException {
-		return parse(new ReaderParserSource(reader));
+	@SuppressWarnings("unchecked")
+	public <T> T parse(Reader reader) throws IOException, JSONException {
+		return (T)parse(new ReaderParserSource(reader));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1096,8 +1115,9 @@ public class JSON {
 		return (T)parse(reader, (Type)cls);
 	}
 	
-	public Object parse(Reader reader, Type type) throws IOException, JSONException {
-		return parse(new ReaderParserSource(reader), type);
+	@SuppressWarnings("unchecked")
+	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
+		return (T)parse(new ReaderParserSource(reader), type);
 	}
 	
 	Object parse(ParserSource s, Type type) throws IOException, JSONException {
