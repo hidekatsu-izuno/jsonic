@@ -646,6 +646,15 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
+<h3>2010/08/13 version 1.2.1</h3>
+
+<ul>
+<li>[不具合] JSONのエンコード時にUNICODEエスケープが必要な制御文字をエスケープしていなかった問題を修正しました。</li>
+<li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました。</li>
+<li>JSON.decodeなどの戻り値に型パラメータを使うようにしました。</li>
+<li>JSON形式の取り扱い方法モードを変更できる機能を追加しました。</li>
+</ul>
+
 <h3>2010/04/04 version 1.2.0</h3>
 
 <div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために以前同様の形で利用可能ですが、今後はRESTServletおよびRPCServletを利用してください。</div>
