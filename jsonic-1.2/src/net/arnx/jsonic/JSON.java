@@ -697,46 +697,37 @@ public class JSON {
 			ap.append(o.toString());
 		} else if (o instanceof CharSequence) {
 			formatString((CharSequence)o, ap);
-		} else if (o instanceof Double || o instanceof Float) {
-			double d = ((Number)o).doubleValue();
-			if (Double.isNaN(d) || Double.isInfinite(d)) {
-				if (mode != Mode.SCRIPT) {
-					ap.append('"').append(o.toString()).append('"');
-				} else if (Double.isNaN(d)) {
-					ap.append("Number.NaN");
+		} else if (o instanceof Number) {
+			if (o instanceof Double || o instanceof Float) {
+				double d = ((Number)o).doubleValue();
+				if (Double.isNaN(d) || Double.isInfinite(d)) {
+					if (mode != Mode.SCRIPT) {
+						ap.append('"').append(o.toString()).append('"');
+					} else if (Double.isNaN(d)) {
+						ap.append("Number.NaN");
+					} else {
+						ap.append("Number.").append((d > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+					}
 				} else {
-					ap.append("Number.").append((d > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+					ap.append(o.toString());
 				}
-			} else {
-				ap.append(o.toString());
-			}
-		} else if (o instanceof Byte) {
-			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
-		} else if (o instanceof Number || o instanceof Boolean) {
-			if (mode != Mode.SCRIPT) {
-				ap.append(o.toString());
-			} else if (src instanceof Date || src instanceof Calendar) {
+			} else if (o instanceof Byte) {
+				ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
+			} else if (mode == Mode.SCRIPT && (src instanceof Date || src instanceof Calendar)) {
 				ap.append("new Date(").append(o.toString()).append(")");
 			} else {
 				ap.append(o.toString());
 			}
-		} else if (o instanceof byte[]) {
-			ap.append('"').append(Base64.encode((byte[])o)).append('"');
+		} else if (o instanceof Boolean) {
+			ap.append(o.toString());
 		} else if (o.getClass().isArray()) {
-			ap.append('[');
-			if (o instanceof boolean[]) {
-				boolean[] array = (boolean[])o;
-				for (int i = 0; i < array.length; i++) {
-					ap.append(String.valueOf(array[i]));
-					if (i != array.length-1) {
-						ap.append(',');
-						if (this.prettyPrint) ap.append(' ');
-					}
-				}
+			if (o instanceof byte[]) {
+				ap.append('"').append(Base64.encode((byte[])o)).append('"');
 			} else if (o instanceof short[]) {
 				NumberFormat f = context.format(NumberFormat.class);
 				
 				short[] array = (short[])o;
+				ap.append('[');
 				for (int i = 0; i < array.length; i++) {
 					if (f != null) {
 						formatString(f.format(array[i]), ap);
@@ -748,10 +739,12 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 					}
 				}
+				ap.append(']');
 			} else if (o instanceof int[]) {
 				NumberFormat f = context.format(NumberFormat.class);
 				
 				int[] array = (int[])o;
+				ap.append('[');
 				for (int i = 0; i < array.length; i++) {
 					if (f != null) {
 						formatString(f.format(array[i]), ap);
@@ -763,10 +756,12 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 					}
 				}
+				ap.append(']');
 			} else if (o instanceof long[]) {
 				NumberFormat f = context.format(NumberFormat.class);
 				
 				long[] array = (long[])o;
+				ap.append('[');
 				for (int i = 0; i < array.length; i++) {
 					if (f != null) {
 						formatString(f.format(array[i]), ap);
@@ -778,10 +773,12 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 					}
 				}
+				ap.append(']');
 			} else if (o instanceof float[]) {
 				NumberFormat f = context.format(NumberFormat.class);
 				
 				float[] array = (float[])o;
+				ap.append('[');
 				for (int i = 0; i < array.length; i++) {
 					if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
 						if (mode != Mode.SCRIPT) {
@@ -801,10 +798,12 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 					}
 				}
+				ap.append(']');
 			} else if (o instanceof double[]) {
 				NumberFormat f = context.format(NumberFormat.class);
 				
 				double[] array = (double[])o;
+				ap.append('[');
 				for (int i = 0; i < array.length; i++) {
 					if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
 						if (mode != Mode.SCRIPT) {
@@ -824,8 +823,21 @@ public class JSON {
 						if (this.prettyPrint) ap.append(' ');
 					}
 				}
+				ap.append(']');
+			} else if (o instanceof boolean[]) {
+				ap.append('[');
+				boolean[] array = (boolean[])o;
+				for (int i = 0; i < array.length; i++) {
+					ap.append(String.valueOf(array[i]));
+					if (i != array.length-1) {
+						ap.append(',');
+						if (this.prettyPrint) ap.append(' ');
+					}
+				}
+				ap.append(']');
 			} else {
 				Object[] array = (Object[])o;
+				ap.append('[');
 				for (int i = 0; i < array.length; i++) {
 					Object item = array[i];
 					if (this.prettyPrint) {
@@ -842,8 +854,8 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 				}
+				ap.append(']');
 			}
-			ap.append(']');
 		} else if (o instanceof List<?> && o instanceof RandomAccess) {
 			List<?> list = (List<?>)o;
 			ap.append('[');
