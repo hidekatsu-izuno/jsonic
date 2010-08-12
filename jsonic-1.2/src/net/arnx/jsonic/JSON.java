@@ -53,7 +53,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.List;
@@ -180,25 +179,12 @@ public class JSON {
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
 	
-	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
-	
-	static final String[] CONTRON_CHARS = {
+	private static final String[] CONTRON_CHARS = {
 		"\\u0000", "\\u0001", "\\u0002", "\\u0003", "\\u0004", "\\u0005", "\\u0006", "\\u0007",
 		"\\b", "\\t", "\\n", "\\u000B", "\\f","\\r", "\\u000E", "\\u000F",
 		"\\u0010", "\\u0011", "\\u0012", "\\u0013", "\\u0014", "\\u0015", "\\u0016", "\\u0017", 
 		"\\u0018", "\\u0019", "\\u001A", "\\u001B", "\\u001C", "\\u001D", "\\u001E", "\\u001F"
 	};
-	
-	static {
-		PRIMITIVE_MAP.put(boolean.class, false);
-		PRIMITIVE_MAP.put(byte.class, (byte)0);
-		PRIMITIVE_MAP.put(short.class, (short)0);
-		PRIMITIVE_MAP.put(int.class, 0);
-		PRIMITIVE_MAP.put(long.class, 0l);
-		PRIMITIVE_MAP.put(float.class, 0.0f);
-		PRIMITIVE_MAP.put(double.class, 0.0);
-		PRIMITIVE_MAP.put(char.class, '\0');
-	}
 	
 	static JSON newInstance() {
 		JSON instance = null;
@@ -358,8 +344,9 @@ public class JSON {
 	 * @exception IOException if I/O error occurred.
 	 * @exception JSONException if error occurred when parsing.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T decode(InputStream in, Type type) throws IOException, JSONException {
-		return JSON.newInstance().parse(in, type);
+		return (T)JSON.newInstance().parse(in, type);
 	}
 	
 	/**
@@ -370,8 +357,9 @@ public class JSON {
 	 * @exception IOException if I/O error occurred.
 	 * @exception JSONException if error occurred when parsing.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T decode(Reader reader) throws IOException, JSONException {
-		return JSON.newInstance().parse(reader);
+		return (T)JSON.newInstance().parse(reader);
 	}
 
 	/**
@@ -396,8 +384,9 @@ public class JSON {
 	 * @exception IOException if I/O error occurred.
 	 * @exception JSONException if error occurred when parsing.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T decode(Reader reader, Type type) throws IOException, JSONException {
-		return JSON.newInstance().parse(reader, type);
+		return (T)JSON.newInstance().parse(reader, type);
 	}
 	
 	public static void validate(CharSequence cs) throws JSONException {
@@ -1730,7 +1719,7 @@ public class JSON {
 	 * 
 	 * @param context current context.
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
-	 * @param c class for converting
+	 * @param cls class for converting
 	 * @param type generics type for converting. type equals to c if not generics.
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
@@ -1743,7 +1732,7 @@ public class JSON {
 		Class<?> c = cls;
 		
 		if (c.isPrimitive()) {
-			data = PRIMITIVE_MAP.get(c);
+			data = getPrimitive(c);
 			c = data.getClass();
 		}
 		
@@ -2481,6 +2470,28 @@ public class JSON {
 		return c;
 	}
 	
+	static Object getPrimitive(Class<?> cls) {
+		if (cls.equals(boolean.class)) {
+			return Boolean.FALSE;
+		} else if (cls.equals(byte.class)) {
+			return (byte)0;
+		} else if (cls.equals(short.class)) {
+			return (short)0;
+		} else if (cls.equals(int.class)) {
+			return 0;
+		} else if (cls.equals(long.class)) {
+			return 0L;
+		} else if (cls.equals(float.class)) {
+			return 0.0F;
+		} else if (cls.equals(double.class)) {
+			return 0.0;
+		} else if (cls.equals(char.class)) {
+			return '\0';
+		} else {
+			return null;
+		}
+	}
+	
 	static boolean isInstance(Class<?> c, String name) {
 		try {
 			Class<?> target = Class.forName(name, true, c.getClassLoader());
@@ -2661,7 +2672,7 @@ public class JSON {
 			enter(key);
 			T o = JSON.this.postparse(this, value, c, c);
 			exit();
-			return (T)((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
+			return (T)((c.isPrimitive()) ? getPrimitive(c).getClass() : c).cast(o);
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
@@ -2669,7 +2680,7 @@ public class JSON {
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
-			return ((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
+			return ((c.isPrimitive()) ? getPrimitive(c).getClass() : c).cast(o);
 		}
 		
 		void enter(Object key, JSONHint hint) {
