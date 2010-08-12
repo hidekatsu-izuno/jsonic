@@ -80,6 +80,10 @@ public class JSONTest {
 		assertEquals("[\"\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F \"]", JSON.encode(list));
 		
 		list.clear();
+		list.add("\u007F");
+		assertEquals("[\"\\u007F\"]", JSON.encode(list));
+		
+		list.clear();
 		list.add("");
 		list.add(1);
 		list.add(1.0);

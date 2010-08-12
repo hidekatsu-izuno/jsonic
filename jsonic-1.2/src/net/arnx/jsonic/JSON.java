@@ -1042,6 +1042,10 @@ public class JSON {
 				if (start < i) ap.append(s, start, i);
 				ap.append(CONTRON_CHARS[c]);
 				start = i+1;
+			} else if (c == '\u007F') {
+				if (start < i) ap.append(s, start, i);
+				ap.append("\\u007F");
+				start = i+1;
 			}
 		}
 		if (start < s.length()) ap.append(s, start, s.length());
