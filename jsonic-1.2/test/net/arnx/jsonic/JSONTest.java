@@ -537,6 +537,7 @@ public class JSONTest {
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Float(10.5f, 10.5f)));
 		assertEquals("[10.0,10.0]", json.format(new Point(10, 10)));
 		
+		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
 		json.setMode(JSON.Mode.SCRIPT);
 		
@@ -547,8 +548,12 @@ public class JSONTest {
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
 		
 		assertEquals("new Date(" + Long.toString(d.getTime()) + ")", json.format(d, new StringBuilder()).toString());
+		assertEquals("[\"!\\u0022#$%\\u0026'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
+		assertArrayEquals(new String[] { "!\"#$%&'()=~|<>?_" }, json.parse("[\"!\\u0022#$%\\u0026'()=~|\\u003C\\u003E?_\"]", String[].class));
 		
 		json.setMode(Mode.STRICT);
+		
+		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
 		try {
 			json.format(null, new StringBuilder());
