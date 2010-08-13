@@ -197,7 +197,7 @@ List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<sp
 Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1, 2, 3]}", Hoge.class<span class="em">)</span>;
 
 <span class="comment">// クラスの配列型への変換も可能です。</span>
-Hoge[]] data = <span class="em">JSON.decode(</span>"[{ \"id\": 1 }, { \"id\": 2 }, { \"id\": 3 }]", Hoge[].class<span class="em">)</span>;
+Hoge[] data = <span class="em">JSON.decode(</span>"[{ \"id\": 1 }, { \"id\": 2 }, { \"id\": 3 }]", Hoge[].class<span class="em">)</span>;
 
 <span class="comment">// ReaderやInputStreamからJSONを読み込むことも可能です<sup>(※5)</sup></span>
 Hoge hoge = <span class="em">JSON.decode(</span>new FileReader("hoge.txt")<span class="em">,</span> Hoge.class<span class="em">)</span>;
@@ -265,7 +265,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <ul>
 <li><a href="index.html#extends">継承による機能拡張</a></li>
 <li><a href="index.html#generics">総称型を指定してのdecode/parse</a></li>
-<li><a href="index.html#liberalparsing">柔軟な読み込み</a></li>
+<li><a href="index.html#liberalparsing">柔軟な読み込みとモード指定</a></li>
 <li><a href="index.html#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="index.html#maxdepth">最大深度の設定</a></li>
 <li><a href="index.html#suppressnull">null値の抑制</a></li>
@@ -378,29 +378,29 @@ public class Config() {
     private Map&lt;String, Hoge&gt; config;
     
     <span class="em">// Filedを使って総称型を指定</span>
-    public Map load(Reader reader) throws IOException {
-        return (Map&lt;String, Hoge&gt;)JSON.<span class="em">decode(</span>reader, 
+    public Map<String, Hoge> load(Reader reader) throws IOException {
+        return JSON.<span class="em">decode(</span>reader, 
             this.getClass().getField("config").getGenericType()<span class="em">)</span>;
     }
     
     <span class="em">// 総称型を継承した無名クラスを使って総称型を指定</span>
     public List&lt;RowData&gt; load(Reader reader) throws IOException {
-	    return (List&lt;RowData&gt;)JSON.<span class="em">decode(</span>"[ { ... }, { ... } ]", 
-	        (new ArrayList&lt;RowData&gt;() {}).getClass().getGenericSuperclass())
+	    return JSON.<span class="em">decode(</span>"[ { ... }, { ... } ]", 
+	        (new ArrayList&lt;RowData&gt;() {}).getClass().getGenericSuperclass());
     }
 </pre>
 
-<h3 id="liberalparsing">■ 柔軟な読み込み <span class="subtitle">- 妥当でないJSONのデコード</span></h3>
-<p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、妥当でないJSONであっても読み込みが可能なように作成されています。<a 
-href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
+<h3 id="liberalparsing">■ TRADITIONALモード <span class="subtitle">- 妥当でないJSONの柔軟なデコード</span></h3>
+<p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、デフォルトでは、妥当でないJSONであっても読み込みが可能なTRADITIONALモードで動作するように作成されています。<br />
+<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
 <ul>
-  <li>Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）およびシェルスクリプトスタイルの行コメント（#）をコメントとして認識します。</li>
-  <li>ルート要素がobjectの場合、一番外側の'{'と'}'を省略することができます（入力文字列が空白文字列やコメントのみの場合も空のobjectとみなされます）。</li>
-  <li>シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します（ただし、シングルクォートで囲まれた場合はjavascriptと異なりエスケープを処理しません）。</li>
-  <li>objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
-  <li>objectにおいてキーに対する値がobjectの場合、':'を省略することができます。</li>
-  <li>string中で改行やタブなどの制御文字を有効な文字として認識します。</li>
-  <li>objectやarrayにおいて値が省略された場合、nullとして認識します。</li>
+  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）およびシェルスクリプトスタイルの行コメント（#）をコメントとして認識します。</li>
+  <li>[デコード] ルート要素がobjectの場合、一番外側の'{'と'}'を省略することができます（入力文字列が空白文字列やコメントのみの場合も空のobjectとみなされます）。</li>
+  <li>[デコード] シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します（ただし、シングルクォートで囲まれた場合はjavascriptと異なりエスケープを処理しません）。</li>
+  <li>[デコード] objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
+  <li>[デコード] objectにおいてキーに対する値がobjectの場合、':'を省略することができます。</li>
+  <li>[デコード] string中で改行やタブなどの制御文字を有効な文字として認識します。</li>
+  <li>[デコード] objectやarrayにおいて値が省略された場合、nullとして認識します。</li>
 </ul>
 <p>例えば、次のテキストは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>では無効ですが、JSONICでは読み込むことが可能です。</p>
 <pre class="source">
@@ -418,6 +418,24 @@ database {
      "user": "sa", "password": "xxxx"}}
 */
 </pre>
+
+<p>この動作は<code>setMode(Mode.STRICT)</code>を指定することで、RFCに準じた妥当性チェックを行なうよう変更することができます。</p>
+
+<h3 id="jsfriendly">■ SCRIPTモード <span class="subtitle">- JavaScriptとの親和性を高めた出力</span></h3>
+<p>JSONは、可搬性あるデータ連携フォーマットとしてだけでなく、HTML内に書かれるJavaScript内にJavaオブジェクトの内容をインライン出力するためにも便利です。
+JSONICでは、このような場合に使いやすいようSCRIPTモードを用意しています。<br />
+<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
+<ul>
+  <li>[エンコード] 引数にStringやIntegerなど、ルート要素が object や array にならないオブジェクトを指定し、JSONの断片を出力することができます。</li>
+  <li>[エンコード] HTMLやXML中ではエスケープが必要な「"」「&」「<」「>」が文字列中に見つかった場合、それぞれ「\u0022」「\u0026」「\u003C」「\u003E」と出力します。</li>
+  <li>[エンコード] java.util.Date 型を new Date(ミリ秒) で出力します。</li>
+  <li>[エンコード] NaN、POSITIVE_INFINITY, NEGATIVE_INFINITY を文字列ではなく、Number.NaN、Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITYとして出力します。</li>
+  <li>[デコード] 引数にstring、number、true/false/nullといったJSONの断片を指定し単純型の値を取得することができます。</li>
+  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）をコメントとして認識します（TRADITIONALモードと異なり#はコメントとして認識しません）。</li>
+  <li>[デコード] シングルクォートで囲まれた文字列をstringとして認識します（TRADITIONALモードと異なりダブルクォートで囲った場合と同様エスケープを認識します）。</li>
+  <li>[デコード] object のキーに限りシングルクォートで囲まれていないリテラルを文字列として認識します。</li>
+</ul>
+
 
 <h3 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h3>
 <p>JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
@@ -649,10 +667,11 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2010/08/13 version 1.2.1</h3>
 
 <ul>
-<li>[不具合] JSONのエンコード時にUNICODEエスケープが必要な制御文字をエスケープしていなかった問題を修正しました。</li>
+<li>[仕様変更] Objectを戻すdecode/parseメソッドの戻り値をタイプパラメータ化し、キャストを不要にしました。</li>
+<li>[不具合] JSONのエンコード時に改行やタブなど記号が割り当てられていない制御文字がエスケープされていなかった問題を修正しました。</li>
 <li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました。</li>
-<li>JSON.decodeなどの戻り値に型パラメータを使うようにしました。</li>
-<li>JSON形式の取り扱い方法モードを変更できる機能を追加しました。</li>
+<li>JSONのparseやformat時の挙動を変えるモード変更機能を追加しました。</li>
+<li>やや高速化しました。</li>
 </ul>
 
 <h3>2010/04/04 version 1.2.0</h3>

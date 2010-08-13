@@ -204,7 +204,7 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @return a json string
-	 * @exception JSONException if error occurred when formating.
+	 * @throws JSONException if error occurred when formating.
 	 */
 	public static String encode(Object source) throws JSONException {
 		return encode(source, false);
@@ -216,7 +216,7 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param prettyPrint output a json string with indent, space or break.
 	 * @return a json string
-	 * @exception JSONException if error occurred when formating.
+	 * @throws JSONException if error occurred when formating.
 	 */
 	public static String encode(Object source, boolean prettyPrint) throws JSONException {		
 		JSON json = JSON.newInstance();
@@ -229,8 +229,8 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
-	 * @exception IOException if I/O Error occurred.
-	 * @exception JSONException if error occurred when formating.
+	 * @throws IOException if I/O Error occurred.
+	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, OutputStream out) throws IOException, JSONException {
 		JSON.newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
@@ -242,8 +242,8 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
-	 * @exception IOException if I/O Error occurred.
-	 * @exception JSONException if error occurred when formating.
+	 * @throws IOException if I/O Error occurred.
+	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
@@ -256,8 +256,8 @@ public class JSON {
 	 * 
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
-	 * @exception IOException if I/O Error occurred.
-	 * @exception JSONException if error occurred when formating.
+	 * @throws IOException if I/O Error occurred.
+	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, Appendable appendable) throws IOException, JSONException {
 		JSON.newInstance().format(source, appendable);
@@ -269,8 +269,8 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
-	 * @exception IOException if I/O Error occurred.
-	 * @exception JSONException if error occurred when formating.
+	 * @throws IOException if I/O Error occurred.
+	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
@@ -283,9 +283,9 @@ public class JSON {
 	 * 
 	 * @param source a json string to decode
 	 * @return a decoded object
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws JSONException if error occurred when parsing.
 	 */
-	public static Object decode(String source) throws JSONException {
+	public static <T> T decode(String source) throws JSONException {
 		return JSON.newInstance().parse(source);
 	}
 	
@@ -295,7 +295,7 @@ public class JSON {
 	 * @param source a json string to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(String source, Class<? extends T> cls) throws JSONException {
 		return JSON.newInstance().parse(source, cls);
@@ -307,9 +307,9 @@ public class JSON {
 	 * @param source a json string to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws JSONException if error occurred when parsing.
 	 */
-	public static Object decode(String source, Type type) throws JSONException {
+	public static <T> T decode(String source, Type type) throws JSONException {
 		return JSON.newInstance().parse(source, type);
 	}
 
@@ -318,10 +318,10 @@ public class JSON {
 	 * 
 	 * @param in a json stream to decode
 	 * @return a decoded object
-	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
 	 */
-	public static Object decode(InputStream in) throws IOException, JSONException {
+	public static <T> T decode(InputStream in) throws IOException, JSONException {
 		return JSON.newInstance().parse(in);
 	}
 
@@ -331,8 +331,8 @@ public class JSON {
 	 * @param in a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONException {
 		return JSON.newInstance().parse(in, cls);
@@ -344,8 +344,8 @@ public class JSON {
 	 * @param in a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(InputStream in, Type type) throws IOException, JSONException {
@@ -357,8 +357,8 @@ public class JSON {
 	 * 
 	 * @param reader a json stream to decode
 	 * @return a decoded object
-	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(Reader reader) throws IOException, JSONException {
@@ -371,8 +371,8 @@ public class JSON {
 	 * @param reader a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONException {
 		return JSON.newInstance().parse(reader, cls);
@@ -384,14 +384,20 @@ public class JSON {
 	 * @param reader a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
-	 * @exception IOException if I/O error occurred.
-	 * @exception JSONException if error occurred when parsing.
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(Reader reader, Type type) throws IOException, JSONException {
 		return (T)JSON.newInstance().parse(reader, type);
 	}
 	
+	/**
+	 * Validates a json text
+	 * 
+	 * @param cs source a json string to decode
+	 * @throws JSONException if error occurred when parsing.
+	 */
 	public static void validate(CharSequence cs) throws JSONException {
 		JSON json = JSON.newInstance();
 		json.setMode(Mode.STRICT);
@@ -399,6 +405,13 @@ public class JSON {
 		json.parse(cs);
 	}
 	
+	/**
+	 * Validates a json stream
+	 * 
+	 * @param in source a json string to decode
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
+	 */
 	public static void validate(InputStream in) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
 		json.setMode(Mode.STRICT);
@@ -406,6 +419,13 @@ public class JSON {
 		json.parse(in);
 	}
 	
+	/**
+	 * Validates a json stream
+	 * 
+	 * @param reader source a json string to decode
+	 * @throws IOException if I/O error occurred.
+	 * @throws JSONException if error occurred when parsing.
+	 */
 	public static void validate(Reader reader) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
 		json.setMode(Mode.STRICT);
@@ -1173,6 +1193,21 @@ public class JSON {
 				if (mode == Mode.TRADITIONAL || (mode == Mode.SCRIPT && c == '/')) {
 					s.back();
 					skipComment(s);
+					continue;
+				}
+			case '\'':
+			case '"':
+				if (mode == Mode.SCRIPT) {
+					s.back();
+					o = parseString(s);
+					isEmpty = false;
+					continue;
+				}
+			default:
+				if (mode == Mode.SCRIPT) {
+					s.back();
+					o = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, false);
+					isEmpty = false;
 					continue;
 				}
 			}

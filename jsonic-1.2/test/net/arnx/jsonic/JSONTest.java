@@ -918,7 +918,17 @@ public class JSONTest {
 		
 		assertEquals(props, json.parse("[\"aaa\",{bbb:1,ccc:2},false]", Properties.class));
 		
+		List<TestBean> list5 = JSON.decode("[ {} ]",  (new ArrayList<TestBean>() {}).getClass().getGenericSuperclass());
+		assertEquals(TestBean.class, list5.get(0).getClass());
+		
+		//SCRIPT
 		json.setMode(JSON.Mode.SCRIPT);
+		
+		assertEquals("aaa", json.parse("\"aaa\""));
+		assertEquals(new BigDecimal("100"), json.parse("100"));
+		assertEquals(true, json.parse("true"));
+		assertEquals(false, json.parse("false"));
+		assertNull(json.parse("null"));
 		
 		try {
 			json.parse("");
@@ -972,6 +982,7 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
+		//STRICT
 		json.setMode(JSON.Mode.STRICT);
 		
 		try {
@@ -1393,7 +1404,7 @@ public class JSONTest {
 		return sb.toString();
 	}
 	
-	@Test
+	//@Test
 	public void testDecodeTime() throws Exception {
 		JSON json = new JSON();
 		
@@ -1543,6 +1554,7 @@ public class JSONTest {
 	public void testValidate() throws Exception {
 		JSON.validate(this.getClass().getResourceAsStream("Sample1.json"));
 	}
+
 }
 
 class TestBeanWrapper {
