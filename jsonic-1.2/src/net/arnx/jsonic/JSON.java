@@ -1059,11 +1059,7 @@ public class JSON {
 				start = i+1;
 			} else if (c == '"') {
 				if (start < i) ap.append(s, start, i);
-				if (mode != Mode.SCRIPT) {
-					ap.append("\\\"");
-				} else {
-					ap.append("\\u0022");
-				}
+				ap.append("\\\"");
 				start = i+1;
 			} else if (c < ' ') {
 				if (start < i) ap.append(s, start, i);
@@ -1074,11 +1070,7 @@ public class JSON {
 				ap.append("\\u007F");
 				start = i+1;
 			} else if (mode == Mode.SCRIPT) {
-				if (c == '&') {
-					if (start < i) ap.append(s, start, i);
-					ap.append("\\u0026");
-					start = i+1;
-				} else if (c == '<') {
+				if (c == '<') {
 					if (start < i) ap.append(s, start, i);
 					ap.append("\\u003C");
 					start = i+1;

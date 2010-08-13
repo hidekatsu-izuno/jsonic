@@ -539,6 +539,7 @@ public class JSONTest {
 		
 		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
+		//SCRIPT
 		json.setMode(JSON.Mode.SCRIPT);
 		
 		assertEquals("null", json.format(null, new StringBuilder()).toString());
@@ -548,9 +549,10 @@ public class JSONTest {
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
 		
 		assertEquals("new Date(" + Long.toString(d.getTime()) + ")", json.format(d, new StringBuilder()).toString());
-		assertEquals("[\"!\\u0022#$%\\u0026'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
-		assertArrayEquals(new String[] { "!\"#$%&'()=~|<>?_" }, json.parse("[\"!\\u0022#$%\\u0026'()=~|\\u003C\\u003E?_\"]", String[].class));
+		assertEquals("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
+		assertArrayEquals(new String[] { "!\"#$%&'()=~|<>?_" }, json.parse("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", String[].class));
 		
+		//STRICT
 		json.setMode(Mode.STRICT);
 		
 		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
