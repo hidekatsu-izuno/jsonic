@@ -266,6 +266,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="index.html#extends">継承による機能拡張</a></li>
 <li><a href="index.html#generics">総称型を指定してのdecode/parse</a></li>
 <li><a href="index.html#liberalparsing">柔軟な読み込み</a></li>
+<li><a href="index.html#validation">JSONの検証</a></li>
 <li><a href="index.html#jsfriendly">JavaScriptに親和的な出力</a></li>
 <li><a href="index.html#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="index.html#maxdepth">最大深度の設定</a></li>
@@ -421,6 +422,26 @@ database {
 </pre>
 
 <p>この動作は<code>setMode(Mode.STRICT)</code>を指定することで、RFCに準じた妥当性チェックを行なうよう変更することができます。</p>
+
+<h3 id="validation">■ JSONの検証 <span class="subtitle">- STRICTモード</span></h3>
+<p>JSONICでは、従来柔軟な読み込みができる反面、<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に厳密に沿ったJSONであるか判定することができませんでした。
+JSONIC 1.2.1からはSTRICTモードが用意され、厳密な検証動作が可能となりました。</p>
+<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。</p>
+<pre class="source">
+	JSON json = new JSON(JSON.Mode.STRICT);
+	
+	json.setMode(JSON.Mode.STRICT);
+	
+	JSON.prototype = (new JSON() {
+		{
+			setMode(JSON.Mode.STRICT);
+		}
+	}).getClass();
+</pre>
+<p>また、データのデコードを行わず検証のみを行うvalidateメソッドも用意されています（これは、setDepth(0)、setMode(Mode.STRICT)を指定した時と同じです）。</p>
+<pre class="source">
+	JSON.validate(new FileInputStream("test.json"));
+</pre>
 
 <h3 id="jsfriendly">■ JavaScriptに親和的な出力 <span class="subtitle">- SCRIPTモード</span></h3>
 <p>JSONは、可搬性あるデータ連携フォーマットとしてだけでなく、HTML内に書かれるJavaScript内にJavaオブジェクトの内容をインライン出力するためにも便利です。
@@ -681,9 +702,9 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>[仕様変更] Objectを戻すdecode/parseメソッドの戻り値をタイプパラメータ化し、キャストを不要にしました。</li>
 <li>[不具合] JSONのエンコード時に改行やタブなど記号が割り当てられていない制御文字がエスケープされていなかった問題を修正しました。</li>
-<li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました。</li>
+<li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました（自信がないので、まだ問題が起こったら教えてください）。</li>
 <li>JSONのparseやformat時の挙動を変えるモード変更機能を追加し、厳密なチェックを行う STRICT モードとインラインでのJavaScript記述に便利な SCRIPT モードを追加しました。</li>
-<li>やや高速化しました。</li>
+<li>やや高速化を図りました。</li>
 </ul>
 
 <h3>2010/04/04 version 1.2.0</h3>

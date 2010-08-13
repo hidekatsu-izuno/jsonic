@@ -1191,14 +1191,14 @@ public class JSON {
 			case '"':
 				if (mode == Mode.SCRIPT) {
 					s.back();
-					o = parseString(s);
+					o = parseString(s, 1);
 					isEmpty = false;
 					continue;
 				}
 			default:
 				if (mode == Mode.SCRIPT) {
 					s.back();
-					o = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, false);
+					o = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s, 1) : parseLiteral(s, 1, false);
 					isEmpty = false;
 					continue;
 				}
@@ -1303,11 +1303,11 @@ public class JSON {
 					point = 1;
 				} else if (point == 1 || point == 6) {
 					s.back();
-					key = parseString(s);
+					key = parseString(s, level+1);
 					point = 2;
 				} else if (point == 3) {
 					s.back();
-					String value = parseString(s);
+					String value = parseString(s, level+1);
 					if (level < this.maxDepth) map.put(key, value);
 					point = 5;
 				} else {
@@ -1331,11 +1331,11 @@ public class JSON {
 				point = 1;
 			} else if (point == 1 || point == 6) {
 				s.back();
-				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, mode != Mode.STRICT);
+				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s, level+1) : parseLiteral(s, level+1, mode != Mode.STRICT);
 				point = 2;
 			} else if (point == 3) {
 				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, mode == Mode.TRADITIONAL);
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s, level+1) : parseLiteral(s, level+1, mode == Mode.TRADITIONAL);
 				if (level < this.maxDepth && (value != null || !this.suppressNull)) {
 					map.put(key, value);
 				}
@@ -1424,7 +1424,7 @@ public class JSON {
 			case '"':
 				if (point == 1 || point == 3 || point == 4) {
 					s.back();
-					String value = parseString(s);
+					String value = parseString(s, level+1);
 					if (level < this.maxDepth) list.add(value);
 					point = 2;
 				} else {
@@ -1445,7 +1445,7 @@ public class JSON {
 			
 			if (point == 1 || point == 3 || point == 4) {
 				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s) : parseLiteral(s, mode == Mode.TRADITIONAL);
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(s, level+1) : parseLiteral(s, level+1, mode == Mode.TRADITIONAL);
 				if (level < this.maxDepth) list.add(value);
 				point = 2;
 			} else {
@@ -1459,9 +1459,9 @@ public class JSON {
 		return list;
 	}
 	
-	String parseString(ParserSource s) throws IOException, JSONException {
+	String parseString(ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		StringBuilder sb = s.getCachedBuilder();
+		StringBuilder sb = (level <= this.maxDepth) ? s.getCachedBuilder() : null;
 		char start = '\0';
 		
 		int n = -1;
@@ -1474,9 +1474,10 @@ public class JSON {
 				if (point == 1) {
 					if (mode != Mode.TRADITIONAL || start == '"') {
 						s.back();
-						sb.append(parseEscape(s));
+						c = parseEscape(s);
+						if (sb != null) sb.append(c);
 					} else {
-						sb.append(c);
+						if (sb != null) sb.append(c);
 					}
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1495,7 +1496,7 @@ public class JSON {
 					if (start == c) {
 						break loop;						
 					} else {
-						sb.append(c);
+						if (sb != null) sb.append(c);
 					}
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1503,7 +1504,7 @@ public class JSON {
 				continue;
 			}
 			if (point == 1 && (mode != Mode.STRICT  || c >= 0x20)) {
-				sb.append(c);
+				if (sb != null) sb.append(c);
 				continue;
 			}
 			throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1512,10 +1513,10 @@ public class JSON {
 		if (n != start) {
 			throw createParseException(getMessage("json.parse.StringNotClosedError"), s);
 		}
-		return sb.toString();
+		return (sb != null) ? sb.toString() : null;
 	}
 	
-	Object parseLiteral(ParserSource s, boolean any) throws IOException, JSONException {
+	Object parseLiteral(ParserSource s, int level, boolean any) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = s.getCachedBuilder();
 
@@ -1553,9 +1554,9 @@ public class JSON {
 		return str;
 	}	
 	
-	Number parseNumber(ParserSource s) throws IOException, JSONException {
+	Number parseNumber(ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilder sb = s.getCachedBuilder();
+		StringBuilder sb = (level <= this.maxDepth) ? s.getCachedBuilder() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1565,7 +1566,7 @@ public class JSON {
 				break;
 			case '+':
 				if (point == 7) {
-					sb.append(c);
+					if (sb != null) sb.append(c);
 					point = 8;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1573,10 +1574,10 @@ public class JSON {
 				break;
 			case '-':
 				if (point == 0) {
-					sb.append(c);
+					if (sb != null) sb.append(c);
 					point = 1;
 				} else if (point == 7) {
-					sb.append(c);
+					if (sb != null) sb.append(c);
 					point = 8;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1584,7 +1585,7 @@ public class JSON {
 				break;
 			case '.':
 				if (point == 2 || point == 3) {
-					sb.append(c);
+					if (sb != null) sb.append(c);
 					point = 4;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1593,7 +1594,7 @@ public class JSON {
 			case 'e':
 			case 'E':
 				if (point == 2 || point == 3 || point == 5 || point == 6) {
-					sb.append(c);
+					if (sb != null) sb.append(c);
 					point = 7;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1602,15 +1603,15 @@ public class JSON {
 			default:
 				if (c >= '0' && c <= '9') {
 					if (point == 0 || point == 1) {
-						sb.append(c);
+						if (sb != null) sb.append(c);
 						point = (c == '0') ? 3 : 2;
 					} else if (point == 2 || point == 5 || point == 9) {
-						sb.append(c);
+						if (sb != null) sb.append(c);
 					} else if (point == 4) {
-						sb.append(c);
+						if (sb != null) sb.append(c);
 						point = 5;
 					} else if (point == 7 || point == 8) {
-						sb.append(c);
+						if (sb != null) sb.append(c);
 						point = 9;
 					} else {
 						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1624,7 +1625,7 @@ public class JSON {
 			}
 		}
 		
-		return new BigDecimal(sb.toString());
+		return (sb != null) ? new BigDecimal(sb.toString()) : null;
 	}
 	
 	char parseEscape(ParserSource s) throws IOException, JSONException {
