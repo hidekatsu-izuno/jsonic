@@ -163,11 +163,14 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.2.0
+ * @version 1.2.1
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
 public class JSON {
+	/**
+	 * JSON process mode
+	 */
 	public enum Mode {
 		TRADITIONAL,
 		STRICT,
