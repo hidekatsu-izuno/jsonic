@@ -169,7 +169,7 @@ import org.w3c.dom.NodeList;
  */
 public class JSON {
 	/**
-	 * JSON process mode
+	 * JSON processing mode
 	 */
 	public enum Mode {
 		TRADITIONAL,
