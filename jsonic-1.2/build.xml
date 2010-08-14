@@ -5,7 +5,7 @@
 	
 	<property name="debug" value="true" />
 	<property name="jsonic_as3.home" location="../jsonic_as3-1.2" />
-	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.0.0" />
+	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />
 	
 	<property name="webapps" location="sample"/>
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
