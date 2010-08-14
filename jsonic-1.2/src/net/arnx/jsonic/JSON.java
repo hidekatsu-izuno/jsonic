@@ -285,8 +285,9 @@ public class JSON {
 	 * @return a decoded object
 	 * @throws JSONException if error occurred when parsing.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T decode(String source) throws JSONException {
-		return JSON.newInstance().parse(source);
+		return (T)JSON.newInstance().parse(source);
 	}
 	
 	/**
@@ -309,8 +310,9 @@ public class JSON {
 	 * @return a decoded object
 	 * @throws JSONException if error occurred when parsing.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T decode(String source, Type type) throws JSONException {
-		return JSON.newInstance().parse(source, type);
+		return (T)JSON.newInstance().parse(source, type);
 	}
 
 	/**
@@ -321,8 +323,9 @@ public class JSON {
 	 * @throws IOException if I/O error occurred.
 	 * @throws JSONException if error occurred when parsing.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T decode(InputStream in) throws IOException, JSONException {
-		return JSON.newInstance().parse(in);
+		return (T)JSON.newInstance().parse(in);
 	}
 
 	/**
