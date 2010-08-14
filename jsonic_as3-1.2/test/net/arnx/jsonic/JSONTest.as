@@ -27,7 +27,10 @@ package net.arnx.jsonic {
 		public function testEncode():void {			
 			var list:Array = [];
 			assertEquals("[]", JSON.encode(list));
+			list.push("\u0000", "\u0001", "\u0009");
+			assertEquals('["\\u0000","\\u0001","\\t"]', JSON.encode(list));
 			
+			list = [];
 			list.push("", 1, 1.0, "c", "string", true, false, null, new Object(), new Array(), /\.*/);
 			assertEquals('["",1,1,"c","string",true,false,null,{},[],"\\\\.*"]', JSON.encode(list));
 			

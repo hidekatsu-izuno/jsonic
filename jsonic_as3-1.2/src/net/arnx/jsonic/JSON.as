@@ -37,6 +37,44 @@ package net.arnx.jsonic {
 		
 		private static var _resourceManager:IResourceManager = ResourceManager.getInstance();
 		
+		private static var CONTROL_CHARS:Object = {
+			"\u0000": "\\u0000", 
+			"\u0001": "\\u0001", 
+			"\u0002": "\\u0002", 
+			"\u0003": "\\u0003",
+			"\u0004": "\\u0004", 
+			"\u0005": "\\u0005", 
+			"\u0006": "\\u0006", 
+			"\u0007": "\\u0007",
+			"\u0008": "\u0008",
+			"\u0009": "\\t", 
+			"\u000A": "\\n", 
+			"\u000B": "\\u000B", 
+			"\u000C": "\\f",
+			"\u000D": "\\r", 
+			"\u000E": "\\u000E", 
+			"\u000F": "\\u000F",
+			"\u0010": "\\u0010", 
+			"\u0011": "\\u0011", 
+			"\u0012": "\\u0012", 
+			"\u0013": "\\u0013",
+			"\u0014": "\\u0014", 
+			"\u0015": "\\u0015", 
+			"\u0016": "\\u0016", 
+			"\u0017": "\\u0017",
+			"\u0018": "\\u0018",
+			"\u0019": "\\u0019",
+			"\u001A": "\\u001A", 
+			"\u001B": "\\u001B", 
+			"\u001C": "\\0001C",
+			"\u001D": "\\0001D", 
+			"\u001E": "\\u001E", 
+			"\u001F": "\\u001F",
+			"\u0022": "\\\"",
+			"\u005C": "\\\\",
+			"\u007F": "\\u007F"
+		};
+		
 		private var _prettyPrint:Boolean = false;
 		private var _maxDepth:int;
 		private var _suppressNull:Boolean = false;
@@ -152,29 +190,11 @@ package net.arnx.jsonic {
 			array.writeUTFBytes('"');
 			for (var i:int = 0; i < s.length; i++) {
 				var c:String = s.charAt(i);
-				switch (c) {
-					case '"':
-					case '\\': 
-						array.writeUTFBytes('\\');
-						array.writeUTFBytes(c);
-						break;
-					case '\b':
-						array.writeUTFBytes('\\b');
-						break;
-					case '\f':
-						array.writeUTFBytes('\\f');
-						break;
-					case '\n':
-						array.writeUTFBytes('\\n');
-						break;
-					case '\r':
-						array.writeUTFBytes('\\r');
-						break;
-					case '\t':
-						array.writeUTFBytes('\\t');
-						break;
-					default:
-						array.writeUTFBytes(c);	
+				var result:String = CONTROL_CHARS[c];
+				if (result !== null) {
+					array.writeUTFBytes(result);
+				} else {
+					array.writeUTFBytes(c);	
 				}
 			}
 			array.writeUTFBytes('"');
