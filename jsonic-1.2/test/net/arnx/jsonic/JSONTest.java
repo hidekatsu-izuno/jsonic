@@ -1054,6 +1054,16 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 	}
+	
+	@Test
+	public void testIterator() throws Exception {
+		JSON json = new JSON();
+		
+		JSONIterator ite = json.iterator(this.getClass().getResourceAsStream("KEN_ALL_Array.json"));
+		while (ite.hasNext()) {
+			System.out.println(ite.next());
+		}
+	}
 
 	@Test
 	public void testConvert() throws Exception {
