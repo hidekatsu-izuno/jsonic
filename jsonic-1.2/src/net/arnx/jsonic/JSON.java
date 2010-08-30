@@ -2699,12 +2699,9 @@ public class JSON {
 	
 	public class Context {
 		Class<?> scope;
-		List<Object[]> path = new ArrayList<Object[]>(8);
+		List<Object[]> path;
 		int level = -1;
 		Map<Class<?>, Map<String, AnnotatedElement>> cache;
-		
-		Context() {
-		}
 		
 		/**
 		 * Returns the current level.
@@ -2721,7 +2718,7 @@ public class JSON {
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
 		public Object getKey() {
-			return path.get(getLevel())[0];
+			return getState(getLevel())[0];
 		}
 		
 		/**
@@ -2731,7 +2728,7 @@ public class JSON {
 		 */
 		public Object getKey(int level) {
 			if (level < 0) level = getLevel()+level; 
-			return path.get(level)[0];
+			return getState(level)[0];
 		}
 		
 		/**
@@ -2740,7 +2737,18 @@ public class JSON {
 		 * @return the current annotation if present on this context, else null.
 		 */
 		public JSONHint getHint() {
-			return (JSONHint)path.get(getLevel())[1];
+			return (JSONHint)getState(getLevel())[1];
+		}
+		
+		Object[] getState(int level) {
+			if (path == null) path =  new ArrayList<Object[]>(8);
+			if (level >= path.size()) {
+				for (int i = path.size(); i <= level; i++) {
+					path.add(new Object[2]);
+				}
+			}
+			
+			return path.get(level);
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -2761,8 +2769,7 @@ public class JSON {
 		
 		void enter(Object key, JSONHint hint) {
 			level++;
-			if (level == path.size()) path.add(new Object[2]);
-			Object[] state = path.get(getLevel());
+			Object[] state = getState(getLevel());
 			state[0] = key;
 			state[1] = hint;
 		}
