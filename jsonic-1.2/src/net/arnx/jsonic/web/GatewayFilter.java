@@ -109,6 +109,7 @@ public class GatewayFilter implements Filter {
 		
 		if (request.getAttribute(GATEWAY_KEY) != null) {
 			chain.doFilter(request, response);
+			return;
 		}
 		
 		String path = (request.getContextPath().equals("/")) ?

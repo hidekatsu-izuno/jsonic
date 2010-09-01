@@ -238,6 +238,16 @@ public class RESTServletTest {
 				JSON.decode(read(con.getErrorStream())));
 		con.disconnect();
 		
+		// DUMMY
+		url = "http://localhost:16001/" + app + "/rest/test";
+		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con.setRequestMethod("GET");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("[\"OK\"]"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
 		System.out.println("<<END testRest: " + app + ">>\n");
 	}
 	

@@ -313,6 +313,16 @@ public class RPCServletTest {
 		assertEquals(0, con.getContentLength());
 		con.disconnect();
 		
+		// DUMMY
+		url = new URL("http://localhost:16001/" + app + "/rpc/test.json");
+		con = (HttpURLConnection)url.openConnection();
+		con.setRequestMethod("POST");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("[\"OK\"]"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
 		System.out.println("<<END testRPC: " + app + ">>\n");
 	}
 	
