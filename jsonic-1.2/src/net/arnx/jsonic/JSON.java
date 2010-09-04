@@ -2401,6 +2401,19 @@ public class JSON {
 		return (T)data;
 	}
 	
+	protected String normalize(String name) {
+		return name;
+	}
+	
+	/**
+	 * Ignore this property. A default behavior is to ignore transient or declaring method in java.lang.Object.
+	 * You can override this method if you have to change default behavior.
+	 * 
+	 * @param context current context
+	 * @param target target class
+	 * @param member target member
+	 * @return true if this member must be ignored.
+	 */
 	protected boolean ignore(Context context, Class<?> target, Member member) {
 		if (Modifier.isTransient(member.getModifiers())) return true;
 		if (member.getDeclaringClass().equals(Object.class)) return true;
@@ -2802,7 +2815,7 @@ public class JSON {
 					continue;
 				}
 				
-				String name = f.getName();
+				String name = normalize(f.getName());
 				if (f.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = f.getAnnotation(JSONHint.class);
 					if (hint.ignore()) continue;
@@ -2844,6 +2857,7 @@ public class JSON {
 					chars[0] = Character.toLowerCase(chars[0]);
 					name = new String(chars);
 				}
+				name = normalize(name);
 				
 				if (m.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = m.getAnnotation(JSONHint.class);
