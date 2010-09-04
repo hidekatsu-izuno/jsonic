@@ -125,8 +125,9 @@ public class WebServiceServlet extends HttpServlet {
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
 		
-		File file = new File(getServletContext().getRealPath(uri));
-		if (file.exists()) {
+		String path = getServletContext().getRealPath(uri);
+		File file = (path != null) ? new File(path) : null;
+		if (file != null && file.exists() && file.isFile()) {
 			OutputStream out = response.getOutputStream();
 			InputStream in = new FileInputStream(file);
 			try {

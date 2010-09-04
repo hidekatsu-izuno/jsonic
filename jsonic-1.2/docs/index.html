@@ -697,11 +697,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2010/08/13 version 1.2.1</h3>
+<h3>2010/09/04 version 1.2.1</h3>
 
 <ul>
 <li>[不具合] JSONのエンコード時に改行やタブなど記号が割り当てられていない制御文字がエスケープされていなかった問題を修正しました（AS3版も同様です）。</li>
-<li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました（自信がないので、まだ問題が起こるようであれば教えてください）。</li>
+<li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました。</li>
+<li>[不具合] JSON Web ServiceにてServletContext#getRealPathがnullを返すとき、NullPointerException が発生していた問題を修正しました（#22982）</li>
 <li>[仕様変更] Objectを戻すdecode/parseメソッドの戻り値をタイプパラメータ化し、キャストを不要にしました。</li>
 <li>JSONのparseやformat時の挙動を変えるモード変更機能を追加し、厳密なチェックを行う STRICT モードとインラインでのJavaScript記述に便利な SCRIPT モードを追加しました。</li>
 <li>JSONの検証を行うために JSON.validate メソッドを追加しました。</li>
