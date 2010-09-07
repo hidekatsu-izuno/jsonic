@@ -35,6 +35,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Properties;
 import java.util.TimeZone;
@@ -372,6 +373,11 @@ public class JSONTest {
 		list.add(null);
 		
 		assertEquals(list, JSON.decode(JSON.encode(list), List.class));
+		
+		TreeMap<String, String> map = new TreeMap<String, String>();
+		map.put("test", "result");
+		
+		assertEquals(map, JSON.decode(JSON.encode(map), TreeMap.class));
 
 		TestBean test = new TestBean();
 		test.setA(100);
@@ -1354,6 +1360,11 @@ public class JSONTest {
 		// Charset
 		assertEquals(Charset.forName("UTF-8"), json.convert("UTF-8", Charset.class));		
 		
+		// Map
+		LinkedHashMap lhmap = new LinkedHashMap();
+		lhmap.put("aaa", null);
+		assertEquals(lhmap, json.convert("aaa", Map.class));
+		
 		// object
 		try {
 			Object test = new Object() {
@@ -1367,6 +1378,15 @@ public class JSONTest {
 			json.convert(map, test.getClass());
 			fail();
 		} catch (Exception e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		// etc
+		try {
+			json.convert("aaa", Iterator.class);
+			fail();
+		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
