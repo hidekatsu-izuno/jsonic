@@ -53,6 +53,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.List;
@@ -163,7 +165,7 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.2.1
+ * @version 1.2.2
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -188,6 +190,22 @@ public class JSON {
 		"\\u0010", "\\u0011", "\\u0012", "\\u0013", "\\u0014", "\\u0015", "\\u0016", "\\u0017", 
 		"\\u0018", "\\u0019", "\\u001A", "\\u001B", "\\u001C", "\\u001D", "\\u001E", "\\u001F"
 	};
+	
+	
+	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
+	
+	static {
+		PRIMITIVE_MAP.put(boolean.class, false);
+		PRIMITIVE_MAP.put(byte.class, (byte)0);
+		PRIMITIVE_MAP.put(short.class, (short)0);
+		PRIMITIVE_MAP.put(int.class, 0);
+		PRIMITIVE_MAP.put(long.class, 0l);
+		PRIMITIVE_MAP.put(float.class, 0.0f);
+		PRIMITIVE_MAP.put(double.class, 0.0);
+		PRIMITIVE_MAP.put(char.class, '\0');
+	}
+	
+	private static Set<String> nonExistentClasses = new HashSet<String>();
 	
 	static JSON newInstance() {
 		JSON instance = null;
@@ -1813,7 +1831,7 @@ public class JSON {
 		Class<?> c = cls;
 		
 		if (c.isPrimitive()) {
-			data = getPrimitive(c);
+			data = PRIMITIVE_MAP.get(c);
 			c = data.getClass();
 		}
 		
@@ -2549,35 +2567,15 @@ public class JSON {
 		}
 	}
 	
-	static Object getPrimitive(Class<?> cls) {
-		if (cls.equals(boolean.class)) {
-			return Boolean.FALSE;
-		} else if (cls.equals(byte.class)) {
-			return (byte)0;
-		} else if (cls.equals(short.class)) {
-			return (short)0;
-		} else if (cls.equals(int.class)) {
-			return 0;
-		} else if (cls.equals(long.class)) {
-			return 0L;
-		} else if (cls.equals(float.class)) {
-			return 0.0F;
-		} else if (cls.equals(double.class)) {
-			return 0.0;
-		} else if (cls.equals(char.class)) {
-			return '\0';
-		} else {
-			return null;
-		}
-	}
-	
-	static boolean isInstance(Class<?> c, String name) {
-		ClassLoader cl = c.getClassLoader();
-		if (cl == null) return false;
-		
+	static boolean isInstance(Class<?> cls, String name) {
+		if (nonExistentClasses.contains(name)) return false;
 		try {
-			return cl.loadClass(name).isAssignableFrom(c);
+			ClassLoader cl = Thread.currentThread().getContextClassLoader();
+			return cl.loadClass(name).isAssignableFrom(cls);
 		} catch (ClassNotFoundException e) {
+			synchronized(nonExistentClasses) {
+				nonExistentClasses.add(name);
+			}
 			return false;
 		}
 	}
@@ -2761,7 +2759,7 @@ public class JSON {
 			enter(key);
 			T o = JSON.this.postparse(this, value, c, c);
 			exit();
-			return (T)((c.isPrimitive()) ? getPrimitive(c).getClass() : c).cast(o);
+			return (T)((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
@@ -2769,7 +2767,7 @@ public class JSON {
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
-			return ((c.isPrimitive()) ? getPrimitive(c).getClass() : c).cast(o);
+			return ((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
 		}
 		
 		void enter(Object key, JSONHint hint) {
