@@ -652,7 +652,12 @@ public class JSON {
 				data = ((CharacterData)value).getData();
 			}
 		} else if (isInstance(value.getClass(), "org.apache.commons.beanutils.DynaBean")) {
-			Class<?> dynaBeanClass = findClass("org.apache.commons.beanutils.DynaBean", value.getClass());
+			Class<?> dynaBeanClass = null;
+			try {
+				ClassLoader cl = value.getClass().getClassLoader();
+				dynaBeanClass = Class.forName("org.apache.commons.beanutils.DynaBean", true, cl);
+			} catch (ClassNotFoundException e) {
+			}
 			
 			Map<Object, Object> map = new TreeMap<Object, Object>();
 			Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(value);
@@ -2310,7 +2315,11 @@ public class JSON {
 				} else if (s.equals("double")) {
 					data = double.class;
 				} else {
-					data = findClass(value.toString());
+					try {
+						ClassLoader cl = Thread.currentThread().getContextClassLoader();
+						data = cl.loadClass(value.toString());
+					} catch (ClassNotFoundException e) {
+					}
 				}
 			} else if (Collection.class.isAssignableFrom(c)) {
 				Collection<Object> collection = (Collection<Object>)create(context, c);
@@ -2540,25 +2549,6 @@ public class JSON {
 		}
 	}
 	
-	static Class<?> findClass(String name) throws ClassNotFoundException {
-		return findClass(name, prototype);
-	}
-	
-	static Class<?> findClass(String name, Class<?> location) throws ClassNotFoundException {
-		Class<?> c = null;
-		try {
-			c = Class.forName(name, true, Thread.currentThread().getContextClassLoader());
-		} catch (ClassNotFoundException e) {
-			try {
-				c = Class.forName(name, true, location.getClassLoader());
-			} catch (ClassNotFoundException e2) {
-				c = Class.forName(name);				
-			}
-		}
-		
-		return c;
-	}
-	
 	static Object getPrimitive(Class<?> cls) {
 		if (cls.equals(boolean.class)) {
 			return Boolean.FALSE;
@@ -2582,9 +2572,11 @@ public class JSON {
 	}
 	
 	static boolean isInstance(Class<?> c, String name) {
+		ClassLoader cl = c.getClassLoader();
+		if (cl == null) return false;
+		
 		try {
-			Class<?> target = Class.forName(name, true, c.getClassLoader());
-			return target.isAssignableFrom(c);
+			return cl.loadClass(name).isAssignableFrom(c);
 		} catch (ClassNotFoundException e) {
 			return false;
 		}
