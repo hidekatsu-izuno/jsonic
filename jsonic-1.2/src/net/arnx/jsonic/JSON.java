@@ -2853,7 +2853,7 @@ public class JSON {
 				
 				name = name.substring(start);
 				if (name.length() < 2 || !Character.isUpperCase(name.charAt(1)) ){
-					char chars[] = name.toCharArray();
+					char[] chars = name.toCharArray();
 					chars[0] = Character.toLowerCase(chars[0]);
 					name = new String(chars);
 				}
@@ -2921,7 +2921,7 @@ public class JSON {
 				
 				name = name.substring(start);
 				if (name.length() < 2 || !Character.isUpperCase(name.charAt(1)) ){
-					char chars[] = name.toCharArray();
+					char[] chars = name.toCharArray();
 					chars[0] = Character.toLowerCase(chars[0]);
 					name = new String(chars);
 				}
