@@ -191,7 +191,6 @@ public class JSON {
 		"\\u0018", "\\u0019", "\\u001A", "\\u001B", "\\u001C", "\\u001D", "\\u001E", "\\u001F"
 	};
 	
-	
 	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
 	
 	static {
@@ -1076,38 +1075,40 @@ public class JSON {
 	
 	Appendable formatString(CharSequence s, Appendable ap) throws IOException {
 		ap.append('"');
-		int start = 0;
 		for (int i = 0; i < s.length(); i++) {
 			char c = s.charAt(i);
-			if (c == '\\') {
-				if (start < i) ap.append(s, start, i);
-				ap.append("\\\\");
-				start = i+1;
-			} else if (c == '"') {
-				if (start < i) ap.append(s, start, i);
+			switch (c) {
+			case '"':
 				ap.append("\\\"");
-				start = i+1;
-			} else if (c < ' ') {
-				if (start < i) ap.append(s, start, i);
-				ap.append(CONTRON_CHARS[c]);
-				start = i+1;
-			} else if (c == '\u007F') {
-				if (start < i) ap.append(s, start, i);
+				break;
+			case '\\': 
+				ap.append("\\\\");
+				break;
+			case '\u007F': 
 				ap.append("\\u007F");
-				start = i+1;
-			} else if (mode == Mode.SCRIPT) {
-				if (c == '<') {
-					if (start < i) ap.append(s, start, i);
+				break;
+			case '<':
+				if (mode == Mode.SCRIPT) {
 					ap.append("\\u003C");
-					start = i+1;
-				} else if (c == '>') {
-					if (start < i) ap.append(s, start, i);
+				} else {
+					ap.append(c);
+				}
+				break;
+			case '>':
+				if (mode == Mode.SCRIPT) {
 					ap.append("\\u003E");
-					start = i+1;
+				} else {
+					ap.append(c);
+				}
+				break;
+			default:
+				if (c < CONTRON_CHARS.length) {
+					ap.append(CONTRON_CHARS[c]);
+				} else {
+					ap.append(c);
 				}
 			}
 		}
-		if (start < s.length()) ap.append(s, start, s.length());
 		ap.append('"');
 		
 		return ap;
@@ -2578,6 +2579,8 @@ public class JSON {
 			}
 			return false;
 		}
+		
+		//return false;
 	}
 	
 	static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
