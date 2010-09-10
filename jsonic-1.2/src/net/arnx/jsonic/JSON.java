@@ -724,8 +724,9 @@ public class JSON {
 		} catch (SQLException e) {
 		}
 		
-		if (o.getClass().isArray()) {
-			if (o.getClass().getComponentType().isPrimitive()) {
+		Class<?> ctype = o.getClass().getComponentType();
+		if (ctype != null) {
+			if (ctype.isPrimitive()) {
 				if (o instanceof byte[]) {
 					ap.append('"').append(Base64.encode((byte[])o)).append('"');
 					return ap;
