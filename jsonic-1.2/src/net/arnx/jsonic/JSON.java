@@ -627,55 +627,47 @@ public class JSON {
 			}
 		}
 		
-		if (o instanceof Character) {
-			o = o.toString();
-		} else if (o instanceof char[]) {
-			o = new String((char[])o);
-		}
-		
-		if (context.getLevel() == 0 
-				&& (o == null
-				|| o instanceof CharSequence
-				|| o instanceof Boolean
-				|| o instanceof Number)
-				&& mode != Mode.SCRIPT) {
-			throw new JSONException(getMessage("json.format.IllegalRootTypeError"),
-				JSONException.FORMAT_ERROR);
-		}
-		
 		JSONHint hint = context.getHint();
 		
 		if (o == null) {
+			checkRoot(context);
 			ap.append("null");
 			return ap;
 		}
 		
 		if (hint != null) {
+			checkRoot(context);
 			if (hint.serialized()) {
 				ap.append(o.toString());
 				return ap;
-			} else if (Serializable.class.equals(hint.type())) {
+			}
+			
+			if (Serializable.class.equals(hint.type())) {
 				o = serialize(o);
 			} else if (String.class.equals(hint.type())) {
 				o = o.toString();
 			}
 		}
-		
+
 		if (o instanceof CharSequence) {
+			checkRoot(context);
 			formatString((CharSequence)o, ap);
 			return ap;
 		}
 		
 		if (o instanceof Boolean) {
+			checkRoot(context);
 			ap.append(o.toString());
 			return ap;
 		}
 		
 		if (o instanceof Calendar) {
+			checkRoot(context);
 			o = ((Calendar)o).getTimeInMillis();
 		}
 		
 		if (o instanceof Date) {
+			checkRoot(context);
 			DateFormat f = context.format(DateFormat.class);
 			if (f != null) {
 				formatString(f.format(o), ap);
@@ -686,6 +678,7 @@ public class JSON {
 		}
 		
 		if (o instanceof Number) {
+			checkRoot(context);
 			NumberFormat f = context.format(NumberFormat.class);
 			if (f != null) {
 				formatString(f.format(o), ap);
@@ -717,7 +710,7 @@ public class JSON {
 		
 		try {
 			if (o instanceof Struct) {
-					o = ((Struct)o).getAttributes();
+				o = ((Struct)o).getAttributes();
 			} else if (o instanceof java.sql.Array) {
 				o = ((java.sql.Array)o).getArray();
 			}
@@ -728,6 +721,7 @@ public class JSON {
 		if (ctype != null) {
 			if (ctype.isPrimitive()) {
 				if (o instanceof byte[]) {
+					checkRoot(context);
 					ap.append('"').append(Base64.encode((byte[])o)).append('"');
 					return ap;
 				}
@@ -861,6 +855,12 @@ public class JSON {
 					ap.append(']');
 					return ap;
 				}
+				
+				if (o instanceof char[]) {
+					checkRoot(context);
+					formatString( new String((char[])o), ap);
+					return ap;
+				}
 			}
 		
 			Object[] array = (Object[])o;
@@ -962,36 +962,49 @@ public class JSON {
 			}
 			
 			if (o instanceof Enum<?>) {
+				checkRoot(context);
 				ap.append(Integer.toString(((Enum<?>)o).ordinal()));
 				return ap;
 			}
 			
 			if (o instanceof Pattern) {
+				checkRoot(context);
 				formatString(((Pattern)o).pattern(), ap);
 				return ap;
 			}
 			
 			if (o instanceof TimeZone) {
+				checkRoot(context);
 				formatString(((TimeZone)o).getID(), ap);
 				return ap;
 			}
 			
 			if (o instanceof InetAddress) {
+				checkRoot(context);
 				formatString(((InetAddress)o).getHostAddress(), ap);
 				return ap;
 			}
 			
 			if (o instanceof Charset) {
-				formatString( ((Charset)o).name(), ap);
+				checkRoot(context);
+				formatString(((Charset)o).name(), ap);
 				return ap;
 			}
 			
 			if (o instanceof Locale) {
+				checkRoot(context);
 				formatString(((Locale)o).toString().replace('_', '-'), ap);
 				return ap;
 			}
 			
+			if (o instanceof Character) {
+				checkRoot(context);
+				formatString(o.toString(), ap);
+				return ap;
+			}
+			
 			if (o instanceof Type) {			
+				checkRoot(context);
 				if (o instanceof Class<?>) {
 					formatString(((Class<?>)o).getName(), ap);
 				} else {
@@ -1004,17 +1017,20 @@ public class JSON {
 					|| o instanceof URL
 					|| o instanceof URI
 					|| o instanceof File) {
+				checkRoot(context);
 				formatString(o.toString(), ap);
 				return ap;
 			}
 			
 			if (ClassCache.isRowId(o.getClass())) {
+				checkRoot(context);
 				o = serialize(o);
 				return ap;
 			}
 			
 			if (o instanceof Node) {
 				if (o instanceof CharacterData && !(o instanceof Comment)) {
+					checkRoot(context);
 					formatString(((CharacterData)o).getData(), ap);
 					return ap;			
 				}
@@ -1160,7 +1176,13 @@ public class JSON {
 		return ap;
 	}
 	
-	Appendable formatString(CharSequence s, Appendable ap) throws IOException {
+	void checkRoot(Context context) {
+		if (context.getLevel() == 0 && mode != Mode.SCRIPT) {
+			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
+		}		
+	}
+	
+	Appendable formatString(CharSequence s, Appendable ap) throws IOException {		
 		ap.append('"');
 		if (mode == Mode.SCRIPT) {
 			for (int i = 0; i < s.length(); i++) {

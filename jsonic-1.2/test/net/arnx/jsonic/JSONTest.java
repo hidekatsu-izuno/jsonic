@@ -516,6 +516,23 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
+		
+		try {
+			json.format(JSON.class, new StringBuilder());
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
+		try {
+			json.format(Locale.JAPAN, new StringBuilder());
+			fail();
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+
 		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.format(
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
 		
