@@ -2969,7 +2969,7 @@ public class JSON {
 					continue;
 				}
 				
-				String name = f.getName();
+				String name = normalize(f.getName());
 				if (f.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = f.getAnnotation(JSONHint.class);
 					if (hint.ignore()) continue;
@@ -3005,6 +3005,7 @@ public class JSON {
 					chars[0] = Character.toLowerCase(chars[0]);
 					name = new String(chars);
 				}
+				name = normalize(name);
 				
 				if (m.isAnnotationPresent(JSONHint.class)) {
 					JSONHint hint = m.getAnnotation(JSONHint.class);
