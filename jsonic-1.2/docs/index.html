@@ -697,10 +697,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2010/09/07 version 1.2.2</h3>
+<h3>2010/09/11 version 1.2.2（ベータ）</h3>
 
 <ul>
 <li>[不具合] JSONのデコードにて型変換の際、JSON string あるいは true/false から Map あるいは Object 型に変換する場合に hint 句がないと NullPointerException が発生する問題を修正しました（#23055）</li>
+<li>[不具合] クラスパスにBeanUtilsが含まれていない場合やJava5を使用している場合に、Class.forNameの失敗によりエンコードやコンバートが著しく遅くなる問題を修正しました（#23146）</li>
+<li>encode/parseの処理順や文字列のエスケープ方式を見直したことにより処理速度がやや向上しました。</li>
 </ul>
 
 <h3>2010/09/04 version 1.2.1</h3>
