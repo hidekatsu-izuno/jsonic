@@ -591,11 +591,6 @@ public class JSON {
 	public Appendable format(Object source, Appendable ap) throws IOException {
 		Context context = new Context();
 		
-		if (contextObject != null) context.scope = contextObject.getClass();
-		if (source != null) {
-			if (context.scope == null) context.scope = source.getClass().getEnclosingClass();
-			if (context.scope == null) context.scope = source.getClass();
-		}
 		context.enter('$');
 		format(context, source, ap);
 		context.exit();
@@ -1254,15 +1249,15 @@ public class JSON {
 		return (T)parse(s, (Type)cls);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence s, Type type) throws JSONException {
-		Object value = null;
+		T value = null;
 		try {
-			value = parse(new CharSequenceParserSource(s, 1000), type);
+			Context context = new Context();
+			value = convert(context, parse(new CharSequenceParserSource(s, 1000)), type);
 		} catch (IOException e) {
 			// never occur
 		}
-		return (T)value;
+		return value;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1275,9 +1270,9 @@ public class JSON {
 		return (T)parse(in, (Type)cls);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
-		return (T)parse(new ReaderParserSource(in), type);
+		Context context = new Context();
+		return convert(context, parse(new ReaderParserSource(in)), type);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1290,13 +1285,9 @@ public class JSON {
 		return (T)parse(reader, (Type)cls);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
-		return (T)parse(new ReaderParserSource(reader), type);
-	}
-	
-	Object parse(ParserSource s, Type type) throws IOException, JSONException {
-		return convert(parse(s), type);
+		Context context = new Context();
+		return convert(context, parse(new ReaderParserSource(reader)), type);
 	}
 	
 	Object parse(ParserSource s) throws IOException, JSONException {
@@ -1917,13 +1908,13 @@ public class JSON {
 		return MessageFormat.format(bundle.getString(id), args);
 	}
 	
-	public Object convert(Object value, Type type) throws JSONException {
-		Context context = new Context();
-		
+	public Object convert(Object value, Type type)  throws JSONException {
+		return convert(new Context(), value, type);
+	}
+	
+	@SuppressWarnings("unchecked")
+	<T> T convert(Context context, Object value, Type type) throws JSONException {
 		Class<?> cls = getRawType(type);
-		if (contextObject != null) context.scope = contextObject.getClass();
-		if (context.scope == null) context.scope = cls.getEnclosingClass();
-		if (context.scope == null) context.scope = cls;
 		
 		Object result = null;
 		try {
@@ -1935,7 +1926,7 @@ public class JSON {
 					(value instanceof String) ? "\"" + value + "\"" : value, type, context),
 					JSONException.POSTPARSE_ERROR, e);
 		}
-		return result;
+		return (T)result;
 	}
 		
 	/**
@@ -2813,7 +2804,6 @@ public class JSON {
 	}
 	
 	public class Context {
-		Class<?> scope;
 		List<Object[]> path;
 		int level = -1;
 		Map<Class<?>, Map<String, AnnotatedElement>> cache;
