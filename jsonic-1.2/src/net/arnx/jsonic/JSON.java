@@ -82,6 +82,10 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -90,6 +94,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as 
@@ -609,7 +617,7 @@ public class JSON {
 		return value;
 	}
 	
-	Appendable format(Context context, Object src, Appendable ap) throws IOException {
+	Appendable format(final Context context, final Object src, final Appendable ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
 			o = null;
@@ -734,7 +742,7 @@ public class JSON {
 						}
 						if (i != array.length-1) {
 							ap.append(',');
-							if (this.prettyPrint) ap.append(' ');
+							if (context.isPrettyPrint()) ap.append(' ');
 						}
 					}
 					ap.append(']');
@@ -754,7 +762,7 @@ public class JSON {
 						}
 						if (i != array.length-1) {
 							ap.append(',');
-							if (this.prettyPrint) ap.append(' ');
+							if (context.isPrettyPrint()) ap.append(' ');
 						}
 					}
 					ap.append(']');
@@ -774,7 +782,7 @@ public class JSON {
 						}
 						if (i != array.length-1) {
 							ap.append(',');
-							if (this.prettyPrint) ap.append(' ');
+							if (context.isPrettyPrint()) ap.append(' ');
 						}
 					}
 					ap.append(']');
@@ -802,7 +810,7 @@ public class JSON {
 						}
 						if (i != array.length-1) {
 							ap.append(',');
-							if (this.prettyPrint) ap.append(' ');
+							if (context.isPrettyPrint()) ap.append(' ');
 						}
 					}
 					ap.append(']');
@@ -830,7 +838,7 @@ public class JSON {
 						}
 						if (i != array.length-1) {
 							ap.append(',');
-							if (this.prettyPrint) ap.append(' ');
+							if (context.isPrettyPrint()) ap.append(' ');
 						}
 					}
 					ap.append(']');
@@ -844,7 +852,7 @@ public class JSON {
 						ap.append(String.valueOf(array[i]));
 						if (i != array.length-1) {
 							ap.append(',');
-							if (this.prettyPrint) ap.append(' ');
+							if (context.isPrettyPrint()) ap.append(' ');
 						}
 					}
 					ap.append(']');
@@ -862,7 +870,7 @@ public class JSON {
 			ap.append('[');
 			for (int i = 0; i < array.length; i++) {
 				Object item = array[i];
-				if (this.prettyPrint) {
+				if (context.isPrettyPrint()) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
@@ -872,7 +880,7 @@ public class JSON {
 				context.exit();
 				if (i != array.length-1) ap.append(',');
 			}
-			if (this.prettyPrint && array.length > 0) {
+			if (context.isPrettyPrint() && array.length > 0) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
@@ -886,7 +894,7 @@ public class JSON {
 				ap.append('[');
 				for (int i = 0; i < list.size(); i++) {
 					Object item = list.get(i);
-					if (this.prettyPrint) {
+					if (context.isPrettyPrint()) {
 						ap.append('\n');
 						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 					}
@@ -896,7 +904,7 @@ public class JSON {
 					context.exit();
 					if (i != list.size()-1) ap.append(',');
 				}
-				if (this.prettyPrint && !list.isEmpty()) {
+				if (context.isPrettyPrint() && !list.isEmpty()) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 				}
@@ -913,7 +921,7 @@ public class JSON {
 			boolean isEmpty = !t.hasNext();
 			for (int i = 0; t.hasNext(); i++) {
 				Object item = t.next();
-				if (this.prettyPrint) {
+				if (context.isPrettyPrint()) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
@@ -923,7 +931,7 @@ public class JSON {
 				context.exit();
 				if (t.hasNext()) ap.append(',');
 			}
-			if (this.prettyPrint && !isEmpty) {
+			if (context.isPrettyPrint() && !isEmpty) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
@@ -938,7 +946,7 @@ public class JSON {
 				boolean isEmpty = !e.hasMoreElements();
 				for (int i = 0; e.hasMoreElements(); i++) {
 					Object item = e.nextElement();
-					if (this.prettyPrint) {
+					if (context.isPrettyPrint()) {
 						ap.append('\n');
 						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 					}
@@ -948,7 +956,7 @@ public class JSON {
 					context.exit();
 					if (e.hasMoreElements()) ap.append(',');
 				}
-				if (this.prettyPrint && !isEmpty) {
+				if (context.isPrettyPrint() && !isEmpty) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 				}
@@ -1023,6 +1031,96 @@ public class JSON {
 				return ap;
 			}
 			
+			if (o instanceof InputSource) {
+				try {
+					SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+					parser.parse((InputSource)o, new DefaultHandler() {
+						int depth = 0;
+						
+						@Override
+						public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+							try {
+								if (depth > 0) {
+									ap.append(',');
+									if (context.isPrettyPrint()) {
+										ap.append('\n');
+										for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+									}
+									context.enter(null);
+								}
+								
+								ap.append('[');
+								formatString(qName, ap);
+								
+								ap.append(',');
+								if (context.isPrettyPrint()) {
+									ap.append('\n');
+									for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+								}
+								ap.append('{');
+								for (int i = 0; i < attributes.getLength(); i++) {
+									if (i != 0) {
+										ap.append(',');
+									}
+									if (context.isPrettyPrint() && attributes.getLength() > 1) {
+										ap.append('\n');
+										for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
+									}
+									formatString(attributes.getQName(i), ap);
+									ap.append(':');
+									if (context.isPrettyPrint()) ap.append(' ');
+									formatString(attributes.getValue(i), ap);
+								}
+								if (context.isPrettyPrint() && attributes.getLength() > 1) {
+									ap.append('\n');
+									for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+								}
+								ap.append('}');
+							} catch (IOException e) {
+								throw new SAXException(e);
+							}
+							
+							depth++;
+						}
+						
+						@Override
+						public void characters(char[] ch, int start, int length) throws SAXException {
+							try {
+								formatString(new String(ch, start, length), ap);
+							} catch (IOException e) {
+								throw new SAXException(e);
+							}
+						}
+						
+						@Override
+						public void endElement(String uri, String localName, String qName) throws SAXException {
+							depth--;
+							
+							try {
+								if (context.isPrettyPrint()) {
+									ap.append('\n');
+									for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+								}
+								ap.append(']');
+								
+								if (depth > 0) {
+									context.exit();
+								}
+							} catch (IOException e) {
+								throw new SAXException(e);
+							}
+						}
+					});
+				} catch (ParserConfigurationException e) {
+					throw new IllegalStateException(e);
+				} catch (SAXException e) {
+					if (e.getCause() instanceof IOException) {
+						throw (IOException)e.getCause();
+					}
+					// no handle
+				}
+			}
+			
 			if (o instanceof Node) {
 				if (o instanceof CharacterData && !(o instanceof Comment)) {
 					checkRoot(context);
@@ -1038,7 +1136,7 @@ public class JSON {
 					formatString(elem.getTagName(), ap);
 					
 					ap.append(',');
-					if (this.prettyPrint) {
+					if (context.isPrettyPrint()) {
 						ap.append('\n');
 						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 					}
@@ -1049,7 +1147,7 @@ public class JSON {
 							if (i != 0) {
 								ap.append(',');
 							}
-							if (this.prettyPrint && names.getLength() > 1) {
+							if (context.isPrettyPrint() && names.getLength() > 1) {
 								ap.append('\n');
 								for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
 							}
@@ -1057,11 +1155,11 @@ public class JSON {
 							if (node instanceof Attr) {
 								formatString(node.getNodeName(), ap);
 								ap.append(':');
-								if (this.prettyPrint) ap.append(' ');
+								if (context.isPrettyPrint()) ap.append(' ');
 								formatString(node.getNodeValue(), ap);
 							}
 						}
-						if (this.prettyPrint && names.getLength() > 1) {
+						if (context.isPrettyPrint() && names.getLength() > 1) {
 							ap.append('\n');
 							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 						}
@@ -1073,17 +1171,17 @@ public class JSON {
 							Node node = nodes.item(i);
 							if ((node instanceof Element) || (node instanceof CharacterData && !(node instanceof Comment))) {
 								ap.append(',');
-								if (this.prettyPrint) {
+								if (context.isPrettyPrint()) {
 									ap.append('\n');
 									for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 								}
-								context.enter(elem.hasAttributes() ? i+2 : i+1);
+								context.enter(i+2);
 								format(context, node, ap);
 								context.exit();
 							}
 						}
 					}
-					if (this.prettyPrint) {
+					if (context.isPrettyPrint()) {
 						ap.append('\n');
 						for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 					}
@@ -1145,12 +1243,12 @@ public class JSON {
 			if (value == src || (cause == null && this.suppressNull && value == null)) continue; 
 			
 			if (i > 0) ap.append(',');
-			if (this.prettyPrint) {
+			if (context.isPrettyPrint()) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 			}
 			formatString(entry.getKey().toString(), ap).append(':');
-			if (this.prettyPrint) ap.append(' ');
+			if (context.isPrettyPrint()) ap.append(' ');
 			context.enter(entry.getKey(), hint);
 			if (cause != null) {
 				throw new JSONException(getMessage("json.format.ConversionError",
@@ -1161,7 +1259,7 @@ public class JSON {
 			context.exit();
 			i++;
 		}
-		if (this.prettyPrint && i > 0) {
+		if (context.isPrettyPrint() && i > 0) {
 			ap.append('\n');
 			for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 		}
@@ -2804,9 +2902,19 @@ public class JSON {
 	}
 	
 	public class Context {
+		final boolean prettyPrint;
+		
 		List<Object[]> path;
 		int level = -1;
 		Map<Class<?>, Map<String, AnnotatedElement>> cache;
+		
+		public Context() {
+			prettyPrint = JSON.this.prettyPrint;
+		}
+		
+		public boolean isPrettyPrint() {
+			return prettyPrint;
+		}
 		
 		/**
 		 * Returns the current level.
