@@ -1249,11 +1249,12 @@ public class JSON {
 		return (T)parse(s, (Type)cls);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence s, Type type) throws JSONException {
 		T value = null;
 		try {
 			Context context = new Context();
-			value = convert(context, parse(new CharSequenceParserSource(s, 1000)), type);
+			value = (T)convert(context, parse(new CharSequenceParserSource(s, 1000)), type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -1270,9 +1271,10 @@ public class JSON {
 		return (T)parse(in, (Type)cls);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return convert(context, parse(new ReaderParserSource(in)), type);
+		return (T)convert(context, parse(new ReaderParserSource(in)), type);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1285,9 +1287,10 @@ public class JSON {
 		return (T)parse(reader, (Type)cls);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return convert(context, parse(new ReaderParserSource(reader)), type);
+		return (T)convert(context, parse(new ReaderParserSource(reader)), type);
 	}
 	
 	Object parse(ParserSource s) throws IOException, JSONException {
