@@ -82,10 +82,6 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -94,10 +90,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as 
@@ -1029,96 +1021,6 @@ public class JSON {
 				checkRoot(context);
 				o = serialize(o);
 				return ap;
-			}
-			
-			if (o instanceof InputSource) {
-				try {
-					SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-					parser.parse((InputSource)o, new DefaultHandler() {
-						int depth = 0;
-						
-						@Override
-						public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-							try {
-								if (depth > 0) {
-									ap.append(',');
-									if (context.isPrettyPrint()) {
-										ap.append('\n');
-										for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-									}
-									context.enter(null);
-								}
-								
-								ap.append('[');
-								formatString(qName, ap);
-								
-								ap.append(',');
-								if (context.isPrettyPrint()) {
-									ap.append('\n');
-									for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-								}
-								ap.append('{');
-								for (int i = 0; i < attributes.getLength(); i++) {
-									if (i != 0) {
-										ap.append(',');
-									}
-									if (context.isPrettyPrint() && attributes.getLength() > 1) {
-										ap.append('\n');
-										for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
-									}
-									formatString(attributes.getQName(i), ap);
-									ap.append(':');
-									if (context.isPrettyPrint()) ap.append(' ');
-									formatString(attributes.getValue(i), ap);
-								}
-								if (context.isPrettyPrint() && attributes.getLength() > 1) {
-									ap.append('\n');
-									for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-								}
-								ap.append('}');
-							} catch (IOException e) {
-								throw new SAXException(e);
-							}
-							
-							depth++;
-						}
-						
-						@Override
-						public void characters(char[] ch, int start, int length) throws SAXException {
-							try {
-								formatString(new String(ch, start, length), ap);
-							} catch (IOException e) {
-								throw new SAXException(e);
-							}
-						}
-						
-						@Override
-						public void endElement(String uri, String localName, String qName) throws SAXException {
-							depth--;
-							
-							try {
-								if (context.isPrettyPrint()) {
-									ap.append('\n');
-									for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-								}
-								ap.append(']');
-								
-								if (depth > 0) {
-									context.exit();
-								}
-							} catch (IOException e) {
-								throw new SAXException(e);
-							}
-						}
-					});
-				} catch (ParserConfigurationException e) {
-					throw new IllegalStateException(e);
-				} catch (SAXException e) {
-					if (e.getCause() instanceof IOException) {
-						throw (IOException)e.getCause();
-					}
-					// no handle
-				}
 			}
 			
 			if (o instanceof Node) {
