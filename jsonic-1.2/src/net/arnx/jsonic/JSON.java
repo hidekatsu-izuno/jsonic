@@ -594,6 +594,7 @@ public class JSON {
 		context.enter('$');
 		format(context, source, ap);
 		context.exit();
+		if (ap instanceof Flushable) ((Flushable)ap).flush();
 		return ap;
 	}
 	
@@ -870,6 +871,7 @@ public class JSON {
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
+				if (ap instanceof Flushable) ((Flushable)ap).flush();
 				if (i != array.length-1) ap.append(',');
 			}
 			if (context.isPrettyPrint() && array.length > 0) {
@@ -894,6 +896,7 @@ public class JSON {
 					context.enter(i);
 					format(context, item, ap);
 					context.exit();
+					if (ap instanceof Flushable) ((Flushable)ap).flush();
 					if (i != list.size()-1) ap.append(',');
 				}
 				if (context.isPrettyPrint() && !list.isEmpty()) {
@@ -921,6 +924,7 @@ public class JSON {
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
+				if (ap instanceof Flushable) ((Flushable)ap).flush();
 				if (t.hasNext()) ap.append(',');
 			}
 			if (context.isPrettyPrint() && !isEmpty) {
@@ -946,6 +950,7 @@ public class JSON {
 					context.enter(i);
 					format(context, item, ap);
 					context.exit();
+					if (ap instanceof Flushable) ((Flushable)ap).flush();
 					if (e.hasMoreElements()) ap.append(',');
 				}
 				if (context.isPrettyPrint() && !isEmpty) {
@@ -1080,6 +1085,7 @@ public class JSON {
 								context.enter(i+2);
 								format(context, node, ap);
 								context.exit();
+								if (ap instanceof Flushable) ((Flushable)ap).flush();
 							}
 						}
 					}
@@ -1159,6 +1165,7 @@ public class JSON {
 			}
 			format(context, value, ap);
 			context.exit();
+			if (ap instanceof Flushable) ((Flushable)ap).flush();
 			i++;
 		}
 		if (context.isPrettyPrint() && i > 0) {
@@ -1167,7 +1174,6 @@ public class JSON {
 		}
 		ap.append('}');
 		
-		if (ap instanceof Flushable) ((Flushable)ap).flush();
 		return ap;
 	}
 	
