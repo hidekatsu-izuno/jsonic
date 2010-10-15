@@ -24,20 +24,20 @@ public final class ClassUtil {
 	}
 	
 	public static Class<?> findClass(String name, ClassLoader cl) {
-		Map<String, Class<?>> instance;
+		Map<String, Class<?>> map;
 		synchronized (cache) {
 			ClassLoader current = cl;
 			if (current == null) current =  ClassLoader.getSystemClassLoader();
 			do {
-				instance = cache.get(current);
-				if (instance != null && instance.containsKey(name)) {
+				map = cache.get(current);
+				if (map != null && map.containsKey(name)) {
 					current = null;
 				} else {
 					current = current.getParent();
 				}
 			} while (current != null);
 			
-			if (instance == null) {
+			if (map == null) {
 				ClassLoader loader;
 				Class<?> target = null;
 				try {
@@ -48,15 +48,15 @@ public final class ClassUtil {
 					loader = cl;
 				}
 				if (loader == null) loader = ClassLoader.getSystemClassLoader();
-				instance = cache.get(loader);
-				if (instance == null) {
-					instance = new HashMap<String, Class<?>>();
-					cache.put(loader, instance);
+				map = cache.get(loader);
+				if (map == null) {
+					map = new HashMap<String, Class<?>>();
+					cache.put(loader, map);
 				}
-				instance.put(name, target);
+				map.put(name, target);
 			}
 		}
-		return instance.get(name);
+		return map.get(name);
 	}
 	
 	public static boolean equals(String name, Class<?> cls) {
