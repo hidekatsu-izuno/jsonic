@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public final class ClassUtil {
-	private static WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
+	private static final WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
 	
 	private ClassUtil() {
 	}
@@ -88,6 +88,26 @@ public final class ClassUtil {
 		} else {
 			return Object.class;
 		}
+	}
+
+	public static String toUpperCamel(String name) {
+		StringBuilder sb = new StringBuilder(name.length());
+		boolean toUpperCase = true;
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
+		}
+		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
+			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+		}
+		return sb.toString();
 	}
 	
 	public static String toLowerCamel(String name) {
