@@ -10,9 +10,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public final class ClassUtil {
-	private static WeakHashMap<ClassLoader, ClassUtil> cache = new WeakHashMap<ClassLoader, ClassUtil>();
-	
-	private Map<String, Class<?>> map = new HashMap<String, Class<?>>();
+	private static WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
 	
 	private ClassUtil() {
 	}
@@ -26,31 +24,39 @@ public final class ClassUtil {
 	}
 	
 	public static Class<?> findClass(String name, ClassLoader cl) {
-		if (cl == null) cl = ClassLoader.getSystemClassLoader();
-
-		ClassUtil cc;
-		synchronized (cl) {
-			cc = cache.get(cl);
-			if (cc == null) {
-				cc = new ClassUtil();
-				cache.put(cl, cc);
-			}
-		}
-		
-		Class<?> target;
-		synchronized (cc) {
-			if (!cc.map.containsKey(name)) {
+		Map<String, Class<?>> instance;
+		synchronized (cache) {
+			ClassLoader current = cl;
+			if (current == null) current =  ClassLoader.getSystemClassLoader();
+			do {
+				instance = cache.get(current);
+				if (instance != null && instance.containsKey(name)) {
+					current = null;
+				} else {
+					current = current.getParent();
+				}
+			} while (current != null);
+			
+			if (instance == null) {
+				ClassLoader loader;
+				Class<?> target = null;
 				try {
 					target = cl.loadClass(name);
+					loader = target.getClassLoader();
 				} catch (ClassNotFoundException e) {
 					target = null;
+					loader = cl;
 				}
-				cc.map.put(name, target);
-			} else {
-				target = cc.map.get(name);
+				if (loader == null) loader = ClassLoader.getSystemClassLoader();
+				instance = cache.get(loader);
+				if (instance == null) {
+					instance = new HashMap<String, Class<?>>();
+					cache.put(loader, instance);
+				}
+				instance.put(name, target);
 			}
 		}
-		return target;
+		return instance.get(name);
 	}
 	
 	public static boolean equals(String name, Class<?> cls) {
