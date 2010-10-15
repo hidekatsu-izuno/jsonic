@@ -40,7 +40,6 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
@@ -73,13 +72,13 @@ import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
-import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
@@ -978,9 +977,9 @@ public class JSON {
 				return ap;
 			}
 			
-			if (ClassCache.isAssignableFrom("java.net.InetAddress", o.getClass())) {
+			if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
 				checkRoot(context);
-				Class<?> inetAddressClass = ClassCache.findClass("java.net.InetAddress", o.getClass());
+				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress", o.getClass());
 				try {
 					formatString((String)inetAddressClass.getMethod("getHostAddress").invoke(o), ap);
 				} catch (Exception e) {
@@ -1026,7 +1025,7 @@ public class JSON {
 				return ap;
 			}
 			
-			if (ClassCache.isAssignableFrom("java.sql.RowId", o.getClass())) {
+			if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
 				checkRoot(context);
 				o = serialize(o);
 				return ap;
@@ -1102,10 +1101,10 @@ public class JSON {
 				}
 			}
 			
-			if (ClassCache.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
+			if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
 				Map<Object, Object> map = new TreeMap<Object, Object>();
 				try {
-					Class<?> dynaBeanClass = ClassCache.findClass("org.apache.commons.beanutils.DynaBean", o.getClass());
+					Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean", o.getClass());
 					
 					Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(o);
 					Object[] dynaProperties = (Object[])dynaClass.getClass().getMethod("getDynaProperties").invoke(dynaClass);
@@ -1926,7 +1925,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	<T> T convert(Context context, Object value, Type type) throws JSONException {
-		Class<?> cls = getRawType(type);
+		Class<?> cls = ClassUtil.getRawType(type);
 		
 		Object result = null;
 		try {
@@ -1967,7 +1966,7 @@ public class JSON {
 			// no handle
 		} else if (hint != null && hint.serialized()) {
 			data = format(value);
-		} else if ((hint != null && Serializable.class.equals(hint.type())) || ClassCache.isAssignableFrom("java.sql.RowId", c)) {
+		} else if ((hint != null && Serializable.class.equals(hint.type())) || ClassUtil.isAssignableFrom("java.sql.RowId", c)) {
 			try {
 				data = deserialize(Base64.decode((String)value));
 			} catch (Exception e) {
@@ -1993,8 +1992,8 @@ public class JSON {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-					Class<?> pc0 = getRawType(pt0);
-					Class<?> pc1 = getRawType(pt1);
+					Class<?> pc0 = ClassUtil.getRawType(pt0);
+					Class<?> pc1 = ClassUtil.getRawType(pt1);
 					
 					if ((Object.class.equals(pc0) || String.class.equals(pc0))
 							&& Object.class.equals(pc1)) {
@@ -2033,7 +2032,7 @@ public class JSON {
 					|| File.class.equals(c)
 					|| URL.class.equals(c)
 					|| URI.class.equals(c)
-					|| ClassCache.equals("java.net.InetAddress", c)
+					|| ClassUtil.equals("java.net.InetAddress", c)
 					|| Charset.class.equals(c)
 					|| Class.class.equals(c)
 				) {
@@ -2052,7 +2051,7 @@ public class JSON {
 					for (Map.Entry<?, ?> entry : src.entrySet()) {
 						String name = entry.getKey().toString();
 						AnnotatedElement target = props.get(name);
-						if (target == null) target = props.get(toLowerCamel(name));
+						if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
 						if (target == null) continue;
 						
 						context.enter(name, target.getAnnotation(JSONHint.class));
@@ -2062,7 +2061,7 @@ public class JSON {
 							Class<?> ptype = m.getParameterTypes()[0];
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
 								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = getRawType(gptype);
+								ptype = ClassUtil.getRawType(gptype);
 							}
 							m.invoke(o, postparse(context, entry.getValue(), ptype, gptype));
 						} else {
@@ -2071,7 +2070,7 @@ public class JSON {
 							Class<?> ptype =  f.getType();
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
 								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = getRawType(gptype);
+								ptype = ClassUtil.getRawType(gptype);
 							}
 							
 							f.set(o, postparse(context, entry.getValue(), ptype, gptype));
@@ -2090,7 +2089,7 @@ public class JSON {
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					Class<?> pc = getRawType(pt);
+					Class<?> pc = ClassUtil.getRawType(pt);
 					
 					if (Object.class.equals(pc)) {
 						collection = (Collection<Object>)src;
@@ -2127,8 +2126,8 @@ public class JSON {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-					Class<?> pc0 = getRawType(pt0);
-					Class<?> pc1 = getRawType(pt1);
+					Class<?> pc0 = ClassUtil.getRawType(pt0);
+					Class<?> pc1 = ClassUtil.getRawType(pt1);
 
 					for (int i = 0; i < src.size(); i++) {
 						context.enter('.');
@@ -2440,8 +2439,8 @@ public class JSON {
 				} else {
 					data = new URI(value.toString().trim());
 				}
-			} else if (ClassCache.equals("java.net.InetAddress", c)) {
-				Class<?> inetAddressClass = ClassCache.findClass("java.net.InetAddress", c);
+			} else if (ClassUtil.equals("java.net.InetAddress", c)) {
+				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress", c);
 				data = inetAddressClass.getMethod("getByName", String.class).invoke(null, value.toString().trim());
 			} else if (Charset.class.equals(c)) {
 				data = Charset.forName(value.toString().trim());
@@ -2473,7 +2472,7 @@ public class JSON {
 				if (type instanceof ParameterizedType) {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					Class<?> pc = getRawType(pt);
+					Class<?> pc = ClassUtil.getRawType(pt);
 					context.enter(0);
 					collection.add(postparse(context, value, pc, pt));
 					context.exit();
@@ -2504,8 +2503,8 @@ public class JSON {
 					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
 					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-					Class<?> pc0 = getRawType(pt0);
-					Class<?> pc1 = getRawType(pt1);
+					Class<?> pc0 = ClassUtil.getRawType(pt0);
+					Class<?> pc1 = ClassUtil.getRawType(pt1);
 					
 					context.enter('.');
 					key = postparse(context, key, pc0, pt0);
@@ -2531,7 +2530,7 @@ public class JSON {
 							Class<?> ptype = m.getParameterTypes()[0];
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
 								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = getRawType(gptype);
+								ptype = ClassUtil.getRawType(gptype);
 							}
 							m.invoke(o, postparse(context, value, ptype, gptype));
 						} else {
@@ -2540,7 +2539,7 @@ public class JSON {
 							Class<?> ptype =  f.getType();
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
 								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = getRawType(gptype);
+								ptype = ClassUtil.getRawType(gptype);
 							}
 							
 							f.set(o, postparse(context, value, ptype, gptype));
@@ -2632,47 +2631,6 @@ public class JSON {
 		return c.cast(instance);
 	}
 	
-	static String toLowerCamel(String name) {
-		StringBuilder sb = new StringBuilder(name.length());
-		boolean toUpperCase = false;
-		for (int i = 0; i < name.length(); i++) {
-			char c = name.charAt(i);
-			if (c == ' ' || c == '_' || c == '-') {
-				toUpperCase = true;
-			} else if (toUpperCase) {
-				sb.append(Character.toUpperCase(c));
-				toUpperCase = false;
-			} else {
-				sb.append(c);
-			}
-		}
-		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
-			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
-		}
-		return sb.toString();
-	}
-	
-	static Class<?> getRawType(Type t) {
-		if (t instanceof Class<?>) {
-			return (Class<?>)t;
-		}else if (t instanceof ParameterizedType) {
-			return (Class<?>)((ParameterizedType)t).getRawType();
-		} else if (t instanceof GenericArrayType) {
-			Class<?> cls = null;
-			try {
-				cls = Array.newInstance(getRawType(((GenericArrayType)t).getGenericComponentType()), 0).getClass();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-			return cls;
-		} else if (t instanceof WildcardType) {
-			Type[] types = ((WildcardType)t).getUpperBounds();
-			return (types.length > 0) ? getRawType(types[0]) : Object.class;
-		} else {
-			return Object.class;
-		}
-	}
-	
 	static void flattenProperties(StringBuilder key, Object value, Properties props) {
 		if (value instanceof Map<?,?>) {
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
@@ -2697,7 +2655,7 @@ public class JSON {
 	}
 	
 	static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
-		Class<?> rawType = getRawType(parent);
+		Class<?> rawType = ClassUtil.getRawType(parent);
 		if (rawType.equals(type.getGenericDeclaration())) {
 			String tvName = type.getName();
 			TypeVariable<?>[] rtypes = ((Class<?>)rawType).getTypeParameters();
@@ -2888,7 +2846,7 @@ public class JSON {
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
-			Class<?> c = getRawType(t);
+			Class<?> c = ClassUtil.getRawType(t);
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
@@ -3117,48 +3075,7 @@ public class JSON {
 }
 
 class ClassCache {	
-	private static WeakHashMap<ClassLoader, ClassCache> cache = new WeakHashMap<ClassLoader, ClassCache>();
-	
-	private Map<String, Class<?>> map = new HashMap<String, Class<?>>();
-	
-	public static Class<?> findClass(String name, Class<?> cls) {
-		ClassLoader cl = cls.getClassLoader();
-		if (cl == null) cl = ClassLoader.getSystemClassLoader();
 
-		ClassCache cc;
-		synchronized (cl) {
-			cc = cache.get(cl);
-			if (cc == null) {
-				cc = new ClassCache();
-				cache.put(cl, cc);
-			}
-		}
-		
-		Class<?> target;
-		synchronized (cc) {
-			if (!cc.map.containsKey(name)) {
-				try {
-					target = cl.loadClass(name);
-				} catch (ClassNotFoundException e) {
-					target = null;
-				}
-				cc.map.put(name, target);
-			} else {
-				target = cc.map.get(name);
-			}
-		}
-		return target;
-	}
-	
-	public static boolean equals(String name, Class<?> cls) {
-		Class<?> target = findClass(name, cls);
-		return (target != null) && target.equals(cls);		
-	}
-	
-	public static boolean isAssignableFrom(String name, Class<?> cls) {
-		Class<?> target = findClass(name, cls);
-		return (target != null) && target.isAssignableFrom(cls);		
-	}
 }
 
 interface ParserSource {
