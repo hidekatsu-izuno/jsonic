@@ -77,7 +77,6 @@ import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -166,7 +165,7 @@ import org.w3c.dom.NodeList;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.2.2
+ * @version 1.2.4
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -979,9 +978,14 @@ public class JSON {
 				return ap;
 			}
 			
-			if (o instanceof InetAddress) {
+			if (ClassCache.isAssignableFrom("java.net.InetAddress", o.getClass())) {
 				checkRoot(context);
-				formatString(((InetAddress)o).getHostAddress(), ap);
+				Class<?> inetAddressClass = ClassCache.findClass("java.net.InetAddress", o.getClass());
+				try {
+					formatString((String)inetAddressClass.getMethod("getHostAddress").invoke(o), ap);
+				} catch (Exception e) {
+					// no handle
+				}
 				return ap;
 			}
 			
@@ -1022,7 +1026,7 @@ public class JSON {
 				return ap;
 			}
 			
-			if (ClassCache.isRowId(o.getClass())) {
+			if (ClassCache.isAssignableFrom("java.sql.RowId", o.getClass())) {
 				checkRoot(context);
 				o = serialize(o);
 				return ap;
@@ -1098,7 +1102,7 @@ public class JSON {
 				}
 			}
 			
-			if (ClassCache.isDynaBean(o.getClass())) {
+			if (ClassCache.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
 				Map<Object, Object> map = new TreeMap<Object, Object>();
 				try {
 					ClassLoader cl = o.getClass().getClassLoader();
@@ -1964,7 +1968,7 @@ public class JSON {
 			// no handle
 		} else if (hint != null && hint.serialized()) {
 			data = format(value);
-		} else if ((hint != null && Serializable.class.equals(hint.type())) || ClassCache.isRowId(c)) {
+		} else if ((hint != null && Serializable.class.equals(hint.type())) || ClassCache.isAssignableFrom("java.sql.RowId", c)) {
 			try {
 				data = deserialize(Base64.decode((String)value));
 			} catch (Exception e) {
@@ -2030,7 +2034,7 @@ public class JSON {
 					|| File.class.equals(c)
 					|| URL.class.equals(c)
 					|| URI.class.equals(c)
-					|| InetAddress.class.equals(c)
+					|| ClassCache.equals("java.net.InetAddress", c)
 					|| Charset.class.equals(c)
 					|| Class.class.equals(c)
 				) {
@@ -2437,8 +2441,9 @@ public class JSON {
 				} else {
 					data = new URI(value.toString().trim());
 				}
-			} else if (InetAddress.class.equals(c)) {
-				data = InetAddress.getByName(value.toString().trim());
+			} else if (ClassCache.equals("java.net.InetAddress", c)) {
+				Class<?> inetAddressClass = ClassCache.findClass("java.net.InetAddress", c);
+				data = inetAddressClass.getMethod("getByName", String.class).invoke(null, value.toString().trim());
 			} else if (Charset.class.equals(c)) {
 				data = Charset.forName(value.toString().trim());
 			} else if (Class.class.equals(c)) {
@@ -3113,48 +3118,47 @@ public class JSON {
 }
 
 class ClassCache {	
-	static WeakHashMap<ClassLoader, ClassCache> cache = new WeakHashMap<ClassLoader, ClassCache>();
+	private static WeakHashMap<ClassLoader, ClassCache> cache = new WeakHashMap<ClassLoader, ClassCache>();
 	
-	static ClassCache get(ClassLoader cl) {
+	private Map<String, Class<?>> map = new HashMap<String, Class<?>>();
+	
+	public static Class<?> findClass(String name, Class<?> cls) {
+		ClassLoader cl = cls.getClassLoader();
 		if (cl == null) cl = ClassLoader.getSystemClassLoader();
-		ClassCache cc = null;
+
+		ClassCache cc;
 		synchronized (cl) {
 			cc = cache.get(cl);
 			if (cc == null) {
 				cc = new ClassCache();
-				try {
-					cc.dynaBeanClass = cl.loadClass("org.apache.commons.beanutils.DynaBean");
-				} catch (ClassNotFoundException e) {
-					// no handle
-				}
-				try {
-					cc.rowIdClass = cl.loadClass("java.sql.RowId");
-				} catch (ClassNotFoundException e) {
-					// no handle
-				}
 				cache.put(cl, cc);
 			}
 		}
-		return cc;
+		
+		Class<?> target;
+		synchronized (cc) {
+			if (!cc.map.containsKey(name)) {
+				try {
+					target = cl.loadClass(name);
+				} catch (ClassNotFoundException e) {
+					target = null;
+				}
+				cc.map.put(name, target);
+			} else {
+				target = cc.map.get(name);
+			}
+		}
+		return target;
 	}
 	
-	Class<?> dynaBeanClass;
-	Class<?> rowIdClass;
-	
-	public static boolean isDynaBean(Class<?> cls) {
-		ClassCache cc = get(cls.getClassLoader());
-		if (cc.dynaBeanClass != null) {
-			return cc.dynaBeanClass.isAssignableFrom(cls);
-		}
-		return false;
+	public static boolean equals(String name, Class<?> cls) {
+		Class<?> target = findClass(name, cls);
+		return (target != null) && target.equals(cls);		
 	}
 	
-	public static boolean isRowId(Class<?> cls) {
-		ClassCache cc = get(cls.getClassLoader());
-		if (cc.rowIdClass != null) {
-			return cc.rowIdClass.isAssignableFrom(cls);
-		}
-		return false;
+	public static boolean isAssignableFrom(String name, Class<?> cls) {
+		Class<?> target = findClass(name, cls);
+		return (target != null) && target.isAssignableFrom(cls);		
 	}
 }
 
