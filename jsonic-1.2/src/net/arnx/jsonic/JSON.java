@@ -1105,8 +1105,7 @@ public class JSON {
 			if (ClassCache.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
 				Map<Object, Object> map = new TreeMap<Object, Object>();
 				try {
-					ClassLoader cl = o.getClass().getClassLoader();
-					Class<?> dynaBeanClass = Class.forName("org.apache.commons.beanutils.DynaBean", true, cl);
+					Class<?> dynaBeanClass = ClassCache.findClass("org.apache.commons.beanutils.DynaBean", o.getClass());
 					
 					Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(o);
 					Object[] dynaProperties = (Object[])dynaClass.getClass().getMethod("getDynaProperties").invoke(dynaClass);
