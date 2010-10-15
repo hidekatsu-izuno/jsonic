@@ -89,7 +89,7 @@ public final class ClassUtil {
 			return Object.class;
 		}
 	}
-
+	
 	public static String toUpperCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = true;
