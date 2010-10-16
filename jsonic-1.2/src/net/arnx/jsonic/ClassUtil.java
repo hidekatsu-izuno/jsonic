@@ -16,7 +16,7 @@ public final class ClassUtil {
 	}
 	
 	public static Class<?> findClass(String name) {
-		return findClass(name, (ClassLoader)null);
+		return findClass(name, Thread.currentThread().getContextClassLoader());
 	}
 	
 	public static Class<?> findClass(String name, Class<?> cls) {
@@ -24,9 +24,6 @@ public final class ClassUtil {
 	}
 	
 	public static Class<?> findClass(String name, ClassLoader cl) {
-		if (cl == null) {
-			cl = Thread.currentThread().getContextClassLoader();
-		}
 		Map<String, Class<?>> map;
 		synchronized (cache) {
 			ClassLoader current = cl;
@@ -43,7 +40,11 @@ public final class ClassUtil {
 				ClassLoader loader;
 				Class<?> target = null;
 				try {
-					target = cl.loadClass(name);
+					if (cl == null) {
+						target = cl.loadClass(name);
+					} else {
+						target = Class.forName(name);
+					}
 					loader = target.getClassLoader();
 				} catch (ClassNotFoundException e) {
 					target = null;
