@@ -16,7 +16,7 @@ public final class ClassUtil {
 	}
 	
 	public static Class<?> findClass(String name) {
-		return findClass(name, Thread.currentThread().getContextClassLoader());
+		return findClass(name, (ClassLoader)null);
 	}
 	
 	public static Class<?> findClass(String name, Class<?> cls) {
@@ -24,15 +24,17 @@ public final class ClassUtil {
 	}
 	
 	public static Class<?> findClass(String name, ClassLoader cl) {
+		if (cl == null) {
+			cl = Thread.currentThread().getContextClassLoader();
+		}
 		Map<String, Class<?>> map;
 		synchronized (cache) {
 			ClassLoader current = cl;
-			if (current == null) current =  ClassLoader.getSystemClassLoader();
 			do {
 				map = cache.get(current);
 				if (map != null && map.containsKey(name)) {
 					current = null;
-				} else {
+				} else if (current != null) {
 					current = current.getParent();
 				}
 			} while (current != null);
@@ -47,7 +49,6 @@ public final class ClassUtil {
 					target = null;
 					loader = cl;
 				}
-				if (loader == null) loader = ClassLoader.getSystemClassLoader();
 				map = cache.get(loader);
 				if (map == null) {
 					map = new HashMap<String, Class<?>>();
