@@ -9,18 +9,30 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-public final class ClassUtil {
+final class ClassUtil {
 	private static final WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
 	
 	private ClassUtil() {
 	}
 	
 	public static Class<?> findClass(String name) {
-		return findClass(name, Thread.currentThread().getContextClassLoader());
+		ClassLoader cl = null;
+		try {
+			cl = Thread.currentThread().getContextClassLoader();
+		} catch (SecurityException e) {
+			cl = null;
+		}
+		return findClass(name, cl);
 	}
 	
 	public static Class<?> findClass(String name, Class<?> cls) {
-		return findClass(name, cls.getClassLoader());
+		ClassLoader cl = null;
+		try {
+			cl = cls.getClassLoader();
+		} catch (SecurityException e) {
+			cl = null;
+		}
+		return findClass(name, cl);
 	}
 	
 	public static Class<?> findClass(String name, ClassLoader cl) {
@@ -32,7 +44,11 @@ public final class ClassUtil {
 				if (map != null && map.containsKey(name)) {
 					current = null;
 				} else if (current != null) {
-					current = current.getParent();
+					try {
+						current = current.getParent();
+					} catch (SecurityException e) {
+						current = null;
+					}
 				}
 			} while (current != null);
 			
