@@ -709,6 +709,7 @@ public class JSON {
 				o = ((java.sql.Array)o).getArray();
 			}
 		} catch (SQLException e) {
+			o = new Object[0];
 		}
 		
 		Class<?> ctype = o.getClass().getComponentType();
@@ -983,7 +984,7 @@ public class JSON {
 				try {
 					formatString((String)inetAddressClass.getMethod("getHostAddress").invoke(o), ap);
 				} catch (Exception e) {
-					// no handle
+					ap.append("null");
 				}
 				return ap;
 			}
