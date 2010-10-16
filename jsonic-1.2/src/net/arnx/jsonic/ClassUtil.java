@@ -41,14 +41,14 @@ final class ClassUtil {
 			ClassLoader current = cl;
 			do {
 				map = cache.get(current);
-				if (map != null && map.containsKey(name)) {
-					current = null;
-				} else if (current != null) {
+				if (current != null && (map == null || !map.containsKey(name))) {
 					try {
 						current = current.getParent();
 					} catch (SecurityException e) {
 						current = null;
 					}
+				} else {
+					current = null;
 				}
 			} while (current != null);
 			
