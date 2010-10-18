@@ -58,17 +58,17 @@ public class RESTServletTest {
 		
 		String[] serverClasses = new String[] {
 		};
-		/*
+		
 		WebAppContext basic = new WebAppContext("sample/basic", "/basic");
 		basic.setSystemClasses(concat(basic.getSystemClasses(), systemClasses));
 		basic.setServerClasses(concat(basic.getServerClasses(), serverClasses));
 		contexts.addHandler(basic);
-		*/
+		
 		WebAppContext seasar2 = new WebAppContext("sample/seasar2", "/seasar2");
 		seasar2.setSystemClasses(concat(seasar2.getSystemClasses(), systemClasses));
 		seasar2.setServerClasses(concat(seasar2.getServerClasses(), serverClasses));
 		contexts.addHandler(seasar2);
-		/*
+		
 		WebAppContext spring = new WebAppContext("sample/spring", "/spring");
 		spring.setSystemClasses(concat(spring.getSystemClasses(), systemClasses));
 		spring.setServerClasses(concat(spring.getServerClasses(), serverClasses));
@@ -78,7 +78,7 @@ public class RESTServletTest {
 		guice.setSystemClasses(concat(guice.getSystemClasses(), systemClasses));
 		guice.setServerClasses(concat(guice.getServerClasses(), serverClasses));
 		contexts.addHandler(guice);
-		*/
+		
 		server.setHandler(contexts);
 		server.start();
 	}
@@ -97,7 +97,7 @@ public class RESTServletTest {
 	
 	@Test
 	public void testREST() throws Exception {
-		//testREST("basic");
+		testREST("basic");
 	}
 	
 	@Test
@@ -107,12 +107,12 @@ public class RESTServletTest {
 	
 	@Test
 	public void testRESTwithSpring() throws Exception {
-		//testREST("spring");
+		testREST("spring");
 	}
 	
 	@Test
 	public void testRESTwithGuice() throws Exception {
-		//testREST("guice");
+		testREST("guice");
 	}
 	
 	public void testREST(String app) throws Exception {

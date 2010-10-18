@@ -57,16 +57,16 @@ public class WebServiceServletTest {
 		String[] serverClasses = new String[] {
 		};
 		
-		/*WebAppContext basic = new WebAppContext("sample-1.1/basic", "/basic");
+		WebAppContext basic = new WebAppContext("sample-1.1/basic", "/basic");
 		basic.setSystemClasses(concat(basic.getSystemClasses(), systemClasses));
 		basic.setServerClasses(concat(basic.getServerClasses(), serverClasses));
 		contexts.addHandler(basic);
-		*/
+		
 		WebAppContext seasar2 = new WebAppContext("sample-1.1/seasar2", "/seasar2");
 		seasar2.setSystemClasses(concat(seasar2.getSystemClasses(), systemClasses));
 		seasar2.setServerClasses(concat(seasar2.getServerClasses(), serverClasses));
 		contexts.addHandler(seasar2);
-		/*
+		
 		WebAppContext spring = new WebAppContext("sample-1.1/spring", "/spring");
 		spring.setSystemClasses(concat(spring.getSystemClasses(), systemClasses));
 		spring.setServerClasses(concat(spring.getServerClasses(), serverClasses));
@@ -76,7 +76,7 @@ public class WebServiceServletTest {
 		guice.setSystemClasses(concat(guice.getSystemClasses(), systemClasses));
 		guice.setServerClasses(concat(guice.getServerClasses(), serverClasses));
 		contexts.addHandler(guice);
-		*/
+		
 		server.setHandler(contexts);
 		server.start();
 	}
@@ -95,7 +95,7 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRPC() throws Exception {
-		//testRPC("basic");
+		testRPC("basic");
 	}
 	
 	@Test
@@ -105,12 +105,12 @@ public class WebServiceServletTest {
 	
 	@Test
 	public void testRPCwithSpring() throws Exception {
-		//testRPC("spring");
+		testRPC("spring");
 	}
 	
 	@Test
 	public void testRPCwithGuice() throws Exception {
-		//testRPC("guice");
+		testRPC("guice");
 	}
 	
 	public void testRPC(String app) throws Exception {
