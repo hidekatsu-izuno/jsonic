@@ -38,38 +38,22 @@ final class ClassUtil {
 	public static Class<?> findClass(String name, ClassLoader cl) {
 		Map<String, Class<?>> map;
 		synchronized (cache) {
-			ClassLoader current = cl;
-			do {
-				map = cache.get(current);
-				if (current != null && (map == null || !map.containsKey(name))) {
-					try {
-						current = current.getParent();
-					} catch (SecurityException e) {
-						current = null;
-					}
-				} else {
-					current = null;
-				}
-			} while (current != null);
+			map = cache.get(cl);
 			
 			if (map == null) {
-				ClassLoader loader;
-				Class<?> target = null;
+				map = new HashMap<String, Class<?>>();
+				cache.put(cl, map);
+			}
+			if (!map.containsKey(name)) {
+				Class<?> target;
 				try {
-					if (cl == null) {
+					if (cl != null) {
 						target = cl.loadClass(name);
 					} else {
 						target = Class.forName(name);
 					}
-					loader = target.getClassLoader();
 				} catch (ClassNotFoundException e) {
 					target = null;
-					loader = cl;
-				}
-				map = cache.get(loader);
-				if (map == null) {
-					map = new HashMap<String, Class<?>>();
-					cache.put(loader, map);
 				}
 				map.put(name, target);
 			}
