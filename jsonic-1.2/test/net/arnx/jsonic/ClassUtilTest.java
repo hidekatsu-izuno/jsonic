@@ -18,6 +18,7 @@ public class ClassUtilTest {
 		Thread.currentThread().setContextClassLoader(cl);
 		
 		assertNotNull(ClassUtil.findClass("org.apache.commons.logging.Log"));
+		assertNotNull(ClassUtil.findClass("java.net.InetAddress"));
 		
 		Thread.currentThread().setContextClassLoader(current);
 		cl = null;
