@@ -3075,10 +3075,6 @@ public class JSON {
 	}
 }
 
-class ClassCache {	
-
-}
-
 interface ParserSource {
 	int next() throws IOException;
 	void back();
