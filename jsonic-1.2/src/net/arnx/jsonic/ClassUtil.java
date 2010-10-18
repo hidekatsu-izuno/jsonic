@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 final class ClassUtil {
-	private static final WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
+	static final WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
+	
+	static boolean accessible = true;
 	
 	private ClassUtil() {
 	}
@@ -18,24 +20,12 @@ final class ClassUtil {
 	public static Class<?> findClass(String name) {
 		ClassLoader cl = null;
 		try {
-			cl = Thread.currentThread().getContextClassLoader();
+			if (accessible) {
+				cl = Thread.currentThread().getContextClassLoader();
+			}
 		} catch (SecurityException e) {
-			cl = null;
+			accessible = false;
 		}
-		return findClass(name, cl);
-	}
-	
-	public static Class<?> findClass(String name, Class<?> cls) {
-		ClassLoader cl = null;
-		try {
-			cl = cls.getClassLoader();
-		} catch (SecurityException e) {
-			cl = null;
-		}
-		return findClass(name, cl);
-	}
-	
-	public static Class<?> findClass(String name, ClassLoader cl) {
 		Map<String, Class<?>> map;
 		synchronized (cache) {
 			map = cache.get(cl);
@@ -62,12 +52,12 @@ final class ClassUtil {
 	}
 	
 	public static boolean equals(String name, Class<?> cls) {
-		Class<?> target = findClass(name, cls);
+		Class<?> target = findClass(name);
 		return (target != null) && target.equals(cls);		
 	}
 	
 	public static boolean isAssignableFrom(String name, Class<?> cls) {
-		Class<?> target = findClass(name, cls);
+		Class<?> target = findClass(name);
 		return (target != null) && target.isAssignableFrom(cls);		
 	}
 	

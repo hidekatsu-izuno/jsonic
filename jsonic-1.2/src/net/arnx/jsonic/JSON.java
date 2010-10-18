@@ -980,7 +980,7 @@ public class JSON {
 			
 			if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
 				checkRoot(context);
-				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress", o.getClass());
+				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
 				try {
 					formatString((String)inetAddressClass.getMethod("getHostAddress").invoke(o), ap);
 				} catch (Exception e) {
@@ -1105,7 +1105,7 @@ public class JSON {
 			if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
 				Map<Object, Object> map = new TreeMap<Object, Object>();
 				try {
-					Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean", o.getClass());
+					Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean");
 					
 					Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(o);
 					Object[] dynaProperties = (Object[])dynaClass.getClass().getMethod("getDynaProperties").invoke(dynaClass);
@@ -2441,7 +2441,7 @@ public class JSON {
 					data = new URI(value.toString().trim());
 				}
 			} else if (ClassUtil.equals("java.net.InetAddress", c)) {
-				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress", c);
+				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
 				data = inetAddressClass.getMethod("getByName", String.class).invoke(null, value.toString().trim());
 			} else if (Charset.class.equals(c)) {
 				data = Charset.forName(value.toString().trim());
