@@ -12,6 +12,8 @@ public class ClassUtilTest {
 	public void testFindClass() throws Exception {
 		URLClassLoader cl = new URLClassLoader(new URL[] { new File("./lib/commmons-logging.jar").toURI().toURL() });
 		
+		ClassUtil.clear();
+		
 		ClassLoader current = Thread.currentThread().getContextClassLoader();
 		Thread.currentThread().setContextClassLoader(cl);
 		
