@@ -5,12 +5,12 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 final class ClassUtil {
-	static final WeakHashMap<ClassLoader, ConcurrentMap<String, Class<?>>> cache = new WeakHashMap<ClassLoader, ConcurrentMap<String, Class<?>>>();
+	static final WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
 	
 	static boolean accessible = true;
 	
@@ -26,27 +26,29 @@ final class ClassUtil {
 		} catch (SecurityException e) {
 			accessible = false;
 		}
-		ConcurrentMap<String, Class<?>> map;
+		Map<String, Class<?>> map;
 		synchronized (cache) {
 			map = cache.get(cl);
 			
 			if (map == null) {
-				map = new ConcurrentHashMap<String, Class<?>>();
+				map = new HashMap<String, Class<?>>();
 				cache.put(cl, map);
 			}
 		}
-		if (!map.containsKey(name)) {
-			Class<?> target;
-			try {
-				if (cl != null) {
-					target = cl.loadClass(name);
-				} else {
-					target = Class.forName(name);
+		synchronized (map) {
+			if (!map.containsKey(name)) {
+				Class<?> target;
+				try {
+					if (cl != null) {
+						target = cl.loadClass(name);
+					} else {
+						target = Class.forName(name);
+					}
+				} catch (ClassNotFoundException e) {
+					target = null;
 				}
-			} catch (ClassNotFoundException e) {
-				target = null;
+				map.put(name, target);
 			}
-			map.putIfAbsent(name, target);
 		}
 		return map.get(name);
 	}
