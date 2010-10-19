@@ -23,10 +23,10 @@
 	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/ognl-2.6.9-patch-20070908.jar"/>
 	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/aopalliance-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/ojdbc6.jar"/>
-	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.41.jar"/>
 	<classpathentry kind="lib" path="sample/spring/WEB-INF/lib/spring.jar"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
+	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.43.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

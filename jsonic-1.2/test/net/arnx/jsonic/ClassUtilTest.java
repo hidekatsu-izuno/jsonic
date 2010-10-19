@@ -19,6 +19,7 @@ public class ClassUtilTest {
 		
 		assertNotNull(ClassUtil.findClass("org.apache.commons.logging.Log"));
 		assertNotNull(ClassUtil.findClass("java.net.InetAddress"));
+		assertNull(ClassUtil.findClass("org.apache.commons.logging.Log2"));
 		
 		Thread.currentThread().setContextClassLoader(current);
 		cl = null;
