@@ -22,6 +22,9 @@ public class ClassUtilTest {
 		assertNull(ClassUtil.findClass("org.apache.commons.logging.Log2"));
 		
 		Thread.currentThread().setContextClassLoader(current);
+		assertEquals(1, ClassUtil.cache.size());
+		assertEquals(3, ClassUtil.cache.get(cl).size());
+		assertNull(ClassUtil.cache.get(cl).get("org.apache.commons.logging.Log2"));
 		cl = null;
 		
 		System.gc();
