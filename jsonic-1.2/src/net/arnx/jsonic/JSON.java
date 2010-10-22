@@ -293,6 +293,19 @@ public class JSON {
 	}
 	
 	/**
+	 * Escapes a object into JavaScript format.
+	 * 
+	 * @param source a object to encode.
+	 * @return a escaped object
+	 * @throws JSONException if error occurred when formating.
+	 */
+	public static String escapeJS(Object source) throws JSONException {
+		JSON json = JSON.newInstance();
+		json.setMode(JSON.Mode.SCRIPT);
+		return json.format(source);
+	}
+	
+	/**
 	 * Decodes a json string into a object.
 	 * 
 	 * @param source a json string to decode

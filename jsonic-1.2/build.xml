@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <project name="jsonic" basedir="." default="dist-all">
-	<property name="version" value="1.2.4" />
+	<property name="version" value="1.2.5" />
 	
 	<property name="debug" value="true" />
 	<property name="jsonic_as3.home" location="../jsonic_as3-1.2" />
@@ -37,16 +37,6 @@
 			<fileset dir="src" excludes="${jar.excludes}" />
 		</jar>
 		<delete dir="${tmp}/build" />
-				
-		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
-			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
-			<classpath>
-				<fileset dir="lib" includes="*.jar" />
-				<fileset dir="${webapps}/seasar2/WEB-INF/lib" includes="*.jar" />
-				<fileset dir="${webapps}/spring/WEB-INF/lib" includes="*.jar" />
-				<fileset dir="${webapps}/guice/WEB-INF/lib" includes="*.jar" />
-			</classpath>
-		</javadoc>
 	</target>
 
 	<target name="build-sample" depends="build">
@@ -69,6 +59,15 @@
 	</target>
 
 	<target name="dist" depends="build">
+		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
+			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+			<classpath>
+				<fileset dir="lib" includes="*.jar" />
+				<fileset dir="${webapps}/seasar2/WEB-INF/lib" includes="*.jar" />
+				<fileset dir="${webapps}/spring/WEB-INF/lib" includes="*.jar" />
+				<fileset dir="${webapps}/guice/WEB-INF/lib" includes="*.jar" />
+			</classpath>
+		</javadoc>
 		<zip destfile="${ant.project.name}-${version}.zip">
 			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}" />
 			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src" />
