@@ -1,20 +1,16 @@
 package net.arnx.jsonic;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 final class ClassUtil {
-	static final WeakHashMap<ClassLoader, Map<String, ClassInfo>> cache = new WeakHashMap<ClassLoader, Map<String, ClassInfo>>();
+	static final WeakHashMap<ClassLoader, Map<String, Class<?>>> cache = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
 	
 	static boolean accessible = true;
 	
@@ -30,13 +26,13 @@ final class ClassUtil {
 		} catch (SecurityException e) {
 			accessible = false;
 		}
-		Map<String, ClassInfo> map;
+		Map<String, Class<?>> map;
 		synchronized (cache) {
 			map = cache.get(cl);
 			
 			if (map == null) {
-				map = new LinkedHashMap<String, ClassInfo>(16, 0.75f, true) {
-					protected boolean removeEldestEntry(Map.Entry<String, ClassInfo> eldest) {
+				map = new LinkedHashMap<String, Class<?>>(16, 0.75f, true) {
+					protected boolean removeEldestEntry(Map.Entry<String, Class<?>> eldest) {
 						return size() > 1024;
 					};
 				};
@@ -55,11 +51,10 @@ final class ClassUtil {
 				} catch (ClassNotFoundException e) {
 					target = null;
 				}
-				map.put(name, (target != null) ? new ClassInfo(target) : null);
+				map.put(name, target);
 			}
 		}
-		ClassInfo info = map.get(name);
-		return (info != null) ? info.getTargetClass() : null;
+		return map.get(name);
 	}
 	
 	public static boolean equals(String name, Class<?> cls) {
@@ -136,53 +131,6 @@ final class ClassUtil {
 	public static void clear() {
 		synchronized (cache) {
 			cache.clear();
-		}
-	}
-	
-	static class ClassInfo {
-		private Class<?> cls;
-		private LinkedList<Member> members;
-		
-		public ClassInfo(Class<?> cls) {
-			this.cls = cls;
-		}
-		
-		public Class<?> getTargetClass() {
-			return cls;
-		}
-		
-		public Field getField(String name) {
-			init();
-			return null;
-		}
-		
-		public Method getGetMethod(String name) {
-			init();
-			return null;
-		}
-		
-		public Method getSetMethod(String name) {
-			init();
-			return null;
-		}
-		
-		public Method findMethod(String name, Object... params) {
-			init();
-			return null;
-		}
-		
-		private void init() {
-			synchronized(this) {
-				if (members == null) {
-					members = new LinkedList<Member>();
-					for (Field field : cls.getFields()) {
-						field.setAccessible(true);
-					}
-					for (Method method : cls.getMethods()) {
-						method.setAccessible(true);
-					}
-				}
-			}
 		}
 	}
 }
