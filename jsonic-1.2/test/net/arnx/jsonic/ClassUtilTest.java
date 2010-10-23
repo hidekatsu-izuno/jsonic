@@ -33,4 +33,23 @@ public class ClassUtilTest {
 
 		assertTrue(ClassUtil.cache.isEmpty());
 	}
+	
+	@Test
+	public void testToUpperCamel() throws Exception {
+		assertEquals("A", ClassUtil.toUpperCamel("a"));
+		assertEquals("Aaa", ClassUtil.toUpperCamel("aaa"));
+		assertEquals("AaaA", ClassUtil.toUpperCamel("aaaA"));
+		assertEquals("AaaAAA", ClassUtil.toUpperCamel("aaaAAA"));
+		assertEquals("AaaAAA", ClassUtil.toUpperCamel("aaa_AAA"));
+	}
+	
+	@Test
+	public void testToLowerCamel() throws Exception {
+		assertEquals("a", ClassUtil.toLowerCamel("a"));
+		assertEquals("aaa", ClassUtil.toLowerCamel("aaa"));
+		assertEquals("aaaA", ClassUtil.toLowerCamel("aaaA"));
+		assertEquals("aaaAAA", ClassUtil.toLowerCamel("aaaAAA"));
+		assertEquals("aaaAAA", ClassUtil.toLowerCamel("aaa_AAA"));
+		assertEquals("AAA", ClassUtil.toLowerCamel("AAA"));
+	}
 }
