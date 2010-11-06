@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.Vector;
 import java.util.regex.Pattern;
 import java.awt.Point;
@@ -195,17 +196,20 @@ public class JSONTest {
 		String sample2 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample2.json"), "UTF-8")).replaceAll("\r\n", "\n");
 		result = JSON.encode(doc, true);
 		assertEquals(sample2, JSON.encode(doc, true));
-
+		
+		UUID uuid = UUID.randomUUID();
+		
 		list = new ArrayList<Object>();
 		list.add(new URI("http://www.google.co.jp/"));
 		list.add(new URL("http://www.google.co.jp/"));
 		list.add(InetAddress.getByName("localhost"));
 		list.add(Charset.forName("UTF-8"));
-		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list));
-		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(list.iterator()));
+		list.add(uuid);
+		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\",\"" + uuid + "\"]", JSON.encode(list));
+		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\",\"" + uuid + "\"]", JSON.encode(list.iterator()));
 		
 		Vector v = new Vector(list);
-		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\"]", JSON.encode(v.elements()));
+		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\",\"" + uuid + "\"]", JSON.encode(v.elements()));
 
 		list = new ArrayList<Object>();
 		list.add(new File("./sample.txt"));
@@ -1393,7 +1397,11 @@ public class JSONTest {
 		assertEquals(InetAddress.getByName("127.0.0.1"), json.convert("127.0.0.1", InetAddress.class));
 		
 		// Charset
-		assertEquals(Charset.forName("UTF-8"), json.convert("UTF-8", Charset.class));		
+		assertEquals(Charset.forName("UTF-8"), json.convert("UTF-8", Charset.class));
+		
+		// UUID
+		UUID uuid = UUID.randomUUID();
+		assertEquals(uuid, json.convert(uuid.toString(), UUID.class));
 		
 		// Map
 		LinkedHashMap lhmap = new LinkedHashMap();

@@ -72,6 +72,7 @@ import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -622,6 +623,40 @@ public class JSON {
 		return value;
 	}
 	
+	private static final int TYPE_UNKNOWN = -1;
+	private static final int TYPE_NULL = 0;
+	private static final int TYPE_PLAIN = 1;
+	private static final int TYPE_OBJECT = 2;
+	private static final int TYPE_CHAR_SEQUENCE = 3;
+	private static final int TYPE_DATE = 4;
+	private static final int TYPE_NUMBER = 5;
+	private static final int TYPE_CHAR_ARRAY = 6;
+	private static final int TYPE_BOOLEAN_ARRAY = 7;
+	private static final int TYPE_BYTE_ARRAY = 8;
+	private static final int TYPE_SHORT_ARRAY = 9;
+	private static final int TYPE_INT_ARRAY = 10;
+	private static final int TYPE_LONG_ARRAY = 11;
+	private static final int TYPE_FLOAT_ARRAY = 12;
+	private static final int TYPE_DOUBLE_ARRAY = 13;
+	private static final int TYPE_OBJECT_ARRAY = 14;
+	private static final int TYPE_LIST = 15;
+	private static final int TYPE_ITERATOR = 16;
+	private static final int TYPE_ENUMERATION = 17;
+	private static final int TYPE_ENUM = 18;
+	private static final int TYPE_LOCALE = 19;
+	private static final int TYPE_CLASS = 20;
+	private static final int TYPE_STRING = 21;
+	private static final int TYPE_PATTERN = 22;
+	private static final int TYPE_TIME_ZONE = 23;
+	private static final int TYPE_CHARSET = 24;
+	private static final int TYPE_DOM_CHARCTER_DATA = 25;
+	private static final int TYPE_DOM_ELEMENT = 26;
+	private static final int TYPE_INET_ADDRESS = 27;
+	private static final int TYPE_DYNA_BEAN = 28;
+	private static final int TYPE_MAP = 29;
+	private static final int TYPE_SERIALIZE = 30;
+	
+	
 	Appendable format(final Context context, final Object src, final Appendable ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
@@ -635,65 +670,233 @@ public class JSON {
 			}
 		}
 		
+		int type = TYPE_UNKNOWN;
+		
 		JSONHint hint = context.getHint();
 		
 		if (o == null) {
-			checkRoot(context);
-			ap.append("null");
-			return ap;
-		}
-		
-		if (hint != null) {
-			checkRoot(context);
+			type = TYPE_NULL;
+		} else if (hint != null) {
 			if (hint.serialized()) {
-				ap.append(o.toString());
-				return ap;
-			}
-			
-			if (Serializable.class.equals(hint.type())) {
-				o = serialize(o);
+				type = TYPE_PLAIN;
 			} else if (String.class.equals(hint.type())) {
-				o = o.toString();
+				type = TYPE_STRING;
+			} else if (Serializable.class.equals(hint.type())) {
+				type = TYPE_SERIALIZE;
 			}
-		}
-
-		if (o instanceof CharSequence) {
-			checkRoot(context);
-			formatString((CharSequence)o, ap);
-			return ap;
+		} else if (o instanceof java.sql.Array) {
+			try {
+				o = (Object[])((java.sql.Array)o).getArray();
+			} catch (SQLException e) {
+				o = new Object[0];
+			}
 		}
 		
-		if (o instanceof Boolean) {
+		if (type == TYPE_UNKNOWN) {
+			if (o instanceof CharSequence) {
+				type = TYPE_CHAR_SEQUENCE;
+			} else if (o instanceof Boolean) {
+				type = TYPE_PLAIN;
+			} else if (o instanceof Date || o instanceof Calendar) {
+				type = TYPE_DATE;
+			} else if (o instanceof Number) {
+				type = TYPE_NUMBER;
+			} else if (o.getClass().isArray()) {
+				Class<?> ctype = o.getClass().getComponentType();
+				if (ctype.isPrimitive()) {
+					if (char.class.equals(ctype)) {
+						type = TYPE_CHAR_ARRAY;
+					} else if (boolean.class.equals(ctype)) {
+						type = TYPE_BOOLEAN_ARRAY;
+					} else if (byte.class.equals(ctype)) {
+						type = TYPE_BYTE_ARRAY;
+					} else if (short.class.equals(ctype)) {
+						type = TYPE_SHORT_ARRAY;
+					} else if (int.class.equals(ctype)) {
+						type = TYPE_INT_ARRAY;
+					} else if (long.class.equals(ctype)) {
+						type = TYPE_LONG_ARRAY;
+					} else if (float.class.equals(ctype)) {
+						type = TYPE_FLOAT_ARRAY;
+					} else if (double.class.equals(ctype)) {
+						type = TYPE_DOUBLE_ARRAY;
+					}
+				} else {
+					type = TYPE_OBJECT_ARRAY;
+				}
+			} else if (o instanceof Map<?, ?>) {
+				type = TYPE_MAP;
+			} else if (o instanceof RandomAccess && o instanceof List<?>) {
+				type = TYPE_LIST;
+			} else if (o instanceof Iterable<?> || o instanceof Iterator<?>) {
+				type = TYPE_ITERATOR;
+			} else if (o instanceof Enumeration) {
+				type = TYPE_ENUMERATION;
+			} else if (o instanceof Enum<?>) {
+				type = TYPE_ENUM;
+			} else if (o instanceof Locale) {
+				type = TYPE_LOCALE;
+			} else if (o instanceof Class<?>) {
+				type = TYPE_CLASS;
+			} else if (o instanceof Type || o instanceof Character || o instanceof Member
+				 || o instanceof URL || o instanceof URI || o instanceof File || o instanceof UUID) {
+				type = TYPE_STRING;
+			} else if (o instanceof Pattern) {
+				type = TYPE_PATTERN;
+			} else if (o instanceof TimeZone) {
+				type = TYPE_TIME_ZONE;
+			} else if (o instanceof Charset) {
+				type = TYPE_CHARSET;
+			} else if (o instanceof Struct) {
+				type = TYPE_OBJECT_ARRAY;
+			} else if (o instanceof Node) {
+				if (o instanceof CharacterData && !(o instanceof Comment)) {
+					type = TYPE_DOM_CHARCTER_DATA;
+				} else if (o instanceof Element || o instanceof Document) {
+					type = TYPE_DOM_ELEMENT;
+				}
+			} else if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
+				type = TYPE_SERIALIZE;
+			} else if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
+				type = TYPE_INET_ADDRESS;
+			} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
+				type = TYPE_DYNA_BEAN;
+			} else {
+				type = TYPE_OBJECT;
+			}
+		}
+		
+		switch (type) {
+		case TYPE_PLAIN: {
 			checkRoot(context);
 			ap.append(o.toString());
-			return ap;
+			break;
 		}
-		
-		if (o instanceof Calendar) {
+		case TYPE_ENUM: {
 			checkRoot(context);
-			o = ((Calendar)o).getTimeInMillis();
+			ap.append(Integer.toString(((Enum<?>)o).ordinal()));
+			break;
 		}
-		
-		if (o instanceof Date) {
+		case TYPE_STRING: {
 			checkRoot(context);
-			DateFormat f = context.format(DateFormat.class);
-			if (f != null) {
-				formatString(f.format(o), ap);
-				return ap;
-			} else {
-				o = ((Date)o).getTime();
+			formatString(o.toString(), ap);
+			break;
+		}
+		case TYPE_CHAR_SEQUENCE: {
+			checkRoot(context);
+			formatString((CharSequence)o, ap);
+			break;
+		}
+		case TYPE_CHAR_ARRAY: {
+			checkRoot(context);
+			formatString(new String((char[])o), ap);
+			break;
+		}
+		case TYPE_CLASS: {
+			checkRoot(context);
+			formatString(((Class<?>)o).getName(), ap);
+			break;
+		}
+		case TYPE_LOCALE: {
+			checkRoot(context);
+			formatString(((Locale)o).toString().replace('_', '-'), ap);
+			break;
+		}
+		case TYPE_PATTERN: {
+			checkRoot(context);
+			formatString(((Pattern)o).pattern(), ap);
+			break;
+		}
+		case TYPE_TIME_ZONE: {
+			checkRoot(context);
+			formatString(((TimeZone)o).getID(), ap);
+			break;
+		}
+		case TYPE_CHARSET: {
+			checkRoot(context);
+			formatString(((Charset)o).name(), ap);
+			break;
+		}
+		case TYPE_INET_ADDRESS: {
+			checkRoot(context);
+			Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
+			try {
+				formatString((String)inetAddressClass.getMethod("getHostAddress").invoke(o), ap);
+			} catch (Exception e) {
+				ap.append("null");
 			}
+			break;
 		}
-		
-		if (o instanceof Number) {
+		case TYPE_DOM_CHARCTER_DATA: {
+			checkRoot(context);
+			formatString(((CharacterData)o).getData(), ap);
+			break;
+		}
+		case TYPE_DOM_ELEMENT: {
+			Element elem = (o instanceof Document) ? ((Document)o).getDocumentElement() : (Element)o;
+			ap.append('[');
+			formatString(elem.getTagName(), ap);
+			
+			ap.append(',');
+			if (context.isPrettyPrint()) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+			}
+			ap.append('{');
+			if (elem.hasAttributes()) {
+				NamedNodeMap names = elem.getAttributes();
+				for (int i = 0; i < names.getLength(); i++) {
+					if (i != 0) {
+						ap.append(',');
+					}
+					if (context.isPrettyPrint() && names.getLength() > 1) {
+						ap.append('\n');
+						for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
+					}
+					Node node = names.item(i);
+					if (node instanceof Attr) {
+						formatString(node.getNodeName(), ap);
+						ap.append(':');
+						if (context.isPrettyPrint()) ap.append(' ');
+						formatString(node.getNodeValue(), ap);
+					}
+				}
+				if (context.isPrettyPrint() && names.getLength() > 1) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+			}
+			ap.append('}');
+			if (elem.hasChildNodes()) {
+				NodeList nodes = elem.getChildNodes();
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					if ((node instanceof Element) || (node instanceof CharacterData && !(node instanceof Comment))) {
+						ap.append(',');
+						if (context.isPrettyPrint()) {
+							ap.append('\n');
+							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+						}
+						context.enter(i+2);
+						format(context, node, ap);
+						context.exit();
+						if (ap instanceof Flushable) ((Flushable)ap).flush();
+					}
+				}
+			}
+			if (context.isPrettyPrint()) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append(']');
+			break;
+		}
+		case TYPE_NUMBER: {
 			checkRoot(context);
 			NumberFormat f = context.format(NumberFormat.class);
 			if (f != null) {
 				formatString(f.format(o), ap);
-				return ap;
-			}
-			
-			if (o instanceof Double || o instanceof Float) {
+			} else if (o instanceof Double || o instanceof Float) {
 				double d = ((Number)o).doubleValue();
 				if (Double.isNaN(d) || Double.isInfinite(d)) {
 					if (mode != Mode.SCRIPT) {
@@ -708,171 +911,165 @@ public class JSON {
 				}
 			} else if (o instanceof Byte) {
 				ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
-			} else if (mode == Mode.SCRIPT && (src instanceof Date || src instanceof Calendar)) {
-				ap.append("new Date(").append(o.toString()).append(")");
 			} else {
 				ap.append(o.toString());
 			}
-			return ap;
+			break;
 		}
-		
-		try {
-			if (o instanceof Struct) {
-				o = ((Struct)o).getAttributes();
-			} else if (o instanceof java.sql.Array) {
-				o = ((java.sql.Array)o).getArray();
+		case TYPE_DATE: {
+			checkRoot(context);
+			Date date = (o instanceof Calendar) ? ((Calendar)o).getTime() : (Date)o;
+			DateFormat f = context.format(DateFormat.class);
+			if (f != null) {
+				formatString(f.format(date), ap);
+			} else if (mode == Mode.SCRIPT) {
+				ap.append("new Date(").append(Long.toString(date.getTime())).append(")");
+			} else {
+				ap.append(Long.toString(date.getTime()));
 			}
-		} catch (SQLException e) {
-			o = new Object[0];
+			break;
 		}
-		
-		Class<?> ctype = o.getClass().getComponentType();
-		if (ctype != null) {
-			if (ctype.isPrimitive()) {
-				if (o instanceof byte[]) {
-					checkRoot(context);
-					ap.append('"').append(Base64.encode((byte[])o)).append('"');
-					return ap;
-				}
-				
-				if (o instanceof short[]) {
-					NumberFormat f = context.format(NumberFormat.class);
-					
-					short[] array = (short[])o;
-					ap.append('[');
-					for (int i = 0; i < array.length; i++) {
-						if (f != null) {
-							formatString(f.format(array[i]), ap);
-						} else {
-							ap.append(String.valueOf(array[i]));
-						}
-						if (i != array.length-1) {
-							ap.append(',');
-							if (context.isPrettyPrint()) ap.append(' ');
-						}
-					}
-					ap.append(']');
-					return ap;
-				}
-				
-				if (o instanceof int[]) {
-					NumberFormat f = context.format(NumberFormat.class);
-					
-					int[] array = (int[])o;
-					ap.append('[');
-					for (int i = 0; i < array.length; i++) {
-						if (f != null) {
-							formatString(f.format(array[i]), ap);
-						} else {
-							ap.append(String.valueOf(array[i]));
-						}
-						if (i != array.length-1) {
-							ap.append(',');
-							if (context.isPrettyPrint()) ap.append(' ');
-						}
-					}
-					ap.append(']');
-					return ap;
-				}
-				
-				if (o instanceof long[]) {
-					NumberFormat f = context.format(NumberFormat.class);
-					
-					long[] array = (long[])o;
-					ap.append('[');
-					for (int i = 0; i < array.length; i++) {
-						if (f != null) {
-							formatString(f.format(array[i]), ap);
-						} else {
-							ap.append(String.valueOf(array[i]));
-						}
-						if (i != array.length-1) {
-							ap.append(',');
-							if (context.isPrettyPrint()) ap.append(' ');
-						}
-					}
-					ap.append(']');
-					return ap;
-				}
-				
-				if (o instanceof float[]) {
-					NumberFormat f = context.format(NumberFormat.class);
-					
-					float[] array = (float[])o;
-					ap.append('[');
-					for (int i = 0; i < array.length; i++) {
-						if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
-							if (mode != Mode.SCRIPT) {
-								ap.append('"').append(Float.toString(array[i])).append('"');
-							} else if (Double.isNaN(array[i])) {
-								ap.append("Number.NaN");
-							} else {
-								ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
-							}
-						} else if (f != null) {
-							formatString(f.format(array[i]), ap);
-						} else {
-							ap.append(String.valueOf(array[i]));
-						}
-						if (i != array.length-1) {
-							ap.append(',');
-							if (context.isPrettyPrint()) ap.append(' ');
-						}
-					}
-					ap.append(']');
-					return ap;
-				}
-				
-				if (o instanceof double[]) {
-					NumberFormat f = context.format(NumberFormat.class);
-					
-					double[] array = (double[])o;
-					ap.append('[');
-					for (int i = 0; i < array.length; i++) {
-						if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
-							if (mode != Mode.SCRIPT) {
-								ap.append('"').append(Double.toString(array[i])).append('"');
-							} else if (Double.isNaN(array[i])) {
-								ap.append("Number.NaN");
-							} else {
-								ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
-							}
-						} else if (f != null) {
-							formatString(f.format(array[i]), ap);
-						} else {
-							ap.append(String.valueOf(array[i]));
-						}
-						if (i != array.length-1) {
-							ap.append(',');
-							if (context.isPrettyPrint()) ap.append(' ');
-						}
-					}
-					ap.append(']');
-					return ap;
-				}
-				
-				if (o instanceof boolean[]) {
-					ap.append('[');
-					boolean[] array = (boolean[])o;
-					for (int i = 0; i < array.length; i++) {
-						ap.append(String.valueOf(array[i]));
-						if (i != array.length-1) {
-							ap.append(',');
-							if (context.isPrettyPrint()) ap.append(' ');
-						}
-					}
-					ap.append(']');
-					return ap;
-				}
-				
-				if (o instanceof char[]) {
-					checkRoot(context);
-					formatString( new String((char[])o), ap);
-					return ap;
+		case TYPE_BOOLEAN_ARRAY: {
+			ap.append('[');
+			boolean[] array = (boolean[])o;
+			for (int i = 0; i < array.length; i++) {
+				ap.append(String.valueOf(array[i]));
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
 				}
 			}
-		
-			Object[] array = (Object[])o;
+			ap.append(']');
+			break;
+		}
+		case TYPE_SERIALIZE: {
+			checkRoot(context);
+			formatString(Base64.encode(serialize(o)), ap);
+			break;
+		}
+		case TYPE_BYTE_ARRAY: {
+			checkRoot(context);
+			formatString(Base64.encode((byte[])o), ap);
+			break;
+		}
+		case TYPE_SHORT_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			short[] array = (short[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (f != null) {
+					formatString(f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			break;
+		}
+		case TYPE_INT_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			int[] array = (int[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (f != null) {
+					formatString(f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			break;
+		}
+		case TYPE_LONG_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			long[] array = (long[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (f != null) {
+					formatString(f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			break;
+		}
+		case TYPE_FLOAT_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			float[] array = (float[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
+					if (mode != Mode.SCRIPT) {
+						ap.append('"').append(Float.toString(array[i])).append('"');
+					} else if (Double.isNaN(array[i])) {
+						ap.append("Number.NaN");
+					} else {
+						ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+					}
+				} else if (f != null) {
+					formatString(f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			break;
+		}
+		case TYPE_DOUBLE_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			double[] array = (double[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
+					if (mode != Mode.SCRIPT) {
+						ap.append('"').append(Double.toString(array[i])).append('"');
+					} else if (Double.isNaN(array[i])) {
+						ap.append("Number.NaN");
+					} else {
+						ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+					}
+				} else if (f != null) {
+					formatString(f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			break;
+		}
+		case TYPE_OBJECT_ARRAY: {
+			Object[] array;
+			try {
+				if (o instanceof Struct) {
+					array = ((Struct)o).getAttributes();
+				} else {
+					array = (Object[])o;
+				}
+			} catch (SQLException e) {
+				array = new Object[0];
+			}
+			
 			ap.append('[');
 			for (int i = 0; i < array.length; i++) {
 				Object item = array[i];
@@ -884,7 +1081,6 @@ public class JSON {
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
-				if (ap instanceof Flushable) ((Flushable)ap).flush();
 				if (i != array.length-1) ap.append(',');
 			}
 			if (context.isPrettyPrint() && array.length > 0) {
@@ -892,39 +1088,37 @@ public class JSON {
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
-			return ap;
+			break;
 		}
-		
-		if (o instanceof Iterable<?>) {
-			if (o instanceof RandomAccess && o instanceof List<?>) {
-				List<?> list = (List<?>)o;
-				ap.append('[');
-				for (int i = 0; i < list.size(); i++) {
-					Object item = list.get(i);
-					if (context.isPrettyPrint()) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-					}
-					if (item == src) item = null;
-					context.enter(i);
-					format(context, item, ap);
-					context.exit();
-					if (ap instanceof Flushable) ((Flushable)ap).flush();
-					if (i != list.size()-1) ap.append(',');
-				}
-				if (context.isPrettyPrint() && !list.isEmpty()) {
+		case TYPE_LIST: {
+			List<?> list = (List<?>)o;
+			ap.append('[');
+			for (int i = 0; i < list.size(); i++) {
+				Object item = list.get(i);
+				if (context.isPrettyPrint()) {
 					ap.append('\n');
-					for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				ap.append(']');				
-				return ap;
-			} else {
-				o = ((Iterable<?>)o).iterator();
+				if (item == src) item = null;
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
+				if (i != list.size()-1) ap.append(',');
 			}
+			if (context.isPrettyPrint() && !list.isEmpty()) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append(']');
+			break;
 		}
-		
-		if (o instanceof Iterator<?>) {
-			Iterator<?> t = (Iterator<?>)o;
+		case TYPE_ITERATOR: {
+			Iterator<?> t;
+			if (o instanceof Iterable<?>) {
+				t = ((Iterable<?>)o).iterator();
+			} else {
+				t = (Iterator<?>)o;
+			}
 			ap.append('[');
 			boolean isEmpty = !t.hasNext();
 			for (int i = 0; t.hasNext(); i++) {
@@ -937,7 +1131,6 @@ public class JSON {
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
-				if (ap instanceof Flushable) ((Flushable)ap).flush();
 				if (t.hasNext()) ap.append(',');
 			}
 			if (context.isPrettyPrint() && !isEmpty) {
@@ -945,252 +1138,172 @@ public class JSON {
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
-			return ap;
+			break;
 		}
-		
-		if (!(o instanceof Map<?, ?>)) {
-			if (o instanceof Enumeration<?>) {
-				Enumeration<?> e = (Enumeration<?>)o;
-				ap.append('[');
-				boolean isEmpty = !e.hasMoreElements();
-				for (int i = 0; e.hasMoreElements(); i++) {
-					Object item = e.nextElement();
-					if (context.isPrettyPrint()) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-					}
-					if (item == src) item = null;
-					context.enter(i);
-					format(context, item, ap);
-					context.exit();
-					if (ap instanceof Flushable) ((Flushable)ap).flush();
-					if (e.hasMoreElements()) ap.append(',');
-				}
-				if (context.isPrettyPrint() && !isEmpty) {
+		case TYPE_ENUMERATION: {
+			Enumeration<?> e = (Enumeration<?>)o;
+			ap.append('[');
+			boolean isEmpty = !e.hasMoreElements();
+			for (int i = 0; e.hasMoreElements(); i++) {
+				Object item = e.nextElement();
+				if (context.isPrettyPrint()) {
 					ap.append('\n');
-					for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				ap.append(']');
-				return ap;
+				if (item == src) item = null;
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
+				if (e.hasMoreElements()) ap.append(',');
 			}
-			
-			if (o instanceof Enum<?>) {
-				checkRoot(context);
-				ap.append(Integer.toString(((Enum<?>)o).ordinal()));
-				return ap;
+			if (context.isPrettyPrint() && !isEmpty) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
-			
-			if (o instanceof Pattern) {
-				checkRoot(context);
-				formatString(((Pattern)o).pattern(), ap);
-				return ap;
-			}
-			
-			if (o instanceof TimeZone) {
-				checkRoot(context);
-				formatString(((TimeZone)o).getID(), ap);
-				return ap;
-			}
-			
-			if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
-				checkRoot(context);
-				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
-				try {
-					formatString((String)inetAddressClass.getMethod("getHostAddress").invoke(o), ap);
-				} catch (Exception e) {
-					ap.append("null");
-				}
-				return ap;
-			}
-			
-			if (o instanceof Charset) {
-				checkRoot(context);
-				formatString(((Charset)o).name(), ap);
-				return ap;
-			}
-			
-			if (o instanceof Locale) {
-				checkRoot(context);
-				formatString(((Locale)o).toString().replace('_', '-'), ap);
-				return ap;
-			}
-			
-			if (o instanceof Character) {
-				checkRoot(context);
-				formatString(o.toString(), ap);
-				return ap;
-			}
-			
-			if (o instanceof Type) {			
-				checkRoot(context);
-				if (o instanceof Class<?>) {
-					formatString(((Class<?>)o).getName(), ap);
-				} else {
-					formatString(o.toString(), ap);
-				}
-				return ap;			
-			}
-			
-			if (o instanceof Member
-					|| o instanceof URL
-					|| o instanceof URI
-					|| o instanceof File) {
-				checkRoot(context);
-				formatString(o.toString(), ap);
-				return ap;
-			}
-			
-			if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
-				checkRoot(context);
-				o = serialize(o);
-				return ap;
-			}
-			
-			if (o instanceof Node) {
-				if (o instanceof CharacterData && !(o instanceof Comment)) {
-					checkRoot(context);
-					formatString(((CharacterData)o).getData(), ap);
-					return ap;			
-				}
-				if (o instanceof Document) {
-					o = ((Document)o).getDocumentElement();
-				}
-				if (o instanceof Element) {
-					Element elem = (Element)o;
-					ap.append('[');
-					formatString(elem.getTagName(), ap);
+			ap.append(']');
+			break;
+		}
+		case TYPE_DYNA_BEAN: {
+			ap.append('{');
+			int i = 0;
+			try {
+				Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean");
+				
+				Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(o);
+				Object[] dynaProperties = (Object[])dynaClass.getClass().getMethod("getDynaProperties").invoke(dynaClass);
+				
+				if (dynaProperties != null && dynaProperties.length > 0) {
+					Method getName = dynaProperties[0].getClass().getMethod("getName");
+					Method get = dynaBeanClass.getMethod("get", String.class);
 					
-					ap.append(',');
-					if (context.isPrettyPrint()) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-					}
-					ap.append('{');
-					if (elem.hasAttributes()) {
-						NamedNodeMap names = elem.getAttributes();
-						for (int i = 0; i < names.getLength(); i++) {
-							if (i != 0) {
-								ap.append(',');
-							}
-							if (context.isPrettyPrint() && names.getLength() > 1) {
-								ap.append('\n');
-								for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
-							}
-							Node node = names.item(i);
-							if (node instanceof Attr) {
-								formatString(node.getNodeName(), ap);
-								ap.append(':');
-								if (context.isPrettyPrint()) ap.append(' ');
-								formatString(node.getNodeValue(), ap);
-							}
+					for (Object dp : dynaProperties) {
+						Object name = null;
+						try {
+							name = getName.invoke(dp);
+						} catch (Exception e) {
 						}
-						if (context.isPrettyPrint() && names.getLength() > 1) {
+						if (name == null) continue;
+						
+						Object value = null;
+						Exception cause = null;
+						
+						try {
+							value = get.invoke(o, name);
+						} catch (Exception e) {
+							cause = e;
+						}
+						
+						if (value == src || (cause == null && this.suppressNull && value == null)) continue; 
+						
+						if (i > 0) ap.append(',');
+						if (context.isPrettyPrint()) {
 							ap.append('\n');
 							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 						}
-					}
-					ap.append('}');
-					if (elem.hasChildNodes()) {
-						NodeList nodes = elem.getChildNodes();
-						for (int i = 0; i < nodes.getLength(); i++) {
-							Node node = nodes.item(i);
-							if ((node instanceof Element) || (node instanceof CharacterData && !(node instanceof Comment))) {
-								ap.append(',');
-								if (context.isPrettyPrint()) {
-									ap.append('\n');
-									for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-								}
-								context.enter(i+2);
-								format(context, node, ap);
-								context.exit();
-								if (ap instanceof Flushable) ((Flushable)ap).flush();
-							}
+						formatString(name.toString(), ap).append(':');
+						if (context.isPrettyPrint()) ap.append(' ');
+						context.enter(name);
+						if (cause != null) {
+							throw new JSONException(getMessage("json.format.ConversionError",
+									(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
+									JSONException.FORMAT_ERROR, cause);
 						}
+						format(context, value, ap);
+						context.exit();
+						i++;
 					}
-					if (context.isPrettyPrint()) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-					}
-					ap.append(']');
-					return ap;
 				}
+			} catch (Exception e) {
+				// no handle
 			}
-			
-			if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
-				Map<Object, Object> map = new TreeMap<Object, Object>();
-				try {
-					Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean");
-					
-					Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(o);
-					Object[] dynaProperties = (Object[])dynaClass.getClass().getMethod("getDynaProperties").invoke(dynaClass);
-					
-					if (dynaProperties != null && dynaProperties.length > 0) {
-						Method getName = dynaProperties[0].getClass().getMethod("getName");
-						Method get = dynaBeanClass.getMethod("get", String.class);
-						
-						for (Object dp : dynaProperties) {
-							context.enter('.');
-							Object name = getName.invoke(dp);
-							context.exit();
-							
-							context.enter(name);
-							map.put(name, get.invoke(o, name));
-							context.exit();
-						}
-					}
-				} catch (Exception e) {
-					// no handle
-				}
-				o = map;
+			if (context.isPrettyPrint() && i > 0) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
+			ap.append('}');
+			break;
 		}
-		
-		Map<?, ?> map = (o instanceof Map<?, ?>) ? (Map<?, ?>)o : context.getGetProperties(o.getClass());
-		
-		ap.append('{');
-		int i = 0;
-		for (Map.Entry<?, ?> entry : map.entrySet()) {
-			if (entry.getKey() == null) continue;
+		case TYPE_MAP: {
+			Map<?, ?> map = (Map<?, ?>)o;
 			
-			Object value = entry.getValue();
-			Exception cause = null; 
+			ap.append('{');
+			int i = 0;
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				if (entry.getKey() == null) continue;
+				
+				Object value = entry.getValue();
+				if (value == src || (this.suppressNull && value == null)) continue; 
+				
+				if (i > 0) ap.append(',');
+				if (context.isPrettyPrint()) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+				formatString(entry.getKey().toString(), ap).append(':');
+				if (context.isPrettyPrint()) ap.append(' ');
+				context.enter(entry.getKey());
+				format(context, value, ap);
+				context.exit();
+				i++;
+			}
+			if (context.isPrettyPrint() && i > 0) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append('}');
+			break;
+		}
+		case TYPE_OBJECT: {
+			Map<?, ?> map = context.getGetProperties(o.getClass());
 			
-			if (value instanceof AnnotatedElement) {
+			ap.append('{');
+			int i = 0;
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				if (entry.getKey() == null) continue;
+				
+				Object value = entry.getValue();
+				Exception cause = null; 
+				
 				hint = ((AnnotatedElement)value).getAnnotation(JSONHint.class);
 				try {
 					value = (value instanceof Method) ? ((Method)value).invoke(o) : ((Field)value).get(o);
 				} catch (Exception e) {
 					cause = e;
 				}
-			} else {
-				hint = null;
+				if (value == src || (cause == null && this.suppressNull && value == null)) continue; 
+				
+				if (i > 0) ap.append(',');
+				if (context.isPrettyPrint()) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+				formatString(entry.getKey().toString(), ap).append(':');
+				if (context.isPrettyPrint()) ap.append(' ');
+				context.enter(entry.getKey(), hint);
+				if (cause != null) {
+					throw new JSONException(getMessage("json.format.ConversionError",
+							(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
+							JSONException.FORMAT_ERROR, cause);					
+				}
+				format(context, value, ap);
+				context.exit();
+				i++;
 			}
-			if (value == src || (cause == null && this.suppressNull && value == null)) continue; 
-			
-			if (i > 0) ap.append(',');
-			if (context.isPrettyPrint()) {
+			if (context.isPrettyPrint() && i > 0) {
 				ap.append('\n');
-				for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
-			formatString(entry.getKey().toString(), ap).append(':');
-			if (context.isPrettyPrint()) ap.append(' ');
-			context.enter(entry.getKey(), hint);
-			if (cause != null) {
-				throw new JSONException(getMessage("json.format.ConversionError",
-						(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
-						JSONException.FORMAT_ERROR, cause);					
-			}
-			format(context, value, ap);
-			context.exit();
-			if (ap instanceof Flushable) ((Flushable)ap).flush();
-			i++;
+			ap.append('}');
+			break;
 		}
-		if (context.isPrettyPrint() && i > 0) {
-			ap.append('\n');
-			for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+		default: {
+			checkRoot(context);
+			ap.append("null");
+			break;
 		}
-		ap.append('}');
+		}
 		
+		if (ap instanceof Flushable) ((Flushable)ap).flush();
 		return ap;
 	}
 	
@@ -2454,6 +2567,8 @@ public class JSON {
 				} else {
 					data = new URI(value.toString().trim());
 				}
+			} else if (UUID.class.equals(c)) {
+				data = UUID.fromString(value.toString().trim());
 			} else if (ClassUtil.equals("java.net.InetAddress", c)) {
 				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
 				data = inetAddressClass.getMethod("getByName", String.class).invoke(null, value.toString().trim());
