@@ -16,6 +16,7 @@
 package net.arnx.jsonic;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -590,7 +591,7 @@ public class JSON {
 	 * @return a reference to 'out' object in parameters
 	 */
 	public OutputStream format(Object source, OutputStream out) throws IOException {
-		format(source, new OutputStreamWriter(out, "UTF-8"));
+		format(source, new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
 		return out;
 	}
 	
@@ -1208,8 +1209,6 @@ public class JSON {
 			break;
 		}
 		}
-		
-		if (ap instanceof Flushable) ((Flushable)ap).flush();
 		return ap;
 	}
 	

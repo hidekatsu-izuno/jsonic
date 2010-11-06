@@ -58,7 +58,7 @@
 		</javac>
 	</target>
 
-	<target name="dist" depends="build">
+	<target name="dist" depends="build-sample">
 		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<classpath>
@@ -68,18 +68,10 @@
 				<fileset dir="${webapps}/guice/WEB-INF/lib" includes="*.jar" />
 			</classpath>
 		</javadoc>
-		<zip destfile="${ant.project.name}-${version}.zip">
-			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src" />
-			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
-			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />
-		</zip>
-		<delete dir="${tmp}" />
 	</target>
 	
 	<target name="dist-all">
-		<antcall target="build-sample">
+		<antcall target="dist">
 			<param name="tmp" location="${tmp}/java" />
 		</antcall>
 		<ant antfile="${jsonic_as3.home}/build.xml" target="build" inheritall="false">
