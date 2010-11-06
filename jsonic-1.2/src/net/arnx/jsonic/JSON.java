@@ -55,8 +55,10 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.List;
 import java.util.Date;
@@ -193,7 +195,36 @@ public class JSON {
 		"\\u0018", "\\u0019", "\\u001A", "\\u001B", "\\u001C", "\\u001D", "\\u001E", "\\u001F"
 	};
 	
-	static final Map<Class<?>, Object> PRIMITIVE_MAP = new IdentityHashMap<Class<?>, Object>();
+	private static final int TYPE_UNKNOWN = -1;
+	private static final int TYPE_NULL = 0;
+	private static final int TYPE_PLAIN = 1;
+	private static final int TYPE_OBJECT = 2;
+	private static final int TYPE_STRING = 3;
+	private static final int TYPE_DATE = 4;
+	private static final int TYPE_NUMBER = 5;
+	private static final int TYPE_CHAR_ARRAY = 6;
+	private static final int TYPE_BOOLEAN_ARRAY = 7;
+	private static final int TYPE_BYTE_ARRAY = 8;
+	private static final int TYPE_SHORT_ARRAY = 9;
+	private static final int TYPE_INT_ARRAY = 10;
+	private static final int TYPE_LONG_ARRAY = 11;
+	private static final int TYPE_FLOAT_ARRAY = 12;
+	private static final int TYPE_DOUBLE_ARRAY = 13;
+	private static final int TYPE_OBJECT_ARRAY = 14;
+	private static final int TYPE_LIST = 15;
+	private static final int TYPE_ITERABLE = 16;
+	private static final int TYPE_ITERATOR = 17;
+	private static final int TYPE_ENUMERATION = 18;
+	private static final int TYPE_DOM_ELEMENT = 19;
+	private static final int TYPE_DYNA_BEAN = 20;
+	private static final int TYPE_MAP = 21;
+	private static final int TYPE_CHAR_SEQUENCE = 22;
+	private static final int TYPE_SERIALIZE = 23;
+	private static final int TYPE_CLASS = 24;
+	private static final int TYPE_LOCALE = 25;
+	
+	static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>();
+	static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(45);
 	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
@@ -205,6 +236,59 @@ public class JSON {
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
 		
+		FORMAT_MAP.put(boolean.class, TYPE_PLAIN);
+		FORMAT_MAP.put(byte.class, TYPE_NUMBER);
+		FORMAT_MAP.put(short.class, TYPE_NUMBER);
+		FORMAT_MAP.put(int.class, TYPE_NUMBER);
+		FORMAT_MAP.put(long.class, TYPE_NUMBER);
+		FORMAT_MAP.put(float.class, TYPE_NUMBER);
+		FORMAT_MAP.put(double.class, TYPE_NUMBER);
+		FORMAT_MAP.put(char.class, TYPE_STRING);
+		
+		FORMAT_MAP.put(boolean[].class, TYPE_BOOLEAN_ARRAY);
+		FORMAT_MAP.put(byte[].class, TYPE_BYTE_ARRAY);
+		FORMAT_MAP.put(short[].class, TYPE_SHORT_ARRAY);
+		FORMAT_MAP.put(int[].class, TYPE_INT_ARRAY);
+		FORMAT_MAP.put(long[].class, TYPE_LONG_ARRAY);
+		FORMAT_MAP.put(float[].class, TYPE_FLOAT_ARRAY);
+		FORMAT_MAP.put(double[].class, TYPE_DOUBLE_ARRAY);
+		FORMAT_MAP.put(char[].class, TYPE_CHAR_ARRAY);
+		FORMAT_MAP.put(Object[].class, TYPE_OBJECT_ARRAY);
+		
+		FORMAT_MAP.put(Boolean.class, TYPE_PLAIN);
+		FORMAT_MAP.put(Byte.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Short.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Integer.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Long.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Float.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Double.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Character.class, TYPE_STRING);
+		
+		FORMAT_MAP.put(BigInteger.class, TYPE_NUMBER);
+		FORMAT_MAP.put(BigDecimal.class, TYPE_NUMBER);
+		FORMAT_MAP.put(String.class, TYPE_STRING);
+		FORMAT_MAP.put(Date.class, TYPE_DATE);
+		FORMAT_MAP.put(java.sql.Date.class, TYPE_DATE);
+		FORMAT_MAP.put(java.sql.Time.class, TYPE_DATE);
+		FORMAT_MAP.put(java.sql.Timestamp.class, TYPE_DATE);
+		FORMAT_MAP.put(URI.class, TYPE_STRING);
+		FORMAT_MAP.put(URL.class, TYPE_STRING);
+		FORMAT_MAP.put(UUID.class, TYPE_STRING);
+		FORMAT_MAP.put(Pattern.class, TYPE_STRING);
+		FORMAT_MAP.put(Class.class, TYPE_CLASS);
+		FORMAT_MAP.put(Locale.class, TYPE_LOCALE);
+		
+		FORMAT_MAP.put(ArrayList.class, TYPE_LIST);
+		FORMAT_MAP.put(LinkedList.class, TYPE_ITERABLE);
+		FORMAT_MAP.put(HashSet.class, TYPE_ITERABLE);
+		FORMAT_MAP.put(TreeSet.class, TYPE_ITERABLE);
+		FORMAT_MAP.put(LinkedHashSet.class, TYPE_ITERABLE);
+		
+		FORMAT_MAP.put(HashMap.class, TYPE_MAP);
+		FORMAT_MAP.put(IdentityHashMap.class, TYPE_MAP);
+		FORMAT_MAP.put(Properties.class, TYPE_MAP);
+		FORMAT_MAP.put(TreeMap.class, TYPE_MAP);
+		FORMAT_MAP.put(LinkedHashMap.class, TYPE_MAP);
 	}
 	
 	static JSON newInstance() {
@@ -629,39 +713,6 @@ public class JSON {
 		return value;
 	}
 	
-	private static final int TYPE_UNKNOWN = -1;
-	private static final int TYPE_NULL = 0;
-	private static final int TYPE_PLAIN = 1;
-	private static final int TYPE_OBJECT = 2;
-	private static final int TYPE_CHAR_SEQUENCE = 3;
-	private static final int TYPE_DATE = 4;
-	private static final int TYPE_NUMBER = 5;
-	private static final int TYPE_CHAR_ARRAY = 6;
-	private static final int TYPE_BOOLEAN_ARRAY = 7;
-	private static final int TYPE_BYTE_ARRAY = 8;
-	private static final int TYPE_SHORT_ARRAY = 9;
-	private static final int TYPE_INT_ARRAY = 10;
-	private static final int TYPE_LONG_ARRAY = 11;
-	private static final int TYPE_FLOAT_ARRAY = 12;
-	private static final int TYPE_DOUBLE_ARRAY = 13;
-	private static final int TYPE_OBJECT_ARRAY = 14;
-	private static final int TYPE_LIST = 15;
-	private static final int TYPE_ITERATOR = 16;
-	private static final int TYPE_ENUMERATION = 17;
-	private static final int TYPE_ENUM = 18;
-	private static final int TYPE_LOCALE = 19;
-	private static final int TYPE_CLASS = 20;
-	private static final int TYPE_STRING = 21;
-	private static final int TYPE_PATTERN = 22;
-	private static final int TYPE_TIME_ZONE = 23;
-	private static final int TYPE_CHARSET = 24;
-	private static final int TYPE_DOM_CHARCTER_DATA = 25;
-	private static final int TYPE_DOM_ELEMENT = 26;
-	private static final int TYPE_INET_ADDRESS = 27;
-	private static final int TYPE_DYNA_BEAN = 28;
-	private static final int TYPE_MAP = 29;
-	private static final int TYPE_SERIALIZE = 30;
-	
 	
 	Appendable format(final Context context, final Object src, final Appendable ap) throws IOException {
 		Object o = src;
@@ -678,15 +729,105 @@ public class JSON {
 		
 		JSONHint hint = context.getHint();
 		
-		switch (context.getFormatType(o, hint)) {
+		int type = TYPE_UNKNOWN;
+		
+		if (o == null) {
+			type = TYPE_NULL;
+		} else if (hint != null) {
+			if (hint.serialized()) {
+				type = TYPE_PLAIN;
+			} else if (String.class.equals(hint.type())) {
+				type = TYPE_STRING;
+			} else if (Serializable.class.equals(hint.type())) {
+				type = TYPE_SERIALIZE;
+			}
+		}
+		
+		if (type == TYPE_UNKNOWN) {				
+			Integer result = FORMAT_MAP.get(o.getClass());
+			if (result != null) type = result;
+		}
+		
+		if (type == TYPE_UNKNOWN) {
+			if (o instanceof Map<?, ?>) {
+				type = TYPE_MAP;
+			} else if (o instanceof Iterable<?>) {
+				if (o instanceof RandomAccess && o instanceof List<?>) {
+					type = TYPE_LIST;
+				} else {
+					type = TYPE_ITERABLE;
+				}
+			} else if (o instanceof Object[]) {
+				type = TYPE_OBJECT_ARRAY;
+			} else if (o instanceof Enum<?>) {
+				o = ((Enum<?>)o).ordinal();
+				type = TYPE_NUMBER;
+			} else if (o instanceof CharSequence) {
+				type = TYPE_CHAR_SEQUENCE;
+			} else if (o instanceof Date) {
+				type = TYPE_DATE;
+			} else if (o instanceof Calendar) {
+				o = ((Calendar)o).getTime();
+				type = TYPE_DATE;
+			} else if (o instanceof Number) {
+				type = TYPE_NUMBER;
+			} else if (o instanceof Iterator<?>) {
+				type = TYPE_ITERATOR;
+			} else if (o instanceof Enumeration) {
+				type = TYPE_ENUMERATION;
+			} else if (o instanceof Type || o instanceof Member || o instanceof File) {
+				type = TYPE_STRING;
+			} else if (o instanceof TimeZone) {
+				o = ((TimeZone)o).getID();
+				type = TYPE_STRING;
+			} else if (o instanceof Charset) {
+				o = ((Charset)o).name();
+				type = TYPE_STRING;
+			} else if (o instanceof java.sql.Array) {
+				try {
+					o = ((java.sql.Array)o).getArray();
+				} catch (SQLException e) {
+					o = new Object[0];
+				}
+				Integer result = FORMAT_MAP.get(o.getClass());
+				if (result != null) type = result;
+			} else if (o instanceof Struct) {
+				try {
+					o = ((Struct)o).getAttributes();
+				} catch (SQLException e) {
+					o = new Object[0];
+				}
+				type = TYPE_OBJECT_ARRAY;
+			} else if (o instanceof Node) {
+				if (o instanceof CharacterData && !(o instanceof Comment)) {
+					o = ((CharacterData)o).getData();
+					type = TYPE_STRING;
+				} else if (o instanceof Document) {
+					o = ((Document)o).getDocumentElement();
+					type = TYPE_DOM_ELEMENT;
+				} else if (o instanceof Element) {
+					type = TYPE_DOM_ELEMENT;
+				}
+			} else if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
+				type = TYPE_SERIALIZE;
+			} else if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
+				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
+				try {
+					o = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
+					type = TYPE_STRING;
+				} catch (Exception e) {
+				}
+			} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
+				type = TYPE_DYNA_BEAN;
+			} else {
+				type = TYPE_OBJECT;
+			}
+		}
+		
+		switch (type) {
 		case TYPE_PLAIN: {
 			checkRoot(context);
 			ap.append(o.toString());
-			break;
-		}
-		case TYPE_ENUM: {
-			checkRoot(context);
-			ap.append(Integer.toString(((Enum<?>)o).ordinal()));
 			break;
 		}
 		case TYPE_STRING: {
@@ -699,11 +840,6 @@ public class JSON {
 			formatString((CharSequence)o, ap);
 			break;
 		}
-		case TYPE_CHAR_ARRAY: {
-			checkRoot(context);
-			formatString(new String((char[])o), ap);
-			break;
-		}
 		case TYPE_CLASS: {
 			checkRoot(context);
 			formatString(((Class<?>)o).getName(), ap);
@@ -714,38 +850,18 @@ public class JSON {
 			formatString(((Locale)o).toString().replace('_', '-'), ap);
 			break;
 		}
-		case TYPE_PATTERN: {
+		case TYPE_CHAR_ARRAY: {
 			checkRoot(context);
-			formatString(((Pattern)o).pattern(), ap);
+			formatString(new String((char[])o), ap);
 			break;
 		}
-		case TYPE_TIME_ZONE: {
+		case TYPE_SERIALIZE: {
 			checkRoot(context);
-			formatString(((TimeZone)o).getID(), ap);
-			break;
-		}
-		case TYPE_CHARSET: {
-			checkRoot(context);
-			formatString(((Charset)o).name(), ap);
-			break;
-		}
-		case TYPE_INET_ADDRESS: {
-			checkRoot(context);
-			Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
-			try {
-				formatString((String)inetAddressClass.getMethod("getHostAddress").invoke(o), ap);
-			} catch (Exception e) {
-				ap.append("null");
-			}
-			break;
-		}
-		case TYPE_DOM_CHARCTER_DATA: {
-			checkRoot(context);
-			formatString(((CharacterData)o).getData(), ap);
+			formatString(Base64.encode(serialize(o)), ap);
 			break;
 		}
 		case TYPE_DOM_ELEMENT: {
-			Element elem = (o instanceof Document) ? ((Document)o).getDocumentElement() : (Element)o;
+			Element elem = (Element)o;
 			ap.append('[');
 			formatString(elem.getTagName(), ap);
 			
@@ -830,7 +946,7 @@ public class JSON {
 		}
 		case TYPE_DATE: {
 			checkRoot(context);
-			Date date = (o instanceof Calendar) ? ((Calendar)o).getTime() : (Date)o;
+			Date date = (Date)o;
 			DateFormat f = context.format(DateFormat.class);
 			if (f != null) {
 				formatString(f.format(date), ap);
@@ -852,11 +968,6 @@ public class JSON {
 				}
 			}
 			ap.append(']');
-			break;
-		}
-		case TYPE_SERIALIZE: {
-			checkRoot(context);
-			formatString(Base64.encode(serialize(o)), ap);
 			break;
 		}
 		case TYPE_BYTE_ARRAY: {
@@ -971,17 +1082,7 @@ public class JSON {
 			break;
 		}
 		case TYPE_OBJECT_ARRAY: {
-			Object[] array;
-			try {
-				if (o instanceof Struct) {
-					array = ((Struct)o).getAttributes();
-				} else {
-					array = (Object[])o;
-				}
-			} catch (SQLException e) {
-				array = new Object[0];
-			}
-			
+			Object[] array = (Object[])o;
 			ap.append('[');
 			for (int i = 0; i < array.length; i++) {
 				Object item = array[i];
@@ -1024,13 +1125,10 @@ public class JSON {
 			ap.append(']');
 			break;
 		}
+		case TYPE_ITERABLE:
+			o = ((Iterable<?>)o).iterator();			
 		case TYPE_ITERATOR: {
-			Iterator<?> t;
-			if (o instanceof Iterable<?>) {
-				t = ((Iterable<?>)o).iterator();
-			} else {
-				t = (Iterator<?>)o;
-			}
+			Iterator<?> t = (Iterator<?>)o;
 			ap.append('[');
 			boolean isEmpty = !t.hasNext();
 			for (int i = 0; t.hasNext(); i++) {
@@ -2820,7 +2918,6 @@ public class JSON {
 		List<Object[]> path;
 		int level = -1;
 		Map<Class<?>, Map<String, AnnotatedElement>> memberCache;
-		Map<Class<?>, Integer> typeMap;
 		
 		public Context() {
 			prettyPrint = JSON.this.prettyPrint;
@@ -2910,112 +3007,6 @@ public class JSON {
 			state[0] = null;
 			state[1] = null;
 			level--;
-		}
-		
-		int getFormatType(Object o, JSONHint hint) {
-			if (typeMap == null) typeMap = new HashMap<Class<?>, Integer>();
-			
-			Integer type = null;
-			
-			if (o == null) {
-				type = TYPE_NULL;
-			} else if (hint != null) {
-				if (hint.serialized()) {
-					type = TYPE_PLAIN;
-				} else if (String.class.equals(hint.type())) {
-					type = TYPE_STRING;
-				} else if (Serializable.class.equals(hint.type())) {
-					type = TYPE_SERIALIZE;
-				}
-			}
-			if (type == null) {				
-				if (o instanceof java.sql.Array) {
-					try {
-						o = (Object[])((java.sql.Array)o).getArray();
-					} catch (SQLException e) {
-						o = new Object[0];
-					}
-				}
-				type = typeMap.get(o.getClass());
-			}
-			
-			if (type == null) {
-				if (o instanceof CharSequence) {
-					type = TYPE_CHAR_SEQUENCE;
-				} else if (o instanceof Boolean) {
-					type = TYPE_PLAIN;
-				} else if (o instanceof Date || o instanceof Calendar) {
-					type = TYPE_DATE;
-				} else if (o instanceof Number) {
-					type = TYPE_NUMBER;
-				} else if (o.getClass().isArray()) {
-					Class<?> ctype = o.getClass().getComponentType();
-					if (ctype.isPrimitive()) {
-						if (char.class.equals(ctype)) {
-							type = TYPE_CHAR_ARRAY;
-						} else if (boolean.class.equals(ctype)) {
-							type = TYPE_BOOLEAN_ARRAY;
-						} else if (byte.class.equals(ctype)) {
-							type = TYPE_BYTE_ARRAY;
-						} else if (short.class.equals(ctype)) {
-							type = TYPE_SHORT_ARRAY;
-						} else if (int.class.equals(ctype)) {
-							type = TYPE_INT_ARRAY;
-						} else if (long.class.equals(ctype)) {
-							type = TYPE_LONG_ARRAY;
-						} else if (float.class.equals(ctype)) {
-							type = TYPE_FLOAT_ARRAY;
-						} else if (double.class.equals(ctype)) {
-							type = TYPE_DOUBLE_ARRAY;
-						}
-					} else {
-						type = TYPE_OBJECT_ARRAY;
-					}
-				} else if (o instanceof Map<?, ?>) {
-					type = TYPE_MAP;
-				} else if (o instanceof RandomAccess && o instanceof List<?>) {
-					type = TYPE_LIST;
-				} else if (o instanceof Iterable<?> || o instanceof Iterator<?>) {
-					type = TYPE_ITERATOR;
-				} else if (o instanceof Enumeration) {
-					type = TYPE_ENUMERATION;
-				} else if (o instanceof Enum<?>) {
-					type = TYPE_ENUM;
-				} else if (o instanceof Locale) {
-					type = TYPE_LOCALE;
-				} else if (o instanceof Class<?>) {
-					type = TYPE_CLASS;
-				} else if (o instanceof Type || o instanceof Character || o instanceof Member
-					 || o instanceof URL || o instanceof URI || o instanceof File || o instanceof UUID) {
-					type = TYPE_STRING;
-				} else if (o instanceof Pattern) {
-					type = TYPE_PATTERN;
-				} else if (o instanceof TimeZone) {
-					type = TYPE_TIME_ZONE;
-				} else if (o instanceof Charset) {
-					type = TYPE_CHARSET;
-				} else if (o instanceof Struct) {
-					type = TYPE_OBJECT_ARRAY;
-				} else if (o instanceof Node) {
-					if (o instanceof CharacterData && !(o instanceof Comment)) {
-						type = TYPE_DOM_CHARCTER_DATA;
-					} else if (o instanceof Element || o instanceof Document) {
-						type = TYPE_DOM_ELEMENT;
-					}
-				} else if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
-					type = TYPE_SERIALIZE;
-				} else if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
-					type = TYPE_INET_ADDRESS;
-				} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
-					type = TYPE_DYNA_BEAN;
-				} else {
-					type = TYPE_OBJECT;
-				}
-				
-				if (type == null) type = TYPE_UNKNOWN;
-				typeMap.put(o.getClass(), type);
-			}
-			return type;
 		}
 		
 		Map<String, AnnotatedElement> getGetProperties(Class<?> c) {
