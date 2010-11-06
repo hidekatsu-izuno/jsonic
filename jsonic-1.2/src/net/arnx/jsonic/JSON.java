@@ -30,6 +30,7 @@ import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.Writer;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -591,7 +592,7 @@ public class JSON {
 	 * @return a reference to 'out' object in parameters
 	 */
 	public OutputStream format(Object source, OutputStream out) throws IOException {
-		format(source, new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
+		format(source, new OutputStreamWriter(out, "UTF-8"));
 		return out;
 	}
 	
@@ -603,6 +604,10 @@ public class JSON {
 	 * @return a json string
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
+		if (ap instanceof Writer && !(ap instanceof BufferedWriter)) {
+			ap = new BufferedWriter((Writer)ap);
+		}
+		
 		Context context = new Context();
 		
 		context.enter('$');
