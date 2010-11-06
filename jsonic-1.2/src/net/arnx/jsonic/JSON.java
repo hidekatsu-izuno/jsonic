@@ -202,26 +202,28 @@ public class JSON {
 	private static final int TYPE_STRING = 3;
 	private static final int TYPE_DATE = 4;
 	private static final int TYPE_NUMBER = 5;
-	private static final int TYPE_CHAR_ARRAY = 6;
-	private static final int TYPE_BOOLEAN_ARRAY = 7;
-	private static final int TYPE_BYTE_ARRAY = 8;
-	private static final int TYPE_SHORT_ARRAY = 9;
-	private static final int TYPE_INT_ARRAY = 10;
-	private static final int TYPE_LONG_ARRAY = 11;
-	private static final int TYPE_FLOAT_ARRAY = 12;
-	private static final int TYPE_DOUBLE_ARRAY = 13;
-	private static final int TYPE_OBJECT_ARRAY = 14;
-	private static final int TYPE_LIST = 15;
-	private static final int TYPE_ITERABLE = 16;
-	private static final int TYPE_ITERATOR = 17;
-	private static final int TYPE_ENUMERATION = 18;
-	private static final int TYPE_DOM_ELEMENT = 19;
-	private static final int TYPE_DYNA_BEAN = 20;
-	private static final int TYPE_MAP = 21;
-	private static final int TYPE_CHAR_SEQUENCE = 22;
-	private static final int TYPE_SERIALIZE = 23;
-	private static final int TYPE_CLASS = 24;
-	private static final int TYPE_LOCALE = 25;
+	private static final int TYPE_FLOAT = 6;
+	private static final int TYPE_BYTE = 7;
+	private static final int TYPE_CHAR_ARRAY = 8;
+	private static final int TYPE_BOOLEAN_ARRAY = 9;
+	private static final int TYPE_BYTE_ARRAY = 10;
+	private static final int TYPE_SHORT_ARRAY = 11;
+	private static final int TYPE_INT_ARRAY = 12;
+	private static final int TYPE_LONG_ARRAY = 13;
+	private static final int TYPE_FLOAT_ARRAY = 14;
+	private static final int TYPE_DOUBLE_ARRAY = 15;
+	private static final int TYPE_OBJECT_ARRAY = 16;
+	private static final int TYPE_LIST = 17;
+	private static final int TYPE_ITERABLE = 18;
+	private static final int TYPE_ITERATOR = 19;
+	private static final int TYPE_ENUMERATION = 20;
+	private static final int TYPE_DOM_ELEMENT = 21;
+	private static final int TYPE_DYNA_BEAN = 22;
+	private static final int TYPE_MAP = 23;
+	private static final int TYPE_CHAR_SEQUENCE = 24;
+	private static final int TYPE_SERIALIZE = 25;
+	private static final int TYPE_CLASS = 26;
+	private static final int TYPE_LOCALE = 27;
 	
 	static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>();
 	static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(45);
@@ -237,12 +239,12 @@ public class JSON {
 		PRIMITIVE_MAP.put(char.class, '\0');
 		
 		FORMAT_MAP.put(boolean.class, TYPE_PLAIN);
-		FORMAT_MAP.put(byte.class, TYPE_NUMBER);
+		FORMAT_MAP.put(byte.class, TYPE_BYTE);
 		FORMAT_MAP.put(short.class, TYPE_NUMBER);
 		FORMAT_MAP.put(int.class, TYPE_NUMBER);
 		FORMAT_MAP.put(long.class, TYPE_NUMBER);
-		FORMAT_MAP.put(float.class, TYPE_NUMBER);
-		FORMAT_MAP.put(double.class, TYPE_NUMBER);
+		FORMAT_MAP.put(float.class, TYPE_FLOAT);
+		FORMAT_MAP.put(double.class, TYPE_FLOAT);
 		FORMAT_MAP.put(char.class, TYPE_STRING);
 		
 		FORMAT_MAP.put(boolean[].class, TYPE_BOOLEAN_ARRAY);
@@ -256,12 +258,12 @@ public class JSON {
 		FORMAT_MAP.put(Object[].class, TYPE_OBJECT_ARRAY);
 		
 		FORMAT_MAP.put(Boolean.class, TYPE_PLAIN);
-		FORMAT_MAP.put(Byte.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Byte.class, TYPE_BYTE);
 		FORMAT_MAP.put(Short.class, TYPE_NUMBER);
 		FORMAT_MAP.put(Integer.class, TYPE_NUMBER);
 		FORMAT_MAP.put(Long.class, TYPE_NUMBER);
-		FORMAT_MAP.put(Float.class, TYPE_NUMBER);
-		FORMAT_MAP.put(Double.class, TYPE_NUMBER);
+		FORMAT_MAP.put(Float.class, TYPE_FLOAT);
+		FORMAT_MAP.put(Double.class, TYPE_FLOAT);
 		FORMAT_MAP.put(Character.class, TYPE_STRING);
 		
 		FORMAT_MAP.put(BigInteger.class, TYPE_NUMBER);
@@ -713,7 +715,6 @@ public class JSON {
 		return value;
 	}
 	
-	
 	Appendable format(final Context context, final Object src, final Appendable ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
@@ -743,7 +744,7 @@ public class JSON {
 			}
 		}
 		
-		if (type == TYPE_UNKNOWN) {				
+		if (type == TYPE_UNKNOWN) {
 			Integer result = FORMAT_MAP.get(o.getClass());
 			if (result != null) type = result;
 		}
@@ -919,12 +920,17 @@ public class JSON {
 			ap.append(']');
 			break;
 		}
-		case TYPE_NUMBER: {
+		case TYPE_BYTE: {
+			checkRoot(context);
+			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
+			break;
+		}
+		case TYPE_FLOAT: {
 			checkRoot(context);
 			NumberFormat f = context.format(NumberFormat.class);
 			if (f != null) {
 				formatString(f.format(o), ap);
-			} else if (o instanceof Double || o instanceof Float) {
+			} else {
 				double d = ((Number)o).doubleValue();
 				if (Double.isNaN(d) || Double.isInfinite(d)) {
 					if (mode != Mode.SCRIPT) {
@@ -937,8 +943,14 @@ public class JSON {
 				} else {
 					ap.append(o.toString());
 				}
-			} else if (o instanceof Byte) {
-				ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
+			}
+			break;
+		}
+		case TYPE_NUMBER: {
+			checkRoot(context);
+			NumberFormat f = context.format(NumberFormat.class);
+			if (f != null) {
+				formatString(f.format(o), ap);
 			} else {
 				ap.append(o.toString());
 			}
@@ -1326,26 +1338,26 @@ public class JSON {
 		if (mode == Mode.SCRIPT) {
 			for (int i = 0; i < s.length(); i++) {
 				char c = s.charAt(i);
-				switch (c) {
-				case '"':
-					ap.append("\\\"");
-					break;
-				case '\\': 
-					ap.append("\\\\");
-					break;
-				case '\u007F': 
-					ap.append("\\u007F");
-					break;
-				case '<':
-					ap.append("\\u003C");
-					break;
-				case '>':
-					ap.append("\\u003E");
-					break;
-				default:
-					if (c < CONTRON_CHARS.length) {
-						ap.append(CONTRON_CHARS[c]);
-					} else {
+				if (c < CONTRON_CHARS.length) {
+					ap.append(CONTRON_CHARS[c]);
+				} else {
+					switch (c) {
+					case '"':
+						ap.append("\\\"");
+						break;
+					case '\\': 
+						ap.append("\\\\");
+						break;
+					case '\u007F': 
+						ap.append("\\u007F");
+						break;
+					case '<':
+						ap.append("\\u003C");
+						break;
+					case '>':
+						ap.append("\\u003E");
+						break;
+					default:
 						ap.append(c);
 					}
 				}
@@ -1353,20 +1365,20 @@ public class JSON {
 		} else {
 			for (int i = 0; i < s.length(); i++) {
 				char c = s.charAt(i);
-				switch (c) {
-				case '"':
-					ap.append("\\\"");
-					break;
-				case '\\': 
-					ap.append("\\\\");
-					break;
-				case '\u007F': 
-					ap.append("\\u007F");
-					break;
-				default:
-					if (c < CONTRON_CHARS.length) {
-						ap.append(CONTRON_CHARS[c]);
-					} else {
+				if (c < CONTRON_CHARS.length) {
+					ap.append(CONTRON_CHARS[c]);
+				} else {
+					switch (c) {
+					case '"':
+						ap.append("\\\"");
+						break;
+					case '\\': 
+						ap.append("\\\\");
+						break;
+					case '\u007F': 
+						ap.append("\\u007F");
+						break;
+					default:
 						ap.append(c);
 					}
 				}

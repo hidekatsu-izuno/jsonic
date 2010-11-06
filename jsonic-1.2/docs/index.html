@@ -166,7 +166,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>java.sql.Array, java.sql.Struct</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
-<tr><td>TimeZone, Pattern, File, URL, URI, Type, Member, Charset</td></tr>
+<tr><td>TimeZone, Pattern, File, URL, URI, Type, Member, Charset, UUID</td></tr>
 <tr><td>byte[]</td><td>string (BASE64エンコード)</td></tr>
 <tr><td>java.sql.RowId</td><td>string (シリアル化後、BASE64エンコード)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
@@ -222,7 +222,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<
 <tr><td>Map</td><td>インデックスの値をキーとするLinkedHashMap</td></tr>
 <tr><td>SortedMap</td><td>インデックスの値をキーとするTreeMap</td></tr>
 <tr><td>その他のMap派生型</td><td>インデックスの値をキーとする指定された型のMap</td></tr>
-<tr><td rowspan="16">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td rowspan="17">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
 <tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
 <tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
@@ -235,6 +235,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<
 <tr><td>Pattern</td><td>Pattern（文字列をcompileにより変換）</td></tr>
 <tr><td>Class, Charset</td><td>指定された型（文字列をforNameにより変換）</td></tr>
 <tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
+<tr><td>UUID</td><td>UUID（文字列をUUID.fromStringで変換）</td></tr>
 <tr><td>File, URI, URL</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
 <tr><td>InetAddress</td><td>InetAddress（文字列をInetAddress.getByNameで変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
@@ -696,6 +697,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2010/11/7 version 1.2.5 ベータ1</h3>
+
+<ul>
+<li>java.util.UUIDの双方向変換に対応しました。</li>
+<li>encode/formatの速度が30%ほど改善しました。</li>
+</ul>
 
 <h3>2010/10/19 version 1.2.4</h3>
 
