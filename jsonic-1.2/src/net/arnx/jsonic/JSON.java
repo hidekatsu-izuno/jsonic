@@ -670,103 +670,9 @@ public class JSON {
 			}
 		}
 		
-		int type = TYPE_UNKNOWN;
-		
 		JSONHint hint = context.getHint();
 		
-		if (o == null) {
-			type = TYPE_NULL;
-		} else if (hint != null) {
-			if (hint.serialized()) {
-				type = TYPE_PLAIN;
-			} else if (String.class.equals(hint.type())) {
-				type = TYPE_STRING;
-			} else if (Serializable.class.equals(hint.type())) {
-				type = TYPE_SERIALIZE;
-			}
-		} else if (o instanceof java.sql.Array) {
-			try {
-				o = (Object[])((java.sql.Array)o).getArray();
-			} catch (SQLException e) {
-				o = new Object[0];
-			}
-		}
-		
-		if (type == TYPE_UNKNOWN) {
-			if (o instanceof CharSequence) {
-				type = TYPE_CHAR_SEQUENCE;
-			} else if (o instanceof Boolean) {
-				type = TYPE_PLAIN;
-			} else if (o instanceof Date || o instanceof Calendar) {
-				type = TYPE_DATE;
-			} else if (o instanceof Number) {
-				type = TYPE_NUMBER;
-			} else if (o.getClass().isArray()) {
-				Class<?> ctype = o.getClass().getComponentType();
-				if (ctype.isPrimitive()) {
-					if (char.class.equals(ctype)) {
-						type = TYPE_CHAR_ARRAY;
-					} else if (boolean.class.equals(ctype)) {
-						type = TYPE_BOOLEAN_ARRAY;
-					} else if (byte.class.equals(ctype)) {
-						type = TYPE_BYTE_ARRAY;
-					} else if (short.class.equals(ctype)) {
-						type = TYPE_SHORT_ARRAY;
-					} else if (int.class.equals(ctype)) {
-						type = TYPE_INT_ARRAY;
-					} else if (long.class.equals(ctype)) {
-						type = TYPE_LONG_ARRAY;
-					} else if (float.class.equals(ctype)) {
-						type = TYPE_FLOAT_ARRAY;
-					} else if (double.class.equals(ctype)) {
-						type = TYPE_DOUBLE_ARRAY;
-					}
-				} else {
-					type = TYPE_OBJECT_ARRAY;
-				}
-			} else if (o instanceof Map<?, ?>) {
-				type = TYPE_MAP;
-			} else if (o instanceof RandomAccess && o instanceof List<?>) {
-				type = TYPE_LIST;
-			} else if (o instanceof Iterable<?> || o instanceof Iterator<?>) {
-				type = TYPE_ITERATOR;
-			} else if (o instanceof Enumeration) {
-				type = TYPE_ENUMERATION;
-			} else if (o instanceof Enum<?>) {
-				type = TYPE_ENUM;
-			} else if (o instanceof Locale) {
-				type = TYPE_LOCALE;
-			} else if (o instanceof Class<?>) {
-				type = TYPE_CLASS;
-			} else if (o instanceof Type || o instanceof Character || o instanceof Member
-				 || o instanceof URL || o instanceof URI || o instanceof File || o instanceof UUID) {
-				type = TYPE_STRING;
-			} else if (o instanceof Pattern) {
-				type = TYPE_PATTERN;
-			} else if (o instanceof TimeZone) {
-				type = TYPE_TIME_ZONE;
-			} else if (o instanceof Charset) {
-				type = TYPE_CHARSET;
-			} else if (o instanceof Struct) {
-				type = TYPE_OBJECT_ARRAY;
-			} else if (o instanceof Node) {
-				if (o instanceof CharacterData && !(o instanceof Comment)) {
-					type = TYPE_DOM_CHARCTER_DATA;
-				} else if (o instanceof Element || o instanceof Document) {
-					type = TYPE_DOM_ELEMENT;
-				}
-			} else if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
-				type = TYPE_SERIALIZE;
-			} else if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
-				type = TYPE_INET_ADDRESS;
-			} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
-				type = TYPE_DYNA_BEAN;
-			} else {
-				type = TYPE_OBJECT;
-			}
-		}
-		
-		switch (type) {
+		switch (context.getFormatType(o, hint)) {
 		case TYPE_PLAIN: {
 			checkRoot(context);
 			ap.append(o.toString());
@@ -2909,7 +2815,8 @@ public class JSON {
 		
 		List<Object[]> path;
 		int level = -1;
-		Map<Class<?>, Map<String, AnnotatedElement>> cache;
+		Map<Class<?>, Map<String, AnnotatedElement>> memberCache;
+		Map<Class<?>, Integer> typeMap;
 		
 		public Context() {
 			prettyPrint = JSON.this.prettyPrint;
@@ -3001,10 +2908,116 @@ public class JSON {
 			level--;
 		}
 		
-		Map<String, AnnotatedElement> getGetProperties(Class<?> c) {
-			if (cache == null) cache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
+		int getFormatType(Object o, JSONHint hint) {
+			if (typeMap == null) typeMap = new HashMap<Class<?>, Integer>();
 			
-			Map<String, AnnotatedElement> props = cache.get(c);
+			Integer type = null;
+			
+			if (o == null) {
+				type = TYPE_NULL;
+			} else if (hint != null) {
+				if (hint.serialized()) {
+					type = TYPE_PLAIN;
+				} else if (String.class.equals(hint.type())) {
+					type = TYPE_STRING;
+				} else if (Serializable.class.equals(hint.type())) {
+					type = TYPE_SERIALIZE;
+				}
+			}
+			if (type == null) {				
+				if (o instanceof java.sql.Array) {
+					try {
+						o = (Object[])((java.sql.Array)o).getArray();
+					} catch (SQLException e) {
+						o = new Object[0];
+					}
+				}
+				type = typeMap.get(o.getClass());
+			}
+			
+			if (type == null) {
+				if (o instanceof CharSequence) {
+					type = TYPE_CHAR_SEQUENCE;
+				} else if (o instanceof Boolean) {
+					type = TYPE_PLAIN;
+				} else if (o instanceof Date || o instanceof Calendar) {
+					type = TYPE_DATE;
+				} else if (o instanceof Number) {
+					type = TYPE_NUMBER;
+				} else if (o.getClass().isArray()) {
+					Class<?> ctype = o.getClass().getComponentType();
+					if (ctype.isPrimitive()) {
+						if (char.class.equals(ctype)) {
+							type = TYPE_CHAR_ARRAY;
+						} else if (boolean.class.equals(ctype)) {
+							type = TYPE_BOOLEAN_ARRAY;
+						} else if (byte.class.equals(ctype)) {
+							type = TYPE_BYTE_ARRAY;
+						} else if (short.class.equals(ctype)) {
+							type = TYPE_SHORT_ARRAY;
+						} else if (int.class.equals(ctype)) {
+							type = TYPE_INT_ARRAY;
+						} else if (long.class.equals(ctype)) {
+							type = TYPE_LONG_ARRAY;
+						} else if (float.class.equals(ctype)) {
+							type = TYPE_FLOAT_ARRAY;
+						} else if (double.class.equals(ctype)) {
+							type = TYPE_DOUBLE_ARRAY;
+						}
+					} else {
+						type = TYPE_OBJECT_ARRAY;
+					}
+				} else if (o instanceof Map<?, ?>) {
+					type = TYPE_MAP;
+				} else if (o instanceof RandomAccess && o instanceof List<?>) {
+					type = TYPE_LIST;
+				} else if (o instanceof Iterable<?> || o instanceof Iterator<?>) {
+					type = TYPE_ITERATOR;
+				} else if (o instanceof Enumeration) {
+					type = TYPE_ENUMERATION;
+				} else if (o instanceof Enum<?>) {
+					type = TYPE_ENUM;
+				} else if (o instanceof Locale) {
+					type = TYPE_LOCALE;
+				} else if (o instanceof Class<?>) {
+					type = TYPE_CLASS;
+				} else if (o instanceof Type || o instanceof Character || o instanceof Member
+					 || o instanceof URL || o instanceof URI || o instanceof File || o instanceof UUID) {
+					type = TYPE_STRING;
+				} else if (o instanceof Pattern) {
+					type = TYPE_PATTERN;
+				} else if (o instanceof TimeZone) {
+					type = TYPE_TIME_ZONE;
+				} else if (o instanceof Charset) {
+					type = TYPE_CHARSET;
+				} else if (o instanceof Struct) {
+					type = TYPE_OBJECT_ARRAY;
+				} else if (o instanceof Node) {
+					if (o instanceof CharacterData && !(o instanceof Comment)) {
+						type = TYPE_DOM_CHARCTER_DATA;
+					} else if (o instanceof Element || o instanceof Document) {
+						type = TYPE_DOM_ELEMENT;
+					}
+				} else if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
+					type = TYPE_SERIALIZE;
+				} else if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
+					type = TYPE_INET_ADDRESS;
+				} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
+					type = TYPE_DYNA_BEAN;
+				} else {
+					type = TYPE_OBJECT;
+				}
+				
+				if (type == null) type = TYPE_UNKNOWN;
+				typeMap.put(o.getClass(), type);
+			}
+			return type;
+		}
+		
+		Map<String, AnnotatedElement> getGetProperties(Class<?> c) {
+			if (memberCache == null) memberCache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
+			
+			Map<String, AnnotatedElement> props = memberCache.get(c);
 			if (props != null) {
 				return props;
 			} else {
@@ -3071,14 +3084,14 @@ public class JSON {
 				props.put(name, m);
 			}
 			
-			cache.put(c, props);
+			memberCache.put(c, props);
 			return props;
 		}
 		
 		Map<String, AnnotatedElement> getSetProperties(Class<?> c) {
-			if (cache == null) cache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
+			if (memberCache == null) memberCache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
 			
-			Map<String, AnnotatedElement> props = cache.get(c);
+			Map<String, AnnotatedElement> props = memberCache.get(c);
 			if (props != null) {
 				return props;
 			} else {
@@ -3139,7 +3152,7 @@ public class JSON {
 				props.put(name, m);
 			}
 			
-			cache.put(c, props);
+			memberCache.put(c, props);
 			return props;
 		}
 		
