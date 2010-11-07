@@ -833,38 +833,38 @@ public class JSON {
 		}
 		case TYPE_STRING: {
 			checkRoot(context);
-			formatString(o.toString(), ap);
+			formatString(context, o.toString(), ap);
 			break;
 		}
 		case TYPE_CHAR_SEQUENCE: {
 			checkRoot(context);
-			formatString((CharSequence)o, ap);
+			formatString(context, (CharSequence)o, ap);
 			break;
 		}
 		case TYPE_CLASS: {
 			checkRoot(context);
-			formatString(((Class<?>)o).getName(), ap);
+			formatString(context, ((Class<?>)o).getName(), ap);
 			break;
 		}
 		case TYPE_LOCALE: {
 			checkRoot(context);
-			formatString(((Locale)o).toString().replace('_', '-'), ap);
+			formatString(context, ((Locale)o).toString().replace('_', '-'), ap);
 			break;
 		}
 		case TYPE_CHAR_ARRAY: {
 			checkRoot(context);
-			formatString(new String((char[])o), ap);
+			formatString(context, new String((char[])o), ap);
 			break;
 		}
 		case TYPE_SERIALIZE: {
 			checkRoot(context);
-			formatString(Base64.encode(serialize(o)), ap);
+			formatString(context, Base64.encode(serialize(o)), ap);
 			break;
 		}
 		case TYPE_DOM_ELEMENT: {
 			Element elem = (Element)o;
 			ap.append('[');
-			formatString(elem.getTagName(), ap);
+			formatString(context, elem.getTagName(), ap);
 			
 			ap.append(',');
 			if (context.isPrettyPrint()) {
@@ -884,10 +884,10 @@ public class JSON {
 					}
 					Node node = names.item(i);
 					if (node instanceof Attr) {
-						formatString(node.getNodeName(), ap);
+						formatString(context, node.getNodeName(), ap);
 						ap.append(':');
 						if (context.isPrettyPrint()) ap.append(' ');
-						formatString(node.getNodeValue(), ap);
+						formatString(context, node.getNodeValue(), ap);
 					}
 				}
 				if (context.isPrettyPrint() && names.getLength() > 1) {
@@ -929,7 +929,7 @@ public class JSON {
 			checkRoot(context);
 			NumberFormat f = context.format(NumberFormat.class);
 			if (f != null) {
-				formatString(f.format(o), ap);
+				formatString(context, f.format(o), ap);
 			} else {
 				double d = ((Number)o).doubleValue();
 				if (Double.isNaN(d) || Double.isInfinite(d)) {
@@ -950,7 +950,7 @@ public class JSON {
 			checkRoot(context);
 			NumberFormat f = context.format(NumberFormat.class);
 			if (f != null) {
-				formatString(f.format(o), ap);
+				formatString(context, f.format(o), ap);
 			} else {
 				ap.append(o.toString());
 			}
@@ -961,7 +961,7 @@ public class JSON {
 			Date date = (Date)o;
 			DateFormat f = context.format(DateFormat.class);
 			if (f != null) {
-				formatString(f.format(date), ap);
+				formatString(context, f.format(date), ap);
 			} else if (mode == Mode.SCRIPT) {
 				ap.append("new Date(").append(Long.toString(date.getTime())).append(")");
 			} else {
@@ -984,7 +984,7 @@ public class JSON {
 		}
 		case TYPE_BYTE_ARRAY: {
 			checkRoot(context);
-			formatString(Base64.encode((byte[])o), ap);
+			formatString(context, Base64.encode((byte[])o), ap);
 			break;
 		}
 		case TYPE_SHORT_ARRAY: {
@@ -993,7 +993,7 @@ public class JSON {
 			ap.append('[');
 			for (int i = 0; i < array.length; i++) {
 				if (f != null) {
-					formatString(f.format(array[i]), ap);
+					formatString(context, f.format(array[i]), ap);
 				} else {
 					ap.append(String.valueOf(array[i]));
 				}
@@ -1011,7 +1011,7 @@ public class JSON {
 			ap.append('[');
 			for (int i = 0; i < array.length; i++) {
 				if (f != null) {
-					formatString(f.format(array[i]), ap);
+					formatString(context, f.format(array[i]), ap);
 				} else {
 					ap.append(String.valueOf(array[i]));
 				}
@@ -1029,7 +1029,7 @@ public class JSON {
 			ap.append('[');
 			for (int i = 0; i < array.length; i++) {
 				if (f != null) {
-					formatString(f.format(array[i]), ap);
+					formatString(context, f.format(array[i]), ap);
 				} else {
 					ap.append(String.valueOf(array[i]));
 				}
@@ -1055,7 +1055,7 @@ public class JSON {
 						ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
 					}
 				} else if (f != null) {
-					formatString(f.format(array[i]), ap);
+					formatString(context, f.format(array[i]), ap);
 				} else {
 					ap.append(String.valueOf(array[i]));
 				}
@@ -1081,7 +1081,7 @@ public class JSON {
 						ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
 					}
 				} else if (f != null) {
-					formatString(f.format(array[i]), ap);
+					formatString(context, f.format(array[i]), ap);
 				} else {
 					ap.append(String.valueOf(array[i]));
 				}
@@ -1228,7 +1228,7 @@ public class JSON {
 							ap.append('\n');
 							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 						}
-						formatString(name.toString(), ap).append(':');
+						formatString(context, name.toString(), ap).append(':');
 						if (context.isPrettyPrint()) ap.append(' ');
 						context.enter(name);
 						if (cause != null) {
@@ -1267,7 +1267,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				formatString(entry.getKey().toString(), ap).append(':');
+				formatString(context, entry.getKey().toString(), ap).append(':');
 				if (context.isPrettyPrint()) ap.append(' ');
 				context.enter(entry.getKey());
 				format(context, value, ap);
@@ -1305,7 +1305,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				formatString(entry.getKey().toString(), ap).append(':');
+				formatString(context, entry.getKey().toString(), ap).append(':');
 				if (context.isPrettyPrint()) ap.append(' ');
 				context.enter(entry.getKey(), hint);
 				if (cause != null) {
@@ -1339,7 +1339,12 @@ public class JSON {
 		}		
 	}
 	
-	Appendable formatString(CharSequence s, Appendable ap) throws IOException {		
+	Appendable formatString(Context context, CharSequence s, Appendable ap) throws IOException {
+		Writer writer = null;
+		if (ap instanceof Writer) {
+			writer = (Writer)ap;
+			ap = context.getCachedBuffer();
+		}
 		ap.append('"');
 		for (int i = 0; i < s.length(); i++) {
 			char c = s.charAt(i);
@@ -1372,6 +1377,10 @@ public class JSON {
 			}
 		}
 		ap.append('"');
+		if (writer != null) {
+			((CacheBuffer)ap).write(writer);
+			ap = writer;
+		}
 		
 		return ap;
 	}
@@ -1757,7 +1766,7 @@ public class JSON {
 	
 	String parseString(Context context, ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		StringBuilder sb = (level <= this.maxDepth) ? context.getCachedBuilder() : null;
+		Appendable sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
 		char start = '\0';
 		
 		int n = -1;
@@ -1814,7 +1823,7 @@ public class JSON {
 	
 	Object parseLiteral(Context context, ParserSource s, int level, boolean any) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilder sb = context.getCachedBuilder();
+		Appendable sb = context.getCachedBuffer();
 
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1852,7 +1861,7 @@ public class JSON {
 	
 	Number parseNumber(Context context, ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilder sb = (level <= this.maxDepth) ? context.getCachedBuilder() : null;
+		Appendable sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -2917,17 +2926,17 @@ public class JSON {
 		List<Object[]> path;
 		int level = -1;
 		Map<Class<?>, Map<String, AnnotatedElement>> memberCache;
-		StringBuilder builderCache;
+		CacheBuffer builderCache;
 		
 		public Context() {
 			prettyPrint = JSON.this.prettyPrint;
 		}
 		
-		public StringBuilder getCachedBuilder() {
+		public CacheBuffer getCachedBuffer() {
 			if (builderCache == null) {
-				builderCache = new StringBuilder(1000);
+				builderCache = new CacheBuffer();
 			} else {
-				builderCache.setLength(0);
+				builderCache.clear();
 			}
 			return builderCache;
 		}
@@ -3206,7 +3215,7 @@ public class JSON {
 					if (escape) {
 						sb.append('[');
 						try {
-							formatString(str, sb);
+							formatString(this, str, sb);
 						} catch (IOException e) {
 							// no handle
 						}
@@ -3217,6 +3226,65 @@ public class JSON {
 				}
 			}
 			return sb.toString();
+		}
+	}
+	
+	static class CacheBuffer implements Appendable {
+		char[] buf = new char[1000];
+		int pos = 0;
+
+		@Override
+		public Appendable append(CharSequence csq) throws IOException {
+			if (csq == null) csq = "null";
+			if (csq.length() == 0) return this;
+			
+			if (buf.length < pos + csq.length()) {
+				char[] newBuf = new char[Math.max(buf.length * 2, pos + csq.length())];
+				System.arraycopy(buf, 0, newBuf, 0, buf.length);
+				buf = newBuf;
+			}
+			if (csq instanceof String) {
+				((String)csq).getChars(0, csq.length(), buf, pos);
+			} else if (csq instanceof StringBuilder) {
+				((StringBuilder)csq).getChars(0, csq.length(), buf, pos);
+			} else if (csq instanceof StringBuffer) {
+				((StringBuilder)csq).getChars(0, csq.length(), buf, pos);
+			} else {
+				for (int i = 0; i < csq.length(); i++) {
+					buf[pos + i] = csq.charAt(i);
+				}
+			}
+			pos += csq.length();
+			return this;
+		}
+
+		@Override
+		public Appendable append(char c) throws IOException {
+			if (buf.length < pos + 1) {
+				char[] newBuf = new char[buf.length * 2];
+				System.arraycopy(buf, 0, newBuf, 0, buf.length);
+				buf = newBuf;
+			}
+			buf[pos++] = c;
+			return this;
+		}
+
+		@Override
+		public Appendable append(CharSequence csq, int start, int end) throws IOException {
+			throw new UnsupportedOperationException();
+		}
+		
+		public void write(Writer writer) throws IOException {
+			writer.write(buf, 0, pos);
+		}
+		
+		@Override
+		public String toString() {
+			return new String(buf, 0, pos);
+		}
+		
+		public void clear() {
+			pos = 0;
 		}
 	}
 }
