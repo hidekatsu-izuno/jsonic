@@ -20,6 +20,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -3233,6 +3234,11 @@ class WriterFormatSource implements FormatSource {
 	private Writer writer;
 	
 	public WriterFormatSource(Writer writer) {
+		if (writer instanceof OutputStreamWriter) {
+			this.writer = new BufferedWriter(writer);
+		} else if (writer instanceof FileWriter) {
+			this.writer = new BufferedWriter(writer);
+		}
 		this.writer = writer;
 	}
 	
