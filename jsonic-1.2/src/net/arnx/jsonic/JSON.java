@@ -1341,52 +1341,33 @@ public class JSON {
 	
 	Appendable formatString(CharSequence s, Appendable ap) throws IOException {		
 		ap.append('"');
-		if (mode == Mode.SCRIPT) {
-			for (int i = 0; i < s.length(); i++) {
-				char c = s.charAt(i);
-				if (c < CONTRON_CHARS.length) {
-					ap.append(CONTRON_CHARS[c]);
-				} else {
-					switch (c) {
-					case '"':
-						ap.append("\\\"");
-						break;
-					case '\\': 
-						ap.append("\\\\");
-						break;
-					case '\u007F': 
-						ap.append("\\u007F");
-						break;
-					case '<':
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			if (c < CONTRON_CHARS.length) {
+				ap.append(CONTRON_CHARS[c]);
+			} else {
+				switch (c) {
+				case '"':
+					ap.append("\\\"");
+					break;
+				case '\\': 
+					ap.append("\\\\");
+					break;
+				case '\u007F': 
+					ap.append("\\u007F");
+					break;
+				case '<':
+					if (mode == Mode.SCRIPT) {
 						ap.append("\\u003C");
 						break;
-					case '>':
+					}
+				case '>':
+					if (mode == Mode.SCRIPT) {
 						ap.append("\\u003E");
 						break;
-					default:
-						ap.append(c);
 					}
-				}
-			}
-		} else {
-			for (int i = 0; i < s.length(); i++) {
-				char c = s.charAt(i);
-				if (c < CONTRON_CHARS.length) {
-					ap.append(CONTRON_CHARS[c]);
-				} else {
-					switch (c) {
-					case '"':
-						ap.append("\\\"");
-						break;
-					case '\\': 
-						ap.append("\\\\");
-						break;
-					case '\u007F': 
-						ap.append("\\u007F");
-						break;
-					default:
-						ap.append(c);
-					}
+				default:
+					ap.append(c);
 				}
 			}
 		}
