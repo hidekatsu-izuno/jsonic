@@ -1096,19 +1096,21 @@ public class JSON {
 		case TYPE_OBJECT_ARRAY: {
 			Object[] array = (Object[])o;
 			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
+			int i = 0;
+			for (; i < array.length; i++) {
 				Object item = array[i];
+				if (item == src) item = null;
+				
+				if (i != 0) ap.append(',');
 				if (context.isPrettyPrint()) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				if (item == src) item = null;
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
-				if (i != array.length-1) ap.append(',');
 			}
-			if (context.isPrettyPrint() && array.length > 0) {
+			if (context.isPrettyPrint() && i > 0) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
@@ -1118,19 +1120,21 @@ public class JSON {
 		case TYPE_LIST: {
 			List<?> list = (List<?>)o;
 			ap.append('[');
-			for (int i = 0; i < list.size(); i++) {
+			int i = 0;
+			for (; i < list.size(); i++) {
 				Object item = list.get(i);
+				if (item == src) item = null;
+				
+				if (i != 0) ap.append(',');
 				if (context.isPrettyPrint()) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				if (item == src) item = null;
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
-				if (i != list.size()-1) ap.append(',');
 			}
-			if (context.isPrettyPrint() && !list.isEmpty()) {
+			if (context.isPrettyPrint() && i > 0) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
@@ -1142,20 +1146,21 @@ public class JSON {
 		case TYPE_ITERATOR: {
 			Iterator<?> t = (Iterator<?>)o;
 			ap.append('[');
-			boolean isEmpty = !t.hasNext();
-			for (int i = 0; t.hasNext(); i++) {
+			int i = 0;
+			for (; t.hasNext(); i++) {
 				Object item = t.next();
+				if (item == src) item = null;
+
+				if (i != 0) ap.append(',');
 				if (context.isPrettyPrint()) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				if (item == src) item = null;
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
-				if (t.hasNext()) ap.append(',');
 			}
-			if (context.isPrettyPrint() && !isEmpty) {
+			if (context.isPrettyPrint() && i > 0) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
@@ -1165,20 +1170,21 @@ public class JSON {
 		case TYPE_ENUMERATION: {
 			Enumeration<?> e = (Enumeration<?>)o;
 			ap.append('[');
-			boolean isEmpty = !e.hasMoreElements();
-			for (int i = 0; e.hasMoreElements(); i++) {
+			int i = 0;
+			for (; e.hasMoreElements(); i++) {
 				Object item = e.nextElement();
+				if (item == src) item = null;
+
+				if (i != 0) ap.append(',');
 				if (context.isPrettyPrint()) {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				if (item == src) item = null;
 				context.enter(i);
 				format(context, item, ap);
 				context.exit();
-				if (e.hasMoreElements()) ap.append(',');
 			}
-			if (context.isPrettyPrint() && !isEmpty) {
+			if (context.isPrettyPrint() && i > 0) {
 				ap.append('\n');
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
