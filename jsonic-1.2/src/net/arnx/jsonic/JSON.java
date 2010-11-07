@@ -20,6 +20,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -30,6 +31,7 @@ import java.io.Reader;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
@@ -678,7 +680,7 @@ public class JSON {
 	 * @return a reference to 'out' object in parameters
 	 */
 	public OutputStream format(Object source, OutputStream out) throws IOException {
-		format(source, new OutputStreamWriter(out, "UTF-8"));
+		format(source, new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
 		return out;
 	}
 	
@@ -690,10 +692,6 @@ public class JSON {
 	 * @return a json string
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
-		if (ap instanceof Writer && !(ap instanceof BufferedWriter)) {
-			ap = new BufferedWriter((Writer)ap);
-		}
-		
 		Context context = new Context();
 		
 		context.enter('$');
@@ -3243,12 +3241,8 @@ public class JSON {
 				System.arraycopy(buf, 0, newBuf, 0, buf.length);
 				buf = newBuf;
 			}
-			if (csq instanceof String) {
+			if (csq.getClass().equals(String.class)) {
 				((String)csq).getChars(0, csq.length(), buf, pos);
-			} else if (csq instanceof StringBuilder) {
-				((StringBuilder)csq).getChars(0, csq.length(), buf, pos);
-			} else if (csq instanceof StringBuffer) {
-				((StringBuilder)csq).getChars(0, csq.length(), buf, pos);
 			} else {
 				for (int i = 0; i < csq.length(); i++) {
 					buf[pos + i] = csq.charAt(i);
