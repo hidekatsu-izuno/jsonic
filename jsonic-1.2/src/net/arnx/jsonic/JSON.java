@@ -188,13 +188,6 @@ public class JSON {
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
 	
-	private static final String[] CONTRON_CHARS = {
-		"\\u0000", "\\u0001", "\\u0002", "\\u0003", "\\u0004", "\\u0005", "\\u0006", "\\u0007",
-		"\\b", "\\t", "\\n", "\\u000B", "\\f","\\r", "\\u000E", "\\u000F",
-		"\\u0010", "\\u0011", "\\u0012", "\\u0013", "\\u0014", "\\u0015", "\\u0016", "\\u0017", 
-		"\\u0018", "\\u0019", "\\u001A", "\\u001B", "\\u001C", "\\u001D", "\\u001E", "\\u001F"
-	};
-	
 	private static final int TYPE_UNKNOWN = -1;
 	private static final int TYPE_NULL = 0;
 	private static final int TYPE_PLAIN = 1;
@@ -225,10 +218,24 @@ public class JSON {
 	private static final int TYPE_CLASS = 26;
 	private static final int TYPE_LOCALE = 27;
 	
-	static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>();
-	static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(45);
+	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>();
+	private static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(45);
+	
+	private static final int[] ESCAPE_CHARS = new int[128];
 	
 	static {
+		for (int i = 0; i < 32; i++) ESCAPE_CHARS[i] = -1;
+		ESCAPE_CHARS['\b'] = 'b';
+		ESCAPE_CHARS['\t'] = 't';
+		ESCAPE_CHARS['\n'] = 'n';
+		ESCAPE_CHARS['\f'] = 'f';
+		ESCAPE_CHARS['\r'] = 'r';
+		ESCAPE_CHARS['"'] = '"';
+		ESCAPE_CHARS['\\'] = '\\';
+		ESCAPE_CHARS['<'] = -2;
+		ESCAPE_CHARS['>'] = -2;
+		ESCAPE_CHARS[0x7F] = -1;
+		
 		PRIMITIVE_MAP.put(boolean.class, false);
 		PRIMITIVE_MAP.put(byte.class, (byte)0);
 		PRIMITIVE_MAP.put(short.class, (short)0);
@@ -1342,36 +1349,27 @@ public class JSON {
 			ap = context.getCachedBuffer();
 		}
 		ap.append('"');
+		int start = 0;
 		for (int i = 0; i < s.length(); i++) {
 			char c = s.charAt(i);
-			if (c < CONTRON_CHARS.length) {
-				ap.append(CONTRON_CHARS[c]);
-			} else {
-				switch (c) {
-				case '"':
-					ap.append("\\\"");
-					break;
-				case '\\': 
-					ap.append("\\\\");
-					break;
-				case '\u007F': 
-					ap.append("\\u007F");
-					break;
-				case '<':
-					if (mode == Mode.SCRIPT) {
-						ap.append("\\u003C");
-						break;
-					}
-				case '>':
-					if (mode == Mode.SCRIPT) {
-						ap.append("\\u003E");
-						break;
-					}
-				default:
-					ap.append(c);
+			if (c < ESCAPE_CHARS.length) {
+				int x = ESCAPE_CHARS[c];
+				if (x == 0) continue;
+				
+				if (x > 0) {
+					if (start < i) ap.append(s, start, i);
+					ap.append('\\').append((char)x);					
+					start = i+1;
+				} else if (x == -1 || (x == -2 && mode == Mode.SCRIPT)) {
+					if (start < i) ap.append(s, start, i);
+					ap.append("\\u00");
+					ap.append("0123456789ABCDEF".charAt(c/16));
+					ap.append("0123456789ABCDEF".charAt(c%16));					
+					start = i+1;
 				}
 			}
 		}
+		if (start < s.length()) ap.append(s, start, s.length());
 		ap.append('"');
 		if (writer != null) {
 			((CacheBuffer)ap).write(writer);
@@ -3232,22 +3230,7 @@ public class JSON {
 		@Override
 		public Appendable append(CharSequence csq) throws IOException {
 			if (csq == null) csq = "null";
-			if (csq.length() == 0) return this;
-			
-			if (buf.length < pos + csq.length()) {
-				char[] newBuf = new char[Math.max(buf.length * 2, pos + csq.length())];
-				System.arraycopy(buf, 0, newBuf, 0, buf.length);
-				buf = newBuf;
-			}
-			if (csq.getClass().equals(String.class)) {
-				((String)csq).getChars(0, csq.length(), buf, pos);
-			} else {
-				for (int i = 0; i < csq.length(); i++) {
-					buf[pos + i] = csq.charAt(i);
-				}
-			}
-			pos += csq.length();
-			return this;
+			return append(csq, 0 , csq.length());
 		}
 
 		@Override
@@ -3263,7 +3246,17 @@ public class JSON {
 
 		@Override
 		public Appendable append(CharSequence csq, int start, int end) throws IOException {
-			throw new UnsupportedOperationException();
+			int length = end - start;
+			if (length <= 0) return this;
+			
+			if (buf.length < pos + length) {
+				char[] newBuf = new char[Math.max(buf.length * 2, pos + length)];
+				System.arraycopy(buf, 0, newBuf, 0, buf.length);
+				buf = newBuf;
+			}
+			((String)csq).getChars(start, end, buf, pos);
+			pos += length;
+			return this;
 		}
 		
 		public void write(Writer writer) throws IOException {
