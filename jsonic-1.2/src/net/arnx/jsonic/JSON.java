@@ -1129,7 +1129,8 @@ public class JSON {
 			List<?> list = (List<?>)o;
 			ap.append('[');
 			int i = 0;
-			for (; i < list.size(); i++) {
+			int length = list.size();
+			for (; i < length; i++) {
 				Object item = list.get(i);
 				if (item == src) item = null;
 				
@@ -1138,7 +1139,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				context.enter(null);
+				context.enter(i);
 				format(context, item, ap);
 				context.exit();
 			}
@@ -1265,7 +1266,8 @@ public class JSON {
 			ap.append('{');
 			int i = 0;
 			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				if (entry.getKey() == null) continue;
+				Object key = entry.getKey();
+				if (key == null) continue;
 				
 				Object value = entry.getValue();
 				if (value == src || (this.suppressNull && value == null)) continue; 
@@ -1275,9 +1277,9 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				formatString(context, entry.getKey().toString(), ap).append(':');
+				formatString(context, key.toString(), ap).append(':');
 				if (context.isPrettyPrint()) ap.append(' ');
-				context.enter(entry.getKey());
+				context.enter(key);
 				format(context, value, ap);
 				context.exit();
 				i++;
@@ -1352,7 +1354,8 @@ public class JSON {
 	FormatSource formatString(Context context, String s, FormatSource ap) throws IOException {
 		ap.append('"');
 		int start = 0;
-		for (int i = 0; i < s.length(); i++) {
+		int length = s.length();
+		for (int i = 0; i < length; i++) {
 			char c = s.charAt(i);
 			if (c < ESCAPE_CHARS.length) {
 				int x = ESCAPE_CHARS[c];
@@ -1371,7 +1374,7 @@ public class JSON {
 				}
 			}
 		}
-		if (start < s.length()) ap.append(s, start, s.length());
+		if (start < length) ap.append(s, start, length);
 		ap.append('"');
 		
 		return ap;
@@ -2915,7 +2918,7 @@ public class JSON {
 	public class Context {
 		final boolean prettyPrint;
 		
-		List<Object[]> path;
+		List<LevelState> path;
 		int level = -1;
 		Map<Class<?>, Map<String, AnnotatedElement>> memberCache;
 		StringBuilderFormatSource builderCache;
@@ -2952,7 +2955,7 @@ public class JSON {
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
 		public Object getKey() {
-			return getState(getLevel())[0];
+			return getState(getLevel()).key;
 		}
 		
 		/**
@@ -2961,8 +2964,8 @@ public class JSON {
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
 		public Object getKey(int level) {
-			if (level < 0) level = getLevel()+level; 
-			return getState(level)[0];
+			if (level < 0) level = getLevel()+level;
+			return getState(level).key;
 		}
 		
 		/**
@@ -2971,14 +2974,14 @@ public class JSON {
 		 * @return the current annotation if present on this context, else null.
 		 */
 		public JSONHint getHint() {
-			return (JSONHint)getState(getLevel())[1];
+			return getState(getLevel()).hint;
 		}
 		
-		Object[] getState(int level) {
-			if (path == null) path =  new ArrayList<Object[]>(8);
+		LevelState getState(int level) {
+			if (path == null) path =  new ArrayList<LevelState>(8);
 			if (level >= path.size()) {
 				for (int i = path.size(); i <= level; i++) {
-					path.add(new Object[2]);
+					path.add(new LevelState());
 				}
 			}
 			
@@ -3003,19 +3006,19 @@ public class JSON {
 		
 		void enter(Object key, JSONHint hint) {
 			level++;
-			Object[] state = getState(getLevel());
-			state[0] = key;
-			state[1] = hint;
+			LevelState state = getState(getLevel());
+			state.key = key;
+			state.hint = hint;
 		}
 		
 		void enter(Object key) {
-			enter(key, (JSONHint)((level >= 0) ? path.get(level)[1] : null));
+			enter(key, ((level >= 0) ? path.get(level).hint : null));
 		}
 		
 		void exit() {
-			Object[] state = path.get(getLevel());
-			state[0] = null;
-			state[1] = null;
+			LevelState state = path.get(getLevel());
+			state.key = null;
+			state.hint = null;
 			level--;
 		}
 		
@@ -3189,7 +3192,7 @@ public class JSON {
 		public String toString() {
 			StringBuilderFormatSource sb = getCachedBuffer();
 			for (int i = 0; i < path.size(); i++) {
-				Object key = path.get(i)[0];
+				Object key = path.get(i).key;
 				if (key == null) {
 					sb.append("[null]");
 				} else if (key instanceof Number) {
@@ -3226,5 +3229,10 @@ public class JSON {
 			}
 			return sb.toString();
 		}
+	}
+	
+	static class LevelState {
+		Object key;
+		JSONHint hint;
 	}
 }
