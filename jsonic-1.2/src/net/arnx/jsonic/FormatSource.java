@@ -133,7 +133,6 @@ class StringBuilderFormatSource implements FormatSource {
 	}
 }
 
-
 class AppendableFormatSource implements FormatSource {
 	private Appendable ap;
 	
