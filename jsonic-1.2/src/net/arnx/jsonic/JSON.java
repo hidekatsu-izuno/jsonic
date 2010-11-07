@@ -184,8 +184,7 @@ public class JSON {
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
 	
-	private static final int TYPE_UNKNOWN = -1;
-	private static final int TYPE_NULL = 0;
+	private static final int TYPE_UNKNOWN = 0;
 	private static final int TYPE_PLAIN = 1;
 	private static final int TYPE_OBJECT = 2;
 	private static final int TYPE_STRING = 3;
@@ -737,13 +736,16 @@ public class JSON {
 			}
 		}
 		
-		JSONHint hint = context.getHint();
+		if (o == null) {
+			checkRoot(context);
+			ap.append("null");
+			return;
+		}
 		
 		int type = TYPE_UNKNOWN;
 		
-		if (o == null) {
-			type = TYPE_NULL;
-		} else if (hint != null) {
+		JSONHint hint = context.getHint();
+		if (hint != null) {
 			if (hint.serialized()) {
 				type = TYPE_PLAIN;
 			} else if (String.class.equals(hint.type())) {
@@ -1336,11 +1338,8 @@ public class JSON {
 			ap.append('}');
 			break;
 		}
-		default: {
-			checkRoot(context);
-			ap.append("null");
-			break;
-		}
+		default:
+			throw new IllegalStateException();
 		}
 	}
 	
