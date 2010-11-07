@@ -15,57 +15,60 @@
  */
 package net.arnx.jsonic;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.Flushable;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.Flushable;
-import java.io.IOException;
 import java.io.Serializable;
 import java.io.Writer;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.FieldPosition;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.List;
-import java.util.Date;
-import java.util.Calendar;
 import java.util.Locale;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.RandomAccess;
 import java.util.ResourceBundle;
@@ -74,17 +77,9 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TimeZone;
 import java.util.TreeMap;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.Charset;
-
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
@@ -3226,499 +3221,5 @@ public class JSON {
 			}
 			return sb.toString();
 		}
-	}
-}
-
-interface FormatSource {
-	public FormatSource append(String text) throws IOException;
-	public FormatSource append(String text, int start, int end) throws IOException;
-	public FormatSource append(char c) throws IOException;
-	public void flush() throws IOException;
-}
-
-class WriterFormatSource implements FormatSource {
-	private Writer writer;
-	
-	public WriterFormatSource(Writer writer) {
-		if (writer instanceof OutputStreamWriter || writer instanceof FileWriter) {
-			this.writer = new BufferedWriter(writer);
-		} else {
-			this.writer = writer;
-		}
-	}
-	
-	@Override
-	public FormatSource append(String text) throws IOException {
-		writer.write(text);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(String text, int start, int end) throws IOException {
-		writer.write(text, start, end-start);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(char c) throws IOException {
-		writer.write(c);
-		return this;
-	}
-	
-	public void flush() throws IOException {
-		writer.flush();
-	}
-}
-
-class StringBufferFormatSource implements FormatSource {
-	private StringBuffer sb;
-	
-	public StringBufferFormatSource() {
-		this.sb = new StringBuffer(1000);
-	}
-	
-	public StringBufferFormatSource(StringBuffer sb) {
-		this.sb = sb;
-	}
-	
-	@Override
-	public FormatSource append(String text) {
-		sb.append(text);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(String text, int start, int end) {
-		sb.append(text, start, end);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(char c) {
-		sb.append(c);
-		return this;
-	}
-	
-	@Override
-	public void flush() throws IOException {
-	}
-	
-	public void clear() {
-		sb.setLength(0);
-	}
-	
-	@Override
-	public String toString() {
-		return sb.toString();
-	}
-}
-
-class StringBuilderFormatSource implements FormatSource {
-	private StringBuilder sb;
-	
-	public StringBuilderFormatSource() {
-		this.sb = new StringBuilder(1000);
-	}
-	
-	public StringBuilderFormatSource(StringBuilder sb) {
-		this.sb = sb;
-	}
-	
-	@Override
-	public FormatSource append(String text) {
-		sb.append(text);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(String text, int start, int end) {
-		sb.append(text, start, end);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(char c) {
-		sb.append(c);
-		return this;
-	}
-	
-	@Override
-	public void flush() {
-	}
-	
-	public void clear() {
-		sb.setLength(0);
-	}
-	
-	@Override
-	public String toString() {
-		return sb.toString();
-	}
-}
-
-class AppendableFormatSource implements FormatSource {
-	private Appendable ap;
-	
-	public AppendableFormatSource(Appendable ap) {
-		this.ap = ap;
-	}
-	
-	@Override
-	public FormatSource append(String text) throws IOException {
-		ap.append(text);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(String text, int start, int end) throws IOException {
-		ap.append(text, start, end);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(char c) throws IOException {
-		ap.append(c);
-		return this;
-	}
-	
-	@Override
-	public void flush() throws IOException {
-	}
-	
-	@Override
-	public String toString() {
-		return ap.toString();
-	}
-}
-
-interface ParserSource {
-	int next() throws IOException;
-	void back();
-	long getLineNumber();
-	long getColumnNumber();
-	long getOffset();
-}
-
-class CharSequenceParserSource implements ParserSource {
-	int lines = 1;
-	int columns = 1;
-	int offset = 0;
-	
-	CharSequence cs;
-	
-	public CharSequenceParserSource(CharSequence cs) {
-		if (cs == null) {
-			throw new NullPointerException();
-		}
-		this.cs = cs;
-	}
-	
-	public int next() {
-		if (offset < cs.length()) {
-			char c = cs.charAt(offset++);
-			if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
-				lines++;
-				columns = 0;
-			} else {
-				columns++;
-			}
-			return c;
-		}
-		return -1;
-	}
-	
-	public void back() {
-		offset--;
-		columns--;
-	}
-	
-	public long getLineNumber() {
-		return lines;
-	}
-	
-	public long getColumnNumber() {
-		return columns;
-	}
-	
-	public long getOffset() {
-		return offset;
-	}
-	
-	public String toString() {
-		return cs.subSequence(offset-columns+1, offset).toString();
-	}
-}
-
-class ReaderParserSource implements ParserSource {
-	long lines = 1l;
-	long columns = 1l;
-	long offset = 0;
-
-	Reader reader;
-	char[] buf = new char[256];
-	int start = 0;
-	int end = 0;
-	
-	public ReaderParserSource(InputStream in) throws IOException {
-		if (!in.markSupported()) in = new BufferedInputStream(in);
-		this.reader = new InputStreamReader(in, determineEncoding(in));
-	}
-	
-	public ReaderParserSource(Reader reader) {
-		if (reader == null) {
-			throw new NullPointerException();
-		}
-		this.reader = reader;
-	}
-	
-	public int next() throws IOException {
-		if (start == end) {
-			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
-			if (size != -1) {
-				end = (end + size) % buf.length;
-			} else {
-				return -1;
-			}
-		}
-		char c = buf[start];
-		if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
-			lines++;
-			columns = 0;
-		} else {
-			columns++;
-		}
-		offset++;
-		start = (start+1) % buf.length;
-		return c;
-	}
-	
-	public void back() {
-		offset--;
-		columns--;
-		start = (start+buf.length-1) % buf.length;
-	}
-	
-	public long getLineNumber() {
-		return lines;
-	}
-	
-	public long getColumnNumber() {
-		return columns;
-	}
-	
-	public long getOffset() {
-		return offset;
-	}
-	
-	String determineEncoding(InputStream in) throws IOException {
-		String encoding = "UTF-8";
-
-		in.mark(4);
-		byte[] check = new byte[4];
-		int size = in.read(check);
-		if (size == 2) {
-			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
-					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
-				encoding = "UTF-16BE";
-			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
-					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
-				encoding = "UTF-16LE";
-			}
-		} else if (size == 4) {
-			if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) == 0x00)) {
-				encoding = "UTF-32BE";
-			} else if (((check[2] & 0xFF) == 0x00 && (check[3] & 0xFF) == 0x00)) {
-				encoding = "UTF-32LE";
-			} else if (((check[0] & 0xFF) == 0x00 && (check[1] & 0xFF) != 0x00) 
-					|| ((check[0] & 0xFF) == 0xFE && (check[1] & 0xFF) == 0xFF)) {
-				encoding = "UTF-16BE";
-			} else if (((check[0] & 0xFF) != 0x00 && (check[1] & 0xFF) == 0x00) 
-					|| ((check[0] & 0xFF) == 0xFF && (check[1] & 0xFF) == 0xFE)) {
-				encoding = "UTF-16LE";
-			}
-		}
-		in.reset();
-		
-		return encoding;
-	}
-	
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
-		for (int i = maxlength; i >= 0; i--) {
-			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
-		}
-		return sb.toString();
-	}
-}
-
-class Base64 {
-	static final String BASE64_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	
-	public static String encode(byte[] data) {
-		if (data == null) return null;
-		
-		char[] buffer = new char[data.length / 3 * 4 + ((data.length % 3 == 0) ? 0 : 4)];
-		
-		int buf = 0;
-		for (int i = 0; i < data.length; i++) {
-			switch (i % 3) {
-				case 0 :
-					buffer[i / 3 * 4] = BASE64_MAP.charAt((data[i] & 0xFC) >> 2);
-					buf = (data[i] & 0x03) << 4;
-					if (i + 1 == data.length) {
-						buffer[i / 3 * 4 + 1] = BASE64_MAP.charAt(buf);
-						buffer[i / 3 * 4 + 2] = '=';
-						buffer[i / 3 * 4 + 3] = '=';
-					}
-					break;
-				case 1 :
-					buf += (data[i] & 0xF0) >> 4;
-					buffer[i / 3 * 4 + 1] = BASE64_MAP.charAt(buf);
-					buf = (data[i] & 0x0F) << 2;
-					if (i + 1 == data.length) {
-						buffer[i / 3 * 4 + 2] = BASE64_MAP.charAt(buf);
-						buffer[i / 3 * 4 + 3] = '=';
-					}
-					break;
-				case 2 :
-					buf += (data[i] & 0xC0) >> 6;
-					buffer[i / 3 * 4 + 2] = BASE64_MAP.charAt(buf);
-					buffer[i / 3 * 4 + 3] = BASE64_MAP.charAt(data[i] & 0x3F);
-					break;
-			}
-		}
-
-		return new String(buffer);
-	}
-	
-	public static byte[] decode(CharSequence cs) {
-		int addsize = 0;
-		int bufsize = 0;
-		
-		for (int i = 0; i < cs.length(); i++) {
-			char c = cs.charAt(i);
-			if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '+' || c == '/') {
-				bufsize++;
-			} else if (c == '=') {
-				if (i+1 < cs.length() && cs.charAt(i+1) == '=' && (bufsize+2) % 4 == 0) {
-					bufsize += 2;
-					addsize = -2;
-				} else if ((bufsize+1) % 4 == 0) {
-					bufsize += 1;
-					addsize = -1;
-				} else {
-					return null;
-				}
-				break;
-			}
-		}
-		
-		byte[] buffer = new byte[bufsize / 4 * 3 + addsize];
-		
-		int pos = 0;
-		for (int i = 0; i < cs.length(); i++) {
-			char c = cs.charAt(i);
-			
-			int data = 0;
-			if (c >= 'A' && c <= 'Z') {
-				data = c - 65;
-			} else if (c >= 'a' && c <= 'z') {
-				data = c - 97 + 26;
-			} else if (c >= '0' && c <= '9') {
-				data = c - 48 + 52;
-			} else if (c == '+') {
-				data = 62;
-			} else if (c == '/') {
-				data = 63;
-			} else if (c == '=') {
-				break;
-			} else {
-				continue;
-			}
-			
-			switch (pos % 4) {
-			case 0:
-				buffer[pos / 4 * 3] = (byte)(data << 2);
-				break;
-			case 1:
-				buffer[pos / 4 * 3] += (byte)(data >> 4);
-				if (pos / 4 * 3 + 1 < buffer.length) {
-					buffer[pos / 4 * 3 + 1] = (byte)((data & 0xF) << 4);
-				}
-				break;
-			case 2:
-				buffer[pos / 4 * 3 + 1] += (byte)(data >> 2);
-				if (pos / 4 * 3 + 2 < buffer.length) {
-					buffer[pos / 4 * 3 + 2] = (byte)((data & 0x3) << 6);
-				}
-				break;
-			case 3:
-				buffer[pos / 4 * 3 + 2] += (byte)data;
-				break;
-			}
-			pos++;
-		}
-		
-		return buffer;
-	}
-}
-
-class ComplexDateFormat extends SimpleDateFormat {
-	boolean escape = false;
-	
-	public ComplexDateFormat(String pattern, Locale locale) {
-		super(escape(pattern), locale);
-		escape = !pattern.equals(this.toPattern());
-	}
-	
-	public ComplexDateFormat(String pattern) {
-		super(escape(pattern));
-		escape = !pattern.equals(this.toPattern());
-	}
-	
-	
-	static String escape(String pattern) {
-		boolean skip = false;
-		int count = 0;
-		StringBuilder sb = null;
-		int last = 0;
-		for (int i = 0; i < pattern.length(); i++) {
-			char c = pattern.charAt(i);
-			if (c == '\'') {
-				skip = !skip;
-			} else if (c == 'Z' && !skip) {
-				count++;
-				if (count == 2) {
-					if (sb == null) sb = new StringBuilder(pattern.length() + 4);
-					sb.append(pattern, last, i-1);
-					sb.append("Z\0");
-					last = i+1;
-				}
-			} else {
-				count = 0;
-			}
-		}
-		if (sb != null) {
-			if (last < pattern.length()) sb.append(pattern, last, pattern.length());
-			return sb.toString();
-		} else {
-			return pattern;
-		}
-	}
-
-	@Override
-	public StringBuffer format(Date date, StringBuffer toAppendTo, FieldPosition pos) {
-		super.format(date, toAppendTo, pos);
-		if (escape) {
-			for (int i = 5; i < toAppendTo.length(); i++) {
-				if (toAppendTo.charAt(i) == '\0') {
-					toAppendTo.setCharAt(i, toAppendTo.charAt(i-1));
-					toAppendTo.setCharAt(i-1, toAppendTo.charAt(i-2));
-					toAppendTo.setCharAt(i-2, ':');
-				}
-			}
-		}
-		return toAppendTo;
 	}
 }
