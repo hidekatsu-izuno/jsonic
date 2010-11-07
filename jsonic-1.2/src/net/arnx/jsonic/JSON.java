@@ -759,7 +759,9 @@ public class JSON {
 		}
 		
 		if (type == TYPE_UNKNOWN) {
-			if (o instanceof Map<?, ?>) {
+			if (context.hasMemberCache(o.getClass())) {
+				type = TYPE_OBJECT;
+			} else if (o instanceof Map<?, ?>) {
 				type = TYPE_MAP;
 			} else if (o instanceof Iterable<?>) {
 				if (o instanceof RandomAccess && o instanceof List<?>) {
@@ -3016,6 +3018,10 @@ public class JSON {
 			state[0] = null;
 			state[1] = null;
 			level--;
+		}
+		
+		boolean hasMemberCache(Class<?> c) {
+			return memberCache != null && memberCache.containsKey(c);
 		}
 		
 		Map<String, AnnotatedElement> getGetProperties(Class<?> c) {
