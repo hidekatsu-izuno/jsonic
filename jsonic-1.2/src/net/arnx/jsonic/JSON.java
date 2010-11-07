@@ -213,10 +213,9 @@ public class JSON {
 	private static final int TYPE_DOM_ELEMENT = 21;
 	private static final int TYPE_DYNA_BEAN = 22;
 	private static final int TYPE_MAP = 23;
-	private static final int TYPE_CHAR_SEQUENCE = 24;
+	private static final int TYPE_LOCALE = 24;
 	private static final int TYPE_SERIALIZE = 25;
 	private static final int TYPE_CLASS = 26;
-	private static final int TYPE_LOCALE = 27;
 	
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>();
 	private static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(45);
@@ -699,10 +698,21 @@ public class JSON {
 	public Appendable format(Object source, Appendable ap) throws IOException {
 		Context context = new Context();
 		
+		FormatSource fs;
+		if (ap instanceof Writer) {
+			fs = new WriterFormatSource((Writer)ap);
+		} else if (ap instanceof StringBuilder) {
+			fs = new StringBuilderFormatSource((StringBuilder)ap);
+		} else if (ap instanceof StringBuilder) {
+			fs = new StringBuilderFormatSource((StringBuilder)ap);
+		} else {
+			fs = new AppendableFormatSource(ap);
+		}
+		
 		context.enter('$');
-		format(context, source, ap);
+		format(context, source, fs);
 		context.exit();
-		if (ap instanceof Flushable) ((Flushable)ap).flush();
+		fs.flush();
 		return ap;
 	}
 	
@@ -718,7 +728,7 @@ public class JSON {
 		return value;
 	}
 	
-	Appendable format(final Context context, final Object src, final Appendable ap) throws IOException {
+	void format(final Context context, final Object src, final FormatSource ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
 			o = null;
@@ -767,7 +777,7 @@ public class JSON {
 				o = ((Enum<?>)o).ordinal();
 				type = TYPE_NUMBER;
 			} else if (o instanceof CharSequence) {
-				type = TYPE_CHAR_SEQUENCE;
+				type = TYPE_STRING;
 			} else if (o instanceof Date) {
 				type = TYPE_DATE;
 			} else if (o instanceof Calendar) {
@@ -837,11 +847,6 @@ public class JSON {
 		case TYPE_STRING: {
 			checkRoot(context);
 			formatString(context, o.toString(), ap);
-			break;
-		}
-		case TYPE_CHAR_SEQUENCE: {
-			checkRoot(context);
-			formatString(context, (CharSequence)o, ap);
 			break;
 		}
 		case TYPE_CLASS: {
@@ -1333,7 +1338,6 @@ public class JSON {
 			break;
 		}
 		}
-		return ap;
 	}
 	
 	void checkRoot(Context context) {
@@ -1342,12 +1346,7 @@ public class JSON {
 		}		
 	}
 	
-	Appendable formatString(Context context, CharSequence s, Appendable ap) throws IOException {
-		Writer writer = null;
-		if (ap instanceof Writer) {
-			writer = (Writer)ap;
-			ap = context.getCachedBuffer();
-		}
+	FormatSource formatString(Context context, String s, FormatSource ap) throws IOException {
 		ap.append('"');
 		int start = 0;
 		for (int i = 0; i < s.length(); i++) {
@@ -1371,14 +1370,10 @@ public class JSON {
 		}
 		if (start < s.length()) ap.append(s, start, s.length());
 		ap.append('"');
-		if (writer != null) {
-			((CacheBuffer)ap).write(writer);
-			ap = writer;
-		}
 		
 		return ap;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence cs) throws JSONException {
 		Object value = null;
@@ -1760,7 +1755,7 @@ public class JSON {
 	
 	String parseString(Context context, ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		Appendable sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
+		StringBuilderFormatSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
 		char start = '\0';
 		
 		int n = -1;
@@ -1817,7 +1812,7 @@ public class JSON {
 	
 	Object parseLiteral(Context context, ParserSource s, int level, boolean any) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		Appendable sb = context.getCachedBuffer();
+		StringBuilderFormatSource sb = context.getCachedBuffer();
 
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1855,7 +1850,7 @@ public class JSON {
 	
 	Number parseNumber(Context context, ParserSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		Appendable sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
+		StringBuilderFormatSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -2920,15 +2915,15 @@ public class JSON {
 		List<Object[]> path;
 		int level = -1;
 		Map<Class<?>, Map<String, AnnotatedElement>> memberCache;
-		CacheBuffer builderCache;
+		StringBuilderFormatSource builderCache;
 		
 		public Context() {
 			prettyPrint = JSON.this.prettyPrint;
 		}
 		
-		public CacheBuffer getCachedBuffer() {
+		public StringBuilderFormatSource getCachedBuffer() {
 			if (builderCache == null) {
-				builderCache = new CacheBuffer();
+				builderCache = new StringBuilderFormatSource();
 			} else {
 				builderCache.clear();
 			}
@@ -3185,15 +3180,17 @@ public class JSON {
 		}
 		
 		public String toString() {
-			StringBuilder sb = new StringBuilder();
+			StringBuilderFormatSource sb = getCachedBuffer();
 			for (int i = 0; i < path.size(); i++) {
 				Object key = path.get(i)[0];
 				if (key == null) {
 					sb.append("[null]");
 				} else if (key instanceof Number) {
-					sb.append('[').append(key).append(']');
+					sb.append('[');
+					sb.append(key.toString());
+					sb.append(']');
 				} else if (key instanceof Character) {
-					sb.append(key);
+					sb.append(key.toString());
 				} else {
 					String str = key.toString();
 					boolean escape = false;
@@ -3215,68 +3212,171 @@ public class JSON {
 						}
 						sb.append(']');
 					} else {
-						sb.append('.').append(str);
+						sb.append('.');
+						sb.append(str);
 					}
 				}
 			}
 			return sb.toString();
 		}
 	}
+}
+
+interface FormatSource {
+	public FormatSource append(String text) throws IOException;
+	public FormatSource append(String text, int start, int end) throws IOException;
+	public FormatSource append(char c) throws IOException;
+	public void flush() throws IOException;
+}
+
+class WriterFormatSource implements FormatSource {
+	private Writer writer;
 	
-	static class CacheBuffer implements Appendable {
-		char[] buf = new char[1000];
-		int pos = 0;
+	public WriterFormatSource(Writer writer) {
+		this.writer = writer;
+	}
+	
+	@Override
+	public FormatSource append(String text) throws IOException {
+		writer.write(text);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(String text, int start, int end) throws IOException {
+		writer.write(text, start, end-start);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(char c) throws IOException {
+		writer.write(c);
+		return this;
+	}
+	
+	public void flush() throws IOException {
+		writer.flush();
+	}
+}
 
-		@Override
-		public Appendable append(CharSequence csq) throws IOException {
-			if (csq == null) csq = "null";
-			return append(csq, 0 , csq.length());
-		}
+class StringBufferFormatSource implements FormatSource {
+	private StringBuffer sb;
+	
+	public StringBufferFormatSource() {
+		this.sb = new StringBuffer(1000);
+	}
+	
+	public StringBufferFormatSource(StringBuffer sb) {
+		this.sb = sb;
+	}
+	
+	@Override
+	public FormatSource append(String text) {
+		sb.append(text);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(String text, int start, int end) {
+		sb.append(text, start, end);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(char c) {
+		sb.append(c);
+		return this;
+	}
+	
+	@Override
+	public void flush() throws IOException {
+	}
+	
+	public void clear() {
+		sb.setLength(0);
+	}
+	
+	@Override
+	public String toString() {
+		return sb.toString();
+	}
+}
 
-		@Override
-		public Appendable append(char c) throws IOException {
-			if (buf.length < pos + 1) {
-				char[] newBuf = new char[buf.length * 2];
-				System.arraycopy(buf, 0, newBuf, 0, buf.length);
-				buf = newBuf;
-			}
-			buf[pos++] = c;
-			return this;
-		}
+class StringBuilderFormatSource implements FormatSource {
+	private StringBuilder sb;
+	
+	public StringBuilderFormatSource() {
+		this.sb = new StringBuilder(1000);
+	}
+	
+	public StringBuilderFormatSource(StringBuilder sb) {
+		this.sb = sb;
+	}
+	
+	@Override
+	public FormatSource append(String text) {
+		sb.append(text);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(String text, int start, int end) {
+		sb.append(text, start, end);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(char c) {
+		sb.append(c);
+		return this;
+	}
+	
+	@Override
+	public void flush() {
+	}
+	
+	public void clear() {
+		sb.setLength(0);
+	}
+	
+	@Override
+	public String toString() {
+		return sb.toString();
+	}
+}
 
-		@Override
-		public Appendable append(CharSequence csq, int start, int end) throws IOException {
-			int length = end - start;
-			if (length <= 0) return this;
-			
-			if (buf.length < pos + length) {
-				char[] newBuf = new char[Math.max(buf.length * 2, pos + length)];
-				System.arraycopy(buf, 0, newBuf, 0, buf.length);
-				buf = newBuf;
-			}
-			if (csq instanceof String) {
-				((String)csq).getChars(start, end, buf, pos);
-			} else {
-				for (int i = 0; i < length; i++) {
-					buf[pos+i] = csq.charAt(start+i);
-				}
-			}
-			pos += length;
-			return this;
-		}
-		
-		public void write(Writer writer) throws IOException {
-			writer.write(buf, 0, pos);
-		}
-		
-		@Override
-		public String toString() {
-			return new String(buf, 0, pos);
-		}
-		
-		public void clear() {
-			pos = 0;
-		}
+class AppendableFormatSource implements FormatSource {
+	private Appendable ap;
+	
+	public AppendableFormatSource(Appendable ap) {
+		this.ap = ap;
+	}
+	
+	@Override
+	public FormatSource append(String text) throws IOException {
+		ap.append(text);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(String text, int start, int end) throws IOException {
+		ap.append(text, start, end);
+		return this;
+	}
+	
+	@Override
+	public FormatSource append(char c) throws IOException {
+		ap.append(c);
+		return this;
+	}
+	
+	@Override
+	public void flush() throws IOException {
+	}
+	
+	@Override
+	public String toString() {
+		return ap.toString();
 	}
 }
 
