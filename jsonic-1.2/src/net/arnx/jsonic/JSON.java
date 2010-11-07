@@ -3254,7 +3254,13 @@ public class JSON {
 				System.arraycopy(buf, 0, newBuf, 0, buf.length);
 				buf = newBuf;
 			}
-			((String)csq).getChars(start, end, buf, pos);
+			if (csq instanceof String) {
+				((String)csq).getChars(start, end, buf, pos);
+			} else {
+				for (int i = 0; i < length; i++) {
+					buf[pos+i] = csq.charAt(start+i);
+				}
+			}
 			pos += length;
 			return this;
 		}
