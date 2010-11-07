@@ -1139,7 +1139,7 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				context.enter(i);
+				context.enter(null);
 				format(context, item, ap);
 				context.exit();
 			}
@@ -1291,32 +1291,38 @@ public class JSON {
 			break;
 		}
 		case TYPE_OBJECT: {
-			Map<?, ?> map = context.getGetProperties(o.getClass());
+			Map<String, AnnotatedElement> map = context.getGetProperties(o.getClass());
 			
 			ap.append('{');
 			int i = 0;
-			for (Map.Entry<?, ?> entry : map.entrySet()) {
+			for (Map.Entry<String, AnnotatedElement> entry : map.entrySet()) {
 				if (entry.getKey() == null) continue;
 				
-				Object value = entry.getValue();
+				Object value = null;
 				Exception cause = null; 
-				
-				hint = ((AnnotatedElement)value).getAnnotation(JSONHint.class);
+
+				AnnotatedElement member = entry.getValue();				
 				try {
-					value = (value instanceof Method) ? ((Method)value).invoke(o) : ((Field)value).get(o);
+					if (member instanceof Method) {
+						value = ((Method)member).invoke(o);
+					} else {
+						value = ((Field)member).get(o);
+					}
+					if (value == src || (this.suppressNull && value == null)) continue;
+
+					
+					if (i > 0) ap.append(',');
+					if (context.isPrettyPrint()) {
+						ap.append('\n');
+						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+					}
 				} catch (Exception e) {
 					cause = e;
 				}
-				if (value == src || (cause == null && this.suppressNull && value == null)) continue; 
 				
-				if (i > 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
 				formatString(context, entry.getKey().toString(), ap).append(':');
 				if (context.isPrettyPrint()) ap.append(' ');
-				context.enter(entry.getKey(), hint);
+				context.enter(entry.getKey(), member.getAnnotation(JSONHint.class));
 				if (cause != null) {
 					throw new JSONException(getMessage("json.format.ConversionError",
 							(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
@@ -3234,12 +3240,11 @@ class WriterFormatSource implements FormatSource {
 	private Writer writer;
 	
 	public WriterFormatSource(Writer writer) {
-		if (writer instanceof OutputStreamWriter) {
+		if (writer instanceof OutputStreamWriter || writer instanceof FileWriter) {
 			this.writer = new BufferedWriter(writer);
-		} else if (writer instanceof FileWriter) {
-			this.writer = new BufferedWriter(writer);
+		} else {
+			this.writer = writer;
 		}
-		this.writer = writer;
 	}
 	
 	@Override
