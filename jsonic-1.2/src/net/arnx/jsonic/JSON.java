@@ -1299,8 +1299,6 @@ public class JSON {
 			ap.append('{');
 			int i = 0;
 			for (Map.Entry<String, AnnotatedElement> entry : map.entrySet()) {
-				if (entry.getKey() == null) continue;
-				
 				Object value = null;
 				Exception cause = null; 
 
@@ -2200,7 +2198,7 @@ public class JSON {
 							Type gptype = m.getGenericParameterTypes()[0];
 							Class<?> ptype = m.getParameterTypes()[0];
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
 								ptype = ClassUtil.getRawType(gptype);
 							}
 							m.invoke(o, postparse(context, entry.getValue(), ptype, gptype));
@@ -2209,7 +2207,7 @@ public class JSON {
 							Type gptype = f.getGenericType();
 							Class<?> ptype =  f.getType();
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
 								ptype = ClassUtil.getRawType(gptype);
 							}
 							
@@ -2671,7 +2669,7 @@ public class JSON {
 							Type gptype = m.getGenericParameterTypes()[0];
 							Class<?> ptype = m.getParameterTypes()[0];
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
 								ptype = ClassUtil.getRawType(gptype);
 							}
 							m.invoke(o, postparse(context, value, ptype, gptype));
@@ -2680,7 +2678,7 @@ public class JSON {
 							Type gptype = f.getGenericType();
 							Class<?> ptype =  f.getType();
 							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
+								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
 								ptype = ClassUtil.getRawType(gptype);
 							}
 							
@@ -2794,21 +2792,6 @@ public class JSON {
 		} else {
 			props.setProperty(key.toString(), value.toString());
 		}
-	}
-	
-	static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
-		Class<?> rawType = ClassUtil.getRawType(parent);
-		if (rawType.equals(type.getGenericDeclaration())) {
-			String tvName = type.getName();
-			TypeVariable<?>[] rtypes = ((Class<?>)rawType).getTypeParameters();
-			Type[] atypes = parent.getActualTypeArguments();
-			
-			for (int i = 0; i < rtypes.length; i++) {
-				if (tvName.equals(rtypes[i].getName())) return atypes[i];
-			}
-		}
-		
-		return type.getBounds()[0];
 	}
 	
 	static byte[] serialize(Object data) throws IOException {
