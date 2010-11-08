@@ -212,8 +212,8 @@ public class JSON {
 	private static final int TYPE_SERIALIZE = 25;
 	private static final int TYPE_CLASS = 26;
 	
-	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>();
-	private static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(45);
+	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>(8);
+	private static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(48);
 	
 	private static final int[] ESCAPE_CHARS = new int[128];
 	
@@ -1237,7 +1237,8 @@ public class JSON {
 							ap.append('\n');
 							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 						}
-						formatString(context, name.toString(), ap).append(':');
+						formatString(context, name.toString(), ap);
+						ap.append(':');
 						if (context.isPrettyPrint()) ap.append(' ');
 						context.enter(name);
 						if (cause != null) {
@@ -1277,7 +1278,8 @@ public class JSON {
 					ap.append('\n');
 					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
 				}
-				formatString(context, key.toString(), ap).append(':');
+				formatString(context, key.toString(), ap);
+				ap.append(':');
 				if (context.isPrettyPrint()) ap.append(' ');
 				context.enter(key);
 				format(context, value, ap);
@@ -1321,7 +1323,8 @@ public class JSON {
 					cause = e;
 				}
 				
-				formatString(context, entry.getKey().toString(), ap).append(':');
+				formatString(context, entry.getKey().toString(), ap);
+				ap.append(':');
 				if (context.isPrettyPrint()) ap.append(' ');
 				context.enter(entry.getKey(), member.getAnnotation(JSONHint.class));
 				if (cause != null) {
@@ -1351,12 +1354,12 @@ public class JSON {
 		}		
 	}
 	
-	FormatSource formatString(Context context, String s, FormatSource ap) throws IOException {
+	void formatString(Context context, String s, FormatSource ap) throws IOException {
 		ap.append('"');
 		int start = 0;
 		int length = s.length();
 		for (int i = 0; i < length; i++) {
-			char c = s.charAt(i);
+			int c = s.charAt(i);
 			if (c < ESCAPE_CHARS.length) {
 				int x = ESCAPE_CHARS[c];
 				if (x == 0) continue;
@@ -1376,8 +1379,6 @@ public class JSON {
 		}
 		if (start < length) ap.append(s, start, length);
 		ap.append('"');
-		
-		return ap;
 	}
 	
 	@SuppressWarnings("unchecked")
