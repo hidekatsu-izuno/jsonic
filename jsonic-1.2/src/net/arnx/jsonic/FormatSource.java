@@ -1,15 +1,12 @@
 package net.arnx.jsonic;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 interface FormatSource {
-	public FormatSource append(String text) throws IOException;
-	public FormatSource append(String text, int start, int end) throws IOException;
-	public FormatSource append(char c) throws IOException;
+	public void append(String text) throws IOException;
+	public void append(String text, int start, int end) throws IOException;
+	public void append(char c) throws IOException;
 	public void flush() throws IOException;
 }
 
@@ -17,32 +14,75 @@ class WriterFormatSource implements FormatSource {
 	private Writer writer;
 	
 	public WriterFormatSource(Writer writer) {
-		if (writer instanceof OutputStreamWriter || writer instanceof FileWriter) {
-			this.writer = new BufferedWriter(writer);
+		this.writer = writer;
+	}
+	
+	@Override
+	public void append(String text) throws IOException {
+		writer.write(text);
+	}
+	
+	@Override
+	public void append(String text, int start, int end) throws IOException {
+		writer.write(text, start, end-start);
+	}
+	
+	@Override
+	public void append(char c) throws IOException {
+		writer.write(c);
+	}
+	
+	public void flush() throws IOException {
+		writer.flush();
+	}
+}
+
+class BufferedWriterFormatSource implements FormatSource {
+	private Writer writer;
+	
+	private char[] buf = new char[1000];
+	private int pos = 0;
+	
+	public BufferedWriterFormatSource(Writer writer) {
+		this.writer = writer;
+	}
+	
+	@Override
+	public void append(String text) throws IOException {
+		append(text, 0, text.length());
+	}
+	
+	@Override
+	public void append(String text, int start, int end) throws IOException {
+		int length = end-start;
+		if (pos + length < buf.length) {
+			text.getChars(start, end, buf, pos);
+			pos += length;
 		} else {
-			this.writer = writer;
+			writer.write(buf, 0, pos);
+			pos = 0;
+			if (length < buf.length) {
+				text.getChars(start, end, buf, pos);
+				pos += length;
+			} else {
+				writer.write(text, start, length);
+			}
 		}
 	}
 	
 	@Override
-	public FormatSource append(String text) throws IOException {
-		writer.write(text);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(String text, int start, int end) throws IOException {
-		writer.write(text, start, end-start);
-		return this;
-	}
-	
-	@Override
-	public FormatSource append(char c) throws IOException {
-		writer.write(c);
-		return this;
+	public void append(char c) throws IOException {
+		if (pos + 1 < buf.length) {
+			buf[pos++] = c;
+		} else {
+			writer.write(buf, 0, pos);
+			pos = 0;
+			buf[pos++] = c;
+		}
 	}
 	
 	public void flush() throws IOException {
+		if (pos > 0) writer.write(buf, 0, pos);
 		writer.flush();
 	}
 }
@@ -59,21 +99,18 @@ class StringBufferFormatSource implements FormatSource {
 	}
 	
 	@Override
-	public FormatSource append(String text) {
+	public void append(String text) {
 		sb.append(text);
-		return this;
 	}
 	
 	@Override
-	public FormatSource append(String text, int start, int end) {
+	public void append(String text, int start, int end) {
 		sb.append(text, start, end);
-		return this;
 	}
 	
 	@Override
-	public FormatSource append(char c) {
+	public void append(char c) {
 		sb.append(c);
-		return this;
 	}
 	
 	@Override
@@ -102,21 +139,18 @@ class StringBuilderFormatSource implements FormatSource {
 	}
 	
 	@Override
-	public FormatSource append(String text) {
+	public void append(String text) {
 		sb.append(text);
-		return this;
 	}
 	
 	@Override
-	public FormatSource append(String text, int start, int end) {
+	public void append(String text, int start, int end) {
 		sb.append(text, start, end);
-		return this;
 	}
 	
 	@Override
-	public FormatSource append(char c) {
+	public void append(char c) {
 		sb.append(c);
-		return this;
 	}
 	
 	@Override
@@ -141,21 +175,18 @@ class AppendableFormatSource implements FormatSource {
 	}
 	
 	@Override
-	public FormatSource append(String text) throws IOException {
+	public void append(String text) throws IOException {
 		ap.append(text);
-		return this;
 	}
 	
 	@Override
-	public FormatSource append(String text, int start, int end) throws IOException {
+	public void append(String text, int start, int end) throws IOException {
 		ap.append(text, start, end);
-		return this;
 	}
 	
 	@Override
-	public FormatSource append(char c) throws IOException {
+	public void append(char c) throws IOException {
 		ap.append(c);
-		return this;
 	}
 	
 	@Override

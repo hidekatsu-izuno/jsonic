@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
@@ -695,8 +696,10 @@ public class JSON {
 		Context context = new Context();
 		
 		FormatSource fs;
-		if (ap instanceof Writer) {
+		if (ap instanceof StringWriter) {
 			fs = new WriterFormatSource((Writer)ap);
+		} else if (ap instanceof Writer) {
+			fs = new BufferedWriterFormatSource((Writer)ap);
 		} else if (ap instanceof StringBuilder) {
 			fs = new StringBuilderFormatSource((StringBuilder)ap);
 		} else if (ap instanceof StringBuilder) {
@@ -724,7 +727,7 @@ public class JSON {
 		return value;
 	}
 	
-	void format(final Context context, final Object src, final FormatSource ap) throws IOException {
+	void format(Context context, Object src, FormatSource ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
 			o = null;
@@ -741,8 +744,33 @@ public class JSON {
 			checkRoot(context);
 			ap.append("null");
 			return;
+		} else if (o instanceof List<?>) {
+			List<?> list = (List<?>)o;
+			ap.append('[');
+			int length = list.size();
+			int i = 0;
+			for (; i < length; i++) {
+				Object item = list.get(i);
+				if (item == src) item = null;
+				
+				if (i != 0) ap.append(',');				
+				if (context.isPrettyPrint()) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+				
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
+			}
+			if (context.isPrettyPrint() && i > 0) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append(']');
+			return;
 		}
-		
+
 		int type = TYPE_UNKNOWN;
 		
 		JSONHint hint = context.getHint();
@@ -944,11 +972,15 @@ public class JSON {
 				double d = ((Number)o).doubleValue();
 				if (Double.isNaN(d) || Double.isInfinite(d)) {
 					if (mode != Mode.SCRIPT) {
-						ap.append('"').append(o.toString()).append('"');
+						ap.append('"');
+						ap.append(o.toString());
+						ap.append('"');
 					} else if (Double.isNaN(d)) {
 						ap.append("Number.NaN");
 					} else {
-						ap.append("Number.").append((d > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+						ap.append("Number.");
+						ap.append((d > 0) ? "POSITIVE" : "NEGATIVE");
+						ap.append("_INFINITY");
 					}
 				} else {
 					ap.append(o.toString());
@@ -973,7 +1005,9 @@ public class JSON {
 			if (f != null) {
 				formatString(context, f.format(date), ap);
 			} else if (mode == Mode.SCRIPT) {
-				ap.append("new Date(").append(Long.toString(date.getTime())).append(")");
+				ap.append("new Date(");
+				ap.append(Long.toString(date.getTime()));
+				ap.append(")");
 			} else {
 				ap.append(Long.toString(date.getTime()));
 			}
@@ -1058,11 +1092,15 @@ public class JSON {
 			for (int i = 0; i < array.length; i++) {
 				if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
 					if (mode != Mode.SCRIPT) {
-						ap.append('"').append(Float.toString(array[i])).append('"');
+						ap.append('"');
+						ap.append(Float.toString(array[i]));
+						ap.append('"');
 					} else if (Double.isNaN(array[i])) {
 						ap.append("Number.NaN");
 					} else {
-						ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+						ap.append("Number.");
+						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
+						ap.append("_INFINITY");
 					}
 				} else if (f != null) {
 					formatString(context, f.format(array[i]), ap);
@@ -1084,11 +1122,15 @@ public class JSON {
 			for (int i = 0; i < array.length; i++) {
 				if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
 					if (mode != Mode.SCRIPT) {
-						ap.append('"').append(Double.toString(array[i])).append('"');
+						ap.append('"');
+						ap.append(Double.toString(array[i]));
+						ap.append('"');
 					} else if (Double.isNaN(array[i])) {
 						ap.append("Number.NaN");
 					} else {
-						ap.append("Number.").append((array[i] > 0) ? "POSITIVE" : "NEGATIVE").append("_INFINITY");
+						ap.append("Number.");
+						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
+						ap.append("_INFINITY");
 					}
 				} else if (f != null) {
 					formatString(context, f.format(array[i]), ap);
@@ -1361,7 +1403,8 @@ public class JSON {
 				
 				if (x > 0) {
 					if (start < i) ap.append(s, start, i);
-					ap.append('\\').append((char)x);					
+					ap.append('\\');
+					ap.append((char)x);					
 					start = i+1;
 				} else if (x == -1 || (x == -2 && mode == Mode.SCRIPT)) {
 					if (start < i) ap.append(s, start, i);
