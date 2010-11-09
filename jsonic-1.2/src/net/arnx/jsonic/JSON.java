@@ -188,31 +188,32 @@ public class JSON {
 	
 	private static final int TYPE_UNKNOWN = 0;
 	private static final int TYPE_PLAIN = 1;
-	private static final int TYPE_OBJECT = 2;
-	private static final int TYPE_STRING = 3;
-	private static final int TYPE_DATE = 4;
-	private static final int TYPE_NUMBER = 5;
-	private static final int TYPE_FLOAT = 6;
-	private static final int TYPE_BYTE = 7;
-	private static final int TYPE_CHAR_ARRAY = 8;
-	private static final int TYPE_BOOLEAN_ARRAY = 9;
-	private static final int TYPE_BYTE_ARRAY = 10;
-	private static final int TYPE_SHORT_ARRAY = 11;
-	private static final int TYPE_INT_ARRAY = 12;
-	private static final int TYPE_LONG_ARRAY = 13;
-	private static final int TYPE_FLOAT_ARRAY = 14;
-	private static final int TYPE_DOUBLE_ARRAY = 15;
-	private static final int TYPE_OBJECT_ARRAY = 16;
-	private static final int TYPE_LIST = 17;
-	private static final int TYPE_ITERABLE = 18;
-	private static final int TYPE_ITERATOR = 19;
-	private static final int TYPE_ENUMERATION = 20;
-	private static final int TYPE_DOM_ELEMENT = 21;
-	private static final int TYPE_DYNA_BEAN = 22;
-	private static final int TYPE_MAP = 23;
-	private static final int TYPE_LOCALE = 24;
-	private static final int TYPE_SERIALIZE = 25;
-	private static final int TYPE_CLASS = 26;
+	private static final int TYPE_STRING = 2;
+	private static final int TYPE_NUMBER = 3;
+	private static final int TYPE_FLOAT = 4;
+	private static final int TYPE_DATE = 5;
+	private static final int TYPE_BOOLEAN_ARRAY = 6;
+	private static final int TYPE_BYTE_ARRAY = 7;
+	private static final int TYPE_SHORT_ARRAY = 8;
+	private static final int TYPE_INT_ARRAY = 9;
+	private static final int TYPE_LONG_ARRAY = 10;
+	private static final int TYPE_FLOAT_ARRAY = 11;
+	private static final int TYPE_DOUBLE_ARRAY = 12;
+	private static final int TYPE_OBJECT_ARRAY = 13;
+	private static final int TYPE_LIST = 14;
+	private static final int TYPE_MAP = 15;
+	private static final int TYPE_OBJECT = 16;
+
+	private static final int TYPE_BYTE = 17;
+	private static final int TYPE_CLASS = 18;
+	private static final int TYPE_LOCALE = 19;
+	private static final int TYPE_CHAR_ARRAY = 20;
+	private static final int TYPE_SERIALIZE = 21;
+	private static final int TYPE_ITERABLE = 22;
+	private static final int TYPE_ITERATOR = 23;
+	private static final int TYPE_ENUMERATION = 24;
+	private static final int TYPE_DYNA_BEAN = 25;
+	private static final int TYPE_DOM_ELEMENT = 26;
 	
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>(8);
 	private static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(48);
@@ -853,6 +854,16 @@ public class JSON {
 			checkRoot(context);
 			formatString(context, o.toString(), ap);
 			return;
+		case TYPE_NUMBER: {
+			checkRoot(context);
+			NumberFormat f = context.format(NumberFormat.class);
+			if (f != null) {
+				formatString(context, f.format(o), ap);
+			} else {
+				ap.append(o.toString());
+			}
+			return;
+		}
 		case TYPE_FLOAT: {
 			checkRoot(context);
 			NumberFormat f = context.format(NumberFormat.class);
@@ -875,16 +886,6 @@ public class JSON {
 				} else {
 					ap.append(o.toString());
 				}
-			}
-			return;
-		}
-		case TYPE_NUMBER: {
-			checkRoot(context);
-			NumberFormat f = context.format(NumberFormat.class);
-			if (f != null) {
-				formatString(context, f.format(o), ap);
-			} else {
-				ap.append(o.toString());
 			}
 			return;
 		}
@@ -1062,8 +1063,8 @@ public class JSON {
 		case TYPE_LIST: {
 			List<?> list = (List<?>)o;
 			ap.append('[');
-			int i = 0;
 			int length = list.size();
+			int i = 0;
 			for (; i < length; i++) {
 				Object item = list.get(i);
 				if (item == src) item = null;
@@ -1162,6 +1163,11 @@ public class JSON {
 		}
 		
 		switch (type) {
+		case TYPE_BYTE: {
+			checkRoot(context);
+			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
+			return;
+		}
 		case TYPE_CLASS: {
 			checkRoot(context);
 			formatString(context, ((Class<?>)o).getName(), ap);
@@ -1180,70 +1186,6 @@ public class JSON {
 		case TYPE_SERIALIZE: {
 			checkRoot(context);
 			formatString(context, Base64.encode(serialize(o)), ap);
-			return;
-		}
-		case TYPE_DOM_ELEMENT: {
-			Element elem = (Element)o;
-			ap.append('[');
-			formatString(context, elem.getTagName(), ap);
-			
-			ap.append(',');
-			if (context.isPrettyPrint()) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-			}
-			ap.append('{');
-			if (elem.hasAttributes()) {
-				NamedNodeMap names = elem.getAttributes();
-				for (int i = 0; i < names.getLength(); i++) {
-					if (i != 0) {
-						ap.append(',');
-					}
-					if (context.isPrettyPrint() && names.getLength() > 1) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
-					}
-					Node node = names.item(i);
-					if (node instanceof Attr) {
-						formatString(context, node.getNodeName(), ap);
-						ap.append(':');
-						if (context.isPrettyPrint()) ap.append(' ');
-						formatString(context, node.getNodeValue(), ap);
-					}
-				}
-				if (context.isPrettyPrint() && names.getLength() > 1) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-			}
-			ap.append('}');
-			if (elem.hasChildNodes()) {
-				NodeList nodes = elem.getChildNodes();
-				for (int i = 0; i < nodes.getLength(); i++) {
-					Node node = nodes.item(i);
-					if ((node instanceof Element) || (node instanceof CharacterData && !(node instanceof Comment))) {
-						ap.append(',');
-						if (context.isPrettyPrint()) {
-							ap.append('\n');
-							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-						}
-						context.enter(i+2);
-						format(context, node, ap);
-						context.exit();
-						if (ap instanceof Flushable) ((Flushable)ap).flush();
-					}
-				}
-			}
-			if (context.isPrettyPrint()) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_BYTE: {
-			checkRoot(context);
-			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
 			return;
 		}
 		case TYPE_ITERABLE:
@@ -1357,7 +1299,68 @@ public class JSON {
 			ap.append('}');
 			return;
 		}
+		case TYPE_DOM_ELEMENT: {
+			Element elem = (Element)o;
+			ap.append('[');
+			formatString(context, elem.getTagName(), ap);
+			
+			ap.append(',');
+			if (context.isPrettyPrint()) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+			}
+			ap.append('{');
+			if (elem.hasAttributes()) {
+				NamedNodeMap names = elem.getAttributes();
+				for (int i = 0; i < names.getLength(); i++) {
+					if (i != 0) {
+						ap.append(',');
+					}
+					if (context.isPrettyPrint() && names.getLength() > 1) {
+						ap.append('\n');
+						for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
+					}
+					Node node = names.item(i);
+					if (node instanceof Attr) {
+						formatString(context, node.getNodeName(), ap);
+						ap.append(':');
+						if (context.isPrettyPrint()) ap.append(' ');
+						formatString(context, node.getNodeValue(), ap);
+					}
+				}
+				if (context.isPrettyPrint() && names.getLength() > 1) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+			}
+			ap.append('}');
+			if (elem.hasChildNodes()) {
+				NodeList nodes = elem.getChildNodes();
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node node = nodes.item(i);
+					if ((node instanceof Element) || (node instanceof CharacterData && !(node instanceof Comment))) {
+						ap.append(',');
+						if (context.isPrettyPrint()) {
+							ap.append('\n');
+							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+						}
+						context.enter(i+2);
+						format(context, node, ap);
+						context.exit();
+						if (ap instanceof Flushable) ((Flushable)ap).flush();
+					}
+				}
+			}
+			if (context.isPrettyPrint()) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append(']');
+			return;
 		}
+		}
+		
+		throw new IllegalStateException();
 	}
 	
 	void checkRoot(Context context) {
