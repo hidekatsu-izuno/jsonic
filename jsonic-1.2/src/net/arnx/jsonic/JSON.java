@@ -842,37 +842,345 @@ public class JSON {
 				type = TYPE_OBJECT;
 			}
 		}
-		
+
 		switch (type) {
 		case TYPE_PLAIN: {
 			checkRoot(context);
 			ap.append(o.toString());
-			break;
+			return;
 		}
-		case TYPE_STRING: {
+		case TYPE_STRING:
 			checkRoot(context);
 			formatString(context, o.toString(), ap);
-			break;
+			return;
+		case TYPE_FLOAT: {
+			checkRoot(context);
+			NumberFormat f = context.format(NumberFormat.class);
+			if (f != null) {
+				formatString(context, f.format(o), ap);
+			} else {
+				double d = ((Number)o).doubleValue();
+				if (Double.isNaN(d) || Double.isInfinite(d)) {
+					if (mode != Mode.SCRIPT) {
+						ap.append('"');
+						ap.append(o.toString());
+						ap.append('"');
+					} else if (Double.isNaN(d)) {
+						ap.append("Number.NaN");
+					} else {
+						ap.append("Number.");
+						ap.append((d > 0) ? "POSITIVE" : "NEGATIVE");
+						ap.append("_INFINITY");
+					}
+				} else {
+					ap.append(o.toString());
+				}
+			}
+			return;
 		}
+		case TYPE_NUMBER: {
+			checkRoot(context);
+			NumberFormat f = context.format(NumberFormat.class);
+			if (f != null) {
+				formatString(context, f.format(o), ap);
+			} else {
+				ap.append(o.toString());
+			}
+			return;
+		}
+		case TYPE_DATE: {
+			checkRoot(context);
+			Date date = (Date)o;
+			DateFormat f = context.format(DateFormat.class);
+			if (f != null) {
+				formatString(context, f.format(date), ap);
+			} else if (mode == Mode.SCRIPT) {
+				ap.append("new Date(");
+				ap.append(Long.toString(date.getTime()));
+				ap.append(")");
+			} else {
+				ap.append(Long.toString(date.getTime()));
+			}
+			return;
+		}
+		case TYPE_BOOLEAN_ARRAY: {
+			ap.append('[');
+			boolean[] array = (boolean[])o;
+			for (int i = 0; i < array.length; i++) {
+				ap.append(String.valueOf(array[i]));
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_BYTE_ARRAY: {
+			checkRoot(context);
+			formatString(context, Base64.encode((byte[])o), ap);
+			return;
+		}
+		case TYPE_SHORT_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			short[] array = (short[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (f != null) {
+					formatString(context, f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_INT_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			int[] array = (int[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (f != null) {
+					formatString(context, f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_LONG_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			long[] array = (long[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (f != null) {
+					formatString(context, f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_FLOAT_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			float[] array = (float[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
+					if (mode != Mode.SCRIPT) {
+						ap.append('"');
+						ap.append(Float.toString(array[i]));
+						ap.append('"');
+					} else if (Double.isNaN(array[i])) {
+						ap.append("Number.NaN");
+					} else {
+						ap.append("Number.");
+						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
+						ap.append("_INFINITY");
+					}
+				} else if (f != null) {
+					formatString(context, f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_DOUBLE_ARRAY: {
+			NumberFormat f = context.format(NumberFormat.class);
+			double[] array = (double[])o;
+			ap.append('[');
+			for (int i = 0; i < array.length; i++) {
+				if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
+					if (mode != Mode.SCRIPT) {
+						ap.append('"');
+						ap.append(Double.toString(array[i]));
+						ap.append('"');
+					} else if (Double.isNaN(array[i])) {
+						ap.append("Number.NaN");
+					} else {
+						ap.append("Number.");
+						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
+						ap.append("_INFINITY");
+					}
+				} else if (f != null) {
+					formatString(context, f.format(array[i]), ap);
+				} else {
+					ap.append(String.valueOf(array[i]));
+				}
+				if (i != array.length-1) {
+					ap.append(',');
+					if (context.isPrettyPrint()) ap.append(' ');
+				}
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_OBJECT_ARRAY: {
+			Object[] array = (Object[])o;
+			ap.append('[');
+			int i = 0;
+			for (; i < array.length; i++) {
+				Object item = array[i];
+				if (item == src) item = null;
+				
+				if (i != 0) ap.append(',');
+				if (context.isPrettyPrint()) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
+			}
+			if (context.isPrettyPrint() && i > 0) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_LIST: {
+			List<?> list = (List<?>)o;
+			ap.append('[');
+			int i = 0;
+			int length = list.size();
+			for (; i < length; i++) {
+				Object item = list.get(i);
+				if (item == src) item = null;
+				
+				if (i != 0) ap.append(',');
+				if (context.isPrettyPrint()) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+				context.enter(i);
+				format(context, item, ap);
+				context.exit();
+			}
+			if (context.isPrettyPrint() && i > 0) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append(']');
+			return;
+		}
+		case TYPE_MAP: {
+			Map<?, ?> map = (Map<?, ?>)o;
+			
+			ap.append('{');
+			int i = 0;
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				Object key = entry.getKey();
+				if (key == null) continue;
+				
+				Object value = entry.getValue();
+				if (value == src || (this.suppressNull && value == null)) continue; 
+				
+				if (i > 0) ap.append(',');
+				if (context.isPrettyPrint()) {
+					ap.append('\n');
+					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+				}
+				formatString(context, key.toString(), ap);
+				ap.append(':');
+				if (context.isPrettyPrint()) ap.append(' ');
+				context.enter(key);
+				format(context, value, ap);
+				context.exit();
+				i++;
+			}
+			if (context.isPrettyPrint() && i > 0) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append('}');
+			return;
+		}
+		case TYPE_OBJECT: {
+			List<Property> props = context.getGetProperties(o.getClass());
+			
+			ap.append('{');
+			int i = 0;
+			for (int p = 0; p < props.size(); p++) {
+				Property prop = props.get(p);
+				Object value = null;
+				Exception cause = null; 
+
+				try {
+					value = prop.get(o);
+					if (value == src || (this.suppressNull && value == null)) continue;
+					
+					if (i > 0) ap.append(',');
+					if (context.isPrettyPrint()) {
+						ap.append('\n');
+						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
+					}
+				} catch (Exception e) {
+					cause = e;
+				}
+				
+				formatString(context, prop.getName(), ap);
+				ap.append(':');
+				if (context.isPrettyPrint()) ap.append(' ');
+				context.enter(prop.getName(), prop.getHint());
+				if (cause != null) {
+					throw new JSONException(getMessage("json.format.ConversionError",
+							(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
+							JSONException.FORMAT_ERROR, cause);					
+				}
+				format(context, value, ap);
+				context.exit();
+				i++;
+			}
+			if (context.isPrettyPrint() && i > 0) {
+				ap.append('\n');
+				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
+			}
+			ap.append('}');
+			return;
+		}
+		}
+		
+		switch (type) {
 		case TYPE_CLASS: {
 			checkRoot(context);
 			formatString(context, ((Class<?>)o).getName(), ap);
-			break;
+			return;
 		}
 		case TYPE_LOCALE: {
 			checkRoot(context);
 			formatString(context, ((Locale)o).toString().replace('_', '-'), ap);
-			break;
+			return;
 		}
 		case TYPE_CHAR_ARRAY: {
 			checkRoot(context);
 			formatString(context, new String((char[])o), ap);
-			break;
+			return;
 		}
 		case TYPE_SERIALIZE: {
 			checkRoot(context);
 			formatString(context, Base64.encode(serialize(o)), ap);
-			break;
+			return;
 		}
 		case TYPE_DOM_ELEMENT: {
 			Element elem = (Element)o;
@@ -931,243 +1239,12 @@ public class JSON {
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
-			break;
+			return;
 		}
 		case TYPE_BYTE: {
 			checkRoot(context);
 			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
-			break;
-		}
-		case TYPE_FLOAT: {
-			checkRoot(context);
-			NumberFormat f = context.format(NumberFormat.class);
-			if (f != null) {
-				formatString(context, f.format(o), ap);
-			} else {
-				double d = ((Number)o).doubleValue();
-				if (Double.isNaN(d) || Double.isInfinite(d)) {
-					if (mode != Mode.SCRIPT) {
-						ap.append('"');
-						ap.append(o.toString());
-						ap.append('"');
-					} else if (Double.isNaN(d)) {
-						ap.append("Number.NaN");
-					} else {
-						ap.append("Number.");
-						ap.append((d > 0) ? "POSITIVE" : "NEGATIVE");
-						ap.append("_INFINITY");
-					}
-				} else {
-					ap.append(o.toString());
-				}
-			}
-			break;
-		}
-		case TYPE_NUMBER: {
-			checkRoot(context);
-			NumberFormat f = context.format(NumberFormat.class);
-			if (f != null) {
-				formatString(context, f.format(o), ap);
-			} else {
-				ap.append(o.toString());
-			}
-			break;
-		}
-		case TYPE_DATE: {
-			checkRoot(context);
-			Date date = (Date)o;
-			DateFormat f = context.format(DateFormat.class);
-			if (f != null) {
-				formatString(context, f.format(date), ap);
-			} else if (mode == Mode.SCRIPT) {
-				ap.append("new Date(");
-				ap.append(Long.toString(date.getTime()));
-				ap.append(")");
-			} else {
-				ap.append(Long.toString(date.getTime()));
-			}
-			break;
-		}
-		case TYPE_BOOLEAN_ARRAY: {
-			ap.append('[');
-			boolean[] array = (boolean[])o;
-			for (int i = 0; i < array.length; i++) {
-				ap.append(String.valueOf(array[i]));
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			break;
-		}
-		case TYPE_BYTE_ARRAY: {
-			checkRoot(context);
-			formatString(context, Base64.encode((byte[])o), ap);
-			break;
-		}
-		case TYPE_SHORT_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			short[] array = (short[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			break;
-		}
-		case TYPE_INT_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			int[] array = (int[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			break;
-		}
-		case TYPE_LONG_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			long[] array = (long[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			break;
-		}
-		case TYPE_FLOAT_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			float[] array = (float[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
-					if (mode != Mode.SCRIPT) {
-						ap.append('"');
-						ap.append(Float.toString(array[i]));
-						ap.append('"');
-					} else if (Double.isNaN(array[i])) {
-						ap.append("Number.NaN");
-					} else {
-						ap.append("Number.");
-						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
-						ap.append("_INFINITY");
-					}
-				} else if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			break;
-		}
-		case TYPE_DOUBLE_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			double[] array = (double[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
-					if (mode != Mode.SCRIPT) {
-						ap.append('"');
-						ap.append(Double.toString(array[i]));
-						ap.append('"');
-					} else if (Double.isNaN(array[i])) {
-						ap.append("Number.NaN");
-					} else {
-						ap.append("Number.");
-						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
-						ap.append("_INFINITY");
-					}
-				} else if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			break;
-		}
-		case TYPE_OBJECT_ARRAY: {
-			Object[] array = (Object[])o;
-			ap.append('[');
-			int i = 0;
-			for (; i < array.length; i++) {
-				Object item = array[i];
-				if (item == src) item = null;
-				
-				if (i != 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				context.enter(i);
-				format(context, item, ap);
-				context.exit();
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			break;
-		}
-		case TYPE_LIST: {
-			List<?> list = (List<?>)o;
-			ap.append('[');
-			int i = 0;
-			int length = list.size();
-			for (; i < length; i++) {
-				Object item = list.get(i);
-				if (item == src) item = null;
-				
-				if (i != 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				context.enter(i);
-				format(context, item, ap);
-				context.exit();
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			break;
+			return;
 		}
 		case TYPE_ITERABLE:
 			o = ((Iterable<?>)o).iterator();			
@@ -1193,7 +1270,7 @@ public class JSON {
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
-			break;
+			return;
 		}
 		case TYPE_ENUMERATION: {
 			Enumeration<?> e = (Enumeration<?>)o;
@@ -1217,7 +1294,7 @@ public class JSON {
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append(']');
-			break;
+			return;
 		}
 		case TYPE_DYNA_BEAN: {
 			ap.append('{');
@@ -1278,92 +1355,15 @@ public class JSON {
 				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
 			}
 			ap.append('}');
-			break;
+			return;
 		}
-		case TYPE_MAP: {
-			Map<?, ?> map = (Map<?, ?>)o;
-			
-			ap.append('{');
-			int i = 0;
-			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				Object key = entry.getKey();
-				if (key == null) continue;
-				
-				Object value = entry.getValue();
-				if (value == src || (this.suppressNull && value == null)) continue; 
-				
-				if (i > 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				formatString(context, key.toString(), ap);
-				ap.append(':');
-				if (context.isPrettyPrint()) ap.append(' ');
-				context.enter(key);
-				format(context, value, ap);
-				context.exit();
-				i++;
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append('}');
-			break;
-		}
-		case TYPE_OBJECT: {
-			List<Property> props = context.getGetProperties(o.getClass());
-			
-			ap.append('{');
-			int i = 0;
-			for (int p = 0; p < props.size(); p++) {
-				Property prop = props.get(p);
-				Object value = null;
-				Exception cause = null; 
-
-				try {
-					value = prop.get(o);
-					if (value == src || (this.suppressNull && value == null)) continue;
-					
-					if (i > 0) ap.append(',');
-					if (context.isPrettyPrint()) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-					}
-				} catch (Exception e) {
-					cause = e;
-				}
-				
-				formatString(context, prop.getName(), ap);
-				ap.append(':');
-				if (context.isPrettyPrint()) ap.append(' ');
-				context.enter(prop.getName(), prop.getHint());
-				if (cause != null) {
-					throw new JSONException(getMessage("json.format.ConversionError",
-							(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
-							JSONException.FORMAT_ERROR, cause);					
-				}
-				format(context, value, ap);
-				context.exit();
-				i++;
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append('}');
-			break;
-		}
-		default:
-			throw new IllegalStateException();
 		}
 	}
 	
 	void checkRoot(Context context) {
 		if (context.getLevel() == 0 && mode != Mode.SCRIPT) {
 			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
-		}		
+		}
 	}
 	
 	void formatString(Context context, String s, FormatSource ap) throws IOException {
@@ -1372,10 +1372,8 @@ public class JSON {
 		int length = s.length();
 		for (int i = 0; i < length; i++) {
 			int c = s.charAt(i);
-			if (c < ESCAPE_CHARS.length) {
+			if (c < ESCAPE_CHARS.length && ESCAPE_CHARS[c] != 0) { 
 				int x = ESCAPE_CHARS[c];
-				if (x == 0) continue;
-				
 				if (x > 0) {
 					if (start < i) ap.append(s, start, i);
 					ap.append('\\');

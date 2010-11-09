@@ -60,25 +60,23 @@ class BufferedWriterFormatSource implements FormatSource {
 			pos += length;
 		} else {
 			writer.write(buf, 0, pos);
-			pos = 0;
 			if (length < buf.length) {
-				text.getChars(start, end, buf, pos);
-				pos += length;
+				text.getChars(start, end, buf, 0);
+				pos = length;
 			} else {
 				writer.write(text, start, length);
+				pos = 0;
 			}
 		}
 	}
 	
 	@Override
 	public void append(char c) throws IOException {
-		if (pos + 1 < buf.length) {
-			buf[pos++] = c;
-		} else {
+		if (pos + 1 >= buf.length) {
 			writer.write(buf, 0, pos);
 			pos = 0;
-			buf[pos++] = c;
 		}
+		buf[pos++] = c;
 	}
 	
 	public void flush() throws IOException {
