@@ -198,7 +198,7 @@ class FieldProperty implements Property {
 	}
 	
 	public String getName() {
-		return field.getName();
+		return name;
 	}
 	
 	public JSONHint getHint() {
@@ -246,6 +246,7 @@ class MethodProperty implements Property {
 	Class<?> type;
 	
 	public MethodProperty(String name, Method method, JSONHint hint) {
+		this.name = name;
 		this.method = method;
 		this.hint = hint;
 		this.method.setAccessible(true);

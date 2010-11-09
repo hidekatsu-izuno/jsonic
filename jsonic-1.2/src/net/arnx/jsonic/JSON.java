@@ -57,6 +57,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -801,16 +802,17 @@ public class JSON {
 				try {
 					o = ((java.sql.Array)o).getArray();
 				} catch (SQLException e) {
-					o = new Object[0];
+					o = null;
 				}
-				Integer result = FORMAT_MAP.get(o.getClass());
-				if (result != null) type = result;
+				if (o != null) o = new Object[0];
+				type = FORMAT_MAP.get(o.getClass());
 			} else if (o instanceof Struct) {
 				try {
 					o = ((Struct)o).getAttributes();
 				} catch (SQLException e) {
-					o = new Object[0];
+					o = null;
 				}
+				if (o != null) o = new Object[0];
 				type = TYPE_OBJECT_ARRAY;
 			} else if (o instanceof Node) {
 				if (o instanceof CharacterData && !(o instanceof Comment)) {
@@ -1294,23 +1296,18 @@ public class JSON {
 			break;
 		}
 		case TYPE_OBJECT: {
-			Map<String, AnnotatedElement> map = context.getGetProperties(o.getClass());
+			List<Property> props = context.getGetProperties(o.getClass());
 			
 			ap.append('{');
 			int i = 0;
-			for (Map.Entry<String, AnnotatedElement> entry : map.entrySet()) {
+			for (int p = 0; p < props.size(); p++) {
+				Property prop = props.get(p);
 				Object value = null;
 				Exception cause = null; 
 
-				AnnotatedElement member = entry.getValue();				
 				try {
-					if (member instanceof Method) {
-						value = ((Method)member).invoke(o);
-					} else {
-						value = ((Field)member).get(o);
-					}
+					value = prop.get(o);
 					if (value == src || (this.suppressNull && value == null)) continue;
-
 					
 					if (i > 0) ap.append(',');
 					if (context.isPrettyPrint()) {
@@ -1321,10 +1318,10 @@ public class JSON {
 					cause = e;
 				}
 				
-				formatString(context, entry.getKey().toString(), ap);
+				formatString(context, prop.getName(), ap);
 				ap.append(':');
 				if (context.isPrettyPrint()) ap.append(' ');
-				context.enter(entry.getKey(), member.getAnnotation(JSONHint.class));
+				context.enter(prop.getName(), prop.getHint());
 				if (cause != null) {
 					throw new JSONException(getMessage("json.format.ConversionError",
 							(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
@@ -2904,7 +2901,7 @@ public class JSON {
 		
 		Object[] path;
 		int level = -1;
-		Map<Class<?>, Map<String, AnnotatedElement>> memberCache;
+		Map<Class<?>, Object> memberCache;
 		StringBuilderFormatSource builderCache;
 		
 		public Context() {
@@ -3001,15 +2998,14 @@ public class JSON {
 			return memberCache != null && memberCache.containsKey(c);
 		}
 		
-		Map<String, AnnotatedElement> getGetProperties(Class<?> c) {
-			if (memberCache == null) memberCache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
+		@SuppressWarnings("unchecked")
+		List<Property> getGetProperties(Class<?> c) {
+			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
-			Map<String, AnnotatedElement> props = memberCache.get(c);
-			if (props != null) {
-				return props;
-			} else {
-				props = new TreeMap<String, AnnotatedElement>();
-			}
+			List<Property> list = (List<Property>)memberCache.get(c);
+			if (list != null) return list;
+			
+			Map<String, Property> props = new HashMap<String, Property>();
 			
 			for (Field f : c.getFields()) {
 				if (Modifier.isStatic(f.getModifiers())
@@ -3019,13 +3015,12 @@ public class JSON {
 				}
 				
 				String name = normalize(f.getName());
-				if (f.isAnnotationPresent(JSONHint.class)) {
-					JSONHint hint = f.getAnnotation(JSONHint.class);
+				JSONHint hint = f.getAnnotation(JSONHint.class);
+				if (hint != null) {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				f.setAccessible(true);
-				props.put(name, f);
+				props.put(name, new FieldProperty(name, f, hint));
 			}
 			
 			for (Method m : c.getMethods()) {
@@ -3062,28 +3057,28 @@ public class JSON {
 				}
 				name = normalize(name);
 				
-				if (m.isAnnotationPresent(JSONHint.class)) {
-					JSONHint hint = m.getAnnotation(JSONHint.class);
+				JSONHint hint = m.getAnnotation(JSONHint.class);
+				if (hint != null) {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				m.setAccessible(true);
-				props.put(name, m);
+				props.put(name, new MethodProperty(name, m, hint));
 			}
 			
-			memberCache.put(c, props);
-			return props;
+			list = new ArrayList<Property>(props.values());
+			Collections.sort(list);
+			
+			memberCache.put(c, list);
+			return list;
 		}
 		
+		@SuppressWarnings("unchecked")
 		Map<String, AnnotatedElement> getSetProperties(Class<?> c) {
-			if (memberCache == null) memberCache = new HashMap<Class<?>, Map<String, AnnotatedElement>>();
+			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
-			Map<String, AnnotatedElement> props = memberCache.get(c);
-			if (props != null) {
-				return props;
-			} else {
-				props = new TreeMap<String, AnnotatedElement>();
-			}
+			Map<String, AnnotatedElement> props = (Map<String, AnnotatedElement>)memberCache.get(c);
+			if (props != null) return props;
+			props = new HashMap<String, AnnotatedElement>();
 
 			for (Field f : c.getFields()) {
 				if (Modifier.isStatic(f.getModifiers())
@@ -3093,8 +3088,8 @@ public class JSON {
 				}
 				
 				String name = normalize(f.getName());
-				if (f.isAnnotationPresent(JSONHint.class)) {
-					JSONHint hint = f.getAnnotation(JSONHint.class);
+				JSONHint hint = f.getAnnotation(JSONHint.class);
+				if (hint != null) {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
@@ -3130,12 +3125,12 @@ public class JSON {
 				}
 				name = normalize(name);
 				
-				if (m.isAnnotationPresent(JSONHint.class)) {
-					JSONHint hint = m.getAnnotation(JSONHint.class);
+				JSONHint hint = m.getAnnotation(JSONHint.class);
+				if (hint != null) {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				m.setAccessible(true);				
+				m.setAccessible(true);
 				props.put(name, m);
 			}
 			
