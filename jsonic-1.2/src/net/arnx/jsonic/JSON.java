@@ -744,31 +744,6 @@ public class JSON {
 			checkRoot(context);
 			ap.append("null");
 			return;
-		} else if (o instanceof List<?>) {
-			List<?> list = (List<?>)o;
-			ap.append('[');
-			int length = list.size();
-			int i = 0;
-			for (; i < length; i++) {
-				Object item = list.get(i);
-				if (item == src) item = null;
-				
-				if (i != 0) ap.append(',');				
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				
-				context.enter(i);
-				format(context, item, ap);
-				context.exit();
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			return;
 		}
 
 		int type = TYPE_UNKNOWN;
