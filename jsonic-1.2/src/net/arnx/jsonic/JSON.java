@@ -808,7 +808,7 @@ public class JSON {
 				} catch (SQLException e) {
 					o = null;
 				}
-				if (o != null) o = new Object[0];
+				if (o == null) o = new Object[0];
 				type = FORMAT_MAP.get(o.getClass());
 			} else if (o instanceof Struct) {
 				try {
@@ -816,7 +816,7 @@ public class JSON {
 				} catch (SQLException e) {
 					o = null;
 				}
-				if (o != null) o = new Object[0];
+				if (o == null) o = new Object[0];
 				type = TYPE_OBJECT_ARRAY;
 			} else if (o instanceof Node) {
 				if (o instanceof CharacterData && !(o instanceof Comment)) {
@@ -834,8 +834,14 @@ public class JSON {
 				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
 				try {
 					o = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
-					type = TYPE_STRING;
 				} catch (Exception e) {
+					o = null;
+				}
+				if (o == null) {
+					o = "null";
+					type = TYPE_PLAIN;
+				} else {
+					type = TYPE_STRING;
 				}
 			} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
 				type = TYPE_DYNA_BEAN;
