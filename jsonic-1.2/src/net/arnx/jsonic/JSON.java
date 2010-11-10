@@ -30,7 +30,6 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -40,7 +39,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -2207,34 +2205,15 @@ public class JSON {
 			} else {
 				Object o = create(context, c);
 				if (o != null) {
-					Map<String, AnnotatedElement> props = context.getSetProperties(c);
+					Map<String, Property> props = context.getSetProperties(c);
 					for (Map.Entry<?, ?> entry : src.entrySet()) {
 						String name = entry.getKey().toString();
-						AnnotatedElement target = props.get(name);
+						Property target = props.get(name);
 						if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
 						if (target == null) continue;
 						
-						context.enter(name, target.getAnnotation(JSONHint.class));
-						if (target instanceof Method) {
-							Method m = (Method)target;
-							Type gptype = m.getGenericParameterTypes()[0];
-							Class<?> ptype = m.getParameterTypes()[0];
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							m.invoke(o, postparse(context, entry.getValue(), ptype, gptype));
-						} else {
-							Field f = (Field)target;
-							Type gptype = f.getGenericType();
-							Class<?> ptype =  f.getType();
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							
-							f.set(o, postparse(context, entry.getValue(), ptype, gptype));
-						}
+						context.enter(name, target.getHint());
+						target.set(o, postparse(context, value, target.getType(type), target.getGenericType(type)));
 						context.exit();
 					}
 					data = o;
@@ -2680,32 +2659,13 @@ public class JSON {
 				}
 				data = map;
 			} else if (hint != null && hint.anonym().length() > 0) {
-				Map<String, AnnotatedElement> props = context.getSetProperties(c);
-				AnnotatedElement target = props.get(hint.anonym());
+				Map<String, Property> props = context.getSetProperties(c);
+				Property target = props.get(hint.anonym());
 				if (target != null) {
 					Object o = create(context, c);
 					if (o != null) {
-						context.enter(hint.anonym(), target.getAnnotation(JSONHint.class));
-						if (target instanceof Method) {
-							Method m = (Method)target;
-							Type gptype = m.getGenericParameterTypes()[0];
-							Class<?> ptype = m.getParameterTypes()[0];
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							m.invoke(o, postparse(context, value, ptype, gptype));
-						} else {
-							Field f = (Field)target;
-							Type gptype = f.getGenericType();
-							Class<?> ptype =  f.getType();
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							
-							f.set(o, postparse(context, value, ptype, gptype));
-						}
+						context.enter(hint.anonym(), target.getHint());
+						target.set(o, postparse(context, value, target.getType(type), target.getGenericType(type)));
 						context.exit();
 					}
 					data = o;
@@ -3098,12 +3058,12 @@ public class JSON {
 		}
 		
 		@SuppressWarnings("unchecked")
-		Map<String, AnnotatedElement> getSetProperties(Class<?> c) {
+		Map<String, Property> getSetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
-			Map<String, AnnotatedElement> props = (Map<String, AnnotatedElement>)memberCache.get(c);
+			Map<String, Property> props = (Map<String, Property>)memberCache.get(c);
 			if (props != null) return props;
-			props = new HashMap<String, AnnotatedElement>();
+			props = new HashMap<String, Property>();
 
 			for (Field f : c.getFields()) {
 				if (Modifier.isStatic(f.getModifiers())
@@ -3118,8 +3078,7 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				f.setAccessible(true);
-				props.put(name, f);
+				props.put(name, new FieldProperty(name, f, hint));
 			}
 			
 			for (Method m : c.getMethods()) {
@@ -3155,8 +3114,7 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				m.setAccessible(true);
-				props.put(name, m);
+				props.put(name, new MethodProperty(name, m, hint));
 			}
 			
 			memberCache.put(c, props);
