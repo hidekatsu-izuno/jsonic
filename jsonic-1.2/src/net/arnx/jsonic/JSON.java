@@ -2066,7 +2066,6 @@ public class JSON {
 		}	
 	}
 	
-	
 	JSONException createParseException(String message, ParserSource s) {
 		return new JSONException("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?",
 				JSONException.PARSE_ERROR, s.getLineNumber(), s.getColumnNumber(), s.getOffset());
