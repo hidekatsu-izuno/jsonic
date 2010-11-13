@@ -204,6 +204,24 @@ class ByteArrayFormatter implements Formatter {
 	}
 }
 
+class SerializableFormatter extends StringFormatter {
+	public static Formatter INSTANCE = new SerializableFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		return super.format(json, context, src,
+				Base64.encode(serialize(o)), in);
+	}
+	
+	static byte[] serialize(Object data) throws IOException {
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(array);
+		out.writeObject(data);
+		out.close();
+		return array.toByteArray();
+	}
+}
+
 class ShortArrayFormatter implements Formatter {
 	public static Formatter INSTANCE = new ShortArrayFormatter();
 	
@@ -387,6 +405,45 @@ class ObjectArrayFormatter implements Formatter {
 	}
 }
 
+
+class ByteFormatter extends PlainFormatter {
+	public static Formatter INSTANCE = new ByteFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		return super.format(json, context, src,
+				Integer.toString(((Byte) o).byteValue() & 0xFF), in);
+	}
+}
+
+class ClassFormatter extends StringFormatter {
+	public static Formatter INSTANCE = new ClassFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		return super.format(json, context, src, ((Class<?>) o).getName(), in);
+	}
+}
+
+class LocaleFormatter extends StringFormatter {
+	public static Formatter INSTANCE = new LocaleFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		return super.format(json, context, src, ((Locale) o).toString()
+				.replace('_', '-'), in);
+	}
+}
+
+class CharArrayFormatter extends StringFormatter {
+	public static Formatter INSTANCE = new CharArrayFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		return super.format(json, context, src, new String((char[]) o), in);
+	}
+}
+
 class ListFormatter implements Formatter {
 	public static Formatter INSTANCE = new ListFormatter();
 	
@@ -398,6 +455,84 @@ class ListFormatter implements Formatter {
 		int i = 0;
 		for (; i < length; i++) {
 			Object item = list.get(i);
+			if (item == src)
+				item = null;
+
+			if (i != 0)
+				in.append(',');
+			if (context.isPrettyPrint()) {
+				in.append('\n');
+				for (int j = 0; j < context.getLevel() + 1; j++)
+					in.append('\t');
+			}
+			context.enter(i);
+			json.format(context, item, in);
+			context.exit();
+		}
+		if (context.isPrettyPrint() && i > 0) {
+			in.append('\n');
+			for (int j = 0; j < context.getLevel(); j++)
+				in.append('\t');
+		}
+		in.append(']');
+		return true;
+	}
+}
+
+class IteratorFormatter implements Formatter {
+	public static Formatter INSTANCE = new IteratorFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		Iterator<?> t = (Iterator<?>) o;
+		in.append('[');
+		int i = 0;
+		for (; t.hasNext(); i++) {
+			Object item = t.next();
+			if (item == src)
+				item = null;
+
+			if (i != 0)
+				in.append(',');
+			if (context.isPrettyPrint()) {
+				in.append('\n');
+				for (int j = 0; j < context.getLevel() + 1; j++)
+					in.append('\t');
+			}
+			context.enter(i);
+			json.format(context, item, in);
+			context.exit();
+		}
+		if (context.isPrettyPrint() && i > 0) {
+			in.append('\n');
+			for (int j = 0; j < context.getLevel(); j++)
+				in.append('\t');
+		}
+		in.append(']');
+		return true;
+	}
+}
+
+class IterableFormatter extends IteratorFormatter {
+	public static Formatter INSTANCE = new IterableFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		return super.format(json, context, src, ((Iterable<?>) o).iterator(),
+				in);
+	}
+}
+
+class EnumerationFormatter implements Formatter {
+	public static Formatter INSTANCE = new EnumerationFormatter();
+	
+	public boolean format(JSON json, Context context, Object src, Object o,
+			InputSource in) throws IOException {
+		Enumeration<?> e = (Enumeration<?>) o;
+		in.append('[');
+		int i = 0;
+		for (; e.hasMoreElements(); i++) {
+			Object item = e.nextElement();
 			if (item == src)
 				item = null;
 
@@ -513,140 +648,6 @@ class ObjectFormatter implements Formatter {
 				in.append('\t');
 		}
 		in.append('}');
-		return true;
-	}
-}
-
-class ByteFormatter extends PlainFormatter {
-	public static Formatter INSTANCE = new ByteFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		return super.format(json, context, src,
-				Integer.toString(((Byte) o).byteValue() & 0xFF), in);
-	}
-}
-
-class ClassFormatter extends StringFormatter {
-	public static Formatter INSTANCE = new ClassFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		return super.format(json, context, src, ((Class<?>) o).getName(), in);
-	}
-}
-
-class LocaleFormatter extends StringFormatter {
-	public static Formatter INSTANCE = new LocaleFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		return super.format(json, context, src, ((Locale) o).toString()
-				.replace('_', '-'), in);
-	}
-}
-
-class CharArrayFormatter extends StringFormatter {
-	public static Formatter INSTANCE = new CharArrayFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		return super.format(json, context, src, new String((char[]) o), in);
-	}
-}
-
-class SerializableFormatter extends StringFormatter {
-	public static Formatter INSTANCE = new SerializableFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		return super.format(json, context, src,
-				Base64.encode(serialize(o)), in);
-	}
-	
-	static byte[] serialize(Object data) throws IOException {
-		ByteArrayOutputStream array = new ByteArrayOutputStream();
-		ObjectOutputStream out = new ObjectOutputStream(array);
-		out.writeObject(data);
-		out.close();
-		return array.toByteArray();
-	}
-}
-
-class IteratorFormatter implements Formatter {
-	public static Formatter INSTANCE = new IteratorFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		Iterator<?> t = (Iterator<?>) o;
-		in.append('[');
-		int i = 0;
-		for (; t.hasNext(); i++) {
-			Object item = t.next();
-			if (item == src)
-				item = null;
-
-			if (i != 0)
-				in.append(',');
-			if (context.isPrettyPrint()) {
-				in.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
-					in.append('\t');
-			}
-			context.enter(i);
-			json.format(context, item, in);
-			context.exit();
-		}
-		if (context.isPrettyPrint() && i > 0) {
-			in.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
-				in.append('\t');
-		}
-		in.append(']');
-		return true;
-	}
-}
-
-class IterableFormatter extends IteratorFormatter {
-	public static Formatter INSTANCE = new IterableFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		return super.format(json, context, src, ((Iterable<?>) o).iterator(),
-				in);
-	}
-}
-
-class EnumerationFormatter implements Formatter {
-	public static Formatter INSTANCE = new EnumerationFormatter();
-	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		Enumeration<?> e = (Enumeration<?>) o;
-		in.append('[');
-		int i = 0;
-		for (; e.hasMoreElements(); i++) {
-			Object item = e.nextElement();
-			if (item == src)
-				item = null;
-
-			if (i != 0)
-				in.append(',');
-			if (context.isPrettyPrint()) {
-				in.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
-					in.append('\t');
-			}
-			context.enter(i);
-			json.format(context, item, in);
-			context.exit();
-		}
-		if (context.isPrettyPrint() && i > 0) {
-			in.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
-				in.append('\t');
-		}
-		in.append(']');
 		return true;
 	}
 }
