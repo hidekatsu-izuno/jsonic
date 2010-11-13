@@ -455,11 +455,9 @@ class ListFormatter implements Formatter {
 		int i = 0;
 		for (; i < length; i++) {
 			Object item = list.get(i);
-			if (item == src)
-				item = null;
+			if (item == src) item = null;
 
-			if (i != 0)
-				in.append(',');
+			if (i != 0) in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
 				for (int j = 0; j < context.getLevel() + 1; j++)
@@ -610,7 +608,8 @@ class ObjectFormatter implements Formatter {
 
 		in.append('{');
 		int i = 0;
-		for (int p = 0; p < props.size(); p++) {
+		int length = props.size();
+		for (int p = 0; p < length; p++) {
 			Property prop = props.get(p);
 			Object value = null;
 			Exception cause = null;
