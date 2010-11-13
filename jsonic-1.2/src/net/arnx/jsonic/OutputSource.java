@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-interface ParserSource {
+interface OutputSource {
 	int next() throws IOException;
 	void back();
 	long getLineNumber();
@@ -14,14 +14,14 @@ interface ParserSource {
 	long getOffset();
 }
 
-class CharSequenceParserSource implements ParserSource {
+class CharSequenceOutputSource implements OutputSource {
 	int lines = 1;
 	int columns = 1;
 	int offset = 0;
 	
 	CharSequence cs;
 	
-	public CharSequenceParserSource(CharSequence cs) {
+	public CharSequenceOutputSource(CharSequence cs) {
 		if (cs == null) {
 			throw new NullPointerException();
 		}
@@ -64,7 +64,7 @@ class CharSequenceParserSource implements ParserSource {
 	}
 }
 
-class ReaderParserSource implements ParserSource {
+class ReaderOutputSource implements OutputSource {
 	long lines = 1l;
 	long columns = 1l;
 	long offset = 0;
@@ -74,12 +74,12 @@ class ReaderParserSource implements ParserSource {
 	int start = 0;
 	int end = 0;
 	
-	public ReaderParserSource(InputStream in) throws IOException {
+	public ReaderOutputSource(InputStream in) throws IOException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		this.reader = new InputStreamReader(in, determineEncoding(in));
 	}
 	
-	public ReaderParserSource(Reader reader) {
+	public ReaderOutputSource(Reader reader) {
 		if (reader == null) {
 			throw new NullPointerException();
 		}

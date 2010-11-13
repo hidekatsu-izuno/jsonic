@@ -696,17 +696,17 @@ public class JSON {
 	public Appendable format(Object source, Appendable ap) throws IOException {
 		Context context = new Context();
 		
-		FormatSource fs;
+		InputSource fs;
 		if (ap instanceof StringWriter) {
-			fs = new WriterFormatSource((Writer)ap);
+			fs = new WriterInputSource((Writer)ap);
 		} else if (ap instanceof Writer) {
-			fs = new BufferedWriterFormatSource((Writer)ap);
+			fs = new BufferedWriterInputSource((Writer)ap);
 		} else if (ap instanceof StringBuilder) {
-			fs = new StringBuilderFormatSource((StringBuilder)ap);
+			fs = new StringBuilderInputSource((StringBuilder)ap);
 		} else if (ap instanceof StringBuilder) {
-			fs = new StringBuilderFormatSource((StringBuilder)ap);
+			fs = new StringBuilderInputSource((StringBuilder)ap);
 		} else {
-			fs = new AppendableFormatSource(ap);
+			fs = new AppendableInputSource(ap);
 		}
 		
 		context.enter('$');
@@ -728,7 +728,7 @@ public class JSON {
 		return value;
 	}
 	
-	void format(Context context, Object src, FormatSource ap) throws IOException {
+	void format(Context context, Object src, InputSource ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > this.maxDepth) {
 			o = null;
@@ -1369,7 +1369,7 @@ public class JSON {
 		}
 	}
 	
-	void formatString(Context context, String s, FormatSource ap) throws IOException {
+	void formatString(Context context, String s, InputSource ap) throws IOException {
 		ap.append('"');
 		int start = 0;
 		int length = s.length();
@@ -1399,7 +1399,7 @@ public class JSON {
 	public <T> T parse(CharSequence cs) throws JSONException {
 		Object value = null;
 		try {
-			value = parse(new Context(), new CharSequenceParserSource(cs));
+			value = parse(new Context(), new CharSequenceOutputSource(cs));
 		} catch (IOException e) {
 			// never occur
 		}
@@ -1416,7 +1416,7 @@ public class JSON {
 		T value = null;
 		try {
 			Context context = new Context();
-			value = (T)convert(context, parse(context, new CharSequenceParserSource(s)), type);
+			value = (T)convert(context, parse(context, new CharSequenceOutputSource(s)), type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -1425,7 +1425,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		return (T)parse(new Context(), new ReaderParserSource(in));
+		return (T)parse(new Context(), new ReaderOutputSource(in));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1436,12 +1436,12 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parse(context, new ReaderParserSource(in)), type);
+		return (T)convert(context, parse(context, new ReaderOutputSource(in)), type);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
-		return (T)parse(new Context(), new ReaderParserSource(reader));
+		return (T)parse(new Context(), new ReaderOutputSource(reader));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1452,10 +1452,10 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parse(context, new ReaderParserSource(reader)), type);
+		return (T)convert(context, parse(context, new ReaderOutputSource(reader)), type);
 	}
 	
-	Object parse(Context context, ParserSource s) throws IOException, JSONException {
+	Object parse(Context context, OutputSource s) throws IOException, JSONException {
 		boolean isEmpty = true;
 		Object o = null;
 		
@@ -1539,7 +1539,7 @@ public class JSON {
 		return o;
 	}
 	
-	Map<Object, Object> parseObject(Context context, ParserSource s, int level) throws IOException, JSONException {
+	Map<Object, Object> parseObject(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<Object, Object> map = (level <= this.maxDepth) ? new LinkedHashMap<Object, Object>() : null;
 		Object key = null;
@@ -1674,7 +1674,7 @@ public class JSON {
 		return map;
 	}
 	
-	List<Object> parseArray(Context context, ParserSource s, int level) throws IOException, JSONException {
+	List<Object> parseArray(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' 4  ... ']' E
 		List<Object> list = (level <= this.maxDepth) ? new ArrayList<Object>() : null;
 		
@@ -1774,9 +1774,9 @@ public class JSON {
 		return list;
 	}
 	
-	String parseString(Context context, ParserSource s, int level) throws IOException, JSONException {
+	String parseString(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		StringBuilderFormatSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
+		StringBuilderInputSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
 		char start = '\0';
 		
 		int n = -1;
@@ -1831,9 +1831,9 @@ public class JSON {
 		return (sb != null) ? sb.toString() : null;
 	}
 	
-	Object parseLiteral(Context context, ParserSource s, int level, boolean any) throws IOException, JSONException {
+	Object parseLiteral(Context context, OutputSource s, int level, boolean any) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilderFormatSource sb = context.getCachedBuffer();
+		StringBuilderInputSource sb = context.getCachedBuffer();
 
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1869,9 +1869,9 @@ public class JSON {
 		return str;
 	}	
 	
-	Number parseNumber(Context context, ParserSource s, int level) throws IOException, JSONException {
+	Number parseNumber(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilderFormatSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
+		StringBuilderInputSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1943,7 +1943,7 @@ public class JSON {
 		return (sb != null) ? new BigDecimal(sb.toString()) : null;
 	}
 	
-	char parseEscape(ParserSource s) throws IOException, JSONException {
+	char parseEscape(OutputSource s) throws IOException, JSONException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -2002,7 +2002,7 @@ public class JSON {
 		return escape;
 	}
 	
-	void skipComment(ParserSource s) throws IOException, JSONException {
+	void skipComment(OutputSource s) throws IOException, JSONException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -2062,7 +2062,7 @@ public class JSON {
 		}	
 	}
 	
-	JSONException createParseException(String message, ParserSource s) {
+	JSONException createParseException(String message, OutputSource s) {
 		return new JSONException("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?",
 				JSONException.PARSE_ERROR, s.getLineNumber(), s.getColumnNumber(), s.getOffset());
 	}
@@ -2921,15 +2921,15 @@ public class JSON {
 		Object[] path;
 		int level = -1;
 		Map<Class<?>, Object> memberCache;
-		StringBuilderFormatSource builderCache;
+		StringBuilderInputSource builderCache;
 		
 		public Context() {
 			prettyPrint = JSON.this.prettyPrint;
 		}
 		
-		public StringBuilderFormatSource getCachedBuffer() {
+		public StringBuilderInputSource getCachedBuffer() {
 			if (builderCache == null) {
-				builderCache = new StringBuilderFormatSource();
+				builderCache = new StringBuilderInputSource();
 			} else {
 				builderCache.clear();
 			}
@@ -3179,7 +3179,7 @@ public class JSON {
 		}
 		
 		public String toString() {
-			StringBuilderFormatSource sb = getCachedBuffer();
+			StringBuilderInputSource sb = getCachedBuffer();
 			for (int i = 0; i < path.length; i+=2) {
 				Object key = path[i];
 				if (key == null) {

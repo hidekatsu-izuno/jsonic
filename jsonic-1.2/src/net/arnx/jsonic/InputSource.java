@@ -3,17 +3,17 @@ package net.arnx.jsonic;
 import java.io.IOException;
 import java.io.Writer;
 
-interface FormatSource {
+interface InputSource {
 	public void append(String text) throws IOException;
 	public void append(String text, int start, int end) throws IOException;
 	public void append(char c) throws IOException;
 	public void flush() throws IOException;
 }
 
-class WriterFormatSource implements FormatSource {
+class WriterInputSource implements InputSource {
 	private Writer writer;
 	
-	public WriterFormatSource(Writer writer) {
+	public WriterInputSource(Writer writer) {
 		this.writer = writer;
 	}
 	
@@ -37,13 +37,13 @@ class WriterFormatSource implements FormatSource {
 	}
 }
 
-class BufferedWriterFormatSource implements FormatSource {
+class BufferedWriterInputSource implements InputSource {
 	private Writer writer;
 	
 	private char[] buf = new char[1000];
 	private int pos = 0;
 	
-	public BufferedWriterFormatSource(Writer writer) {
+	public BufferedWriterInputSource(Writer writer) {
 		this.writer = writer;
 	}
 	
@@ -85,7 +85,7 @@ class BufferedWriterFormatSource implements FormatSource {
 	}
 }
 
-class StringBufferFormatSource implements FormatSource {
+class StringBufferFormatSource implements InputSource {
 	private StringBuffer sb;
 	
 	public StringBufferFormatSource() {
@@ -125,14 +125,14 @@ class StringBufferFormatSource implements FormatSource {
 	}
 }
 
-class StringBuilderFormatSource implements FormatSource {
+class StringBuilderInputSource implements InputSource {
 	private StringBuilder sb;
 	
-	public StringBuilderFormatSource() {
+	public StringBuilderInputSource() {
 		this.sb = new StringBuilder(1000);
 	}
 	
-	public StringBuilderFormatSource(StringBuilder sb) {
+	public StringBuilderInputSource(StringBuilder sb) {
 		this.sb = sb;
 	}
 	
@@ -165,10 +165,10 @@ class StringBuilderFormatSource implements FormatSource {
 	}
 }
 
-class AppendableFormatSource implements FormatSource {
+class AppendableInputSource implements InputSource {
 	private Appendable ap;
 	
-	public AppendableFormatSource(Appendable ap) {
+	public AppendableInputSource(Appendable ap) {
 		this.ap = ap;
 	}
 	
