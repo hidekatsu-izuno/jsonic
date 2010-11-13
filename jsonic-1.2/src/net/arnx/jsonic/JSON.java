@@ -679,7 +679,7 @@ public class JSON {
 		return value;
 	}
 	
-	void format(Context context, Object src, InputSource ap) throws IOException {
+	final void format(Context context, Object src, InputSource ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > context.getMaxDepth()) {
 			o = null;
@@ -792,7 +792,7 @@ public class JSON {
 			}
 		}
 		
-		boolean isStruct = false;
+		boolean isStruct;
 		try {
 			isStruct = f.format(this, context, src, o, ap);
 		} catch (IOException e) {
