@@ -437,7 +437,7 @@ class ListFormatter implements Formatter {
 				for (int j = 0; j < context.getLevel() + 1; j++)
 					in.append('\t');
 			}
-			context.enter(i);
+			context.enter(count);
 			json.format(context, item, in);
 			context.exit();
 			count++;
