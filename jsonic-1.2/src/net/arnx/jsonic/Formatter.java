@@ -448,9 +448,8 @@ class CharArrayFormatter extends StringFormatter {
 class ListFormatter implements Formatter {
 	public static Formatter INSTANCE = new ListFormatter();
 	
-	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
-		List<?> list = (List<?>) o;
+	public boolean format(JSON json, Context context, Object src, Object o, InputSource in) throws IOException {
+		List<?> list = (List<?>)o;
 		in.append('[');
 		final int length = list.size();
 		int count = 0;
