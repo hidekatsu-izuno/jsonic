@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -452,8 +453,8 @@ class ListFormatter implements Formatter {
 		List<?> list = (List<?>) o;
 		in.append('[');
 		final int length = list.size();
-		int i = 0;
-		for (; i < length; i++) {
+		int count = 0;
+		for (int i = 0; i < length; i++) {
 			Object item = list.get(i);
 			if (item == src) item = null;
 
@@ -466,8 +467,9 @@ class ListFormatter implements Formatter {
 			context.enter(i);
 			json.format(context, item, in);
 			context.exit();
+			count++;
 		}
-		if (context.isPrettyPrint() && i > 0) {
+		if (context.isPrettyPrint() && count > 0) {
 			in.append('\n');
 			for (int j = 0; j < context.getLevel(); j++)
 				in.append('\t');
@@ -484,24 +486,25 @@ class IteratorFormatter implements Formatter {
 			InputSource in) throws IOException {
 		Iterator<?> t = (Iterator<?>) o;
 		in.append('[');
-		int i = 0;
-		for (; t.hasNext(); i++) {
+		int count = 0;
+		while(t.hasNext()) {
 			Object item = t.next();
 			if (item == src)
 				item = null;
 
-			if (i != 0)
+			if (count != 0)
 				in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
 				for (int j = 0; j < context.getLevel() + 1; j++)
 					in.append('\t');
 			}
-			context.enter(i);
+			context.enter(count);
 			json.format(context, item, in);
 			context.exit();
+			count++;
 		}
-		if (context.isPrettyPrint() && i > 0) {
+		if (context.isPrettyPrint() && count > 0) {
 			in.append('\n');
 			for (int j = 0; j < context.getLevel(); j++)
 				in.append('\t');
@@ -528,24 +531,23 @@ class EnumerationFormatter implements Formatter {
 			InputSource in) throws IOException {
 		Enumeration<?> e = (Enumeration<?>) o;
 		in.append('[');
-		int i = 0;
-		for (; e.hasMoreElements(); i++) {
+		int count = 0;
+		while (e.hasMoreElements()) {
 			Object item = e.nextElement();
-			if (item == src)
-				item = null;
+			if (item == src) item = null;
 
-			if (i != 0)
-				in.append(',');
+			if (count != 0) in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
 				for (int j = 0; j < context.getLevel() + 1; j++)
 					in.append('\t');
 			}
-			context.enter(i);
+			context.enter(count);
 			json.format(context, item, in);
 			context.exit();
+			count++;
 		}
-		if (context.isPrettyPrint() && i > 0) {
+		if (context.isPrettyPrint() && count > 0) {
 			in.append('\n');
 			for (int j = 0; j < context.getLevel(); j++)
 				in.append('\t');
@@ -563,7 +565,7 @@ class MapFormatter implements Formatter {
 		Map<?, ?> map = (Map<?, ?>) o;
 
 		in.append('{');
-		int i = 0;
+		int count = 0;
 		for (Map.Entry<?, ?> entry : map.entrySet()) {
 			Object key = entry.getKey();
 			if (key == null)
@@ -573,7 +575,7 @@ class MapFormatter implements Formatter {
 			if (value == src || (context.isSuppressNull() && value == null))
 				continue;
 
-			if (i > 0)
+			if (count != 0)
 				in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
@@ -587,9 +589,9 @@ class MapFormatter implements Formatter {
 			context.enter(key);
 			json.format(context, value, in);
 			context.exit();
-			i++;
+			count++;
 		}
-		if (context.isPrettyPrint() && i > 0) {
+		if (context.isPrettyPrint() && count > 0) {
 			in.append('\n');
 			for (int j = 0; j < context.getLevel(); j++)
 				in.append('\t');
@@ -607,7 +609,7 @@ class ObjectFormatter implements Formatter {
 		List<Property> props = context.getGetProperties(o.getClass());
 
 		in.append('{');
-		int i = 0;
+		int count = 0;
 		final int length = props.size();
 		for (int p = 0; p < length; p++) {
 			Property prop = props.get(p);
@@ -619,8 +621,7 @@ class ObjectFormatter implements Formatter {
 				if (value == src || (context.isSuppressNull() && value == null))
 					continue;
 
-				if (i > 0)
-					in.append(',');
+				if (count != 0) in.append(',');
 				if (context.isPrettyPrint()) {
 					in.append('\n');
 					for (int j = 0; j < context.getLevel() + 1; j++)
@@ -639,9 +640,9 @@ class ObjectFormatter implements Formatter {
 			
 			json.format(context, value, in);
 			context.exit();
-			i++;
+			count++;
 		}
-		if (context.isPrettyPrint() && i > 0) {
+		if (context.isPrettyPrint() && count > 0) {
 			in.append('\n');
 			for (int j = 0; j < context.getLevel(); j++)
 				in.append('\t');
@@ -655,9 +656,9 @@ class DynaBeanFormatter implements Formatter {
 	public static Formatter INSTANCE = new DynaBeanFormatter();
 	
 	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
+			InputSource in) throws Exception {
 		in.append('{');
-		int i = 0;
+		int count = 0;
 		try {
 			Class<?> dynaBeanClass = ClassUtil
 					.findClass("org.apache.commons.beanutils.DynaBean");
@@ -676,10 +677,11 @@ class DynaBeanFormatter implements Formatter {
 					Object name = null;
 					try {
 						name = getName.invoke(dp);
+					} catch (InvocationTargetException e) {
+						throw e;
 					} catch (Exception e) {
 					}
-					if (name == null)
-						continue;
+					if (name == null) continue;
 
 					Object value = null;
 					Exception cause = null;
@@ -690,12 +692,11 @@ class DynaBeanFormatter implements Formatter {
 						cause = e;
 					}
 
-					if (value == src
-							|| (cause == null && context.isSuppressNull() && value == null))
+					if (value == src || (cause == null && context.isSuppressNull() && value == null)) {
 						continue;
+					}
 
-					if (i > 0)
-						in.append(',');
+					if (count != 0) in.append(',');
 					if (context.isPrettyPrint()) {
 						in.append('\n');
 						for (int j = 0; j < context.getLevel() + 1; j++)
@@ -703,25 +704,26 @@ class DynaBeanFormatter implements Formatter {
 					}
 					StringFormatter.serialize(context, name.toString(), in);
 					in.append(':');
-					if (context.isPrettyPrint())
-						in.append(' ');
+					if (context.isPrettyPrint()) in.append(' ');
 					context.enter(name);
-					if (cause != null) {
-						throw new JSONException(json.getMessage(
-								"json.format.ConversionError",
-								(src instanceof CharSequence) ? "\"" + src
-										+ "\"" : src, context),
-								JSONException.FORMAT_ERROR, cause);
-					}
+					if (cause != null) throw cause;
 					json.format(context, value, in);
 					context.exit();
-					i++;
+					count++;
 				}
+			}
+		} catch (InvocationTargetException e) {
+			if (e.getCause() instanceof Error) {
+				throw (Error)e.getCause();
+			} else if (e.getCause() instanceof RuntimeException) {
+				throw (RuntimeException)e.getCause();
+			} else {
+				throw (Exception)e.getCause();
 			}
 		} catch (Exception e) {
 			// no handle
 		}
-		if (context.isPrettyPrint() && i > 0) {
+		if (context.isPrettyPrint() && count > 0) {
 			in.append('\n');
 			for (int j = 0; j < context.getLevel(); j++)
 				in.append('\t');
