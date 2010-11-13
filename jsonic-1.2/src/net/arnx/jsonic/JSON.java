@@ -698,14 +698,14 @@ public class JSON {
 			f = NullFormatter.INSTANCE;
 		} else {
 			JSONHint hint = context.getHint();
-			if (hint != null) {
-				if (hint.serialized()) {
-					f = PlainFormatter.INSTANCE;
-				} else if (String.class.equals(hint.type())) {
-					f = StringFormatter.INSTANCE;
-				} else if (Serializable.class.equals(hint.type())) {
-					f = SerializableFormatter.INSTANCE;
-				}
+			if (hint == null) {
+				// no handle
+			} else if (hint.serialized()) {
+				f = PlainFormatter.INSTANCE;
+			} else if (String.class.equals(hint.type())) {
+				f = StringFormatter.INSTANCE;
+			} else if (Serializable.class.equals(hint.type())) {
+				f = SerializableFormatter.INSTANCE;
 			}
 		}
 		
