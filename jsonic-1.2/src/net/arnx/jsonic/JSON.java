@@ -782,7 +782,6 @@ public class JSON {
 					o = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
 					f = StringFormatter.INSTANCE;
 				} catch (Exception e) {
-					o = null;
 					f = NullFormatter.INSTANCE;
 				}
 				f = StringFormatter.INSTANCE;
