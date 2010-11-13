@@ -681,7 +681,7 @@ public class JSON {
 	
 	void format(Context context, Object src, InputSource ap) throws IOException {
 		Object o = src;
-		if (context.getLevel() > this.maxDepth) {
+		if (context.getLevel() > context.getMaxDepth()) {
 			o = null;
 		} else {
 			try {
@@ -954,7 +954,7 @@ public class JSON {
 	
 	Map<Object, Object> parseObject(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
-		Map<Object, Object> map = (level <= this.maxDepth) ? new LinkedHashMap<Object, Object>() : null;
+		Map<Object, Object> map = (level <= context.getMaxDepth()) ? new LinkedHashMap<Object, Object>() : null;
 		Object key = null;
 		char start = '\0';
 		
@@ -979,7 +979,7 @@ public class JSON {
 				} else if (point == 2 || point == 3){
 					s.back();
 					Object value = parseObject(context, s, level+1);
-					if (level < this.maxDepth) map.put(key, value);
+					if (level < context.getMaxDepth()) map.put(key, value);
 					point = 5;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -994,7 +994,7 @@ public class JSON {
 				continue;
 			case ',':
 				if (point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3)) {
-					if (point == 3 && level < this.maxDepth && !this.suppressNull) {
+					if (point == 3 && level < context.getMaxDepth() && !context.isSuppressNull()) {
 						map.put(key, null);
 					}
 					point = 1;
@@ -1004,7 +1004,7 @@ public class JSON {
 				continue;
 			case '}':
 				if (start == '{' && (point == 1 || point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3))) {
-					if (point == 3 && level < this.maxDepth && !this.suppressNull) {
+					if (point == 3 && level < context.getMaxDepth() && !context.isSuppressNull()) {
 						map.put(key, null);
 					}
 				} else {
@@ -1015,7 +1015,7 @@ public class JSON {
 				if (point == 3) {
 					s.back();
 					List<Object> value = parseArray(context, s, level+1);
-					if (level < this.maxDepth) map.put(key, value);
+					if (level < context.getMaxDepth()) map.put(key, value);
 					point = 5;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1036,7 +1036,7 @@ public class JSON {
 				} else if (point == 3) {
 					s.back();
 					String value = parseString(context, s, level+1);
-					if (level < this.maxDepth) map.put(key, value);
+					if (level < context.getMaxDepth()) map.put(key, value);
 					point = 5;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1064,7 +1064,7 @@ public class JSON {
 			} else if (point == 3) {
 				s.back();
 				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
-				if (level < this.maxDepth && (value != null || !this.suppressNull)) {
+				if (level < context.getMaxDepth() && (value != null || !context.isSuppressNull())) {
 					map.put(key, value);
 				}
 				point = 5;
@@ -1075,7 +1075,7 @@ public class JSON {
 		
 		if (n == -1) {
 			if (point == 3 || point == 4) {
-				if (level < this.maxDepth && !this.suppressNull) map.put(key, null);
+				if (level < context.getMaxDepth() && !context.isSuppressNull()) map.put(key, null);
 			} else if (point == 2) {
 				throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
 			}
@@ -1089,7 +1089,7 @@ public class JSON {
 	
 	List<Object> parseArray(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' 4  ... ']' E
-		List<Object> list = (level <= this.maxDepth) ? new ArrayList<Object>() : null;
+		List<Object> list = (level <= context.getMaxDepth()) ? new ArrayList<Object>() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1111,7 +1111,7 @@ public class JSON {
 				} else if (point == 1 || point == 3 || point == 4) {
 					s.back();
 					List<Object> value = parseArray(context, s, level+1);
-					if (level < this.maxDepth) list.add(value);
+					if (level < context.getMaxDepth()) list.add(value);
 					point = 2;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1119,7 +1119,7 @@ public class JSON {
 				continue;
 			case ',':
 				if (context.getMode() == Mode.TRADITIONAL && (point == 1 || point == 4)) {
-					if (level < this.maxDepth) list.add(null);
+					if (level < context.getMaxDepth()) list.add(null);
 				} else if (point == 2 || point == 3) {
 					point = 4;
 				} else {
@@ -1130,7 +1130,7 @@ public class JSON {
 				if (point == 1 || point == 2 || point == 3) {
 					// nothing
 				} else if (context.getMode() == Mode.TRADITIONAL && point == 4) {
-					if (level < this.maxDepth) list.add(null);
+					if (level < context.getMaxDepth()) list.add(null);
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
@@ -1139,7 +1139,7 @@ public class JSON {
 				if (point == 1 || point == 3 || point == 4){
 					s.back();
 					Map<Object, Object> value = parseObject(context, s, level+1);
-					if (level < this.maxDepth) list.add(value);
+					if (level < context.getMaxDepth()) list.add(value);
 					point = 2;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1153,7 +1153,7 @@ public class JSON {
 				if (point == 1 || point == 3 || point == 4) {
 					s.back();
 					String value = parseString(context, s, level+1);
-					if (level < this.maxDepth) list.add(value);
+					if (level < context.getMaxDepth()) list.add(value);
 					point = 2;
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1174,7 +1174,7 @@ public class JSON {
 			if (point == 1 || point == 3 || point == 4) {
 				s.back();
 				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
-				if (level < this.maxDepth) list.add(value);
+				if (level < context.getMaxDepth()) list.add(value);
 				point = 2;
 			} else {
 				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1189,7 +1189,7 @@ public class JSON {
 	
 	String parseString(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		StringBuilderInputSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
+		StringBuilderInputSource sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		char start = '\0';
 		
 		int n = -1;
@@ -1284,7 +1284,7 @@ public class JSON {
 	
 	Number parseNumber(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilderInputSource sb = (level <= this.maxDepth) ? context.getCachedBuffer() : null;
+		StringBuilderInputSource sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -2321,6 +2321,7 @@ public class JSON {
 	}
 	
 	public class Context {
+		final int maxDepth;
 		final boolean prettyPrint;
 		final boolean suppressNull;
 		final Mode mode;
@@ -2331,6 +2332,7 @@ public class JSON {
 		StringBuilderInputSource builderCache;
 		
 		public Context() {
+			maxDepth = JSON.this.maxDepth;
 			prettyPrint = JSON.this.prettyPrint;
 			suppressNull = JSON.this.suppressNull;
 			mode = JSON.this.mode;
@@ -2343,6 +2345,10 @@ public class JSON {
 				builderCache.clear();
 			}
 			return builderCache;
+		}
+		
+		public int getMaxDepth() {
+			return maxDepth;
 		}
 		
 		public boolean isPrettyPrint() {
