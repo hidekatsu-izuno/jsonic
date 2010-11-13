@@ -17,13 +17,10 @@ package net.arnx.jsonic;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.Flushable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -83,14 +80,11 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as 
@@ -186,53 +180,10 @@ public class JSON {
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
 	
-	private static final int TYPE_UNKNOWN = 0;
-	private static final int TYPE_PLAIN = 1;
-	private static final int TYPE_STRING = 2;
-	private static final int TYPE_NUMBER = 3;
-	private static final int TYPE_FLOAT = 4;
-	private static final int TYPE_DATE = 5;
-	private static final int TYPE_BOOLEAN_ARRAY = 6;
-	private static final int TYPE_BYTE_ARRAY = 7;
-	private static final int TYPE_SHORT_ARRAY = 8;
-	private static final int TYPE_INT_ARRAY = 9;
-	private static final int TYPE_LONG_ARRAY = 10;
-	private static final int TYPE_FLOAT_ARRAY = 11;
-	private static final int TYPE_DOUBLE_ARRAY = 12;
-	private static final int TYPE_OBJECT_ARRAY = 13;
-	private static final int TYPE_LIST = 14;
-	private static final int TYPE_MAP = 15;
-	private static final int TYPE_OBJECT = 16;
-
-	private static final int TYPE_BYTE = 17;
-	private static final int TYPE_CLASS = 18;
-	private static final int TYPE_LOCALE = 19;
-	private static final int TYPE_CHAR_ARRAY = 20;
-	private static final int TYPE_SERIALIZE = 21;
-	private static final int TYPE_ITERABLE = 22;
-	private static final int TYPE_ITERATOR = 23;
-	private static final int TYPE_ENUMERATION = 24;
-	private static final int TYPE_DYNA_BEAN = 25;
-	private static final int TYPE_DOM_ELEMENT = 26;
-	
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>(8);
-	private static final Map<Class<?>, Integer> FORMAT_MAP = new HashMap<Class<?>, Integer>(48);
-	
-	private static final int[] ESCAPE_CHARS = new int[128];
+	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(48);
 	
 	static {
-		for (int i = 0; i < 32; i++) ESCAPE_CHARS[i] = -1;
-		ESCAPE_CHARS['\b'] = 'b';
-		ESCAPE_CHARS['\t'] = 't';
-		ESCAPE_CHARS['\n'] = 'n';
-		ESCAPE_CHARS['\f'] = 'f';
-		ESCAPE_CHARS['\r'] = 'r';
-		ESCAPE_CHARS['"'] = '"';
-		ESCAPE_CHARS['\\'] = '\\';
-		ESCAPE_CHARS['<'] = -2;
-		ESCAPE_CHARS['>'] = -2;
-		ESCAPE_CHARS[0x7F] = -1;
-		
 		PRIMITIVE_MAP.put(boolean.class, false);
 		PRIMITIVE_MAP.put(byte.class, (byte)0);
 		PRIMITIVE_MAP.put(short.class, (short)0);
@@ -242,59 +193,59 @@ public class JSON {
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
 		
-		FORMAT_MAP.put(boolean.class, TYPE_PLAIN);
-		FORMAT_MAP.put(byte.class, TYPE_BYTE);
-		FORMAT_MAP.put(short.class, TYPE_NUMBER);
-		FORMAT_MAP.put(int.class, TYPE_NUMBER);
-		FORMAT_MAP.put(long.class, TYPE_NUMBER);
-		FORMAT_MAP.put(float.class, TYPE_FLOAT);
-		FORMAT_MAP.put(double.class, TYPE_FLOAT);
-		FORMAT_MAP.put(char.class, TYPE_STRING);
+		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
+		FORMAT_MAP.put(byte.class, ByteFormatter.INSTANCE);
+		FORMAT_MAP.put(short.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(int.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(long.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(float.class, FloatFormatter.INSTANCE);
+		FORMAT_MAP.put(double.class, FloatFormatter.INSTANCE);
+		FORMAT_MAP.put(char.class, StringFormatter.INSTANCE);
 		
-		FORMAT_MAP.put(boolean[].class, TYPE_BOOLEAN_ARRAY);
-		FORMAT_MAP.put(byte[].class, TYPE_BYTE_ARRAY);
-		FORMAT_MAP.put(short[].class, TYPE_SHORT_ARRAY);
-		FORMAT_MAP.put(int[].class, TYPE_INT_ARRAY);
-		FORMAT_MAP.put(long[].class, TYPE_LONG_ARRAY);
-		FORMAT_MAP.put(float[].class, TYPE_FLOAT_ARRAY);
-		FORMAT_MAP.put(double[].class, TYPE_DOUBLE_ARRAY);
-		FORMAT_MAP.put(char[].class, TYPE_CHAR_ARRAY);
-		FORMAT_MAP.put(Object[].class, TYPE_OBJECT_ARRAY);
+		FORMAT_MAP.put(boolean[].class, BooleanArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(byte[].class, ByteArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(short[].class, ShortArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(int[].class, IntArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(long[].class, LongArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(float[].class, FloatArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(double[].class, DoubleArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(char[].class, CharArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(Object[].class, ObjectArrayFormatter.INSTANCE);
 		
-		FORMAT_MAP.put(Boolean.class, TYPE_PLAIN);
-		FORMAT_MAP.put(Byte.class, TYPE_BYTE);
-		FORMAT_MAP.put(Short.class, TYPE_NUMBER);
-		FORMAT_MAP.put(Integer.class, TYPE_NUMBER);
-		FORMAT_MAP.put(Long.class, TYPE_NUMBER);
-		FORMAT_MAP.put(Float.class, TYPE_FLOAT);
-		FORMAT_MAP.put(Double.class, TYPE_FLOAT);
-		FORMAT_MAP.put(Character.class, TYPE_STRING);
+		FORMAT_MAP.put(Boolean.class, PlainFormatter.INSTANCE);
+		FORMAT_MAP.put(Byte.class, ByteFormatter.INSTANCE);
+		FORMAT_MAP.put(Short.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(Integer.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(Long.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(Float.class, FloatFormatter.INSTANCE);
+		FORMAT_MAP.put(Double.class, FloatFormatter.INSTANCE);
+		FORMAT_MAP.put(Character.class, StringFormatter.INSTANCE);
 		
-		FORMAT_MAP.put(BigInteger.class, TYPE_NUMBER);
-		FORMAT_MAP.put(BigDecimal.class, TYPE_NUMBER);
-		FORMAT_MAP.put(String.class, TYPE_STRING);
-		FORMAT_MAP.put(Date.class, TYPE_DATE);
-		FORMAT_MAP.put(java.sql.Date.class, TYPE_DATE);
-		FORMAT_MAP.put(java.sql.Time.class, TYPE_DATE);
-		FORMAT_MAP.put(java.sql.Timestamp.class, TYPE_DATE);
-		FORMAT_MAP.put(URI.class, TYPE_STRING);
-		FORMAT_MAP.put(URL.class, TYPE_STRING);
-		FORMAT_MAP.put(UUID.class, TYPE_STRING);
-		FORMAT_MAP.put(Pattern.class, TYPE_STRING);
-		FORMAT_MAP.put(Class.class, TYPE_CLASS);
-		FORMAT_MAP.put(Locale.class, TYPE_LOCALE);
+		FORMAT_MAP.put(BigInteger.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(BigDecimal.class, NumberFormatter.INSTANCE);
+		FORMAT_MAP.put(String.class, StringFormatter.INSTANCE);
+		FORMAT_MAP.put(Date.class, DateFormatter.INSTANCE);
+		FORMAT_MAP.put(java.sql.Date.class, DateFormatter.INSTANCE);
+		FORMAT_MAP.put(java.sql.Time.class, DateFormatter.INSTANCE);
+		FORMAT_MAP.put(java.sql.Timestamp.class, DateFormatter.INSTANCE);
+		FORMAT_MAP.put(URI.class, StringFormatter.INSTANCE);
+		FORMAT_MAP.put(URL.class, StringFormatter.INSTANCE);
+		FORMAT_MAP.put(UUID.class, StringFormatter.INSTANCE);
+		FORMAT_MAP.put(Pattern.class, StringFormatter.INSTANCE);
+		FORMAT_MAP.put(Class.class, ClassFormatter.INSTANCE);
+		FORMAT_MAP.put(Locale.class, LocaleFormatter.INSTANCE);
 		
-		FORMAT_MAP.put(ArrayList.class, TYPE_LIST);
-		FORMAT_MAP.put(LinkedList.class, TYPE_ITERABLE);
-		FORMAT_MAP.put(HashSet.class, TYPE_ITERABLE);
-		FORMAT_MAP.put(TreeSet.class, TYPE_ITERABLE);
-		FORMAT_MAP.put(LinkedHashSet.class, TYPE_ITERABLE);
+		FORMAT_MAP.put(ArrayList.class, ListFormatter.INSTANCE);
+		FORMAT_MAP.put(LinkedList.class, IterableFormatter.INSTANCE);
+		FORMAT_MAP.put(HashSet.class, IterableFormatter.INSTANCE);
+		FORMAT_MAP.put(TreeSet.class, IterableFormatter.INSTANCE);
+		FORMAT_MAP.put(LinkedHashSet.class, IterableFormatter.INSTANCE);
 		
-		FORMAT_MAP.put(HashMap.class, TYPE_MAP);
-		FORMAT_MAP.put(IdentityHashMap.class, TYPE_MAP);
-		FORMAT_MAP.put(Properties.class, TYPE_MAP);
-		FORMAT_MAP.put(TreeMap.class, TYPE_MAP);
-		FORMAT_MAP.put(LinkedHashMap.class, TYPE_MAP);
+		FORMAT_MAP.put(HashMap.class, MapFormatter.INSTANCE);
+		FORMAT_MAP.put(IdentityHashMap.class, MapFormatter.INSTANCE);
+		FORMAT_MAP.put(Properties.class, MapFormatter.INSTANCE);
+		FORMAT_MAP.put(TreeMap.class, MapFormatter.INSTANCE);
+		FORMAT_MAP.put(LinkedHashMap.class, MapFormatter.INSTANCE);
 	}
 	
 	static JSON newInstance() {
@@ -740,68 +691,63 @@ public class JSON {
 					JSONException.PREFORMAT_ERROR, e);
 			}
 		}
+
+		Formatter f = null;
 		
 		if (o == null) {
-			checkRoot(context);
-			ap.append("null");
-			return;
-		}
-
-		int type = TYPE_UNKNOWN;
-		
-		JSONHint hint = context.getHint();
-		if (hint != null) {
-			if (hint.serialized()) {
-				type = TYPE_PLAIN;
-			} else if (String.class.equals(hint.type())) {
-				type = TYPE_STRING;
-			} else if (Serializable.class.equals(hint.type())) {
-				type = TYPE_SERIALIZE;
+			f = NullFormatter.INSTANCE;
+		} else {
+			JSONHint hint = context.getHint();
+			if (hint != null) {
+				if (hint.serialized()) {
+					f = PlainFormatter.INSTANCE;
+				} else if (String.class.equals(hint.type())) {
+					f = StringFormatter.INSTANCE;
+				} else if (Serializable.class.equals(hint.type())) {
+					f = SerializableFormatter.INSTANCE;
+				}
 			}
 		}
 		
-		if (type == TYPE_UNKNOWN) {
-			Integer result = FORMAT_MAP.get(o.getClass());
-			if (result != null) type = result;
-		}
+		if (f == null) f = FORMAT_MAP.get(o.getClass());
 		
-		if (type == TYPE_UNKNOWN) {
+		if (f == null) {
 			if (context.hasMemberCache(o.getClass())) {
-				type = TYPE_OBJECT;
+				f = ObjectFormatter.INSTANCE;
 			} else if (o instanceof Map<?, ?>) {
-				type = TYPE_MAP;
+				f = MapFormatter.INSTANCE;
 			} else if (o instanceof Iterable<?>) {
 				if (o instanceof RandomAccess && o instanceof List<?>) {
-					type = TYPE_LIST;
+					f = ListFormatter.INSTANCE;
 				} else {
-					type = TYPE_ITERABLE;
+					f = IterableFormatter.INSTANCE;
 				}
 			} else if (o instanceof Object[]) {
-				type = TYPE_OBJECT_ARRAY;
+				f = ObjectArrayFormatter.INSTANCE;
 			} else if (o instanceof Enum<?>) {
 				o = ((Enum<?>)o).ordinal();
-				type = TYPE_NUMBER;
+				f = NumberFormatter.INSTANCE;
 			} else if (o instanceof CharSequence) {
-				type = TYPE_STRING;
+				f = StringFormatter.INSTANCE;
 			} else if (o instanceof Date) {
-				type = TYPE_DATE;
+				f = DateFormatter.INSTANCE;
 			} else if (o instanceof Calendar) {
 				o = ((Calendar)o).getTime();
-				type = TYPE_DATE;
+				f = DateFormatter.INSTANCE;
 			} else if (o instanceof Number) {
-				type = TYPE_NUMBER;
+				f = NumberFormatter.INSTANCE;
 			} else if (o instanceof Iterator<?>) {
-				type = TYPE_ITERATOR;
+				f = IteratorFormatter.INSTANCE;
 			} else if (o instanceof Enumeration) {
-				type = TYPE_ENUMERATION;
+				f = EnumerationFormatter.INSTANCE;
 			} else if (o instanceof Type || o instanceof Member || o instanceof File) {
-				type = TYPE_STRING;
+				f = StringFormatter.INSTANCE;
 			} else if (o instanceof TimeZone) {
 				o = ((TimeZone)o).getID();
-				type = TYPE_STRING;
+				f = StringFormatter.INSTANCE;
 			} else if (o instanceof Charset) {
 				o = ((Charset)o).name();
-				type = TYPE_STRING;
+				f = StringFormatter.INSTANCE;
 			} else if (o instanceof java.sql.Array) {
 				try {
 					o = ((java.sql.Array)o).getArray();
@@ -809,7 +755,7 @@ public class JSON {
 					o = null;
 				}
 				if (o == null) o = new Object[0];
-				type = FORMAT_MAP.get(o.getClass());
+				f = FORMAT_MAP.get(o.getClass());
 			} else if (o instanceof Struct) {
 				try {
 					o = ((Struct)o).getAttributes();
@@ -817,582 +763,41 @@ public class JSON {
 					o = null;
 				}
 				if (o == null) o = new Object[0];
-				type = TYPE_OBJECT_ARRAY;
+				f = ObjectArrayFormatter.INSTANCE;
 			} else if (o instanceof Node) {
 				if (o instanceof CharacterData && !(o instanceof Comment)) {
 					o = ((CharacterData)o).getData();
-					type = TYPE_STRING;
+					f = StringFormatter.INSTANCE;
 				} else if (o instanceof Document) {
 					o = ((Document)o).getDocumentElement();
-					type = TYPE_DOM_ELEMENT;
+					f = DOMElementFormatter.INSTANCE;
 				} else if (o instanceof Element) {
-					type = TYPE_DOM_ELEMENT;
+					f = DOMElementFormatter.INSTANCE;
 				}
 			} else if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
-				type = TYPE_SERIALIZE;
+				f = SerializableFormatter.INSTANCE;
 			} else if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
 				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
 				try {
 					o = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
-					type = TYPE_STRING;
+					f = StringFormatter.INSTANCE;
 				} catch (Exception e) {
+					o = null;
+					f = NullFormatter.INSTANCE;
 				}
+				f = StringFormatter.INSTANCE;
 			} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
-				type = TYPE_DYNA_BEAN;
+				f = DynaBeanFormatter.INSTANCE;
 			} else {
-				type = TYPE_OBJECT;
+				f = ObjectFormatter.INSTANCE;
 			}
-		}
-
-		switch (type) {
-		case TYPE_PLAIN: {
-			checkRoot(context);
-			ap.append(o.toString());
-			return;
-		}
-		case TYPE_STRING:
-			checkRoot(context);
-			formatString(context, o.toString(), ap);
-			return;
-		case TYPE_NUMBER: {
-			checkRoot(context);
-			NumberFormat f = context.format(NumberFormat.class);
-			if (f != null) {
-				formatString(context, f.format(o), ap);
-			} else {
-				ap.append(o.toString());
-			}
-			return;
-		}
-		case TYPE_FLOAT: {
-			checkRoot(context);
-			NumberFormat f = context.format(NumberFormat.class);
-			if (f != null) {
-				formatString(context, f.format(o), ap);
-			} else {
-				double d = ((Number)o).doubleValue();
-				if (Double.isNaN(d) || Double.isInfinite(d)) {
-					if (mode != Mode.SCRIPT) {
-						ap.append('"');
-						ap.append(o.toString());
-						ap.append('"');
-					} else if (Double.isNaN(d)) {
-						ap.append("Number.NaN");
-					} else {
-						ap.append("Number.");
-						ap.append((d > 0) ? "POSITIVE" : "NEGATIVE");
-						ap.append("_INFINITY");
-					}
-				} else {
-					ap.append(o.toString());
-				}
-			}
-			return;
-		}
-		case TYPE_DATE: {
-			checkRoot(context);
-			Date date = (Date)o;
-			DateFormat f = context.format(DateFormat.class);
-			if (f != null) {
-				formatString(context, f.format(date), ap);
-			} else if (mode == Mode.SCRIPT) {
-				ap.append("new Date(");
-				ap.append(Long.toString(date.getTime()));
-				ap.append(")");
-			} else {
-				ap.append(Long.toString(date.getTime()));
-			}
-			return;
-		}
-		case TYPE_BOOLEAN_ARRAY: {
-			ap.append('[');
-			boolean[] array = (boolean[])o;
-			for (int i = 0; i < array.length; i++) {
-				ap.append(String.valueOf(array[i]));
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_BYTE_ARRAY: {
-			checkRoot(context);
-			formatString(context, Base64.encode((byte[])o), ap);
-			return;
-		}
-		case TYPE_SHORT_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			short[] array = (short[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_INT_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			int[] array = (int[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_LONG_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			long[] array = (long[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_FLOAT_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			float[] array = (float[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
-					if (mode != Mode.SCRIPT) {
-						ap.append('"');
-						ap.append(Float.toString(array[i]));
-						ap.append('"');
-					} else if (Double.isNaN(array[i])) {
-						ap.append("Number.NaN");
-					} else {
-						ap.append("Number.");
-						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
-						ap.append("_INFINITY");
-					}
-				} else if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_DOUBLE_ARRAY: {
-			NumberFormat f = context.format(NumberFormat.class);
-			double[] array = (double[])o;
-			ap.append('[');
-			for (int i = 0; i < array.length; i++) {
-				if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
-					if (mode != Mode.SCRIPT) {
-						ap.append('"');
-						ap.append(Double.toString(array[i]));
-						ap.append('"');
-					} else if (Double.isNaN(array[i])) {
-						ap.append("Number.NaN");
-					} else {
-						ap.append("Number.");
-						ap.append((array[i] > 0) ? "POSITIVE" : "NEGATIVE");
-						ap.append("_INFINITY");
-					}
-				} else if (f != null) {
-					formatString(context, f.format(array[i]), ap);
-				} else {
-					ap.append(String.valueOf(array[i]));
-				}
-				if (i != array.length-1) {
-					ap.append(',');
-					if (context.isPrettyPrint()) ap.append(' ');
-				}
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_OBJECT_ARRAY: {
-			Object[] array = (Object[])o;
-			ap.append('[');
-			int i = 0;
-			for (; i < array.length; i++) {
-				Object item = array[i];
-				if (item == src) item = null;
-				
-				if (i != 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				context.enter(i);
-				format(context, item, ap);
-				context.exit();
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_LIST: {
-			List<?> list = (List<?>)o;
-			ap.append('[');
-			int length = list.size();
-			int i = 0;
-			for (; i < length; i++) {
-				Object item = list.get(i);
-				if (item == src) item = null;
-				
-				if (i != 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				context.enter(i);
-				format(context, item, ap);
-				context.exit();
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_MAP: {
-			Map<?, ?> map = (Map<?, ?>)o;
-			
-			ap.append('{');
-			int i = 0;
-			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				Object key = entry.getKey();
-				if (key == null) continue;
-				
-				Object value = entry.getValue();
-				if (value == src || (this.suppressNull && value == null)) continue; 
-				
-				if (i > 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				formatString(context, key.toString(), ap);
-				ap.append(':');
-				if (context.isPrettyPrint()) ap.append(' ');
-				context.enter(key);
-				format(context, value, ap);
-				context.exit();
-				i++;
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append('}');
-			return;
-		}
-		case TYPE_OBJECT: {
-			List<Property> props = context.getGetProperties(o.getClass());
-			
-			ap.append('{');
-			int i = 0;
-			for (int p = 0; p < props.size(); p++) {
-				Property prop = props.get(p);
-				Object value = null;
-				Exception cause = null; 
-
-				try {
-					value = prop.get(o);
-					if (value == src || (this.suppressNull && value == null)) continue;
-					
-					if (i > 0) ap.append(',');
-					if (context.isPrettyPrint()) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-					}
-				} catch (Exception e) {
-					cause = e;
-				}
-				
-				formatString(context, prop.getName(), ap);
-				ap.append(':');
-				if (context.isPrettyPrint()) ap.append(' ');
-				context.enter(prop.getName(), prop.getHint());
-				if (cause != null) {
-					throw new JSONException(getMessage("json.format.ConversionError",
-							(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
-							JSONException.FORMAT_ERROR, cause);					
-				}
-				format(context, value, ap);
-				context.exit();
-				i++;
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append('}');
-			return;
-		}
 		}
 		
-		switch (type) {
-		case TYPE_BYTE: {
-			checkRoot(context);
-			ap.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
-			return;
-		}
-		case TYPE_CLASS: {
-			checkRoot(context);
-			formatString(context, ((Class<?>)o).getName(), ap);
-			return;
-		}
-		case TYPE_LOCALE: {
-			checkRoot(context);
-			formatString(context, ((Locale)o).toString().replace('_', '-'), ap);
-			return;
-		}
-		case TYPE_CHAR_ARRAY: {
-			checkRoot(context);
-			formatString(context, new String((char[])o), ap);
-			return;
-		}
-		case TYPE_SERIALIZE: {
-			checkRoot(context);
-			formatString(context, Base64.encode(serialize(o)), ap);
-			return;
-		}
-		case TYPE_ITERABLE:
-			o = ((Iterable<?>)o).iterator();			
-		case TYPE_ITERATOR: {
-			Iterator<?> t = (Iterator<?>)o;
-			ap.append('[');
-			int i = 0;
-			for (; t.hasNext(); i++) {
-				Object item = t.next();
-				if (item == src) item = null;
-
-				if (i != 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				context.enter(i);
-				format(context, item, ap);
-				context.exit();
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_ENUMERATION: {
-			Enumeration<?> e = (Enumeration<?>)o;
-			ap.append('[');
-			int i = 0;
-			for (; e.hasMoreElements(); i++) {
-				Object item = e.nextElement();
-				if (item == src) item = null;
-
-				if (i != 0) ap.append(',');
-				if (context.isPrettyPrint()) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-				context.enter(i);
-				format(context, item, ap);
-				context.exit();
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			return;
-		}
-		case TYPE_DYNA_BEAN: {
-			ap.append('{');
-			int i = 0;
-			try {
-				Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean");
-				
-				Object dynaClass = dynaBeanClass.getMethod("getDynaClass").invoke(o);
-				Object[] dynaProperties = (Object[])dynaClass.getClass().getMethod("getDynaProperties").invoke(dynaClass);
-				
-				if (dynaProperties != null && dynaProperties.length > 0) {
-					Method getName = dynaProperties[0].getClass().getMethod("getName");
-					Method get = dynaBeanClass.getMethod("get", String.class);
-					
-					for (Object dp : dynaProperties) {
-						Object name = null;
-						try {
-							name = getName.invoke(dp);
-						} catch (Exception e) {
-						}
-						if (name == null) continue;
-						
-						Object value = null;
-						Exception cause = null;
-						
-						try {
-							value = get.invoke(o, name);
-						} catch (Exception e) {
-							cause = e;
-						}
-						
-						if (value == src || (cause == null && this.suppressNull && value == null)) continue; 
-						
-						if (i > 0) ap.append(',');
-						if (context.isPrettyPrint()) {
-							ap.append('\n');
-							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-						}
-						formatString(context, name.toString(), ap);
-						ap.append(':');
-						if (context.isPrettyPrint()) ap.append(' ');
-						context.enter(name);
-						if (cause != null) {
-							throw new JSONException(getMessage("json.format.ConversionError",
-									(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
-									JSONException.FORMAT_ERROR, cause);
-						}
-						format(context, value, ap);
-						context.exit();
-						i++;
-					}
-				}
-			} catch (Exception e) {
-				// no handle
-			}
-			if (context.isPrettyPrint() && i > 0) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append('}');
-			return;
-		}
-		case TYPE_DOM_ELEMENT: {
-			Element elem = (Element)o;
-			ap.append('[');
-			formatString(context, elem.getTagName(), ap);
-			
-			ap.append(',');
-			if (context.isPrettyPrint()) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-			}
-			ap.append('{');
-			if (elem.hasAttributes()) {
-				NamedNodeMap names = elem.getAttributes();
-				for (int i = 0; i < names.getLength(); i++) {
-					if (i != 0) {
-						ap.append(',');
-					}
-					if (context.isPrettyPrint() && names.getLength() > 1) {
-						ap.append('\n');
-						for (int j = 0; j < context.getLevel()+2; j++) ap.append('\t');
-					}
-					Node node = names.item(i);
-					if (node instanceof Attr) {
-						formatString(context, node.getNodeName(), ap);
-						ap.append(':');
-						if (context.isPrettyPrint()) ap.append(' ');
-						formatString(context, node.getNodeValue(), ap);
-					}
-				}
-				if (context.isPrettyPrint() && names.getLength() > 1) {
-					ap.append('\n');
-					for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-				}
-			}
-			ap.append('}');
-			if (elem.hasChildNodes()) {
-				NodeList nodes = elem.getChildNodes();
-				for (int i = 0; i < nodes.getLength(); i++) {
-					Node node = nodes.item(i);
-					if ((node instanceof Element) || (node instanceof CharacterData && !(node instanceof Comment))) {
-						ap.append(',');
-						if (context.isPrettyPrint()) {
-							ap.append('\n');
-							for (int j = 0; j < context.getLevel()+1; j++) ap.append('\t');
-						}
-						context.enter(i+2);
-						format(context, node, ap);
-						context.exit();
-						if (ap instanceof Flushable) ((Flushable)ap).flush();
-					}
-				}
-			}
-			if (context.isPrettyPrint()) {
-				ap.append('\n');
-				for (int j = 0; j < context.getLevel(); j++) ap.append('\t');
-			}
-			ap.append(']');
-			return;
-		}
-		}
-		
-		throw new IllegalStateException();
-	}
-	
-	void checkRoot(Context context) {
-		if (context.getLevel() == 0 && mode != Mode.SCRIPT) {
-			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
-		}
-	}
-	
-	void formatString(Context context, String s, InputSource ap) throws IOException {
-		ap.append('"');
-		int start = 0;
-		int length = s.length();
-		for (int i = 0; i < length; i++) {
-			int c = s.charAt(i);
-			if (c < ESCAPE_CHARS.length && ESCAPE_CHARS[c] != 0) { 
-				int x = ESCAPE_CHARS[c];
-				if (x > 0) {
-					if (start < i) ap.append(s, start, i);
-					ap.append('\\');
-					ap.append((char)x);					
-					start = i+1;
-				} else if (x == -1 || (x == -2 && mode == Mode.SCRIPT)) {
-					if (start < i) ap.append(s, start, i);
-					ap.append("\\u00");
-					ap.append("0123456789ABCDEF".charAt(c/16));
-					ap.append("0123456789ABCDEF".charAt(c%16));					
-					start = i+1;
-				}
+		if (!f.format(this, context, src, o, ap)) {
+			if (context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
+				throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
 			}
 		}
-		if (start < length) ap.append(s, start, length);
-		ap.append('"');
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1489,14 +894,14 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (mode == Mode.TRADITIONAL || (mode == Mode.SCRIPT && c == '/')) {
+				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
 					s.back();
-					skipComment(s);
+					skipComment(context, s);
 					continue;
 				}
 			case '\'':
 			case '"':
-				if (mode == Mode.SCRIPT) {
+				if (context.getMode() == Mode.SCRIPT) {
 					if (isEmpty) {
 						s.back();
 						o = parseString(context, s, 1);
@@ -1507,7 +912,7 @@ public class JSON {
 					continue;
 				}
 			default:
-				if (mode == Mode.SCRIPT) {
+				if (context.getMode() == Mode.SCRIPT) {
 					if (isEmpty) {
 						s.back();
 						o = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, 1) : parseLiteral(context, s, 1, false);
@@ -1519,7 +924,7 @@ public class JSON {
 				}
 			}
 			
-			if (mode == Mode.TRADITIONAL && isEmpty) {
+			if (context.getMode() == Mode.TRADITIONAL && isEmpty) {
 				s.back();
 				o = parseObject(context, s, 1);
 				isEmpty = false;
@@ -1529,7 +934,7 @@ public class JSON {
 		}
 		
 		if (isEmpty) {
-			if (mode == Mode.TRADITIONAL) {
+			if (context.getMode() == Mode.TRADITIONAL) {
 				o = new LinkedHashMap<String, Object>();
 			} else {
 				throw createParseException(getMessage("json.parse.EmptyInputError"), s);
@@ -1551,7 +956,7 @@ public class JSON {
 			switch(c) {
 			case '\r':
 			case '\n':
-				if (mode == Mode.TRADITIONAL && point == 5) {
+				if (context.getMode() == Mode.TRADITIONAL && point == 5) {
 					point = 6;
 				}
 				continue;
@@ -1580,7 +985,7 @@ public class JSON {
 				}
 				continue;
 			case ',':
-				if (point == 5 || point == 6 || (mode == Mode.TRADITIONAL && point == 3)) {
+				if (point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3)) {
 					if (point == 3 && level < this.maxDepth && !this.suppressNull) {
 						map.put(key, null);
 					}
@@ -1590,7 +995,7 @@ public class JSON {
 				}
 				continue;
 			case '}':
-				if (start == '{' && (point == 1 || point == 5 || point == 6 || (mode == Mode.TRADITIONAL && point == 3))) {
+				if (start == '{' && (point == 1 || point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3))) {
 					if (point == 3 && level < this.maxDepth && !this.suppressNull) {
 						map.put(key, null);
 					}
@@ -1609,7 +1014,7 @@ public class JSON {
 				}
 				continue;
 			case '\'':
-				if (mode == Mode.STRICT) {
+				if (context.getMode() == Mode.STRICT) {
 					break;
 				}
 			case '"':
@@ -1631,9 +1036,9 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (mode == Mode.TRADITIONAL || (mode == Mode.SCRIPT && c == '/')) {
+				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
 					s.back();
-					skipComment(s);
+					skipComment(context, s);
 					if (point == 5) {
 						point = 6;
 					}
@@ -1646,11 +1051,11 @@ public class JSON {
 				point = 1;
 			} else if (point == 1 || point == 6) {
 				s.back();
-				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, mode != Mode.STRICT);
+				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() != Mode.STRICT);
 				point = 2;
 			} else if (point == 3) {
 				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, mode == Mode.TRADITIONAL);
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
 				if (level < this.maxDepth && (value != null || !this.suppressNull)) {
 					map.put(key, value);
 				}
@@ -1684,7 +1089,7 @@ public class JSON {
 			switch(c) {
 			case '\r':
 			case '\n':
-				if (mode == Mode.TRADITIONAL && point == 2) {
+				if (context.getMode() == Mode.TRADITIONAL && point == 2) {
 					point = 3;
 				}
 				continue;
@@ -1705,7 +1110,7 @@ public class JSON {
 				}
 				continue;
 			case ',':
-				if (mode == Mode.TRADITIONAL && (point == 1 || point == 4)) {
+				if (context.getMode() == Mode.TRADITIONAL && (point == 1 || point == 4)) {
 					if (level < this.maxDepth) list.add(null);
 				} else if (point == 2 || point == 3) {
 					point = 4;
@@ -1716,7 +1121,7 @@ public class JSON {
 			case ']':
 				if (point == 1 || point == 2 || point == 3) {
 					// nothing
-				} else if (mode == Mode.TRADITIONAL && point == 4) {
+				} else if (context.getMode() == Mode.TRADITIONAL && point == 4) {
 					if (level < this.maxDepth) list.add(null);
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1733,7 +1138,7 @@ public class JSON {
 				}
 				continue;
 			case '\'':
-				if (mode == Mode.STRICT) {
+				if (context.getMode() == Mode.STRICT) {
 					break;
 				}
 			case '"':
@@ -1748,9 +1153,9 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (mode == Mode.TRADITIONAL || (mode == Mode.SCRIPT && c == '/')) {
+				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
 					s.back();
-					skipComment(s);
+					skipComment(context, s);
 					if (point == 2) {
 						point = 3;
 					}
@@ -1760,7 +1165,7 @@ public class JSON {
 			
 			if (point == 1 || point == 3 || point == 4) {
 				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, mode == Mode.TRADITIONAL);
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
 				if (level < this.maxDepth) list.add(value);
 				point = 2;
 			} else {
@@ -1787,7 +1192,7 @@ public class JSON {
 				continue;
 			case '\\':
 				if (point == 1) {
-					if (mode != Mode.TRADITIONAL || start == '"') {
+					if (context.getMode() != Mode.TRADITIONAL || start == '"') {
 						s.back();
 						c = parseEscape(s);
 						if (sb != null) sb.append(c);
@@ -1799,7 +1204,7 @@ public class JSON {
 				}
 				continue;
 			case '\'':
-				if (mode == Mode.STRICT) {
+				if (context.getMode() == Mode.STRICT) {
 					continue;
 				}
 			case '"':
@@ -1818,7 +1223,7 @@ public class JSON {
 				}
 				continue;
 			}
-			if (point == 1 && (mode != Mode.STRICT  || c >= 0x20)) {
+			if (point == 1 && (context.getMode() != Mode.STRICT  || c >= 0x20)) {
 				if (sb != null) sb.append(c);
 				continue;
 			}
@@ -2002,7 +1407,7 @@ public class JSON {
 		return escape;
 	}
 	
-	void skipComment(OutputSource s) throws IOException, JSONException {
+	void skipComment(Context context, OutputSource s) throws IOException, JSONException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -2042,7 +1447,7 @@ public class JSON {
 				}
 				break;
 			case '#':
-				if (mode == Mode.TRADITIONAL) {
+				if (context.getMode() == Mode.TRADITIONAL) {
 					if (point == 0) {
 						point = 4;
 					} else if (point == 3) {
@@ -2810,14 +2215,6 @@ public class JSON {
 		}
 	}
 	
-	static byte[] serialize(Object data) throws IOException {
-		ByteArrayOutputStream array = new ByteArrayOutputStream();
-		ObjectOutputStream out = new ObjectOutputStream(array);
-		out.writeObject(data);
-		out.close();
-		return array.toByteArray();
-	}	
-	
 	static Object deserialize(byte[] array) throws IOException, ClassNotFoundException {
 		Object ret = null;
 		ObjectInputStream in = null;
@@ -2917,6 +2314,7 @@ public class JSON {
 	
 	public class Context {
 		final boolean prettyPrint;
+		final Mode mode;
 		
 		Object[] path;
 		int level = -1;
@@ -2925,6 +2323,7 @@ public class JSON {
 		
 		public Context() {
 			prettyPrint = JSON.this.prettyPrint;
+			mode = JSON.this.mode;
 		}
 		
 		public StringBuilderInputSource getCachedBuffer() {
@@ -2938,6 +2337,10 @@ public class JSON {
 		
 		public boolean isPrettyPrint() {
 			return prettyPrint;
+		}
+		
+		public Mode getMode() {
+			return mode;
 		}
 		
 		/**
@@ -3205,7 +2608,7 @@ public class JSON {
 					if (escape) {
 						sb.append('[');
 						try {
-							formatString(this, str, sb);
+							StringFormatter.serialize(this, str, sb);
 						} catch (IOException e) {
 							// no handle
 						}
