@@ -181,7 +181,7 @@ public class JSON {
 	public static Class<? extends JSON> prototype = JSON.class;
 	
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>(8);
-	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(48);
+	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
