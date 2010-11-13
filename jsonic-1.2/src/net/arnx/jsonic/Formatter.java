@@ -430,7 +430,7 @@ class ListFormatter implements Formatter {
 		for (int i = 0; i < length; i++) {
 			Object item = list.get(i);
 			if (item == src) item = null;
-
+			
 			if (i != 0) in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
