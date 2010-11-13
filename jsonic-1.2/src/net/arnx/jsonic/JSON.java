@@ -793,10 +793,19 @@ public class JSON {
 			}
 		}
 		
-		if (!f.format(this, context, src, o, ap)) {
-			if (context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
-				throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
-			}
+		boolean isStruct = false;
+		try {
+			isStruct = f.format(this, context, src, o, ap);
+		} catch (IOException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new JSONException(getMessage("json.format.ConversionError",
+				(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
+					JSONException.FORMAT_ERROR, e);
+
+		}
+		if (!isStruct && context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
+			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
 		}
 	}
 	
@@ -2314,6 +2323,7 @@ public class JSON {
 	
 	public class Context {
 		final boolean prettyPrint;
+		final boolean suppressNull;
 		final Mode mode;
 		
 		Object[] path;
@@ -2323,6 +2333,7 @@ public class JSON {
 		
 		public Context() {
 			prettyPrint = JSON.this.prettyPrint;
+			suppressNull = JSON.this.suppressNull;
 			mode = JSON.this.mode;
 		}
 		
@@ -2337,6 +2348,10 @@ public class JSON {
 		
 		public boolean isPrettyPrint() {
 			return prettyPrint;
+		}
+		
+		public boolean isSuppressNull() {
+			return suppressNull;
 		}
 		
 		public Mode getMode() {

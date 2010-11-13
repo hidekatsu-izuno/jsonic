@@ -27,7 +27,7 @@ import net.arnx.jsonic.JSON.Mode;
 
 interface Formatter {
 	boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException;
+			InputSource in) throws Exception;
 }
 
 class NullFormatter implements Formatter {
@@ -437,7 +437,7 @@ class MapFormatter implements Formatter {
 				continue;
 
 			Object value = entry.getValue();
-			if (value == src || (json.suppressNull && value == null))
+			if (value == src || (context.isSuppressNull() && value == null))
 				continue;
 
 			if (i > 0)
@@ -470,7 +470,7 @@ class ObjectFormatter implements Formatter {
 	public static Formatter INSTANCE = new ObjectFormatter();
 	
 	public boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws IOException {
+			InputSource in) throws Exception {
 		List<Property> props = context.getGetProperties(o.getClass());
 
 		in.append('{');
@@ -482,7 +482,7 @@ class ObjectFormatter implements Formatter {
 
 			try {
 				value = prop.get(o);
-				if (value == src || (json.suppressNull && value == null))
+				if (value == src || (context.isSuppressNull() && value == null))
 					continue;
 
 				if (i > 0)
@@ -501,13 +501,8 @@ class ObjectFormatter implements Formatter {
 			if (context.isPrettyPrint())
 				in.append(' ');
 			context.enter(prop.getName(), prop.getHint());
-			if (cause != null) {
-				throw new JSONException(
-						json.getMessage("json.format.ConversionError",
-								(src instanceof CharSequence) ? "\"" + src
-										+ "\"" : src, context),
-						JSONException.FORMAT_ERROR, cause);
-			}
+			if (cause != null) throw cause;
+			
 			json.format(context, value, in);
 			context.exit();
 			i++;
@@ -696,7 +691,7 @@ class DynaBeanFormatter implements Formatter {
 					}
 
 					if (value == src
-							|| (cause == null && json.suppressNull && value == null))
+							|| (cause == null && context.isSuppressNull() && value == null))
 						continue;
 
 					if (i > 0)
