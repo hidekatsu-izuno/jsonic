@@ -2174,8 +2174,8 @@ public class JSON {
 			Class<?> eClass = c.getEnclosingClass();
 			Constructor<?> con = c.getDeclaredConstructor(eClass);
 			con.setAccessible(true);
-			if (contextObject != null && eClass.isAssignableFrom(contextObject.getClass())) {
-				instance = con.newInstance(contextObject);
+			if (context.contextObject != null && eClass.isAssignableFrom(context.contextObject.getClass())) {
+				instance = con.newInstance(context.contextObject);
 			} else {
 				instance = con.newInstance((Object)null);
 			}
@@ -2321,6 +2321,7 @@ public class JSON {
 	}
 	
 	public class Context {
+		final Object contextObject;
 		final int maxDepth;
 		final boolean prettyPrint;
 		final boolean suppressNull;
@@ -2332,6 +2333,7 @@ public class JSON {
 		StringBuilderInputSource builderCache;
 		
 		public Context() {
+			contextObject = JSON.this.contextObject;
 			maxDepth = JSON.this.maxDepth;
 			prettyPrint = JSON.this.prettyPrint;
 			suppressNull = JSON.this.suppressNull;
