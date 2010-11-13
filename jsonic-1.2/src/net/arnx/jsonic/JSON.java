@@ -801,8 +801,8 @@ public class JSON {
 			throw new JSONException(getMessage("json.format.ConversionError",
 				(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
 					JSONException.FORMAT_ERROR, e);
-
 		}
+		
 		if (!isStruct && context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
 			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
 		}
