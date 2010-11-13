@@ -82,7 +82,7 @@ class StringFormatter implements Formatter {
 			throws IOException {
 		in.append('"');
 		int start = 0;
-		int length = s.length();
+		final int length = s.length();
 		for (int i = 0; i < length; i++) {
 			int c = s.charAt(i);
 			if (c < ESCAPE_CHARS.length && ESCAPE_CHARS[c] != 0) {
@@ -451,7 +451,7 @@ class ListFormatter implements Formatter {
 			InputSource in) throws IOException {
 		List<?> list = (List<?>) o;
 		in.append('[');
-		int length = list.size();
+		final int length = list.size();
 		int i = 0;
 		for (; i < length; i++) {
 			Object item = list.get(i);
@@ -608,7 +608,7 @@ class ObjectFormatter implements Formatter {
 
 		in.append('{');
 		int i = 0;
-		int length = props.size();
+		final int length = props.size();
 		for (int p = 0; p < length; p++) {
 			Property prop = props.get(p);
 			Object value = null;
