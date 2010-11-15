@@ -86,6 +86,7 @@ class StringSerializableConverter implements Converter {
 		if (value instanceof String) {
 			try {
 				Constructor<?> con = c.getConstructor(String.class);
+				con.setAccessible(true);
 				return con.newInstance(value.toString());
 			} catch (NoSuchMethodException e) {
 				return null;
