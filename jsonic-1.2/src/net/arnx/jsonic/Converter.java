@@ -834,7 +834,7 @@ class DateConverter implements Converter {
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
-				millis = convertDate(str, json.locale);
+				millis = convertDate(str, context.getLocale());
 				date = (Date)json.create(context, c);						
 			}
 		}
@@ -968,7 +968,7 @@ class CalendarConverter implements Converter {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				Calendar cal = (Calendar)json.create(context, c);
-				cal.setTimeInMillis(DateConverter.convertDate(str, json.locale));
+				cal.setTimeInMillis(DateConverter.convertDate(str, context.getLocale()));
 				return  cal;
 			}
 		}

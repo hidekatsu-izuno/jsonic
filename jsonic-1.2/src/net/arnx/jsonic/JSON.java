@@ -1673,6 +1673,7 @@ public class JSON {
 
 	
 	public class Context {
+		final Locale locale;
 		final Object contextObject;
 		final int maxDepth;
 		final boolean prettyPrint;
@@ -1685,6 +1686,7 @@ public class JSON {
 		StringBuilderInputSource builderCache;
 		
 		public Context() {
+			locale = JSON.this.locale;
 			contextObject = JSON.this.contextObject;
 			maxDepth = JSON.this.maxDepth;
 			prettyPrint = JSON.this.prettyPrint;
@@ -1699,6 +1701,10 @@ public class JSON {
 				builderCache.clear();
 			}
 			return builderCache;
+		}
+		
+		public Locale getLocale() {
+			return locale;
 		}
 		
 		public int getMaxDepth() {
