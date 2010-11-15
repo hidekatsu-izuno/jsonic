@@ -261,6 +261,29 @@ public class JSON {
 		CONVERT_MAP.put(UUID.class, UUIDConverter.INSTANCE);
 		CONVERT_MAP.put(Charset.class, CharsetConverter.INSTANCE);
 		CONVERT_MAP.put(Class.class, ClassConverter.INSTANCE);
+
+		CONVERT_MAP.put(Date.class, DateConverter.INSTANCE);
+		CONVERT_MAP.put(java.sql.Date.class, DateConverter.INSTANCE);
+		CONVERT_MAP.put(java.sql.Time.class, DateConverter.INSTANCE);
+		CONVERT_MAP.put(java.sql.Timestamp.class, DateConverter.INSTANCE);
+		CONVERT_MAP.put(Calendar.class, CalendarConverter.INSTANCE);
+		
+		CONVERT_MAP.put(Collection.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(Set.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(List.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(SortedSet.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(LinkedList.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(HashSet.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(TreeSet.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(LinkedHashSet.class, CollectionConverter.INSTANCE);
+		
+		CONVERT_MAP.put(Map.class, MapConverter.INSTANCE);
+		CONVERT_MAP.put(SortedMap.class, MapConverter.INSTANCE);
+		CONVERT_MAP.put(HashMap.class, MapConverter.INSTANCE);
+		CONVERT_MAP.put(IdentityHashMap.class, MapConverter.INSTANCE);
+		CONVERT_MAP.put(Properties.class, MapConverter.INSTANCE);
+		CONVERT_MAP.put(TreeMap.class, MapConverter.INSTANCE);
+		CONVERT_MAP.put(LinkedHashMap.class, MapConverter.INSTANCE);
 	}
 	
 	static JSON newInstance() {
