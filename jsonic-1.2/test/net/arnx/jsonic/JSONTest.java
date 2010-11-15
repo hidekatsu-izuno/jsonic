@@ -1107,8 +1107,10 @@ public class JSONTest {
 		// boolean
 		assertEquals(Boolean.TRUE, json.convert(100, boolean.class));
 		assertEquals(Boolean.FALSE, json.convert(0, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert(0.0, boolean.class));
 		assertEquals(Boolean.FALSE, json.convert(BigDecimal.ZERO, boolean.class));
 		assertEquals(Boolean.FALSE, json.convert(BigInteger.ZERO, boolean.class));
+		assertEquals(Boolean.FALSE, json.convert('0', boolean.class));
 		assertEquals(Boolean.FALSE, json.convert("0", boolean.class));
 		assertEquals(Boolean.FALSE, json.convert("f", boolean.class));
 		assertEquals(Boolean.FALSE, json.convert("off", boolean.class));

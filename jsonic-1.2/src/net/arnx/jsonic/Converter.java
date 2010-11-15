@@ -141,10 +141,11 @@ class BooleanConverter implements Converter {
 		} else if (value instanceof BigInteger) {
 			return !value.equals(BigInteger.ZERO);
 		} else if (value instanceof Number) {
-			return ((Number)value).intValue() != 0;
+			return ((Number)value).doubleValue() != 0;
 		} else if (value != null){
 			String s = value.toString().trim();
 			if (s.length() == 0
+				|| s.equalsIgnoreCase("0")
 				|| s.equalsIgnoreCase("f")
 				|| s.equalsIgnoreCase("false")
 				|| s.equalsIgnoreCase("no")
