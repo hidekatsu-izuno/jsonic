@@ -1018,20 +1018,22 @@ class ArrayConverter implements Converter {
 			}
 			return array;
 		} else {
-			if (value instanceof String && byte.class.equals(c.getComponentType())) {
-				return Base64.decode((String)value);
-			} else if (value instanceof String && char.class.equals(c.getComponentType())) {
-				return ((String)value).toCharArray();
-			} else {
-				Object array = Array.newInstance(c.getComponentType(), 1);
-				Class<?> pc = c.getComponentType();
-				Type pt = (t instanceof GenericArrayType) ? 
-						((GenericArrayType)t).getGenericComponentType() : pc;
-				context.enter(0);
-				Array.set(array, 0, json.postparse(context, value, pc, pt));
-				context.exit();
-				return array;
+			Class<?> ctype = c.getComponentType();
+			if (value instanceof String) {
+				if (byte.class.equals(ctype)) {
+					return Base64.decode((String)value);
+				} else if (char.class.equals(ctype)) {
+					return ((String)value).toCharArray();
+				}
 			}
+			Object array = Array.newInstance(ctype, 1);
+			Class<?> pc = ctype;
+			Type pt = (t instanceof GenericArrayType) ? 
+					((GenericArrayType)t).getGenericComponentType() : pc;
+			context.enter(0);
+			Array.set(array, 0, json.postparse(context, value, pc, pt));
+			context.exit();
+			return array;
 		}
 	}
 }
