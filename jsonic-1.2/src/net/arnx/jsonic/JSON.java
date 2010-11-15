@@ -25,7 +25,6 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -1875,12 +1874,12 @@ public class JSON {
 		}
 		
 		@SuppressWarnings("unchecked")
-		Map<String, AnnotatedElement> getSetProperties(Class<?> c) {
+		Map<String, Property> getSetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
-			Map<String, AnnotatedElement> props = (Map<String, AnnotatedElement>)memberCache.get(c);
+			Map<String, Property> props = (Map<String, Property>)memberCache.get(c);
 			if (props != null) return props;
-			props = new HashMap<String, AnnotatedElement>();
+			props = new HashMap<String, Property>();
 
 			for (Field f : c.getFields()) {
 				if (Modifier.isStatic(f.getModifiers())
@@ -1895,8 +1894,7 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				f.setAccessible(true);
-				props.put(name, f);
+				props.put(name, new FieldProperty(name, f, hint));
 			}
 			
 			for (Method m : c.getMethods()) {
@@ -1932,8 +1930,7 @@ public class JSON {
 					if (hint.ignore()) continue;
 					if (hint.name().length() > 0) name = hint.name();
 				}
-				m.setAccessible(true);
-				props.put(name, m);
+				props.put(name, new MethodProperty(name, m, hint));
 			}
 			
 			memberCache.put(c, props);

@@ -1211,37 +1211,18 @@ class ObjectConverter implements Converter {
 	public static final Converter INSTANCE = new ObjectConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
-		Map<String, AnnotatedElement> props = context.getSetProperties(c);
+		Map<String, Property> props = context.getSetProperties(c);
 		if (value instanceof Map<?, ?>) {
 			Object o = json.create(context, c);
 			if (o == null) return null;
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				String name = entry.getKey().toString();
-				AnnotatedElement target = props.get(name);
+				Property target = props.get(name);
 				if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
 				if (target == null) continue;
 				
-				context.enter(name, target.getAnnotation(JSONHint.class));
-				if (target instanceof Method) {
-					Method m = (Method)target;
-					Type gptype = m.getGenericParameterTypes()[0];
-					Class<?> ptype = m.getParameterTypes()[0];
-					if (gptype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
-						gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)t);
-						ptype = ClassUtil.getRawType(gptype);
-					}
-					m.invoke(o, json.postparse(context, entry.getValue(), ptype, gptype));
-				} else {
-					Field f = (Field)target;
-					Type gptype = f.getGenericType();
-					Class<?> ptype =  f.getType();
-					if (gptype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
-						gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)t);
-						ptype = ClassUtil.getRawType(gptype);
-					}
-					
-					f.set(o, json.postparse(context, entry.getValue(), ptype, gptype));
-				}
+				context.enter(name, target.getHint());
+				target.set(o, json.postparse(context, entry.getValue(), target.getType(t), target.getGenericType(t)));
 				context.exit();
 			}
 			return o;
@@ -1250,31 +1231,12 @@ class ObjectConverter implements Converter {
 		} else {
 			JSONHint hint = context.getHint();
 			if (hint != null && hint.anonym().length() > 0) {
-				AnnotatedElement target = props.get(hint.anonym());
+				Property target = props.get(hint.anonym());
 				if (target == null) return null;
 				Object o = json.create(context, c);
 				if (o == null) return null;
-				context.enter(hint.anonym(), target.getAnnotation(JSONHint.class));
-				if (target instanceof Method) {
-					Method m = (Method)target;
-					Type gptype = m.getGenericParameterTypes()[0];
-					Class<?> ptype = m.getParameterTypes()[0];
-					if (gptype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
-						gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)t);
-						ptype = ClassUtil.getRawType(gptype);
-					}
-					m.invoke(o, json.postparse(context, value, ptype, gptype));
-				} else {
-					Field f = (Field)target;
-					Type gptype = f.getGenericType();
-					Class<?> ptype =  f.getType();
-					if (gptype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
-						gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)t);
-						ptype = ClassUtil.getRawType(gptype);
-					}
-					
-					f.set(o, json.postparse(context, value, ptype, gptype));
-				}
+				context.enter(hint.anonym(), target.getHint());
+				target.set(o, json.postparse(context, value, target.getType(t), target.getGenericType(t)));
 				context.exit();
 				return o;
 			} else {
