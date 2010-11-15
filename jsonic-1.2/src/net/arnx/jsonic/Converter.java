@@ -1020,6 +1020,8 @@ class ArrayConverter implements Converter {
 		} else {
 			if (value instanceof String && byte.class.equals(c.getComponentType())) {
 				return Base64.decode((String)value);
+			} else if (value instanceof String && char.class.equals(c.getComponentType())) {
+				return ((String)value).toCharArray();
 			} else {
 				Object array = Array.newInstance(c.getComponentType(), 1);
 				Class<?> pc = c.getComponentType();

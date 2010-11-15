@@ -239,6 +239,16 @@ public class JSON {
 		CONVERT_MAP.put(float.class, FloatConverter.INSTANCE);
 		CONVERT_MAP.put(double.class, DoubleConverter.INSTANCE);
 		
+		CONVERT_MAP.put(boolean[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(char[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(byte[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(short[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(int[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(long[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(float[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(double[].class, ArrayConverter.INSTANCE);
+		CONVERT_MAP.put(Object[].class, ArrayConverter.INSTANCE);
+		
 		CONVERT_MAP.put(Boolean.class, BooleanConverter.INSTANCE);
 		CONVERT_MAP.put(Character.class, CharacterConverter.INSTANCE);
 		CONVERT_MAP.put(Byte.class, ByteConverter.INSTANCE);
