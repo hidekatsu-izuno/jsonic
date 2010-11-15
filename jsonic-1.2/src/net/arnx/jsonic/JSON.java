@@ -16,11 +16,9 @@
 package net.arnx.jsonic;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -28,16 +26,12 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -51,7 +45,6 @@ import java.text.DecimalFormatSymbols;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -180,46 +173,37 @@ public class JSON {
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
 	
-	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>(8);
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
+	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
 	
 	static {
-		PRIMITIVE_MAP.put(boolean.class, false);
-		PRIMITIVE_MAP.put(byte.class, (byte)0);
-		PRIMITIVE_MAP.put(short.class, (short)0);
-		PRIMITIVE_MAP.put(int.class, 0);
-		PRIMITIVE_MAP.put(long.class, 0l);
-		PRIMITIVE_MAP.put(float.class, 0.0f);
-		PRIMITIVE_MAP.put(double.class, 0.0);
-		PRIMITIVE_MAP.put(char.class, '\0');
-		
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
+		FORMAT_MAP.put(char.class, StringFormatter.INSTANCE);
 		FORMAT_MAP.put(byte.class, ByteFormatter.INSTANCE);
 		FORMAT_MAP.put(short.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(int.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(long.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(float.class, FloatFormatter.INSTANCE);
 		FORMAT_MAP.put(double.class, FloatFormatter.INSTANCE);
-		FORMAT_MAP.put(char.class, StringFormatter.INSTANCE);
 		
 		FORMAT_MAP.put(boolean[].class, BooleanArrayFormatter.INSTANCE);
+		FORMAT_MAP.put(char[].class, CharArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(byte[].class, ByteArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(short[].class, ShortArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(int[].class, IntArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(long[].class, LongArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(float[].class, FloatArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(double[].class, DoubleArrayFormatter.INSTANCE);
-		FORMAT_MAP.put(char[].class, CharArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(Object[].class, ObjectArrayFormatter.INSTANCE);
 		
 		FORMAT_MAP.put(Boolean.class, PlainFormatter.INSTANCE);
+		FORMAT_MAP.put(Character.class, StringFormatter.INSTANCE);
 		FORMAT_MAP.put(Byte.class, ByteFormatter.INSTANCE);
 		FORMAT_MAP.put(Short.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(Integer.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(Long.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(Float.class, FloatFormatter.INSTANCE);
 		FORMAT_MAP.put(Double.class, FloatFormatter.INSTANCE);
-		FORMAT_MAP.put(Character.class, StringFormatter.INSTANCE);
 		
 		FORMAT_MAP.put(BigInteger.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(BigDecimal.class, NumberFormatter.INSTANCE);
@@ -246,6 +230,38 @@ public class JSON {
 		FORMAT_MAP.put(Properties.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(TreeMap.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(LinkedHashMap.class, MapFormatter.INSTANCE);
+		
+		CONVERT_MAP.put(boolean.class, BooleanConverter.INSTANCE);
+		CONVERT_MAP.put(char.class, CharacterConverter.INSTANCE);
+		CONVERT_MAP.put(byte.class, ByteConverter.INSTANCE);
+		CONVERT_MAP.put(short.class, ShortConverter.INSTANCE);
+		CONVERT_MAP.put(int.class, IntegerConverter.INSTANCE);
+		CONVERT_MAP.put(long.class, LongConverter.INSTANCE);
+		CONVERT_MAP.put(float.class, FloatConverter.INSTANCE);
+		CONVERT_MAP.put(double.class, DoubleConverter.INSTANCE);
+		
+		CONVERT_MAP.put(Boolean.class, BooleanConverter.INSTANCE);
+		CONVERT_MAP.put(Character.class, CharacterConverter.INSTANCE);
+		CONVERT_MAP.put(Byte.class, ByteConverter.INSTANCE);
+		CONVERT_MAP.put(Short.class, ShortConverter.INSTANCE);
+		CONVERT_MAP.put(Integer.class, IntegerConverter.INSTANCE);
+		CONVERT_MAP.put(Long.class, LongConverter.INSTANCE);
+		CONVERT_MAP.put(Float.class, FloatConverter.INSTANCE);
+		CONVERT_MAP.put(Double.class, DoubleConverter.INSTANCE);
+		
+		CONVERT_MAP.put(BigInteger.class, BigIntegerConverter.INSTANCE);
+		CONVERT_MAP.put(BigDecimal.class, BigDecimalConverter.INSTANCE);
+		CONVERT_MAP.put(Number.class, BigDecimalConverter.INSTANCE);
+		
+		CONVERT_MAP.put(Pattern.class, PatternConverter.INSTANCE);
+		CONVERT_MAP.put(TimeZone.class, TimeZoneConverter.INSTANCE);
+		CONVERT_MAP.put(Locale.class, LocaleConverter.INSTANCE);
+		CONVERT_MAP.put(File.class, FileConverter.INSTANCE);
+		CONVERT_MAP.put(URL.class, URLConverter.INSTANCE);
+		CONVERT_MAP.put(URI.class, URIConverter.INSTANCE);
+		CONVERT_MAP.put(UUID.class, UUIDConverter.INSTANCE);
+		CONVERT_MAP.put(Charset.class, CharsetConverter.INSTANCE);
+		CONVERT_MAP.put(Class.class, ClassConverter.INSTANCE);
 	}
 	
 	static JSON newInstance() {
@@ -1517,612 +1533,67 @@ public class JSON {
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked" })
 	protected <T> T postparse(Context context, Object value, Class<? extends T> cls, Type type) throws Exception {
-		Object data = null;
-		
-		JSONHint hint = context.getHint();
-		Class<?> c = cls;
-		
-		if (c.isPrimitive()) {
-			data = PRIMITIVE_MAP.get(c);
-			c = data.getClass();
-		}
+		Converter c = null;
 		
 		if (value == null) {
-			// no handle
-		} else if (hint != null && hint.serialized()) {
-			data = format(value);
-		} else if ((hint != null && Serializable.class.equals(hint.type())) || ClassUtil.isAssignableFrom("java.sql.RowId", c)) {
-			try {
-				data = deserialize(Base64.decode((String)value));
-			} catch (Exception e) {
-				throw e;
-			}
-		} else if (hint != null && String.class.equals(hint.type())) {
-			try {
-				Constructor<?> con = c.getConstructor(String.class);
-				data = con.newInstance(value.toString());
-			} catch (NoSuchMethodException e) {
-				data = null; // ignored
-			}
-		} else if (c.equals(type) && c.isAssignableFrom(value.getClass())) {
-			data = value;
-		} else if (value instanceof Map) {
-			Map<?, ?> src = (Map<?, ?>)value;
-			if (Map.class.isAssignableFrom(c)) {
-				Map<Object, Object> map = null;
-				if (Properties.class.isAssignableFrom(c)) {
-					map = (Map<Object, Object>)create(context, c);
-					flattenProperties(new StringBuilder(32), (Map<Object, Object>)value, (Properties)map);
-				} else if (type instanceof ParameterizedType) {
-					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-					Class<?> pc0 = ClassUtil.getRawType(pt0);
-					Class<?> pc1 = ClassUtil.getRawType(pt1);
-					
-					if ((Object.class.equals(pc0) || String.class.equals(pc0))
-							&& Object.class.equals(pc1)) {
-						map = (Map<Object, Object>)value;
-					} else {
-						map = (Map<Object, Object>)create(context, c);
-						for (Map.Entry<?, ?> entry : src.entrySet()) {
-							context.enter('.');
-							Object key = postparse(context, entry.getKey(), pc0, pt0);
-							context.exit();
-							
-							context.enter(entry.getKey());
-							map.put(key, postparse(context, entry.getValue(), pc1, pt1));
-							context.exit();
-						}
-					}
-				} else {
-					map = (Map<Object, Object>)create(context, c);
-					map.putAll(src);
-				}
-				data = map;
-			} else if (Collection.class.isAssignableFrom(c) || c.isArray()) {
-				if (!(src instanceof SortedMap)) {
-					src = new TreeMap<Object, Object>(src);
-				}
-				data = postparse(context, src.values(), c, type);
-			} else if (c.isEnum()
-					|| Number.class.isAssignableFrom(c)
-					|| CharSequence.class.isAssignableFrom(c)
-					|| Appendable.class.isAssignableFrom(c)
-					|| Boolean.class.equals(c)
-					|| Character.class.equals(c)
-					|| Locale.class.equals(c)
-					|| TimeZone.class.equals(c)
-					|| Pattern.class.equals(c)
-					|| File.class.equals(c)
-					|| URL.class.equals(c)
-					|| URI.class.equals(c)
-					|| ClassUtil.equals("java.net.InetAddress", c)
-					|| Charset.class.equals(c)
-					|| Class.class.equals(c)
-				) {
-				if (src.containsKey(null)) {
-					Object target = src.get(null);
-					if (target instanceof List) {
-						List<?> list = (List<?>)target;
-						target = (!list.isEmpty()) ? list.get(0) : null;
-					}
-					data = postparse(context, target, c, type);
-				}
-			} else {
-				Object o = create(context, c);
-				if (o != null) {
-					Map<String, AnnotatedElement> props = context.getSetProperties(c);
-					for (Map.Entry<?, ?> entry : src.entrySet()) {
-						String name = entry.getKey().toString();
-						AnnotatedElement target = props.get(name);
-						if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
-						if (target == null) continue;
-						
-						context.enter(name, target.getAnnotation(JSONHint.class));
-						if (target instanceof Method) {
-							Method m = (Method)target;
-							Type gptype = m.getGenericParameterTypes()[0];
-							Class<?> ptype = m.getParameterTypes()[0];
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							m.invoke(o, postparse(context, entry.getValue(), ptype, gptype));
-						} else {
-							Field f = (Field)target;
-							Type gptype = f.getGenericType();
-							Class<?> ptype =  f.getType();
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							
-							f.set(o, postparse(context, entry.getValue(), ptype, gptype));
-						}
-						context.exit();
-					}
-					data = o;
-				} else {
-					throw new UnsupportedOperationException();
-				}
-			}
-		} else if (value instanceof List) {
-			List<?> src = (List<?>)value;
-			if (Collection.class.isAssignableFrom(c)) {
-				Collection<Object> collection = null;
-				if (type instanceof ParameterizedType) {
-					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					Class<?> pc = ClassUtil.getRawType(pt);
-					
-					if (Object.class.equals(pc)) {
-						collection = (Collection<Object>)src;
-					} else {
-						collection = (Collection<Object>)create(context, c);
-						for (int i = 0; i < src.size(); i++) {
-							context.enter(i);
-							collection.add(postparse(context, src.get(i), pc, pt));
-							context.exit();
-						}
-					}
-				} else {
-					collection = (Collection<Object>)create(context, c);
-					collection.addAll(src);
-				}
-				data = collection;
-			} else if (c.isArray()) {
-				Object array = Array.newInstance(c.getComponentType(), src.size());
-				Class<?> pc = c.getComponentType();
-				Type pt = (type instanceof GenericArrayType) ? 
-						((GenericArrayType)type).getGenericComponentType() : pc;
-				
-				for (int i = 0; i < src.size(); i++) {
-					context.enter(i);
-					Array.set(array, i, postparse(context, src.get(i), pc, pt));
-					context.exit();
-				}
-				data = array;
-			} else if (Map.class.isAssignableFrom(c)) {
-				Map<Object, Object> map = (Map<Object, Object>)create(context, c);
-				if (Properties.class.isAssignableFrom(c)) {
-					flattenProperties(new StringBuilder(32), (List<Object>)value, (Properties)map);
-				} else if (type instanceof ParameterizedType) {
-					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-					Class<?> pc0 = ClassUtil.getRawType(pt0);
-					Class<?> pc1 = ClassUtil.getRawType(pt1);
-
-					for (int i = 0; i < src.size(); i++) {
-						context.enter('.');
-						Object key = postparse(context, i, pc0, pt0);
-						context.exit();
-						
-						context.enter(i);
-						map.put(key, postparse(context, src.get(i), pc1, pt1));
-						context.exit();
-					}
-				} else {
-					for (int i = 0; i < src.size(); i++) {
-						map.put(i, src.get(i));
-					}
-				}
-				data = map;
-			} else if (Locale.class.equals(c)) {
-				if (src.size() == 1) {
-					data = new Locale(src.get(0).toString());
-				} else if (src.size() == 2) {
-					data = new Locale(src.get(0).toString(), src.get(1).toString());
-				} else if (src.size() > 2) {
-					data = new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
-				}
-			} else if (!src.isEmpty()) {
-				data = postparse(context, src.get(0), c, type);
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		} else if (Number.class.isAssignableFrom(c)) {
-			if (value instanceof String) {
-				NumberFormat f = context.format(NumberFormat.class);
-				if (f != null) value = f.parse((String)value);
-			}
-			
-			if (Byte.class.equals(c)) {
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? 1 : 0;
-				} else if (value instanceof BigDecimal) {
-					data = ((BigDecimal)value).byteValueExact();
-				} else if (value instanceof Number) {
-					data = ((Number)value).byteValue();
-				} else {
-					String str = value.toString().trim().toLowerCase();
-					if (str.length() > 0) {
-						int start = 0;
-						if (str.charAt(0) == '+') {
-							start++;
-						}
-						
-						int num = 0;
-						if (str.startsWith("0x", start)) {
-							num = Integer.parseInt(str.substring(start+2), 16);
-						} else {
-							num = Integer.parseInt(str.substring(start));
-						}
-						
-						data = (byte)((num > 127) ? num-256 : num);
-					}
-				}
-			} else if (Short.class.equals(c)) {
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? 1 : 0;
-				} else if (value instanceof BigDecimal) {
-					data = ((BigDecimal)value).shortValueExact();
-				} else if (value instanceof Number) {
-					data = ((Number)value).shortValue();
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						int start = 0;
-						if (str.charAt(0) == '+') {
-							start++;
-						}
-						
-						if (str.startsWith("0x", start)) {
-							data = (short)Integer.parseInt(str.substring(start+2), 16);
-						} else {
-							data = (short)Integer.parseInt(str.substring(start));
-						}
-					}
-				}				
-			} else if (int.class.equals(c) || Integer.class.equals(c)) {
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? 1 : 0;
-				} else if (value instanceof BigDecimal) {
-					data = ((BigDecimal)value).intValueExact();
-				} else if (value instanceof Number) {
-					data = ((Number)value).intValue();
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						int start = 0;
-						if (str.charAt(0) == '+') {
-							start++;
-						}
-						
-						if (str.startsWith("0x", start)) {
-							data = Integer.parseInt(str.substring(start+2), 16);
-						} else {
-							data = Integer.parseInt(str.substring(start));
-						}
-					}				
-				}
-			} else if (Long.class.equals(c)) {
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? 1l : 0l;
-				} else if (value instanceof BigDecimal) {
-					data = ((BigDecimal)value).longValueExact();
-				} else if (value instanceof Number) {
-					data = ((Number)value).longValue();
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						int start = 0;
-						if (str.charAt(0) == '+') {
-							start++;
-						}
-						
-						if (str.startsWith("0x", start)) {
-							data = Long.parseLong(str.substring(start+2), 16);
-						} else {
-							data = Long.parseLong(str.substring(start));
-						}
-					}					
-				}
-			} else if (Float.class.equals(c)) {
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
-				} else if (value instanceof Number) {
-					data = ((Number)value).floatValue();
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						data = Float.valueOf(str);
-					}					
-				}
-			} else if (Double.class.equals(c)) {
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
-				} else if (value instanceof Number) {
-					data = ((Number)value).doubleValue();
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						data = Double.valueOf(str);
-					}				
-				}
-			} else if (BigInteger.class.equals(c)) {				
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
-				} else if (value instanceof BigDecimal) {
-					data = ((BigDecimal)value).toBigIntegerExact();
-				} else if (value instanceof Number) {
-					data = BigInteger.valueOf(((Number)value).longValue());
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						int start = 0;
-						if (str.charAt(0) == '+') {
-							start++;
-						}
-						
-						if (str.startsWith("0x", start)) {
-							data = new BigInteger(str.substring(start+2), 16);
-						} else {
-							data = new BigInteger(str.substring(start));
-						}
-					}
-				}
-			} else if (BigDecimal.class.equals(c) || Number.class.equals(c)) {
-				String str = value.toString().trim();
-				if (str.length() > 0) {
-					if (str.charAt(0) == '+') {
-						data = new BigDecimal(str.substring(1));
-					} else {
-						data = new BigDecimal(str);
-					}
-				}
-			} else {
-				throw new UnsupportedOperationException();
+			if (!cls.isPrimitive()) {
+				c = NullConverter.INSTANCE;
 			}
 		} else {
-			if (boolean.class.equals(c) || Boolean.class.equals(c)) {
-				if (value instanceof Number) {
-					data = !value.equals(0);
-				} else {
-					String s = value.toString().trim();
-					if (s.length() == 0
-						|| s.equalsIgnoreCase("f")
-						|| s.equalsIgnoreCase("false")
-						|| s.equalsIgnoreCase("no")
-						|| s.equalsIgnoreCase("off")
-						|| s.equals("NaN")) {
-						data = false;
-					} else {
-						data = true;
-					}
-				}
-			} else if (Character.class.equals(c)) {
-				if (value instanceof Boolean) {
-					data = (((Boolean)value).booleanValue()) ? '1' : '0';
-				} else if (value instanceof Number) {
-					data = (char)((Number)value).intValue();
-				} else {
-					String s = value.toString();
-					if (s.length() > 0) {
-						data = s.charAt(0);
-					}				
-				}
-			} else if (CharSequence.class.isAssignableFrom(c)) {
-				data = value.toString();
-			} else if (Appendable.class.isAssignableFrom(c)) {
-				Appendable a = (Appendable)create(context, c);
-				data = a.append(value.toString());
-			} else if (Enum.class.isAssignableFrom(c)) {
-				if (value instanceof Number) {
-					data = c.getEnumConstants()[((Number)value).intValue()];
-				} else if (value instanceof Boolean) {
-					data = c.getEnumConstants()[((Boolean)value) ? 1 : 0];
-				} else {
-					String str = value.toString().trim();
-					if (str.length() == 0) {
-						data = null;
-					} else if (Character.isDigit(str.charAt(0))) {
-						data = c.getEnumConstants()[Integer.parseInt(str)];
-					} else {
-						data = Enum.valueOf((Class<? extends Enum>)c, str);
-					}
-				}
-			} else if (Pattern.class.equals(c)) {
-				data = Pattern.compile(value.toString());
-			} else if (Date.class.isAssignableFrom(c)) {
-				Date date = null;
-				long millis = -1;
-				if (value instanceof Number) {
-					millis = ((Number)value).longValue();
-					date = (Date)create(context, c);
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						millis = convertDate(str, locale);
-						date = (Date)create(context, c);						
-					}
-				}
-				
-				if (date != null) {
-					if (date instanceof java.sql.Date) {
-						Calendar cal = Calendar.getInstance();
-						cal.setTimeInMillis(millis);
-						cal.set(Calendar.HOUR_OF_DAY, 0);
-						cal.set(Calendar.MINUTE, 0);
-						cal.set(Calendar.SECOND, 0);
-						cal.set(Calendar.MILLISECOND, 0);
-						date.setTime(cal.getTimeInMillis());
-					} else if (date instanceof java.sql.Time) {
-						Calendar cal = Calendar.getInstance();
-						cal.setTimeInMillis(millis);
-						cal.set(Calendar.YEAR, 1970);
-						cal.set(Calendar.MONTH, Calendar.JANUARY);
-						cal.set(Calendar.DATE, 1);
-						date.setTime(cal.getTimeInMillis());
-					} else {
-						date.setTime(millis);
-					}
-				}
-				
-				data = date;
-			} else if (Calendar.class.isAssignableFrom(c)) {
-				if (value instanceof Number) {
-					Calendar cal = (Calendar)create(context, c);
-					cal.setTimeInMillis(((Number)value).longValue());
-					data = cal;
-				} else {
-					String str = value.toString().trim();
-					if (str.length() > 0) {
-						Calendar cal = (Calendar)create(context, c);
-						cal.setTimeInMillis(convertDate(str, locale));
-						data = cal;
-					}
-				}
-			} else if (TimeZone.class.equals(c)) {
-				data = TimeZone.getTimeZone(value.toString().trim());
-			} else if (Locale.class.equals(c)) {
-				String[] array = value.toString().split("\\p{Punct}");
-				
-				if (array.length == 1) {
-					data = new Locale(array[0]);
-				} else if (array.length == 2) {
-					data = new Locale(array[0], array[1]);
-				} else if (array.length > 2) {
-					data = new Locale(array[0], array[1], array[2]);
-				}
-			} else if (File.class.equals(c)) {
-				data = new File(value.toString().trim());
-			} else if (URL.class.equals(c)) {
-				if (value instanceof File) {
-					data = ((File)value).toURI().toURL();
-				} else if (value instanceof URI) {
-					data = ((URI)value).toURL();
-				} else {
-					data = new URL(value.toString().trim());
-				}
-			} else if (URI.class.equals(c)) {
-				if (value instanceof File) {
-					data = ((File)value).toURI();
-				} else if (value instanceof URL) {
-					data = ((URL)value).toURI();
-				} else {
-					data = new URI(value.toString().trim());
-				}
-			} else if (UUID.class.equals(c)) {
-				data = UUID.fromString(value.toString().trim());
-			} else if (ClassUtil.equals("java.net.InetAddress", c)) {
-				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
-				data = inetAddressClass.getMethod("getByName", String.class).invoke(null, value.toString().trim());
-			} else if (Charset.class.equals(c)) {
-				data = Charset.forName(value.toString().trim());
-			} else if (Class.class.equals(c)) {
-				String s = value.toString().trim();
-				if (s.equals("boolean")) {
-					data = boolean.class;
-				} else if (s.equals("byte")) {
-					data = byte.class;
-				} else if (s.equals("short")) {
-					data = short.class;
-				} else if (s.equals("int")) {
-					data = int.class;
-				} else if (s.equals("long")) {
-					data = long.class;
-				} else if (s.equals("float")) {
-					data = float.class;
-				} else if (s.equals("double")) {
-					data = double.class;
-				} else {
-					try {
-						ClassLoader cl = Thread.currentThread().getContextClassLoader();
-						data = cl.loadClass(value.toString());
-					} catch (ClassNotFoundException e) {
-					}
-				}
-			} else if (Collection.class.isAssignableFrom(c)) {
-				Collection<Object> collection = (Collection<Object>)create(context, c);
-				if (type instanceof ParameterizedType) {
-					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-					Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					Class<?> pc = ClassUtil.getRawType(pt);
-					context.enter(0);
-					collection.add(postparse(context, value, pc, pt));
-					context.exit();
-				} else {
-					collection.add(value);
-				}
-				data = collection;
-			} else if (c.isArray()) {
-				if (value instanceof String && byte.class.equals(c.getComponentType())) {
-					data = Base64.decode((String)value);
-				} else {
-					Object array = Array.newInstance(c.getComponentType(), 1);
-					Class<?> pc = c.getComponentType();
-					Type pt = (type instanceof GenericArrayType) ? 
-							((GenericArrayType)type).getGenericComponentType() : pc;
-					context.enter(0);
-					Array.set(array, 0, postparse(context, value, pc, pt));
-					context.exit();
-					data = array;
-				}
-			} else if (java.sql.Array.class.isAssignableFrom(c)
-					|| Struct.class.isAssignableFrom(c)) {
-				data = null; // ignored
-			} else if (Map.class.isAssignableFrom(c)) {
-				Map<Object, Object> map = (Map)create(context, c);
-				Object key = (hint != null && hint.anonym().length() > 0) ? hint.anonym() : null;
-				if (type instanceof ParameterizedType) {
-					Type[] pts = ((ParameterizedType)type).getActualTypeArguments();
-					Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-					Class<?> pc0 = ClassUtil.getRawType(pt0);
-					Class<?> pc1 = ClassUtil.getRawType(pt1);
-					
-					context.enter('.');
-					key = postparse(context, key, pc0, pt0);
-					context.exit();
-					
-					context.enter(key);
-					map.put(key, postparse(context, value, pc1, pt1));
-					context.exit();
-				} else {
-					map.put(value, null);
-				}
-				data = map;
-			} else if (hint != null && hint.anonym().length() > 0) {
-				Map<String, AnnotatedElement> props = context.getSetProperties(c);
-				AnnotatedElement target = props.get(hint.anonym());
-				if (target != null) {
-					Object o = create(context, c);
-					if (o != null) {
-						context.enter(hint.anonym(), target.getAnnotation(JSONHint.class));
-						if (target instanceof Method) {
-							Method m = (Method)target;
-							Type gptype = m.getGenericParameterTypes()[0];
-							Class<?> ptype = m.getParameterTypes()[0];
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							m.invoke(o, postparse(context, value, ptype, gptype));
-						} else {
-							Field f = (Field)target;
-							Type gptype = f.getGenericType();
-							Class<?> ptype =  f.getType();
-							if (gptype instanceof TypeVariable<?> && type instanceof ParameterizedType) {
-								gptype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gptype, (ParameterizedType)type);
-								ptype = ClassUtil.getRawType(gptype);
-							}
-							
-							f.set(o, postparse(context, value, ptype, gptype));
-						}
-						context.exit();
-					}
-					data = o;
-				}
+			JSONHint hint = context.getHint();
+			if (hint == null) {
+				// no handle
+			} else if (hint.serialized()) {
+				c = FormatConverter.INSTANCE;
+			} else if (Serializable.class.equals(hint.type())) {
+				c = SerializableConverter.INSTANCE;
+			} else if (String.class.equals(hint.type())) {
+				c = StringSerializableConverter.INSTANCE;
+			}
+		}
+		if (c == null) {
+			if (value != null && cls.equals(type) && cls.isAssignableFrom(value.getClass())) {
+				c = PlainConverter.INSTANCE;
 			} else {
-				throw new UnsupportedOperationException();
+				c = CONVERT_MAP.get(cls);
+			}
+		}
+		if (c == null) {
+			if (context.hasMemberCache(cls)) {
+				c = ObjectConverter.INSTANCE;
+			} else if (Map.class.isAssignableFrom(cls)) {
+				c = MapConverter.INSTANCE;
+			} else if (Collection.class.isAssignableFrom(cls)) {
+				c = CollectionConverter.INSTANCE;
+			} else if (cls.isArray()) {
+				c = ArrayConverter.INSTANCE;
+			} else if (cls.isEnum()) {
+				c = EnumConverter.INSTANCE;
+			} else if (Date.class.isAssignableFrom(cls)) {
+				c = DateConverter.INSTANCE;
+			} else if (Calendar.class.isAssignableFrom(cls)) {
+				c = CalendarConverter.INSTANCE;
+			} else if (CharSequence.class.isAssignableFrom(cls)) {
+				c = CharSequenceConverter.INSTANCE;
+			} else if (Appendable.class.isAssignableFrom(cls)) {
+				c = AppendableConverter.INSTANCE;
+			} else if (ClassUtil.equals("java.net.InetAddress", cls)) {
+				c = InetAddressConverter.INSTANCE;
+			} else if (java.sql.Array.class.isAssignableFrom(cls)
+					|| Struct.class.isAssignableFrom(cls)) {
+				c = NullConverter.INSTANCE;
+			} else {
+				c = ObjectConverter.INSTANCE;
 			}
 		}
 		
-		return (T)data;
+		if (c != null) {
+			return (T)c.convert(this, context, value, cls, type);
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 	
 	protected String normalize(String name) {
@@ -2199,126 +1670,7 @@ public class JSON {
 		
 		return c.cast(instance);
 	}
-	
-	static void flattenProperties(StringBuilder key, Object value, Properties props) {
-		if (value instanceof Map<?,?>) {
-			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
-				int pos = key.length();
-				if (pos > 0) key.append('.');
-				key.append(entry.getKey());
-				flattenProperties(key, entry.getValue(), props);
-				key.setLength(pos);
-			}
-		} else if (value instanceof List<?>) {
-			List<?> list = (List<?>)value;
-			for (int i = 0; i < list.size(); i++) {
-				int pos = key.length();
-				if (pos > 0) key.append('.');
-				key.append(i);
-				flattenProperties(key, list.get(i), props);
-				key.setLength(pos);
-			}
-		} else {
-			props.setProperty(key.toString(), value.toString());
-		}
-	}
-	
-	static Object deserialize(byte[] array) throws IOException, ClassNotFoundException {
-		Object ret = null;
-		ObjectInputStream in = null;
-		try {
-			in = new ObjectInputStream(new ByteArrayInputStream(array));
-			ret = in.readObject();
-		} finally {
-			if (in != null) in.close();
-		}
-		return ret;
-	}
-	
-	static Long convertDate(String value, Locale locale) throws java.text.ParseException {
-		value = value.trim();
-		if (value.length() == 0) {
-			return null;
-		}
-		if (locale == null) locale = Locale.getDefault();
-		value = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})")
-			.matcher(value)
-			.replaceFirst("GMT$1:$2");
-		
-		DateFormat format = null;
-		if (Character.isDigit(value.charAt(0))) {
-			StringBuilder sb = new StringBuilder(value.length() * 2);
 
-			String types = "yMdHmsSZ";
-			// 0: year, 1:month, 2: day, 3: hour, 4: minute, 5: sec, 6:msec, 7: timezone
-			int pos = (value.length() > 2 && value.charAt(2) == ':') ? 3 : 0;
-			boolean before = true;
-			int count = 0;
-			for (int i = 0; i < value.length(); i++) {
-				char c = value.charAt(i);
-				if ((pos == 4 || pos == 5 || pos == 6) 
-						&& (c == '+' || c == '-')
-						&& (i + 1 < value.length())
-						&& (Character.isDigit(value.charAt(i+1)))) {
-					
-					if (!before) sb.append('\'');
-					pos = 7;
-					count = 0;
-					before = true;
-					continue;
-				} else if (pos == 7 && c == ':'
-						&& (i + 1 < value.length())
-						&& (Character.isDigit(value.charAt(i+1)))) {
-					value = value.substring(0, i) + value.substring(i+1);
-					continue;
-				}
-				
-				boolean digit = (Character.isDigit(c) && pos < 8);
-				if (before != digit) {
-					sb.append('\'');
-					if (digit) {
-						count = 0;
-						pos++;
-					}
-				}
-				
-				if (digit) {
-					char type = types.charAt(pos);
-					if (count == ((type == 'y' || type == 'Z') ? 4 : (type == 'S') ? 3 : 2)) {
-						count = 0;
-						pos++;
-						type = types.charAt(pos);
-					}
-					if (type != 'Z' || count == 0) sb.append(type);
-					count++;
-				} else {
-					sb.append((c == '\'') ? "''" : c);
-				}
-				before = digit;
-			}
-			if (!before) sb.append('\'');
-			
-			format = new SimpleDateFormat(sb.toString(), Locale.ENGLISH);
-		} else if (value.length() > 18) {
-			if (value.charAt(3) == ',') {
-				String pattern = "EEE, dd MMM yyyy HH:mm:ss Z";
-				format = new SimpleDateFormat(
-						(value.length() < pattern.length()) ? pattern.substring(0, value.length()) : pattern, Locale.ENGLISH);
-			} else if (value.charAt(13) == ':') {
-				format = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
-			} else if (value.charAt(18) == ':') {
-				String pattern = "EEE MMM dd yyyy HH:mm:ss Z";
-				format = new SimpleDateFormat(
-						(value.length() < pattern.length()) ? pattern.substring(0, value.length()) : pattern, Locale.ENGLISH);
-			} else  {
-				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, locale);
-			}
-		} else {
-			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
-		}
-		
-		return format.parse(value).getTime();
-	}
 	
 	public class Context {
 		final Object contextObject;
@@ -2407,7 +1759,7 @@ public class JSON {
 			enter(key);
 			T o = JSON.this.postparse(this, value, c, c);
 			exit();
-			return (T)((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
+			return (T)((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
@@ -2415,7 +1767,7 @@ public class JSON {
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
-			return ((c.isPrimitive()) ? PRIMITIVE_MAP.get(c).getClass() : c).cast(o);
+			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
 		
 		void enter(Object key, JSONHint hint) {
