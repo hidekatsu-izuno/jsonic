@@ -425,8 +425,8 @@ final class ListFormatter implements Formatter {
 		in.append('[');
 		final int length = list.size();
 		int count = 0;
-		for (int i = 0; i < length; i++) {
-			Object item = list.get(i);
+		while (count < length) {
+			Object item = list.get(count);
 			if (item == src) item = null;
 			
 			if (count != 0) in.append(',');
