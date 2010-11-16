@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -696,10 +695,8 @@ public class JSON {
 		Context context = new Context();
 		
 		InputSource fs;
-		if (ap instanceof StringWriter) {
+		if (ap instanceof Writer) {
 			fs = new WriterInputSource((Writer)ap);
-		} else if (ap instanceof Writer) {
-			fs = new BufferedWriterInputSource((Writer)ap);
 		} else if (ap instanceof StringBuilder) {
 			fs = new StringBuilderInputSource((StringBuilder)ap);
 		} else if (ap instanceof StringBuilder) {
@@ -727,7 +724,7 @@ public class JSON {
 		return value;
 	}
 	
-	final void format(Context context, Object src, InputSource ap) throws IOException {
+	final void format(final Context context, final Object src, final InputSource ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > context.getMaxDepth()) {
 			o = null;

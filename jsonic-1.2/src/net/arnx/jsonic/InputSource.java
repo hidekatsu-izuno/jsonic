@@ -13,37 +13,10 @@ interface InputSource {
 class WriterInputSource implements InputSource {
 	private Writer writer;
 	
-	public WriterInputSource(Writer writer) {
-		this.writer = writer;
-	}
-	
-	@Override
-	public void append(String text) throws IOException {
-		writer.write(text);
-	}
-	
-	@Override
-	public void append(String text, int start, int end) throws IOException {
-		writer.write(text, start, end-start);
-	}
-	
-	@Override
-	public void append(char c) throws IOException {
-		writer.write(c);
-	}
-	
-	public void flush() throws IOException {
-		writer.flush();
-	}
-}
-
-class BufferedWriterInputSource implements InputSource {
-	private Writer writer;
-	
 	private char[] buf = new char[1000];
 	private int pos = 0;
 	
-	public BufferedWriterInputSource(Writer writer) {
+	public WriterInputSource(Writer writer) {
 		this.writer = writer;
 	}
 	
