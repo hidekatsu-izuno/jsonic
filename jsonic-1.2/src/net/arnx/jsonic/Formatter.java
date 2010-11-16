@@ -429,7 +429,7 @@ final class ListFormatter implements Formatter {
 			Object item = list.get(i);
 			if (item == src) item = null;
 			
-			if (i != 0) in.append(',');
+			if (count != 0) in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
 				for (int j = 0; j < context.getLevel() + 1; j++) in.append('\t');
@@ -460,12 +460,10 @@ final class IteratorFormatter implements Formatter {
 			if (item == src)
 				item = null;
 
-			if (count != 0)
-				in.append(',');
+			if (count != 0) in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
-					in.append('\t');
+				for (int j = 0; j < context.getLevel() + 1; j++) in.append('\t');
 			}
 			context.enter(count);
 			json.format(context, item, in);
@@ -474,8 +472,7 @@ final class IteratorFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			in.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
-				in.append('\t');
+			for (int j = 0; j < context.getLevel(); j++) in.append('\t');
 		}
 		in.append(']');
 		return true;
@@ -532,24 +529,19 @@ final class MapFormatter implements Formatter {
 		int count = 0;
 		for (Map.Entry<?, ?> entry : map.entrySet()) {
 			Object key = entry.getKey();
-			if (key == null)
-				continue;
+			if (key == null) continue;
 
 			Object value = entry.getValue();
-			if (value == src || (context.isSuppressNull() && value == null))
-				continue;
+			if (value == src || (context.isSuppressNull() && value == null)) continue;
 
-			if (count != 0)
-				in.append(',');
+			if (count != 0) in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
-					in.append('\t');
+				for (int j = 0; j < context.getLevel() + 1; j++) in.append('\t');
 			}
 			StringFormatter.serialize(context, key.toString(), in);
 			in.append(':');
-			if (context.isPrettyPrint())
-				in.append(' ');
+			if (context.isPrettyPrint()) in.append(' ');
 			context.enter(key);
 			json.format(context, value, in);
 			context.exit();
