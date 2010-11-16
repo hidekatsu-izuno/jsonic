@@ -1701,7 +1701,7 @@ public class JSON {
 	}
 
 	
-	public class Context {
+	public final class Context {
 		final Locale locale;
 		final Object contextObject;
 		final int maxDepth;
