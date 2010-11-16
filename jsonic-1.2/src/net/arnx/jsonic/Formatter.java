@@ -432,8 +432,7 @@ final class ListFormatter implements Formatter {
 			if (i != 0) in.append(',');
 			if (context.isPrettyPrint()) {
 				in.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
-					in.append('\t');
+				for (int j = 0; j < context.getLevel() + 1; j++) in.append('\t');
 			}
 			context.enter(count);
 			json.format(context, item, in);
