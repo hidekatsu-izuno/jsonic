@@ -152,7 +152,7 @@ import org.w3c.dom.Node;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.2.4
+ * @version 1.2.5
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -555,12 +555,12 @@ public class JSON {
 		json.parse(reader);
 	}
 	
-	Object contextObject;
-	Locale locale;
-	boolean prettyPrint = false;
-	int maxDepth = 32;
-	boolean suppressNull = false;
-	Mode mode = Mode.TRADITIONAL;
+	private Object contextObject;
+	private Locale locale;
+	private boolean prettyPrint = false;
+	private int maxDepth = 32;
+	private boolean suppressNull = false;
+	private Mode mode = Mode.TRADITIONAL;
 
 	public JSON() {
 	}
