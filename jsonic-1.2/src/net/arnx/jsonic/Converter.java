@@ -38,16 +38,16 @@ interface Converter {
 	Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception;
 }
 
-class NullConverter implements Converter {
-	public static final Converter INSTANCE = new NullConverter();
+final class NullConverter implements Converter {
+	public static final NullConverter INSTANCE = new NullConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) {
 		return null;
 	}
 }
 
-class PlainConverter implements Converter {
-	public static final Converter INSTANCE = new PlainConverter();
+final class PlainConverter implements Converter {
+	public static final PlainConverter INSTANCE = new PlainConverter();
 	
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>(8);
 	
@@ -71,16 +71,16 @@ class PlainConverter implements Converter {
 	}
 }
 
-class FormatConverter implements Converter {
-	public static final Converter INSTANCE = new FormatConverter();
+final class FormatConverter implements Converter {
+	public static final FormatConverter INSTANCE = new FormatConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) {
 		return json.format(value);
 	}
 }
 
-class StringSerializableConverter implements Converter {
-	public static final Converter INSTANCE = new StringSerializableConverter();
+final class StringSerializableConverter implements Converter {
+	public static final StringSerializableConverter INSTANCE = new StringSerializableConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
@@ -98,8 +98,8 @@ class StringSerializableConverter implements Converter {
 	}	
 }
 
-class SerializableConverter implements Converter {
-	public static final Converter INSTANCE = new SerializableConverter();
+final class SerializableConverter implements Converter {
+	public static final SerializableConverter INSTANCE = new SerializableConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
@@ -123,8 +123,8 @@ class SerializableConverter implements Converter {
 	}
 }
 
-class BooleanConverter implements Converter {
-	public static final Converter INSTANCE = new BooleanConverter();
+final class BooleanConverter implements Converter {
+	public static final BooleanConverter INSTANCE = new BooleanConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -160,8 +160,8 @@ class BooleanConverter implements Converter {
 	}
 }
 
-class CharacterConverter implements Converter {
-	public static final Converter INSTANCE = new CharacterConverter();
+final class CharacterConverter implements Converter {
+	public static final CharacterConverter INSTANCE = new CharacterConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -189,8 +189,8 @@ class CharacterConverter implements Converter {
 	}
 }
 
-class ByteConverter implements Converter {
-	public static final Converter INSTANCE = new ByteConverter();
+final class ByteConverter implements Converter {
+	public static final ByteConverter INSTANCE = new ByteConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -237,8 +237,8 @@ class ByteConverter implements Converter {
 	}
 }
 
-class ShortConverter implements Converter {
-	public static final Converter INSTANCE = new ShortConverter();
+final class ShortConverter implements Converter {
+	public static final ShortConverter INSTANCE = new ShortConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -282,8 +282,8 @@ class ShortConverter implements Converter {
 	}	
 }
 
-class IntegerConverter  implements Converter {
-	public static final Converter INSTANCE = new IntegerConverter();
+final class IntegerConverter  implements Converter {
+	public static final IntegerConverter INSTANCE = new IntegerConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -327,8 +327,8 @@ class IntegerConverter  implements Converter {
 	}	
 }
 
-class LongConverter  implements Converter {
-	public static final Converter INSTANCE = new LongConverter();
+final class LongConverter implements Converter {
+	public static final LongConverter INSTANCE = new LongConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -372,8 +372,8 @@ class LongConverter  implements Converter {
 	}	
 }
 
-class FloatConverter  implements Converter {
-	public static final Converter INSTANCE = new FloatConverter();
+final class FloatConverter  implements Converter {
+	public static final FloatConverter INSTANCE = new FloatConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -406,8 +406,8 @@ class FloatConverter  implements Converter {
 	}	
 }
 
-class DoubleConverter  implements Converter {
-	public static final Converter INSTANCE = new DoubleConverter();
+final class DoubleConverter  implements Converter {
+	public static final DoubleConverter INSTANCE = new DoubleConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -440,8 +440,8 @@ class DoubleConverter  implements Converter {
 	}	
 }
 
-class BigIntegerConverter  implements Converter {
-	public static final Converter INSTANCE = new BigIntegerConverter();
+final class BigIntegerConverter  implements Converter {
+	public static final BigIntegerConverter INSTANCE = new BigIntegerConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -486,8 +486,8 @@ class BigIntegerConverter  implements Converter {
 	}	
 }
 
-class BigDecimalConverter  implements Converter {
-	public static final Converter INSTANCE = new BigDecimalConverter();
+final class BigDecimalConverter  implements Converter {
+	public static final BigDecimalConverter INSTANCE = new BigDecimalConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -519,8 +519,8 @@ class BigDecimalConverter  implements Converter {
 	}	
 }
 
-class PatternConverter implements Converter {
-	public static final Converter INSTANCE = new PatternConverter();
+final class PatternConverter implements Converter {
+	public static final PatternConverter INSTANCE = new PatternConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -539,8 +539,8 @@ class PatternConverter implements Converter {
 	}
 }
 
-class TimeZoneConverter implements Converter {
-	public static final Converter INSTANCE = new TimeZoneConverter();
+final class TimeZoneConverter implements Converter {
+	public static final TimeZoneConverter INSTANCE = new TimeZoneConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -559,8 +559,8 @@ class TimeZoneConverter implements Converter {
 	}	
 }
 
-class LocaleConverter implements Converter {
-	public static final Converter INSTANCE = new LocaleConverter();
+final class LocaleConverter implements Converter {
+	public static final LocaleConverter INSTANCE = new LocaleConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof List<?>) {
@@ -599,8 +599,8 @@ class LocaleConverter implements Converter {
 	}
 }
 
-class FileConverter implements Converter {
-	public static final Converter INSTANCE = new FileConverter();
+final class FileConverter implements Converter {
+	public static final FileConverter INSTANCE = new FileConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -618,8 +618,8 @@ class FileConverter implements Converter {
 	}
 }
 
-class URLConverter implements Converter {
-	public static final Converter INSTANCE = new URLConverter();
+final class URLConverter implements Converter {
+	public static final URLConverter INSTANCE = new URLConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -643,8 +643,8 @@ class URLConverter implements Converter {
 	}
 }
 
-class URIConverter implements Converter {
-	public static final Converter INSTANCE = new URIConverter();
+final class URIConverter implements Converter {
+	public static final URIConverter INSTANCE = new URIConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -668,8 +668,8 @@ class URIConverter implements Converter {
 	}
 }
 
-class UUIDConverter implements Converter {
-	public static final Converter INSTANCE = new UUIDConverter();
+final class UUIDConverter implements Converter {
+	public static final UUIDConverter INSTANCE = new UUIDConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -687,8 +687,8 @@ class UUIDConverter implements Converter {
 	}
 }
 
-class CharsetConverter implements Converter {
-	public static final Converter INSTANCE = new CharsetConverter();
+final class CharsetConverter implements Converter {
+	public static final CharsetConverter INSTANCE = new CharsetConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -706,8 +706,8 @@ class CharsetConverter implements Converter {
 	}
 }
 
-class ClassConverter implements Converter {
-	public static final Converter INSTANCE = new ClassConverter();
+final class ClassConverter implements Converter {
+	public static final ClassConverter INSTANCE = new ClassConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -747,8 +747,8 @@ class ClassConverter implements Converter {
 	}
 }
 
-class CharSequenceConverter implements Converter {
-	public static final Converter INSTANCE = new CharSequenceConverter();
+final class CharSequenceConverter implements Converter {
+	public static final CharSequenceConverter INSTANCE = new CharSequenceConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -764,8 +764,8 @@ class CharSequenceConverter implements Converter {
 	}
 }
 
-class AppendableConverter implements Converter {
-	public static final Converter INSTANCE = new AppendableConverter();
+final class AppendableConverter implements Converter {
+	public static final AppendableConverter INSTANCE = new AppendableConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -783,8 +783,8 @@ class AppendableConverter implements Converter {
 	}
 }
 
-class EnumConverter implements Converter {
-	public static final Converter INSTANCE = new EnumConverter();
+final class EnumConverter implements Converter {
+	public static final EnumConverter INSTANCE = new EnumConverter();
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -813,8 +813,8 @@ class EnumConverter implements Converter {
 	}
 }
 
-class DateConverter implements Converter {
-	public static final Converter INSTANCE = new DateConverter();
+final class DateConverter implements Converter {
+	public static final DateConverter INSTANCE = new DateConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -947,8 +947,8 @@ class DateConverter implements Converter {
 	}
 }
 
-class CalendarConverter implements Converter {
-	public static final Converter INSTANCE = new CalendarConverter();
+final class CalendarConverter implements Converter {
+	public static final CalendarConverter INSTANCE = new CalendarConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -974,8 +974,8 @@ class CalendarConverter implements Converter {
 	}
 }
 
-class InetAddressConverter implements Converter {
-	public static final Converter INSTANCE = new InetAddressConverter();
+final class InetAddressConverter implements Converter {
+	public static final InetAddressConverter INSTANCE = new InetAddressConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -993,8 +993,8 @@ class InetAddressConverter implements Converter {
 	}
 }
 
-class ArrayConverter implements Converter {
-	public static final Converter INSTANCE = new ArrayConverter();
+final class ArrayConverter implements Converter {
+	public static final ArrayConverter INSTANCE = new ArrayConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -1040,8 +1040,8 @@ class ArrayConverter implements Converter {
 	}
 }
 
-class CollectionConverter implements Converter {
-	public static final Converter INSTANCE = new CollectionConverter();
+final class CollectionConverter implements Converter {
+	public static final CollectionConverter INSTANCE = new CollectionConverter();
 	
 	@SuppressWarnings("unchecked")
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -1094,8 +1094,8 @@ class CollectionConverter implements Converter {
 	}	
 }
 
-class MapConverter implements Converter {
-	public static final Converter INSTANCE = new MapConverter();
+final class MapConverter implements Converter {
+	public static final MapConverter INSTANCE = new MapConverter();
 	
 	@SuppressWarnings("unchecked")
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -1209,8 +1209,8 @@ class MapConverter implements Converter {
 	}
 }
 
-class ObjectConverter implements Converter {
-	public static final Converter INSTANCE = new ObjectConverter();
+final class ObjectConverter implements Converter {
+	public static final ObjectConverter INSTANCE = new ObjectConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		Map<String, Property> props = context.getSetProperties(c);

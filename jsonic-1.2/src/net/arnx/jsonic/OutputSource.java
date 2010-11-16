@@ -14,12 +14,12 @@ interface OutputSource {
 	long getOffset();
 }
 
-class CharSequenceOutputSource implements OutputSource {
+final class CharSequenceOutputSource implements OutputSource {
 	int lines = 1;
 	int columns = 1;
 	int offset = 0;
 	
-	CharSequence cs;
+	final CharSequence cs;
 	
 	public CharSequenceOutputSource(CharSequence cs) {
 		if (cs == null) {
@@ -64,13 +64,13 @@ class CharSequenceOutputSource implements OutputSource {
 	}
 }
 
-class ReaderOutputSource implements OutputSource {
+final class ReaderOutputSource implements OutputSource {
 	long lines = 1l;
 	long columns = 1l;
 	long offset = 0;
 
-	Reader reader;
-	char[] buf = new char[256];
+	final Reader reader;
+	final char[] buf = new char[256];
 	int start = 0;
 	int end = 0;
 	

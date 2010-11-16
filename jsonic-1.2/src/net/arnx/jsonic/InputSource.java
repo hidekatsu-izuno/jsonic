@@ -10,10 +10,10 @@ interface InputSource {
 	public void flush() throws IOException;
 }
 
-class WriterInputSource implements InputSource {
-	private Writer writer;
+final class WriterInputSource implements InputSource {
+	private final Writer writer;
 	
-	private char[] buf = new char[1000];
+	private final char[] buf = new char[1000];
 	private int pos = 0;
 	
 	public WriterInputSource(Writer writer) {
@@ -58,8 +58,8 @@ class WriterInputSource implements InputSource {
 	}
 }
 
-class StringBufferFormatSource implements InputSource {
-	private StringBuffer sb;
+final class StringBufferFormatSource implements InputSource {
+	private final StringBuffer sb;
 	
 	public StringBufferFormatSource() {
 		this.sb = new StringBuffer(1000);
@@ -98,8 +98,8 @@ class StringBufferFormatSource implements InputSource {
 	}
 }
 
-class StringBuilderInputSource implements InputSource {
-	private StringBuilder sb;
+final class StringBuilderInputSource implements InputSource {
+	private final StringBuilder sb;
 	
 	public StringBuilderInputSource() {
 		this.sb = new StringBuilder(1000);
@@ -138,8 +138,8 @@ class StringBuilderInputSource implements InputSource {
 	}
 }
 
-class AppendableInputSource implements InputSource {
-	private Appendable ap;
+final class AppendableInputSource implements InputSource {
+	private final Appendable ap;
 	
 	public AppendableInputSource(Appendable ap) {
 		this.ap = ap;
