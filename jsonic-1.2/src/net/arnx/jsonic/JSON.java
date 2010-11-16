@@ -724,7 +724,7 @@ public class JSON {
 		return value;
 	}
 	
-	final void format(final Context context, final Object src, final InputSource ap) throws IOException {
+	final Formatter format(final Context context, final Object src, final InputSource ap) throws IOException {
 		Object o = src;
 		if (context.getLevel() > context.getMaxDepth()) {
 			o = null;
@@ -851,6 +851,8 @@ public class JSON {
 		if (!isStruct && context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
 			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
 		}
+		
+		return f;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -2016,7 +2018,7 @@ public class JSON {
 						sb.append('[');
 						try {
 							StringFormatter.serialize(this, str, sb);
-						} catch (IOException e) {
+						} catch (Exception e) {
 							// no handle
 						}
 						sb.append(']');
