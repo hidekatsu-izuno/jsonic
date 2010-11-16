@@ -913,7 +913,7 @@ public class JSON {
 		return (T)convert(context, parse(context, new ReaderOutputSource(reader)), type);
 	}
 	
-	Object parse(Context context, OutputSource s) throws IOException, JSONException {
+	private Object parse(Context context, OutputSource s) throws IOException, JSONException {
 		boolean isEmpty = true;
 		Object o = null;
 		
@@ -997,7 +997,7 @@ public class JSON {
 		return o;
 	}
 	
-	Map<Object, Object> parseObject(Context context, OutputSource s, int level) throws IOException, JSONException {
+	private Map<Object, Object> parseObject(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
 		Map<Object, Object> map = (level <= context.getMaxDepth()) ? new LinkedHashMap<Object, Object>() : null;
 		Object key = null;
@@ -1132,7 +1132,7 @@ public class JSON {
 		return map;
 	}
 	
-	List<Object> parseArray(Context context, OutputSource s, int level) throws IOException, JSONException {
+	private List<Object> parseArray(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' 4  ... ']' E
 		List<Object> list = (level <= context.getMaxDepth()) ? new ArrayList<Object>() : null;
 		
@@ -1232,7 +1232,7 @@ public class JSON {
 		return list;
 	}
 	
-	String parseString(Context context, OutputSource s, int level) throws IOException, JSONException {
+	private String parseString(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilderInputSource sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		char start = '\0';
@@ -1289,7 +1289,7 @@ public class JSON {
 		return (sb != null) ? sb.toString() : null;
 	}
 	
-	Object parseLiteral(Context context, OutputSource s, int level, boolean any) throws IOException, JSONException {
+	private Object parseLiteral(Context context, OutputSource s, int level, boolean any) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilderInputSource sb = context.getCachedBuffer();
 
@@ -1327,7 +1327,7 @@ public class JSON {
 		return str;
 	}	
 	
-	Number parseNumber(Context context, OutputSource s, int level) throws IOException, JSONException {
+	private Number parseNumber(Context context, OutputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilderInputSource sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		
@@ -1401,7 +1401,7 @@ public class JSON {
 		return (sb != null) ? new BigDecimal(sb.toString()) : null;
 	}
 	
-	char parseEscape(OutputSource s) throws IOException, JSONException {
+	private char parseEscape(OutputSource s) throws IOException, JSONException {
 		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -1460,7 +1460,7 @@ public class JSON {
 		return escape;
 	}
 	
-	void skipComment(Context context, OutputSource s) throws IOException, JSONException {
+	private void skipComment(Context context, OutputSource s) throws IOException, JSONException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		
 		int n = -1;
@@ -1536,7 +1536,7 @@ public class JSON {
 	}
 	
 	@SuppressWarnings("unchecked")
-	<T> T convert(Context context, Object value, Type type) throws JSONException {
+	private <T> T convert(Context context, Object value, Type type) throws JSONException {
 		Class<?> cls = ClassUtil.getRawType(type);
 		
 		Object result = null;
