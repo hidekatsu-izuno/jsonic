@@ -16,8 +16,6 @@
 package net.arnx.jsonic.web;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,6 +26,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -125,11 +124,10 @@ public class WebServiceServlet extends HttpServlet {
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
 		
-		String path = getServletContext().getRealPath(uri);
-		File file = (path != null) ? new File(path) : null;
-		if (file != null && file.exists() && file.isFile()) {
+		URL resource = getServletContext().getResource(uri);
+		if (resource != null) {
 			OutputStream out = response.getOutputStream();
-			InputStream in = new FileInputStream(file);
+			InputStream in = resource.openStream();
 			try {
 				byte[] buffer = new byte[1024];
 				int count = 0;

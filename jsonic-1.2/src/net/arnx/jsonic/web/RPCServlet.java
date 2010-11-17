@@ -15,14 +15,13 @@
  */
 package net.arnx.jsonic.web;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -112,11 +111,10 @@ public class RPCServlet extends HttpServlet {
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
 		
-		String path = getServletContext().getRealPath(uri);
-		File file = (path != null) ? new File(path) : null;
-		if (file != null && file.exists() && file.isFile()) {
+		URL resource = getServletContext().getResource(uri);
+		if (resource != null) {
 			OutputStream out = response.getOutputStream();
-			InputStream in = new FileInputStream(file);
+			InputStream in = resource.openStream();
 			try {
 				byte[] buffer = new byte[1024];
 				int count = 0;
@@ -124,11 +122,7 @@ public class RPCServlet extends HttpServlet {
 					out.write(buffer, 0, count);
 				}
 			} finally {
-				try {
-					if (in != null) in.close();
-				} catch (IOException e2) {
-					// no handle
-				}
+				if (in != null) in.close();
 			}
 			return;
 		}
