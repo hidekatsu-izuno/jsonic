@@ -420,9 +420,14 @@ final class ListFormatter implements Formatter {
 	public static final ListFormatter INSTANCE = new ListFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
-		List<?> list = (List<?>)o;
-		in.append('[');
+		final List<?> list = (List<?>)o;
+		final JSONHint hint = context.getHint();
 		final int length = list.size();
+		
+		Class<?> lastClass = null;
+		Formatter lastFormatter = null;
+		
+		in.append('[');
 		int count = 0;
 		while (count < length) {
 			Object item = list.get(count);
@@ -433,8 +438,19 @@ final class ListFormatter implements Formatter {
 				in.append('\n');
 				for (int j = 0; j < context.getLevel() + 1; j++) in.append('\t');
 			}
-			context.enter(count);
-			json.format(context, item, in);
+			context.enter(count, hint);
+			if (item == null) {
+				NullFormatter.INSTANCE.format(json, context, src, item, in);
+			} else if (hint == null) {
+				if (item.getClass().equals(lastClass)) {
+					lastFormatter.format(json, context, src, item, in);
+				} else {
+					lastClass = item.getClass();
+					lastFormatter = json.format(context, item, in);
+				}
+			} else {
+				json.format(context, item, in);
+			}
 			context.exit();
 			count++;
 		}
@@ -451,7 +467,12 @@ final class IteratorFormatter implements Formatter {
 	public static final IteratorFormatter INSTANCE = new IteratorFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
-		Iterator<?> t = (Iterator<?>) o;
+		final Iterator<?> t = (Iterator<?>)o;
+		final JSONHint hint = context.getHint();
+		
+		Class<?> lastClass = null;
+		Formatter lastFormatter = null;
+		
 		in.append('[');
 		int count = 0;
 		while(t.hasNext()) {
@@ -464,8 +485,19 @@ final class IteratorFormatter implements Formatter {
 				in.append('\n');
 				for (int j = 0; j < context.getLevel() + 1; j++) in.append('\t');
 			}
-			context.enter(count);
-			json.format(context, item, in);
+			context.enter(count, hint);
+			if (item == null) {
+				NullFormatter.INSTANCE.format(json, context, src, item, in);
+			} else if (hint == null) {
+				if (item.getClass().equals(lastClass)) {
+					lastFormatter.format(json, context, src, item, in);
+				} else {
+					lastClass = item.getClass();
+					lastFormatter = json.format(context, item, in);
+				}
+			} else {
+				json.format(context, item, in);
+			}
 			context.exit();
 			count++;
 		}
@@ -490,9 +522,14 @@ final class EnumerationFormatter implements Formatter {
 	public static final EnumerationFormatter INSTANCE = new EnumerationFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
-		Enumeration<?> e = (Enumeration<?>) o;
+		final Enumeration<?> e = (Enumeration<?>)o;
+		final JSONHint hint = context.getHint();
+		
 		in.append('[');
 		int count = 0;
+		
+		Class<?> lastClass = null;
+		Formatter lastFormatter = null;
 		while (e.hasMoreElements()) {
 			Object item = e.nextElement();
 			if (item == src) item = null;
@@ -503,8 +540,19 @@ final class EnumerationFormatter implements Formatter {
 				for (int j = 0; j < context.getLevel() + 1; j++)
 					in.append('\t');
 			}
-			context.enter(count);
-			json.format(context, item, in);
+			context.enter(count, hint);
+			if (item == null) {
+				NullFormatter.INSTANCE.format(json, context, src, item, in);
+			} else if (hint == null) {
+				if (item.getClass().equals(lastClass)) {
+					lastFormatter.format(json, context, src, item, in);
+				} else {
+					lastClass = item.getClass();
+					lastFormatter = json.format(context, item, in);
+				}
+			} else {
+				json.format(context, item, in);
+			}
 			context.exit();
 			count++;
 		}
@@ -522,7 +570,11 @@ final class MapFormatter implements Formatter {
 	public static final MapFormatter INSTANCE = new MapFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
-		Map<?, ?> map = (Map<?, ?>) o;
+		final Map<?, ?> map = (Map<?, ?>) o;
+		final JSONHint hint = context.getHint();
+
+		Class<?> lastClass = null;
+		Formatter lastFormatter = null;
 
 		in.append('{');
 		int count = 0;
@@ -541,8 +593,19 @@ final class MapFormatter implements Formatter {
 			StringFormatter.serialize(context, key.toString(), in);
 			in.append(':');
 			if (context.isPrettyPrint()) in.append(' ');
-			context.enter(key);
-			json.format(context, value, in);
+			context.enter(key, hint);
+			if (value == null) {
+				NullFormatter.INSTANCE.format(json, context, src, value, in);
+			} else if (hint == null) {
+				if (value.getClass().equals(lastClass)) {
+					lastFormatter.format(json, context, src, value, in);
+				} else {
+					lastClass = value.getClass();
+					lastFormatter = json.format(context, value, in);
+				}
+			} else {
+				json.format(context, value, in);
+			}
 			context.exit();
 			count++;
 		}
@@ -587,8 +650,7 @@ final class ObjectFormatter implements Formatter {
 
 			StringFormatter.serialize(context, prop.getName(), in);
 			in.append(':');
-			if (context.isPrettyPrint())
-				in.append(' ');
+			if (context.isPrettyPrint()) in.append(' ');
 			context.enter(prop.getName(), prop.getHint());
 			if (cause != null) throw cause;
 			
