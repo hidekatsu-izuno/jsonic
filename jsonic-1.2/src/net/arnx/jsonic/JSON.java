@@ -849,7 +849,8 @@ public class JSON {
 		}
 		
 		if (!isStruct && context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
-			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), JSONException.FORMAT_ERROR);
+			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
+					JSONException.FORMAT_ERROR);
 		}
 		
 		return f;
@@ -1564,7 +1565,7 @@ public class JSON {
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
-	@SuppressWarnings({ "unchecked" })
+	@SuppressWarnings("unchecked")
 	protected <T> T postparse(Context context, Object value, Class<? extends T> cls, Type type) throws Exception {
 		Converter c = null;
 		
