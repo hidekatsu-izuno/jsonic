@@ -26,14 +26,13 @@ import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.JSON.Mode;
 
 interface Formatter {
-	boolean format(JSON json, Context context, Object src, Object o,
-			InputSource in) throws Exception;
+	boolean format(JSON json, Context context, Object src, Object o, InputSource in) throws Exception;
 }
 
 final class NullFormatter implements Formatter {
 	public static final NullFormatter INSTANCE = new NullFormatter();
 
-	public boolean format(JSON json, Context context, Object src, Object o, InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
 		in.append("null");
 		return false;
 	}
@@ -42,7 +41,7 @@ final class NullFormatter implements Formatter {
 final class PlainFormatter implements Formatter {
 	public static final PlainFormatter INSTANCE = new PlainFormatter();
 
-	public boolean format(JSON json, Context context, Object src, Object o, InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
 		in.append(o.toString());
 		return false;
 	}
@@ -75,7 +74,7 @@ final class StringFormatter implements Formatter {
 		return false;
 	}
 
-	static void serialize(Context context, String s, InputSource in) throws Exception {
+	static void serialize(final Context context, final String s, final InputSource in) throws Exception {
 		in.append('"');
 		int start = 0;
 		final int length = s.length();
