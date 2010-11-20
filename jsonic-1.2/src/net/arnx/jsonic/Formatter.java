@@ -569,7 +569,7 @@ final class MapFormatter implements Formatter {
 	public static final MapFormatter INSTANCE = new MapFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
-		final Map<?, ?> map = (Map<?, ?>) o;
+		final Map<?, ?> map = (Map<?, ?>)o;
 		final JSONHint hint = context.getHint();
 
 		Class<?> lastClass = null;
