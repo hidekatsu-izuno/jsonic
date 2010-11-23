@@ -83,7 +83,9 @@ public class JSONTest {
 		
 		list.clear();
 		list.add("\u007F");
-		assertEquals("[\"\\u007F\"]", JSON.encode(list));
+		list.add("\u2028");
+		list.add("\u2029");
+		assertEquals("[\"\\u007F\",\"\\u2028\",\"\\u2029\"]", JSON.encode(list));
 		
 		list.clear();
 		list.add("");

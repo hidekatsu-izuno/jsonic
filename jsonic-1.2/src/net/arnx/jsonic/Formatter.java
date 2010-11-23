@@ -80,9 +80,11 @@ final class StringFormatter implements Formatter {
 		final int length = s.length();
 		for (int i = 0; i < length; i++) {
 			int c = s.charAt(i);
-			if (c < ESCAPE_CHARS.length && ESCAPE_CHARS[c] != 0) {
+			if (c < ESCAPE_CHARS.length) {
 				int x = ESCAPE_CHARS[c];
-				if (x > 0) {
+				if (x == 0) {
+					// no handle
+				} else if (x > 0) {
 					if (start < i) in.append(s, start, i);
 					in.append('\\');
 					in.append((char) x);
@@ -94,6 +96,12 @@ final class StringFormatter implements Formatter {
 					in.append("0123456789ABCDEF".charAt(c % 16));
 					start = i + 1;
 				}
+			} else if (c == '\u2028') {
+				in.append("\\u2028");
+				start = i + 1;
+			} else if (c == '\u2029') {
+				in.append("\\u2029");
+				start = i + 1;
 			}
 		}
 		if (start < length) in.append(s, start, length);
