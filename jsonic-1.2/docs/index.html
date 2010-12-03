@@ -698,12 +698,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2010/11/7 version 1.2.5 ベータ1～3</h3>
+<h3>2010/12/05 version 1.2.5</h3>
 
 <ul>
 <li>java.util.UUIDの双方向変換に対応しました。</li>
 <li>encode/formatの速度が50%ほど改善しました。</li>
 <li>decode/parseの速度が25%ほど改善しました。</li>
+<li>JavaScriptのevalでエラーとなるU+2028、U+2029をエスケープするよう修正しました。</li>
 <li>JSON Web Serviceにて、warファイルのまま実行すると配置済みjsonファイルを返さない問題を修正しました。</li>
 </ul>
 
