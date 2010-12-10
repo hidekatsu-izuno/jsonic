@@ -1353,7 +1353,15 @@ public class JSONTest {
 		assertEquals(ExampleEnum.Example1, json.convert("1", ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convert(true, ExampleEnum.class));
 		assertEquals(ExampleEnum.Example0, json.convert(false, ExampleEnum.class));
-				
+
+		try {
+			json.convert("20100431", Date.class);
+			fail();		
+		} catch (JSONException e) {
+			System.out.println(e);
+			assertNotNull(e);
+		}
+		
 		try {
 			json.convert(5, ExampleEnum.class);
 			fail();		

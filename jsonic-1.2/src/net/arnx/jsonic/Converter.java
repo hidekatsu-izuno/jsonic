@@ -942,6 +942,7 @@ final class DateConverter implements Converter {
 		} else {
 			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
 		}
+		format.setLenient(false);
 		
 		return format.parse(value).getTime();
 	}
