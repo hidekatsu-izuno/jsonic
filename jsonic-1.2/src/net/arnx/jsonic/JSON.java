@@ -171,6 +171,7 @@ public class JSON {
 	 */
 	public static Class<? extends JSON> prototype = JSON.class;
 	
+	private static final Object NO_OVERRIDE = new Object();
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
 	
@@ -721,16 +722,23 @@ public class JSON {
 	 * @throws Exception if conversion failed.
 	 */
 	protected Object preformat(Context context, Object value) throws Exception {
-		return value;
+		return NO_OVERRIDE;
 	}
 	
 	final Formatter format(final Context context, final Object src, final InputSource ap) throws IOException {
+		boolean reuse = true;
+		
 		Object o = src;
 		if (context.getLevel() > context.getMaxDepth()) {
 			o = null;
-		} else {
+		} else if (getClass() != JSON.class) {
 			try {
-				o = preformat(context, o);
+				o = preformat(context, src);
+				if (o == NO_OVERRIDE) {
+					o = src;
+				} else {
+					reuse = false;
+				}
 			} catch (Exception e) {
 				throw new JSONException(getMessage("json.format.ConversionError", o, context),
 					JSONException.PREFORMAT_ERROR, e);
@@ -853,7 +861,7 @@ public class JSON {
 					JSONException.FORMAT_ERROR);
 		}
 		
-		return f;
+		return (reuse) ? f : null;
 	}
 	
 	@SuppressWarnings("unchecked")
