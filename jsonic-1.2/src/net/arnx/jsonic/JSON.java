@@ -722,7 +722,7 @@ public class JSON {
 	 * @throws Exception if conversion failed.
 	 */
 	protected Object preformat(Context context, Object value) throws Exception {
-		return NO_OVERRIDE;
+		return (getClass() != JSON.class) ? value : NO_OVERRIDE;
 	}
 	
 	final Formatter format(final Context context, final Object src, final InputSource ap) throws IOException {

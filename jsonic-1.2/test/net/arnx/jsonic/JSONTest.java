@@ -270,6 +270,18 @@ public class JSONTest {
 		} catch (JSONException e) {
 			assertNotNull(e);
 		}
+		
+		
+		assertEquals("[0,\"1\",2,\"3\",4]", (new JSON() {
+			@Override
+			protected Object preformat(Context context, Object value) throws Exception {
+				if ("0".equals(value) || "2".equals(value) || "4".equals(value)) {
+					return Integer.parseInt(value.toString());
+				} else {
+					return super.preformat(context, value);
+				}
+			}
+		}).format(Arrays.asList("0", "1", "2", "3", "4")));
 	}
 	
 	@Test
