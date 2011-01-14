@@ -272,16 +272,17 @@ public class JSONTest {
 		}
 		
 		
-		assertEquals("[0,\"1\",2,\"3\",4]", (new JSON() {
+		assertEquals("[0,\"1\",2,\"3\",4,5,6,\"7\",\"8\"]", (new JSON() {
 			@Override
 			protected Object preformat(Context context, Object value) throws Exception {
-				if ("0".equals(value) || "2".equals(value) || "4".equals(value)) {
+				if ("0".equals(value) || "2".equals(value) || "4".equals(value)
+						|| "5".equals(value) || "6".equals(value)) {
 					return Integer.parseInt(value.toString());
 				} else {
 					return super.preformat(context, value);
 				}
 			}
-		}).format(Arrays.asList("0", "1", "2", "3", "4")));
+		}).format(Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8")));
 	}
 	
 	@Test
