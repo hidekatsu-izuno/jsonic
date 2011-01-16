@@ -453,9 +453,7 @@ final class ListFormatter implements Formatter {
 					lastFormatter.format(json, context, src, item, in);
 				} else {
 					lastFormatter = json.format(context, item, in);
-					if (lastFormatter != null) {
-						lastClass = item.getClass();
-					}
+					lastClass = (lastFormatter != null) ? item.getClass() : null;
 				}
 			} else {
 				json.format(context, item, in);
@@ -502,9 +500,7 @@ final class IteratorFormatter implements Formatter {
 					lastFormatter.format(json, context, src, item, in);
 				} else {
 					lastFormatter = json.format(context, item, in);
-					if (lastFormatter != null) {
-						lastClass = item.getClass();
-					}
+					lastClass = (lastFormatter != null) ? item.getClass() : null;
 				}
 			} else {
 				json.format(context, item, in);
@@ -559,9 +555,7 @@ final class EnumerationFormatter implements Formatter {
 					lastFormatter.format(json, context, src, item, in);
 				} else {
 					lastFormatter = json.format(context, item, in);
-					if (lastFormatter != null) {
-						lastClass = item.getClass();
-					}
+					lastClass = (lastFormatter != null) ? item.getClass() : null;
 				}
 			} else {
 				json.format(context, item, in);
@@ -614,9 +608,7 @@ final class MapFormatter implements Formatter {
 					lastFormatter.format(json, context, src, value, in);
 				} else {
 					lastFormatter = json.format(context, value, in);
-					if (lastFormatter != null) {
-						lastClass = value.getClass();
-					}
+					lastClass = (lastFormatter != null) ? value.getClass() : null;
 				}
 			} else {
 				json.format(context, value, in);
