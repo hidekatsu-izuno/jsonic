@@ -699,8 +699,6 @@ public class JSON {
 			fs = new WriterInputSource((Writer)ap);
 		} else if (ap instanceof StringBuilder) {
 			fs = new StringBuilderInputSource((StringBuilder)ap);
-		} else if (ap instanceof StringBuilder) {
-			fs = new StringBuilderInputSource((StringBuilder)ap);
 		} else {
 			fs = new AppendableInputSource(ap);
 		}

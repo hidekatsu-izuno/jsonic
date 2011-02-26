@@ -58,46 +58,6 @@ final class WriterInputSource implements InputSource {
 	}
 }
 
-final class StringBufferFormatSource implements InputSource {
-	private final StringBuffer sb;
-	
-	public StringBufferFormatSource() {
-		this.sb = new StringBuffer(1000);
-	}
-	
-	public StringBufferFormatSource(StringBuffer sb) {
-		this.sb = sb;
-	}
-	
-	@Override
-	public void append(String text) {
-		sb.append(text);
-	}
-	
-	@Override
-	public void append(String text, int start, int end) {
-		sb.append(text, start, end);
-	}
-	
-	@Override
-	public void append(char c) {
-		sb.append(c);
-	}
-	
-	@Override
-	public void flush() throws IOException {
-	}
-	
-	public void clear() {
-		sb.setLength(0);
-	}
-	
-	@Override
-	public String toString() {
-		return sb.toString();
-	}
-}
-
 final class StringBuilderInputSource implements InputSource {
 	private final StringBuilder sb;
 	
