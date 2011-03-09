@@ -111,6 +111,7 @@ public class JSONTest {
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new long[] {1l,2l,3l}));
+		assertEquals("[1,2,3]", JSON.encode(new Integer[] {1,2,3}));
 		assertEquals("[1.0,2.0,3.0,\"NaN\",\"Infinity\",\"-Infinity\"]", JSON.encode(
 				new float[] {1.0f,2.0f,3.0f,Float.NaN,Float.POSITIVE_INFINITY,Float.NEGATIVE_INFINITY}));
 		assertEquals("[1.0,2.0,3.0,\"NaN\",\"Infinity\",\"-Infinity\"]", JSON.encode(
