@@ -1706,25 +1706,27 @@ public class JSON {
 
 	
 	public final class Context {
-		final Locale locale;
-		final Object contextObject;
-		final int maxDepth;
-		final boolean prettyPrint;
-		final boolean suppressNull;
-		final Mode mode;
+		private final Locale locale;
+		private final Object contextObject;
+		private final int maxDepth;
+		private final boolean prettyPrint;
+		private final boolean suppressNull;
+		private final Mode mode;
 		
-		Object[] path;
-		int level = -1;
-		Map<Class<?>, Object> memberCache;
-		StringBuilderInputSource builderCache;
+		private Object[] path;
+		private int level = -1;
+		private Map<Class<?>, Object> memberCache;
+		private StringBuilderInputSource builderCache;
 		
 		public Context() {
-			locale = JSON.this.locale;
-			contextObject = JSON.this.contextObject;
-			maxDepth = JSON.this.maxDepth;
-			prettyPrint = JSON.this.prettyPrint;
-			suppressNull = JSON.this.suppressNull;
-			mode = JSON.this.mode;
+			synchronized (JSON.this) {
+				locale = JSON.this.locale;
+				contextObject = JSON.this.contextObject;
+				maxDepth = JSON.this.maxDepth;
+				prettyPrint = JSON.this.prettyPrint;
+				suppressNull = JSON.this.suppressNull;
+				mode = JSON.this.mode;
+			}
 		}
 		
 		public StringBuilderInputSource getCachedBuffer() {
