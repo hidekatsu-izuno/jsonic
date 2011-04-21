@@ -1703,7 +1703,6 @@ public class JSON {
 		
 		return c.cast(instance);
 	}
-
 	
 	public final class Context {
 		private final Locale locale;
