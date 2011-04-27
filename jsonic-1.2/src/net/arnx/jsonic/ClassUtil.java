@@ -117,13 +117,18 @@ final class ClassUtil {
 	
 	public static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
 		Class<?> rawType = ClassUtil.getRawType(parent);
-		if (rawType.equals(type.getGenericDeclaration())) {
-			String tvName = type.getName();
-			TypeVariable<?>[] rtypes = ((Class<?>)rawType).getTypeParameters();
-			Type[] atypes = parent.getActualTypeArguments();
-			
-			for (int i = 0; i < rtypes.length; i++) {
-				if (tvName.equals(rtypes[i].getName())) return atypes[i];
+		while (rawType != null) {
+			if (rawType.equals(type.getGenericDeclaration())) {
+				String tvName = type.getName();
+				TypeVariable<?>[] rtypes = ((Class<?>)rawType).getTypeParameters();
+				Type[] atypes = parent.getActualTypeArguments();
+				
+				for (int i = 0; i < rtypes.length; i++) {
+					if (tvName.equals(rtypes[i].getName())) return atypes[i];
+				}
+				break;
+			} else {
+				rawType = rawType.getEnclosingClass();
 			}
 		}
 		
