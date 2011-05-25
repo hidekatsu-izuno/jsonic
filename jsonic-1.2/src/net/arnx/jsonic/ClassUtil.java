@@ -33,55 +33,37 @@ final class ClassUtil {
 	}
 	
 	public static Class<?> findClass(String name) {
-		return findClass(name, true);
-	}
-	
-	public static Class<?> findClass(String name, boolean useCache) {
 		ClassLoader cl = getContextClassLoader();
 		
-		if (useCache) {
-			Map<String, Class<?>> map;
-			synchronized (cache) {
-				map = cache.get(cl);
-				
-				if (map == null) {
-					map = new LinkedHashMap<String, Class<?>>(16, 0.75f, true) {
-						protected boolean removeEldestEntry(Map.Entry<String, Class<?>> eldest) {
-							return size() > 1024;
-						};
+		Map<String, Class<?>> map;
+		synchronized (cache) {
+			map = cache.get(cl);
+			
+			if (map == null) {
+				map = new LinkedHashMap<String, Class<?>>(16, 0.75f, true) {
+					protected boolean removeEldestEntry(Map.Entry<String, Class<?>> eldest) {
+						return size() > 1024;
 					};
-					cache.put(cl, map);
-				}
+				};
+				cache.put(cl, map);
 			}
-			synchronized (map) {
-				if (!map.containsKey(name)) {
-					Class<?> target;
-					try {
-						if (cl != null) {
-							target = cl.loadClass(name);
-						} else {
-							target = Class.forName(name);
-						}
-					} catch (ClassNotFoundException e) {
-						target = null;
-					}
-					map.put(name, target);
-				}
-			}
-			return map.get(name);
-		} else {
-			Class<?> target;
-			try {
-				if (cl != null) {
-					target = cl.loadClass(name);
-				} else {
-					target = Class.forName(name);
-				}
-			} catch (ClassNotFoundException e) {
-				target = null;
-			}
-			return target;
 		}
+		synchronized (map) {
+			if (!map.containsKey(name)) {
+				Class<?> target;
+				try {
+					if (cl != null) {
+						target = cl.loadClass(name);
+					} else {
+						target = Class.forName(name);
+					}
+				} catch (ClassNotFoundException e) {
+					target = null;
+				}
+				map.put(name, target);
+			}
+		}
+		return map.get(name);
 	}
 	
 	public static boolean equals(String name, Class<?> cls) {

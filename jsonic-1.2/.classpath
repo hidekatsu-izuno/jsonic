@@ -27,6 +27,7 @@
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.8.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
 	<classpathentry kind="lib" path="sample/seasar2/WEB-INF/lib/s2-framework-2.4.43.jar"/>
+	<classpathentry kind="lib" path="lib/jsp-api.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
