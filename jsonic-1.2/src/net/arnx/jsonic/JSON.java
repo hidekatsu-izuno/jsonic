@@ -398,6 +398,34 @@ public class JSON {
 	}
 	
 	/**
+	 * Escapes a object into JavaScript format.
+	 * 
+	 * @param source a object to encode.
+	 * @param out a destination to output a json string.
+	 * @throws IOException if I/O Error occurred.
+	 * @throws JSONException if error occurred when formating.
+	 */
+	public static void escapeJS(Object source, OutputStream out) throws IOException, JSONException {
+		JSON json = JSON.newInstance();
+		json.setMode(JSON.Mode.SCRIPT);
+		json.format(source, out);
+	}
+	
+	/**
+	 * Escapes a object into JavaScript format.
+	 * 
+	 * @param source a object to encode.
+	 * @param appendable a destination to output a json string.
+	 * @throws IOException if I/O Error occurred.
+	 * @throws JSONException if error occurred when formating.
+	 */
+	public static void escapeJS(Object source, Appendable appendable) throws IOException, JSONException {
+		JSON json = JSON.newInstance();
+		json.setMode(JSON.Mode.SCRIPT);
+		json.format(source, appendable);
+	}
+	
+	/**
 	 * Decodes a json string into a object.
 	 * 
 	 * @param source a json string to decode
