@@ -89,7 +89,7 @@ final class StringFormatter implements Formatter {
 					in.append('\\');
 					in.append((char) x);
 					start = i + 1;
-				} else if (x == -1 || (x == -2 && context.getMode() == Mode.SCRIPT)) {
+				} else if (x == -1 || (x == -2 && context.getMode() != Mode.STRICT)) {
 					if (start < i) in.append(s, start, i);
 					in.append("\\u00");
 					in.append("0123456789ABCDEF".charAt(c / 16));

@@ -50,6 +50,7 @@
 	sup { font-size: 8pt; }
 	.caption { font: 8pt sans-serif; margin: 10px; }
 	.copyright { text-align: right; }
+	dt { font-weight: bold; margin-bottom: 2px; }
 </style>
 <!--[if IE 6]>
 <style type="text/css">
@@ -451,7 +452,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
 <ul>
   <li>[エンコード] 引数にStringやIntegerなど、ルート要素が object や array にならないオブジェクトを指定し、JSONの断片を出力することができます。</li>
-  <li>[エンコード] HTMLやXML中ではエスケープが必要な「<」「>」が文字列中に見つかった場合、それぞれ「\u003C」「\u003E」と出力します。</li>
+  <li>[エンコード] HTMLやXML中ではエスケープが必要な「<」「>」が文字列中に見つかった場合、それぞれ「\u003C」「\u003E」と出力します（1.2.6からは、Traditionalモードでも同様に変換されます）。</li>
   <li>[エンコード] java.util.Date 型を new Date(ミリ秒) で出力します。</li>
   <li>[エンコード] NaN、POSITIVE_INFINITY, NEGATIVE_INFINITY を文字列ではなく、Number.NaN、Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITYとして出力します。</li>
   <li>[デコード] 引数にstring、number、true/false/nullといったJSONの断片を指定し単純型の値を取得することができます。</li>
@@ -459,7 +460,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
   <li>[デコード] シングルクォートで囲まれた文字列をstringとして認識します（TRADITIONALモードと異なりダブルクォートで囲った場合と同様エスケープを認識します）。</li>
   <li>[デコード] object のキーに限りシングルクォートで囲まれていないリテラルを文字列として認識します。</li>
 </ul>
-<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。</p>
+<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeJS を通じて簡単に使うことが可能です。</p>
 <pre class="source">
 	JSON json = new JSON(JSON.Mode.SCRIPT);
 	
@@ -470,6 +471,8 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 			setMode(JSON.Mode.SCRIPT);
 		}
 	}).getClass();
+	
+	JSON.escapeJS(...);
 </pre>
 
 <h3 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h3>
@@ -690,6 +693,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <span class="elem">&lt;/mx:WindowedApplication&gt;</span>
 </pre>
 
+<h2 id="faq">FAQ</h2>
+<dl>
+<dt>Q. RESTServletでHTTP GETを使うと日本語文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
+<dt>Q. 大量データを読み込むとOutOfMemoryErrorで落ちます。</dt><dd>A. JSONICは、ブラウザをクライアントとしたような大規模データの送受信を行わないシステムでの利用を想定して作成されています。XMLにおいてDOMに対してSAXやStAXがあるように、大量データを取り扱う場合にはストリームAPIを利用すべきですがJSONICには現状用意されておりませんので、Twitter Streaming APIのように行区切りのJSONで送受信するか、<a href="http://jackson.codehaus.org/">jackson</a>など代替ライブラリの採用を検討ください。</dd>
+</dl> 
+
 <h2 id="maven">Mavenリポジトリ</h2> 
 <p>JSONICでは現在のところ、Mavenリポジトリで配布は行っておりません。しかし、Seasarコミッタの方のご厚意により<a href="http://maven.seasar.org/maven2/">Seasar.orgのMavenリポジトリ</a>にて配布して頂けるとのご連絡を頂きましたので、当面はこちらをご利用頂けますと幸いです。</p> 
 
@@ -701,6 +710,14 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2011/6/1 version 1.2.6</h3>
+
+<ul>
+<li>[不具合] preformatの中でループ中に変換先クラスを変えた場合、formatに失敗する問題を修正しました（#24129）</li>
+<li>[非互換] XSS脆弱性の可能性を防止するため、Scriptモードだけでなく、Traditionalモードでも「&lt;&gt;」を「\u003C\u003E」とエスケープするようにしました。Strictモードでは従来通り「&lt;&gt;」と出力されます（<a href="http://blog.livedoor.jp/leaf_hiro/archives/51512698.html">参考</a>）</li>
+<li>JSONクラスにScriptモードでエスケープする escapeJS を追加しました。</li>
+</ul>
 
 <h3>2010/12/19 version 1.2.5</h3>
 
