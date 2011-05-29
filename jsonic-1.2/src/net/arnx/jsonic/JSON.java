@@ -1899,13 +1899,13 @@ public class JSON {
 				int start = 0;
 				if (name.startsWith("get")
 					&& name.length() > 3
-					&& Character.isUpperCase(name.charAt(3))
+					&& !Character.isLowerCase(name.charAt(3))
 					&& m.getParameterTypes().length == 0
 					&& !m.getReturnType().equals(void.class)) {
 					start = 3;
 				} else if (name.startsWith("is")
 					&& name.length() > 2
-					&& Character.isUpperCase(name.charAt(2))
+					&& !Character.isLowerCase(name.charAt(2))
 					&& m.getParameterTypes().length == 0
 					&& m.getReturnType().equals(boolean.class)) {
 					start = 2;
@@ -1972,7 +1972,7 @@ public class JSON {
 				int start = 0;
 				if (name.startsWith("set") 
 					&& name.length() > 3
-					&& Character.isUpperCase(name.charAt(3))
+					&& !Character.isLowerCase(name.charAt(3))
 					&& m.getParameterTypes().length == 1
 					&& m.getReturnType().equals(void.class)) {
 					start = 3;

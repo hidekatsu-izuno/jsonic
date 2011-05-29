@@ -1693,6 +1693,9 @@ class TestBean implements Serializable {
 	int y = 100;
 	protected int z = 1000;
 	
+	public void getignore(String test) {
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
