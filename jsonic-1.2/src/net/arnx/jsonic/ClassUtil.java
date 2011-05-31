@@ -1,9 +1,7 @@
 package net.arnx.jsonic;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -111,7 +109,7 @@ final class ClassUtil {
 		
 		return type.getBounds()[0];
 	}
-	
+		
 	public static String toUpperCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = true;
@@ -153,174 +151,5 @@ final class ClassUtil {
 		synchronized (cache) {
 			cache.clear();
 		}
-	}
-}
-
-interface Property extends Comparable<Property> {
-	public String getName();
-	public JSONHint getHint();
-	public Object get(Object o) throws Exception;
-	public void set(Object o, Object value) throws Exception;
-	public Class<?> getType(Type type);
-	public Type getGenericType(Type type);
-}
-
-class FieldProperty implements Property {
-	String name;
-	Field field;
-	JSONHint hint;
-	Type gtype;
-	Class<?> type;
-	
-	public FieldProperty(String name, Field field, JSONHint hint) {
-		this.name = name;
-		this.field = field;
-		this.hint = hint;
-		this.field.setAccessible(true);
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public JSONHint getHint() {
-		return hint;
-	}
-	
-	public Object get(Object o) throws Exception {
-		return field.get(o);
-	}
-	
-	public void set(Object o, Object value) throws Exception {
-		field.set(o, value);
-	}
-	
-	public Type getGenericType(Type target) {
-		init(target);
-		return gtype;
-	}
-	
-	public Class<?> getType(Type target) {
-		init(target);
-		return type;
-	}
-	
-	private void init(Type target) {
-		gtype = field.getGenericType();
-		type =  field.getType();
-		if (gtype instanceof TypeVariable<?> && target instanceof ParameterizedType) {
-			gtype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)target);
-			type = ClassUtil.getRawType(gtype);
-		}
-	}
-	
-	@Override
-	public int compareTo(Property prop) {
-		return name.compareTo(prop.getName());
-	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		FieldProperty other = (FieldProperty) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
-	}
-}
-
-class MethodProperty implements Property {
-	String name;
-	Method method;
-	JSONHint hint;
-	Type gtype;
-	Class<?> type;
-	
-	public MethodProperty(String name, Method method, JSONHint hint) {
-		this.name = name;
-		this.method = method;
-		this.hint = hint;
-		this.method.setAccessible(true);
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public JSONHint getHint() {
-		return hint;
-	}
-	
-	public Object get(Object o) throws Exception {
-		return method.invoke(o);
-	}
-	
-	public void set(Object o, Object value) throws Exception {
-		method.invoke(o, value);
-	}
-	
-	public Type getGenericType(Type target) {
-		init(target);
-		return gtype;
-	}
-	
-	public Class<?> getType(Type target) {
-		init(target);
-		return type;
-	}
-	
-	private void init(Type target) {
-		gtype = method.getGenericParameterTypes()[0];
-		type = method.getParameterTypes()[0];
-		if (gtype instanceof TypeVariable<?> && target instanceof ParameterizedType) {
-			gtype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)target);
-			type = ClassUtil.getRawType(gtype);
-		}
-	}
-	
-	@Override
-	public int compareTo(Property prop) {
-		return name.compareTo(prop.getName());
-	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		FieldProperty other = (FieldProperty) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
 	}
 }

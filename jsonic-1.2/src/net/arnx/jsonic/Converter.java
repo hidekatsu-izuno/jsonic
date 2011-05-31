@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -33,6 +34,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.util.Property;
 
 interface Converter {
 	Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception;
@@ -1224,8 +1226,14 @@ final class ObjectConverter implements Converter {
 				if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
 				if (target == null) continue;
 				
-				context.enter(name, target.getHint());
-				target.set(o, json.postparse(context, entry.getValue(), target.getType(t), target.getGenericType(t)));
+				context.enter(name, target.getWriteAnnotation(JSONHint.class));
+				Class<?> cls = target.getWriteType();
+				Type gtype = target.getWriteGenericType();
+				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
+					gtype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
+					cls = ClassUtil.getRawType(gtype);
+				}
+				target.set(o, json.postparse(context, entry.getValue(), cls, gtype));
 				context.exit();
 			}
 			return o;
@@ -1238,8 +1246,14 @@ final class ObjectConverter implements Converter {
 				if (target == null) return null;
 				Object o = json.create(context, c);
 				if (o == null) return null;
-				context.enter(hint.anonym(), target.getHint());
-				target.set(o, json.postparse(context, value, target.getType(t), target.getGenericType(t)));
+				context.enter(hint.anonym(), target.getWriteAnnotation(JSONHint.class));
+				Class<?> cls = target.getWriteType();
+				Type gtype = target.getWriteGenericType();
+				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
+					gtype = ClassUtil.resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
+					cls = ClassUtil.getRawType(gtype);
+				}
+				target.set(o, json.postparse(context, value, cls, gtype));
 				context.exit();
 				return o;
 			} else {

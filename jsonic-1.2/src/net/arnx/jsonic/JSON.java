@@ -25,9 +25,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Member;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -70,6 +68,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
+import net.arnx.jsonic.util.BeanInfo;
+import net.arnx.jsonic.util.Property;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -1866,74 +1867,26 @@ public class JSON {
 		List<Property> getGetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
-			List<Property> list = (List<Property>)memberCache.get(c);
-			if (list != null) return list;
-			
-			Map<String, Property> props = new HashMap<String, Property>();
-			
-			for (Field f : c.getFields()) {
-				if (Modifier.isStatic(f.getModifiers())
-						|| f.isSynthetic()
-						|| ignore(this, c, f)) {
-					continue;
+			List<Property> props = (List<Property>)memberCache.get(c);
+			if (props == null) {
+				props = new ArrayList<Property>();
+				for (Property prop : BeanInfo.get(c).getProperties()) {
+					if (!prop.isReadable() || ignore(this, c, prop.getReadMember())) {
+						continue;
+					}
+					
+					JSONHint hint = prop.getReadAnnotation(JSONHint.class);
+					if (hint != null) {
+						if (hint.ignore()) continue;
+						if (hint.name().length() > 0) prop = prop.alias(hint.name());
+					}
+					
+					props.add(prop);
 				}
-				
-				String name = normalize(f.getName());
-				JSONHint hint = f.getAnnotation(JSONHint.class);
-				if (hint != null) {
-					if (hint.ignore()) continue;
-					if (hint.name().length() > 0) name = hint.name();
-				}
-				props.put(name, new FieldProperty(name, f, hint));
+				Collections.sort(props);
+				memberCache.put(c, props);				
 			}
-			
-			for (Method m : c.getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())
-						|| m.isSynthetic()
-						|| m.isBridge()
-						|| ignore(this, c, m)) {
-					continue;
-				}
-
-				String name = m.getName();
-				int start = 0;
-				if (name.startsWith("get")
-					&& name.length() > 3
-					&& !Character.isLowerCase(name.charAt(3))
-					&& m.getParameterTypes().length == 0
-					&& !m.getReturnType().equals(void.class)) {
-					start = 3;
-				} else if (name.startsWith("is")
-					&& name.length() > 2
-					&& !Character.isLowerCase(name.charAt(2))
-					&& m.getParameterTypes().length == 0
-					&& m.getReturnType().equals(boolean.class)) {
-					start = 2;
-				} else {
-					continue;
-				}
-				
-				name = name.substring(start);
-				if (name.length() < 2 || !Character.isUpperCase(name.charAt(1)) ){
-					char[] chars = name.toCharArray();
-					chars[0] = Character.toLowerCase(chars[0]);
-					name = new String(chars);
-				}
-				name = normalize(name);
-				
-				JSONHint hint = m.getAnnotation(JSONHint.class);
-				if (hint != null) {
-					if (hint.ignore()) continue;
-					if (hint.name().length() > 0) name = hint.name();
-				}
-				props.put(name, new MethodProperty(name, m, hint));
-			}
-			
-			list = new ArrayList<Property>(props.values());
-			Collections.sort(list);
-			
-			memberCache.put(c, list);
-			return list;
+			return props;
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -1941,62 +1894,23 @@ public class JSON {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
 			Map<String, Property> props = (Map<String, Property>)memberCache.get(c);
-			if (props != null) return props;
-			props = new HashMap<String, Property>();
-
-			for (Field f : c.getFields()) {
-				if (Modifier.isStatic(f.getModifiers())
-						|| f.isSynthetic()
-						|| ignore(this, c, f)) {
-					continue;
+			if (props == null) {
+				props = new HashMap<String, Property>();
+				for (Property prop : BeanInfo.get(c).getProperties()) {
+					if (!prop.isWritable() || ignore(this, c, prop.getWriteMember())) {
+						continue;
+					}
+					
+					JSONHint hint = prop.getWriteAnnotation(JSONHint.class);
+					if (hint != null) {
+						if (hint.ignore()) continue;
+						if (hint.name().length() > 0) prop = prop.alias(hint.name());
+					}
+					
+					props.put(prop.getName(), prop);
 				}
-				
-				String name = normalize(f.getName());
-				JSONHint hint = f.getAnnotation(JSONHint.class);
-				if (hint != null) {
-					if (hint.ignore()) continue;
-					if (hint.name().length() > 0) name = hint.name();
-				}
-				props.put(name, new FieldProperty(name, f, hint));
+				memberCache.put(c, props);				
 			}
-			
-			for (Method m : c.getMethods()) {
-				if (Modifier.isStatic(m.getModifiers())
-						|| m.isSynthetic()
-						|| m.isBridge()
-						|| ignore(this, c, m)) {
-					continue;
-				}
-
-				String name = m.getName();
-				int start = 0;
-				if (name.startsWith("set") 
-					&& name.length() > 3
-					&& !Character.isLowerCase(name.charAt(3))
-					&& m.getParameterTypes().length == 1
-					&& m.getReturnType().equals(void.class)) {
-					start = 3;
-				} else {
-					continue;
-				}
-				
-				name = name.substring(start);
-				if (name.length() < 2 || !Character.isUpperCase(name.charAt(1)) ){
-					char[] chars = name.toCharArray();
-					chars[0] = Character.toLowerCase(chars[0]);
-					name = new String(chars);
-				}
-				name = normalize(name);
-				
-				JSONHint hint = m.getAnnotation(JSONHint.class);
-				if (hint != null) {
-					if (hint.ignore()) continue;
-					if (hint.name().length() > 0) name = hint.name();
-				}
-				props.put(name, new MethodProperty(name, m, hint));
-			}
-			
-			memberCache.put(c, props);
 			return props;
 		}
 		

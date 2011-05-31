@@ -24,6 +24,7 @@ import org.w3c.dom.NodeList;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.JSON.Mode;
+import net.arnx.jsonic.util.Property;
 
 interface Formatter {
 	boolean format(JSON json, Context context, Object src, Object o, InputSource in) throws Exception;
@@ -658,7 +659,7 @@ final class ObjectFormatter implements Formatter {
 			StringFormatter.serialize(context, prop.getName(), in);
 			in.append(':');
 			if (context.isPrettyPrint()) in.append(' ');
-			context.enter(prop.getName(), prop.getHint());
+			context.enter(prop.getName(), prop.getReadAnnotation(JSONHint.class));
 			if (cause != null) throw cause;
 			
 			json.format(context, value, in);
