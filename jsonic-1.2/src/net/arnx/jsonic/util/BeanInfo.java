@@ -1,13 +1,9 @@
 package net.arnx.jsonic.util;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.WildcardType;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -48,11 +44,6 @@ public final class BeanInfo {
 	private Class<?> type;
 	private Type gtype;
 	private Map<String, Property> props;
-	
-	private BeanInfo(Type t) {
-		this(getRawType(t));
-		gtype = t;
-	}
 	
 	private BeanInfo(Class<?> cls) {
 		type = cls;
@@ -146,26 +137,5 @@ public final class BeanInfo {
 	@Override
 	public String toString() {
 		return "BeanInfo [props=" + props + "]";
-	}
-	
-	static Class<?> getRawType(Type t) {
-		if (t instanceof Class<?>) {
-			return (Class<?>)t;
-		} else if (t instanceof ParameterizedType) {
-			return (Class<?>)((ParameterizedType)t).getRawType();
-		} else if (t instanceof GenericArrayType) {
-			Class<?> cls = null;
-			try {
-				cls = Array.newInstance(getRawType(((GenericArrayType)t).getGenericComponentType()), 0).getClass();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-			return cls;
-		} else if (t instanceof WildcardType) {
-			Type[] types = ((WildcardType)t).getUpperBounds();
-			return (types.length > 0) ? getRawType(types[0]) : Object.class;
-		} else {
-			return Object.class;
-		}
 	}
 }
