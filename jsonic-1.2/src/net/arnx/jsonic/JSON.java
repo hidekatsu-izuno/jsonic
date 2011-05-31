@@ -1878,7 +1878,18 @@ public class JSON {
 					JSONHint hint = prop.getReadAnnotation(JSONHint.class);
 					if (hint != null) {
 						if (hint.ignore()) continue;
-						if (hint.name().length() > 0) prop = prop.alias(hint.name());
+						if (hint.name().length() > 0) {
+							if (prop.getReadMethod() != null && prop.getField() != null) {
+								props.add(new Property(prop.getBeanClass(), prop.getName(), 
+										prop.getField(), null, null));
+								props.add(new Property(prop.getBeanClass(), hint.name(), 
+										null, prop.getReadMethod(), null));
+							} else {
+								props.add(new Property(prop.getBeanClass(), hint.name(), 
+										prop.getField(), prop.getReadMethod(), null));
+							}
+							continue;
+						}
 					}
 					
 					props.add(prop);
@@ -1904,7 +1915,18 @@ public class JSON {
 					JSONHint hint = prop.getWriteAnnotation(JSONHint.class);
 					if (hint != null) {
 						if (hint.ignore()) continue;
-						if (hint.name().length() > 0) prop = prop.alias(hint.name());
+						if (hint.name().length() > 0) {
+							if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
+								props.put(prop.getName(), new Property(prop.getBeanClass(), prop.getName(), 
+										prop.getField(), null, null));
+								props.put(hint.name(), new Property(prop.getBeanClass(), hint.name(), 
+										null, null, prop.getWriteMethod()));
+							} else {
+								props.put(hint.name(), new Property(prop.getBeanClass(), hint.name(), 
+										prop.getField(), null, prop.getWriteMethod()));
+							}
+							continue;
+						}
 					}
 					
 					props.put(prop.getName(), prop);

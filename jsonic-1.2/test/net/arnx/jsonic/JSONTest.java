@@ -247,7 +247,7 @@ public class JSONTest {
 		aBean.array3 = array3;
 		assertEquals("{\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\","
-				+ "\"json_data\":{\"a\": 100 /* ほげほげ */}}", JSON.encode(aBean));
+				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},\"method\":2}", JSON.encode(aBean));
 		
 		obj = new Object() {
 			@JSONHint(type=String.class)

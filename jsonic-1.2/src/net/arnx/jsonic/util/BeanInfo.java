@@ -56,10 +56,7 @@ public final class BeanInfo {
 			}
 			
 			f.setAccessible(true);
-			Property prop = new Property(this, f.getName());
-			prop.reader = f;
-			if (!Modifier.isFinal(f.getModifiers())) prop.writer = f;
-			props.put(f.getName(), prop);
+			props.put(f.getName(), new Property(cls, f.getName(), f, null, null));
 		}
 		
 		for (Method m : cls.getMethods()) {
@@ -98,23 +95,18 @@ public final class BeanInfo {
 				name = new String(chars);
 			}
 			
-			m.setAccessible(true);
-			
 			Property prop = props.get(name);
 			if (prop == null) {
-				prop = new Property(this, name);
+				prop = new Property(cls, name, null, null, null);
 				props.put(name, prop);
 			}
 			
+			m.setAccessible(true);
 			if (type == 1) {
-				prop.reader = m;
+				prop.readMethod = m;
 			} else {
-				prop.writer = m;
+				prop.writeMethod = m;
 			}
-		}
-		
-		for (Property prop : props.values()) {
-			prop.init();
 		}
 	}
 	

@@ -1,77 +1,99 @@
 package net.arnx.jsonic.util;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
 public class Property implements Comparable<Property> {
-	BeanInfo parent;
+	private Class<?> beanClass;
 	
-	String name;
-	Member reader;
-	Class<?> readType;
-	Type readGtype;
+	private String name;
 	
-	Member writer;
-	Class<?> writeType;
-	Type writeGtype;	
+	Field field;	
+	Method readMethod;
+	Method writeMethod;
 	
-	Property(BeanInfo parent, String name) {
-		this.parent = parent;
+	public Property(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod) {
+		this.beanClass = beanClass;
 		this.name = name;
+		this.field = field;
+		this.readMethod = readMethod;
+		this.writeMethod = writeMethod;
 	}
 	
-	void init() {
-		if (reader instanceof Method) {
-			readType = ((Method)reader).getReturnType();
-			readGtype = ((Method)reader).getGenericReturnType();
-		} else if (reader instanceof Field) {
-			readType = ((Field)reader).getType();
-			readGtype = ((Field)reader).getGenericType();
-		}
-		
-		if (writer instanceof Method) {
-			writeType = ((Method)writer).getParameterTypes()[0];
-			writeGtype = ((Method)writer).getGenericParameterTypes()[0];
-		} else if (writer instanceof Field) {
-			writeType = ((Field)writer).getType();
-			writeGtype = ((Field)writer).getGenericType();
-		}
+	public Class<?> getBeanClass() {
+		return beanClass;
 	}
 	
 	public String getName() {
 		return name;
 	}
 	
+	public Field getField() {
+		return field;
+	}
+	
+	public Method getReadMethod() {
+		return readMethod;
+	}
+	
+	public Method getWriteMethod() {
+		return writeMethod;
+	}
+	
 	public boolean isReadable() {
-		return (reader != null);
-	}
-	
-	public Class<?> getReadType() {
-		return readType;
-	}
-	
-	public Type getReadGenericType() {
-		return readGtype;
+		return (readMethod != null || field != null);
 	}
 	
 	public Member getReadMember() {
-		return reader;
+		if (readMethod != null) {
+			return readMethod;
+		} else if (field != null) {
+			return field;
+		} else {
+			throw new IllegalStateException(name + " property is not readable.");
+		}
+	}
+	
+	public Class<?> getReadType() {
+		if (readMethod != null) {
+			return readMethod.getReturnType();
+		} else if (field != null) {
+			return field.getType();
+		} else {
+			throw new IllegalStateException(name + " property is not readable.");
+		}
+	}
+	
+	public Type getReadGenericType() {
+		if (readMethod != null) {
+			return readMethod.getGenericReturnType();
+		} else if (field != null) {
+			return field.getGenericType();
+		} else {
+			throw new IllegalStateException(name + " property is not readable.");
+		}
 	}
 	
 	public <T extends Annotation> T getReadAnnotation(Class<T> annotationClass) {
-		return ((AnnotatedElement)reader).getAnnotation(annotationClass);
+		if (readMethod != null) {
+			return readMethod.getAnnotation(annotationClass);
+		} else if (field != null) {
+			return field.getAnnotation(annotationClass);
+		} else {
+			throw new IllegalStateException(name + " property is not readable.");
+		}
 	}
 	
 	public Object get(Object target) {
 		try {
-			if (reader instanceof Method) {
+			if (readMethod != null) {
 				try {
-					return ((Method)reader).invoke(target);
+					return readMethod.invoke(target);
 				} catch (InvocationTargetException e) {
 					if (e.getCause() instanceof Error) {
 						throw (Error)e.getCause();
@@ -81,8 +103,8 @@ public class Property implements Comparable<Property> {
 						throw new IllegalStateException(e.getCause());
 					}
 				}
-			} else if (reader instanceof Field) {
-				return ((Field)reader).get(target);
+			} else if (field != null) {
+				return field.get(target);
 			} else {
 				throw new IllegalStateException(name + " property is not readable.");
 			}
@@ -93,32 +115,55 @@ public class Property implements Comparable<Property> {
 		}
 	}
 	
-	
 	public boolean isWritable() {
-		return (writer != null);
-	}
-	
-	public Class<?> getWriteType() {
-		return writeType;
-	}
-	
-	public Type getWriteGenericType() {
-		return writeGtype;
+		return (writeMethod != null || (field != null && !Modifier.isFinal(field.getModifiers())));
 	}
 	
 	public Member getWriteMember() {
-		return writer;
+		if (writeMethod != null) {
+			return writeMethod;
+		} else if (field != null && !Modifier.isFinal(field.getModifiers())) {
+			return field;
+		} else {
+			throw new IllegalStateException(name + " property is not writable.");
+		}
+	}
+	
+	public Class<?> getWriteType() {
+		if (writeMethod != null) {
+			return writeMethod.getParameterTypes()[0];
+		} else if (field != null && !Modifier.isFinal(field.getModifiers())) {
+			return field.getType();
+		} else {
+			throw new IllegalStateException(name + " property is not writable.");
+		}
+	}
+	
+	public Type getWriteGenericType() {
+		if (writeMethod != null) {
+			return writeMethod.getGenericParameterTypes()[0];
+		} else if (field != null && !Modifier.isFinal(field.getModifiers())) {
+			return field.getGenericType();
+		} else {
+			throw new IllegalStateException(name + " property is not writable.");
+		}
 	}
 	
 	public <T extends Annotation> T getWriteAnnotation(Class<T> annotationClass) {
-		return ((AnnotatedElement)writer).getAnnotation(annotationClass);
+		if (writeMethod != null) {
+			return writeMethod.getAnnotation(annotationClass);
+		} else if (field != null && !Modifier.isFinal(field.getModifiers())) {
+			return field.getAnnotation(annotationClass);
+		} else {
+			throw new IllegalStateException(name + " property is not writable.");
+		}
 	}
 	
 	public void set(Object target, Object value) {
 		try {
-			if (writer instanceof Method) {
+			if (writeMethod != null) {
 				try {
-					((Method)writer).invoke(target, value);
+					writeMethod.invoke(target, value);
 				} catch (InvocationTargetException e) {
 					if (e.getCause() instanceof Error) {
 						throw (Error)e.getCause();
@@ -128,8 +173,8 @@ public class Property implements Comparable<Property> {
 						throw new IllegalStateException(e.getCause());
 					}
 				}
-			} else if (writer instanceof Field) {
-				((Field)writer).set(target, value);
+			} else if (field != null && !Modifier.isFinal(field.getModifiers())) {
+				field.set(target, value);
 			} else {
 				throw new IllegalStateException(name + " property is not writable.");
 			}
@@ -140,26 +185,19 @@ public class Property implements Comparable<Property> {
 		}
 	}
 	
-	public Property alias(String name) {
-		Property alias = new Property(parent, name);
-		synchronized (this) {
-			alias.reader = reader;
-			alias.readType = readType;
-			alias.readGtype = readGtype;
-			
-			alias.writer = writer;
-			alias.writeType = writeType;
-			alias.writeGtype = writeGtype;
-		}
-		return alias;
-	}
-
 	@Override
 	public int compareTo(Property property) {
-		if (!parent.getType().equals(property.parent.getType())) {
-			return parent.getType().getName().compareTo(property.parent.getType().getName());			
+		if (!beanClass.equals(property.beanClass)) {
+			return beanClass.getName().compareTo(property.beanClass.getName());			
 		} else {
 			return name.compareTo(property.name);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "Property [beanClass=" + beanClass + ", name=" + name
+				+ ", field=" + field + ", readMethod=" + readMethod
+				+ ", writeMethod=" + writeMethod + "]";
 	}
 }
