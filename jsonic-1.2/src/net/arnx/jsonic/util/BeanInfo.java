@@ -15,10 +15,6 @@ public final class BeanInfo {
 		new WeakHashMap<ClassLoader, Map<Class<?>, BeanInfo>>();
 	
 	public static BeanInfo get(Class<?> cls) {
-		return get(cls, true);
-	}
-	
-	public static BeanInfo get(Class<?> cls, boolean create) {
 		BeanInfo info = null;
 		synchronized(cache) {
 			Map<Class<?>, BeanInfo> map = cache.get(cls.getClassLoader());
@@ -29,7 +25,7 @@ public final class BeanInfo {
 				info = map.get(cls);
 			}
 			
-			if (info == null && create) {
+			if (info == null) {
 				info = new BeanInfo(cls);
 				map.put(cls, info);
 			}
