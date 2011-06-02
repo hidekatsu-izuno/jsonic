@@ -70,6 +70,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import net.arnx.jsonic.util.BeanInfo;
+import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.Property;
 
 import org.w3c.dom.CharacterData;
@@ -849,9 +850,9 @@ public class JSON {
 				} else if (o instanceof Element) {
 					f = DOMElementFormatter.INSTANCE;
 				}
-			} else if (ClassUtil.isAssignableFrom("java.sql.RowId", o.getClass())) {
+			} else if (isAssignableFrom(ClassUtil.findClass("java.sql.RowId"), o.getClass())) {
 				f = SerializableFormatter.INSTANCE;
-			} else if (ClassUtil.isAssignableFrom("java.net.InetAddress", o.getClass())) {
+			} else if (isAssignableFrom(ClassUtil.findClass("java.net.InetAddress"), o.getClass())) {
 				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
 				try {
 					o = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
@@ -859,8 +860,7 @@ public class JSON {
 				} catch (Exception e) {
 					f = NullFormatter.INSTANCE;
 				}
-				f = StringFormatter.INSTANCE;
-			} else if (ClassUtil.isAssignableFrom("org.apache.commons.beanutils.DynaBean", o.getClass())) {
+			} else if (isAssignableFrom(ClassUtil.findClass("org.apache.commons.beanutils.DynaBean"), o.getClass())) {
 				f = DynaBeanFormatter.INSTANCE;
 			} else {
 				f = ObjectFormatter.INSTANCE;
@@ -1570,7 +1570,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	private <T> T convert(Context context, Object value, Type type) throws JSONException {
-		Class<?> cls = BeanInfo.getRawType(type);
+		Class<?> cls = ClassUtil.getRawType(type);
 		
 		Object result = null;
 		try {
@@ -1641,7 +1641,7 @@ public class JSON {
 				c = CharSequenceConverter.INSTANCE;
 			} else if (Appendable.class.isAssignableFrom(cls)) {
 				c = AppendableConverter.INSTANCE;
-			} else if (ClassUtil.equals("java.net.InetAddress", cls)) {
+			} else if (cls.equals(ClassUtil.findClass("java.net.InetAddress"))) {
 				c = InetAddressConverter.INSTANCE;
 			} else if (java.sql.Array.class.isAssignableFrom(cls)
 					|| Struct.class.isAssignableFrom(cls)) {
@@ -1731,6 +1731,10 @@ public class JSON {
 		}
 		
 		return c.cast(instance);
+	}
+	
+	private static boolean isAssignableFrom(Class<?> target, Class<?> cls) {
+		return (target != null) && target.isAssignableFrom(cls);
 	}
 	
 	public final class Context {
@@ -1832,7 +1836,7 @@ public class JSON {
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
-			Class<?> c = BeanInfo.getRawType(t);
+			Class<?> c = ClassUtil.getRawType(t);
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();

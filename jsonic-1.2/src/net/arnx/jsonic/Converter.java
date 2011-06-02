@@ -34,7 +34,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import net.arnx.jsonic.JSON.Context;
-import net.arnx.jsonic.util.BeanInfo;
+import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.Property;
 
 interface Converter {
@@ -1063,7 +1063,7 @@ final class CollectionConverter implements Converter {
 			if (t instanceof ParameterizedType) {
 				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
 				Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-				Class<?> pc = BeanInfo.getRawType(pt);
+				Class<?> pc = ClassUtil.getRawType(pt);
 				
 				if (Object.class.equals(pc)) {
 					collection = (Collection<Object>)src;
@@ -1086,7 +1086,7 @@ final class CollectionConverter implements Converter {
 			if (t instanceof ParameterizedType) {
 				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
 				Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-				Class<?> pc = BeanInfo.getRawType(pt);
+				Class<?> pc = ClassUtil.getRawType(pt);
 				context.enter(0);
 				collection.add(json.postparse(context, value, pc, pt));
 				context.exit();
@@ -1112,8 +1112,8 @@ final class MapConverter implements Converter {
 				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
 				Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 				Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-				Class<?> pc0 = BeanInfo.getRawType(pt0);
-				Class<?> pc1 = BeanInfo.getRawType(pt1);
+				Class<?> pc0 = ClassUtil.getRawType(pt0);
+				Class<?> pc1 = ClassUtil.getRawType(pt1);
 				
 				if ((Object.class.equals(pc0) || String.class.equals(pc0))
 						&& Object.class.equals(pc1)) {
@@ -1143,8 +1143,8 @@ final class MapConverter implements Converter {
 				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
 				Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 				Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-				Class<?> pc0 = BeanInfo.getRawType(pt0);
-				Class<?> pc1 = BeanInfo.getRawType(pt1);
+				Class<?> pc0 = ClassUtil.getRawType(pt0);
+				Class<?> pc1 = ClassUtil.getRawType(pt1);
 				
 				List<?> src = (List<?>)value;
 				for (int i = 0; i < src.size(); i++) {
@@ -1172,8 +1172,8 @@ final class MapConverter implements Converter {
 				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
 				Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
 				Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-				Class<?> pc0 = BeanInfo.getRawType(pt0);
-				Class<?> pc1 = BeanInfo.getRawType(pt1);
+				Class<?> pc0 = ClassUtil.getRawType(pt0);
+				Class<?> pc1 = ClassUtil.getRawType(pt1);
 				
 				context.enter('.');
 				key = json.postparse(context, key, pc0, pt0);
@@ -1224,7 +1224,7 @@ final class ObjectConverter implements Converter {
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				String name = entry.getKey().toString();
 				Property target = props.get(name);
-				if (target == null) target = props.get(BeanInfo.toLowerCamel(name));
+				if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
 				if (target == null) continue;
 				
 				context.enter(name, target.getWriteAnnotation(JSONHint.class));
@@ -1232,7 +1232,7 @@ final class ObjectConverter implements Converter {
 				Type gtype = target.getWriteGenericType();
 				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
 					gtype = resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
-					cls = BeanInfo.getRawType(gtype);
+					cls = ClassUtil.getRawType(gtype);
 				}
 				target.set(o, json.postparse(context, entry.getValue(), cls, gtype));
 				context.exit();
@@ -1252,7 +1252,7 @@ final class ObjectConverter implements Converter {
 				Type gtype = target.getWriteGenericType();
 				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
 					gtype = resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
-					cls = BeanInfo.getRawType(gtype);
+					cls = ClassUtil.getRawType(gtype);
 				}
 				target.set(o, json.postparse(context, value, cls, gtype));
 				context.exit();
@@ -1264,7 +1264,7 @@ final class ObjectConverter implements Converter {
 	}
 	
 	private static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
-		Class<?> rawType = BeanInfo.getRawType(parent);
+		Class<?> rawType = ClassUtil.getRawType(parent);
 		if (rawType.equals(type.getGenericDeclaration())) {
 			String tvName = type.getName();
 			TypeVariable<?>[] rtypes = ((Class<?>)rawType).getTypeParameters();

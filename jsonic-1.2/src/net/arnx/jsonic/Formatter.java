@@ -24,6 +24,7 @@ import org.w3c.dom.NodeList;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.JSON.Mode;
+import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.Property;
 
 interface Formatter {
@@ -683,8 +684,7 @@ final class DynaBeanFormatter implements Formatter {
 		in.append('{');
 		int count = 0;
 		try {
-			Class<?> dynaBeanClass = ClassUtil
-					.findClass("org.apache.commons.beanutils.DynaBean");
+			Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean");
 
 			Object dynaClass = dynaBeanClass.getMethod("getDynaClass")
 					.invoke(o);
