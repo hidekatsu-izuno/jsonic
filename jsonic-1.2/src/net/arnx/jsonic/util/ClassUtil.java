@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
@@ -124,12 +125,14 @@ public final class ClassUtil {
 		}
 	}
 	
-	public static byte[] serialize(Object o) {
+	public static byte[] serialize(Object o) throws ObjectStreamException {
 		ByteArrayOutputStream array = new ByteArrayOutputStream();
 		ObjectOutputStream out = null;
 		try {
 			out = new ObjectOutputStream(array);
 			out.writeObject(o);
+		} catch (ObjectStreamException e) {
+			throw e;
 		} catch (IOException e) {
 			// no handle
 		} finally {
@@ -142,12 +145,14 @@ public final class ClassUtil {
 		return array.toByteArray();
 	}
 	
-	public static Object deserialize(byte[] data) throws ClassNotFoundException {
+	public static Object deserialize(byte[] data) throws ObjectStreamException, ClassNotFoundException {
 		Object ret = null;
 		ObjectInputStream in = null;
 		try {
 			in = new ObjectInputStream(new ByteArrayInputStream(data));
 			ret = in.readObject();
+		} catch (ObjectStreamException e) {
+			throw e;
 		} catch (IOException e) {
 			// no handle
 		} finally {
