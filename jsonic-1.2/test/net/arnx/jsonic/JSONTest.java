@@ -1558,38 +1558,10 @@ public class JSONTest {
 		System.out.println("format time: " + (System.currentTimeMillis()-start));
 	}
 	
-	public List<List<Object>> t1;
-	public Map<Map<String, Object>, List<Object>> t2;
-	public List<?> t3;
-	public List<? extends List> t4;
-	public List<? super List> t5;
-	public List[] t6;
-	public List<List>[] t7;
-	public List<List>[][] t8;
-	
 	public List<Integer> tx;
 	
 	@Test
 	public void testGetRawType() throws Exception {
-		List<List<Object>> xt1 = new ArrayList<List<Object>>();
-		List<Object> xt1_1 = new ArrayList<Object>();
-		xt1_1.add("a");
-		xt1.add(xt1_1);
-		
-		assertEquals(xt1, JSON.decode("[['a']]", this.getClass().getField("t1").getGenericType()));
-		
-		assertEquals(String.class, ClassUtil.getRawType(String.class));
-		assertEquals(String[].class, ClassUtil.getRawType(String[].class));
-		assertEquals(List.class, ClassUtil.getRawType(this.getClass().getField("t1").getGenericType()));
-		assertEquals(Map.class, ClassUtil.getRawType(this.getClass().getField("t2").getGenericType()));
-		assertEquals(List.class, ClassUtil.getRawType(this.getClass().getField("t3").getGenericType()));
-		assertEquals(List.class, ClassUtil.getRawType(this.getClass().getField("t4").getGenericType()));
-		assertEquals(List.class, ClassUtil.getRawType(((ParameterizedType)this.getClass().getField("t4").getGenericType()).getActualTypeArguments()[0]));
-		assertEquals(List.class, ClassUtil.getRawType(this.getClass().getField("t5").getGenericType()));
-		assertEquals(Object.class, ClassUtil.getRawType(((ParameterizedType)this.getClass().getField("t5").getGenericType()).getActualTypeArguments()[0]));
-		assertEquals(List[].class, ClassUtil.getRawType(this.getClass().getField("t6").getGenericType()));
-		assertEquals(List[].class, ClassUtil.getRawType(this.getClass().getField("t7").getGenericType()));
-		assertEquals(List[][].class, ClassUtil.getRawType(this.getClass().getField("t8").getGenericType()));
 		
 		List<BigDecimal> listA = new ArrayList<BigDecimal>();
 		listA.add(new BigDecimal("1"));

@@ -483,7 +483,7 @@ public class RESTServlet extends HttpServlet {
 							for (String value : values) list.add(value);
 							map.put(null, list);
 						} else {
-							map.put(null, values[0]);						
+							map.put(null, (values.length > 0) ? values[0] : null);						
 						}
 					} else if (target instanceof List) {
 						List<Object> list = ((List<Object>)target);
@@ -499,7 +499,7 @@ public class RESTServlet extends HttpServlet {
 					for (String value : values) list.add(value);
 					current.put(key, list);
 				} else {
-					current.put(key, values[0]);
+					current.put(key, (values.length > 0) ? values[0] : null);
 				}
 			}
 		}

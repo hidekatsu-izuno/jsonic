@@ -153,7 +153,7 @@ import org.w3c.dom.Node;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.2.5
+ * @version 1.2.6
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -1570,7 +1570,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	private <T> T convert(Context context, Object value, Type type) throws JSONException {
-		Class<?> cls = ClassUtil.getRawType(type);
+		Class<?> cls = BeanInfo.getRawType(type);
 		
 		Object result = null;
 		try {
@@ -1832,7 +1832,7 @@ public class JSON {
 		}
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
-			Class<?> c = ClassUtil.getRawType(t);
+			Class<?> c = BeanInfo.getRawType(t);
 			enter(key);
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
