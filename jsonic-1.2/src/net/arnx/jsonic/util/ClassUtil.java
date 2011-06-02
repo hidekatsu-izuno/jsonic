@@ -1,5 +1,10 @@
 package net.arnx.jsonic.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
@@ -117,6 +122,42 @@ public final class ClassUtil {
 		} else {
 			return Object.class;
 		}
+	}
+	
+	public static byte[] serialize(Object o) {
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+		ObjectOutputStream out = null;
+		try {
+			out = new ObjectOutputStream(array);
+			out.writeObject(o);
+		} catch (IOException e) {
+			// no handle
+		} finally {
+			try {
+				if (out != null) out.close();
+			} catch (IOException e) {
+				// no handle
+			}
+		}
+		return array.toByteArray();
+	}
+	
+	public static Object deserialize(byte[] data) throws ClassNotFoundException {
+		Object ret = null;
+		ObjectInputStream in = null;
+		try {
+			in = new ObjectInputStream(new ByteArrayInputStream(data));
+			ret = in.readObject();
+		} catch (IOException e) {
+			// no handle
+		} finally {
+			try {
+				if (in != null) in.close();
+			} catch (IOException e) {
+				// no handle
+			}
+		}
+		return ret;
 	}
 	
 	public static int hashCode(Object target) {

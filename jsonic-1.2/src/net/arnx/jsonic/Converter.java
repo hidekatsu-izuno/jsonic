@@ -1,9 +1,6 @@
 package net.arnx.jsonic;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
@@ -106,23 +103,11 @@ final class SerializableConverter implements Converter {
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
-			return deserialize(Base64.decode((String)value));
+			return ClassUtil.deserialize(Base64.decode((String)value));
 		} else if (value != null) {
 			throw new UnsupportedOperationException();
 		}
 		return null;
-	}
-	
-	static Object deserialize(byte[] array) throws IOException, ClassNotFoundException {
-		Object ret = null;
-		ObjectInputStream in = null;
-		try {
-			in = new ObjectInputStream(new ByteArrayInputStream(array));
-			ret = in.readObject();
-		} finally {
-			if (in != null) in.close();
-		}
-		return ret;
 	}
 }
 

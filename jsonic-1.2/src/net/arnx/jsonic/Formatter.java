@@ -1,8 +1,6 @@
 package net.arnx.jsonic;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Flushable;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
@@ -205,15 +203,7 @@ final class SerializableFormatter implements Formatter {
 	public static final SerializableFormatter INSTANCE = new SerializableFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
-		return StringFormatter.INSTANCE.format(json, context, src, Base64.encode(serialize(o)), in);
-	}
-	
-	static byte[] serialize(Object data) throws Exception {
-		ByteArrayOutputStream array = new ByteArrayOutputStream();
-		ObjectOutputStream out = new ObjectOutputStream(array);
-		out.writeObject(data);
-		out.close();
-		return array.toByteArray();
+		return StringFormatter.INSTANCE.format(json, context, src, Base64.encode(ClassUtil.serialize(o)), in);
 	}
 }
 
