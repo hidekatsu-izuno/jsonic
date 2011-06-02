@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public final class ClassUtil {
-	private static final Map<ClassLoader, Map<String, Class<?>>> cache 
-		= new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
+	private static final Map<ClassLoader, Map<String, Class<?>>> cache = 
+		new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
 	
 	public static Class<?> findClass(String name) {
 		ClassLoader cl;
