@@ -3,13 +3,13 @@ package net.arnx.jsonic.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import java.io.ObjectStreamClass;
 
 public final class ClassUtil {
 	private static final Map<ClassLoader, Map<String, Class<?>>> cache = 
@@ -132,40 +134,26 @@ public final class ClassUtil {
 		try {
 			out = new ObjectOutputStream(array);
 			out.writeObject(o);
+			out.close();
 		} catch (ObjectStreamException e) {
 			throw e;
 		} catch (IOException e) {
 			// no handle
-		} finally {
-			try {
-				if (out != null) out.close();
-			} catch (IOException e) {
-				// no handle
-			}
 		}
 		return array.toByteArray();
 	}
 	
 	public static Object deserialize(byte[] data) throws ObjectStreamException, ClassNotFoundException {
 		Object ret = null;
+		ObjectInputStream in = null;
 		try {
-			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			Class<?> deserializerClass = Class.forName(ClassUtil.class.getName() + "$Deserializer", true, cl);
-			ret = deserializerClass.getMethod("deserialize", byte[].class).invoke(null, data);
-		} catch (InvocationTargetException e) {
-			if (e.getCause() instanceof Error) {
-				throw (Error)e.getCause();
-			} else if (e.getCause() instanceof ObjectStreamException) {
-				throw (ObjectStreamException)e.getCause();
-			} else if (e.getCause() instanceof ClassNotFoundException) {
-				throw (ClassNotFoundException)e.getCause();
-			} else if (e.getCause() instanceof RuntimeException) {
-				throw (RuntimeException)e.getCause();
-			} else {
-				throw new IllegalStateException(e.getCause());
-			}
-		} catch (Exception e) {
-			throw new IllegalStateException(e);
+			in = new ContextObjectInputStream(new ByteArrayInputStream(data));
+			ret = in.readObject();
+			in.close();
+		} catch (ObjectStreamException e) {
+			throw e;
+		} catch (IOException e) {
+			// no handle
 		}
 		return ret;
 	}
@@ -332,25 +320,19 @@ public final class ClassUtil {
 	private ClassUtil() {
 	}
 	
-	static class Deserializer {
-		public static Object deserialize(byte[] data) throws ObjectStreamException, ClassNotFoundException {
-			Object ret = null;
-			ObjectInputStream in = null;
+	private static class ContextObjectInputStream extends ObjectInputStream {
+		public ContextObjectInputStream(InputStream in) throws IOException {
+			super(in);
+		}
+		
+		@Override
+		protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+			ClassLoader cl = Thread.currentThread().getContextClassLoader();
 			try {
-				in = new ObjectInputStream(new ByteArrayInputStream(data));
-				ret = in.readObject();
-			} catch (ObjectStreamException e) {
-				throw e;
-			} catch (IOException e) {
-				// no handle
-			} finally {
-				try {
-					if (in != null) in.close();
-				} catch (IOException e) {
-					// no handle
-				}
+				return Class.forName(desc.getName(), true, cl);
+			} catch (Exception e) {
+				return super.resolveClass(desc);
 			}
-			return ret;
 		}
 	}
 }
