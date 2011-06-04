@@ -9,6 +9,7 @@ import java.io.ObjectStreamException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -147,20 +148,24 @@ public final class ClassUtil {
 	
 	public static Object deserialize(byte[] data) throws ObjectStreamException, ClassNotFoundException {
 		Object ret = null;
-		ObjectInputStream in = null;
 		try {
-			in = new ObjectInputStream(new ByteArrayInputStream(data));
-			ret = in.readObject();
-		} catch (ObjectStreamException e) {
-			throw e;
-		} catch (IOException e) {
-			// no handle
-		} finally {
-			try {
-				if (in != null) in.close();
-			} catch (IOException e) {
-				// no handle
+			ClassLoader cl = Thread.currentThread().getContextClassLoader();
+			Class<?> deserializerClass = Class.forName(ClassUtil.class.getName() + "$Deserializer", true, cl);
+			ret = deserializerClass.getMethod("deserialize", byte[].class).invoke(null, data);
+		} catch (InvocationTargetException e) {
+			if (e.getCause() instanceof Error) {
+				throw (Error)e.getCause();
+			} else if (e.getCause() instanceof ObjectStreamException) {
+				throw (ObjectStreamException)e.getCause();
+			} else if (e.getCause() instanceof ClassNotFoundException) {
+				throw (ClassNotFoundException)e.getCause();
+			} else if (e.getCause() instanceof RuntimeException) {
+				throw (RuntimeException)e.getCause();
+			} else {
+				throw new IllegalStateException(e.getCause());
 			}
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
 		}
 		return ret;
 	}
@@ -325,5 +330,27 @@ public final class ClassUtil {
 	}
 	
 	private ClassUtil() {
+	}
+	
+	static class Deserializer {
+		public static Object deserialize(byte[] data) throws ObjectStreamException, ClassNotFoundException {
+			Object ret = null;
+			ObjectInputStream in = null;
+			try {
+				in = new ObjectInputStream(new ByteArrayInputStream(data));
+				ret = in.readObject();
+			} catch (ObjectStreamException e) {
+				throw e;
+			} catch (IOException e) {
+				// no handle
+			} finally {
+				try {
+					if (in != null) in.close();
+				} catch (IOException e) {
+					// no handle
+				}
+			}
+			return ret;
+		}
 	}
 }
