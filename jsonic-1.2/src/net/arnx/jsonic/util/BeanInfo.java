@@ -106,6 +106,14 @@ public final class BeanInfo {
 		}
 	}
 	
+	public Object newInstance() {
+		try {
+			return type.newInstance();
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+	}
+	
 	public Class<?> getType() {
 		return type;
 	}
