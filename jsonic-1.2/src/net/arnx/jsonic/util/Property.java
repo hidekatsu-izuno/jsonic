@@ -12,8 +12,8 @@ public class Property implements Comparable<Property> {
 	private Class<?> beanClass;
 	
 	private String name;
+	private Field field;
 	
-	Field field;	
 	Method readMethod;
 	Method writeMethod;
 	
