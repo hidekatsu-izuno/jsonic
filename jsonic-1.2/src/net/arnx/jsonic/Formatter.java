@@ -26,13 +26,13 @@ import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.Property;
 
 interface Formatter {
-	boolean format(JSON json, Context context, Object src, Object o, InputSource in) throws Exception;
+	boolean format(JSON json, Context context, Object src, Object o, OutputSource in) throws Exception;
 }
 
 final class NullFormatter implements Formatter {
 	public static final NullFormatter INSTANCE = new NullFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		in.append("null");
 		return false;
 	}
@@ -41,7 +41,7 @@ final class NullFormatter implements Formatter {
 final class PlainFormatter implements Formatter {
 	public static final PlainFormatter INSTANCE = new PlainFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		in.append(o.toString());
 		return false;
 	}
@@ -69,12 +69,12 @@ final class StringFormatter implements Formatter {
 	}
 
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		serialize(context, o.toString(), in);
 		return false;
 	}
 
-	static void serialize(final Context context, final String s, final InputSource in) throws Exception {
+	static void serialize(final Context context, final String s, final OutputSource in) throws Exception {
 		in.append('"');
 		int start = 0;
 		final int length = s.length();
@@ -112,7 +112,7 @@ final class StringFormatter implements Formatter {
 final class NumberFormatter implements Formatter {
 	public static final NumberFormatter INSTANCE = new NumberFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		NumberFormat f = context.format(NumberFormat.class);
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(o), in);
@@ -126,7 +126,7 @@ final class NumberFormatter implements Formatter {
 final class FloatFormatter implements Formatter {
 	public static final FloatFormatter INSTANCE = new FloatFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		NumberFormat f = context.format(NumberFormat.class);
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(o), in);
@@ -155,7 +155,7 @@ final class FloatFormatter implements Formatter {
 final class DateFormatter implements Formatter {
 	public static final DateFormatter INSTANCE = new DateFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		Date date = (Date) o;
 		DateFormat f = context.format(DateFormat.class);
 		if (f != null) {
@@ -174,7 +174,7 @@ final class DateFormatter implements Formatter {
 final class BooleanArrayFormatter implements Formatter {
 	public static final BooleanArrayFormatter INSTANCE = new BooleanArrayFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		in.append('[');
 		boolean[] array = (boolean[]) o;
 		for (int i = 0; i < array.length; i++) {
@@ -193,7 +193,7 @@ final class BooleanArrayFormatter implements Formatter {
 final class ByteArrayFormatter implements Formatter {
 	public static final ByteArrayFormatter INSTANCE = new ByteArrayFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		StringFormatter.serialize(context, Base64.encode((byte[]) o), in);
 		return false;
 	}
@@ -202,7 +202,7 @@ final class ByteArrayFormatter implements Formatter {
 final class SerializableFormatter implements Formatter {
 	public static final SerializableFormatter INSTANCE = new SerializableFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		return StringFormatter.INSTANCE.format(json, context, src, Base64.encode(ClassUtil.serialize(o)), in);
 	}
 }
@@ -210,7 +210,7 @@ final class SerializableFormatter implements Formatter {
 final class ShortArrayFormatter implements Formatter {
 	public static final ShortArrayFormatter INSTANCE = new ShortArrayFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		NumberFormat f = context.format(NumberFormat.class);
 		short[] array = (short[]) o;
 		in.append('[');
@@ -234,7 +234,7 @@ final class ShortArrayFormatter implements Formatter {
 final class IntArrayFormatter implements Formatter {
 	public static final IntArrayFormatter INSTANCE = new IntArrayFormatter();
 
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		NumberFormat f = context.format(NumberFormat.class);
 		int[] array = (int[]) o;
 		in.append('[');
@@ -258,7 +258,7 @@ final class IntArrayFormatter implements Formatter {
 final class LongArrayFormatter implements Formatter {
 	public static final LongArrayFormatter INSTANCE = new LongArrayFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		NumberFormat f = context.format(NumberFormat.class);
 		long[] array = (long[]) o;
 		in.append('[');
@@ -281,7 +281,7 @@ final class LongArrayFormatter implements Formatter {
 final class FloatArrayFormatter implements Formatter {
 	public static final FloatArrayFormatter INSTANCE = new FloatArrayFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		NumberFormat f = context.format(NumberFormat.class);
 		float[] array = (float[]) o;
 		in.append('[');
@@ -317,7 +317,7 @@ final class FloatArrayFormatter implements Formatter {
 final class DoubleArrayFormatter implements Formatter {
 	public static final DoubleArrayFormatter INSTANCE = new DoubleArrayFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		NumberFormat f = context.format(NumberFormat.class);
 		double[] array = (double[]) o;
 		in.append('[');
@@ -352,7 +352,7 @@ final class DoubleArrayFormatter implements Formatter {
 final class ObjectArrayFormatter implements Formatter {
 	public static final ObjectArrayFormatter INSTANCE = new ObjectArrayFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		Object[] array = (Object[]) o;
 		in.append('[');
 		int i = 0;
@@ -385,7 +385,7 @@ final class ObjectArrayFormatter implements Formatter {
 final class ByteFormatter implements Formatter {
 	public static final ByteFormatter INSTANCE = new ByteFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		in.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
 		return false;
 	}
@@ -394,7 +394,7 @@ final class ByteFormatter implements Formatter {
 final class ClassFormatter implements Formatter {
 	public static final ClassFormatter INSTANCE = new ClassFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		return StringFormatter.INSTANCE.format(json, context, src, ((Class<?>)o).getName(), in);
 	}
 }
@@ -402,7 +402,7 @@ final class ClassFormatter implements Formatter {
 final class LocaleFormatter implements Formatter {
 	public static final LocaleFormatter INSTANCE = new LocaleFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		return StringFormatter.INSTANCE.format(json, context, src, ((Locale)o).toString().replace('_', '-'), in);
 	}
 }
@@ -410,7 +410,7 @@ final class LocaleFormatter implements Formatter {
 final class CharArrayFormatter implements Formatter {
 	public static final CharArrayFormatter INSTANCE = new CharArrayFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		return StringFormatter.INSTANCE.format(json, context, src, new String((char[]) o), in);
 	}
 }
@@ -418,7 +418,7 @@ final class CharArrayFormatter implements Formatter {
 final class ListFormatter implements Formatter {
 	public static final ListFormatter INSTANCE = new ListFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		final List<?> list = (List<?>)o;
 		final JSONHint hint = context.getHint();
 		final int length = list.size();
@@ -465,7 +465,7 @@ final class ListFormatter implements Formatter {
 final class IteratorFormatter implements Formatter {
 	public static final IteratorFormatter INSTANCE = new IteratorFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		final Iterator<?> t = (Iterator<?>)o;
 		final JSONHint hint = context.getHint();
 		
@@ -512,7 +512,7 @@ final class IteratorFormatter implements Formatter {
 final class IterableFormatter implements Formatter {
 	public static final IterableFormatter INSTANCE = new IterableFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		return IteratorFormatter.INSTANCE.format(json, context, src, ((Iterable<?>) o).iterator(), in);
 	}
 }
@@ -520,7 +520,7 @@ final class IterableFormatter implements Formatter {
 final class EnumerationFormatter implements Formatter {
 	public static final EnumerationFormatter INSTANCE = new EnumerationFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		final Enumeration<?> e = (Enumeration<?>)o;
 		final JSONHint hint = context.getHint();
 		
@@ -568,7 +568,7 @@ final class EnumerationFormatter implements Formatter {
 final class MapFormatter implements Formatter {
 	public static final MapFormatter INSTANCE = new MapFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		final Map<?, ?> map = (Map<?, ?>)o;
 		final JSONHint hint = context.getHint();
 
@@ -621,7 +621,7 @@ final class MapFormatter implements Formatter {
 final class ObjectFormatter implements Formatter {
 	public static final ObjectFormatter INSTANCE = new ObjectFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		List<Property> props = context.getGetProperties(o.getClass());
 
 		in.append('{');
@@ -670,7 +670,7 @@ final class ObjectFormatter implements Formatter {
 final class DynaBeanFormatter implements Formatter {
 	public static final DynaBeanFormatter INSTANCE = new DynaBeanFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		in.append('{');
 		int count = 0;
 		try {
@@ -749,7 +749,7 @@ final class DynaBeanFormatter implements Formatter {
 final class DOMElementFormatter implements Formatter {
 	public static final DOMElementFormatter INSTANCE = new DOMElementFormatter();
 	
-	public boolean format(final JSON json, final Context context, final Object src, final Object o, final InputSource in) throws Exception {
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource in) throws Exception {
 		Element elem = (Element)o;
 		in.append('[');
 		StringFormatter.serialize(context, elem.getTagName(), in);
