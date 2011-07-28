@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.util.Base64;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.Property;
 
