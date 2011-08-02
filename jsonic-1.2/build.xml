@@ -34,7 +34,10 @@
 
 		<jar destfile="${tmp}/${ant.project.name}-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
-			<fileset dir="src" excludes="${jar.excludes}" />
+			<fileset dir="src" excludes="**/*.java" />
+		</jar>
+		<jar destfile="${tmp}/${ant.project.name}-${version}-sources.jar">
+			<fileset dir="src" />
 		</jar>
 		<delete dir="${tmp}/build" />
 	</target>
@@ -59,7 +62,8 @@
 	</target>
 
 	<target name="dist" depends="build-sample">
-		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US">
+		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true" locale="en_US"
+			excludepackagenames="net.arnx.jsonic.util.*">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
@@ -81,7 +85,7 @@
 		<zip destfile="${dist}/${ant.project.name}-${version}.zip">
 			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src/java" />
 			<zipfileset dir="${tmp}/java/docs" prefix="${ant.project.name}-${version}/docs/java" />
-			<zipfileset file="${tmp}/java/${ant.project.name}-${version}.jar" prefix="${ant.project.name}-${version}" />
+			<zipfileset file="${tmp}/java/${ant.project.name}-${version}*.jar" prefix="${ant.project.name}-${version}" />
 			
 			<zipfileset dir="${jsonic_as3.home}/src" prefix="${ant.project.name}-${version}/src/as3" />
 			<zipfileset dir="${tmp}/as3/docs" prefix="${ant.project.name}-${version}/docs/as3" />
