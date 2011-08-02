@@ -711,14 +711,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2011/8/1 version 1.2.6</h3>
+<h3>2011/8/3 version 1.2.6</h3>
 
 <ul>
 <li>[不具合] preformatの中でループ中に変換先クラスを変えた場合、formatに失敗する問題を修正しました（#24129）</li>
 <li>[不具合] プロパティ名に漢字など英数でない名称をしていた場合、formatやparseに失敗していた問題を修正しました（#25884）</li>
 <li>[非互換] XSS脆弱性の可能性を防止するため、Scriptモードだけでなく、Traditionalモードでも「&lt;&gt;」を「\u003C\u003E」とエスケープするようにしました。Strictモードでは従来通り「&lt;&gt;」と出力されます（<a href="http://blog.livedoor.jp/leaf_hiro/archives/51512698.html">参考</a>）</li>
 <li>JSONクラスにScriptモードでエスケープする escapeScript を追加しました。</li>
-<li>出力するJSON objectの名前の並び順が定義順となるようにする setSorting/getSortingを追加しまた。</li>
 </ul>
 
 <h3>2010/12/19 version 1.2.5</h3>

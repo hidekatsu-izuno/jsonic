@@ -18,6 +18,12 @@ package net.arnx.jsonic.util;
 public class Base64 {
 	static final String BASE64_MAP = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	
+	/**
+	 * Encodes bytes to BASE64.
+	 * 
+	 * @param data input bytes data
+	 * @return BASE64 String
+	 */
 	public static String encode(byte[] data) {
 		if (data == null) return null;
 		
@@ -55,6 +61,12 @@ public class Base64 {
 		return new String(buffer);
 	}
 	
+	/**
+	 * Decodes BASE64 to bytes.
+	 * 
+	 * @param cs BASE64.
+	 * @return decoded bytes data.
+	 */
 	public static byte[] decode(CharSequence cs) {
 		int addsize = 0;
 		int bufsize = 0;
