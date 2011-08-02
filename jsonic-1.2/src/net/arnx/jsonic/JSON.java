@@ -393,7 +393,7 @@ public class JSON {
 	 * @return a escaped object
 	 * @throws JSONException if error occurred when formating.
 	 */
-	public static String escapeJS(Object source) throws JSONException {
+	public static String escapeScript(Object source) throws JSONException {
 		JSON json = JSON.newInstance();
 		json.setMode(JSON.Mode.SCRIPT);
 		return json.format(source);
@@ -407,7 +407,7 @@ public class JSON {
 	 * @throws IOException if I/O Error occurred.
 	 * @throws JSONException if error occurred when formating.
 	 */
-	public static void escapeJS(Object source, OutputStream out) throws IOException, JSONException {
+	public static void escapeScript(Object source, OutputStream out) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
 		json.setMode(JSON.Mode.SCRIPT);
 		json.format(source, out);
@@ -421,7 +421,7 @@ public class JSON {
 	 * @throws IOException if I/O Error occurred.
 	 * @throws JSONException if error occurred when formating.
 	 */
-	public static void escapeJS(Object source, Appendable appendable) throws IOException, JSONException {
+	public static void escapeScript(Object source, Appendable appendable) throws IOException, JSONException {
 		JSON json = JSON.newInstance();
 		json.setMode(JSON.Mode.SCRIPT);
 		json.format(source, appendable);
@@ -588,6 +588,7 @@ public class JSON {
 	private Object contextObject;
 	private Locale locale;
 	private boolean prettyPrint = false;
+	private boolean sorting = true;
 	private int maxDepth = 32;
 	private boolean suppressNull = false;
 	private Mode mode = Mode.TRADITIONAL;
@@ -684,6 +685,25 @@ public class JSON {
 	 */
 	public Mode getMode() {
 		return mode;
+	}
+	
+	/**
+	 * If this property is true, JSON object values is sorted by name.
+	 * default value is true.
+	 * 
+	 * @param sorting true to sort JSON object values by name.
+	 */
+	public void setSorting(boolean sorting) {
+		this.sorting = sorting;
+	}
+	
+	/**
+	 * If this property is true, JSON object values is sorted by name.
+	 * 
+	 * @return  true to sort JSON object values by name.
+	 */
+	public boolean isSorting() {
+		return sorting;
 	}
 	
 	/**
@@ -1742,6 +1762,7 @@ public class JSON {
 		private final Object contextObject;
 		private final int maxDepth;
 		private final boolean prettyPrint;
+		private final boolean sorting;
 		private final boolean suppressNull;
 		private final Mode mode;
 		
@@ -1756,6 +1777,7 @@ public class JSON {
 				contextObject = JSON.this.contextObject;
 				maxDepth = JSON.this.maxDepth;
 				prettyPrint = JSON.this.prettyPrint;
+				sorting = JSON.this.sorting;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
 			}
@@ -1898,7 +1920,7 @@ public class JSON {
 					
 					props.add(prop);
 				}
-				Collections.sort(props);
+				if (sorting) Collections.sort(props);
 				memberCache.put(c, props);				
 			}
 			return props;

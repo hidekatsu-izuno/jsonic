@@ -286,21 +286,21 @@ public class JSONTest {
 	}
 	
 	@Test
-	public void testEscapeJS() throws Exception {
-		assertEquals("null", JSON.escapeJS(null));
-		assertEquals("100", JSON.escapeJS(100));
-		assertEquals("100.1", JSON.escapeJS(100.1));
-		assertEquals("\"string\"", JSON.escapeJS("string"));
-		assertEquals("[1,2,3]", JSON.escapeJS(new short[] {1,2,3}));
-		assertEquals("[1,2,3]", JSON.escapeJS(new int[] {1,2,3}));
-		assertEquals("[1,2,3]", JSON.escapeJS(new long[] {1l,2l,3l}));
-		assertEquals("[1.0,2.0,3.0,Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", JSON.escapeJS(
+	public void testEscapeScript() throws Exception {
+		assertEquals("null", JSON.escapeScript(null));
+		assertEquals("100", JSON.escapeScript(100));
+		assertEquals("100.1", JSON.escapeScript(100.1));
+		assertEquals("\"string\"", JSON.escapeScript("string"));
+		assertEquals("[1,2,3]", JSON.escapeScript(new short[] {1,2,3}));
+		assertEquals("[1,2,3]", JSON.escapeScript(new int[] {1,2,3}));
+		assertEquals("[1,2,3]", JSON.escapeScript(new long[] {1l,2l,3l}));
+		assertEquals("[1.0,2.0,3.0,Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", JSON.escapeScript(
 				new float[] {1.0f,2.0f,3.0f,Float.NaN,Float.POSITIVE_INFINITY,Float.NEGATIVE_INFINITY}));
-		assertEquals("[1.0,2.0,3.0,Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", JSON.escapeJS(
+		assertEquals("[1.0,2.0,3.0,Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", JSON.escapeScript(
 				new double[] {1.0,2.0,3.0,Double.NaN,Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY}));
 		
 		Date date = new Date();
-		assertEquals("new Date(" + date.getTime() + ")", JSON.escapeJS(date));
+		assertEquals("new Date(" + date.getTime() + ")", JSON.escapeScript(date));
 	}
 
 	@Test

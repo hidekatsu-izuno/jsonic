@@ -85,26 +85,6 @@ public final class ClassUtil {
 		}
 	}
 	
-	public static String getPackageName(String className) {
-		int start = 0;
-		while (start < className.length()) {
-			if (className.charAt(start) == '[') {
-				start++;
-			} else {
-				break;
-			}
-		}
-		if (start < className.length()) {
-			if (className.charAt(start) == 'L' && className.charAt(className.length()-1) == ';') {
-				start++;
-			}
-			int end = className.lastIndexOf('.', start);
-			return (end != -1) ? className.substring(start, end) : className.substring(start);
-		} else {
-			return "";
-		}
-	}
-	
 	public static String toUpperCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = true;
