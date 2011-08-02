@@ -182,12 +182,12 @@ public class JSONTest {
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(test));
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(test));
 		
 		TestBeanWrapper tbw = new TestBeanWrapper();
 		tbw.test = test;
 		String result = JSON.encode(tbw);
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null}", JSON.encode(JSON.decode(result, TestBeanWrapper.class).test));
+		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(JSON.decode(result, TestBeanWrapper.class).test));
 		
 		Document doc = DocumentBuilderFactory
 			.newInstance()
@@ -1652,7 +1652,11 @@ class TestBean implements Serializable {
 	private TimeZone h;
 	public TimeZone getH() { return h; }
 	public void setH(TimeZone h) { this.h = h; }
-
+	
+	private String 漢字;
+	public String get漢字() { return 漢字; }
+	public void set漢字(String 漢字) { this.漢字 = 漢字; }
+	
 	@JSONHint(name="class")
 	public Class class_;
 	
