@@ -599,7 +599,17 @@ public class JSONTest {
 		
 		assertEquals("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
+		json = new JSON();
+		json.setSorting(false);
+		
+		TestBean test = new TestBean();
+		test.setA(100);
+		test.e = Locale.ENGLISH;
+		assertEquals("{\"b\":null,\"d\":null,\"e\":\"en\",\"class\":null,\"a\":100,\"c\":false,\"g\":null,\"h\":null,\"f\":null,\"漢字\":null,\"if\":null}", json.format(test));
+		//assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", json.format(test));
+		
 		//SCRIPT
+		json = new JSON();
 		json.setMode(JSON.Mode.SCRIPT);
 		
 		assertEquals("null", json.format(null, new StringBuilder()).toString());
@@ -613,6 +623,7 @@ public class JSONTest {
 		assertArrayEquals(new String[] { "!\"#$%&'()=~|<>?_" }, json.parse("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", String[].class));
 		
 		//STRICT
+		json = new JSON();
 		json.setMode(Mode.STRICT);
 		
 		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
