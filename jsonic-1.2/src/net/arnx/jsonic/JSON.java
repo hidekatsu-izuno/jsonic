@@ -292,9 +292,9 @@ public class JSON {
 		CONVERT_MAP.put(SortedMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(HashMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(IdentityHashMap.class, MapConverter.INSTANCE);
-		CONVERT_MAP.put(Properties.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(TreeMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(LinkedHashMap.class, MapConverter.INSTANCE);
+		CONVERT_MAP.put(Properties.class, PropertiesConverter.INSTANCE);
 	}
 	
 	static JSON newInstance() {
@@ -1625,6 +1625,8 @@ public class JSON {
 		if (c == null) {
 			if (context.hasMemberCache(cls)) {
 				c = ObjectConverter.INSTANCE;
+			} else if (Properties.class.isAssignableFrom(cls)) {
+				c = PropertiesConverter.INSTANCE;
 			} else if (Map.class.isAssignableFrom(cls)) {
 				c = MapConverter.INSTANCE;
 			} else if (Collection.class.isAssignableFrom(cls)) {

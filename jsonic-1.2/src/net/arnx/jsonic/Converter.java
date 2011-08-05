@@ -1049,7 +1049,7 @@ final class CollectionConverter implements Converter {
 		
 		while (!(t instanceof ParameterizedType)) {
 			Class<?> raw = ClassUtil.getRawType(t);
-			if (Collection.class.isAssignableFrom(raw.getSuperclass())) {
+			if (raw.getSuperclass() != null && Collection.class.isAssignableFrom(raw.getSuperclass())) {
 				t = raw.getGenericSuperclass();
 			} else {
 				break;
@@ -1088,100 +1088,17 @@ final class CollectionConverter implements Converter {
 	}	
 }
 
-final class MapConverter implements Converter {
-	public static final MapConverter INSTANCE = new MapConverter();
+final class PropertiesConverter implements Converter {
+	public static final PropertiesConverter INSTANCE = new PropertiesConverter();
 	
-	@SuppressWarnings("unchecked")
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
-		Map<Object, Object> map = (Map<Object, Object>)json.create(context, c);
-		if (value instanceof Map<?, ?>) {
-			if (Properties.class.isAssignableFrom(c)) {
-				flattenProperties(new StringBuilder(32), (Map<Object, Object>)value, (Properties)map);
-			} else {
-				Type pt0 = Object.class;
-				Type pt1 = Object.class;
-				Class<?> pc0 = Object.class;
-				Class<?> pc1 = Object.class;
-				
-				while (!(t instanceof ParameterizedType)) {
-					Class<?> raw = ClassUtil.getRawType(t);
-					if (Collection.class.isAssignableFrom(raw.getSuperclass())) {
-						t = raw.getGenericSuperclass();
-					} else {
-						break;
-					}
-				}
-				if (t instanceof ParameterizedType) {
-					Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-					pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-					pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-					pc0 = ClassUtil.getRawType(pt0);
-					pc1 = ClassUtil.getRawType(pt1);
-				}
-				
-				if ((Object.class.equals(pc0) || String.class.equals(pc0)) && Object.class.equals(pc1)) {
-					map.putAll((Map<?,?>)value);
-				} else {
-					for (Map.Entry<?, ?> entry : ((Map<?,?>)value).entrySet()) {
-						context.enter('.');
-						Object key = json.postparse(context, entry.getKey(), pc0, pt0);
-						context.exit();
-						
-						context.enter(entry.getKey());
-						map.put(key, json.postparse(context, entry.getValue(), pc1, pt1));
-						context.exit();
-					}
-				}
-			}
-		} else if (value instanceof List<?>) {
-			if (Properties.class.isAssignableFrom(c)) {
-				flattenProperties(new StringBuilder(32), (List<Object>)value, (Properties)map);
-			} else if (t instanceof ParameterizedType) {
-				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-				Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-				Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-				Class<?> pc0 = ClassUtil.getRawType(pt0);
-				Class<?> pc1 = ClassUtil.getRawType(pt1);
-				
-				List<?> src = (List<?>)value;
-				for (int i = 0; i < src.size(); i++) {
-					context.enter('.');
-					Object key = json.postparse(context, i, pc0, pt0);
-					context.exit();
-					
-					context.enter(i);
-					map.put(key, json.postparse(context, src.get(i), pc1, pt1));
-					context.exit();
-				}
-			} else {
-				List<?> src = (List<?>)value;
-				for (int i = 0; i < src.size(); i++) {
-					map.put(i, src.get(i));
-				}
-			}
-		} else {
-			JSONHint hint = context.getHint();
-			
-			Object key = (hint != null && hint.anonym().length() > 0) ? hint.anonym() : null;
-			if (t instanceof ParameterizedType) {
-				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-				Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-				Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-				Class<?> pc0 = ClassUtil.getRawType(pt0);
-				Class<?> pc1 = ClassUtil.getRawType(pt1);
-				
-				context.enter('.');
-				key = json.postparse(context, key, pc0, pt0);
-				context.exit();
-				
-				context.enter(key);
-				map.put(key, json.postparse(context, value, pc1, pt1));
-				context.exit();
-			} else {
-				map.put(value, null);
-			}
+		Properties prop = (Properties)json.create(context, c);
+		if (value instanceof Map<?, ?> || value instanceof List<?>) {
+			flattenProperties(new StringBuilder(32), value, prop);
+		} else if (value != null) {
+			prop.setProperty(value.toString(), null);
 		}
-		return map;
+		return prop;
 	}
 	
 	private static void flattenProperties(StringBuilder key, Object value, Properties props) {
@@ -1205,6 +1122,86 @@ final class MapConverter implements Converter {
 		} else {
 			props.setProperty(key.toString(), value.toString());
 		}
+	}
+}
+
+final class MapConverter implements Converter {
+	public static final MapConverter INSTANCE = new MapConverter();
+	
+	@SuppressWarnings("unchecked")
+	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+		Map<Object, Object> map = (Map<Object, Object>)json.create(context, c);
+		
+		Type pt0 = Object.class;
+		Type pt1 = Object.class;
+		Class<?> pc0 = Object.class;
+		Class<?> pc1 = Object.class;
+		
+		while (!(t instanceof ParameterizedType)) {
+			Class<?> raw = ClassUtil.getRawType(t);
+			if (raw.getSuperclass() != null && Collection.class.isAssignableFrom(raw.getSuperclass())) {
+				t = raw.getGenericSuperclass();
+			} else {
+				break;
+			}
+		}
+		if (t instanceof ParameterizedType) {
+			Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
+			pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+			pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
+			pc0 = ClassUtil.getRawType(pt0);
+			pc1 = ClassUtil.getRawType(pt1);
+		}
+		
+		if (value instanceof Map<?, ?>) {	
+			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
+				map.putAll((Map<?,?>)value);
+			} else {
+				for (Map.Entry<?, ?> entry : ((Map<?,?>)value).entrySet()) {
+					context.enter('.');
+					Object key = json.postparse(context, entry.getKey(), pc0, pt0);
+					context.exit();
+					
+					context.enter(entry.getKey());
+					map.put(key, json.postparse(context, entry.getValue(), pc1, pt1));
+					context.exit();
+				}
+			}
+		} else if (value instanceof List<?>) {
+			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
+				List<?> src = (List<?>)value;
+				for (int i = 0; i < src.size(); i++) {
+					map.put(i, src.get(i));
+				}
+			} else {
+				List<?> src = (List<?>)value;
+				for (int i = 0; i < src.size(); i++) {
+					context.enter('.');
+					Object key = json.postparse(context, i, pc0, pt0);
+					context.exit();
+					
+					context.enter(i);
+					map.put(key, json.postparse(context, src.get(i), pc1, pt1));
+					context.exit();
+				}
+			}
+		} else {
+			JSONHint hint = context.getHint();
+			
+			Object key = (hint != null && hint.anonym().length() > 0) ? hint.anonym() : null;
+			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
+				map.put(value, null);
+			} else {
+				context.enter('.');
+				key = json.postparse(context, key, pc0, pt0);
+				context.exit();
+				
+				context.enter(key);
+				map.put(key, json.postparse(context, value, pc1, pt1));
+				context.exit();
+			}
+		}
+		return map;
 	}
 }
 
