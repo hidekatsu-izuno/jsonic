@@ -449,6 +449,11 @@ public class JSONTest {
 		list2.add("false");
 		gb.setList(list2);
 		
+		InheritList ilist = new InheritList();
+		ilist.add("1");
+		ilist.add("false");
+		gb.ilist = ilist;
+		
 		Map<String, String> gmap = new HashMap<String, String>();
 		gmap.put("1", "1");
 		gmap.put("true", "true");
@@ -473,7 +478,7 @@ public class JSONTest {
 		});
 		gb.setGenericsList(glist2);
 		
-		GenericsBean out = JSON.decode("{\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
+		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
 		assertEquals(gb, out);
 		
 		AnnotationBean aBean = new AnnotationBean();
@@ -1792,6 +1797,7 @@ class NamedBean {
 
 class GenericsBean {
 	private List<String> list = null;
+	public InheritList ilist = null;
 	private Map<String, String> map = null;
 	private List<List<String>> glist = null;
 	public Map<String, Integer> map2 = null;
@@ -1826,6 +1832,7 @@ class GenericsBean {
 		final int PRIME = 31;
 		int result = 1;
 		result = PRIME * result + ((glist == null) ? 0 : glist.hashCode());
+		result = PRIME * result + ((ilist == null) ? 0 : ilist.hashCode());
 		result = PRIME * result + ((list == null) ? 0 : list.hashCode());
 		result = PRIME * result + ((map == null) ? 0 : map.hashCode());
 		result = PRIME * result + ((map2 == null) ? 0 : map2.hashCode());
@@ -1846,6 +1853,11 @@ class GenericsBean {
 			if (other.glist != null)
 				return false;
 		} else if (!glist.equals(other.glist))
+			return false;
+		if (ilist == null) {
+			if (other.ilist != null)
+				return false;
+		} else if (!ilist.equals(other.ilist))
 			return false;
 		if (list == null) {
 			if (other.list != null)
@@ -1938,6 +1950,10 @@ class InheritedBean {
 		return true;
 	}
 }
+
+class InheritList extends ArrayList<String> {
+	
+};
 
 @SuppressWarnings("rawtypes")
 class SuperLinkedHashMap extends LinkedHashMap {

@@ -1043,44 +1043,48 @@ final class CollectionConverter implements Converter {
 			value = src.values();
 		}
 		
+		Collection<Object> collection = (Collection<Object>)json.create(context, c);
+		Class<?> pc = Object.class;
+		Type pt = Object.class;
+		
+		while (!(t instanceof ParameterizedType)) {
+			Class<?> raw = ClassUtil.getRawType(t);
+			if (Collection.class.isAssignableFrom(raw.getSuperclass())) {
+				t = raw.getGenericSuperclass();
+			} else {
+				break;
+			}
+		}
+		if (t instanceof ParameterizedType) {
+			Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
+			pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+			pc = ClassUtil.getRawType(pt);
+		}
+		
 		if (value instanceof Collection) {
 			Collection<?> src = (Collection<?>)value;
-			Collection<Object> collection = null;
-			if (t instanceof ParameterizedType) {
-				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-				Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-				Class<?> pc = ClassUtil.getRawType(pt);
-				
-				if (Object.class.equals(pc)) {
-					collection = (Collection<Object>)src;
-				} else {
-					collection = (Collection<Object>)json.create(context, c);
-					Iterator<?> it = src.iterator();
-					for (int i = 0; it.hasNext(); i++) {
-						context.enter(i);
-						collection.add(json.postparse(context, it.next(), pc, pt));
-						context.exit();
-					}
+						
+			if (!Object.class.equals(pc)) {
+				Iterator<?> it = src.iterator();
+				for (int i = 0; it.hasNext(); i++) {
+					context.enter(i);
+					collection.add(json.postparse(context, it.next(), pc, pt));
+					context.exit();
 				}
 			} else {
-				collection = (Collection<Object>)json.create(context, c);
 				collection.addAll(src);
 			}
-			return collection;
 		} else {
-			Collection<Object> collection = (Collection<Object>)json.create(context, c);
-			if (t instanceof ParameterizedType) {
-				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-				Type pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-				Class<?> pc = ClassUtil.getRawType(pt);
+			if (!Object.class.equals(pc)) {
 				context.enter(0);
 				collection.add(json.postparse(context, value, pc, pt));
 				context.exit();
 			} else {
 				collection.add(value);
 			}
-			return collection;
 		}
+		
+		return collection;
 	}	
 }
 
@@ -1089,23 +1093,35 @@ final class MapConverter implements Converter {
 	
 	@SuppressWarnings("unchecked")
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+		Map<Object, Object> map = (Map<Object, Object>)json.create(context, c);
 		if (value instanceof Map<?, ?>) {
-			Map<Object, Object> map = null;
 			if (Properties.class.isAssignableFrom(c)) {
-				map = (Map<Object, Object>)json.create(context, c);
 				flattenProperties(new StringBuilder(32), (Map<Object, Object>)value, (Properties)map);
-			} else if (t instanceof ParameterizedType) {
-				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-				Type pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-				Type pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-				Class<?> pc0 = ClassUtil.getRawType(pt0);
-				Class<?> pc1 = ClassUtil.getRawType(pt1);
+			} else {
+				Type pt0 = Object.class;
+				Type pt1 = Object.class;
+				Class<?> pc0 = Object.class;
+				Class<?> pc1 = Object.class;
 				
-				if ((Object.class.equals(pc0) || String.class.equals(pc0))
-						&& Object.class.equals(pc1)) {
-					map = (Map<Object, Object>)value;
+				while (!(t instanceof ParameterizedType)) {
+					Class<?> raw = ClassUtil.getRawType(t);
+					if (Collection.class.isAssignableFrom(raw.getSuperclass())) {
+						t = raw.getGenericSuperclass();
+					} else {
+						break;
+					}
+				}
+				if (t instanceof ParameterizedType) {
+					Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
+					pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
+					pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
+					pc0 = ClassUtil.getRawType(pt0);
+					pc1 = ClassUtil.getRawType(pt1);
+				}
+				
+				if ((Object.class.equals(pc0) || String.class.equals(pc0)) && Object.class.equals(pc1)) {
+					map.putAll((Map<?,?>)value);
 				} else {
-					map = (Map<Object, Object>)json.create(context, c);
 					for (Map.Entry<?, ?> entry : ((Map<?,?>)value).entrySet()) {
 						context.enter('.');
 						Object key = json.postparse(context, entry.getKey(), pc0, pt0);
@@ -1116,13 +1132,8 @@ final class MapConverter implements Converter {
 						context.exit();
 					}
 				}
-			} else {
-				map = (Map<Object, Object>)json.create(context, c);
-				map.putAll((Map<?,?>)value);
 			}
-			return map;
 		} else if (value instanceof List<?>) {
-			Map<Object, Object> map = (Map<Object, Object>)json.create(context, c);
 			if (Properties.class.isAssignableFrom(c)) {
 				flattenProperties(new StringBuilder(32), (List<Object>)value, (Properties)map);
 			} else if (t instanceof ParameterizedType) {
@@ -1148,11 +1159,9 @@ final class MapConverter implements Converter {
 					map.put(i, src.get(i));
 				}
 			}
-			return map;
 		} else {
 			JSONHint hint = context.getHint();
 			
-			Map<Object, Object> map = (Map<Object, Object>)json.create(context, c);
 			Object key = (hint != null && hint.anonym().length() > 0) ? hint.anonym() : null;
 			if (t instanceof ParameterizedType) {
 				Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
@@ -1171,8 +1180,8 @@ final class MapConverter implements Converter {
 			} else {
 				map.put(value, null);
 			}
-			return map;
 		}
+		return map;
 	}
 	
 	private static void flattenProperties(StringBuilder key, Object value, Properties props) {
