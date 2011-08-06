@@ -69,6 +69,13 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import net.arnx.jsonic.io.AppendableOutputSource;
+import net.arnx.jsonic.io.CharSequenceInputSource;
+import net.arnx.jsonic.io.InputSource;
+import net.arnx.jsonic.io.OutputSource;
+import net.arnx.jsonic.io.ReaderInputSource;
+import net.arnx.jsonic.io.StringBuilderOutputSource;
+import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.Property;
