@@ -1139,7 +1139,7 @@ final class MapConverter implements Converter {
 		
 		while (!(t instanceof ParameterizedType)) {
 			Class<?> raw = ClassUtil.getRawType(t);
-			if (raw.getSuperclass() != null && Collection.class.isAssignableFrom(raw.getSuperclass())) {
+			if (raw.getSuperclass() != null && Map.class.isAssignableFrom(raw.getSuperclass())) {
 				t = raw.getGenericSuperclass();
 			} else {
 				break;

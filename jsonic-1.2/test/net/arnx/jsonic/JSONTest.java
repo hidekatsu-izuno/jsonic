@@ -454,6 +454,11 @@ public class JSONTest {
 		ilist.add("false");
 		gb.ilist = ilist;
 		
+		InheritMap imap = new InheritMap();
+		imap.put(1, "1");
+		imap.put(2, "false");
+		gb.imap = imap;
+		
 		Map<String, String> gmap = new HashMap<String, String>();
 		gmap.put("1", "1");
 		gmap.put("true", "true");
@@ -478,7 +483,7 @@ public class JSONTest {
 		});
 		gb.setGenericsList(glist2);
 		
-		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
+		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"imap\": {'1':1, '2':false},\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
 		assertEquals(gb, out);
 		
 		AnnotationBean aBean = new AnnotationBean();
@@ -1798,6 +1803,7 @@ class NamedBean {
 class GenericsBean {
 	private List<String> list = null;
 	public InheritList ilist = null;
+	public InheritMap imap = null;
 	private Map<String, String> map = null;
 	private List<List<String>> glist = null;
 	public Map<String, Integer> map2 = null;
@@ -1833,6 +1839,7 @@ class GenericsBean {
 		int result = 1;
 		result = PRIME * result + ((glist == null) ? 0 : glist.hashCode());
 		result = PRIME * result + ((ilist == null) ? 0 : ilist.hashCode());
+		result = PRIME * result + ((imap == null) ? 0 : imap.hashCode());
 		result = PRIME * result + ((list == null) ? 0 : list.hashCode());
 		result = PRIME * result + ((map == null) ? 0 : map.hashCode());
 		result = PRIME * result + ((map2 == null) ? 0 : map2.hashCode());
@@ -1858,6 +1865,11 @@ class GenericsBean {
 			if (other.ilist != null)
 				return false;
 		} else if (!ilist.equals(other.ilist))
+			return false;
+		if (imap == null) {
+			if (other.imap != null)
+				return false;
+		} else if (!imap.equals(other.imap))
 			return false;
 		if (list == null) {
 			if (other.list != null)
@@ -1951,7 +1963,12 @@ class InheritedBean {
 	}
 }
 
+
 class InheritList extends ArrayList<String> {
+	
+};
+
+class InheritMap extends LinkedHashMap<Integer, String> {
 	
 };
 
