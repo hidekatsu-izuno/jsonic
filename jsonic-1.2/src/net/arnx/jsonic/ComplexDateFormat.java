@@ -18,7 +18,6 @@ class ComplexDateFormat extends SimpleDateFormat {
 		escape = !pattern.equals(this.toPattern());
 	}
 	
-	
 	static String escape(String pattern) {
 		boolean skip = false;
 		int count = 0;
