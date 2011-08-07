@@ -458,7 +458,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
 <ul>
   <li>[エンコード] 引数にStringやIntegerなど、ルート要素が object や array にならないオブジェクトを指定し、JSONの断片を出力することができます。</li>
-  <li>[エンコード] HTMLやXML中ではエスケープが必要な「<」「>」が文字列中に見つかった場合、それぞれ「\u003C」「\u003E」と出力します（1.2.6からは、Traditionalモードでも同様に変換されます）。</li>
+  <li>[エンコード] HTMLやXML中ではエスケープが必要な「<」「>」が文字列中に見つかった場合、それぞれ「\u003C」「\u003E」と出力します。</li>
   <li>[エンコード] java.util.Date 型を new Date(ミリ秒) で出力します。</li>
   <li>[エンコード] NaN、POSITIVE_INFINITY, NEGATIVE_INFINITY を文字列ではなく、Number.NaN、Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITYとして出力します。</li>
   <li>[デコード] 引数にstring、number、true/false/nullといったJSONの断片を指定し単純型の値を取得することができます。</li>
