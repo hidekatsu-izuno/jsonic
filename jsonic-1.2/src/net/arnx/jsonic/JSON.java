@@ -178,7 +178,7 @@ public class JSON {
 	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
-	public static Class<? extends JSON> prototype = JSON.class;
+	public static volatile Class<? extends JSON> prototype = JSON.class;
 	
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
