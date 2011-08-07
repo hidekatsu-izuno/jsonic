@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.ListIterator;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -454,6 +455,11 @@ public class JSONTest {
 		ilist.add("false");
 		gb.ilist = ilist;
 		
+		InheritList2 ilist2 = new InheritList2();
+		ilist2.add("1");
+		ilist2.add("false");
+		gb.ilist2 = ilist2;
+		
 		InheritMap imap = new InheritMap();
 		imap.put(1, "1");
 		imap.put(2, "false");
@@ -483,7 +489,7 @@ public class JSONTest {
 		});
 		gb.setGenericsList(glist2);
 		
-		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"imap\": {'1':1, '2':false},\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
+		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"ilist2\": [1, false],\"imap\": {'1':1, '2':false},\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
 		assertEquals(gb, out);
 		
 		AnnotationBean aBean = new AnnotationBean();
@@ -1803,6 +1809,7 @@ class NamedBean {
 class GenericsBean {
 	private List<String> list = null;
 	public InheritList ilist = null;
+	public InheritList2 ilist2 = null;
 	public InheritMap imap = null;
 	private Map<String, String> map = null;
 	private List<List<String>> glist = null;
@@ -1839,6 +1846,7 @@ class GenericsBean {
 		int result = 1;
 		result = PRIME * result + ((glist == null) ? 0 : glist.hashCode());
 		result = PRIME * result + ((ilist == null) ? 0 : ilist.hashCode());
+		result = PRIME * result + ((ilist2 == null) ? 0 : ilist2.hashCode());
 		result = PRIME * result + ((imap == null) ? 0 : imap.hashCode());
 		result = PRIME * result + ((list == null) ? 0 : list.hashCode());
 		result = PRIME * result + ((map == null) ? 0 : map.hashCode());
@@ -1865,6 +1873,11 @@ class GenericsBean {
 			if (other.ilist != null)
 				return false;
 		} else if (!ilist.equals(other.ilist))
+			return false;
+		if (ilist2 == null) {
+			if (other.ilist2 != null)
+				return false;
+		} else if (!ilist2.equals(other.ilist2))
 			return false;
 		if (imap == null) {
 			if (other.imap != null)
@@ -1970,6 +1983,138 @@ class InheritList extends ArrayList<String> {
 
 class InheritMap extends LinkedHashMap<Integer, String> {
 	
+};
+
+class InheritList2 implements List<String> {
+	private List<String> list = new ArrayList<String>();
+	@Override
+	public boolean add(String o) {
+		return list.add(o);
+	}
+
+	@Override
+	public void add(int i, String o) {
+		list.add(o);
+	}
+
+	@Override
+	public boolean addAll(Collection<? extends String> c) {
+		return list.addAll(c);
+	}
+
+	@Override
+	public boolean addAll(int i, Collection<? extends String> c) {
+		return list.addAll(i, c);
+	}
+
+	@Override
+	public void clear() {
+		list.clear();
+	}
+
+	@Override
+	public boolean contains(Object o) {
+		return list.contains(o);
+	}
+
+	@Override
+	public boolean containsAll(Collection<?> c) {
+		return list.contains(c);
+	}
+
+	@Override
+	public String get(int i) {
+		return list.get(i);
+	}
+
+	@Override
+	public int indexOf(Object o) {
+		return list.indexOf(o);
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return list.isEmpty();
+	}
+
+	@Override
+	public Iterator<String> iterator() {
+		return list.iterator();
+	}
+
+	@Override
+	public int lastIndexOf(Object o) {
+		return list.lastIndexOf(o);
+	}
+
+	@Override
+	public ListIterator<String> listIterator() {
+		return list.listIterator();
+	}
+
+	@Override
+	public ListIterator<String> listIterator(int i) {
+		return list.listIterator(i);
+	}
+
+	@Override
+	public boolean remove(Object o) {
+		return list.remove(o);
+	}
+
+	@Override
+	public String remove(int i) {
+		return list.remove(i);
+	}
+
+	@Override
+	public boolean removeAll(Collection<?> c) {
+		return list.removeAll(c);
+	}
+
+	@Override
+	public boolean retainAll(Collection<?> c) {
+		return list.retainAll(c);
+	}
+
+	@Override
+	public String set(int i, String o) {
+		return list.set(i, o);
+	}
+
+	@Override
+	public int size() {
+		return list.size();
+	}
+
+	@Override
+	public List<String> subList(int i, int j) {
+		return list.subList(i, j);
+	}
+
+	@Override
+	public Object[] toArray() {
+		return list.toArray();
+	}
+
+	@Override
+	public <T> T[] toArray(T[] array) {
+		return list.toArray(array);
+	}
+	
+	@Override
+	public int hashCode() {
+		return list.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof InheritList2) {
+			return list.equals(((InheritList2)o).list);
+		} else {
+			return false;
+		}
+	};
 };
 
 @SuppressWarnings("rawtypes")

@@ -1044,17 +1044,10 @@ final class CollectionConverter implements Converter {
 		}
 		
 		Collection<Object> collection = (Collection<Object>)json.create(context, c);
+		t = ClassUtil.resolveParameterizedType(t, Collection.class);
+		
 		Class<?> pc = Object.class;
 		Type pt = Object.class;
-		
-		while (!(t instanceof ParameterizedType)) {
-			Class<?> raw = ClassUtil.getRawType(t);
-			if (raw.getSuperclass() != null && Collection.class.isAssignableFrom(raw.getSuperclass())) {
-				t = raw.getGenericSuperclass();
-			} else {
-				break;
-			}
-		}
 		if (t instanceof ParameterizedType) {
 			Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
 			pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
@@ -1131,20 +1124,12 @@ final class MapConverter implements Converter {
 	@SuppressWarnings("unchecked")
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		Map<Object, Object> map = (Map<Object, Object>)json.create(context, c);
+		t = ClassUtil.resolveParameterizedType(t, Map.class);
 		
 		Type pt0 = Object.class;
 		Type pt1 = Object.class;
 		Class<?> pc0 = Object.class;
 		Class<?> pc1 = Object.class;
-		
-		while (!(t instanceof ParameterizedType)) {
-			Class<?> raw = ClassUtil.getRawType(t);
-			if (raw.getSuperclass() != null && Map.class.isAssignableFrom(raw.getSuperclass())) {
-				t = raw.getGenericSuperclass();
-			} else {
-				break;
-			}
-		}
 		if (t instanceof ParameterizedType) {
 			Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
 			pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;

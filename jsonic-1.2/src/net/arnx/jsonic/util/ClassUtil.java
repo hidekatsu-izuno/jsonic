@@ -143,6 +143,27 @@ public final class ClassUtil {
 		}
 	}
 	
+	public static ParameterizedType resolveParameterizedType(Type t, Class<?> baseClass) {
+		Class<?> raw = getRawType(t);
+		
+		if (t instanceof ParameterizedType && baseClass.isAssignableFrom(raw)) {
+			return (ParameterizedType)t;
+		}
+		
+		ParameterizedType pt = null;
+		if (raw.getSuperclass() != null && raw.getSuperclass() != Object.class) {
+			pt = resolveParameterizedType(raw.getGenericSuperclass(), baseClass);
+			if (pt != null) return pt;
+		}
+		if (!raw.isInterface()) {
+			for (Type ifs : raw.getGenericInterfaces()) {
+				pt = resolveParameterizedType(ifs, baseClass);
+				if (pt != null) return pt;
+			}
+		}
+		return null;
+	}
+	
 	public static byte[] serialize(Object o) throws ObjectStreamException {
 		ByteArrayOutputStream array = new ByteArrayOutputStream();
 		ObjectOutputStream out = null;
