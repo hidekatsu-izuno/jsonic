@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.ListIterator;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.List;
@@ -465,6 +466,11 @@ public class JSONTest {
 		imap.put(2, "false");
 		gb.imap = imap;
 		
+		InheritMap2 imap2 = new InheritMap2();
+		imap2.put(1, "1");
+		imap2.put(2, "false");
+		gb.imap2 = imap2;
+		
 		Map<String, String> gmap = new HashMap<String, String>();
 		gmap.put("1", "1");
 		gmap.put("true", "true");
@@ -489,7 +495,7 @@ public class JSONTest {
 		});
 		gb.setGenericsList(glist2);
 		
-		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"ilist2\": [1, false],\"imap\": {'1':1, '2':false},\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
+		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"ilist2\": [1, false],\"imap\": {'1':1, '2':false},\"imap2\": {'1':1, '2':false},\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
 		assertEquals(gb, out);
 		
 		AnnotationBean aBean = new AnnotationBean();
@@ -1811,6 +1817,7 @@ class GenericsBean {
 	public InheritList ilist = null;
 	public InheritList2 ilist2 = null;
 	public InheritMap imap = null;
+	public InheritMap2 imap2 = null;
 	private Map<String, String> map = null;
 	private List<List<String>> glist = null;
 	public Map<String, Integer> map2 = null;
@@ -1848,6 +1855,7 @@ class GenericsBean {
 		result = PRIME * result + ((ilist == null) ? 0 : ilist.hashCode());
 		result = PRIME * result + ((ilist2 == null) ? 0 : ilist2.hashCode());
 		result = PRIME * result + ((imap == null) ? 0 : imap.hashCode());
+		result = PRIME * result + ((imap2 == null) ? 0 : imap2.hashCode());
 		result = PRIME * result + ((list == null) ? 0 : list.hashCode());
 		result = PRIME * result + ((map == null) ? 0 : map.hashCode());
 		result = PRIME * result + ((map2 == null) ? 0 : map2.hashCode());
@@ -1883,6 +1891,11 @@ class GenericsBean {
 			if (other.imap != null)
 				return false;
 		} else if (!imap.equals(other.imap))
+			return false;
+		if (imap2 == null) {
+			if (other.imap2 != null)
+				return false;
+		} else if (!imap2.equals(other.imap2))
 			return false;
 		if (list == null) {
 			if (other.list != null)
@@ -2115,7 +2128,85 @@ class InheritList2 implements List<String> {
 			return false;
 		}
 	};
-};
+}
+
+class InheritMap2 implements Map<Integer, String> {
+	Map<Integer, String> map = new LinkedHashMap<Integer, String>();
+
+	@Override
+	public void clear() {
+		map.clear();
+	}
+
+	@Override
+	public boolean containsKey(Object key) {
+		return map.containsKey(key);
+	}
+
+	@Override
+	public boolean containsValue(Object value) {
+		return map.containsValue(value);
+	}
+
+	@Override
+	public Set<java.util.Map.Entry<Integer, String>> entrySet() {
+		return map.entrySet();
+	}
+
+	@Override
+	public String get(Object key) {
+		return map.get(key);
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return map.isEmpty();
+	}
+
+	@Override
+	public Set<Integer> keySet() {
+		return map.keySet();
+	}
+
+	@Override
+	public String put(Integer key, String value) {
+		return map.put(key, value);
+	}
+
+	@Override
+	public void putAll(Map<? extends Integer, ? extends String> m) {
+		map.putAll(m);
+	}
+
+	@Override
+	public String remove(Object key) {
+		return map.remove(key);
+	}
+
+	@Override
+	public int size() {
+		return map.size();
+	}
+
+	@Override
+	public Collection<String> values() {
+		return map.values();
+	}
+	
+	@Override
+	public int hashCode() {
+		return map.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof InheritMap2) {
+			return map.equals(((InheritMap2)obj).map);
+		} else {
+			return false;
+		}
+	}
+}
 
 @SuppressWarnings("rawtypes")
 class SuperLinkedHashMap extends LinkedHashMap {
