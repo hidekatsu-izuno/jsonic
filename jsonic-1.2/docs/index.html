@@ -466,7 +466,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
   <li>[デコード] シングルクォートで囲まれた文字列をstringとして認識します（TRADITIONALモードと異なりダブルクォートで囲った場合と同様エスケープを認識します）。</li>
   <li>[デコード] object のキーに限りシングルクォートで囲まれていないリテラルを文字列として認識します。</li>
 </ul>
-<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeJS を通じて簡単に使うことが可能です。</p>
+<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeScript を通じて簡単に使うことが可能です。</p>
 <pre class="source">
 	JSON json = new JSON(JSON.Mode.SCRIPT);
 	
@@ -478,7 +478,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 		}
 	}).getClass();
 	
-	JSON.escapeJS(...);
+	JSON.escapeScript(...);
 </pre>
 
 <h3 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h3>
