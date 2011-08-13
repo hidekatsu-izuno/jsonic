@@ -15,5 +15,6 @@ public class ExpressionTest {
 		assertEquals(false, Expression.compile("!true").evaluate());
 		assertEquals(true, Expression.compile("!null").evaluate());
 		assertEquals(true, Expression.compile("!null || true").evaluate());
+		Expression.compile("a == b ? 100 +2 : 10").evaluate();
 	}
 }

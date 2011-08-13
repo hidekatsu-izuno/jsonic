@@ -741,7 +741,8 @@ public class JSON {
 		}
 		
 		context.enter('$');
-		format(context, source, fs);
+		source = preformatInternal(context, source);
+		formatInternal(context, source, fs);
 		context.exit();
 		fs.flush();
 		return ap;
@@ -759,22 +760,25 @@ public class JSON {
 		return value;
 	}
 	
-	final Formatter format(final Context context, final Object src, final OutputSource ap) throws IOException {
-		boolean reuse = true;
-		
-		Object o = src;
-		if (context.getLevel() > context.getMaxDepth()) {
-			o = null;
+	final Object preformatInternal(Context context, Object value) {
+		if (value == null) {
+			return null;
+		} else if (context.getLevel() > context.getMaxDepth()) {
+			return null;
 		} else if (getClass() != JSON.class) {
-			reuse = false;
 			try {
-				o = preformat(context, src);
+				return preformat(context, value);
 			} catch (Exception e) {
-				throw new JSONException(getMessage("json.format.ConversionError", o, context),
+				throw new JSONException(getMessage("json.format.ConversionError", value, context),
 					JSONException.PREFORMAT_ERROR, e);
 			}
 		}
-
+		return value;
+	}
+	
+	final Formatter formatInternal(final Context context, final Object src, final OutputSource ap) throws IOException {
+		Object o = src;
+		
 		Formatter f = null;
 		
 		if (o == null) {
@@ -890,14 +894,14 @@ public class JSON {
 					JSONException.FORMAT_ERROR);
 		}
 		
-		return (reuse) ? f : null;
+		return f;
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence cs) throws JSONException {
 		Object value = null;
 		try {
-			value = parse(new Context(), new CharSequenceInputSource(cs));
+			value = parseInternal(new Context(), new CharSequenceInputSource(cs));
 		} catch (IOException e) {
 			// never occur
 		}
@@ -914,7 +918,7 @@ public class JSON {
 		T value = null;
 		try {
 			Context context = new Context();
-			value = (T)convert(context, parse(context, new CharSequenceInputSource(s)), type);
+			value = (T)convert(context, parseInternal(context, new CharSequenceInputSource(s)), type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -923,7 +927,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		return (T)parse(new Context(), new ReaderInputSource(in));
+		return (T)parseInternal(new Context(), new ReaderInputSource(in));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -934,12 +938,12 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parse(context, new ReaderInputSource(in)), type);
+		return (T)convert(context, parseInternal(context, new ReaderInputSource(in)), type);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
-		return (T)parse(new Context(), new ReaderInputSource(reader));
+		return (T)parseInternal(new Context(), new ReaderInputSource(reader));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -950,10 +954,10 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parse(context, new ReaderInputSource(reader)), type);
+		return (T)convert(context, parseInternal(context, new ReaderInputSource(reader)), type);
 	}
 	
-	private Object parse(Context context, InputSource s) throws IOException, JSONException {
+	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
 		boolean isEmpty = true;
 		Object o = null;
 		
