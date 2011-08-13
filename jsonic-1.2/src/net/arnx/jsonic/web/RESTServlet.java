@@ -45,6 +45,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.JSONHint;
+import net.arnx.jsonic.util.ClassUtil;
 
 import static javax.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
@@ -556,7 +557,7 @@ public class RESTServlet extends HttpServlet {
 				String value = getParameter(key);
 				
 				if (key.equals("class") && container.namingConversion) {
-					value = toUpperCamel(value);
+					value = ClassUtil.toUpperCamel(value);
 				} else if (key.equals("package")) {
 					value = value.replace('/', '.');
 				}

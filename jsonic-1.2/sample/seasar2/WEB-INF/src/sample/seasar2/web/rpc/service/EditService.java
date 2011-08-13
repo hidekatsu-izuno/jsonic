@@ -20,6 +20,14 @@ public class EditService {
 		return a + b;
 	}
 	
+	public String concat(String... text) {
+		StringBuilder sb = new StringBuilder();
+		for (String str : text) {
+			sb.append(str);
+		}
+		return sb.toString();
+	}
+	
 	public String[] split(String a, String b) {
 		return a.split(b);
 	}

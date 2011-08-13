@@ -44,9 +44,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSONException;
+import net.arnx.jsonic.util.ClassUtil;
 
 import static javax.servlet.http.HttpServletResponse.*;
-import static net.arnx.jsonic.web.Container.*;
 
 @Deprecated
 public class WebServiceServlet extends HttpServlet {
@@ -793,7 +793,7 @@ public class WebServiceServlet extends HttpServlet {
 				String value = getParameter(key);
 				
 				if (key.equals("class")) {
-					value = toUpperCamel((sub != null) ? sub 
+					value = ClassUtil.toUpperCamel((sub != null) ? sub 
 						: (value != null) ? value : "");
 				} else if (value == null) {
 					value = "";

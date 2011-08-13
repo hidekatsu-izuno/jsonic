@@ -24,6 +24,10 @@ public class CalcService {
 		return a + b;
 	}
 	
+	public String plus(String a, String b) {
+		return a + b;
+	}
+	
 	public int sum(int[] a) {
 		int result = 0;
 		for (int n : a) {

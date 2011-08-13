@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
-public class Property implements Comparable<Property> {
+public class PropertyInfo implements Comparable<PropertyInfo> {
 	private Class<?> beanClass;
 	
 	private String name;
@@ -32,7 +32,7 @@ public class Property implements Comparable<Property> {
 	Method readMethod;
 	Method writeMethod;
 	
-	public Property(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod) {
+	public PropertyInfo(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod) {
 		this.beanClass = beanClass;
 		this.name = name;
 		this.field = field;
@@ -201,7 +201,7 @@ public class Property implements Comparable<Property> {
 	}
 	
 	@Override
-	public int compareTo(Property property) {
+	public int compareTo(PropertyInfo property) {
 		if (!beanClass.equals(property.beanClass)) {
 			return beanClass.getName().compareTo(property.beanClass.getName());			
 		} else {

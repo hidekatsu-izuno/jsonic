@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.util.Base64;
 import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.Property;
+import net.arnx.jsonic.util.PropertyInfo;
 
 interface Converter {
 	Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception;
@@ -1194,13 +1194,13 @@ final class ObjectConverter implements Converter {
 	public static final ObjectConverter INSTANCE = new ObjectConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
-		Map<String, Property> props = context.getSetProperties(c);
+		Map<String, PropertyInfo> props = context.getSetProperties(c);
 		if (value instanceof Map<?, ?>) {
 			Object o = json.create(context, c);
 			if (o == null) return null;
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				String name = entry.getKey().toString();
-				Property target = props.get(name);
+				PropertyInfo target = props.get(name);
 				if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
 				if (target == null) continue;
 				
@@ -1220,7 +1220,7 @@ final class ObjectConverter implements Converter {
 		} else {
 			JSONHint hint = context.getHint();
 			if (hint != null && hint.anonym().length() > 0) {
-				Property target = props.get(hint.anonym());
+				PropertyInfo target = props.get(hint.anonym());
 				if (target == null) return null;
 				Object o = json.create(context, c);
 				if (o == null) return null;

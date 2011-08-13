@@ -78,7 +78,7 @@ import net.arnx.jsonic.io.StringBuilderOutputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.Property;
+import net.arnx.jsonic.util.PropertyInfo;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -1881,13 +1881,13 @@ public class JSON {
 		}
 		
 		@SuppressWarnings("unchecked")
-		List<Property> getGetProperties(Class<?> c) {
+		List<PropertyInfo> getGetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
-			List<Property> props = (List<Property>)memberCache.get(c);
+			List<PropertyInfo> props = (List<PropertyInfo>)memberCache.get(c);
 			if (props == null) {
-				props = new ArrayList<Property>();
-				for (Property prop : BeanInfo.get(c).getProperties()) {
+				props = new ArrayList<PropertyInfo>();
+				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
 					if (!prop.isReadable() || ignore(this, c, prop.getReadMember())) {
 						continue;
 					}
@@ -1897,12 +1897,12 @@ public class JSON {
 						if (hint.ignore()) continue;
 						if (hint.name().length() > 0) {
 							if (prop.getReadMethod() != null && prop.getField() != null) {
-								props.add(new Property(prop.getBeanClass(), prop.getName(), 
+								props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(), 
 										prop.getField(), null, null));
-								props.add(new Property(prop.getBeanClass(), hint.name(), 
+								props.add(new PropertyInfo(prop.getBeanClass(), hint.name(), 
 										null, prop.getReadMethod(), null));
 							} else {
-								props.add(new Property(prop.getBeanClass(), hint.name(), 
+								props.add(new PropertyInfo(prop.getBeanClass(), hint.name(), 
 										prop.getField(), prop.getReadMethod(), null));
 							}
 							continue;
@@ -1918,13 +1918,13 @@ public class JSON {
 		}
 		
 		@SuppressWarnings("unchecked")
-		Map<String, Property> getSetProperties(Class<?> c) {
+		Map<String, PropertyInfo> getSetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
-			Map<String, Property> props = (Map<String, Property>)memberCache.get(c);
+			Map<String, PropertyInfo> props = (Map<String, PropertyInfo>)memberCache.get(c);
 			if (props == null) {
-				props = new HashMap<String, Property>();
-				for (Property prop : BeanInfo.get(c).getProperties()) {
+				props = new HashMap<String, PropertyInfo>();
+				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
 					if (!prop.isWritable() || ignore(this, c, prop.getWriteMember())) {
 						continue;
 					}
@@ -1934,12 +1934,12 @@ public class JSON {
 						if (hint.ignore()) continue;
 						if (hint.name().length() > 0) {
 							if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
-								props.put(prop.getName(), new Property(prop.getBeanClass(), prop.getName(), 
+								props.put(prop.getName(), new PropertyInfo(prop.getBeanClass(), prop.getName(), 
 										prop.getField(), null, null));
-								props.put(hint.name(), new Property(prop.getBeanClass(), hint.name(), 
+								props.put(hint.name(), new PropertyInfo(prop.getBeanClass(), hint.name(), 
 										null, null, prop.getWriteMethod()));
 							} else {
-								props.put(hint.name(), new Property(prop.getBeanClass(), hint.name(), 
+								props.put(hint.name(), new PropertyInfo(prop.getBeanClass(), hint.name(), 
 										prop.getField(), null, prop.getWriteMethod()));
 							}
 							continue;

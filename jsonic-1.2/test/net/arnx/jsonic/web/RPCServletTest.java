@@ -158,6 +158,50 @@ public class RPCServletTest {
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+		write(con, "{\"method\":\"calc.plus\",\"params\":[\"1\",\"2\"],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":\"12\",\"error\":null,\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+		write(con, "{\"method\":\"edit.concat\",\"params\":[\"1\",\"2\"],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":\"12\",\"error\":null,\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+		write(con, "{\"method\":\"edit.concat\",\"params\":[\"1\"],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":\"1\",\"error\":null,\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+		write(con, "{\"method\":\"edit.concat\",\"params\":[\"1\",\"2\",\"3\"],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"result\":\"123\",\"error\":null,\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
 		con = (HttpURLConnection)new URL("http://localhost:16001/" + app + "/rpc/rpc/calc.json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");

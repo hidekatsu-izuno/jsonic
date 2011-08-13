@@ -310,7 +310,7 @@ public final class ClassUtil {
 		StringBuilder sb = new StringBuilder(10 * info.getProperties().size() + 20);
 		sb.append(target.getClass().getSimpleName()).append(" [");
 		boolean first = true;
-		for (Property prop : info.getProperties()) {
+		for (PropertyInfo prop : info.getProperties()) {
 			if (!prop.isReadable() || prop.getName().equals("class")) continue;
 			
 			if (!first) {

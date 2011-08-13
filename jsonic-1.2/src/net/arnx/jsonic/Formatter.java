@@ -25,7 +25,7 @@ import net.arnx.jsonic.JSON.Mode;
 import net.arnx.jsonic.io.OutputSource;
 import net.arnx.jsonic.util.Base64;
 import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.Property;
+import net.arnx.jsonic.util.PropertyInfo;
 
 interface Formatter {
 	boolean format(JSON json, Context context, Object src, Object o, OutputSource out) throws Exception;
@@ -645,13 +645,13 @@ final class ObjectFormatter implements Formatter {
 	public static final ObjectFormatter INSTANCE = new ObjectFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		List<Property> props = context.getGetProperties(o.getClass());
+		List<PropertyInfo> props = context.getGetProperties(o.getClass());
 
 		out.append('{');
 		int count = 0;
 		final int length = props.size();
 		for (int p = 0; p < length; p++) {
-			Property prop = props.get(p);
+			PropertyInfo prop = props.get(p);
 			Object value = null;
 			Exception cause = null;
 

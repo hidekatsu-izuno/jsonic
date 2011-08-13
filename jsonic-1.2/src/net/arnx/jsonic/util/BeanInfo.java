@@ -15,6 +15,7 @@
  */
 package net.arnx.jsonic.util;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -55,18 +56,35 @@ public final class BeanInfo {
 	}
 	
 	private Class<?> type;
-	private Map<String, Property> props = new LinkedHashMap<String, Property>();
+	private Map<String, PropertyInfo> props = new LinkedHashMap<String, PropertyInfo>();
+	private Map<String, MethodInfo> methods = new LinkedHashMap<String, MethodInfo>();
 	
 	private BeanInfo(Class<?> cls) {
 		type = cls;
+		
+		String name = cls.getSimpleName();
+		for (Constructor<?> con : cls.getConstructors()) {
+			if (con.isSynthetic()) {
+				continue;
+			}
+			
+			MethodInfo mi = methods.get(name);
+			if (mi == null) {
+				mi = new MethodInfo(cls, name, null);
+				methods.put(name, mi);
+			}
+			mi.members.add(con);			
+		}
+		
 		for (Field f : cls.getFields()) {
 			if (Modifier.isStatic(f.getModifiers()) 
 					|| f.isSynthetic()) {
 				continue;
 			}
 			
+			name = f.getName();
 			f.setAccessible(true);
-			props.put(f.getName(), new Property(cls, f.getName(), f, null, null));
+			props.put(f.getName(), new PropertyInfo(cls, name, f, null, null));
 		}
 		
 		for (Method m : cls.getMethods()) {
@@ -76,9 +94,16 @@ public final class BeanInfo {
 				continue;
 			}
 			
-			String name = m.getName();
+			name = m.getName();
 			Class<?>[] paramTypes = m.getParameterTypes();
 			Class<?> returnType = m.getReturnType();
+			
+			MethodInfo mi = methods.get(name);
+			if (mi == null) {
+				mi = new MethodInfo(cls, name, null);
+				methods.put(name, mi);
+			}
+			mi.members.add(m);
 			
 			int type = -1;
 			if (name.startsWith("get") 
@@ -106,9 +131,9 @@ public final class BeanInfo {
 				name = new String(chars);
 			}
 			
-			Property prop = props.get(name);
+			PropertyInfo prop = props.get(name);
 			if (prop == null) {
-				prop = new Property(cls, name, null, null, null);
+				prop = new PropertyInfo(cls, name, null, null, null);
 				props.put(name, prop);
 			}
 			
@@ -123,7 +148,9 @@ public final class BeanInfo {
 	
 	public Object newInstance() {
 		try {
-			return type.newInstance();
+			Constructor<?> target = type.getConstructor();
+			target.setAccessible(true);
+			return target.newInstance();
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
@@ -133,11 +160,11 @@ public final class BeanInfo {
 		return type;
 	}
 	
-	public Property getProperty(String name) {
+	public PropertyInfo getProperty(String name) {
 		return props.get(name);
 	}
 	
-	public Collection<Property> getProperties() {
+	public Collection<PropertyInfo> getProperties() {
 		return props.values();
 	}
 

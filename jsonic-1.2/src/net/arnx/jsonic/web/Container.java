@@ -21,10 +21,23 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -35,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.util.ClassUtil;
 
 public class Container {
 	public Boolean debug;
@@ -111,7 +125,7 @@ public class Container {
 	public Method getMethod(Object component, String methodName, List<?> params) throws NoSuchMethodException {
 		if (params == null) params = Collections.emptyList();
 		
-		if (namingConversion) methodName = toLowerCamel(methodName);
+		if (namingConversion) methodName = ClassUtil.toLowerCamel(methodName);
 		
 		if (methodName.equals(init) || methodName.equals(destroy)) {
 			debug("Method name is same init or destroy method name.");
@@ -121,23 +135,72 @@ public class Container {
 		Class<?> c = component.getClass();
 		
 		Method method = null;
-		Type[] lastPType = null;
+		int length = -1;
 		
-		for (Method m : c.getMethods()) {
-			if (Modifier.isStatic(m.getModifiers()) || m.isSynthetic() || m.isBridge()) {
-				continue;
+		Method vmethod = null;
+		int vlength = -1;
+		
+		loop:for (Method cmethod : c.getMethods()) {
+			if (Modifier.isStatic(cmethod.getModifiers())
+					|| cmethod.isSynthetic() || cmethod.isBridge()) {
+				continue loop;
 			}
 			
-			if (m.getName().equals(methodName)) {
-				Type[] pTypes = m.getGenericParameterTypes();
-				if (pTypes.length <= params.size()) {
-					if (method == null || (params.size() - pTypes.length) < (params.size() - lastPType.length)) {
-						method = m;
-						lastPType = pTypes;
-					} else if (pTypes.length == lastPType.length) {
-						debug("too many methods found: " + toPrintString(c, method.getName(), params));
-						return null;
+			if (cmethod.getName().equals(methodName)) {
+				Method tmethod = method;
+				int tlength = length;
+				int clength = cmethod.getParameterTypes().length;
+				
+				if (cmethod.isVarArgs()) {
+					tmethod = vmethod;
+					tlength = vlength;
+					clength--;
+				}
+				
+				if (clength > params.size() || clength < tlength) {
+					continue loop;
+				}
+				
+				if (clength > tlength) {
+					if (cmethod.isVarArgs()) {
+						vmethod = cmethod;
+						vlength = clength;
+					} else {
+						method = cmethod;
+						length = clength;
 					}
+					continue loop;
+				}
+				
+				int tpoint = calcurateDistance(tmethod, params);
+				int cpoint = calcurateDistance(cmethod, params);
+				if (cpoint > tpoint) {
+					if (cmethod.isVarArgs()) {
+						vmethod = cmethod;
+						vlength = clength;
+					} else {
+						method = cmethod;
+						length = clength;
+					}
+				} else if (tpoint == cpoint) {
+					if (cmethod.isVarArgs()) {
+						vmethod = null;
+					} else {
+						method = null; 
+					}
+				}
+				continue loop;
+			}
+		}
+		
+		if (vmethod != null) {
+			if (method == null) {
+				method = vmethod;
+			} else {
+				int point = calcurateDistance(method, params);
+				int vpoint = calcurateDistance(vmethod, params);
+				if (vpoint > point) {
+					method = vmethod;
 				}
 			}
 		}
@@ -204,7 +267,11 @@ public class Container {
 		Type[] argTypes = method.getGenericParameterTypes();
 		Object[] args = new Object[argTypes.length];
 		for (int i = 0; i < args.length; i++) {
-			args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
+			if (i == args.length-1 && method.isVarArgs()) {
+				args[i] = json.convert(params.subList((i < params.size()) ? i : params.size(), params.size()), argTypes[i]);
+			} else {
+				args[i] = json.convert((i < params.size()) ? params.get(i) : null, argTypes[i]);
+			}
 		}
 		if (this.isDebugMode()) {
 			this.debug("Execute: " + toPrintString(component.getClass(), method.getName(), Arrays.asList(args)));
@@ -334,6 +401,123 @@ public class Container {
 		return false;
 	}
 	
+	static int calcurateDistance(Method m, List<?> params) {
+		Class<?>[] types = m.getParameterTypes();
+		
+		if (m.isVarArgs()) {
+			Class<?> vtype = types[types.length-1].getComponentType();
+			Class<?>[] vtypes = new Class<?>[params.size()];
+			System.arraycopy(types, 0, vtypes, 0, types.length-1);
+			for (int i = types.length-1; i < vtypes.length; i++) {
+				vtypes[i] = vtype;
+			}
+			types = vtypes;
+		}
+		
+		int point = 0;
+		for (int i = 0; i < types.length; i++) {
+			Object param = params.get(i);
+			if (param == null) {
+				continue;
+			} else if (param instanceof String) {
+				if (String.class.equals(types[i])) {
+					point += 10;
+				} else if (types[i].isAssignableFrom(String.class)) {
+					point += 9;
+				} else if (types[i].isPrimitive()
+						|| Boolean.class.equals(types[i])
+						|| CharSequence.class.isAssignableFrom(types[i])
+						|| Character.class.isAssignableFrom(types[i])
+						|| Number.class.isAssignableFrom(types[i])
+						|| Date.class.isAssignableFrom(types[i])
+						|| Calendar.class.isAssignableFrom(types[i])
+						|| Locale.class.equals(types[i])
+						|| TimeZone.class.equals(types[i])
+						|| Pattern.class.equals(types[i])
+						|| Charset.class.equals(types[i])
+						|| URI.class.equals(types[i])
+						|| URL.class.equals(types[i])
+						|| UUID.class.equals(types[i])) {
+					point += 8;
+				} else if (Object.class.equals(types[i])) {
+					point += 1;
+				}
+			} else if (param instanceof Number) {
+				if (byte.class.equals(types[i])
+						|| short.class.equals(types[i])
+						|| int.class.equals(types[i])
+						|| long.class.equals(types[i])
+						|| double.class.equals(types[i])
+						|| Number.class.isAssignableFrom(types[i])) {
+					point += 10;
+				} else if (types[i].isAssignableFrom(BigDecimal.class)) {
+					point += 9;
+				} else if (types[i].isPrimitive()
+						|| CharSequence.class.isAssignableFrom(types[i])
+						|| Character.class.equals(types[i])
+						|| Boolean.class.equals(types[i])
+						|| Date.class.isAssignableFrom(types[i])
+						|| Calendar.class.isAssignableFrom(types[i])) {
+					point += 8;
+				} else if (Object.class.equals(types[i])) {
+					point += 1;
+				}
+			} else if (param instanceof Boolean) {
+				if (boolean.class.equals(types[i])
+						|| Boolean.class.equals(types[i])
+						) {
+					point += 10;
+				} else if (types[i].isAssignableFrom(Boolean.class)) {
+					point += 9;
+				} else if (types[i].isPrimitive()
+						|| Number.class.isAssignableFrom(types[i])
+						|| CharSequence.class.isAssignableFrom(types[i])
+						|| Character.class.equals(types[i])) {
+					point += 8;
+				} else if (Object.class.equals(types[i])) {
+					point += 1;
+				}
+			} else if (param instanceof List<?>) {
+				if (Collection.class.isAssignableFrom(types[i])
+						|| types[i].isArray()) {
+					point += 10;
+				} else if (types[i].isAssignableFrom(ArrayList.class)) {
+					point += 9;
+				} else if (Map.class.isAssignableFrom(types[i])) {
+					point += 8;
+				} else if (Object.class.equals(types[i])) {
+					point += 1;
+				}
+			} else if (param instanceof Map<?, ?>) {
+				if (Map.class.isAssignableFrom(types[i])) {
+					point += 10;
+				} else if (types[i].isAssignableFrom(LinkedHashMap.class)) {
+					point += 9;
+				} else if (List.class.isAssignableFrom(types[i])
+						|| types[i].isArray()) {
+					point += 8;
+				} else if (!(types[i].isPrimitive()
+						|| Boolean.class.equals(types[i])
+						|| CharSequence.class.isAssignableFrom(types[i])
+						|| Character.class.isAssignableFrom(types[i])
+						|| Number.class.isAssignableFrom(types[i])
+						|| Date.class.isAssignableFrom(types[i])
+						|| Calendar.class.isAssignableFrom(types[i])
+						|| Locale.class.equals(types[i])
+						|| TimeZone.class.equals(types[i])
+						|| Pattern.class.equals(types[i])
+						|| Charset.class.equals(types[i])
+						|| URI.class.equals(types[i])
+						|| URL.class.equals(types[i])
+						|| UUID.class.equals(types[i]))) {
+					point += 8;
+				} else if (Object.class.equals(types[i])) {
+					point += 1;
+				}
+			}
+		}
+		return point;
+	}
 	
 	static String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());
@@ -343,43 +527,6 @@ public class Container {
 			sb.append(str, 1, str.length()-1);
 		}
 		sb.append(')');
-		return sb.toString();
-	}
-	
-	static String toLowerCamel(String name) {
-		StringBuilder sb = new StringBuilder(name.length());
-		boolean toUpperCase = false;
-		for (int i = 0; i < name.length(); i++) {
-			char c = name.charAt(i);
-			if (c == ' ' || c == '_' || c == '-') {
-				toUpperCase = true;
-			} else if (toUpperCase) {
-				sb.append(Character.toUpperCase(c));
-				toUpperCase = false;
-			} else {
-				sb.append(c);
-			}
-		}
-		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && Character.isLowerCase(sb.charAt(1))) {
-			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
-		}
-		return sb.toString();
-	}
-	
-	static String toUpperCamel(String name) {
-		StringBuilder sb = new StringBuilder(name.length());
-		boolean toUpperCase = true;
-		for (int i = 0; i < name.length(); i++) {
-			char c = name.charAt(i);
-			if (c == ' ' || c == '_' || c == '-') {
-				toUpperCase = true;
-			} else if (toUpperCase) {
-				sb.append(Character.toUpperCase(c));
-				toUpperCase = false;
-			} else {
-				sb.append(c);
-			}
-		}
 		return sb.toString();
 	}
 	
