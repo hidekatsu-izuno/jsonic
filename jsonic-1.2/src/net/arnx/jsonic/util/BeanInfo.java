@@ -56,8 +56,7 @@ public final class BeanInfo {
 	}
 	
 	private Class<?> type;
-	private Map<String, PropertyInfo> sprops = new LinkedHashMap<String, PropertyInfo>();
-	private Map<String, MethodInfo> smethods = new LinkedHashMap<String, MethodInfo>();
+	private Map<String, ConstructorInfo> cons = new LinkedHashMap<String, ConstructorInfo>();
 	private Map<String, PropertyInfo> props = new LinkedHashMap<String, PropertyInfo>();
 	private Map<String, MethodInfo> methods = new LinkedHashMap<String, MethodInfo>();
 	
@@ -70,12 +69,13 @@ public final class BeanInfo {
 				continue;
 			}
 			
-			MethodInfo mi = smethods.get(name);
-			if (mi == null) {
-				mi = new MethodInfo(cls, name, null);
-				smethods.put(name, mi);
+			ConstructorInfo ci = cons.get(name);
+			if (ci == null) {
+				ci = new ConstructorInfo(cls, null);
+				cons.put(name, ci);
 			}
-			mi.members.add(con);			
+			con.setAccessible(true);
+			ci.constructors.add(con);			
 		}
 		
 		for (Field f : cls.getFields()) {
@@ -83,11 +83,11 @@ public final class BeanInfo {
 				continue;
 			}
 			
-			Map<String, PropertyInfo> cprops = Modifier.isStatic(f.getModifiers()) ? sprops : props;
+			boolean isStatic = Modifier.isStatic(f.getModifiers());
 			
 			name = f.getName();
 			f.setAccessible(true);
-			cprops.put(name, new PropertyInfo(cls, name, f, null, null));
+			props.put(name, new PropertyInfo(cls, name, f, null, null, isStatic));
 		}
 		
 		for (Method m : cls.getMethods()) {
@@ -99,14 +99,15 @@ public final class BeanInfo {
 			Class<?>[] paramTypes = m.getParameterTypes();
 			Class<?> returnType = m.getReturnType();
 			
-			Map<String, MethodInfo> cmethods = Modifier.isStatic(m.getModifiers()) ? smethods : methods;
+			boolean isStatic = Modifier.isStatic(m.getModifiers());
 			
-			MethodInfo mi = cmethods.get(name);
+			MethodInfo mi = methods.get(name);
 			if (mi == null) {
-				mi = new MethodInfo(cls, name, null);
-				cmethods.put(name, mi);
+				mi = new MethodInfo(cls, name, null, isStatic);
+				methods.put(name, mi);
 			}
-			mi.members.add(m);
+			m.setAccessible(true);
+			mi.methods.add(m);
 			
 			int type = -1;
 			if (name.startsWith("get") 
@@ -134,15 +135,12 @@ public final class BeanInfo {
 				name = new String(chars);
 			}
 			
-			Map<String, PropertyInfo> cprops = Modifier.isStatic(m.getModifiers()) ? sprops : props;
-			
-			PropertyInfo prop = cprops.get(name);
+			PropertyInfo prop = props.get(name);
 			if (prop == null) {
-				prop = new PropertyInfo(cls, name, null, null, null);
-				cprops.put(name, prop);
+				prop = new PropertyInfo(cls, name, null, null, null, isStatic);
+				props.put(name, prop);
 			}
 			
-			m.setAccessible(true);
 			if (type == 1) {
 				prop.readMethod = m;
 			} else {
@@ -165,20 +163,24 @@ public final class BeanInfo {
 		return type;
 	}
 	
-	public PropertyInfo getStaticProperty(String name) {
-		return sprops.get(name);
+	public ConstructorInfo getConstructor(String name) {
+		return cons.get(name);
 	}
 	
 	public PropertyInfo getProperty(String name) {
 		return props.get(name);
 	}
 	
-	public MethodInfo getStaticMethod(String name) {
-		return smethods.get(name);
-	}
-	
 	public MethodInfo getMethod(String name) {
 		return methods.get(name);
+	}
+	
+	public Collection<ConstructorInfo> getConstructors() {
+		return cons.values();
+	}
+	
+	public Collection<MethodInfo> getMethods() {
+		return methods.values();
 	}
 	
 	public Collection<PropertyInfo> getProperties() {
@@ -209,10 +211,69 @@ public final class BeanInfo {
 
 	@Override
 	public String toString() {
-		return "BeanInfo [staticProperties = " + sprops 
-			+ ", properties = " + props
-			+ ", staticMethods = " + smethods
-			+ ", methods = " + methods
-			+ "]";
+		return "BeanInfo [properties = " + props
+			+ ", methods = " + methods + "]";
+	}
+	
+	static int calcurateDistance(Class<?>[] params, Object[] args) {
+		int point = 0;
+		for (int i = 0; i < args.length; i++) {
+			if (args[i] == null) {
+				if (!params[i].isPrimitive()) point += 5;
+			} else if (params[i].equals(args[i].getClass())) {
+				point += 10;
+			} else if (params[i].isAssignableFrom(args[i].getClass())) {
+				point += 8;
+			} else if (boolean.class.equals(args[i].getClass()) || Boolean.class.equals(args[i].getClass())) {
+				if (boolean.class.equals(params[i]) || Boolean.class.equals(params[i].getClass())) {
+					point += 10;
+				}
+			} else if (byte.class.equals(args[i].getClass()) || Byte.class.equals(args[i].getClass())) {
+				if (byte.class.equals(params[i])
+						|| short.class.equals(params[i]) || char.class.equals(params[i])
+						|| int.class.equals(params[i]) || long.class.equals(params[i])
+						|| float.class.equals(params[i]) || double.class.equals(params[i])
+						|| Byte.class.equals(params[i])
+						|| Short.class.equals(params[i]) || Character.class.equals(params[i])
+						|| Integer.class.equals(params[i]) || Long.class.equals(params[i])
+						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+					point += 10;
+				}
+			} else if (short.class.equals(args[i].getClass()) || Short.class.equals(args[i].getClass())
+					|| char.class.equals(args[i].getClass()) || Character.class.equals(args[i].getClass())) {
+				if (short.class.equals(params[i]) || char.class.equals(params[i])
+						|| int.class.equals(params[i]) || long.class.equals(params[i])
+						|| float.class.equals(params[i]) || double.class.equals(params[i])
+						|| Short.class.equals(params[i]) || Character.class.equals(params[i])
+						|| Integer.class.equals(params[i]) || Long.class.equals(params[i])
+						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+					point += 10;
+				}
+			} else if (int.class.equals(args[i].getClass()) || Integer.class.equals(args[i].getClass())) {
+				if (int.class.equals(params[i]) || long.class.equals(params[i])
+						|| float.class.equals(params[i]) || double.class.equals(params[i])
+						|| Integer.class.equals(params[i]) || Long.class.equals(params[i])
+						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+					point += 10;
+				}
+			} else if (long.class.equals(args[i].getClass()) || Long.class.equals(args[i].getClass())) {
+				if (long.class.equals(params[i])
+						|| float.class.equals(params[i]) || double.class.equals(params[i])
+						|| Long.class.equals(params[i])
+						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+					point += 10;
+				}
+			} else if (float.class.equals(args[i].getClass()) || Float.class.equals(args[i].getClass())) {
+				if (float.class.equals(params[i]) || double.class.equals(params[i])
+						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+					point += 10;
+				}
+			} else if (double.class.equals(args[i].getClass()) || Double.class.equals(args[i].getClass())) {
+				if (double.class.equals(params[i]) || Double.class.equals(params[i])) {
+					point += 10;
+				}
+			}
+		}
+		return point;
 	}
 }

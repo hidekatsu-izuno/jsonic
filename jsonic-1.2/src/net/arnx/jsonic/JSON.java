@@ -1888,7 +1888,7 @@ public class JSON {
 			if (props == null) {
 				props = new ArrayList<PropertyInfo>();
 				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					if (!prop.isReadable() || ignore(this, c, prop.getReadMember())) {
+					if (prop.isStatic() || !prop.isReadable() || ignore(this, c, prop.getReadMember())) {
 						continue;
 					}
 					
@@ -1898,12 +1898,12 @@ public class JSON {
 						if (hint.name().length() > 0) {
 							if (prop.getReadMethod() != null && prop.getField() != null) {
 								props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-										prop.getField(), null, null));
+										prop.getField(), null, null, prop.isStatic()));
 								props.add(new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										null, prop.getReadMethod(), null));
+										null, prop.getReadMethod(), null, prop.isStatic()));
 							} else {
 								props.add(new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										prop.getField(), prop.getReadMethod(), null));
+										prop.getField(), prop.getReadMethod(), null, prop.isStatic()));
 							}
 							continue;
 						}
@@ -1925,7 +1925,7 @@ public class JSON {
 			if (props == null) {
 				props = new HashMap<String, PropertyInfo>();
 				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					if (!prop.isWritable() || ignore(this, c, prop.getWriteMember())) {
+					if (prop.isStatic() || !prop.isWritable() || ignore(this, c, prop.getWriteMember())) {
 						continue;
 					}
 					
@@ -1935,12 +1935,12 @@ public class JSON {
 						if (hint.name().length() > 0) {
 							if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
 								props.put(prop.getName(), new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-										prop.getField(), null, null));
+										prop.getField(), null, null, prop.isStatic()));
 								props.put(hint.name(), new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										null, null, prop.getWriteMethod()));
+										null, null, prop.getWriteMethod(), prop.isStatic()));
 							} else {
 								props.put(hint.name(), new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										prop.getField(), null, prop.getWriteMethod()));
+										prop.getField(), null, prop.getWriteMethod(), prop.isStatic()));
 							}
 							continue;
 						}

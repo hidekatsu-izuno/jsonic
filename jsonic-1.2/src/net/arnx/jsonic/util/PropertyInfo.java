@@ -27,14 +27,17 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 	private Class<?> beanClass;
 	
 	private String name;
+	private boolean isStatic;
 	private Field field;
 	
 	Method readMethod;
 	Method writeMethod;
 	
-	public PropertyInfo(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod) {
+	public PropertyInfo(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod, boolean isStatic) {
 		this.beanClass = beanClass;
 		this.name = name;
+		this.isStatic = isStatic;
+		
 		this.field = field;
 		this.readMethod = readMethod;
 		this.writeMethod = writeMethod;
@@ -46,6 +49,10 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 	
 	public String getName() {
 		return name;
+	}
+	
+	public boolean isStatic() {
+		return isStatic;
 	}
 	
 	public Field getField() {
