@@ -56,6 +56,8 @@ public final class BeanInfo {
 	}
 	
 	private Class<?> type;
+	private Map<String, PropertyInfo> sprops = new LinkedHashMap<String, PropertyInfo>();
+	private Map<String, MethodInfo> smethods = new LinkedHashMap<String, MethodInfo>();
 	private Map<String, PropertyInfo> props = new LinkedHashMap<String, PropertyInfo>();
 	private Map<String, MethodInfo> methods = new LinkedHashMap<String, MethodInfo>();
 	
@@ -68,29 +70,28 @@ public final class BeanInfo {
 				continue;
 			}
 			
-			MethodInfo mi = methods.get(name);
+			MethodInfo mi = smethods.get(name);
 			if (mi == null) {
 				mi = new MethodInfo(cls, name, null);
-				methods.put(name, mi);
+				smethods.put(name, mi);
 			}
 			mi.members.add(con);			
 		}
 		
 		for (Field f : cls.getFields()) {
-			if (Modifier.isStatic(f.getModifiers()) 
-					|| f.isSynthetic()) {
+			if (f.isSynthetic()) {
 				continue;
 			}
 			
+			Map<String, PropertyInfo> cprops = Modifier.isStatic(f.getModifiers()) ? sprops : props;
+			
 			name = f.getName();
 			f.setAccessible(true);
-			props.put(f.getName(), new PropertyInfo(cls, name, f, null, null));
+			cprops.put(name, new PropertyInfo(cls, name, f, null, null));
 		}
 		
 		for (Method m : cls.getMethods()) {
-			if (Modifier.isStatic(m.getModifiers())
-					|| m.isSynthetic()
-					|| m.isBridge()) {
+			if (m.isSynthetic() || m.isBridge()) {
 				continue;
 			}
 			
@@ -98,10 +99,12 @@ public final class BeanInfo {
 			Class<?>[] paramTypes = m.getParameterTypes();
 			Class<?> returnType = m.getReturnType();
 			
-			MethodInfo mi = methods.get(name);
+			Map<String, MethodInfo> cmethods = Modifier.isStatic(m.getModifiers()) ? smethods : methods;
+			
+			MethodInfo mi = cmethods.get(name);
 			if (mi == null) {
 				mi = new MethodInfo(cls, name, null);
-				methods.put(name, mi);
+				cmethods.put(name, mi);
 			}
 			mi.members.add(m);
 			
@@ -131,10 +134,12 @@ public final class BeanInfo {
 				name = new String(chars);
 			}
 			
-			PropertyInfo prop = props.get(name);
+			Map<String, PropertyInfo> cprops = Modifier.isStatic(m.getModifiers()) ? sprops : props;
+			
+			PropertyInfo prop = cprops.get(name);
 			if (prop == null) {
 				prop = new PropertyInfo(cls, name, null, null, null);
-				props.put(name, prop);
+				cprops.put(name, prop);
 			}
 			
 			m.setAccessible(true);
@@ -160,8 +165,20 @@ public final class BeanInfo {
 		return type;
 	}
 	
+	public PropertyInfo getStaticProperty(String name) {
+		return sprops.get(name);
+	}
+	
 	public PropertyInfo getProperty(String name) {
 		return props.get(name);
+	}
+	
+	public MethodInfo getStaticMethod(String name) {
+		return smethods.get(name);
+	}
+	
+	public MethodInfo getMethod(String name) {
+		return methods.get(name);
 	}
 	
 	public Collection<PropertyInfo> getProperties() {
@@ -182,11 +199,6 @@ public final class BeanInfo {
 		if (getClass() != obj.getClass())
 			return false;
 		BeanInfo other = (BeanInfo) obj;
-		if (props == null) {
-			if (other.props != null)
-				return false;
-		} else if (!props.equals(other.props))
-			return false;
 		if (type == null) {
 			if (other.type != null)
 				return false;
@@ -197,6 +209,10 @@ public final class BeanInfo {
 
 	@Override
 	public String toString() {
-		return "BeanInfo [props=" + props + "]";
+		return "BeanInfo [staticProperties = " + sprops 
+			+ ", properties = " + props
+			+ ", staticMethods = " + smethods
+			+ ", methods = " + methods
+			+ "]";
 	}
 }

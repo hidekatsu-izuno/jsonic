@@ -135,61 +135,66 @@ public class Container {
 		Class<?> c = component.getClass();
 		
 		Method method = null;
-		int length = -1;
+		Class<?>[] types = null;
 		
 		Method vmethod = null;
-		int vlength = -1;
+		Class<?>[] vtypes = null;
 		
-		loop:for (Method cmethod : c.getMethods()) {
+		for (Method cmethod : c.getMethods()) {
 			if (Modifier.isStatic(cmethod.getModifiers())
-					|| cmethod.isSynthetic() || cmethod.isBridge()) {
-				continue loop;
+					|| cmethod.isSynthetic()
+					|| cmethod.isBridge()
+					|| !cmethod.getName().equals(methodName)) {
+				continue;
 			}
 			
-			if (cmethod.getName().equals(methodName)) {
-				Method tmethod = method;
-				int tlength = length;
-				int clength = cmethod.getParameterTypes().length;
-				
-				if (cmethod.isVarArgs()) {
-					tmethod = vmethod;
-					tlength = vlength;
-					clength--;
+			Class<?>[] ctypes = cmethod.getParameterTypes();
+			
+			if (cmethod.isVarArgs()) {
+				if (ctypes.length-1 > params.size()) {
+					continue;
 				}
 				
-				if (clength > params.size() || clength < tlength) {
-					continue loop;
+				Class<?> vtype = ctypes[ctypes.length-1].getComponentType();
+				Class<?>[] tmp = new Class<?>[params.size()];
+				System.arraycopy(tmp, 0, ctypes, 0, ctypes.length-1);
+				for (int i = ctypes.length-1; i < tmp.length; i++) {
+					tmp[i] = vtype;
 				}
+				ctypes = tmp;
 				
-				if (clength > tlength) {
-					if (cmethod.isVarArgs()) {
+				if (vmethod == null || ctypes.length > vtypes.length) {
+					vmethod = cmethod;
+					vtypes = ctypes;
+				} else {
+					int vpoint = calcurateDistance(vtypes, params);
+					int cpoint = calcurateDistance(ctypes, params);
+					if (cpoint > vpoint) {
 						vmethod = cmethod;
-						vlength = clength;
-					} else {
-						method = cmethod;
-						length = clength;
-					}
-					continue loop;
-				}
-				
-				int tpoint = calcurateDistance(tmethod, params);
-				int cpoint = calcurateDistance(cmethod, params);
-				if (cpoint > tpoint) {
-					if (cmethod.isVarArgs()) {
-						vmethod = cmethod;
-						vlength = clength;
-					} else {
-						method = cmethod;
-						length = clength;
-					}
-				} else if (tpoint == cpoint) {
-					if (cmethod.isVarArgs()) {
+						vtypes = ctypes;
+					} else if (cpoint == vpoint) {
 						vmethod = null;
-					} else {
-						method = null; 
 					}
 				}
-				continue loop;
+			} else {
+				if (ctypes.length > params.size()
+						|| (types != null && ctypes.length < types.length)) {
+					continue;
+				}
+				
+				if (method == null || ctypes.length > types.length) {
+					method = cmethod;
+					types = ctypes;
+				} else {
+					int point = calcurateDistance(types, params);
+					int cpoint = calcurateDistance(ctypes, params);
+					if (cpoint > point) {
+						method = cmethod;
+						types = ctypes;
+					} else if (cpoint == point) {
+						method = null;
+					}
+				}
 			}
 		}
 		
@@ -197,8 +202,8 @@ public class Container {
 			if (method == null) {
 				method = vmethod;
 			} else {
-				int point = calcurateDistance(method, params);
-				int vpoint = calcurateDistance(vmethod, params);
+				int point = calcurateDistance(types, params);
+				int vpoint = calcurateDistance(vtypes, params);
 				if (vpoint > point) {
 					method = vmethod;
 				}
@@ -401,19 +406,7 @@ public class Container {
 		return false;
 	}
 	
-	static int calcurateDistance(Method m, List<?> params) {
-		Class<?>[] types = m.getParameterTypes();
-		
-		if (m.isVarArgs()) {
-			Class<?> vtype = types[types.length-1].getComponentType();
-			Class<?>[] vtypes = new Class<?>[params.size()];
-			System.arraycopy(types, 0, vtypes, 0, types.length-1);
-			for (int i = types.length-1; i < vtypes.length; i++) {
-				vtypes[i] = vtype;
-			}
-			types = vtypes;
-		}
-		
+	static int calcurateDistance(Class<?>[] types, List<?> params) {
 		int point = 0;
 		for (int i = 0; i < types.length; i++) {
 			Object param = params.get(i);
