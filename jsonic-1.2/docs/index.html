@@ -701,7 +701,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="faq">FAQ</h2>
 <dl>
-<dt>Q. RESTServletでHTTP GETを使うと日本語文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
+<dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
 <dt>Q. 大量データを読み込むとOutOfMemoryErrorで落ちます。</dt><dd>A. JSONICは、ブラウザをクライアントとしたような大規模データの送受信を行わないシステムでの利用を想定して作成されています。XMLにおいてDOMに対してSAXやStAXがあるように、大量データを取り扱う場合にはストリームAPIを利用すべきですがJSONICには現状用意されておりませんので、Twitter Streaming APIのように行区切りのJSONで送受信するか、<a href="http://jackson.codehaus.org/">jackson</a>など代替ライブラリの採用を検討ください。</dd>
 </dl> 
 
