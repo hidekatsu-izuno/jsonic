@@ -33,8 +33,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.context.ServletContextAware;
 
-import sample.basic.web.rest.service.MemoException;
-
 public class MemoService implements ServletContextAware {
 	
 	// it's incorrect use. you should use RDBMS.

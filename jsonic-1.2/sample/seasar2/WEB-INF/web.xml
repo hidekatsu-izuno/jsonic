@@ -81,7 +81,7 @@
 					'/{package}/{class}.json': 'sample.seasar2.web.${package}.service.${class}Service'
 				},
 				errors: {
-					'sample.basic.web.rest.service.MemoException': 406
+					'sample.seasar2.web.rest.service.MemoException': 406
 				}
 			</param-value>
 		</init-param>
@@ -94,6 +94,6 @@
 	
 	<servlet-mapping>
 		<servlet-name>restServlet</servlet-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>*.json</url-pattern>
 	</servlet-mapping>
 </web-app>

@@ -62,7 +62,7 @@
 					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
 				},
 				errors: {
-					'sample.basic.web.rest.service.MemoException': 406
+					'sample.guice.web.rest.service.MemoException': 406
 				}
 			</param-value>
 		</init-param>
@@ -75,6 +75,6 @@
 	
 	<servlet-mapping>
 		<servlet-name>restServlet</servlet-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>*.json</url-pattern>
 	</servlet-mapping>
 </web-app>

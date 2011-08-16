@@ -57,6 +57,6 @@
 	
 	<servlet-mapping>
 		<servlet-name>restServlet</servlet-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>*.json</url-pattern>
 	</servlet-mapping>
 </web-app>
