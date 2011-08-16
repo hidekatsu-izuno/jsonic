@@ -3,6 +3,7 @@ package net.arnx.jsonic.web;
 import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
@@ -362,9 +363,7 @@ public class RPCServletTest {
 		con = (HttpURLConnection)url.openConnection();
 		con.setRequestMethod("POST");
 		con.connect();
-		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("[\"OK\"]"), 
-				JSON.decode(read(con.getInputStream())));
+		assertEquals(SC_NOT_FOUND, con.getResponseCode());
 		con.disconnect();
 		
 		System.out.println("<<END testRPC: " + app + ">>\n");

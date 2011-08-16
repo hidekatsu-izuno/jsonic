@@ -18,7 +18,6 @@ package net.arnx.jsonic.web;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
@@ -26,7 +25,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -123,22 +121,6 @@ public class WebServiceServlet extends HttpServlet {
 		String uri = (request.getContextPath().equals("/")) ?
 				request.getRequestURI() : 
 				request.getRequestURI().substring(request.getContextPath().length());
-		
-		URL resource = getServletContext().getResource(uri);
-		if (resource != null) {
-			OutputStream out = response.getOutputStream();
-			InputStream in = resource.openStream();
-			try {
-				byte[] buffer = new byte[1024];
-				int count = 0;
-				while ((count = in.read(buffer)) > 0) {
-					out.write(buffer, 0, count);
-				}
-			} finally {
-				if (in != null) in.close();
-			}
-			return null;
-		}
 		
 		Route route = null;
 		for (RouteMapping m : mappings) {

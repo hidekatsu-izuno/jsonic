@@ -243,9 +243,7 @@ public class RESTServletTest {
 		con = (HttpURLConnection)new URL(url + ".json").openConnection();
 		con.setRequestMethod("GET");
 		con.connect();
-		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("[\"OK\"]"), 
-				JSON.decode(read(con.getInputStream())));
+		assertEquals(SC_NOT_FOUND, con.getResponseCode());
 		con.disconnect();
 		
 		System.out.println("<<END testRest: " + app + ">>\n");

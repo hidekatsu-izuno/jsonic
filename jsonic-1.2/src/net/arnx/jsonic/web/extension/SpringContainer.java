@@ -43,7 +43,12 @@ public class SpringContainer extends Container {
 	
 	@Override
 	public Object getComponent(String className) throws Exception {
-		Object component = appContext.getBean(className);
+		Object component;
+		try {
+			component = appContext.getBean(className);
+		} catch (Exception e) {
+			throw new ClassNotFoundException("class not found: " + className, e);
+		}
 		
 		if (component instanceof ApplicationContextAware) {
 			((ApplicationContextAware)component).setApplicationContext(appContext);
