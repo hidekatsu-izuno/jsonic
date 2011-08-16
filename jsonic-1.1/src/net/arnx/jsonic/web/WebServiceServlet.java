@@ -15,11 +15,7 @@
  */
 package net.arnx.jsonic.web;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -128,22 +124,6 @@ public class WebServiceServlet extends HttpServlet {
 			response.setHeader("Cache-Control", "no-cache");
 			response.setHeader("Pragma", "no-cache");
 			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
-		}
-		
-		File file = new File(getServletContext().getRealPath(uri));
-		if (file.exists()) {
-			OutputStream out = response.getOutputStream();
-			InputStream in = new FileInputStream(file);
-			try {
-				byte[] buffer = new byte[1024];
-				int count = 0;
-				while ((count = in.read(buffer)) > 0) {
-					out.write(buffer, 0, count);
-				}
-			} finally {
-				if (in != null) in.close();
-			}
-			return null;
 		}
 		
 		Route route = null;
