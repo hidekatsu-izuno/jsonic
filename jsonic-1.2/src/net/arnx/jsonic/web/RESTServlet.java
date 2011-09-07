@@ -72,7 +72,7 @@ public class RESTServlet extends HttpServlet {
 		public Map<String, RouteMapping> mappings;
 		
 		public Map<String, Pattern> definitions;
-		public Map<Class<? extends Exception>, Integer> errors;
+		public Map<String, Integer> errors;
 		public Map<String, String> method;
 		public Set<String> verb;
 	}
@@ -259,8 +259,9 @@ public class RESTServlet extends HttpServlet {
 					response.flushBuffer();
 				} else {
 					Integer errorCode = null;
-					for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
-						if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
+					for (Map.Entry<String, Integer> entry : config.errors.entrySet()) {
+						Class<?> cls = ClassUtil.findClass(entry.getKey());
+						if (cls.isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
 							errorCode = entry.getValue();
 							break;
 						}

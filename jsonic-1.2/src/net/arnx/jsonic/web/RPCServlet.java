@@ -52,7 +52,7 @@ public class RPCServlet extends HttpServlet {
 		public Map<String, RouteMapping> mappings;
 		
 		public Map<String, Pattern> definitions;
-		public Map<Class<? extends Exception>, Integer> errors;
+		public Map<String, Integer> errors;
 	}
 	
 	protected Container container;
@@ -236,8 +236,9 @@ public class RPCServlet extends HttpServlet {
 							error.put("message", "Invalid params.");
 						} else {
 							Integer errorCode = null;
-							for (Map.Entry<Class<? extends Exception>, Integer> entry : config.errors.entrySet()) {
-								if (entry.getKey().isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
+							for (Map.Entry<String, Integer> entry : config.errors.entrySet()) {
+								Class<?> cls = ClassUtil.findClass(entry.getKey());
+								if (cls.isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
 									errorCode = entry.getValue();
 									break;
 								}
