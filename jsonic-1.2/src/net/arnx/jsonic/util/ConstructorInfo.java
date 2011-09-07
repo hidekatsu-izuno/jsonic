@@ -19,7 +19,7 @@ public class ConstructorInfo implements Comparable<ConstructorInfo> {
 		return beanClass;
 	}
 	
-	public Object newInstance(Object instance, Object... args) {
+	public Object newInstance(Object... args) {
 		Constructor<?> constructor = findConstructor(args);
 		try {
 			return constructor.newInstance(args);
@@ -39,7 +39,7 @@ public class ConstructorInfo implements Comparable<ConstructorInfo> {
 		}
 	}
 	
-	private Constructor<?> findConstructor(Object... args) {
+	public Constructor<?> findConstructor(Object... args) {
 		Constructor<?> constructor = null;
 		Class<?>[] types = null;
 		

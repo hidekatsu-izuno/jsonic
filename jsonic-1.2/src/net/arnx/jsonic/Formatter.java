@@ -3,18 +3,24 @@ package net.arnx.jsonic;
 import java.io.Flushable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.sql.SQLException;
+import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -111,6 +117,44 @@ final class StringFormatter implements Formatter {
 	}
 }
 
+final class TimeZoneFormatter implements Formatter {
+	public static final TimeZoneFormatter INSTANCE = new TimeZoneFormatter();
+
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return StringFormatter.INSTANCE.format(json, context, src, ((TimeZone)o).getID(), out);
+	}
+}
+
+final class CharsetFormatter implements Formatter {
+	public static final CharsetFormatter INSTANCE = new CharsetFormatter();
+
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return StringFormatter.INSTANCE.format(json, context, src, ((Charset)o).name(), out);
+	}
+}
+
+final class InetAddressFormatter implements Formatter {
+	public static final InetAddressFormatter INSTANCE = new InetAddressFormatter();
+
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
+		try {
+			String text = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
+			return StringFormatter.INSTANCE.format(json, context, src, text, out);
+		} catch (Exception e) {
+			return NullFormatter.INSTANCE.format(json, context, src, null, out);
+		}
+	}
+}
+
+final class CharacterDataFormatter implements Formatter {
+	public static final CharacterDataFormatter INSTANCE = new CharacterDataFormatter();
+
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return StringFormatter.INSTANCE.format(json, context, src, ((CharacterData)o).getData(), out);
+	}
+}
+
 final class NumberFormatter implements Formatter {
 	public static final NumberFormatter INSTANCE = new NumberFormatter();
 
@@ -122,6 +166,14 @@ final class NumberFormatter implements Formatter {
 			out.append(o.toString());
 		}
 		return false;
+	}
+}
+
+final class EnumFormatter implements Formatter {
+	public static final EnumFormatter INSTANCE = new EnumFormatter();
+
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return NumberFormatter.INSTANCE.format(json, context, src, ((Enum<?>)o).ordinal(), out);
 	}
 }
 
@@ -171,6 +223,14 @@ final class DateFormatter implements Formatter {
 		}
 		return false;
 	}
+}
+
+final class CalendarFormatter implements Formatter {
+	public static final CalendarFormatter INSTANCE = new CalendarFormatter();
+	
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return DateFormatter.INSTANCE.format(json, context, src, ((Calendar)o).getTime(), out);
+	}	
 }
 
 final class BooleanArrayFormatter implements Formatter {
@@ -398,6 +458,36 @@ final class ObjectArrayFormatter implements Formatter {
 		}
 		out.append(']');
 		return true;
+	}
+}
+
+final class SQLArrayFormatter implements Formatter {
+	public static final SQLArrayFormatter INSTANCE = new SQLArrayFormatter();
+	
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		Object array;
+		try {
+			array = ((java.sql.Array)o).getArray();
+		} catch (SQLException e) {
+			array = null;
+		}
+		if (array == null) array = new Object[0];
+		return ObjectArrayFormatter.INSTANCE.format(json, context, src, array, out);
+	}
+}
+
+final class StructFormmatter implements Formatter {
+	public static final StructFormmatter INSTANCE = new StructFormmatter();
+	
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		Object value;
+		try {
+			value = ((Struct)o).getAttributes();
+		} catch (SQLException e) {
+			value = null;
+		}
+		if (value == null) value = new Object[0];
+		return ObjectArrayFormatter.INSTANCE.format(json, context, src, o, out);
 	}
 }
 
@@ -841,5 +931,13 @@ final class DOMElementFormatter implements Formatter {
 		}
 		out.append(']');
 		return true;
+	}
+}
+
+final class DOMDocumentFormatter implements Formatter {
+	public static final DOMDocumentFormatter INSTANCE = new DOMDocumentFormatter();
+	
+	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return DOMElementFormatter.INSTANCE.format(json, context, src, ((Document)o).getDocumentElement(), out);
 	}
 }

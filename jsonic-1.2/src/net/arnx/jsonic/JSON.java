@@ -33,7 +33,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -812,15 +811,13 @@ public class JSON {
 			} else if (o instanceof Object[]) {
 				f = ObjectArrayFormatter.INSTANCE;
 			} else if (o instanceof Enum<?>) {
-				o = ((Enum<?>)o).ordinal();
-				f = NumberFormatter.INSTANCE;
+				f = EnumFormatter.INSTANCE;
 			} else if (o instanceof CharSequence) {
 				f = StringFormatter.INSTANCE;
 			} else if (o instanceof Date) {
 				f = DateFormatter.INSTANCE;
 			} else if (o instanceof Calendar) {
-				o = ((Calendar)o).getTime();
-				f = DateFormatter.INSTANCE;
+				f = CalendarFormatter.INSTANCE;
 			} else if (o instanceof Number) {
 				f = NumberFormatter.INSTANCE;
 			} else if (o instanceof Iterator<?>) {
@@ -830,47 +827,25 @@ public class JSON {
 			} else if (o instanceof Type || o instanceof Member || o instanceof File) {
 				f = StringFormatter.INSTANCE;
 			} else if (o instanceof TimeZone) {
-				o = ((TimeZone)o).getID();
-				f = StringFormatter.INSTANCE;
+				f = TimeZoneFormatter.INSTANCE;
 			} else if (o instanceof Charset) {
-				o = ((Charset)o).name();
-				f = StringFormatter.INSTANCE;
+				f = CharsetFormatter.INSTANCE;
 			} else if (o instanceof java.sql.Array) {
-				try {
-					o = ((java.sql.Array)o).getArray();
-				} catch (SQLException e) {
-					o = null;
-				}
-				if (o == null) o = new Object[0];
-				f = FORMAT_MAP.get(o.getClass());
+				f = SQLArrayFormatter.INSTANCE;
 			} else if (o instanceof Struct) {
-				try {
-					o = ((Struct)o).getAttributes();
-				} catch (SQLException e) {
-					o = null;
-				}
-				if (o == null) o = new Object[0];
-				f = ObjectArrayFormatter.INSTANCE;
+				f = StructFormmatter.INSTANCE;
 			} else if (o instanceof Node) {
 				if (o instanceof CharacterData && !(o instanceof Comment)) {
-					o = ((CharacterData)o).getData();
-					f = StringFormatter.INSTANCE;
+					f = CharacterDataFormatter.INSTANCE;
 				} else if (o instanceof Document) {
-					o = ((Document)o).getDocumentElement();
-					f = DOMElementFormatter.INSTANCE;
+					f = DOMDocumentFormatter.INSTANCE;
 				} else if (o instanceof Element) {
 					f = DOMElementFormatter.INSTANCE;
 				}
 			} else if (isAssignableFrom(ClassUtil.findClass("java.sql.RowId"), o.getClass())) {
 				f = SerializableFormatter.INSTANCE;
 			} else if (isAssignableFrom(ClassUtil.findClass("java.net.InetAddress"), o.getClass())) {
-				Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
-				try {
-					o = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
-					f = StringFormatter.INSTANCE;
-				} catch (Exception e) {
-					f = NullFormatter.INSTANCE;
-				}
+				f = InetAddressFormatter.INSTANCE;
 			} else if (isAssignableFrom(ClassUtil.findClass("org.apache.commons.beanutils.DynaBean"), o.getClass())) {
 				f = DynaBeanFormatter.INSTANCE;
 			} else {

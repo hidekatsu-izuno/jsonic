@@ -51,7 +51,7 @@ public class MethodInfo implements Comparable<MethodInfo> {
 		}
 	}
 	
-	private Method findMethod(Object... args) {
+	public Method findMethod(Object... args) {
 		Method method = null;
 		Class<?>[] types = null;
 		

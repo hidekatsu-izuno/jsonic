@@ -56,23 +56,20 @@ public final class BeanInfo {
 	}
 	
 	private Class<?> type;
-	private Map<String, ConstructorInfo> cons = new LinkedHashMap<String, ConstructorInfo>();
+	private ConstructorInfo ci;
 	private Map<String, PropertyInfo> props = new LinkedHashMap<String, PropertyInfo>();
 	private Map<String, MethodInfo> methods = new LinkedHashMap<String, MethodInfo>();
 	
 	private BeanInfo(Class<?> cls) {
 		type = cls;
 		
-		String name = cls.getSimpleName();
 		for (Constructor<?> con : cls.getConstructors()) {
 			if (con.isSynthetic()) {
 				continue;
 			}
 			
-			ConstructorInfo ci = cons.get(name);
 			if (ci == null) {
 				ci = new ConstructorInfo(cls, null);
-				cons.put(name, ci);
 			}
 			con.setAccessible(true);
 			ci.constructors.add(con);			
@@ -85,7 +82,7 @@ public final class BeanInfo {
 			
 			boolean isStatic = Modifier.isStatic(f.getModifiers());
 			
-			name = f.getName();
+			String name = f.getName();
 			f.setAccessible(true);
 			props.put(name, new PropertyInfo(cls, name, f, null, null, isStatic));
 		}
@@ -95,7 +92,7 @@ public final class BeanInfo {
 				continue;
 			}
 			
-			name = m.getName();
+			String name = m.getName();
 			Class<?>[] paramTypes = m.getParameterTypes();
 			Class<?> returnType = m.getReturnType();
 			
@@ -163,8 +160,8 @@ public final class BeanInfo {
 		return type;
 	}
 	
-	public ConstructorInfo getConstructor(String name) {
-		return cons.get(name);
+	public ConstructorInfo getConstructor() {
+		return ci;
 	}
 	
 	public PropertyInfo getProperty(String name) {
@@ -173,10 +170,6 @@ public final class BeanInfo {
 	
 	public MethodInfo getMethod(String name) {
 		return methods.get(name);
-	}
-	
-	public Collection<ConstructorInfo> getConstructors() {
-		return cons.values();
 	}
 	
 	public Collection<MethodInfo> getMethods() {

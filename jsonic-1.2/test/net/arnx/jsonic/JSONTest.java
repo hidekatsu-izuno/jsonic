@@ -128,6 +128,15 @@ public class JSONTest {
 		
 		Calendar cal = Calendar.getInstance();
 		assertEquals("[" + cal.getTimeInMillis() + "]", JSON.encode(new Object[] {cal}));
+		assertEquals("[" + cal.getTimeInMillis() + "," + cal.getTimeInMillis() + "," + cal.getTimeInMillis() + "]", JSON.encode(new Object[] {cal, cal, cal}));
+
+		assertEquals("[0,0,0]", JSON.encode(new Object[] {Thread.State.NEW, Thread.State.NEW, Thread.State.NEW}));
+
+		TimeZone timeZone = TimeZone.getDefault();
+		assertEquals("[\"" + timeZone.getID() + "\",\"" + timeZone.getID() + "\"]", JSON.encode(new Object[] {timeZone, timeZone}));
+
+		Charset charset = Charset.defaultCharset();
+		assertEquals("[\"" + charset.name() + "\",\"" + charset.name() + "\"]", JSON.encode(new Object[] {charset, charset}));
 		
 		Map<String, Object> map = new HashMap<String, Object>();
 		assertEquals("{}", JSON.encode(map));
@@ -285,6 +294,7 @@ public class JSONTest {
 				}
 			}
 		}).format(Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8")));
+		
 	}
 	
 	@Test
