@@ -717,11 +717,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2011/8/17 version 1.2.7</h3>
+<h3>2011/9/8 version 1.2.7</h3>
 
 <ul>
+<li>[不具合] encode/format 時に Calendar、TimeZone、Charset, java.sql.Array, Document, Element を List や Map などに詰めていた場合、ClassCastException が発生していた問題を修正しました（#26256）</li>
 <li>[仕様変更] JSON Web Serviceにて、パス名と一致するファイルがある場合、実ファイルを優先する機能が実装されておりましたが、マッピング制限が緩い場合、JSPなど意図せぬソース公開の恐れがあるため削除しました（#26032）</li>
-<li>[不具合] SpringContainer を使っている場合、コンポーネントが見つからなかった場合、500 Internal Server Error が戻されていましたが、404 Not Found を返すよう修正しました。</li>
+<li>[不具合] JSON Web Serviceにて、SpringContainer を使っている場合、コンポーネントが見つからなかった場合、500 Internal Server Error が戻されていましたが、404 Not Found を返すよう修正しました。</li>
+<li>[不具合] JSON Web Serviceにて、web.xml に Hot Deploy 対象の例外クラスを指定していた場合、ClassCastException が発生していた問題を修正しました。</li>
 <li>JSON Web Serviceにて、可変長引数による呼び出しをサポートしました。</li>
 <li>JSON Web Serviceにて、オーバーロードされたメソッドの呼び出しをサポートしました。</li>
 </ul>
