@@ -169,8 +169,19 @@ public class JSON {
 	 * JSON processing mode
 	 */
 	public enum Mode {
+		/**
+		 * Traditional Mode
+		 */
 		TRADITIONAL,
+		
+		/**
+		 * Strict Mode
+		 */
 		STRICT,
+		
+		/**
+		 * Script(=JavaScript) Mode
+		 */
 		SCRIPT
 	}
 	
