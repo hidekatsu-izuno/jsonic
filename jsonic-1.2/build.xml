@@ -5,6 +5,7 @@
 	
 	<property name="debug" value="true" />
 	<property name="jsonic_as3.home" location="../jsonic_as3-1.2" />
+	<property name="jdk.home" location="C:\Program Files (x86)\Java\jdk1.5.0_22" />
 	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />
 	
 	<property name="webapps" location="sample"/>
@@ -19,7 +20,7 @@
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
 		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" debug="${debug}" fork="true"
-			includeantruntime="false">
+			includeantruntime="false" bootclasspath="${jdk.home}/jre/lib/rt.jar">
 			<compilerarg value="-Xlint:unchecked"/>
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
@@ -55,7 +56,7 @@
 		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
 		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
-			includeantruntime="false">
+			includeantruntime="false" bootclasspath="${jdk.home}/jre/lib/rt.jar">
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 				<fileset dir="${tmp}/sample/basic/WEB-INF/lib" includes="*.jar" />
