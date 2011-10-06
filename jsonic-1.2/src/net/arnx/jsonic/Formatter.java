@@ -82,8 +82,8 @@ final class StringFormatter implements Formatter {
 		return false;
 	}
 
-	static void serialize(final Context context, final String s, final OutputSource in) throws Exception {
-		in.append('"');
+	static void serialize(final Context context, final String s, final OutputSource out) throws Exception {
+		out.append('"');
 		int start = 0;
 		final int length = s.length();
 		for (int i = 0; i < length; i++) {
@@ -93,27 +93,27 @@ final class StringFormatter implements Formatter {
 				if (x == 0) {
 					// no handle
 				} else if (x > 0) {
-					if (start < i) in.append(s, start, i);
-					in.append('\\');
-					in.append((char) x);
+					if (start < i) out.append(s, start, i);
+					out.append('\\');
+					out.append((char) x);
 					start = i + 1;
 				} else if (x == -1 || (x == -2 && context.getMode() == Mode.SCRIPT)) {
-					if (start < i) in.append(s, start, i);
-					in.append("\\u00");
-					in.append("0123456789ABCDEF".charAt(c / 16));
-					in.append("0123456789ABCDEF".charAt(c % 16));
+					if (start < i) out.append(s, start, i);
+					out.append("\\u00");
+					out.append("0123456789ABCDEF".charAt(c / 16));
+					out.append("0123456789ABCDEF".charAt(c % 16));
 					start = i + 1;
 				}
 			} else if (c == '\u2028') {
-				in.append("\\u2028");
+				out.append("\\u2028");
 				start = i + 1;
 			} else if (c == '\u2029') {
-				in.append("\\u2029");
+				out.append("\\u2029");
 				start = i + 1;
 			}
 		}
-		if (start < length) in.append(s, start, length);
-		in.append('"');
+		if (start < length) out.append(s, start, length);
+		out.append('"');
 	}
 }
 

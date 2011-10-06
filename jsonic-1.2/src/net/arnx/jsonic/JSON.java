@@ -1264,7 +1264,7 @@ public class JSON {
 	
 	private String parseString(Context context, InputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
-		StringBuilderOutputSource sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
+		StringBuilder sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		char start = '\0';
 		
 		int n = -1;
@@ -1321,7 +1321,7 @@ public class JSON {
 	
 	private Object parseLiteral(Context context, InputSource s, int level, boolean any) throws IOException, JSONException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilderOutputSource sb = context.getCachedBuffer();
+		StringBuilder sb = context.getCachedBuffer();
 
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1359,7 +1359,7 @@ public class JSON {
 	
 	private Number parseNumber(Context context, InputSource s, int level) throws IOException, JSONException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilderOutputSource sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
+		StringBuilder sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
@@ -1747,7 +1747,7 @@ public class JSON {
 		private Object[] path;
 		private int level = -1;
 		private Map<Class<?>, Object> memberCache;
-		private StringBuilderOutputSource builderCache;
+		private StringBuilder builderCache;
 		
 		public Context() {
 			synchronized (JSON.this) {
@@ -1760,11 +1760,11 @@ public class JSON {
 			}
 		}
 		
-		public StringBuilderOutputSource getCachedBuffer() {
+		public StringBuilder getCachedBuffer() {
 			if (builderCache == null) {
-				builderCache = new StringBuilderOutputSource();
+				builderCache = new StringBuilder();
 			} else {
-				builderCache.clear();
+				builderCache.setLength(0);
 			}
 			return builderCache;
 		}
@@ -1961,7 +1961,7 @@ public class JSON {
 		}
 		
 		public String toString() {
-			StringBuilderOutputSource sb = getCachedBuffer();
+			StringBuilderOutputSource sb = new StringBuilderOutputSource(getCachedBuffer());
 			for (int i = 0; i < path.length; i+=2) {
 				Object key = path[i];
 				if (key == null) {
