@@ -722,7 +722,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2011/10/8 version 1.2.7</h3>
+<h3>2011/10/9 version 1.2.7</h3>
 
 <ul>
 <li>[仕様変更] JSON Web Serviceにて、パス名と一致するファイルがある場合、実ファイルを優先する機能が実装されておりましたが、マッピング制限が緩い場合、JSPなど意図せぬソースが公開される恐れがあるため削除しました（#26032）</li>
@@ -731,6 +731,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[不具合] JSON Web Serviceにて、web.xml に Hot Deploy 対象の例外クラスを指定していた場合、ClassCastException が発生していた問題を修正しました。</li>
 <li>JSON Web Serviceにて、可変長引数による呼び出しをサポートしました。</li>
 <li>JSON Web Serviceにて、オーバーロードされたメソッドの呼び出しをサポートしました。</li>
+<li>jar ファイルを Maven Central Repository に登録しました。</li>
+<li>JavadocをJDK7で生成するようにしました。</li>
 </ul>
 
 <h3>2011/8/7 version 1.2.6</h3>
