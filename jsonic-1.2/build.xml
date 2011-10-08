@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-
-<project name="jsonic" basedir="." default="dist-all">
-	<property name="version" value="1.2.7" />
+<!DOCTYPE project>
+<project name="jsonic" basedir="." default="dist-all">	
+	<xmlproperty file="pom.xml" />
 	
+	<property name="version" value="${project.version}" />
 	<property name="debug" value="true" />
 	<property name="jsonic_as3.home" location="../jsonic_as3-1.2" />
-	<property name="jdk.home" location="C:\Program Files (x86)\Java\jdk1.5.0_22" />
 	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />
 	
 	<property name="webapps" location="sample"/>
@@ -20,7 +20,7 @@
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
 		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" debug="${debug}" fork="true"
-			includeantruntime="false" bootclasspath="${jdk.home}/jre/lib/rt.jar">
+			includeantruntime="false">
 			<compilerarg value="-Xlint:unchecked"/>
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
@@ -55,8 +55,9 @@
 		<copy file="${webapps}/guice/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_guice.xml" />
 		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
-		<javac source="1.5" target="1.5" srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
-			includeantruntime="false" bootclasspath="${jdk.home}/jre/lib/rt.jar">
+		<javac source="1.5" target="1.5" 
+			srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
+			includeantruntime="false">
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 				<fileset dir="${tmp}/sample/basic/WEB-INF/lib" includes="*.jar" />
@@ -67,7 +68,7 @@
 	<target name="dist" depends="build-sample">
 		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true"
 			additionalparam="-J-Duser.language=en_US">
-			<link href="http://download.oracle.com/javase/1.5.0/docs/api/" />
+			<link href="http://download.oracle.com/javase/7/docs/api/" />
 			<excludepackage name="net.arnx.jsonic.util.*" />
 			<excludepackage name="net.arnx.jsonic.io.*" />
 			<classpath>
@@ -99,7 +100,10 @@
 			<zipfileset dir="${tmp}/java/sample/basic" prefix="${ant.project.name}-${version}/sample" />
 			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
 			<zipfileset dir="lib" includes="build.xml" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />			
+			<zipfileset dir="." prefix="${ant.project.name}-${version}" >
+				<include name="LICENSE.txt" />
+				<include name="pom.xml" />
+			</zipfileset>			
 		</zip>
 		<delete dir="${tmp}" />
 	</target>

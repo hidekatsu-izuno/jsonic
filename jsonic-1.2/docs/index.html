@@ -706,7 +706,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 </dl> 
 
 <h2 id="maven">Mavenリポジトリ</h2> 
-<p>JSONICでは現在のところ、Mavenリポジトリで配布は行っておりません。しかし、Seasarコミッタの方のご厚意により<a href="http://maven.seasar.org/maven2/">Seasar.orgのMavenリポジトリ</a>にて配布して頂けるとのご連絡を頂きましたので、当面はこちらをご利用頂けますと幸いです。</p> 
+<p>JSONICは、1.2.7以降 Maven Central Repository に登録されるようになりました。groupId、artifactIdは次の通りです。</p>
+<pre class="source">
+&lt;groupId&gt;net.arnx&lt;/groupId&gt;
+&lt;artifactId&gt;jsonic&lt;/artifactId&gt;
+</pre>
+<p>それ以前のバージョンに関しては、 <a href="http://maven.seasar.org/maven2/">Seasar.orgのMavenリポジトリ</a> などをご利用ください。</p> 
 
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
@@ -717,7 +722,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2011/10/1 version 1.2.7</h3>
+<h3>2011/10/8 version 1.2.7</h3>
 
 <ul>
 <li>[仕様変更] JSON Web Serviceにて、パス名と一致するファイルがある場合、実ファイルを優先する機能が実装されておりましたが、マッピング制限が緩い場合、JSPなど意図せぬソースが公開される恐れがあるため削除しました（#26032）</li>
