@@ -105,34 +105,34 @@ public class RPCServlet extends HttpServlet {
 	protected void doRPC(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		String uri = (request.getContextPath().equals("/")) ?
-				request.getRequestURI() : 
-				request.getRequestURI().substring(request.getContextPath().length());
-		
-		Route route = null;
-		for (RouteMapping m : config.mappings.values()) {
-			if ((route = m.matches(request, uri)) != null) {
-				container.debug("Route found: " + request.getMethod() + " " + uri);
-				break;
-			}
-		}
-		
-		if (route == null || !isJSONType(request.getContentType())) {
-			response.sendError(SC_NOT_FOUND, "Not Found");
-			return;
-		}
-		
+		JSON json = null;
 		boolean isBatch = false;
-		List<Object> requestList = new ArrayList<Object>(0);
 		List<Object> responseList = new ArrayList<Object>();
 		
-		Object component = null;
-		
-		JSON json = container.createJSON(request.getLocale());
-		
-		container.start(request, response);
 		try {
+			container.start(request, response);
+			
+			String uri = (request.getContextPath().equals("/")) ?
+					request.getRequestURI() : 
+					request.getRequestURI().substring(request.getContextPath().length());
+			
+			Route route = null;
+			for (RouteMapping m : config.mappings.values()) {
+				if ((route = m.matches(request, uri)) != null) {
+					container.debug("Route found: " + request.getMethod() + " " + uri);
+					break;
+				}
+			}
+			
+			if (route == null || !isJSONType(request.getContentType())) {
+				response.sendError(SC_NOT_FOUND, "Not Found");
+				return;
+			}
+			
+			json = container.createJSON(request.getLocale());
+			
 			// request processing
+			List<Object> requestList = new ArrayList<Object>(0);
 			Object value = json.parse(request.getReader());
 			if (value instanceof List<?> && !((List<?>)value).isEmpty()) {
 				requestList = cast(value);					
@@ -192,7 +192,7 @@ public class RPCServlet extends HttpServlet {
 						methodName = (sep != -1) ? rmethod.substring(sep+1) : rmethod;
 					}
 					
-					component = container.getComponent(route.getComponentClass(container, subcompName));
+					Object component = container.getComponent(route.getComponentClass(container, subcompName));
 					if (component == null) {
 						throw new NoSuchMethodException("Method not found: " + rmethod);
 					}

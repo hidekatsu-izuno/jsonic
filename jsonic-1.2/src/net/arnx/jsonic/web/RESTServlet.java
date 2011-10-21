@@ -160,44 +160,45 @@ public class RESTServlet extends HttpServlet {
 	protected void doREST(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		
-		String uri = (request.getContextPath().equals("/")) ?
-				request.getRequestURI() : 
-				request.getRequestURI().substring(request.getContextPath().length());
-		
-		Route route = null;
-		for (RouteMapping m : config.mappings.values()) {
-			if ((route = m.matches(request, uri)) != null) {
-				container.debug("Route found: " + request.getMethod() + " " + uri);
-				break;
-			}
-		}
-		
-		if (route == null) {
-			response.sendError(SC_NOT_FOUND, "Not Found");
-			return;
-		}
-		
-		if (route.getHttpMethod() == null || route.getRestMethod() == null) {
-			container.debug("Method mapping not found: " + route.getHttpMethod());
-			response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
-			return;			
-		}
-		
 		int status = SC_OK;
+		JSON json = null;
 		String callback = null;
 		Object result = null;
-		
-		if ("GET".equals(request.getMethod())) {
-			callback = route.getParameter("callback");
-		} else if ("POST".equals(route.getHttpMethod())) {
-			status = SC_CREATED;
-		}
-		
-		container.start(request, response);
-		
-		JSON json = container.createJSON(request.getLocale());
-		
+
 		try {
+			container.start(request, response);	
+			
+			String uri = (request.getContextPath().equals("/")) ?
+					request.getRequestURI() : 
+					request.getRequestURI().substring(request.getContextPath().length());
+			
+			Route route = null;
+			for (RouteMapping m : config.mappings.values()) {
+				if ((route = m.matches(request, uri)) != null) {
+					container.debug("Route found: " + request.getMethod() + " " + uri);
+					break;
+				}
+			}
+			
+			if (route == null) {
+				response.sendError(SC_NOT_FOUND, "Not Found");
+				return;
+			}
+			
+			if (route.getHttpMethod() == null || route.getRestMethod() == null) {
+				container.debug("Method mapping not found: " + route.getHttpMethod());
+				response.sendError(SC_METHOD_NOT_ALLOWED, "Method Not Allowed");
+				return;			
+			}
+			
+			if ("GET".equals(request.getMethod())) {
+				callback = route.getParameter("callback");
+			} else if ("POST".equals(route.getHttpMethod())) {
+				status = SC_CREATED;
+			}
+			
+			json = container.createJSON(request.getLocale());
+		
 			String className = route.getComponentClass(container);
 			Object component = container.getComponent(className);
 			if (component == null) {
