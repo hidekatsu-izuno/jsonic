@@ -797,6 +797,8 @@ public class JSON {
 			JSONHint hint = context.getHint();
 			if (hint == null) {
 				// no handle
+			} else if (context.skipHint) {
+				context.skipHint = false;
 			} else if (hint.serialized()) {
 				f = PlainFormatter.INSTANCE;
 			} else if (String.class.equals(hint.type())) {
@@ -1604,6 +1606,8 @@ public class JSON {
 			JSONHint hint = context.getHint();
 			if (hint == null) {
 				// no handle
+			} else if (context.skipHint) {
+				context.skipHint = false;
 			} else if (hint.serialized()) {
 				c = FormatConverter.INSTANCE;
 			} else if (Serializable.class.equals(hint.type())) {
@@ -1749,6 +1753,8 @@ public class JSON {
 		private Map<Class<?>, Object> memberCache;
 		private StringBuilder builderCache;
 		
+		boolean skipHint = false;
+		
 		public Context() {
 			synchronized (JSON.this) {
 				locale = JSON.this.locale;
@@ -1770,7 +1776,6 @@ public class JSON {
 				mode = context.mode;
 				level = context.level;
 				path = context.path.clone();
-				path[level*2+1] = null;
 			}
 		}
 		

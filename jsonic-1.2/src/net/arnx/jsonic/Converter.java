@@ -77,8 +77,9 @@ final class PlainConverter implements Converter {
 final class FormatConverter implements Converter {
 	public static final FormatConverter INSTANCE = new FormatConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) {
+	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		Context context2 = json.new Context(context);
+		context2.skipHint = true;
 		value = json.preformatInternal(context2, value);
 		StringBuilderOutputSource fs = new StringBuilderOutputSource(new StringBuilder(200));
 		try {
@@ -87,7 +88,9 @@ final class FormatConverter implements Converter {
 			// no handle
 		}
 		fs.flush();
-		return fs.toString();
+		
+		context.skipHint = true;
+		return json.postparse(context, fs.toString(), c, t);
 	}
 }
 
