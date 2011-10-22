@@ -251,6 +251,7 @@ public class JSONTest {
 		aBean.array2 = new Integer[] {1, 2, 3};
 		aBean.json_data = "{\"a\": 100 /* ほげほげ */}";
 		aBean.simple_json_data = "0";
+		aBean.number_json_data = 0.0;
 		
 		List<Integer> array3 = new ArrayList<Integer>();
 		array3.add(1);
@@ -259,7 +260,8 @@ public class JSONTest {
 		aBean.array3 = array3;
 		assertEquals("{\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\","
-				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},\"simple_json_data\":0,\"method\":2}", JSON.encode(aBean));
+				+ "\"json_data\":{\"a\": 100 /* ほげほげ */},\"method\":2,\"number_json_data\":0.0,\"simple_json_data\":0"
+				+ "}", JSON.encode(aBean));
 		
 		obj = new Object() {
 			@JSONHint(type=String.class)
@@ -518,6 +520,7 @@ public class JSONTest {
 		aBean.array2 = new Integer[] {1, 2, 3};
 		aBean.json_data = "{\"a\":100}";
 		aBean.simple_json_data = "0";
+		aBean.number_json_data = 0.0;
 		
 		List<Integer> array3 = new ArrayList<Integer>();
 		array3.add(1);
@@ -530,7 +533,7 @@ public class JSONTest {
 		aBean.anonymMap = anonymMap;
 		
 		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"anonymMap\":\"test\",\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"2.01\",\"date\":\"2009/01/01\","
-				+ "json_data: {\"a\": 100 /* ほげほげ */}, \"simple_json_data\": 0,"
+				+ "json_data: {\"a\": 100 /* ほげほげ */}, \"simple_json_data\": 0, \"number_json_data\": 0,"
 				+ "\"method\":2}", AnnotationBean.class);
 		assertEquals(aBean, aBeanResult);
 		assertEquals(Vector.class, aBeanResult.array3.getClass());
@@ -2261,6 +2264,9 @@ class AnnotationBean {
 	
 	@JSONHint(serialized=true)
 	public String simple_json_data;
+	
+	@JSONHint(serialized=true)
+	public double number_json_data;
 	
 	@JSONHint(anonym="anonym")
 	public AnonymTest anonymMap;
