@@ -1,6 +1,7 @@
 package net.arnx.jsonic;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.io.StringBuilderOutputSource;
 import net.arnx.jsonic.util.Base64;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
@@ -76,7 +78,16 @@ final class FormatConverter implements Converter {
 	public static final FormatConverter INSTANCE = new FormatConverter();
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) {
-		return json.format(value);
+		Context context2 = json.new Context(context);
+		value = json.preformatInternal(context2, value);
+		StringBuilderOutputSource fs = new StringBuilderOutputSource(new StringBuilder(200));
+		try {
+			json.formatInternal(context2, value, fs);
+		} catch (IOException e) {
+			// no handle
+		}
+		fs.flush();
+		return fs.toString();
 	}
 }
 

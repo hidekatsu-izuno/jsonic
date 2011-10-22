@@ -1760,6 +1760,20 @@ public class JSON {
 			}
 		}
 		
+		Context(Context context) {
+			synchronized (context) {
+				locale = context.locale;
+				contextObject = context.contextObject;
+				maxDepth = context.maxDepth;
+				prettyPrint = context.prettyPrint;
+				suppressNull = context.suppressNull;
+				mode = context.mode;
+				level = context.level;
+				path = context.path.clone();
+				path[level*2+1] = null;
+			}
+		}
+		
 		public StringBuilder getCachedBuffer() {
 			if (builderCache == null) {
 				builderCache = new StringBuilder();
