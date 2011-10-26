@@ -193,12 +193,12 @@ public class JSONTest {
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(test));
+		assertEquals("{\"_w\":100000000000000000000000,\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(test));
 		
 		TestBeanWrapper tbw = new TestBeanWrapper();
 		tbw.test = test;
 		String result = JSON.encode(tbw);
-		assertEquals("{\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(JSON.decode(result, TestBeanWrapper.class).test));
+		assertEquals("{\"_w\":100000000000000000000000,\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(JSON.decode(result, TestBeanWrapper.class).test));
 		
 		Document doc = DocumentBuilderFactory
 			.newInstance()
@@ -1703,6 +1703,8 @@ class TestBean implements Serializable {
 	public String getIf() { return if_; }
 	public void setIf(String if_) { this.if_ = if_; }
 	
+	public BigDecimal _w = new  BigDecimal("100000000000000000000000");
+	
 	private int x = 10;
 	int y = 100;
 	protected int z = 1000;
@@ -1724,6 +1726,7 @@ class TestBean implements Serializable {
 		result = prime * result + ((g == null) ? 0 : g.pattern().hashCode());
 		result = prime * result + ((h == null) ? 0 : h.hashCode());
 		result = prime * result + ((if_ == null) ? 0 : if_.hashCode());
+		result = prime * result + ((_w == null) ? 0 : _w.hashCode());
 		result = prime * result + x;
 		result = prime * result + y;
 		result = prime * result + z;
@@ -1782,6 +1785,11 @@ class TestBean implements Serializable {
 			if (other.if_ != null)
 				return false;
 		} else if (!if_.equals(other.if_))
+			return false;
+		if (_w == null) {
+			if (other._w != null)
+				return false;
+		} else if (!_w.equals(other._w))
 			return false;
 		if (x != other.x)
 			return false;
