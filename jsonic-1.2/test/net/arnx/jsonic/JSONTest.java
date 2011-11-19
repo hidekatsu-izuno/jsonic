@@ -1163,6 +1163,19 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
+		
+		DateTestClass dates = new DateTestClass();
+		dates.a = toDate(2000, 1, 1, 12, 5, 6, 0);
+		dates.b = toDate(2001, 1, 1, 12, 5, 6, 1);
+		dates.c = toDate(2002, 1, 1, 0, 0, 0, 0);
+		
+		json = new JSON();
+		json.setDefaultDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+		assertEquals(dates, json.parse("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001/01/01 12:05:06.001\",\"c\":\"2002-01\"}", DateTestClass.class));
+		
+		json.setDefaultDateFormat(null);
+		assertEquals(dates, json.parse("{\"a\":" + dates.a.getTime() + ",\"b\":" + dates.b.getTime() + ",\"c\":\"2002-01\"}", DateTestClass.class));
+
 	}
 
 	@Test
