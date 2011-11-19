@@ -608,7 +608,8 @@ public class JSON {
 	private int maxDepth = 32;
 	private boolean suppressNull = false;
 	private Mode mode = Mode.TRADITIONAL;
-
+	private String defaultDateFormat;
+	
 	public JSON() {
 	}
 	
@@ -701,6 +702,16 @@ public class JSON {
 	 */
 	public Mode getMode() {
 		return mode;
+	}
+	
+	/**
+	 * Sets default Date format. 
+	 * If format is null, java.util.Date is formated to long value.  
+	 * 
+	 * @param format default Date format
+	 */
+	public void setDefaultDateFormat(String format) {
+		this.defaultDateFormat = format;
 	}
 	
 	/**
@@ -1747,6 +1758,7 @@ public class JSON {
 		private final boolean prettyPrint;
 		private final boolean suppressNull;
 		private final Mode mode;
+		private final DateFormat defaultDateFormat;
 		
 		private Object[] path;
 		private int level = -1;
@@ -1763,6 +1775,16 @@ public class JSON {
 				prettyPrint = JSON.this.prettyPrint;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
+				
+				if (JSON.this.defaultDateFormat != null) {
+					if (JSON.this.locale != null) {
+						defaultDateFormat = new ComplexDateFormat(JSON.this.defaultDateFormat, JSON.this.locale);
+					} else {
+						defaultDateFormat = new ComplexDateFormat(JSON.this.defaultDateFormat);
+					}
+				} else {
+					defaultDateFormat = null;
+				}
 			}
 		}
 		
@@ -1774,6 +1796,7 @@ public class JSON {
 				prettyPrint = context.prettyPrint;
 				suppressNull = context.suppressNull;
 				mode = context.mode;
+				defaultDateFormat = context.defaultDateFormat;
 				level = context.level;
 				path = context.path.clone();
 			}
@@ -1974,6 +1997,12 @@ public class JSON {
 					} else {
 						format = c.cast(new ComplexDateFormat(hint.format()));
 					}
+				}
+			}
+			
+			if (format == null) {
+				if (DateFormat.class.isAssignableFrom(c)) {
+					format = c.cast(defaultDateFormat);
 				}
 			}
 			return format;
