@@ -2034,7 +2034,7 @@ public class JSON {
 					} else {
 						format = c.cast(new DecimalFormat(hint.format()));
 					}
-				} else if (hint == null || Number.class.isAssignableFrom(hint.getClass())) {
+				} else if (hint == null || Number.class.isAssignableFrom(hint.type())) {
 					if (numberFormat != null) format = c.cast(numberFormat);
 				}
 			} else if (DateFormat.class.isAssignableFrom(c)) {
@@ -2044,7 +2044,7 @@ public class JSON {
 					} else {
 						format = c.cast(new ComplexDateFormat(hint.format()));
 					}
-				} else if (hint == null || Number.class.isAssignableFrom(hint.getClass())) {
+				} else if (hint == null || Number.class.isAssignableFrom(hint.type())) {
 					if (dateFormat != null) format = c.cast(dateFormat);
 				}
 			}
