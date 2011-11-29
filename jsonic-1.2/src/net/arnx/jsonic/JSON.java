@@ -1791,7 +1791,9 @@ public class JSON {
 		private final Mode mode;
 		private final DateFormat dateFormat;
 		private final NumberFormat numberFormat;
-		
+		private final CaseStyle keyCaseStyle;
+		private final CaseStyle enumCaseStyle;
+
 		private Object[] path;
 		private int level = -1;
 		private Map<Class<?>, Object> memberCache;
@@ -1807,6 +1809,8 @@ public class JSON {
 				prettyPrint = JSON.this.prettyPrint;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
+				keyCaseStyle = JSON.this.keyCaseStyle;
+				enumCaseStyle = JSON.this.enumCaseStyle;
 				
 				if (JSON.this.dateFormat != null) {
 					if (JSON.this.locale != null) {
@@ -1840,6 +1844,8 @@ public class JSON {
 				mode = context.mode;
 				dateFormat = context.dateFormat;
 				numberFormat = context.numberFormat;
+				keyCaseStyle = context.keyCaseStyle;
+				enumCaseStyle = context.enumCaseStyle;
 				level = context.level;
 				path = context.path.clone();
 			}
