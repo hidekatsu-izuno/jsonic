@@ -608,7 +608,10 @@ public class JSON {
 	private int maxDepth = 32;
 	private boolean suppressNull = false;
 	private Mode mode = Mode.TRADITIONAL;
-	private String defaultDateFormat;
+	private String dateFormat;
+	private String numberFormat;
+	private CaseStyle keyCaseStyle;
+	private CaseStyle enumCaseStyle;
 	
 	public JSON() {
 	}
@@ -706,12 +709,40 @@ public class JSON {
 	
 	/**
 	 * Sets default Date format. 
-	 * If format is null, java.util.Date is formated to long value.  
+	 * When format is null, Date is formated to JSON number.  
 	 * 
 	 * @param format default Date format
 	 */
-	public void setDefaultDateFormat(String format) {
-		this.defaultDateFormat = format;
+	public void setDateFormat(String format) {
+		this.dateFormat = format;
+	}
+	
+	/**
+	 * Sets default Number format. 
+	 * When format is null, Number is formated to JSON number.  
+	 * 
+	 * @param format default Number format
+	 */
+	public void setNumberFormat(String format) {
+		this.numberFormat = format;
+	}
+	
+	/**
+	 * Sets default Case style for the keys of JSON object. 
+	 * 
+	 * @param format default Case style for keys of JSON object. 
+	 */
+	public void setKeyCaseStyle(CaseStyle style) {
+		this.keyCaseStyle = style;
+	}
+	
+	/**
+	 * Sets default Case style for Enum. 
+	 * 
+	 * @param format default Case style for Enum.
+	 */
+	public void setEnumCaseStyle(CaseStyle style) {
+		this.enumCaseStyle = style;
 	}
 	
 	/**
@@ -1758,7 +1789,8 @@ public class JSON {
 		private final boolean prettyPrint;
 		private final boolean suppressNull;
 		private final Mode mode;
-		private final DateFormat defaultDateFormat;
+		private final DateFormat dateFormat;
+		private final NumberFormat numberFormat;
 		
 		private Object[] path;
 		private int level = -1;
@@ -1776,14 +1808,24 @@ public class JSON {
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
 				
-				if (JSON.this.defaultDateFormat != null) {
+				if (JSON.this.dateFormat != null) {
 					if (JSON.this.locale != null) {
-						defaultDateFormat = new ComplexDateFormat(JSON.this.defaultDateFormat, JSON.this.locale);
+						dateFormat = new ComplexDateFormat(JSON.this.dateFormat, JSON.this.locale);
 					} else {
-						defaultDateFormat = new ComplexDateFormat(JSON.this.defaultDateFormat);
+						dateFormat = new ComplexDateFormat(JSON.this.dateFormat);
 					}
 				} else {
-					defaultDateFormat = null;
+					dateFormat = null;
+				}
+				
+				if (JSON.this.numberFormat != null) {
+					if (JSON.this.locale != null) {
+						numberFormat = new DecimalFormat(JSON.this.numberFormat, new DecimalFormatSymbols(JSON.this.locale));
+					} else {
+						numberFormat = new DecimalFormat(JSON.this.numberFormat);
+					}
+				} else {
+					numberFormat = null;
 				}
 			}
 		}
@@ -1796,7 +1838,8 @@ public class JSON {
 				prettyPrint = context.prettyPrint;
 				suppressNull = context.suppressNull;
 				mode = context.mode;
-				defaultDateFormat = context.defaultDateFormat;
+				dateFormat = context.dateFormat;
+				numberFormat = context.numberFormat;
 				level = context.level;
 				path = context.path.clone();
 			}
@@ -1984,25 +2027,25 @@ public class JSON {
 		<T extends Format> T format(Class<? extends T> c) {
 			T format = null;
 			JSONHint hint = getHint();
-			if (hint != null && hint.format().length() > 0) {
-				if (NumberFormat.class.isAssignableFrom(c)) {
+			if (NumberFormat.class.isAssignableFrom(c)) {
+				if (hint != null && hint.format().length() > 0) {
 					if (locale != null) {
 						format = c.cast(new DecimalFormat(hint.format(), new DecimalFormatSymbols(locale)));
 					} else {
 						format = c.cast(new DecimalFormat(hint.format()));
 					}
-				} else if (DateFormat.class.isAssignableFrom(c)) {
+				} else if (hint == null || Number.class.isAssignableFrom(hint.getClass())) {
+					if (numberFormat != null) format = c.cast(numberFormat);
+				}
+			} else if (DateFormat.class.isAssignableFrom(c)) {
+				if (hint != null && hint.format().length() > 0) {
 					if (locale != null) {
 						format = c.cast(new ComplexDateFormat(hint.format(), locale));
 					} else {
 						format = c.cast(new ComplexDateFormat(hint.format()));
 					}
-				}
-			}
-			
-			if (format == null) {
-				if (DateFormat.class.isAssignableFrom(c)) {
-					format = c.cast(defaultDateFormat);
+				} else if (hint == null || Number.class.isAssignableFrom(hint.getClass())) {
+					if (dateFormat != null) format = c.cast(dateFormat);
 				}
 			}
 			return format;

@@ -678,16 +678,18 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
-		DateTestClass dates = new DateTestClass();
+		DateNumberTestClass dates = new DateNumberTestClass();
 		dates.a = toDate(2000, 1, 1, 12, 5, 6, 0);
 		dates.b = toDate(2001, 1, 1, 12, 5, 6, 1);
 		dates.c = toDate(2002, 1, 1, 12, 5, 6, 2);
 		
 		json = new JSON();
-		json.setDefaultDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+		json.setNumberFormat("000,000.00");
 		assertEquals("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001/01/01 12:05:06.001\",\"c\":\"2002-01\"}", json.format(dates));
 		
-		json.setDefaultDateFormat(null);
+		json.setDateFormat(null);
+		json.setNumberFormat(null);
 		assertEquals("{\"a\":" + dates.a.getTime() + ",\"b\":" + dates.b.getTime() + ",\"c\":\"2002-01\"}", json.format(dates));
 		
 	}
@@ -1164,17 +1166,17 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
-		DateTestClass dates = new DateTestClass();
+		DateNumberTestClass dates = new DateNumberTestClass();
 		dates.a = toDate(2000, 1, 1, 12, 5, 6, 0);
 		dates.b = toDate(2001, 1, 1, 12, 5, 6, 1);
 		dates.c = toDate(2002, 1, 1, 0, 0, 0, 0);
 		
 		json = new JSON();
-		json.setDefaultDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
-		assertEquals(dates, json.parse("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001/01/01 12:05:06.001\",\"c\":\"2002-01\"}", DateTestClass.class));
+		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+		assertEquals(dates, json.parse("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001/01/01 12:05:06.001\",\"c\":\"2002-01\"}", DateNumberTestClass.class));
 		
-		json.setDefaultDateFormat(null);
-		assertEquals(dates, json.parse("{\"a\":" + dates.a.getTime() + ",\"b\":" + dates.b.getTime() + ",\"c\":\"2002-01\"}", DateTestClass.class));
+		json.setDateFormat(null);
+		assertEquals(dates, json.parse("{\"a\":" + dates.a.getTime() + ",\"b\":" + dates.b.getTime() + ",\"c\":\"2002-01\"}", DateNumberTestClass.class));
 
 	}
 
@@ -2681,12 +2683,13 @@ class NullAppendable implements Appendable {
 	}
 }
 
-class DateTestClass {
+class DateNumberTestClass {
 	public Date a;
 	public Date b;
 	
 	@JSONHint(format="yyyy-MM")
 	public Date c;
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -2704,7 +2707,7 @@ class DateTestClass {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		DateTestClass other = (DateTestClass) obj;
+		DateNumberTestClass other = (DateNumberTestClass) obj;
 		if (a == null) {
 			if (other.a != null)
 				return false;
@@ -2725,6 +2728,6 @@ class DateTestClass {
 	
 	@Override
 	public String toString() {
-		return "DateTestClass [a=" + a + ", b=" + b + ", c=" + c + "]";
+		return "DateNumberTestClass [a=" + a + ", b=" + b + ", c=" + c + "]";
 	}
 }
