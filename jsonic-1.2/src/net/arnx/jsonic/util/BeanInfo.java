@@ -129,7 +129,7 @@ public final class BeanInfo {
 			if (name.length() < 2 || !Character.isUpperCase(name.charAt(1))){
 				char[] chars = name.toCharArray();
 				chars[0] = Character.toLowerCase(chars[0]);
-				name = new String(chars);
+				name = String.valueOf(chars);
 			}
 			
 			PropertyInfo prop = props.get(name);

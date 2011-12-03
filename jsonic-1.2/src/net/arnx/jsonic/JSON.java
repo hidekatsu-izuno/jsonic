@@ -610,7 +610,7 @@ public class JSON {
 	private Mode mode = Mode.TRADITIONAL;
 	private String dateFormat;
 	private String numberFormat;
-	private CaseStyle keyCaseStyle;
+	private CaseStyle propertyCaseStyle;
 	private CaseStyle enumCaseStyle;
 	
 	public JSON() {
@@ -728,12 +728,12 @@ public class JSON {
 	}
 	
 	/**
-	 * Sets default Case style for the keys of JSON object. 
+	 * Sets default Case style for the property name of JSON object. 
 	 * 
 	 * @param format default Case style for keys of JSON object. 
 	 */
-	public void setKeyCaseStyle(CaseStyle style) {
-		this.keyCaseStyle = style;
+	public void setPropertyCaseStyle(CaseStyle style) {
+		this.propertyCaseStyle = style;
 	}
 	
 	/**
@@ -1791,7 +1791,7 @@ public class JSON {
 		private final Mode mode;
 		private final DateFormat dateFormat;
 		private final NumberFormat numberFormat;
-		private final CaseStyle keyCaseStyle;
+		private final CaseStyle propertyCaseStyle;
 		private final CaseStyle enumCaseStyle;
 
 		private Object[] path;
@@ -1809,7 +1809,7 @@ public class JSON {
 				prettyPrint = JSON.this.prettyPrint;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
-				keyCaseStyle = JSON.this.keyCaseStyle;
+				propertyCaseStyle = JSON.this.propertyCaseStyle;
 				enumCaseStyle = JSON.this.enumCaseStyle;
 				
 				if (JSON.this.dateFormat != null) {
@@ -1844,7 +1844,7 @@ public class JSON {
 				mode = context.mode;
 				dateFormat = context.dateFormat;
 				numberFormat = context.numberFormat;
-				keyCaseStyle = context.keyCaseStyle;
+				propertyCaseStyle = context.propertyCaseStyle;
 				enumCaseStyle = context.enumCaseStyle;
 				level = context.level;
 				path = context.path.clone();
@@ -1878,6 +1878,14 @@ public class JSON {
 		
 		public Mode getMode() {
 			return mode;
+		}
+		
+		public CaseStyle getPropertyCaseStyle() {
+			return propertyCaseStyle;
+		}
+		
+		public CaseStyle getEnumCaseStyle() {
+			return enumCaseStyle;
 		}
 		
 		/**

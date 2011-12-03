@@ -171,9 +171,13 @@ final class NumberFormatter implements Formatter {
 
 final class EnumFormatter implements Formatter {
 	public static final EnumFormatter INSTANCE = new EnumFormatter();
-
+	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		return NumberFormatter.INSTANCE.format(json, context, src, ((Enum<?>)o).ordinal(), out);
+		if (context.getEnumCaseStyle() != null) {
+			return StringFormatter.INSTANCE.format(json, context, src, context.getPropertyCaseStyle().to(((Enum<?>)o).name()), out);
+		} else {
+			return NumberFormatter.INSTANCE.format(json, context, src, ((Enum<?>)o).ordinal(), out);
+		}
 	}
 }
 
@@ -520,7 +524,7 @@ final class CharArrayFormatter implements Formatter {
 	public static final CharArrayFormatter INSTANCE = new CharArrayFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		return StringFormatter.INSTANCE.format(json, context, src, new String((char[]) o), out);
+		return StringFormatter.INSTANCE.format(json, context, src, String.valueOf((char[])o), out);
 	}
 }
 
@@ -759,8 +763,12 @@ final class ObjectFormatter implements Formatter {
 			} catch (Exception e) {
 				cause = e;
 			}
-
-			StringFormatter.serialize(context, prop.getName(), out);
+			
+			String name = prop.getName();
+			if (context.getPropertyCaseStyle() != null) {
+				name = context.getPropertyCaseStyle().to(name);
+			}
+			StringFormatter.serialize(context, name, out);
 			out.append(':');
 			if (context.isPrettyPrint()) out.append(' ');
 			context.enter(prop.getName(), prop.getReadAnnotation(JSONHint.class));

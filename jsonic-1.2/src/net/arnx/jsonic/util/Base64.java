@@ -58,7 +58,7 @@ public class Base64 {
 			}
 		}
 
-		return new String(buffer);
+		return String.valueOf(buffer);
 	}
 	
 	/**
