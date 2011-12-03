@@ -5,15 +5,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-class ComplexDateFormat extends SimpleDateFormat {
+class ExtendedDateFormat extends SimpleDateFormat {
 	boolean escape = false;
 	
-	public ComplexDateFormat(String pattern, Locale locale) {
+	public ExtendedDateFormat(String pattern, Locale locale) {
 		super(escape(pattern), locale);
 		escape = !pattern.equals(this.toPattern());
 	}
 	
-	public ComplexDateFormat(String pattern) {
+	public ExtendedDateFormat(String pattern) {
 		super(escape(pattern));
 		escape = !pattern.equals(this.toPattern());
 	}

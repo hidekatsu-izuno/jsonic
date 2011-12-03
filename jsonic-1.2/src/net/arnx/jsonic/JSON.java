@@ -1814,9 +1814,9 @@ public class JSON {
 				
 				if (JSON.this.dateFormat != null) {
 					if (JSON.this.locale != null) {
-						dateFormat = new ComplexDateFormat(JSON.this.dateFormat, JSON.this.locale);
+						dateFormat = new ExtendedDateFormat(JSON.this.dateFormat, JSON.this.locale);
 					} else {
-						dateFormat = new ComplexDateFormat(JSON.this.dateFormat);
+						dateFormat = new ExtendedDateFormat(JSON.this.dateFormat);
 					}
 				} else {
 					dateFormat = null;
@@ -1992,10 +1992,10 @@ public class JSON {
 
 					if (name != null) {
 						if (prop.getReadMethod() != null && prop.getField() != null) {
-							props.add(new ExtendPropertyInfo(prop, prop.getName(), true, false, order));
-							props.add(new ExtendPropertyInfo(prop, name, false, true, order));
+							props.add(new ExtendedPropertyInfo(prop, prop.getName(), true, false, order));
+							props.add(new ExtendedPropertyInfo(prop, name, false, true, order));
 						} else {
-							props.add(new ExtendPropertyInfo(prop, name, true, true, order));
+							props.add(new ExtendedPropertyInfo(prop, name, true, true, order));
 						}
 						continue;
 					}
@@ -2032,10 +2032,10 @@ public class JSON {
 					
 					if (name != null) {
 						if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
-							props.put(prop.getName(), new ExtendPropertyInfo(prop, prop.getName(), true, false, order));
-							props.put(name, new ExtendPropertyInfo(prop, name, false, true, order));
+							props.put(prop.getName(), new ExtendedPropertyInfo(prop, prop.getName(), true, false, order));
+							props.put(name, new ExtendedPropertyInfo(prop, name, false, true, order));
 						} else {
-							props.put(name, new ExtendPropertyInfo(prop, name, true, true, order));
+							props.put(name, new ExtendedPropertyInfo(prop, name, true, true, order));
 						}
 						continue;
 					}
@@ -2063,9 +2063,9 @@ public class JSON {
 			} else if (DateFormat.class.isAssignableFrom(c)) {
 				if (hint != null && hint.format().length() > 0) {
 					if (locale != null) {
-						format = c.cast(new ComplexDateFormat(hint.format(), locale));
+						format = c.cast(new ExtendedDateFormat(hint.format(), locale));
 					} else {
-						format = c.cast(new ComplexDateFormat(hint.format()));
+						format = c.cast(new ExtendedDateFormat(hint.format()));
 					}
 				} else if (hint == null || Number.class.isAssignableFrom(hint.type())) {
 					if (dateFormat != null) format = c.cast(dateFormat);

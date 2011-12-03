@@ -2,10 +2,10 @@ package net.arnx.jsonic;
 
 import net.arnx.jsonic.util.PropertyInfo;
 
-class ExtendPropertyInfo extends PropertyInfo {
+class ExtendedPropertyInfo extends PropertyInfo {
 	private int order = -1;
 	
-	public ExtendPropertyInfo(PropertyInfo base, String name, 
+	public ExtendedPropertyInfo(PropertyInfo base, String name, 
 			boolean useField, boolean useMethod, int order) {
 		super(base.getBeanClass(), name, 
 				useField ? base.getField() : null, 
@@ -17,8 +17,8 @@ class ExtendPropertyInfo extends PropertyInfo {
 	
 	@Override
 	public int compareTo(PropertyInfo property) {
-		if (property instanceof ExtendPropertyInfo) {
-			ExtendPropertyInfo eprop = (ExtendPropertyInfo)property;
+		if (property instanceof ExtendedPropertyInfo) {
+			ExtendedPropertyInfo eprop = (ExtendedPropertyInfo)property;
 			if (order >= 0) {
 				if (eprop.order >= 0) {
 					if (order > eprop.order) {
