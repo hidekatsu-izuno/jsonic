@@ -122,6 +122,66 @@ public class CaseStyleTest {
 		assertEquals("aあああああ_", CaseStyle.LOWER_CAMEL.to("aあああああ_"));
 		assertEquals("aああAaa_", CaseStyle.LOWER_CAMEL.to("aああAaa_"));
 	}
+
+	@Test
+	public void testLowerUnderscore() {
+		assertEquals("aaaaaa", CaseStyle.LOWER_UNDERSCORE.to("aaaaaa"));
+		assertEquals("aaaaaa", CaseStyle.LOWER_UNDERSCORE.to("AAAAAA"));
+		assertEquals("aaaaaa", CaseStyle.LOWER_UNDERSCORE.to("Aaaaaa"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("AaaAaa"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("aaaAaa"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("AAA AAA"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("AAA_AAA"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("AAA-AAA"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("aaa aaa"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("aaa_aaa"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("aaa-aaa"));
+		assertEquals("aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("AAA  AAA"));
+		assertEquals("あああ_aaa", CaseStyle.LOWER_UNDERSCORE.to("あああAaa"));
+		assertEquals("あああaaa", CaseStyle.LOWER_UNDERSCORE.to("あああaaa"));
+		assertEquals("aあああああ", CaseStyle.LOWER_UNDERSCORE.to("Aあああああ"));
+		assertEquals("aああ_aaa", CaseStyle.LOWER_UNDERSCORE.to("AああAaa"));
+		assertEquals("aあああああ", CaseStyle.LOWER_UNDERSCORE.to("aあああああ"));
+		assertEquals("aああ_aaa", CaseStyle.LOWER_UNDERSCORE.to("aああAaa"));
+		
+		assertEquals("_aaaaaa", CaseStyle.LOWER_UNDERSCORE.to("_aaaaaa"));
+		assertEquals("_aaaaaa", CaseStyle.LOWER_UNDERSCORE.to("_AAAAAA"));
+		assertEquals("_aaaaaa", CaseStyle.LOWER_UNDERSCORE.to("_Aaaaaa"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_AaaAaa"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_aaaAaa"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_AAA AAA"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_AAA_AAA"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_AAA-AAA"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_aaa aaa"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_aaa_aaa"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_aaa-aaa"));
+		assertEquals("_aaa_aaa", CaseStyle.LOWER_UNDERSCORE.to("_AAA  AAA"));
+		assertEquals("_あああ_aaa", CaseStyle.LOWER_UNDERSCORE.to("_あああAaa"));
+		assertEquals("_あああaaa", CaseStyle.LOWER_UNDERSCORE.to("_あああaaa"));
+		assertEquals("_aあああああ", CaseStyle.LOWER_UNDERSCORE.to("_Aあああああ"));
+		assertEquals("_aああ_aaa", CaseStyle.LOWER_UNDERSCORE.to("_AああAaa"));
+		assertEquals("_aあああああ", CaseStyle.LOWER_UNDERSCORE.to("_aあああああ"));
+		assertEquals("_aああ_aaa", CaseStyle.LOWER_UNDERSCORE.to("_aああAaa"));
+		
+		assertEquals("aaaaaa_", CaseStyle.LOWER_UNDERSCORE.to("aaaaaa_"));
+		assertEquals("aaaaaa_", CaseStyle.LOWER_UNDERSCORE.to("AAAAAA_"));
+		assertEquals("aaaaaa_", CaseStyle.LOWER_UNDERSCORE.to("Aaaaaa_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("AaaAaa_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("aaaAaa_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("AAA AAA_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("AAA_AAA_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("AAA-AAA_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("aaa aaa_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("aaa_aaa_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("aaa-aaa_"));
+		assertEquals("aaa_aaa_", CaseStyle.LOWER_UNDERSCORE.to("AAA  AAA_"));
+		assertEquals("あああ_aaa_", CaseStyle.LOWER_UNDERSCORE.to("あああAaa_"));
+		assertEquals("あああaaa_", CaseStyle.LOWER_UNDERSCORE.to("あああaaa_"));
+		assertEquals("aあああああ_", CaseStyle.LOWER_UNDERSCORE.to("Aあああああ_"));
+		assertEquals("aああ_aaa_", CaseStyle.LOWER_UNDERSCORE.to("AああAaa_"));
+		assertEquals("aあああああ_", CaseStyle.LOWER_UNDERSCORE.to("aあああああ_"));
+		assertEquals("aああ_aaa_", CaseStyle.LOWER_UNDERSCORE.to("aああAaa_"));
+	}
 	
 	@Test
 	public void testUpperCase() {
@@ -247,5 +307,64 @@ public class CaseStyleTest {
 		assertEquals("Aあああああ_", CaseStyle.UPPER_CAMEL.to("aあああああ_"));
 		assertEquals("AああAaa_", CaseStyle.UPPER_CAMEL.to("aああAaa_"));
 	}
-
+	@Test
+	public void testUpperUnderscore() {
+		assertEquals("AAAAAA", CaseStyle.UPPER_UNDERSCORE.to("aaaaaa"));
+		assertEquals("AAAAAA", CaseStyle.UPPER_UNDERSCORE.to("AAAAAA"));
+		assertEquals("AAAAAA", CaseStyle.UPPER_UNDERSCORE.to("Aaaaaa"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("AaaAaa"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("aaaAaa"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("AAA AAA"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("AAA_AAA"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("AAA-AAA"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("aaa aaa"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("aaa_aaa"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("aaa-aaa"));
+		assertEquals("AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("AAA  AAA"));
+		assertEquals("あああ_AAA", CaseStyle.UPPER_UNDERSCORE.to("あああAaa"));
+		assertEquals("あああAAA", CaseStyle.UPPER_UNDERSCORE.to("あああaaa"));
+		assertEquals("Aあああああ", CaseStyle.UPPER_UNDERSCORE.to("Aあああああ"));
+		assertEquals("Aああ_AAA", CaseStyle.UPPER_UNDERSCORE.to("AああAaa"));
+		assertEquals("Aあああああ", CaseStyle.UPPER_UNDERSCORE.to("aあああああ"));
+		assertEquals("Aああ_AAA", CaseStyle.UPPER_UNDERSCORE.to("aああAaa"));
+		
+		assertEquals("_AAAAAA", CaseStyle.UPPER_UNDERSCORE.to("_aaaaaa"));
+		assertEquals("_AAAAAA", CaseStyle.UPPER_UNDERSCORE.to("_AAAAAA"));
+		assertEquals("_AAAAAA", CaseStyle.UPPER_UNDERSCORE.to("_Aaaaaa"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_AaaAaa"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_aaaAaa"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_AAA AAA"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_AAA_AAA"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_AAA-AAA"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_aaa aaa"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_aaa_aaa"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_aaa-aaa"));
+		assertEquals("_AAA_AAA", CaseStyle.UPPER_UNDERSCORE.to("_AAA  AAA"));
+		assertEquals("_あああ_AAA", CaseStyle.UPPER_UNDERSCORE.to("_あああAaa"));
+		assertEquals("_あああAAA", CaseStyle.UPPER_UNDERSCORE.to("_あああaaa"));
+		assertEquals("_Aあああああ", CaseStyle.UPPER_UNDERSCORE.to("_Aあああああ"));
+		assertEquals("_Aああ_AAA", CaseStyle.UPPER_UNDERSCORE.to("_AああAaa"));
+		assertEquals("_Aあああああ", CaseStyle.UPPER_UNDERSCORE.to("_aあああああ"));
+		assertEquals("_Aああ_AAA", CaseStyle.UPPER_UNDERSCORE.to("_aああAaa"));
+		
+		assertEquals("AAAAAA_", CaseStyle.UPPER_UNDERSCORE.to("aaaaaa_"));
+		assertEquals("AAAAAA_", CaseStyle.UPPER_UNDERSCORE.to("AAAAAA_"));
+		assertEquals("AAAAAA_", CaseStyle.UPPER_UNDERSCORE.to("Aaaaaa_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("AaaAaa_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("aaaAaa_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("AAA AAA_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("AAA_AAA_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("AAA-AAA_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("aaa aaa_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("aaa_aaa_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("aaa-aaa_"));
+		assertEquals("AAA_AAA_", CaseStyle.UPPER_UNDERSCORE.to("AAA  AAA_"));
+		assertEquals("あああ_AAA_", CaseStyle.UPPER_UNDERSCORE.to("あああAaa_"));
+		assertEquals("あああAAA_", CaseStyle.UPPER_UNDERSCORE.to("あああaaa_"));
+		assertEquals("Aあああああ_", CaseStyle.UPPER_UNDERSCORE.to("Aあああああ_"));
+		assertEquals("Aああ_AAA_", CaseStyle.UPPER_UNDERSCORE.to("AああAaa_"));
+		assertEquals("Aあああああ_", CaseStyle.UPPER_UNDERSCORE.to("aあああああ_"));
+		assertEquals("Aああ_AAA_", CaseStyle.UPPER_UNDERSCORE.to("aああAaa_"));
+	}
+	
 }

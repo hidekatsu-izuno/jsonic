@@ -214,7 +214,7 @@ public enum CaseStyle {
 				}
 			}
 			if (type == SEPARATOR) {
-				sb.append(sep);
+				if (prev != SEPARATOR) sb.append(sep);
 			} else if (upper && type == LOWER) {
 				sb.append((char)(c - 32));
 			} else if (!upper && type == UPPER) {
