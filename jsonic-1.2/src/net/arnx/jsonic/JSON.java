@@ -77,6 +77,7 @@ import net.arnx.jsonic.io.StringBuilderOutputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.ExtendedDateFormat;
 import net.arnx.jsonic.util.PropertyInfo;
 
 import org.w3c.dom.CharacterData;
@@ -1619,8 +1620,17 @@ public class JSON {
 			result = postparse(context, value, cls, type);
 			context.exit();
 		} catch (Exception e) {
-			throw new JSONException(getMessage("json.parse.ConversionError",
-					(value instanceof String) ? "\"" + value + "\"" : value, type, context),
+			String text;
+			if (value instanceof CharSequence) {
+				text = "\"" + value + "\"";
+			} else {
+				try {
+					text = value.toString();
+				} catch (Exception e2) {
+					text = value.getClass().toString();
+				}
+			}
+			throw new JSONException(getMessage("json.parse.ConversionError", text, type, context), 
 					JSONException.POSTPARSE_ERROR, e);
 		}
 		return (T)result;

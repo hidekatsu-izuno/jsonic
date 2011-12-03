@@ -1,11 +1,11 @@
-package net.arnx.jsonic;
+package net.arnx.jsonic.util;
 
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-class ExtendedDateFormat extends SimpleDateFormat {
+public class ExtendedDateFormat extends SimpleDateFormat {
 	boolean escape = false;
 	
 	public ExtendedDateFormat(String pattern, Locale locale) {

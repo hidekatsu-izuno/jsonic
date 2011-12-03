@@ -107,7 +107,7 @@ final class StringSerializableConverter implements Converter {
 				return null;
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}	
@@ -120,7 +120,7 @@ final class SerializableConverter implements Converter {
 		if (value instanceof String) {
 			return ClassUtil.deserialize(Base64.decode((String)value));
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -186,7 +186,7 @@ final class CharacterConverter implements Converter {
 				return PlainConverter.getDefaultValue(c);
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
 	}
@@ -234,7 +234,7 @@ final class ByteConverter implements Converter {
 				return PlainConverter.getDefaultValue(c);
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
 	}
@@ -279,7 +279,7 @@ final class ShortConverter implements Converter {
 				return PlainConverter.getDefaultValue(c);
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
 	}	
@@ -324,7 +324,7 @@ final class IntegerConverter  implements Converter {
 				return PlainConverter.getDefaultValue(c);
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
 	}	
@@ -369,7 +369,7 @@ final class LongConverter implements Converter {
 				return PlainConverter.getDefaultValue(c);
 			}					
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
 	}	
@@ -403,7 +403,7 @@ final class FloatConverter  implements Converter {
 				return PlainConverter.getDefaultValue(c);
 			}					
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
 	}	
@@ -437,7 +437,7 @@ final class DoubleConverter  implements Converter {
 				return PlainConverter.getDefaultValue(c);
 			}					
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
 	}	
@@ -483,7 +483,7 @@ final class BigIntegerConverter  implements Converter {
 			}
 			return null;
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}	
@@ -516,7 +516,7 @@ final class BigDecimalConverter  implements Converter {
 			}
 			return null;
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}	
@@ -536,7 +536,7 @@ final class PatternConverter implements Converter {
 		if (value instanceof String) {
 			return Pattern.compile(value.toString());
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -556,7 +556,7 @@ final class TimeZoneConverter implements Converter {
 		if (value instanceof String) {
 			return TimeZone.getTimeZone(value.toString().trim());
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}	
@@ -595,7 +595,7 @@ final class LocaleConverter implements Converter {
 					return null;
 				}
 			} else if (value != null) {
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 			}
 		}
 		return null;
@@ -615,7 +615,7 @@ final class FileConverter implements Converter {
 		if (value instanceof String) {
 			return new File(value.toString().trim());
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -640,7 +640,7 @@ final class URLConverter implements Converter {
 				return new URL(value.toString().trim());
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -665,7 +665,7 @@ final class URIConverter implements Converter {
 				return new URI(value.toString().trim());
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -684,7 +684,7 @@ final class UUIDConverter implements Converter {
 		if (value instanceof String) {
 			return UUID.fromString(value.toString().trim());
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -703,7 +703,7 @@ final class CharsetConverter implements Converter {
 		if (value instanceof String) {
 			return Charset.forName(value.toString().trim());
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -744,7 +744,7 @@ final class ClassConverter implements Converter {
 				}
 			}
 		} else if (value != null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
 	}
@@ -1230,7 +1230,7 @@ final class ObjectConverter implements Converter {
 			}
 			return o;
 		} else if (value instanceof List<?>) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		} else {
 			JSONHint hint = context.getHint();
 			if (hint != null && hint.anonym().length() > 0) {
@@ -1249,7 +1249,7 @@ final class ObjectConverter implements Converter {
 				context.exit();
 				return o;
 			} else {
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 			}
 		}
 	}
