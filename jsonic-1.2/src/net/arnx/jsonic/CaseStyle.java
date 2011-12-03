@@ -15,10 +15,10 @@ public enum CaseStyle {
 		}
 	},
 	
-	LOWER_UNDERSCORE {
+	LOWER_SPACE {
 		@Override
 		public String to(String value) {
-			return toSeparatedCase(value, false, '_');
+			return toSeparatedCase(value, false, ' ');
 		}
 	},
 	
@@ -26,6 +26,13 @@ public enum CaseStyle {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, false, '-');
+		}
+	},
+	
+	LOWER_UNDERSCORE {
+		@Override
+		public String to(String value) {
+			return toSeparatedCase(value, false, '_');
 		}
 	},
 	
@@ -43,10 +50,10 @@ public enum CaseStyle {
 		}
 	},
 	
-	UPPER_UNDERSCORE {
+	UPPER_SPACE {
 		@Override
 		public String to(String value) {
-			return toSeparatedCase(value, true, '_');
+			return toSeparatedCase(value, true, ' ');
 		}
 	},
 	
@@ -54,6 +61,13 @@ public enum CaseStyle {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, true, '-');
+		}
+	},
+	
+	UPPER_UNDERSCORE {
+		@Override
+		public String to(String value) {
+			return toSeparatedCase(value, true, '_');
 		}
 	};
 	
@@ -63,6 +77,7 @@ public enum CaseStyle {
 	private static final int LOWER = 2;
 	private static final int UPPER = 3;
 	private static final int NUMBER = 4;
+	private static final int OTHER = 9;
 	private static final int[] MAP = new int[128];
 	
 	static {
@@ -73,8 +88,10 @@ public enum CaseStyle {
 				MAP[i] = LOWER;
 			} else if (i >= '0' && i <= '9') {
 				MAP[i] = NUMBER;
-			} else {
+			} else if (i == ' ' || i == '+'|| i == ',' || i == '-' || i == '.' || i == '_') {
 				MAP[i] = SEPARATOR;
+			} else {
+				MAP[i] = OTHER;
 			}
 		}
 	}
@@ -93,17 +110,32 @@ public enum CaseStyle {
 			}
 		}
 		return String.valueOf(ca);
-
 	}
 	
 	private static String toCamelCase(String value, boolean upper) {
 		if (value == null || value.isEmpty()) {
 			return value;
 		}
-		int start = (getType(value.charAt(0)) == SEPARATOR) ? 1 : 0;
-		int end = (getType(value.charAt(value.length()-1)) == SEPARATOR) ? 1 : 0;
-		int index = indexOfSeparator(value, start, end);
-
+		
+		int start;
+		int end;
+		for (start = 0; start < value.length(); start++) {
+			int type = getType(value.charAt(start));
+			if (type != SEPARATOR && type != OTHER) break;
+		}
+		for (end = 0; end < value.length()-start; end++) {
+			int type = getType(value.charAt(value.length()-end-1));
+			if (type != SEPARATOR && type != OTHER) break;
+		}
+		
+		int index = -1;
+		for (int i = start; i < value.length()-end; i++) {
+			if (getType(value.charAt(i)) == SEPARATOR) {
+				index = i;
+				break;
+			}
+		}
+		
 		if (index == -1) {
 			int type = getType(value.charAt(start));
 			if (type == UPPER) {
@@ -153,10 +185,20 @@ public enum CaseStyle {
 		if (value == null || value.isEmpty()) {
 			return value;
 		}
-		int start = (getType(value.charAt(0)) == SEPARATOR) ? 1 : 0;
-		int end = (getType(value.charAt(value.length()-1)) == SEPARATOR) ? 1 : 0;
+		
+		int start;
+		int end;
+		for (start = 0; start < value.length(); start++) {
+			int type = getType(value.charAt(start));
+			if (type != SEPARATOR && type != OTHER) break;
+		}
+		for (end = 0; end < value.length()-start; end++) {
+			int type = getType(value.charAt(value.length()-end-1));
+			if (type != SEPARATOR && type != OTHER) break;
+		}
 		
 		StringBuilder sb = new StringBuilder((int)(value.length() * 1.5));
+		if (start > 0) sb.append(value, 0, start);
 		int prev = -1;
 		for (int i = start; i < value.length() - end; i++) {
 			char c = value.charAt(i);
@@ -184,16 +226,6 @@ public enum CaseStyle {
 		}
 		if (end > 0) sb.append(value, value.length()-end, value.length());
 		return sb.toString();
-	}
-	
-	private static int indexOfSeparator(String value, int start, int end) {
-		for (int i = start; i < value.length()-end; i++) {
-			char c = value.charAt(i);
-			if (getType(c) == SEPARATOR) {
-				return i;
-			}
-		}
-		return -1;
 	}
 	
 	private static int getType(char c) {
