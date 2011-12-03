@@ -180,4 +180,72 @@ public class CaseStyleTest {
 		assertEquals("AああAAA_", CaseStyle.UPPER_CASE.to("aああAaa_"));
 	}
 
+	@Test
+	public void testUpperCamel() {
+		assertEquals("Aaaaaa", CaseStyle.UPPER_CAMEL.to("aaaaaa"));
+		assertEquals("Aaaaaa", CaseStyle.UPPER_CAMEL.to("AAAAAA"));
+		assertEquals("Aaaaaa", CaseStyle.UPPER_CAMEL.to("Aaaaaa"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("AaaAaa"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("aaaAaa"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("AAA AAA"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("AAA_AAA"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("AAA-AAA"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("aaa aaa"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("aaa_aaa"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("aaa-aaa"));
+		assertEquals("AaaAaa", CaseStyle.UPPER_CAMEL.to("AAA  AAA"));
+		assertEquals("あああAaa", CaseStyle.UPPER_CAMEL.to("あああAaa"));
+		assertEquals("あああaaa", CaseStyle.UPPER_CAMEL.to("あああaaa"));
+		assertEquals("Aあああああ", CaseStyle.UPPER_CAMEL.to("Aあああああ"));
+		assertEquals("AああAaa", CaseStyle.UPPER_CAMEL.to("AああAaa"));
+		assertEquals("Aあああああ", CaseStyle.UPPER_CAMEL.to("aあああああ"));
+		assertEquals("AああAaa", CaseStyle.UPPER_CAMEL.to("aああAaa"));
+		
+		assertEquals("_Aaaaaa", CaseStyle.UPPER_CAMEL.to("_aaaaaa"));
+		assertEquals("_Aaaaaa", CaseStyle.UPPER_CAMEL.to("_AAAAAA"));
+		assertEquals("_Aaaaaa", CaseStyle.UPPER_CAMEL.to("_Aaaaaa"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_AaaAaa"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_aaaAaa"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_AAA AAA"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_AAA_AAA"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_AAA-AAA"));
+		assertEquals("@AaaAaa", CaseStyle.UPPER_CAMEL.to("@aaaAaa"));
+		assertEquals("@@AaaAaa", CaseStyle.UPPER_CAMEL.to("@@AAA AAA"));
+		assertEquals("@AaaAaa", CaseStyle.UPPER_CAMEL.to("@AAA_AAA"));
+		assertEquals("@@AaaAaa", CaseStyle.UPPER_CAMEL.to("@@AAA-AAA"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_aaa aaa"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_aaa_aaa"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_aaa-aaa"));
+		assertEquals("_AaaAaa", CaseStyle.UPPER_CAMEL.to("_AAA  AAA"));
+		assertEquals("_あああAaa", CaseStyle.UPPER_CAMEL.to("_あああAaa"));
+		assertEquals("_あああaaa", CaseStyle.UPPER_CAMEL.to("_あああaaa"));
+		assertEquals("_Aあああああ", CaseStyle.UPPER_CAMEL.to("_Aあああああ"));
+		assertEquals("_AああAaa", CaseStyle.UPPER_CAMEL.to("_AああAaa"));
+		assertEquals("_Aあああああ", CaseStyle.UPPER_CAMEL.to("_aあああああ"));
+		assertEquals("_AああAaa", CaseStyle.UPPER_CAMEL.to("_aああAaa"));
+		
+		assertEquals("Aaaaaa_", CaseStyle.UPPER_CAMEL.to("aaaaaa_"));
+		assertEquals("Aaaaaa_", CaseStyle.UPPER_CAMEL.to("AAAAAA_"));
+		assertEquals("Aaaaaa_", CaseStyle.UPPER_CAMEL.to("Aaaaaa_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("AaaAaa_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("aaaAaa_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("AAA AAA_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("AAA_AAA_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("AAA-AAA_"));
+		assertEquals("AaaAaa@", CaseStyle.UPPER_CAMEL.to("aaaAaa@"));
+		assertEquals("AaaAaa@@", CaseStyle.UPPER_CAMEL.to("AAA AAA@@"));
+		assertEquals("AaaAaa@", CaseStyle.UPPER_CAMEL.to("AAA_AAA@"));
+		assertEquals("AaaAaa@@", CaseStyle.UPPER_CAMEL.to("AAA-AAA@@"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("aaa aaa_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("aaa_aaa_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("aaa-aaa_"));
+		assertEquals("AaaAaa_", CaseStyle.UPPER_CAMEL.to("AAA  AAA_"));
+		assertEquals("あああAaa_", CaseStyle.UPPER_CAMEL.to("あああAaa_"));
+		assertEquals("あああaaa_", CaseStyle.UPPER_CAMEL.to("あああaaa_"));
+		assertEquals("Aあああああ_", CaseStyle.UPPER_CAMEL.to("Aあああああ_"));
+		assertEquals("AああAaa_", CaseStyle.UPPER_CAMEL.to("AああAaa_"));
+		assertEquals("Aあああああ_", CaseStyle.UPPER_CAMEL.to("aあああああ_"));
+		assertEquals("AああAaa_", CaseStyle.UPPER_CAMEL.to("aああAaa_"));
+	}
+
 }
