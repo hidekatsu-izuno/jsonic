@@ -59,11 +59,10 @@ public enum CaseStyle {
 	
 	public abstract String to(String value);
 	
-	private static final int SEPARATOR = 0;
-	private static final int LOWER = 1;
-	private static final int UPPER = 2;
-	private static final int NUMBER = 3;
-	private static final int OTHER = 9;
+	private static final int SEPARATOR = 1;
+	private static final int LOWER = 2;
+	private static final int UPPER = 3;
+	private static final int NUMBER = 4;
 	private static final int[] MAP = new int[128];
 	
 	static {
@@ -156,49 +155,35 @@ public enum CaseStyle {
 		}
 		int start = (getType(value.charAt(0)) == SEPARATOR) ? 1 : 0;
 		int end = (getType(value.charAt(value.length()-1)) == SEPARATOR) ? 1 : 0;
-		int index = indexOfSeparator(value, start, end);
 		
-		if (index == -1) {
-			StringBuilder sb = new StringBuilder((int)(value.length() * 1.5));
-			int prev = -1;
-			for (int i = start; i < value.length() - end; i++) {
-				char c = value.charAt(i);
-				int type = getType(c);
-				if (type == UPPER && prev != -1) {
-					if (prev != UPPER) {
+		StringBuilder sb = new StringBuilder((int)(value.length() * 1.5));
+		int prev = -1;
+		for (int i = start; i < value.length() - end; i++) {
+			char c = value.charAt(i);
+			int type = getType(c);
+			if (type == UPPER && prev != -1) {
+				if (prev != UPPER && prev != SEPARATOR) {
+					sb.append(sep);
+				} else if (i+1 < value.length() - end) {
+					int next = getType(value.charAt(i+1));
+					if (next != UPPER && next != NUMBER && next != SEPARATOR) {
 						sb.append(sep);
-					} else if (i+1 < value.length() - end) {
-						int next = getType(value.charAt(i+1));
-						if (next != UPPER && next != NUMBER) {
-							sb.append(sep);
-						}
 					}
 				}
-				if (upper && type == LOWER) {
-					sb.append((char)(c - 32));
-				} else if (!upper && type == UPPER) {
-					sb.append((char)(c + 32));
-				} else {
-					sb.append(c);
-				}
-				prev = type;
 			}
-			if (end > 0) sb.append(value, value.length()-end, value.length());
-			return sb.toString();
-		} else {
-			char[] ca = value.toCharArray();
-			for (int i = start; i < ca.length - end; i++) {
-				int type = getType(ca[i]);
-				if (type == UPPER) {
-					if (!upper) ca[i] = (char)(ca[i] + 32);
-				} else if (type == LOWER) {
-					if (upper) ca[i] = (char)(ca[i] - 32);
-				} else if (type == SEPARATOR) {
-					if (ca[i] != sep) ca[i] = sep;
-				}
+			if (type == SEPARATOR) {
+				sb.append(sep);
+			} else if (upper && type == LOWER) {
+				sb.append((char)(c - 32));
+			} else if (!upper && type == UPPER) {
+				sb.append((char)(c + 32));
+			} else {
+				sb.append(c);
 			}
-			return String.valueOf(ca);
+			prev = type;
 		}
+		if (end > 0) sb.append(value, value.length()-end, value.length());
+		return sb.toString();
 	}
 	
 	private static int indexOfSeparator(String value, int start, int end) {
@@ -212,6 +197,6 @@ public enum CaseStyle {
 	}
 	
 	private static int getType(char c) {
-		return (c < MAP.length) ? MAP[c] : OTHER;
+		return (c < MAP.length) ? MAP[c] : 0;
 	}
 }
