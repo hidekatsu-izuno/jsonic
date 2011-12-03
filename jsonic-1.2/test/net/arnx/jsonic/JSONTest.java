@@ -634,6 +634,21 @@ public class JSONTest {
 		
 		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
+		json = new JSON();
+		Object obj2 = new Object() {
+			public int abcDef = 100;
+			public int GhiJkl = 100;
+			public int mno_pqr = 100;
+			public int STU_VWX = 100;
+		};
+		assertEquals("{\"GhiJkl\":100,\"STU_VWX\":100,\"abcDef\":100,\"mno_pqr\":100}", json.format(obj2));
+		json.setPropertyCaseStyle(CaseStyle.LOWER_CASE);
+		assertEquals("{\"abcdef\":100,\"ghijkl\":100,\"mno_pqr\":100,\"stu_vwx\":100}", json.format(obj2));
+		json.setPropertyCaseStyle(CaseStyle.LOWER_CAMEL);
+		assertEquals("{\"abcDef\":100,\"ghiJkl\":100,\"mnoPqr\":100,\"stuVwx\":100}", json.format(obj2));
+		json.setPropertyCaseStyle(CaseStyle.LOWER_UNDERSCORE);
+		assertEquals("{\"abc_def\":100,\"ghi_jkl\":100,\"mno_pqr\":100,\"stu_vwx\":100}", json.format(obj2));
+		
 		//SCRIPT
 		json = new JSON();
 		json.setMode(JSON.Mode.SCRIPT);

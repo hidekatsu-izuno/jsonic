@@ -1976,22 +1976,30 @@ public class JSON {
 					if (prop.isStatic() || !prop.isReadable() || ignore(this, c, prop.getReadMember())) {
 						continue;
 					}
+					String name = null;
 					
 					JSONHint hint = prop.getReadAnnotation(JSONHint.class);
 					if (hint != null) {
 						if (hint.ignore()) continue;
-						if (hint.name().length() > 0) {
-							if (prop.getReadMethod() != null && prop.getField() != null) {
-								props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-										prop.getField(), null, null, prop.isStatic()));
-								props.add(new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										null, prop.getReadMethod(), null, prop.isStatic()));
-							} else {
-								props.add(new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										prop.getField(), prop.getReadMethod(), null, prop.isStatic()));
-							}
-							continue;
+						
+						if (hint.name().length() > 0) name = hint.name();
+					}
+
+					if (name == null && getPropertyCaseStyle() != null) {
+						name = getPropertyCaseStyle().to(prop.getName());
+					}
+
+					if (name != null) {
+						if (prop.getReadMethod() != null && prop.getField() != null) {
+							props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(), 
+									prop.getField(), null, null, prop.isStatic()));
+							props.add(new PropertyInfo(prop.getBeanClass(), name, 
+									null, prop.getReadMethod(), null, prop.isStatic()));
+						} else {
+							props.add(new PropertyInfo(prop.getBeanClass(), name, 
+									prop.getField(), prop.getReadMethod(), null, prop.isStatic()));
 						}
+						continue;
 					}
 					
 					props.add(prop);

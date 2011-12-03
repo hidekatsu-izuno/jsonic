@@ -764,11 +764,7 @@ final class ObjectFormatter implements Formatter {
 				cause = e;
 			}
 			
-			String name = prop.getName();
-			if (context.getPropertyCaseStyle() != null) {
-				name = context.getPropertyCaseStyle().to(name);
-			}
-			StringFormatter.serialize(context, name, out);
+			StringFormatter.serialize(context, prop.getName(), out);
 			out.append(':');
 			if (context.isPrettyPrint()) out.append(' ');
 			context.enter(prop.getName(), prop.getReadAnnotation(JSONHint.class));
