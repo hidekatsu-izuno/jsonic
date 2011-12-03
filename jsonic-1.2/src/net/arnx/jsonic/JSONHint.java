@@ -29,4 +29,5 @@ public @interface JSONHint {
 	boolean ignore() default false;
 	boolean serialized() default false;
 	String anonym() default "";
+	int order() default -1;
 }

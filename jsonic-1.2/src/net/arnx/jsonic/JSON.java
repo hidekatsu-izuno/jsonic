@@ -1977,12 +1977,13 @@ public class JSON {
 						continue;
 					}
 					String name = null;
+					int order = -1;
 					
 					JSONHint hint = prop.getReadAnnotation(JSONHint.class);
 					if (hint != null) {
 						if (hint.ignore()) continue;
-						
 						if (hint.name().length() > 0) name = hint.name();
+						order = hint.order();
 					}
 
 					if (name == null && getPropertyCaseStyle() != null) {
@@ -1991,13 +1992,10 @@ public class JSON {
 
 					if (name != null) {
 						if (prop.getReadMethod() != null && prop.getField() != null) {
-							props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-									prop.getField(), null, null, prop.isStatic()));
-							props.add(new PropertyInfo(prop.getBeanClass(), name, 
-									null, prop.getReadMethod(), null, prop.isStatic()));
+							props.add(new ExtendPropertyInfo(prop, prop.getName(), true, false, order));
+							props.add(new ExtendPropertyInfo(prop, name, false, true, order));
 						} else {
-							props.add(new PropertyInfo(prop.getBeanClass(), name, 
-									prop.getField(), prop.getReadMethod(), null, prop.isStatic()));
+							props.add(new ExtendPropertyInfo(prop, name, true, true, order));
 						}
 						continue;
 					}
@@ -2022,21 +2020,24 @@ public class JSON {
 						continue;
 					}
 					
+					String name = null;
+					int order = -1;
+										
 					JSONHint hint = prop.getWriteAnnotation(JSONHint.class);
 					if (hint != null) {
 						if (hint.ignore()) continue;
-						if (hint.name().length() > 0) {
-							if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
-								props.put(prop.getName(), new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-										prop.getField(), null, null, prop.isStatic()));
-								props.put(hint.name(), new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										null, null, prop.getWriteMethod(), prop.isStatic()));
-							} else {
-								props.put(hint.name(), new PropertyInfo(prop.getBeanClass(), hint.name(), 
-										prop.getField(), null, prop.getWriteMethod(), prop.isStatic()));
-							}
-							continue;
+						if (hint.name().length() > 0) name = hint.name();
+						order = hint.order();
+					}
+					
+					if (name != null) {
+						if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
+							props.put(prop.getName(), new ExtendPropertyInfo(prop, prop.getName(), true, false, order));
+							props.put(name, new ExtendPropertyInfo(prop, name, false, true, order));
+						} else {
+							props.put(name, new ExtendPropertyInfo(prop, name, true, true, order));
 						}
+						continue;
 					}
 					
 					props.put(prop.getName(), prop);

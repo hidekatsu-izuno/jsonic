@@ -24,12 +24,10 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
 public class PropertyInfo implements Comparable<PropertyInfo> {
-	private Class<?> beanClass;
-	
-	private String name;
-	private boolean isStatic;
-	private Field field;
-	
+	Class<?> beanClass;
+	String name;
+	boolean isStatic;
+	Field field;
 	Method readMethod;
 	Method writeMethod;
 	
@@ -37,7 +35,6 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 		this.beanClass = beanClass;
 		this.name = name;
 		this.isStatic = isStatic;
-		
 		this.field = field;
 		this.readMethod = readMethod;
 		this.writeMethod = writeMethod;
