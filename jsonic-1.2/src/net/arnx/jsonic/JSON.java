@@ -1993,7 +1993,7 @@ public class JSON {
 					if (hint != null) {
 						if (hint.ignore()) continue;
 						if (hint.name().length() > 0) name = hint.name();
-						order = hint.order();
+						order = hint.ordinal();
 					}
 
 					if (name == null && getPropertyCaseStyle() != null) {
@@ -2042,7 +2042,7 @@ public class JSON {
 					if (hint != null) {
 						if (hint.ignore()) continue;
 						if (hint.name().length() > 0) name = hint.name();
-						order = hint.order();
+						order = hint.ordinal();
 					}
 					
 					if (name != null) {

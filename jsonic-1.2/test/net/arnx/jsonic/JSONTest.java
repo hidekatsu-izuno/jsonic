@@ -2297,13 +2297,13 @@ class AnnotationBean {
 	@JSONHint(format="###,###,0.0", type=Vector.class)
 	public List<Integer> array3;
 	
-	@JSONHint(serialized=true, order=0)
+	@JSONHint(serialized=true, ordinal=0)
 	public String json_data;
 	
-	@JSONHint(serialized=true, order=1)
+	@JSONHint(serialized=true, ordinal=1)
 	public String simple_json_data;
 	
-	@JSONHint(serialized=true, order=2)
+	@JSONHint(serialized=true, ordinal=2)
 	public double number_json_data;
 	
 	@JSONHint(anonym="anonym")
