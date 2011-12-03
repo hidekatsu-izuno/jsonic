@@ -84,7 +84,7 @@ public final class BeanInfo {
 			
 			String name = f.getName();
 			f.setAccessible(true);
-			props.put(name, new PropertyInfo(cls, name, f, null, null, isStatic));
+			props.put(name, new PropertyInfo(cls, name, f, null, null, isStatic, -1));
 		}
 		
 		for (Method m : cls.getMethods()) {
@@ -134,7 +134,7 @@ public final class BeanInfo {
 			
 			PropertyInfo prop = props.get(name);
 			if (prop == null) {
-				prop = new PropertyInfo(cls, name, null, null, null, isStatic);
+				prop = new PropertyInfo(cls, name, null, null, null, isStatic, -1);
 				props.put(name, prop);
 			}
 			

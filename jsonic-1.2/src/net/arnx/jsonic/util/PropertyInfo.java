@@ -30,14 +30,20 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 	Field field;
 	Method readMethod;
 	Method writeMethod;
+	int order;
 	
 	public PropertyInfo(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod, boolean isStatic) {
+		this(beanClass, name, field, readMethod, writeMethod, isStatic, -1);
+	}
+	
+	public PropertyInfo(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod, boolean isStatic, int order) {
 		this.beanClass = beanClass;
 		this.name = name;
 		this.isStatic = isStatic;
 		this.field = field;
 		this.readMethod = readMethod;
 		this.writeMethod = writeMethod;
+		this.order = order;
 	}
 	
 	public Class<?> getBeanClass() {
@@ -209,6 +215,20 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 		if (!beanClass.equals(property.beanClass)) {
 			return beanClass.getName().compareTo(property.beanClass.getName());			
 		} else {
+			if (order >= 0) {
+				if (property.order >= 0) {
+					if (order > property.order) {
+						return 1;
+					} else if (order < property.order) {
+						return -1;
+					}
+				} else {
+					return -1;
+				}
+			} else if (property.order >= 0) {
+				return 1;
+			}
+			
 			return name.compareTo(property.name);
 		}
 	}

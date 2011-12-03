@@ -1992,15 +1992,20 @@ public class JSON {
 
 					if (name != null) {
 						if (prop.getReadMethod() != null && prop.getField() != null) {
-							props.add(new ExtendedPropertyInfo(prop, prop.getName(), true, false, order));
-							props.add(new ExtendedPropertyInfo(prop, name, false, true, order));
+							props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(), 
+									prop.getField(), null, null, prop.isStatic(), order));
+							props.add(new PropertyInfo(prop.getBeanClass(), name, 
+									null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
 						} else {
-							props.add(new ExtendedPropertyInfo(prop, name, true, true, order));
+							props.add(new PropertyInfo(prop.getBeanClass(), name,
+									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
 						}
-						continue;
+					} else if (order >= 0) {
+						props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(),
+								prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
+					} else {
+						props.add(prop);
 					}
-					
-					props.add(prop);
 				}
 				Collections.sort(props);
 				memberCache.put(c, props);				
@@ -2032,15 +2037,20 @@ public class JSON {
 					
 					if (name != null) {
 						if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
-							props.put(prop.getName(), new ExtendedPropertyInfo(prop, prop.getName(), true, false, order));
-							props.put(name, new ExtendedPropertyInfo(prop, name, false, true, order));
+							props.put(prop.getName(), new PropertyInfo(prop.getBeanClass(), prop.getName(), 
+									prop.getField(), null, null, prop.isStatic(), order));
+							props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+									null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
 						} else {
-							props.put(name, new ExtendedPropertyInfo(prop, name, true, true, order));
+							props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
 						}
-						continue;
+					} else if (order >= 0) {
+						props.put(prop.getName(), new PropertyInfo(prop.getBeanClass(), prop.getName(), 
+								prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
+					} else {
+						props.put(prop.getName(), prop);
 					}
-					
-					props.put(prop.getName(), prop);
 				}
 				memberCache.put(c, props);				
 			}
