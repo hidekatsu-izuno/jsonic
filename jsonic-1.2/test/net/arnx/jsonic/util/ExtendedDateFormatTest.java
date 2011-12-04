@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class ExtendedDateFormatTest {
 	@Test
-	public void testComplexDateFormat() throws Exception {
+	public void testExtendedDateFormat() throws Exception {
 		assertEquals("Z\0", ExtendedDateFormat.escape("ZZ"));
 		assertEquals("'ZZ'", ExtendedDateFormat.escape("'ZZ'"));
 		assertEquals("Z\0'ZZ'", ExtendedDateFormat.escape("ZZ'ZZ'"));
