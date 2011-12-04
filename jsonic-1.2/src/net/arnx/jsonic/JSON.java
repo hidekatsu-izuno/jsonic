@@ -731,7 +731,7 @@ public class JSON {
 	/**
 	 * Sets default Case style for the property name of JSON object. 
 	 * 
-	 * @param format default Case style for keys of JSON object. 
+	 * @param style default Case style for keys of JSON object. 
 	 */
 	public void setPropertyCaseStyle(CaseStyle style) {
 		this.propertyCaseStyle = style;
@@ -740,7 +740,7 @@ public class JSON {
 	/**
 	 * Sets default Case style for Enum. 
 	 * 
-	 * @param format default Case style for Enum.
+	 * @param style default Case style for Enum.
 	 */
 	public void setEnumCaseStyle(CaseStyle style) {
 		this.enumCaseStyle = style;
