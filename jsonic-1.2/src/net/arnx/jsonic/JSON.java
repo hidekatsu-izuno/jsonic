@@ -161,7 +161,7 @@ import org.w3c.dom.Node;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.2.6
+ * @version 1.2.8
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -2077,8 +2077,8 @@ public class JSON {
 					} else {
 						format = c.cast(new DecimalFormat(hint.format()));
 					}
-				} else if (hint == null || Number.class.isAssignableFrom(hint.type())) {
-					if (numberFormat != null) format = c.cast(numberFormat);
+				} else if (hint == null && numberFormat != null) {
+					format = c.cast(numberFormat);
 				}
 			} else if (DateFormat.class.isAssignableFrom(c)) {
 				if (hint != null && hint.format().length() > 0) {
@@ -2087,8 +2087,8 @@ public class JSON {
 					} else {
 						format = c.cast(new ExtendedDateFormat(hint.format()));
 					}
-				} else if (hint == null || Number.class.isAssignableFrom(hint.type())) {
-					if (dateFormat != null) format = c.cast(dateFormat);
+				} else if (hint == null && numberFormat != null) {
+					format = c.cast(dateFormat);
 				}
 			}
 			return format;

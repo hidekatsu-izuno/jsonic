@@ -277,6 +277,8 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="index.html#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="index.html#validation">JSONの検証</a></li>
 <li><a href="index.html#jsfriendly">JavaScriptに親和的な出力</a></li>
+<li><a href="index.html#format">日時/数値書式の指定</a></li>
+<li><a href="index.html#casestyle">プロパティ名/列挙型出力書式の指定</a></li>
 <li><a href="index.html#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="index.html#maxdepth">最大深度の設定</a></li>
 <li><a href="index.html#suppressnull">null値の抑制</a></li>
@@ -481,6 +483,43 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 	JSON.escapeScript(...);
 </pre>
 
+<h3 id="format">■ 日時/数値書式の指定 <span class="subtitle">- setDateFormat/setNumberFormat</span></h3>
+
+<p>日付型や数値型は、デフォルトではJSON numberとして出力されますが、JSONIC 1.2.8以降ではsetDateFormat/setNumberFormatを指定することでデフォルトの日時/数値書式を設定できます。フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※7）。なお、書式は JSONHint を使うことで上書きすることができます。</p>
+<pre class="source">
+	JSON json = new JSON();
+	<span class="comment">// デフォルトの日時書式を指定</span>
+	json.setDateFormat("yyyy/MM/dd");
+	
+	<span class="comment">// デフォルトの数値書式を指定</span>
+	json.setNumberFormat("###,##0.00");
+	
+	<span class="comment">// 戻り値は { "date": "2011/01/01", "number": "1,000.00" ] となります</span>
+	json.format(new Object() {
+		public Date date = new Date(2011, 0, 1);
+		public int number = 1000;
+	});
+</pre>
+<div class="caption">
+(※7) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
+</div>
+
+<h3 id="casestyle">■ プロパティ名/列挙型出力書式の指定 <span class="subtitle">- setPropertyCaseStyle/setEnumCaseStyle</span></h3>
+<p>プロパティ名は、デフォルトではプロパティ名をJSON stringとして、列挙型は序数をJSON numberとして出力しますが、JSONIC 1.2.8以降ではsetPropertyCaseStyle/setEnumCaseStyleを使用することで出力書式を設定できます。</p>
+<pre class="source">
+	JSON json = new JSON();
+	<span class="comment">// プロパティ名を、アッパーキャメル記法に変換して出力</span>
+	json.setPropertyCaseStyle(CaseStyle.UPPER_UNDERSCORE);
+	
+	<span class="comment">// 列挙値を、小文字アンダースコア区切りに変換して出力</span>
+	json.setEnumCaseStyle(CaseStyle.LOWER_CAMEL);
+	
+	<span class="comment">// 戻り値は { "JSON_MODE": "halfEven" } となります</span>
+	json.format(new Object() {
+		public RoundingMode jsonMode = RoundingMode.HALF_EVEN;
+	});
+</pre>
+
 <h3 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h3>
 <p>JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
 JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一パッケージの内部クラスや無名クラスを自動的にアクセス可能に変更します。<br />
@@ -564,18 +603,19 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><th>属性名</th><th>値型</th><th>説明</th></tr>
 <tr><td>name</td><td>String</td><td>出力/代入するキー名を変更します</td></tr>
 <tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。<br />
-フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※7）。</td></tr>
+フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※8）。</td></tr>
 <tr><td>type</td><td>Class</td><td>parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。</td></tr>
 <tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
 <tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。デフォルトはfalseです。
-Format時はtoString()の値をそのまま出力<sup>(※8)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
+Format時はtoString()の値をそのまま出力<sup>(※9)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
 <tr><td>anonym</td><td>String</td><td>単純値型からMapや複合型に変換するときに単純値型を設定するプロパティ名を指定します。anonymを指定しない場合、Mapの場合はnullキーの値として設定されますが、複合型を指定した場合はエラーとなります。</td></tr>
+<tr><td>ordinal</td><td>int</td><td>JSON objectへの変換する際のキーの出力順を昇順で指定します。デフォルトはキー値の自然順序順（＝負値指定）です。</td></tr>
 </table>
 <div class="caption">
-(※7) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
+(※8) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
 </div>
 <div class="caption">
-(※8) 出力される文字列は検証されないため妥当でないJSONが出力されてしまう可能性があることに注意してください。
+(※9) 出力される文字列は検証されないため妥当でないJSONが出力されてしまう可能性があることに注意してください。
 逆に言えば、この機能を使うことでコメントやfunction呼び出しを出力することも可能です。
 </div>
 
@@ -729,7 +769,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[不具合] JSON Web Service の設定にて encoding を設定してもパラメータが文字化けしてしまう問題を修正しました（#26567）</li>
 <li>デフォルトの日時/数値フォーマットを指定する setDateFormat、setNumberFormat を追加しました。</li>
 <li>デフォルトのプロパティ名/列挙型の変換方式を指定する setPropertyCaseStyle、setEnumCaseStyle を追加しました。</li>
-<li>JSONHint アノテーションにプロパティ名の出力順序を指定する order を追加しました。</li>
+<li>JSONHint アノテーションにプロパティ名の出力順序を指定する ordinal を追加しました。</li>
 <li>decode/parse 時に UnsupportedOperationException が起こった際のメッセージを追加しました。</li>
 </ul>
 
