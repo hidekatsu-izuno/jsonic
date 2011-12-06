@@ -437,7 +437,7 @@ public class RESTServlet extends HttpServlet {
 				name = name.substring(start, (old == ']') ? name.length()-1 : name.length());
 				
 				Object key = name;
-				if (name.length() > 0 && name.charAt(0) >= '0' && name.charAt(0) >= '9') {
+				if (name.length() > 0 && name.charAt(0) >= '0' && name.charAt(0) <= '9') {
 					try {
 						key = new BigDecimal(name);
 					} catch (Exception e) {
