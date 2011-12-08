@@ -61,11 +61,9 @@ public class SpringContainer extends Container {
 					&& params.length == 1) {
 				Class<?> c = params[0];
 				if (HttpServletRequest.class.equals(c)) {
-					HttpServletRequest request = (HttpServletRequest)THREAD_LOCAL.get().get(HttpServletRequest.class);
-					method.invoke(component, request);
+					method.invoke(component, getServletComponent(c, "request"));
 				} else if (HttpServletResponse.class.equals(c)) {
-					HttpServletResponse response = (HttpServletResponse)THREAD_LOCAL.get().get(HttpServletResponse.class);
-					method.invoke(component, response);
+					method.invoke(component, getServletComponent(c, "response"));
 				}
 			}
 		}

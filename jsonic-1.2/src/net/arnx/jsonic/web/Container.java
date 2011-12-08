@@ -46,13 +46,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.util.ClassUtil;
 
 public class Container {
-	protected static final ThreadLocal<Map<Class<?>, ?>> THREAD_LOCAL = new ThreadLocal<Map<Class<?>, ?>>();
+	private static final ThreadLocal<Map<String, Object>> THREAD_LOCAL = new ThreadLocal<Map<String, Object>>();
 	
 	public Boolean debug;
 	public String init = "init";
@@ -73,11 +72,12 @@ public class Container {
 	}
 	
 	public void start(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		Map<Class<?>, Object> context = new HashMap<Class<?>, Object>();
-		context.put(HttpServletRequest.class, request);
-		context.put(HttpServletResponse.class, response);
-		THREAD_LOCAL.set(context);
-		
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("application", context);
+		map.put("config", config);
+		map.put("request", request);
+		map.put("response", response);
+		THREAD_LOCAL.set(map);
 		
 		String encoding = this.encoding;
 		Boolean expire = this.expire;
@@ -109,20 +109,10 @@ public class Container {
 		Object o = findClass(className).newInstance();
 		
 		for (Field field : o.getClass().getFields()) {
-			Class<?> c = field.getType();
-			if (ServletContext.class.equals(c) && "application".equals(field.getName())) {
-				field.set(o, context);
-			} else if (ServletConfig.class.equals(c) && "config".equals(field.getName())) {
-				field.set(o, config);
-			} else if (HttpServletRequest.class.equals(c) && "request".equals(field.getName())) {
-				HttpServletRequest request = (HttpServletRequest)THREAD_LOCAL.get().get(HttpServletRequest.class);
-				field.set(o, request);
-			} else if (HttpServletResponse.class.equals(c)	&& "response".equals(field.getName())) {
-				HttpServletResponse response = (HttpServletResponse)THREAD_LOCAL.get().get(HttpServletResponse.class);
-				field.set(o, response);
-			} else if (HttpSession.class.equals(c) && "session".equals(field.getName())) {
-				HttpServletRequest request = (HttpServletRequest)THREAD_LOCAL.get().get(HttpServletRequest.class);
-				field.set(o, request.getSession(true));
+			Class<?> cls = field.getType();
+			Object comp = getServletComponent(cls, field.getName());
+			if (comp != null && cls.isAssignableFrom(comp.getClass())) {
+				field.set(o, comp);
 			}
 		}
 		
@@ -342,6 +332,15 @@ public class Container {
 		}
 		
 		return c;
+	}
+	
+	protected Object getServletComponent(Class<?> cls, String name) {
+		if ("session".equals(name)) {
+			HttpServletRequest request = (HttpServletRequest)THREAD_LOCAL.get().get("request");
+			return request.getSession(true);
+		} else {
+			return THREAD_LOCAL.get().get(name);
+		}
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {
