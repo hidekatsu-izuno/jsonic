@@ -23,11 +23,38 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JSONHint {
+	/**
+	 * The property name 
+	 */
 	String name() default "";
+	
+	/**
+	 * The format of Number or Date
+	 */
 	String format() default "";
+	
+	/**
+	 * The Java type for creation
+	 */
 	Class<?> type() default Object.class;
+	
+	/**
+	 * Ignore this property
+	 */
 	boolean ignore() default false;
+	
+	/**
+	 * Set the flag that this property is already serialized.
+	 */
 	boolean serialized() default false;
+	
+	/**
+	 * The default key name for using when converting simple type to struct type.
+	 */
 	String anonym() default "";
+	
+	/**
+	 * The sort order of property key
+	 */
 	int ordinal() default -1;
 }
