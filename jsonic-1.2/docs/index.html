@@ -504,15 +504,15 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 (※7) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
 </div>
 
-<h3 id="casestyle">■ プロパティ名/列挙型出力書式の指定 <span class="subtitle">- setPropertyCaseStyle/setEnumCaseStyle</span></h3>
-<p>プロパティ名は、デフォルトではプロパティ名をJSON stringとして、列挙型は序数をJSON numberとして出力しますが、JSONIC 1.2.8以降ではsetPropertyCaseStyle/setEnumCaseStyleを使用することで出力書式を設定できます。</p>
+<h3 id="casestyle">■ プロパティ名/列挙型出力書式の指定 <span class="subtitle">- setPropertyStyle/setEnumStyle</span></h3>
+<p>プロパティ名は、デフォルトではプロパティ名をJSON stringとして、列挙型は序数をJSON numberとして出力しますが、JSONIC 1.2.8以降ではsetPropertyStyle/setEnumStyleを使用することで出力書式を設定できます。</p>
 <pre class="source">
 	JSON json = new JSON();
 	<span class="comment">// プロパティ名を、アッパーキャメル記法に変換して出力</span>
-	json.setPropertyCaseStyle(CaseStyle.UPPER_UNDERSCORE);
+	json.setPropertyStyle(CaseStyle.UPPER_UNDERSCORE);
 	
 	<span class="comment">// 列挙値を、小文字アンダースコア区切りに変換して出力</span>
-	json.setEnumCaseStyle(CaseStyle.LOWER_CAMEL);
+	json.setEnumStyle(CaseStyle.LOWER_CAMEL);
 	
 	<span class="comment">// 戻り値は { "JSON_MODE": "halfEven" } となります</span>
 	json.format(new Object() {
@@ -767,8 +767,9 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <ul>
 <li>[不具合] JSONHint にて serialized = true の指定時、単純型を受け取れない問題を修正しました（#26577）</li>
 <li>[不具合] JSON Web Service の設定にて encoding を設定してもパラメータが文字化けしてしまう問題を修正しました（#26567）</li>
+<li>[不具合] JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取れてしまう場合がある問題を修正しました。</li>
 <li>デフォルトの日時/数値フォーマットを指定する setDateFormat、setNumberFormat を追加しました。</li>
-<li>デフォルトのプロパティ名/列挙型の変換方式を指定する setPropertyCaseStyle、setEnumCaseStyle を追加しました。</li>
+<li>デフォルトのプロパティ名/列挙型の変換方式を指定する setPropertyStyle、setEnumStyle を追加しました。</li>
 <li>JSONHint アノテーションにプロパティ名の出力順序を指定する ordinal を追加しました。</li>
 <li>decode/parse 時に UnsupportedOperationException が起こった際のメッセージを追加しました。</li>
 </ul>

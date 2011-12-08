@@ -1,77 +1,88 @@
 package net.arnx.jsonic;
 
-public enum CaseStyle {
-	LOWER_CASE {
+public abstract class CaseStyle {
+	public static final CaseStyle LOWER_CASE = new CaseStyle("LOWER_CASE") {
 		@Override
 		public String to(String value) {
 			return toSimpleCase(value, false);
 		}
-	},
+	};
 	
-	LOWER_CAMEL {
+	public static final CaseStyle LOWER_CAMEL = new CaseStyle("LOWER_CAMEL") {
 		@Override
 		public String to(String value) {
 			return toCamelCase(value, false);
 		}
-	},
+	};
 	
-	LOWER_SPACE {
+	public static final CaseStyle LOWER_SPACE = new CaseStyle("LOWER_SPACE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, false, ' ');
 		}
-	},
+	};
 	
-	LOWER_HYPHEN {
+	public static final CaseStyle LOWER_HYPHEN = new CaseStyle("LOWER_HYPHEN") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, false, '-');
 		}
-	},
+	};
 	
-	LOWER_UNDERSCORE {
+	public static final CaseStyle LOWER_UNDERSCORE = new CaseStyle("LOWER_UNDERSCORE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, false, '_');
 		}
-	},
+	};
 	
-	UPPER_CASE {
+	public static final CaseStyle UPPER_CASE = new CaseStyle("UPPER_CASE") {
 		@Override
 		public String to(String value) {
 			return toSimpleCase(value, true);
 		}
-	},
+	};
 	
-	UPPER_CAMEL {
+	public static final CaseStyle UPPER_CAMEL = new CaseStyle("UPPER_CAMEL") {
 		@Override
 		public String to(String value) {
 			return toCamelCase(value, true);
 		}
-	},
+	};
 	
-	UPPER_SPACE {
+	public static final CaseStyle UPPER_SPACE = new CaseStyle("UPPER_SPACE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, true, ' ');
 		}
-	},
+	};
 	
-	UPPER_HYPHEN {
+	public static final CaseStyle UPPER_HYPHEN = new CaseStyle("UPPER_HYPHEN") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, true, '-');
 		}
-	},
+	};
 	
-	UPPER_UNDERSCORE {
+	public static final CaseStyle UPPER_UNDERSCORE = new CaseStyle("UPPER_UNDERSCORE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, true, '_');
 		}
 	};
 	
+	private String name;
+	
+	public CaseStyle(String name) {
+		this.name = name;
+	}
+	
 	public abstract String to(String value);
+	
+	@Override
+	public String toString() {
+		return name;
+	}
 	
 	private static final int SEPARATOR = 1;
 	private static final int LOWER = 2;

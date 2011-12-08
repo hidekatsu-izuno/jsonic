@@ -82,6 +82,9 @@ public class MemoService implements ServletContextAware {
 				} catch (IOException e) {}
 			}
 		}
+		
+		request.getContentType();
+		response.getContentType();
 	}
 	
 	// This method is ignored. Because init method has no arguments.

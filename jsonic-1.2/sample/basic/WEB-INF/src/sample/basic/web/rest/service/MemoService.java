@@ -27,9 +27,11 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 public class MemoService {
 	// it's incorrect use. you should use RDBMS.
@@ -38,8 +40,10 @@ public class MemoService {
 	
 	// injects context object. but default container only.
 	public ServletContext application;
+	public ServletConfig config;
 	public HttpServletRequest request;
 	public HttpServletResponse response;
+	public HttpSession session;
 	
 	@SuppressWarnings("unchecked")
 	public void init() {
@@ -64,6 +68,12 @@ public class MemoService {
 				} catch (IOException e) {}
 			}
 		}
+		
+		application.getContextPath();
+		config.getServletName();
+		request.getContentType();
+		response.getContentType();
+		session.getCreationTime();
 	}
 	
 	// This method is ignored. Because init method has no arguments.

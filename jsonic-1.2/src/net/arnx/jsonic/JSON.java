@@ -611,8 +611,8 @@ public class JSON {
 	private Mode mode = Mode.TRADITIONAL;
 	private String dateFormat;
 	private String numberFormat;
-	private CaseStyle propertyCaseStyle;
-	private CaseStyle enumCaseStyle;
+	private CaseStyle propertyStyle;
+	private CaseStyle enumStyle;
 	
 	public JSON() {
 	}
@@ -733,8 +733,8 @@ public class JSON {
 	 * 
 	 * @param style default Case style for keys of JSON object. 
 	 */
-	public void setPropertyCaseStyle(CaseStyle style) {
-		this.propertyCaseStyle = style;
+	public void setPropertyStyle(CaseStyle style) {
+		this.propertyStyle = style;
 	}
 	
 	/**
@@ -742,8 +742,8 @@ public class JSON {
 	 * 
 	 * @param style default Case style for Enum.
 	 */
-	public void setEnumCaseStyle(CaseStyle style) {
-		this.enumCaseStyle = style;
+	public void setEnumStyle(CaseStyle style) {
+		this.enumStyle = style;
 	}
 	
 	/**
@@ -1801,8 +1801,8 @@ public class JSON {
 		private final Mode mode;
 		private final DateFormat dateFormat;
 		private final NumberFormat numberFormat;
-		private final CaseStyle propertyCaseStyle;
-		private final CaseStyle enumCaseStyle;
+		private final CaseStyle propertyStyle;
+		private final CaseStyle enumStyle;
 
 		private Object[] path;
 		private int level = -1;
@@ -1819,8 +1819,8 @@ public class JSON {
 				prettyPrint = JSON.this.prettyPrint;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
-				propertyCaseStyle = JSON.this.propertyCaseStyle;
-				enumCaseStyle = JSON.this.enumCaseStyle;
+				propertyStyle = JSON.this.propertyStyle;
+				enumStyle = JSON.this.enumStyle;
 				
 				if (JSON.this.dateFormat != null) {
 					if (JSON.this.locale != null) {
@@ -1854,8 +1854,8 @@ public class JSON {
 				mode = context.mode;
 				dateFormat = context.dateFormat;
 				numberFormat = context.numberFormat;
-				propertyCaseStyle = context.propertyCaseStyle;
-				enumCaseStyle = context.enumCaseStyle;
+				propertyStyle = context.propertyStyle;
+				enumStyle = context.enumStyle;
 				level = context.level;
 				path = context.path.clone();
 			}
@@ -1891,11 +1891,11 @@ public class JSON {
 		}
 		
 		public CaseStyle getPropertyCaseStyle() {
-			return propertyCaseStyle;
+			return propertyStyle;
 		}
 		
 		public CaseStyle getEnumCaseStyle() {
-			return enumCaseStyle;
+			return enumStyle;
 		}
 		
 		/**

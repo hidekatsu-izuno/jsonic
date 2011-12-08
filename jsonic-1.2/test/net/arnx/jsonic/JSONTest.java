@@ -646,11 +646,11 @@ public class JSONTest {
 			public int STU_VWX = 100;
 		};
 		assertEquals("{\"GhiJkl\":100,\"STU_VWX\":100,\"abcDef\":100,\"mno_pqr\":100}", json.format(obj2));
-		json.setPropertyCaseStyle(CaseStyle.LOWER_CASE);
+		json.setPropertyStyle(CaseStyle.LOWER_CASE);
 		assertEquals("{\"abcdef\":100,\"ghijkl\":100,\"mno_pqr\":100,\"stu_vwx\":100}", json.format(obj2));
-		json.setPropertyCaseStyle(CaseStyle.LOWER_CAMEL);
+		json.setPropertyStyle(CaseStyle.LOWER_CAMEL);
 		assertEquals("{\"abcDef\":100,\"ghiJkl\":100,\"mnoPqr\":100,\"stuVwx\":100}", json.format(obj2));
-		json.setPropertyCaseStyle(CaseStyle.LOWER_UNDERSCORE);
+		json.setPropertyStyle(CaseStyle.LOWER_UNDERSCORE);
 		assertEquals("{\"abc_def\":100,\"ghi_jkl\":100,\"mno_pqr\":100,\"stu_vwx\":100}", json.format(obj2));
 		
 		//SCRIPT
