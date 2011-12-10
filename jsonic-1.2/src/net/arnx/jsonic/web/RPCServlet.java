@@ -110,6 +110,7 @@ public class RPCServlet extends HttpServlet {
 		List<Object> responseList = new ArrayList<Object>();
 		
 		try {
+			ExternalContext.start(getServletConfig(), getServletContext(), request, response);		
 			container.start(request, response);
 			
 			String uri = (request.getContextPath().equals("/")) ?
@@ -293,7 +294,11 @@ public class RPCServlet extends HttpServlet {
 			
 			responseList.add(responseData);
 		} finally {
-			container.end(request, response);
+			try {
+				container.end(request, response);				
+			} finally {
+				ExternalContext.end();				
+			}
 		}
 		
 		if (response.isCommitted()) return;

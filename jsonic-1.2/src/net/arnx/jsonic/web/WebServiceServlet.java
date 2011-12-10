@@ -147,6 +147,7 @@ public class WebServiceServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		ExternalContext.start(getServletConfig(), getServletContext(), request, response);		
 		container.start(request, response);
 		try {
 			Route route = preprocess(request, response);
@@ -159,13 +160,18 @@ public class WebServiceServlet extends HttpServlet {
 				doREST(route, request, response);
 			}
 		} finally {
-			container.end(request, response);
+			try {
+				container.end(request, response);				
+			} finally {
+				ExternalContext.end();				
+			}
 		}
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		ExternalContext.start(getServletConfig(), getServletContext(), request, response);		
 		container.start(request, response);
 		try {
 			Route route = preprocess(request, response);
@@ -177,13 +183,18 @@ public class WebServiceServlet extends HttpServlet {
 				doREST(route, request, response);
 			}
 		} finally {
-			container.end(request, response);
+			try {
+				container.end(request, response);				
+			} finally {
+				ExternalContext.end();				
+			}
 		}
 	}
 
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		ExternalContext.start(getServletConfig(), getServletContext(), request, response);		
 		container.start(request, response);
 		try {
 			Route route = preprocess(request, response);
@@ -196,13 +207,18 @@ public class WebServiceServlet extends HttpServlet {
 				doREST(route, request, response);
 			}
 		} finally {
-			container.end(request, response);
+			try {
+				container.end(request, response);				
+			} finally {
+				ExternalContext.end();				
+			}
 		}
 	}
 	
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
 		throws ServletException, IOException {
+		ExternalContext.start(getServletConfig(), getServletContext(), request, response);		
 		container.start(request, response);
 		try {
 			Route route = preprocess(request, response);
@@ -215,7 +231,11 @@ public class WebServiceServlet extends HttpServlet {
 				doREST(route, request, response);
 			}
 		} finally {
-			container.end(request, response);
+			try {
+				container.end(request, response);				
+			} finally {
+				ExternalContext.end();				
+			}
 		}
 	}
 	

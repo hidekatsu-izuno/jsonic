@@ -164,9 +164,10 @@ public class RESTServlet extends HttpServlet {
 		JSON json = null;
 		String callback = null;
 		Object result = null;
-
+		
 		try {
-			container.start(request, response);	
+			ExternalContext.start(getServletConfig(), getServletContext(), request, response);		
+			container.start(request, response);
 			
 			String uri = (request.getContextPath().equals("/")) ?
 					request.getRequestURI() : 
@@ -286,7 +287,11 @@ public class RESTServlet extends HttpServlet {
 				response.flushBuffer();
 			}
 		} finally {
-			container.end(request, response);
+			try {
+				container.end(request, response);				
+			} finally {
+				ExternalContext.end();				
+			}
 		}
 		
 		if (response.isCommitted()) return;

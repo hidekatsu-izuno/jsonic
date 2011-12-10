@@ -70,8 +70,6 @@ public class Container {
 	}
 	
 	public void start(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		ExternalContext.init(config, context, request, response);
-		
 		String encoding = this.encoding;
 		Boolean expire = this.expire;
 				
@@ -313,7 +311,6 @@ public class Container {
 	}
 	
 	public void end(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		ExternalContext.destory();
 	}
 
 	public void destory() {
