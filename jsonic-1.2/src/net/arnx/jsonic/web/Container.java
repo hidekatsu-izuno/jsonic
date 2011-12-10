@@ -31,7 +31,6 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -46,13 +45,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.util.ClassUtil;
 
-public class Container {
-	private static final ThreadLocal<Map<String, Object>> THREAD_LOCAL = new ThreadLocal<Map<String, Object>>();
-	
+public class Container {	
 	public Boolean debug;
 	public String init = "init";
 	public String destroy = "destroy";
@@ -72,12 +70,7 @@ public class Container {
 	}
 	
 	public void start(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("application", context);
-		map.put("config", config);
-		map.put("request", request);
-		map.put("response", response);
-		THREAD_LOCAL.set(map);
+		ExternalContext.init(config, context, request, response);
 		
 		String encoding = this.encoding;
 		Boolean expire = this.expire;
@@ -110,9 +103,16 @@ public class Container {
 		
 		for (Field field : o.getClass().getFields()) {
 			Class<?> cls = field.getType();
-			Object comp = getServletComponent(cls, field.getName());
-			if (comp != null && cls.isAssignableFrom(comp.getClass())) {
-				field.set(o, comp);
+			if ("config".equals(field.getName()) && ServletConfig.class.equals(cls)) {
+				field.set(o, ExternalContext.getConfig());
+			} else if ("application".equals(field.getName()) && ServletContext.class.equals(cls)) {
+				field.set(o, ExternalContext.getApplication());
+			} else if ("request".equals(field.getName()) && HttpServletRequest.class.equals(cls)) {
+				field.set(o, ExternalContext.getRequest());
+			} else if ("response".equals(field.getName()) && HttpServletResponse.class.equals(cls)) {
+				field.set(o, ExternalContext.getResponse());
+			} else if ("session".equals(field.getName()) && HttpSession.class.equals(cls)) {
+				field.set(o, ExternalContext.getSession());
 			}
 		}
 		
@@ -313,7 +313,7 @@ public class Container {
 	}
 	
 	public void end(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		THREAD_LOCAL.remove();
+		ExternalContext.destory();
 	}
 
 	public void destory() {
@@ -332,15 +332,6 @@ public class Container {
 		}
 		
 		return c;
-	}
-	
-	protected Object getServletComponent(Class<?> cls, String name) {
-		if ("session".equals(name)) {
-			HttpServletRequest request = (HttpServletRequest)THREAD_LOCAL.get().get("request");
-			return request.getSession(true);
-		} else {
-			return THREAD_LOCAL.get().get(name);
-		}
 	}
 	
 	protected boolean limit(Class<?> c, Method method) {

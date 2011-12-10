@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.web.Container;
+import net.arnx.jsonic.web.ExternalContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,9 +62,9 @@ public class SpringContainer extends Container {
 					&& params.length == 1) {
 				Class<?> c = params[0];
 				if (HttpServletRequest.class.equals(c)) {
-					method.invoke(component, getServletComponent(c, "request"));
+					method.invoke(component, ExternalContext.getRequest());
 				} else if (HttpServletResponse.class.equals(c)) {
-					method.invoke(component, getServletComponent(c, "response"));
+					method.invoke(component, ExternalContext.getResponse());
 				}
 			}
 		}
