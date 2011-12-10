@@ -5,8 +5,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import net.arnx.jsonic.JSON;
@@ -101,4 +104,19 @@ public class ClassUtilTest {
 		assertEquals(List[].class, ClassUtil.getRawType(this.getClass().getField("t7").getGenericType()));
 		assertEquals(List[][].class, ClassUtil.getRawType(this.getClass().getField("t8").getGenericType()));
 	}
+	
+	@Test
+	public void testToType() throws Exception {
+		Map<Locale, List<Charset>> map = new LinkedHashMap<Locale, List<Charset>>();
+		List<Charset> list = new ArrayList<Charset>();
+		list.add(Charset.forName("UTF-8"));
+		list.add(Charset.forName("SHIFT_JIS"));
+		map.put(Locale.ENGLISH, list);
+		
+		Map<Locale, List<Charset>> result = JSON.decode("{'en': ['UTF-8', 'SHIFT_JIS']}", 
+				ClassUtil.toType(Map.class, Locale.class, ClassUtil.toType(List.class, Charset.class)));
+		
+		assertEquals(map, result);
+	}
+
 }

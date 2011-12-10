@@ -353,7 +353,40 @@ public final class ClassUtil {
 		return sb.toString();
 	}
 	
+	public static ParameterizedType toType(Class<?> cls, Type... types) {
+		return new ParameterizedTypeImpl(cls, types);
+	}
+	
 	private ClassUtil() {
+	}
+	
+	private static class ParameterizedTypeImpl implements ParameterizedType {
+		private Class<?> rawType;
+		private Type[] typeArgs;
+		
+		public ParameterizedTypeImpl(Class<?> rawType, Type... typeArgs) {
+			if (rawType.getTypeParameters().length != typeArgs.length) {
+				throw new IllegalArgumentException("mismatch type parameter length.");
+			}
+			
+			this.rawType = rawType;
+			this.typeArgs = typeArgs;
+		}
+		
+		@Override
+		public Type[] getActualTypeArguments() {
+			return (Type[])typeArgs.clone();
+		}
+		
+		@Override
+		public Type getOwnerType() {
+			return rawType.getDeclaringClass();
+		}
+		
+		@Override
+		public Type getRawType() {
+			return rawType;
+		}		
 	}
 	
 	private static class ContextObjectInputStream extends ObjectInputStream {
