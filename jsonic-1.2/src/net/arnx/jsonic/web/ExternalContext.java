@@ -9,7 +9,7 @@ import javax.servlet.http.HttpSession;
 public class ExternalContext {
 	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new InheritableThreadLocal<ExternalContext>();
 	
-	public static void start(ServletConfig config, ServletContext application, HttpServletRequest request, HttpServletResponse response) {
+	static void start(ServletConfig config, ServletContext application, HttpServletRequest request, HttpServletResponse response) {
 		synchronized (THREAD_LOCAL) {
 			THREAD_LOCAL.set(new ExternalContext(config, application, request, response));
 		}
@@ -35,7 +35,7 @@ public class ExternalContext {
 		return THREAD_LOCAL.get().request.getSession();
 	}
 	
-	public static void end() {
+	static void end() {
 		synchronized (THREAD_LOCAL) {
 			THREAD_LOCAL.remove();
 		}
