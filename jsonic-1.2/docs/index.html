@@ -278,7 +278,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="index.html#validation">JSONの検証</a></li>
 <li><a href="index.html#jsfriendly">JavaScriptに親和的な出力</a></li>
 <li><a href="index.html#format">日時/数値書式の指定</a></li>
-<li><a href="index.html#casestyle">プロパティ名/列挙型出力書式の指定</a></li>
+<li><a href="index.html#namingstyle">プロパティ名/列挙型出力書式の指定</a></li>
 <li><a href="index.html#innerclass">内部クラスを利用したエンコード/デコード</a></li>
 <li><a href="index.html#maxdepth">最大深度の設定</a></li>
 <li><a href="index.html#suppressnull">null値の抑制</a></li>
@@ -504,15 +504,15 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 (※7) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
 </div>
 
-<h3 id="casestyle">■ プロパティ名/列挙型出力書式の指定 <span class="subtitle">- setPropertyStyle/setEnumStyle</span></h3>
+<h3 id="namingstyle">■ プロパティ名/列挙型出力書式の指定 <span class="subtitle">- setPropertyStyle/setEnumStyle</span></h3>
 <p>プロパティ名は、デフォルトではプロパティ名をJSON stringとして、列挙型は序数をJSON numberとして出力しますが、JSONIC 1.2.8以降ではsetPropertyStyle/setEnumStyleを使用することで出力書式を設定できます。</p>
 <pre class="source">
 	JSON json = new JSON();
 	<span class="comment">// プロパティ名を、アッパーキャメル記法に変換して出力</span>
-	json.setPropertyStyle(CaseStyle.UPPER_UNDERSCORE);
+	json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
 	
 	<span class="comment">// 列挙値を、小文字アンダースコア区切りに変換して出力</span>
-	json.setEnumStyle(CaseStyle.LOWER_CAMEL);
+	json.setEnumStyle(NamingStyle.LOWER_CAMEL);
 	
 	<span class="comment">// 戻り値は { "JSON_MODE": "halfEven" } となります</span>
 	json.format(new Object() {

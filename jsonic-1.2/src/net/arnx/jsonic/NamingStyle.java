@@ -1,70 +1,70 @@
 package net.arnx.jsonic;
 
-public abstract class CaseStyle {
-	public static final CaseStyle LOWER_CASE = new CaseStyle("LOWER_CASE") {
+public abstract class NamingStyle {
+	public static final NamingStyle LOWER_CASE = new NamingStyle("LOWER_CASE") {
 		@Override
 		public String to(String value) {
 			return toSimpleCase(value, false);
 		}
 	};
 	
-	public static final CaseStyle LOWER_CAMEL = new CaseStyle("LOWER_CAMEL") {
+	public static final NamingStyle LOWER_CAMEL = new NamingStyle("LOWER_CAMEL") {
 		@Override
 		public String to(String value) {
 			return toCamelCase(value, false);
 		}
 	};
 	
-	public static final CaseStyle LOWER_SPACE = new CaseStyle("LOWER_SPACE") {
+	public static final NamingStyle LOWER_SPACE = new NamingStyle("LOWER_SPACE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, false, ' ');
 		}
 	};
 	
-	public static final CaseStyle LOWER_HYPHEN = new CaseStyle("LOWER_HYPHEN") {
+	public static final NamingStyle LOWER_HYPHEN = new NamingStyle("LOWER_HYPHEN") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, false, '-');
 		}
 	};
 	
-	public static final CaseStyle LOWER_UNDERSCORE = new CaseStyle("LOWER_UNDERSCORE") {
+	public static final NamingStyle LOWER_UNDERSCORE = new NamingStyle("LOWER_UNDERSCORE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, false, '_');
 		}
 	};
 	
-	public static final CaseStyle UPPER_CASE = new CaseStyle("UPPER_CASE") {
+	public static final NamingStyle UPPER_CASE = new NamingStyle("UPPER_CASE") {
 		@Override
 		public String to(String value) {
 			return toSimpleCase(value, true);
 		}
 	};
 	
-	public static final CaseStyle UPPER_CAMEL = new CaseStyle("UPPER_CAMEL") {
+	public static final NamingStyle UPPER_CAMEL = new NamingStyle("UPPER_CAMEL") {
 		@Override
 		public String to(String value) {
 			return toCamelCase(value, true);
 		}
 	};
 	
-	public static final CaseStyle UPPER_SPACE = new CaseStyle("UPPER_SPACE") {
+	public static final NamingStyle UPPER_SPACE = new NamingStyle("UPPER_SPACE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, true, ' ');
 		}
 	};
 	
-	public static final CaseStyle UPPER_HYPHEN = new CaseStyle("UPPER_HYPHEN") {
+	public static final NamingStyle UPPER_HYPHEN = new NamingStyle("UPPER_HYPHEN") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, true, '-');
 		}
 	};
 	
-	public static final CaseStyle UPPER_UNDERSCORE = new CaseStyle("UPPER_UNDERSCORE") {
+	public static final NamingStyle UPPER_UNDERSCORE = new NamingStyle("UPPER_UNDERSCORE") {
 		@Override
 		public String to(String value) {
 			return toSeparatedCase(value, true, '_');
@@ -73,7 +73,7 @@ public abstract class CaseStyle {
 	
 	private String name;
 	
-	public CaseStyle(String name) {
+	public NamingStyle(String name) {
 		this.name = name;
 	}
 	

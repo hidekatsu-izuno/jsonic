@@ -611,8 +611,8 @@ public class JSON {
 	private Mode mode = Mode.TRADITIONAL;
 	private String dateFormat;
 	private String numberFormat;
-	private CaseStyle propertyStyle;
-	private CaseStyle enumStyle;
+	private NamingStyle propertyStyle;
+	private NamingStyle enumStyle;
 	
 	public JSON() {
 	}
@@ -733,7 +733,7 @@ public class JSON {
 	 * 
 	 * @param style default Case style for keys of JSON object. 
 	 */
-	public void setPropertyStyle(CaseStyle style) {
+	public void setPropertyStyle(NamingStyle style) {
 		this.propertyStyle = style;
 	}
 	
@@ -742,7 +742,7 @@ public class JSON {
 	 * 
 	 * @param style default Case style for Enum.
 	 */
-	public void setEnumStyle(CaseStyle style) {
+	public void setEnumStyle(NamingStyle style) {
 		this.enumStyle = style;
 	}
 	
@@ -1801,8 +1801,8 @@ public class JSON {
 		private final Mode mode;
 		private final DateFormat dateFormat;
 		private final NumberFormat numberFormat;
-		private final CaseStyle propertyStyle;
-		private final CaseStyle enumStyle;
+		private final NamingStyle propertyStyle;
+		private final NamingStyle enumStyle;
 
 		private Object[] path;
 		private int level = -1;
@@ -1890,11 +1890,11 @@ public class JSON {
 			return mode;
 		}
 		
-		public CaseStyle getPropertyCaseStyle() {
+		public NamingStyle getPropertyCaseStyle() {
 			return propertyStyle;
 		}
 		
-		public CaseStyle getEnumCaseStyle() {
+		public NamingStyle getEnumCaseStyle() {
 			return enumStyle;
 		}
 		
