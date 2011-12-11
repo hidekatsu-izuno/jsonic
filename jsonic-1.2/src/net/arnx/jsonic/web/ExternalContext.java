@@ -22,7 +22,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public class ExternalContext {
-	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new InheritableThreadLocal<ExternalContext>();
+	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new InheritableThreadLocal<ExternalContext>() {
+		protected ExternalContext initialValue() {
+			throw new UnsupportedOperationException();
+		};
+	};
 	
 	static void start(ServletConfig config, ServletContext application, HttpServletRequest request, HttpServletResponse response) {
 		synchronized (THREAD_LOCAL) {
