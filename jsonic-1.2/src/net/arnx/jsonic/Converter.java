@@ -818,6 +818,7 @@ final class EnumConverter implements Converter {
 
 final class DateConverter implements Converter {
 	public static final DateConverter INSTANCE = new DateConverter();
+	private static final Pattern TIMEZONE_PATTERN = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})");
 	
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -870,9 +871,7 @@ final class DateConverter implements Converter {
 			return null;
 		}
 		if (locale == null) locale = Locale.getDefault();
-		value = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})")
-			.matcher(value)
-			.replaceFirst("GMT$1:$2");
+		value = TIMEZONE_PATTERN.matcher(value).replaceFirst("GMT$1:$2");
 		
 		DateFormat format = null;
 		if (Character.isDigit(value.charAt(0))) {

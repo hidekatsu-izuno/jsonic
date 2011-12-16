@@ -37,8 +37,10 @@ import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -1798,14 +1800,16 @@ public class JSON {
 		private final boolean prettyPrint;
 		private final boolean suppressNull;
 		private final Mode mode;
-		private final DateFormat dateFormat;
-		private final NumberFormat numberFormat;
+		private final String numberFormat;
+		private final String dateFormat;
 		private final NamingStyle propertyStyle;
 		private final NamingStyle enumStyle;
 
 		private Object[] path;
 		private int level = -1;
 		private Map<Class<?>, Object> memberCache;
+		private Map<String, DateFormat> dateFormatCache;
+		private Map<String, NumberFormat> numberFormatCache;
 		private StringBuilder builderCache;
 		
 		boolean skipHint = false;
@@ -1818,28 +1822,10 @@ public class JSON {
 				prettyPrint = JSON.this.prettyPrint;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
+				numberFormat = JSON.this.numberFormat;
+				dateFormat = JSON.this.dateFormat;
 				propertyStyle = JSON.this.propertyStyle;
 				enumStyle = JSON.this.enumStyle;
-				
-				if (JSON.this.dateFormat != null) {
-					if (JSON.this.locale != null) {
-						dateFormat = new ExtendedDateFormat(JSON.this.dateFormat, JSON.this.locale);
-					} else {
-						dateFormat = new ExtendedDateFormat(JSON.this.dateFormat);
-					}
-				} else {
-					dateFormat = null;
-				}
-				
-				if (JSON.this.numberFormat != null) {
-					if (JSON.this.locale != null) {
-						numberFormat = new DecimalFormat(JSON.this.numberFormat, new DecimalFormatSymbols(JSON.this.locale));
-					} else {
-						numberFormat = new DecimalFormat(JSON.this.numberFormat);
-					}
-				} else {
-					numberFormat = null;
-				}
 			}
 		}
 		
@@ -1851,8 +1837,8 @@ public class JSON {
 				prettyPrint = context.prettyPrint;
 				suppressNull = context.suppressNull;
 				mode = context.mode;
-				dateFormat = context.dateFormat;
 				numberFormat = context.numberFormat;
+				dateFormat = context.dateFormat;
 				propertyStyle = context.propertyStyle;
 				enumStyle = context.enumStyle;
 				level = context.level;
@@ -2068,27 +2054,49 @@ public class JSON {
 		
 		NumberFormat numberFormat() {
 			JSONHint hint = getHint();
-			if (hint != null && hint.format().length() > 0) {
-				if (locale != null) {
-					return new DecimalFormat(hint.format(), new DecimalFormatSymbols(locale));
+			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;			
+			if (format != null) {
+				NumberFormat nformat = null;
+				if (numberFormatCache == null) {
+					numberFormatCache = new HashMap<String, NumberFormat>();
 				} else {
-					return new DecimalFormat(hint.format());
+					nformat = numberFormatCache.get(format);
 				}
+				if (nformat == null) {
+					if (locale != null) {
+						nformat = new DecimalFormat(format, new DecimalFormatSymbols(locale));
+					} else {
+						nformat = new DecimalFormat(format);
+					}
+					numberFormatCache.put(format, nformat);
+				}
+				return nformat;
 			} else {
-				return numberFormat;
+				return null;
 			}
 		}
 		
 		DateFormat dateFormat() {
 			JSONHint hint = getHint();
-			if (hint != null && hint.format().length() > 0) {
-				if (locale != null) {
-					return new ExtendedDateFormat(hint.format(), locale);
+			String format = (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;			
+			if (format != null) {
+				DateFormat dformat = null;
+				if (dateFormatCache == null) {
+					dateFormatCache = new HashMap<String, DateFormat>();
 				} else {
-					return new ExtendedDateFormat(hint.format());
+					dformat = dateFormatCache.get(format);
 				}
+				if (dformat == null) {
+					if (locale != null) {
+						dformat = new SimpleDateFormat(format, locale);
+					} else {
+						dformat = new SimpleDateFormat(format);
+					}
+					dateFormatCache.put(format, dformat);
+				}
+				return dformat;
 			} else {
-				return dateFormat;
+				return null;
 			}
 		}
 		
