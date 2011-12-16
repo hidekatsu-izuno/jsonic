@@ -37,7 +37,6 @@ import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -2067,31 +2066,30 @@ public class JSON {
 			return props;
 		}
 		
-		<T extends Format> T format(Class<? extends T> c) {
-			T format = null;
+		NumberFormat numberFormat() {
 			JSONHint hint = getHint();
-			if (NumberFormat.class.isAssignableFrom(c)) {
-				if (hint != null && hint.format().length() > 0) {
-					if (locale != null) {
-						format = c.cast(new DecimalFormat(hint.format(), new DecimalFormatSymbols(locale)));
-					} else {
-						format = c.cast(new DecimalFormat(hint.format()));
-					}
-				} else if (hint == null && numberFormat != null) {
-					format = c.cast(numberFormat);
+			if (hint != null && hint.format().length() > 0) {
+				if (locale != null) {
+					return new DecimalFormat(hint.format(), new DecimalFormatSymbols(locale));
+				} else {
+					return new DecimalFormat(hint.format());
 				}
-			} else if (DateFormat.class.isAssignableFrom(c)) {
-				if (hint != null && hint.format().length() > 0) {
-					if (locale != null) {
-						format = c.cast(new ExtendedDateFormat(hint.format(), locale));
-					} else {
-						format = c.cast(new ExtendedDateFormat(hint.format()));
-					}
-				} else if (hint == null && numberFormat != null) {
-					format = c.cast(dateFormat);
-				}
+			} else {
+				return numberFormat;
 			}
-			return format;
+		}
+		
+		DateFormat dateFormat() {
+			JSONHint hint = getHint();
+			if (hint != null && hint.format().length() > 0) {
+				if (locale != null) {
+					return new ExtendedDateFormat(hint.format(), locale);
+				} else {
+					return new ExtendedDateFormat(hint.format());
+				}
+			} else {
+				return dateFormat;
+			}
 		}
 		
 		public String toString() {
