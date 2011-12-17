@@ -720,6 +720,35 @@ public class JSONTest {
 		json.setNumberFormat(null);
 		assertEquals("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":1000,\"d\":\"1001.000\"}", json.format(dates));
 		
+		NamedTestClass named = new NamedTestClass();
+		named.aaaAaaAaa = NamedTestEnum.aaaAaaAaa;
+		named.AAA_BBB_CCC = NamedTestEnum.AAA_BBB_CCC;
+		named.aaaあああ = NamedTestEnum.aaaあああ;
+		
+		json = new JSON();
+		json.setPropertyStyle(NamingStyle.LOWER_CASE);
+		json.setEnumStyle(NamingStyle.LOWER_CASE);
+		assertEquals("{\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaaaaaaa\":\"aaaaaaaaa\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
+		
+		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
+		json.setEnumStyle(NamingStyle.LOWER_CAMEL);
+		assertEquals("{\"aaaAaaAaa\":\"aaaAaaAaa\",\"aaaBbbCcc\":\"aaaBbbCcc\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
+		
+		json.setPropertyStyle(NamingStyle.LOWER_UNDERSCORE);
+		json.setEnumStyle(NamingStyle.LOWER_UNDERSCORE);
+		assertEquals("{\"aaa_aaa_aaa\":\"aaa_aaa_aaa\",\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
+
+		json.setPropertyStyle(NamingStyle.UPPER_CASE);
+		json.setEnumStyle(NamingStyle.UPPER_CASE);
+		assertEquals("{\"AAAAAAAAA\":\"AAAAAAAAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", json.format(named));
+		
+		json.setPropertyStyle(NamingStyle.UPPER_CAMEL);
+		json.setEnumStyle(NamingStyle.UPPER_CAMEL);
+		assertEquals("{\"AaaAaaAaa\":\"AaaAaaAaa\",\"AaaBbbCcc\":\"AaaBbbCcc\",\"Aaaあああ\":\"Aaaあああ\"}", json.format(named));
+		
+		json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
+		json.setEnumStyle(NamingStyle.UPPER_UNDERSCORE);
+		assertEquals("{\"AAA_AAA_AAA\":\"AAA_AAA_AAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", json.format(named));
 	}
 	
 	@Test
@@ -1205,8 +1234,46 @@ public class JSONTest {
 		json.setNumberFormat("000,000.00");
 		assertEquals(dates, json.parse("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", DateNumberTestClass.class));
 		
+		json = new JSON();
+		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+		assertEquals(dates, json.parse("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":\"1000\",\"d\":\"1001.000\"}", DateNumberTestClass.class));
+		
+		json = new JSON();
+		json.setNumberFormat("000,000.00");
+		assertEquals(dates, json.parse("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", DateNumberTestClass.class));
+		
 		json.setDateFormat(null);
 		assertEquals(dates, json.parse("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":1000,\"d\":\"1001.000\"}", DateNumberTestClass.class));
+		
+		NamedTestClass named = new NamedTestClass();
+		named.aaaAaaAaa = NamedTestEnum.aaaAaaAaa;
+		named.AAA_BBB_CCC = NamedTestEnum.AAA_BBB_CCC;
+		named.aaaあああ = NamedTestEnum.aaaあああ;
+		
+		json = new JSON();
+		json.setPropertyStyle(NamingStyle.LOWER_CASE);
+		json.setEnumStyle(NamingStyle.LOWER_CASE);
+		assertEquals(named, json.parse("{\"aaaaaaaaa\":\"aaaaaaaaa\",\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaあああ\":\"aaaあああ\"}", NamedTestClass.class));
+		
+		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
+		json.setEnumStyle(NamingStyle.LOWER_CAMEL);
+		assertEquals(named, json.parse("{\"aaaAaaAaa\":\"aaaAaaAaa\",\"aaaBbbCcc\":\"aaaBbbCcc\",\"aaaあああ\":\"aaaあああ\"}", NamedTestClass.class));
+		
+		json.setPropertyStyle(NamingStyle.LOWER_UNDERSCORE);
+		json.setEnumStyle(NamingStyle.LOWER_UNDERSCORE);
+		assertEquals(named, json.parse("{\"aaa_aaa_aaa\":\"aaa_aaa_aaa\",\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaあああ\":\"aaaあああ\"}", NamedTestClass.class));
+
+		json.setPropertyStyle(NamingStyle.UPPER_CASE);
+		json.setEnumStyle(NamingStyle.UPPER_CASE);
+		assertEquals(named, json.parse("{\"AAAAAAAAA\":\"AAAAAAAAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", NamedTestClass.class));
+		
+		json.setPropertyStyle(NamingStyle.UPPER_CAMEL);
+		json.setEnumStyle(NamingStyle.UPPER_CAMEL);
+		assertEquals(named, json.parse("{\"AaaAaaAaa\":\"AaaAaaAaa\",\"AaaBbbCcc\":\"AaaBbbCcc\",\"Aaaあああ\":\"Aaaあああ\"}", NamedTestClass.class));
+		
+		json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
+		json.setEnumStyle(NamingStyle.UPPER_UNDERSCORE);
+		assertEquals(named, json.parse("{\"AAA_AAA_AAA\":\"AAA_AAA_AAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", NamedTestClass.class));
 	}
 
 	@Test
@@ -2749,5 +2816,62 @@ class DateNumberTestClass {
 	public String toString() {
 		return "DateNumberTestClass [a=" + a + ", b=" + b + ", c=" + c + ", d="
 				+ d + "]";
+	}
+}
+
+enum NamedTestEnum {
+	aaaAaaAaa,
+	AAA_BBB_CCC,
+	aaaあああ
+}
+
+class NamedTestClass {
+	public NamedTestEnum aaaAaaAaa;
+	public NamedTestEnum AAA_BBB_CCC;
+	public NamedTestEnum aaaあああ;
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((AAA_BBB_CCC == null) ? 0 : AAA_BBB_CCC.hashCode());
+		result = prime * result
+				+ ((aaaAaaAaa == null) ? 0 : aaaAaaAaa.hashCode());
+		result = prime * result + ((aaaあああ == null) ? 0 : aaaあああ.hashCode());
+		return result;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		NamedTestClass other = (NamedTestClass) obj;
+		if (AAA_BBB_CCC == null) {
+			if (other.AAA_BBB_CCC != null)
+				return false;
+		} else if (!AAA_BBB_CCC.equals(other.AAA_BBB_CCC))
+			return false;
+		if (aaaAaaAaa == null) {
+			if (other.aaaAaaAaa != null)
+				return false;
+		} else if (!aaaAaaAaa.equals(other.aaaAaaAaa))
+			return false;
+		if (aaaあああ == null) {
+			if (other.aaaあああ != null)
+				return false;
+		} else if (!aaaあああ.equals(other.aaaあああ))
+			return false;
+		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return "NamedTestClass [aaaAaaAaa=" + aaaAaaAaa + ", AAA_BBB_CCC="
+				+ AAA_BBB_CCC + ", aaaあああ=" + aaaあああ + "]";
 	}
 }
