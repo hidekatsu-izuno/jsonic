@@ -358,7 +358,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, OutputStream out) throws IOException, JSONException {
-		JSON.newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
+		newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
 	}
 
 	/**
@@ -465,7 +465,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(String source, Class<? extends T> cls) throws JSONException {
-		return JSON.newInstance().parse(source, cls);
+		return newInstance().parse(source, cls);
 	}
 	
 	/**
@@ -558,7 +558,7 @@ public class JSON {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(Reader reader, Type type) throws IOException, JSONException {
-		return (T)JSON.newInstance().parse(reader, type);
+		return (T)newInstance().parse(reader, type);
 	}
 	
 	/**
