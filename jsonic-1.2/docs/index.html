@@ -762,7 +762,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2011/11/04 version 1.2.8 ベータ2</h3>
+<h3>2011/12/17 version 1.2.8</h3>
 
 <ul>
 <li>[不具合] JSONHint にて serialized = true の指定時、単純型を受け取れない問題を修正しました（#26577）</li>
@@ -774,12 +774,6 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>タイムゾーンを変更可能にしました。</li>
 <li>JSONHint アノテーションにプロパティ名の出力順序を指定する ordinal を追加しました。</li>
 <li>decode/parse 時に UnsupportedOperationException が起こった際のメッセージを追加しました。</li>
-</ul>
-
-<p>ベータ１からの変更点は以下の通りです。</p>
-<ul>
-<li>[不具合] JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取れてしまう場合がある問題を修正しました。</li>
-<li>setPropertyCaseStyle, setEnumCaseStyle, CaseStyle がそれぞれ setPropertyStyle, setEnumStyle, NamingStyle に変わりました。</li>
 </ul>
 
 <h3>2011/10/9 version 1.2.7</h3>
