@@ -159,7 +159,7 @@ final class NumberFormatter implements Formatter {
 	public static final NumberFormatter INSTANCE = new NumberFormatter();
 
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		NumberFormat f = context.numberFormat();
+		NumberFormat f = context.getNumberFormat();
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(o), out);
 		} else {
@@ -185,7 +185,7 @@ final class FloatFormatter implements Formatter {
 	public static final FloatFormatter INSTANCE = new FloatFormatter();
 
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		NumberFormat f = context.numberFormat();
+		NumberFormat f = context.getNumberFormat();
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(o), out);
 		} else {
@@ -215,7 +215,7 @@ final class DateFormatter implements Formatter {
 
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Date date = (Date) o;
-		DateFormat f = context.dateFormat();
+		DateFormat f = context.getDateFormat();
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(o), out);
 		} else if (context.getMode() == Mode.SCRIPT) {
@@ -277,7 +277,7 @@ final class ShortArrayFormatter implements Formatter {
 	public static final ShortArrayFormatter INSTANCE = new ShortArrayFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		NumberFormat f = context.numberFormat();
+		NumberFormat f = context.getNumberFormat();
 		short[] array = (short[]) o;
 		out.append('[');
 		for (int i = 0; i < array.length; i++) {
@@ -301,7 +301,7 @@ final class IntArrayFormatter implements Formatter {
 	public static final IntArrayFormatter INSTANCE = new IntArrayFormatter();
 
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		NumberFormat f = context.numberFormat();
+		NumberFormat f = context.getNumberFormat();
 		int[] array = (int[]) o;
 		out.append('[');
 		for (int i = 0; i < array.length; i++) {
@@ -325,7 +325,7 @@ final class LongArrayFormatter implements Formatter {
 	public static final LongArrayFormatter INSTANCE = new LongArrayFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		NumberFormat f = context.numberFormat();
+		NumberFormat f = context.getNumberFormat();
 		long[] array = (long[]) o;
 		out.append('[');
 		for (int i = 0; i < array.length; i++) {
@@ -348,7 +348,7 @@ final class FloatArrayFormatter implements Formatter {
 	public static final FloatArrayFormatter INSTANCE = new FloatArrayFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		NumberFormat f = context.numberFormat();
+		NumberFormat f = context.getNumberFormat();
 		float[] array = (float[]) o;
 		out.append('[');
 		for (int i = 0; i < array.length; i++) {
@@ -384,7 +384,7 @@ final class DoubleArrayFormatter implements Formatter {
 	public static final DoubleArrayFormatter INSTANCE = new DoubleArrayFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		NumberFormat f = context.numberFormat();
+		NumberFormat f = context.getNumberFormat();
 		double[] array = (double[]) o;
 		out.append('[');
 		for (int i = 0; i < array.length; i++) {

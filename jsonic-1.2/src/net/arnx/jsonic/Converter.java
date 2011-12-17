@@ -204,7 +204,7 @@ final class ByteConverter implements Converter {
 		}
 		
 		if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
 		
@@ -252,7 +252,7 @@ final class ShortConverter implements Converter {
 		}
 		
 		if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
 		
@@ -297,7 +297,7 @@ final class IntegerConverter  implements Converter {
 		}
 		
 		if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
 		
@@ -342,7 +342,7 @@ final class LongConverter implements Converter {
 		}
 		
 		if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
 		
@@ -387,7 +387,7 @@ final class FloatConverter  implements Converter {
 		}
 		
 		if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
 		
@@ -421,7 +421,7 @@ final class DoubleConverter  implements Converter {
 		}
 		
 		if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
 		
@@ -455,7 +455,7 @@ final class BigIntegerConverter  implements Converter {
 		}
 		
 		if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
 		
@@ -503,7 +503,7 @@ final class BigDecimalConverter  implements Converter {
 		if (value instanceof BigDecimal) {
 			return value;
 		} else if (value instanceof String) {
-			NumberFormat f = context.numberFormat();
+			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 			
 			String str = value.toString().trim();

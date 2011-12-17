@@ -708,6 +708,14 @@ public class JSONTest {
 		json.setNumberFormat("000,000.00");
 		assertEquals("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", json.format(dates));
 		
+		json = new JSON();
+		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+		assertEquals("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":1000,\"d\":\"1001.000\"}", json.format(dates));
+		
+		json = new JSON();
+		json.setNumberFormat("000,000.00");
+		assertEquals("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", json.format(dates));
+		
 		json.setDateFormat(null);
 		json.setNumberFormat(null);
 		assertEquals("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":1000,\"d\":\"1001.000\"}", json.format(dates));

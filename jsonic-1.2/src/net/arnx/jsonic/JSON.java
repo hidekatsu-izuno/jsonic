@@ -37,10 +37,8 @@ import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -2052,7 +2050,7 @@ public class JSON {
 			return props;
 		}
 		
-		NumberFormat numberFormat() {
+		NumberFormat getNumberFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;			
 			if (format != null) {
@@ -2076,7 +2074,7 @@ public class JSON {
 			}
 		}
 		
-		DateFormat dateFormat() {
+		DateFormat getDateFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;			
 			if (format != null) {
@@ -2088,9 +2086,9 @@ public class JSON {
 				}
 				if (dformat == null) {
 					if (locale != null) {
-						dformat = new SimpleDateFormat(format, locale);
+						dformat = new ExtendedDateFormat(format, locale);
 					} else {
-						dformat = new SimpleDateFormat(format);
+						dformat = new ExtendedDateFormat(format);
 					}
 					dateFormatCache.put(format, dformat);
 				}
