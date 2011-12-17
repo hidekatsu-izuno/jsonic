@@ -603,7 +603,8 @@ public class JSON {
 	}
 	
 	private Object contextObject;
-	private Locale locale;
+	private Locale locale = Locale.getDefault();
+	private TimeZone timeZone = TimeZone.getDefault();
 	private boolean prettyPrint = false;
 	private int maxDepth = 32;
 	private boolean suppressNull = false;
@@ -634,15 +635,27 @@ public class JSON {
 	}
 	
 	/**
-	 * Sets locale for conversion or message.
+	 * Sets locale for formatting, converting and selecting message.
 	 * 
-	 * @param locale
+	 * @param locale locale for formatting, converting and selecting message
 	 */
 	public void setLocale(Locale locale) {
 		if (locale == null) {
 			throw new NullPointerException();
 		}
 		this.locale = locale;
+	}
+	
+	/**
+	 * Sets timeZone for formatting and converting.
+	 * 
+	 * @param timeZone timeZone for formatting and converting.
+	 */
+	public void setTimeZone(TimeZone timeZone) {
+		if (timeZone == null) {
+			throw new NullPointerException();
+		}
+		this.timeZone = timeZone;
 	}
 	
 	/**
@@ -1600,7 +1613,6 @@ public class JSON {
 	}
 	
 	String getMessage(String id, Object... args) {
-		if (locale == null) locale = Locale.getDefault();
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);
 	}
@@ -1793,6 +1805,7 @@ public class JSON {
 	
 	public final class Context {
 		private final Locale locale;
+		private final TimeZone timeZone;
 		private final Object contextObject;
 		private final int maxDepth;
 		private final boolean prettyPrint;
@@ -1815,6 +1828,7 @@ public class JSON {
 		public Context() {
 			synchronized (JSON.this) {
 				locale = JSON.this.locale;
+				timeZone = JSON.this.timeZone;
 				contextObject = JSON.this.contextObject;
 				maxDepth = JSON.this.maxDepth;
 				prettyPrint = JSON.this.prettyPrint;
@@ -1830,6 +1844,7 @@ public class JSON {
 		Context(Context context) {
 			synchronized (context) {
 				locale = context.locale;
+				timeZone = context.timeZone;
 				contextObject = context.contextObject;
 				maxDepth = context.maxDepth;
 				prettyPrint = context.prettyPrint;
@@ -1855,6 +1870,10 @@ public class JSON {
 		
 		public Locale getLocale() {
 			return locale;
+		}
+		
+		public TimeZone getTimeZone() {
+			return timeZone;
 		}
 		
 		public int getMaxDepth() {
@@ -2061,11 +2080,8 @@ public class JSON {
 					nformat = numberFormatCache.get(format);
 				}
 				if (nformat == null) {
-					if (locale != null) {
-						nformat = new DecimalFormat(format, new DecimalFormatSymbols(locale));
-					} else {
-						nformat = new DecimalFormat(format);
-					}
+					nformat = new DecimalFormat(format, new DecimalFormatSymbols(locale));
+					nformat = new DecimalFormat(format);
 					numberFormatCache.put(format, nformat);
 				}
 				return nformat;
@@ -2085,11 +2101,8 @@ public class JSON {
 					dformat = dateFormatCache.get(format);
 				}
 				if (dformat == null) {
-					if (locale != null) {
-						dformat = new ExtendedDateFormat(format, locale);
-					} else {
-						dformat = new ExtendedDateFormat(format);
-					}
+					dformat = new ExtendedDateFormat(format, locale);
+					dformat.setTimeZone(timeZone);
 					dateFormatCache.put(format, dformat);
 				}
 				return dformat;

@@ -789,7 +789,7 @@ final class AppendableConverter implements Converter {
 final class EnumConverter implements Converter {
 	public static final EnumConverter INSTANCE = new EnumConverter();
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes" })
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -798,18 +798,27 @@ final class EnumConverter implements Converter {
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
 		
+		Enum[] enums = (Enum[])c.getEnumConstants();
 		if (value instanceof Number) {
-			return c.getEnumConstants()[((Number)value).intValue()];
+			return enums[((Number)value).intValue()];
 		} else if (value instanceof Boolean) {
-			return c.getEnumConstants()[((Boolean)value) ? 1 : 0];
+			return enums[((Boolean)value) ? 1 : 0];
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() == 0) {
 				return null;
 			} else if (Character.isDigit(str.charAt(0))) {
-				return c.getEnumConstants()[Integer.parseInt(str)];
+				return enums[Integer.parseInt(str)];
 			} else {
-				return Enum.valueOf((Class<? extends Enum>)c, str);
+				for (Enum e : enums) {
+					if (str.equals(e.name())) return e;
+				}
+				if (context.getEnumCaseStyle() != null) {
+					for (Enum e : enums) {
+						if (str.equals(context.getEnumCaseStyle().to(e.name()))) return e;
+					}
+				}
+				throw new IllegalArgumentException(str + " is not " + c);
 			}
 		}
 		return null;
@@ -836,7 +845,7 @@ final class DateConverter implements Converter {
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
-				millis = convertDate(str, context.getLocale());
+				millis = convertDate(str, context.getLocale(), context.getTimeZone());
 				date = (Date)json.create(context, c);						
 			}
 		}
@@ -865,7 +874,7 @@ final class DateConverter implements Converter {
 		return date;
 	}
 	
-	static Long convertDate(String value, Locale locale) throws java.text.ParseException {
+	static Long convertDate(String value, Locale locale, TimeZone timeZone) throws java.text.ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
@@ -945,6 +954,7 @@ final class DateConverter implements Converter {
 			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
 		}
 		format.setLenient(false);
+		format.setTimeZone(timeZone);
 		
 		return format.parse(value).getTime();
 	}
@@ -969,7 +979,7 @@ final class CalendarConverter implements Converter {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				Calendar cal = (Calendar)json.create(context, c);
-				cal.setTimeInMillis(DateConverter.convertDate(str, context.getLocale()));
+				cal.setTimeInMillis(DateConverter.convertDate(str, context.getLocale(), context.getTimeZone()));
 				return  cal;
 			}
 		}
