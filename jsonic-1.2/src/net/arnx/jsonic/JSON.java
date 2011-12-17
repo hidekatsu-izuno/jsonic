@@ -344,7 +344,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static String encode(Object source, boolean prettyPrint) throws JSONException {		
-		JSON json = JSON.newInstance();
+		JSON json = newInstance();
 		json.setPrettyPrint(prettyPrint);		
 		return json.format(source);
 	}
@@ -371,7 +371,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException, JSONException {
-		JSON json = JSON.newInstance();
+		JSON json = newInstance();
 		json.setPrettyPrint(prettyPrint);		
 		json.format(source, new OutputStreamWriter(out, "UTF-8"));
 	}
@@ -385,7 +385,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, Appendable appendable) throws IOException, JSONException {
-		JSON.newInstance().format(source, appendable);
+		newInstance().format(source, appendable);
 	}
 
 	/**
@@ -398,7 +398,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException, JSONException {
-		JSON json = JSON.newInstance();
+		JSON json = newInstance();
 		json.setPrettyPrint(prettyPrint);		
 		json.format(source, appendable);
 	}
@@ -411,8 +411,8 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static String escapeScript(Object source) throws JSONException {
-		JSON json = JSON.newInstance();
-		json.setMode(JSON.Mode.SCRIPT);
+		JSON json = newInstance();
+		json.setMode(Mode.SCRIPT);
 		return json.format(source);
 	}
 	
@@ -425,8 +425,8 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void escapeScript(Object source, OutputStream out) throws IOException, JSONException {
-		JSON json = JSON.newInstance();
-		json.setMode(JSON.Mode.SCRIPT);
+		JSON json = newInstance();
+		json.setMode(Mode.SCRIPT);
 		json.format(source, out);
 	}
 	
@@ -439,8 +439,8 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void escapeScript(Object source, Appendable appendable) throws IOException, JSONException {
-		JSON json = JSON.newInstance();
-		json.setMode(JSON.Mode.SCRIPT);
+		JSON json = newInstance();
+		json.setMode(Mode.SCRIPT);
 		json.format(source, appendable);
 	}
 	
@@ -453,7 +453,7 @@ public class JSON {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(String source) throws JSONException {
-		return (T)JSON.newInstance().parse(source);
+		return (T)newInstance().parse(source);
 	}
 	
 	/**
@@ -478,7 +478,7 @@ public class JSON {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(String source, Type type) throws JSONException {
-		return (T)JSON.newInstance().parse(source, type);
+		return (T)newInstance().parse(source, type);
 	}
 
 	/**
@@ -491,7 +491,7 @@ public class JSON {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(InputStream in) throws IOException, JSONException {
-		return (T)JSON.newInstance().parse(in);
+		return (T)newInstance().parse(in);
 	}
 
 	/**
@@ -504,7 +504,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(InputStream in, Class<? extends T> cls) throws IOException, JSONException {
-		return JSON.newInstance().parse(in, cls);
+		return newInstance().parse(in, cls);
 	}
 
 	/**
@@ -518,7 +518,7 @@ public class JSON {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(InputStream in, Type type) throws IOException, JSONException {
-		return (T)JSON.newInstance().parse(in, type);
+		return (T)newInstance().parse(in, type);
 	}
 	
 	/**
@@ -531,7 +531,7 @@ public class JSON {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T decode(Reader reader) throws IOException, JSONException {
-		return (T)JSON.newInstance().parse(reader);
+		return (T)newInstance().parse(reader);
 	}
 
 	/**
@@ -544,7 +544,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static <T> T decode(Reader reader, Class<? extends T> cls) throws IOException, JSONException {
-		return JSON.newInstance().parse(reader, cls);
+		return newInstance().parse(reader, cls);
 	}
 
 	/**
@@ -568,7 +568,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static void validate(CharSequence cs) throws JSONException {
-		JSON json = JSON.newInstance();
+		JSON json = newInstance();
 		json.setMode(Mode.STRICT);
 		json.setMaxDepth(0);
 		json.parse(cs);
@@ -582,7 +582,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static void validate(InputStream in) throws IOException, JSONException {
-		JSON json = JSON.newInstance();
+		JSON json = newInstance();
 		json.setMode(Mode.STRICT);
 		json.setMaxDepth(0);
 		json.parse(in);
@@ -596,7 +596,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when parsing.
 	 */
 	public static void validate(Reader reader) throws IOException, JSONException {
-		JSON json = JSON.newInstance();
+		JSON json = newInstance();
 		json.setMode(Mode.STRICT);
 		json.setMaxDepth(0);
 		json.parse(reader);
