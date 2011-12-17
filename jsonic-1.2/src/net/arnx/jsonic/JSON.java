@@ -1345,7 +1345,7 @@ public class JSON {
 				continue;
 			case '\'':
 				if (context.getMode() == Mode.STRICT) {
-					continue;
+					break;
 				}
 			case '"':
 				if (point == 0) {
@@ -1363,6 +1363,7 @@ public class JSON {
 				}
 				continue;
 			}
+			
 			if (point == 1 && (context.getMode() != Mode.STRICT  || c >= 0x20)) {
 				if (sb != null) sb.append(c);
 				continue;
