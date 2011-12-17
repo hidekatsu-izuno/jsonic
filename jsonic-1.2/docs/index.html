@@ -766,6 +766,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <ul>
 <li>[不具合] JSONHint にて serialized = true の指定時、単純型を受け取れない問題を修正しました（#26577）</li>
+<li>[不具合] STRICTモードでparse時に文字列中のシングルクォートが消えてしまう問題を修正しました。</li>
 <li>[不具合] JSON Web Service の設定にて encoding を設定してもパラメータが文字化けしてしまう問題を修正しました（#26567）</li>
 <li>[不具合] JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取れてしまう場合がある問題を修正しました。</li>
 <li>デフォルトの日時/数値フォーマットを指定する setDateFormat、setNumberFormat を追加しました。</li>
