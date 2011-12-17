@@ -2049,22 +2049,30 @@ public class JSON {
 					
 					if (name != null) {
 						if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
-							props.put(prop.getName(), new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-									prop.getField(), null, null, prop.isStatic(), order));
 							props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
 									null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
+							prop = new PropertyInfo(prop.getBeanClass(), prop.getName(), 
+									prop.getField(), null, null, prop.isStatic(), order);
 						} else {
 							props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
 									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
+							continue;
 						}
 					} else if (order >= 0) {
-						props.put(prop.getName(), new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-								prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
-					} else {
-						props.put(prop.getName(), prop);
+						prop = new PropertyInfo(prop.getBeanClass(), prop.getName(), 
+								prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order);
+					}
+				
+					props.put(prop.getName(), prop);
+					if (getPropertyCaseStyle() != null) {
+						name = getPropertyCaseStyle().to(prop.getName());
+						if (!prop.getName().equals(name)) {
+							props.put(name, prop);
+						}
 					}
 				}
-				memberCache.put(c, props);				
+				
+				memberCache.put(c, props);
 			}
 			return props;
 		}
@@ -2081,7 +2089,6 @@ public class JSON {
 				}
 				if (nformat == null) {
 					nformat = new DecimalFormat(format, new DecimalFormatSymbols(locale));
-					nformat = new DecimalFormat(format);
 					numberFormatCache.put(format, nformat);
 				}
 				return nformat;

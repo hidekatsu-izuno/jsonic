@@ -15,6 +15,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
@@ -845,7 +846,7 @@ final class DateConverter implements Converter {
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
-				millis = convertDate(str, context.getLocale(), context.getTimeZone());
+				millis = convertDate(str, context);
 				date = (Date)json.create(context, c);						
 			}
 		}
@@ -874,12 +875,11 @@ final class DateConverter implements Converter {
 		return date;
 	}
 	
-	static Long convertDate(String value, Locale locale, TimeZone timeZone) throws java.text.ParseException {
+	static Long convertDate(String value, Context context) throws ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
 		}
-		if (locale == null) locale = Locale.getDefault();
 		value = TIMEZONE_PATTERN.matcher(value).replaceFirst("GMT$1:$2");
 		
 		DateFormat format = null;
@@ -948,13 +948,13 @@ final class DateConverter implements Converter {
 				format = new SimpleDateFormat(
 						(value.length() < pattern.length()) ? pattern.substring(0, value.length()) : pattern, Locale.ENGLISH);
 			} else  {
-				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, locale);
+				format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, context.getLocale());
 			}
 		} else {
-			format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale);
+			format = DateFormat.getDateInstance(DateFormat.MEDIUM, context.getLocale());
 		}
 		format.setLenient(false);
-		format.setTimeZone(timeZone);
+		format.setTimeZone(context.getTimeZone());
 		
 		return format.parse(value).getTime();
 	}
@@ -979,7 +979,7 @@ final class CalendarConverter implements Converter {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				Calendar cal = (Calendar)json.create(context, c);
-				cal.setTimeInMillis(DateConverter.convertDate(str, context.getLocale(), context.getTimeZone()));
+				cal.setTimeInMillis(DateConverter.convertDate(str, context));
 				return  cal;
 			}
 		}
@@ -1261,6 +1261,7 @@ final class ObjectConverter implements Converter {
 				throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 			}
 		}
+		
 	}
 	
 	private static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
