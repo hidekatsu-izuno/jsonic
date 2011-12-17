@@ -1224,7 +1224,7 @@ final class ObjectConverter implements Converter {
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				String name = entry.getKey().toString();
 				PropertyInfo target = props.get(name);
-				if (target == null) target = props.get(ClassUtil.toLowerCamel(name));
+				if (target == null) target = props.get(toLowerCamel(context, name));
 				if (target == null) continue;
 				
 				context.enter(name, target.getWriteAnnotation(JSONHint.class));
@@ -1261,7 +1261,26 @@ final class ObjectConverter implements Converter {
 				throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 			}
 		}
-		
+	}
+	
+	private static String toLowerCamel(Context context, String name) {
+		StringBuilder sb = context.getCachedBuffer();
+		boolean toUpperCase = false;
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == ' ' || c == '_' || c == '-') {
+				toUpperCase = true;
+			} else if (toUpperCase) {
+				sb.append(Character.toUpperCase(c));
+				toUpperCase = false;
+			} else {
+				sb.append(c);
+			}
+		}
+		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && !Character.isUpperCase(sb.charAt(1))) {
+			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
+		}
+		return sb.toString();
 	}
 	
 	private static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
