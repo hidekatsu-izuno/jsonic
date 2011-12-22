@@ -75,8 +75,8 @@ public final class ClassUtil {
 				}
 				map.put(name, target);
 			}
+			return map.get(name);
 		}
-		return map.get(name);
 	}
 	
 	public static void clear() {

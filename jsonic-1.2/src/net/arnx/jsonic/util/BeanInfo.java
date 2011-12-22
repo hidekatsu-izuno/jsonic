@@ -29,8 +29,8 @@ public final class BeanInfo {
 		new WeakHashMap<ClassLoader, Map<Class<?>, BeanInfo>>();
 	
 	public static BeanInfo get(Class<?> cls) {
-		BeanInfo info = null;
 		synchronized(cache) {
+			BeanInfo info = null;
 			Map<Class<?>, BeanInfo> map = cache.get(cls.getClassLoader());
 			if (map == null) {
 				map = new LinkedHashMap<Class<?>, BeanInfo>(16, 0.75f, true) {
@@ -47,12 +47,14 @@ public final class BeanInfo {
 				info = new BeanInfo(cls);
 				map.put(cls, info);
 			}
+			return info;
 		}
-		return info;
 	}
 	
 	public static void clear() {
-		cache.clear();
+		synchronized (cache) {
+			cache.clear();
+		}
 	}
 	
 	private Class<?> type;
