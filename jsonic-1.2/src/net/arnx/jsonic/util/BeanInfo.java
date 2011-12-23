@@ -191,35 +191,51 @@ public final class BeanInfo {
 	}
 	
 	public PropertyInfo getStaticProperty(String name) {
-		return sprops.get(name);
+		synchronized (sprops) {
+			return sprops.get(name);
+		}
 	}
 	
 	public MethodInfo getStaticMethod(String name) {
-		return smethods.get(name);
+		synchronized (smethods) {
+			return smethods.get(name);
+		}
 	}
 	
 	public Collection<PropertyInfo> getStaticProperties() {
-		return sprops.values();
+		synchronized (sprops) {
+			return sprops.values();
+		}
 	}
 	
 	public Collection<MethodInfo> getStaticMethods() {
-		return smethods.values();
+		synchronized (smethods) {
+			return smethods.values();
+		}
 	}
 	
 	public PropertyInfo getProperty(String name) {
-		return props.get(name);
+		synchronized (props) {
+			return props.get(name);
+		}
 	}
 	
 	public MethodInfo getMethod(String name) {
-		return methods.get(name);
+		synchronized (methods) {
+			return methods.get(name);
+		}
 	}
 	
 	public Collection<PropertyInfo> getProperties() {
-		return props.values();
+		synchronized (props) {
+			return props.values();
+		}
 	}
 	
 	public Collection<MethodInfo> getMethods() {
-		return methods.values();
+		synchronized (methods) {
+			return methods.values();
+		}
 	}
 
 	@Override
