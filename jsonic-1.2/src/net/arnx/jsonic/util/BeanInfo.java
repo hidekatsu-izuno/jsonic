@@ -190,6 +190,22 @@ public final class BeanInfo {
 		return ci;
 	}
 	
+	public PropertyInfo getStaticProperty(String name) {
+		return sprops.get(name);
+	}
+	
+	public MethodInfo getStaticMethod(String name) {
+		return smethods.get(name);
+	}
+	
+	public Collection<PropertyInfo> getStaticProperties() {
+		return sprops.values();
+	}
+	
+	public Collection<MethodInfo> getStaticMethods() {
+		return smethods.values();
+	}
+	
 	public PropertyInfo getProperty(String name) {
 		return props.get(name);
 	}
@@ -198,12 +214,12 @@ public final class BeanInfo {
 		return methods.get(name);
 	}
 	
-	public Collection<MethodInfo> getMethods() {
-		return methods.values();
-	}
-	
 	public Collection<PropertyInfo> getProperties() {
 		return props.values();
+	}
+	
+	public Collection<MethodInfo> getMethods() {
+		return methods.values();
 	}
 
 	@Override
@@ -230,7 +246,9 @@ public final class BeanInfo {
 
 	@Override
 	public String toString() {
-		return "BeanInfo [properties = " + props
+		return "BeanInfo [static properties = " + sprops
+			+ ", static methods = " + smethods 
+			+ ", properties = " + props
 			+ ", methods = " + methods + "]";
 	}
 	
