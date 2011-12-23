@@ -59,6 +59,8 @@ public final class BeanInfo {
 	
 	private Class<?> type;
 	private ConstructorInfo ci;
+	private Map<String, PropertyInfo> sprops = new LinkedHashMap<String, PropertyInfo>();
+	private Map<String, MethodInfo> smethods = new LinkedHashMap<String, MethodInfo>();
 	private Map<String, PropertyInfo> props = new LinkedHashMap<String, PropertyInfo>();
 	private Map<String, MethodInfo> methods = new LinkedHashMap<String, MethodInfo>();
 	
@@ -86,7 +88,11 @@ public final class BeanInfo {
 			
 			String name = f.getName();
 			f.setAccessible(true);
-			props.put(name, new PropertyInfo(cls, name, f, null, null, isStatic, -1));
+			if (isStatic) {
+				sprops.put(name, new PropertyInfo(cls, name, f, null, null, isStatic, -1));				
+			} else {
+				props.put(name, new PropertyInfo(cls, name, f, null, null, isStatic, -1));
+			}
 		}
 		
 		for (Method m : cls.getMethods()) {
@@ -100,10 +106,19 @@ public final class BeanInfo {
 			
 			boolean isStatic = Modifier.isStatic(m.getModifiers());
 			
-			MethodInfo mi = methods.get(name);
-			if (mi == null) {
-				mi = new MethodInfo(cls, name, null, isStatic);
-				methods.put(name, mi);
+			MethodInfo mi;
+			if (isStatic) {
+				mi = smethods.get(name);
+				if (mi == null) {
+					mi = new MethodInfo(cls, name, null, isStatic);
+					smethods.put(name, mi);
+				}
+			} else {
+				mi = methods.get(name);
+				if (mi == null) {
+					mi = new MethodInfo(cls, name, null, isStatic);
+					methods.put(name, mi);
+				}
 			}
 			m.setAccessible(true);
 			mi.methods.add(m);
@@ -134,10 +149,19 @@ public final class BeanInfo {
 				name = String.valueOf(chars);
 			}
 			
-			PropertyInfo prop = props.get(name);
-			if (prop == null) {
-				prop = new PropertyInfo(cls, name, null, null, null, isStatic, -1);
-				props.put(name, prop);
+			PropertyInfo prop;
+			if (isStatic) {
+				prop = sprops.get(name);
+				if (prop == null) {
+					prop = new PropertyInfo(cls, name, null, null, null, isStatic, -1);
+					sprops.put(name, prop);
+				}
+			} else {
+				prop = props.get(name);
+				if (prop == null) {
+					prop = new PropertyInfo(cls, name, null, null, null, isStatic, -1);
+					props.put(name, prop);
+				}
 			}
 			
 			if (type == 1) {
