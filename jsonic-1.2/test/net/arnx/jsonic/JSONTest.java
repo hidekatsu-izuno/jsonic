@@ -48,6 +48,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -61,6 +66,7 @@ import net.arnx.jsonic.util.ExtendedDateFormat;
 
 import org.junit.Test;
 import org.seasar.framework.util.ReaderUtil;
+import org.springframework.jdbc.core.CallableStatementCreatorFactory;
 import org.w3c.dom.Document;
 
 import org.apache.commons.beanutils.BasicDynaClass;
@@ -70,6 +76,37 @@ import org.apache.commons.beanutils.DynaProperty;
 
 @SuppressWarnings({"unchecked", "unused", "serial", "rawtypes"})
 public class JSONTest {
+	@Test
+	public void testMultiThread() throws Exception {
+		ExecutorService service = Executors.newCachedThreadPool();
+		
+		List<JSONTester> list = new ArrayList<JSONTester>();
+		for (int i = 0; i < 10; i++) {
+			list.add(new JSONTester());
+		}
+		List<Future<Object>> results = service.invokeAll(list);
+		
+		service.shutdown();
+		service.awaitTermination(1, TimeUnit.MINUTES);
+		
+		for (Future<Object> future : results) {
+			future.get();
+		}
+	}
+	
+	static class JSONTester implements Callable<Object> {
+		@Override
+		public Object call() throws Exception {
+			JSONTest test = new JSONTest();
+			test.testEncode();
+			test.testDecodeString();
+			test.testDecodeStringClassOfQextendsT();
+			test.testFormat();
+			test.testParse();
+			return null;
+		}
+	}
+	
 	@Test
 	public void testEncode() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
