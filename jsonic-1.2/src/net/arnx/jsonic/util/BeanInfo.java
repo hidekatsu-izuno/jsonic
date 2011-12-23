@@ -60,10 +60,10 @@ public final class BeanInfo {
 	
 	private Class<?> type;
 	private ConstructorInfo ci;
-	private Map<String, PropertyInfo> sprops = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
-	private Map<String, MethodInfo> smethods = Collections.synchronizedMap(new LinkedHashMap<String, MethodInfo>());
-	private Map<String, PropertyInfo> props = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
-	private Map<String, MethodInfo> methods = Collections.synchronizedMap(new LinkedHashMap<String, MethodInfo>());
+	private Map<String, PropertyInfo> sprops;
+	private Map<String, MethodInfo> smethods;
+	private Map<String, PropertyInfo> props;
+	private Map<String, MethodInfo> methods;
 	
 	private BeanInfo(Class<?> cls) {
 		type = cls;
@@ -90,8 +90,14 @@ public final class BeanInfo {
 			String name = f.getName();
 			f.setAccessible(true);
 			if (isStatic) {
+				if (sprops == null) {
+					sprops = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
+				}
 				sprops.put(name, new PropertyInfo(cls, name, f, null, null, isStatic, -1));				
 			} else {
+				if (props == null) {
+					props = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
+				}
 				props.put(name, new PropertyInfo(cls, name, f, null, null, isStatic, -1));
 			}
 		}
@@ -109,12 +115,18 @@ public final class BeanInfo {
 			
 			MethodInfo mi;
 			if (isStatic) {
+				if (smethods == null) {
+					smethods = Collections.synchronizedMap(new LinkedHashMap<String, MethodInfo>());
+				}
 				mi = smethods.get(name);
 				if (mi == null) {
 					mi = new MethodInfo(cls, name, null, isStatic);
 					smethods.put(name, mi);
 				}
 			} else {
+				if (methods == null) {
+					methods = Collections.synchronizedMap(new LinkedHashMap<String, MethodInfo>());
+				}
 				mi = methods.get(name);
 				if (mi == null) {
 					mi = new MethodInfo(cls, name, null, isStatic);
@@ -152,12 +164,18 @@ public final class BeanInfo {
 			
 			PropertyInfo prop;
 			if (isStatic) {
+				if (sprops == null) {
+					sprops = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
+				}
 				prop = sprops.get(name);
 				if (prop == null) {
 					prop = new PropertyInfo(cls, name, null, null, null, isStatic, -1);
 					sprops.put(name, prop);
 				}
 			} else {
+				if (props == null) {
+					props = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
+				}
 				prop = props.get(name);
 				if (prop == null) {
 					prop = new PropertyInfo(cls, name, null, null, null, isStatic, -1);
@@ -171,6 +189,11 @@ public final class BeanInfo {
 				prop.writeMethod = m;
 			}
 		}
+		
+		if (sprops == null) sprops = Collections.emptyMap();
+		if (smethods == null) smethods = Collections.emptyMap();
+		if (props == null) props = Collections.emptyMap();
+		if (methods == null) methods = Collections.emptyMap();
 	}
 	
 	public Object newInstance() {
