@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -59,10 +60,10 @@ public final class BeanInfo {
 	
 	private Class<?> type;
 	private ConstructorInfo ci;
-	private Map<String, PropertyInfo> sprops = new LinkedHashMap<String, PropertyInfo>();
-	private Map<String, MethodInfo> smethods = new LinkedHashMap<String, MethodInfo>();
-	private Map<String, PropertyInfo> props = new LinkedHashMap<String, PropertyInfo>();
-	private Map<String, MethodInfo> methods = new LinkedHashMap<String, MethodInfo>();
+	private Map<String, PropertyInfo> sprops = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
+	private Map<String, MethodInfo> smethods = Collections.synchronizedMap(new LinkedHashMap<String, MethodInfo>());
+	private Map<String, PropertyInfo> props = Collections.synchronizedMap(new LinkedHashMap<String, PropertyInfo>());
+	private Map<String, MethodInfo> methods = Collections.synchronizedMap(new LinkedHashMap<String, MethodInfo>());
 	
 	private BeanInfo(Class<?> cls) {
 		type = cls;
@@ -191,51 +192,35 @@ public final class BeanInfo {
 	}
 	
 	public PropertyInfo getStaticProperty(String name) {
-		synchronized (sprops) {
-			return sprops.get(name);
-		}
+		return sprops.get(name);
 	}
 	
 	public MethodInfo getStaticMethod(String name) {
-		synchronized (smethods) {
-			return smethods.get(name);
-		}
+		return smethods.get(name);
 	}
 	
 	public Collection<PropertyInfo> getStaticProperties() {
-		synchronized (sprops) {
-			return sprops.values();
-		}
+		return sprops.values();
 	}
 	
 	public Collection<MethodInfo> getStaticMethods() {
-		synchronized (smethods) {
-			return smethods.values();
-		}
+		return smethods.values();
 	}
 	
 	public PropertyInfo getProperty(String name) {
-		synchronized (props) {
-			return props.get(name);
-		}
+		return props.get(name);
 	}
 	
 	public MethodInfo getMethod(String name) {
-		synchronized (methods) {
-			return methods.get(name);
-		}
+		return methods.get(name);
 	}
 	
 	public Collection<PropertyInfo> getProperties() {
-		synchronized (props) {
-			return props.values();
-		}
+		return props.values();
 	}
 	
 	public Collection<MethodInfo> getMethods() {
-		synchronized (methods) {
-			return methods.values();
-		}
+		return methods.values();
 	}
 
 	@Override
