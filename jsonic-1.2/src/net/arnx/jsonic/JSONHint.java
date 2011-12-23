@@ -57,7 +57,7 @@ public @interface JSONHint {
 	String anonym() default "";
 	
 	/**
-	 * The sort order of property key
+	 * The sort ordinal of property key
 	 */
 	int ordinal() default -1;
 }

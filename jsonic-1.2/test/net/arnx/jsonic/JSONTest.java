@@ -262,8 +262,8 @@ public class JSONTest {
 		assertEquals(
 				"{\"json_data\":{\"a\": 100 /* ほげほげ */},\"simple_json_data\":0,\"number_json_data\":0.0,"
 				+ "\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
-				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2"
-				+ "}", JSON.encode(aBean));
+				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2,"
+				+ "\"nameb\":\"aaa\",\"namex\":\"aaa\"}", JSON.encode(aBean));
 		
 		obj = new Object() {
 			@JSONHint(type=String.class)
@@ -2324,6 +2324,17 @@ class AnnotationBean {
 	
 	@JSONHint(anonym="anonym")
 	public AnonymTest anonymMap;
+	
+	@JSONHint(name = "nameb")
+	public String namex = "aaa";
+	
+	public String getNamex() {
+		return namex;
+	}
+	
+	public void setNamex(String namex) {
+		this.namex = namex;
+	}
 
 	@Override
 	public int hashCode() {
@@ -2342,6 +2353,8 @@ class AnnotationBean {
 		result = prime * result
 				+ ((simple_json_data == null) ? 0 : simple_json_data.hashCode());
 		result = prime * result + method;
+		result = prime * result
+				+ ((namex == null) ? 0 : namex.hashCode());
 		return result;
 	}
 
@@ -2389,6 +2402,11 @@ class AnnotationBean {
 			return false;
 		if (method != other.method)
 			return false;
+		if (namex == null) {
+			if (other.namex != null)
+				return false;
+		} else if (!namex.equals(other.namex))
+			return false;
 		return true;
 	}
 
@@ -2398,7 +2416,8 @@ class AnnotationBean {
 				+ Arrays.toString(array1) + ", array2="
 				+ Arrays.toString(array2) + ", array3=" + array3 + ", date="
 				+ date + ", dummy=" + dummy + ", field=" + field
-				+ ", json_data=" + json_data + ", method=" + method + "]";
+				+ ", json_data=" + json_data + ", method=" + method 
+				+ ", namex=" + namex + "]";
 	}
 }
 

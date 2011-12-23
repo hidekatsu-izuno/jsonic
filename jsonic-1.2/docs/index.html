@@ -765,6 +765,13 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <h3>2011/12/17 version 1.2.8</h3>
 
 <ul>
+<li>[不具合] マルチスレッド環境下で使用した場合に NullPointerExceptionが発生する問題を修正しました（#26993）</li>
+<li>[不具合] 同名のフィールドとGetter/Setterメソッドを持つ場合、フィールド側にJSONHint(name=別名)を付けても無視される問題を修正しました（#26992）</li>
+</ul>
+
+<h3>2011/12/17 version 1.2.8</h3>
+
+<ul>
 <li>[不具合] JSONHint にて serialized = true の指定時、単純型を受け取れない問題を修正しました（#26577）</li>
 <li>[不具合] STRICTモードでparse時に文字列中のシングルクォートが消えてしまう問題を修正しました。</li>
 <li>[不具合] JSON Web Service の設定にて encoding を設定してもパラメータが文字化けしてしまう問題を修正しました（#26567）</li>
