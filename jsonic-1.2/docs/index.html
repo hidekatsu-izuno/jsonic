@@ -777,6 +777,7 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <li>[不具合] STRICTモードでparse時に文字列中のシングルクォートが消えてしまう問題を修正しました。</li>
 <li>[不具合] JSON Web Service の設定にて encoding を設定してもパラメータが文字化けしてしまう問題を修正しました（#26567）</li>
 <li>[不具合] JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取れてしまう場合がある問題を修正しました。</li>
+<li>[仕様変更] 上記、不具合への対応のため、Containerクラスからrequest/responseを削除しました。</li>
 <li>デフォルトの日時/数値フォーマットを指定する setDateFormat、setNumberFormat を追加しました。</li>
 <li>デフォルトのプロパティ名/列挙型の変換方式を指定する setPropertyStyle、setEnumStyle を追加しました。</li>
 <li>タイムゾーンを変更可能にしました。</li>
