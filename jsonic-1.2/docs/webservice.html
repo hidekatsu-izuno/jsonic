@@ -587,6 +587,8 @@ public class SpringDrivenService {
     }
 }
 </pre>
+<div class="warning">JSONIC version 1.2.0～1.2.6では、デフォルトコンテナとSpringContainerで他のスレッドのrequest/responseが取得されてしまう可能性がありました。同機能を利用している場合は、1.2.7以降にバージョンを上げるようお願いいたします。
+また、これに伴い Container クラスから request/response が削除されました。Container内の任意のメソッド内でrequest/responseを参照する場合は、ExternalContext#getRequest()/ExternalContext#getResponse()をご利用ください。</div>
 
 <h3>処理エラーの取り扱い</h3>
 <p>処理でエラーが発生した場合、専用のログを取ったり、、トランザクションをロールバックしたいなどあるかもしれません。その場合は、コンテナを継承してexecuteメソッドをオーバーライドします。</p>
