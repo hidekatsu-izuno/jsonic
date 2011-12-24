@@ -76,24 +76,7 @@ import org.apache.commons.beanutils.DynaProperty;
 
 @SuppressWarnings({"unchecked", "unused", "serial", "rawtypes"})
 public class JSONTest {
-	@Test
-	public void testMultiThread() throws Exception {
-		ExecutorService service = Executors.newCachedThreadPool();
-		
-		List<JSONTester> list = new ArrayList<JSONTester>();
-		for (int i = 0; i < 10; i++) {
-			list.add(new JSONTester());
-		}
-		List<Future<Object>> results = service.invokeAll(list);
-		
-		service.shutdown();
-		service.awaitTermination(1, TimeUnit.MINUTES);
-		
-		for (Future<Object> future : results) {
-			future.get();
-		}
-	}
-	
+
 	static class JSONTester implements Callable<Object> {
 		@Override
 		public Object call() throws Exception {
