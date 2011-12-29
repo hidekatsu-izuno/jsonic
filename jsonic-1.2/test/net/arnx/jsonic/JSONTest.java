@@ -284,7 +284,7 @@ public class JSONTest {
 				"{\"json_data\":{\"a\": 100 /* ほげほげ */},\"simple_json_data\":0,\"number_json_data\":0.0,"
 				+ "\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2,"
-				+ "\"nameb\":\"aaa\",\"namec\":\"aaa\",\"namex\":\"aaa\"}", JSON.encode(aBean));
+				+ "\"name_a\":\"aaa\",\"name_b\":\"aaa\",\"namex\":\"aaa\",\"namez\":\"aaa\"}", JSON.encode(aBean));
 		
 		obj = new Object() {
 			@JSONHint(type=String.class)
@@ -2347,7 +2347,7 @@ class AnnotationBean {
 	@JSONHint(anonym="anonym")
 	public AnonymTest anonymMap;
 	
-	@JSONHint(name = "nameb")
+	@JSONHint(name = "name_a")
 	public String namex = "aaa";
 	
 	public String getNamex() {
@@ -2358,7 +2358,7 @@ class AnnotationBean {
 		this.namex = namex;
 	}
 	
-	@JSONHint(name = "namec")
+	@JSONHint(name = "name_b")
 	public String namey = "aaa";
 	
 	@JSONHint(ignore = true)
@@ -2366,9 +2366,15 @@ class AnnotationBean {
 		return namey;
 	}
 	
-	@JSONHint(ignore = true)
-	public void setNamey(String namey) {
-		this.namey = namey;
+	@JSONHint(name = "name_c", ignore = true)
+	public String namez = "aaa";
+	
+	public String getNamez() {
+		return namey;
+	}
+	
+	public void setNamez(String namey) {
+		this.namey = namez;
 	}
 
 	@Override
