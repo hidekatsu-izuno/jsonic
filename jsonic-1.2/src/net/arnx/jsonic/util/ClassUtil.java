@@ -217,29 +217,31 @@ public final class ClassUtil {
 				}
 				if (self == null) {
 					result = prime * result + 0;
-				} else if (current.isArray()) {
-					if (current.equals(boolean[].class)) {
+				} else if (self.getClass().isArray()) {
+					if (self.getClass().equals(boolean[].class)) {
 						result = prime * result + Arrays.hashCode((boolean[])self);
-					} else if (current.equals(char[].class)) {
+					} else if (self.getClass().equals(char[].class)) {
 						result = prime * result + Arrays.hashCode((char[])self);
-					} else if (current.equals(byte[].class)) {
+					} else if (self.getClass().equals(byte[].class)) {
 						result = prime * result + Arrays.hashCode((byte[])self);
-					} else if (current.equals(short[].class)) {
+					} else if (self.getClass().equals(short[].class)) {
 						result = prime * result + Arrays.hashCode((short[])self);
-					} else if (current.equals(int[].class)) {
+					} else if (self.getClass().equals(int[].class)) {
 						result = prime * result + Arrays.hashCode((int[])self);
-					} else if (current.equals(long[].class)) {
+					} else if (self.getClass().equals(long[].class)) {
 						result = prime * result + Arrays.hashCode((long[])self);
-					} else if (current.equals(float[].class)) {
+					} else if (self.getClass().equals(float[].class)) {
 						result = prime * result + Arrays.hashCode((float[])self);
-					} else if (current.equals(double[].class)) {
+					} else if (self.getClass().equals(double[].class)) {
 						result = prime * result + Arrays.hashCode((double[])self);
 					} else {
 						result = prime * result + Arrays.hashCode((Object[])self);
 					}
 				} else {
-					result = prime * result + self.hashCode();;
+					result = prime * result + self.hashCode();
 				}
+				
+				System.out.println(f.getName() + ": " + result);
 			}
 			current = current.getSuperclass();
 		} while (!Object.class.equals(current));
@@ -272,22 +274,22 @@ public final class ClassUtil {
 				}
 				if (self == null) {
 					if (other != null) return false;
-				} else if (current.isArray()) {
-					if (current.equals(boolean[].class)) {
+				} else if (self.getClass().isArray()) {
+					if (self.getClass().equals(boolean[].class)) {
 						if (!Arrays.equals((boolean[])self, (boolean[])other)) return false;
-					} else if (current.equals(char[].class)) {
+					} else if (self.getClass().equals(char[].class)) {
 						if (!Arrays.equals((char[])self, (char[])other)) return false;
-					} else if (current.equals(byte[].class)) {
+					} else if (self.getClass().equals(byte[].class)) {
 						if (!Arrays.equals((byte[])self, (byte[])other)) return false;
-					} else if (current.equals(short[].class)) {
+					} else if (self.getClass().equals(short[].class)) {
 						if (!Arrays.equals((short[])self, (short[])other)) return false;
-					} else if (current.equals(int[].class)) {
+					} else if (self.getClass().equals(int[].class)) {
 						if (!Arrays.equals((int[])self, (int[])other)) return false;
-					} else if (current.equals(long[].class)) {
+					} else if (self.getClass().equals(long[].class)) {
 						if (!Arrays.equals((long[])self, (long[])other)) return false;
-					} else if (current.equals(float[].class)) {
+					} else if (self.getClass().equals(float[].class)) {
 						if (!Arrays.equals((float[])self, (float[])other)) return false;
-					} else if (current.equals(double[].class)) {
+					} else if (self.getClass().equals(double[].class)) {
 						if (!Arrays.equals((double[])self, (double[])other)) return false;
 					} else {
 						if (!Arrays.equals((Object[])self, (Object[])other)) return false;

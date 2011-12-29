@@ -62,6 +62,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSON.Mode;
+import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.ExtendedDateFormat;
 
 import org.junit.Test;
@@ -283,7 +284,7 @@ public class JSONTest {
 				"{\"json_data\":{\"a\": 100 /* ほげほげ */},\"simple_json_data\":0,\"number_json_data\":0.0,"
 				+ "\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2,"
-				+ "\"nameb\":\"aaa\",\"namex\":\"aaa\"}", JSON.encode(aBean));
+				+ "\"nameb\":\"aaa\",\"namec\":\"aaa\",\"namex\":\"aaa\"}", JSON.encode(aBean));
 		
 		obj = new Object() {
 			@JSONHint(type=String.class)
@@ -542,7 +543,7 @@ public class JSONTest {
 		aBean.simple_json_data = "0";
 		aBean.number_json_data = 0.0;
 		
-		List<Integer> array3 = new ArrayList<Integer>();
+		List<Integer> array3 = new Vector<Integer>();
 		array3.add(1);
 		array3.add(2);
 		array3.add(3);
@@ -557,8 +558,9 @@ public class JSONTest {
 				+ "\"b\":\"2.01\",\"date\":\"2009/01/01\","
 				+ "json_data: {\"a\": 100 /* ほげほげ */}, \"simple_json_data\": 0, \"number_json_data\": 0,"
 				+ "\"method\":2}", AnnotationBean.class);
+		aBean.hashCode();
+		aBeanResult.hashCode();
 		assertEquals(aBean, aBeanResult);
-		assertEquals(Vector.class, aBeanResult.array3.getClass());
 	}
 
 	@Test
@@ -2355,89 +2357,33 @@ class AnnotationBean {
 	public void setNamex(String namex) {
 		this.namex = namex;
 	}
+	
+	@JSONHint(name = "namec")
+	public String namey = "aaa";
+	
+	@JSONHint(ignore = true)
+	public String getNamey() {
+		return namey;
+	}
+	
+	@JSONHint(ignore = true)
+	public void setNamey(String namey) {
+		this.namey = namey;
+	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((anonymMap == null) ? 0 : anonymMap.hashCode());
-		result = prime * result + Arrays.hashCode(array1);
-		result = prime * result + Arrays.hashCode(array2);
-		result = prime * result + ((array3 == null) ? 0 : array3.hashCode());
-		result = prime * result + ((date == null) ? 0 : date.hashCode());
-		result = prime * result + dummy;
-		result = prime * result + field;
-		result = prime * result
-				+ ((json_data == null) ? 0 : json_data.hashCode());
-		result = prime * result
-				+ ((simple_json_data == null) ? 0 : simple_json_data.hashCode());
-		result = prime * result + method;
-		result = prime * result
-				+ ((namex == null) ? 0 : namex.hashCode());
-		return result;
+		return ClassUtil.hashCode(this);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		AnnotationBean other = (AnnotationBean) obj;
-		if (anonymMap == null) {
-			if (other.anonymMap != null)
-				return false;
-		} else if (!anonymMap.equals(other.anonymMap))
-			return false;
-		if (!Arrays.equals(array1, other.array1))
-			return false;
-		if (!Arrays.equals(array2, other.array2))
-			return false;
-		if (array3 == null) {
-			if (other.array3 != null)
-				return false;
-		} else if (!array3.equals(other.array3))
-			return false;
-		if (date == null) {
-			if (other.date != null)
-				return false;
-		} else if (!date.equals(other.date))
-			return false;
-		if (dummy != other.dummy)
-			return false;
-		if (field != other.field)
-			return false;
-		if (json_data == null) {
-			if (other.json_data != null)
-				return false;
-		} else if (!json_data.equals(other.json_data))
-			return false;
-		if (simple_json_data == null) {
-			if (other.simple_json_data != null)
-				return false;
-		} else if (!simple_json_data.equals(other.simple_json_data))
-			return false;
-		if (method != other.method)
-			return false;
-		if (namex == null) {
-			if (other.namex != null)
-				return false;
-		} else if (!namex.equals(other.namex))
-			return false;
-		return true;
+		return ClassUtil.equals(this, obj);
 	}
 
 	@Override
 	public String toString() {
-		return "AnnotationBean [anonymMap=" + anonymMap + ", array1="
-				+ Arrays.toString(array1) + ", array2="
-				+ Arrays.toString(array2) + ", array3=" + array3 + ", date="
-				+ date + ", dummy=" + dummy + ", field=" + field
-				+ ", json_data=" + json_data + ", method=" + method 
-				+ ", namex=" + namex + "]";
+		return ClassUtil.toString(this);
 	}
 }
 
