@@ -762,11 +762,12 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2011/12/17 version 1.2.8</h3>
+<h3>2012/1/6 version 1.2.9</h3>
 
 <ul>
 <li>[不具合] マルチスレッド環境下で使用した場合に NullPointerExceptionが発生する問題を修正しました（#26993）</li>
 <li>[不具合] 同名のフィールドとGetter/Setterメソッドを持つ場合、フィールド側にJSONHint(name=別名)を付けても無視される問題を修正しました（#26992）</li>
+<li>[不具合] PropertyCaseStyle が JSONHint アノテーションにて name に指定された名前にも適用されていた問題を修正しました。</li>
 <li>JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取れてしまう場合がある問題について注意書きをドキュメントに追加しました。</li>
 </ul>
 
