@@ -1986,78 +1986,66 @@ public class JSON {
 			if (props == null) {
 				props = new ArrayList<PropertyInfo>();
 				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					PropertyInfo mp = null;
-					if (prop.getReadMethod() != null) {
-						mp = prop;
+					if (prop.isStatic() || !prop.isReadable()) continue;
+					
+					String mName = null;
+					if (prop.getReadMethod() != null && !ignore(this, c, prop.getReadMethod())) {
 						JSONHint hint = prop.getReadMethod().getAnnotation(JSONHint.class);
 						if (hint != null) {
-							String name = (!hint.name().isEmpty()) ? hint.name() : prop.getName();
-							mp = new PropertyInfo(prop.getBeanClass(), name, 
-									null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), hint.ordinal());
+							if (!hint.ignore()) {
+								mName = prop.getName();
+								if (!hint.name().isEmpty()) {
+									mName = hint.name();
+								} else if (getPropertyCaseStyle() != null) {
+									mName = getPropertyCaseStyle().to(mName);
+								}
+								props.add(new PropertyInfo(prop.getBeanClass(), mName, 
+										null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), hint.ordinal()));
+							}
+						} else if (getPropertyCaseStyle() != null) {
+							mName = getPropertyCaseStyle().to(prop.getName());
+							props.add(new PropertyInfo(prop.getBeanClass(), mName, 
+									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
+						} else {
+							mName = prop.getName();
+							props.add(prop);
 						}
-						addProperty(c, props, mp);
 					}
 					
-					if (prop.getField() != null) {
-						PropertyInfo fp = prop;
+					if (prop.getField() != null && !ignore(this, c, prop.getField())) {
 						JSONHint hint = prop.getField().getAnnotation(JSONHint.class);
 						if (hint != null) {
-							String name = (!hint.name().isEmpty()) ? hint.name() : prop.getName();
-							if (mp != null && name.equals(mp.getName())) {
-								continue;
+							String name = prop.getName();
+							if (!hint.name().isEmpty()) {
+								name = hint.name();
+							} else if (getPropertyCaseStyle() != null) {
+								name = getPropertyCaseStyle().to(name);
 							}
-							fp = new PropertyInfo(prop.getBeanClass(), name, 
-									prop.getField(), null, null, prop.isStatic(), hint.ordinal());
-						} else if (mp != null) {
-							if (prop.getName().equals(mp.getName())) {
-								continue;
+							if (!name.equals(mName) && !hint.ignore()) {
+								props.add(new PropertyInfo(prop.getBeanClass(), name, 
+										prop.getField(), null, null, prop.isStatic(), hint.ordinal()));
 							}
-							fp = new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-									prop.getField(), null, null, prop.isStatic(), prop.getOrdinal());
+						} else if (mName != null) {
+							String name = prop.getName();
+							if (getPropertyCaseStyle() != null) {
+								name = getPropertyCaseStyle().to(name);
+							}
+							if (!name.equals(mName)) {
+								props.add(new PropertyInfo(prop.getBeanClass(), name, 
+										prop.getField(), null, null, prop.isStatic(), prop.getOrdinal()));
+							}
+						} else if (getPropertyCaseStyle() != null) {
+							props.add(new PropertyInfo(prop.getBeanClass(), getPropertyCaseStyle().to(prop.getName()), 
+									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
+						} else {
+							props.add(prop);
 						}
-						addProperty(c, props, fp);
 					}
 				}
 				Collections.sort(props);
 				memberCache.put(c, props);				
 			}
 			return props;
-		}
-		
-		private void addProperty(Class<?> c, List<PropertyInfo> props, PropertyInfo prop) {
-			if (prop.isStatic() || !prop.isReadable() || ignore(this, c, prop.getReadMember())) {
-				return;
-			}
-			String name = null;
-			int order = -1;
-			
-			JSONHint hint = prop.getReadAnnotation(JSONHint.class);
-			if (hint != null) {
-				if (hint.ignore()) return;
-				if (hint.name().length() > 0) name = hint.name();
-				order = hint.ordinal();
-			}
-
-			if (name == null && getPropertyCaseStyle() != null) {
-				name = getPropertyCaseStyle().to(prop.getName());
-			}
-
-			if (name != null) {
-				if (prop.getReadMethod() != null && prop.getField() != null) {
-					props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-							prop.getField(), null, null, prop.isStatic(), order));
-					props.add(new PropertyInfo(prop.getBeanClass(), name, 
-							null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
-				} else {
-					props.add(new PropertyInfo(prop.getBeanClass(), name,
-							prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
-				}
-			} else if (order >= 0) {
-				props.add(new PropertyInfo(prop.getBeanClass(), prop.getName(),
-						prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
-			} else {
-				props.add(prop);
-			}			
 		}
 		
 		@SuppressWarnings("unchecked")
