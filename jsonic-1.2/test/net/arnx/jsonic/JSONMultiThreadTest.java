@@ -14,7 +14,7 @@ import org.junit.Test;
 public class JSONMultiThreadTest {
 	@Test
 	public void testMultiThread() throws Exception {
-		ExecutorService service = Executors.newCachedThreadPool();
+		ExecutorService service = Executors.newFixedThreadPool(50);
 		
 		List<JSONTester> list = new ArrayList<JSONTester>();
 		for (int i = 0; i < 1000; i++) {

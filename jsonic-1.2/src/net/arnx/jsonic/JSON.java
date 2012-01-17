@@ -1626,10 +1626,10 @@ public class JSON {
 	private <T> T convert(Context context, Object value, Type type) throws JSONException {
 		Class<?> cls = ClassUtil.getRawType(type);
 		
-		Object result = null;
+		T result = null;
 		try {
 			context.enter('$');
-			result = postparse(context, value, cls, type);
+			result = (T)postparse(context, value, cls, type);
 			context.exit();
 		} catch (Exception e) {
 			String text;
@@ -1645,7 +1645,7 @@ public class JSON {
 			throw new JSONException(getMessage("json.parse.ConversionError", text, type, context), 
 					JSONException.POSTPARSE_ERROR, e);
 		}
-		return (T)result;
+		return result;
 	}
 		
 	/**
