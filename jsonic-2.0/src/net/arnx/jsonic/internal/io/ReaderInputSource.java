@@ -21,7 +21,7 @@ public class ReaderInputSource implements InputSource {
 		this.reader = new InputStreamReader(in, determineEncoding(in));
 	}
 	
-	public ReaderInputSource(Reader reader) {
+	public ReaderInputSource(Reader reader) throws IOException {
 		if (reader == null) {
 			throw new NullPointerException();
 		}

@@ -49,24 +49,20 @@ public class StrictJSONParser implements JSONParser {
 	public static class BeforeRoot implements ParseState {
 		@Override
 		public ParseState next(ParseContext context) throws IOException {
-			int n = -1;
-			while ((n = context.next()) != -1) {
-				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				case '{':
-					context.push(JSONEventType.BEGIN_OBJECT);
-					return BEFORE_NAME;
-				case '[':
-					context.push(JSONEventType.BEGIN_ARRAY);
-					return BEFORE_VALUE;
-				default:
-					throw context.createParseException("json.parse.UnexpectedChar", c);
+			int n = skip(context);
+			if (n != -1) {
+				while ((n = context.next()) != -1) {
+					char c = (char)n;
+					switch(c) {
+					case '{':
+						context.push(JSONEventType.BEGIN_OBJECT);
+						return BEFORE_NAME;
+					case '[':
+						context.push(JSONEventType.BEGIN_ARRAY);
+						return BEFORE_VALUE;
+					default:
+						throw context.createParseException("json.parse.UnexpectedChar", c);
+					}
 				}
 			}
 			throw context.createParseException("json.parse.EmptyInputError");
@@ -76,21 +72,11 @@ public class StrictJSONParser implements JSONParser {
 	public static class AfterRoot implements ParseState {
 		@Override
 		public ParseState next(ParseContext context) throws IOException {
-			int n = -1;
-			while ((n = context.next()) != -1) {
+			int n = skip(context);
+			if (n != -1) {
 				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				default:
-					throw context.createParseException("json.parse.UnexpectedChar", c);
-				}
+				throw context.createParseException("json.parse.UnexpectedChar", c);
 			}
-			
 			return null;
 		}
 	}
@@ -98,30 +84,26 @@ public class StrictJSONParser implements JSONParser {
 	public static class BeforeName implements ParseState {
 		@Override
 		public ParseState next(ParseContext context) throws IOException {
-			int n = -1;
-			while ((n = context.next()) != -1) {
-				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				case '"':
-					context.set(JSONEventType.NAME, parseString(context));
-					return AFTER_NAME;					
-				case '}':
-					if (context.getPrevType() == JSONEventType.BEGIN_OBJECT) {
-						context.pop();
-						if (context.getBeginType() == null) {
-							return AFTER_ROOT;
-						} else {
-							return AFTER_VALUE;							
+			int n = skip(context);
+			if (n != -1) {
+				while ((n = context.next()) != -1) {
+					char c = (char)n;
+					switch(c) {
+					case '"':
+						context.set(JSONEventType.NAME, parseString(context));
+						return AFTER_NAME;					
+					case '}':
+						if (context.getPrevType() == JSONEventType.BEGIN_OBJECT) {
+							context.pop();
+							if (context.getBeginType() == null) {
+								return AFTER_ROOT;
+							} else {
+								return AFTER_VALUE;							
+							}
 						}
+					default:
+						throw context.createParseException("json.parse.UnexpectedChar", c);
 					}
-				default:
-					throw context.createParseException("json.parse.UnexpectedChar", c);
 				}
 			}
 			throw context.createParseException("json.parse.ObjectNotClosedError");
@@ -131,20 +113,16 @@ public class StrictJSONParser implements JSONParser {
 	public static class AfterName implements ParseState {
 		@Override
 		public ParseState next(ParseContext context) throws IOException {
-			int n = -1;
-			while ((n = context.next()) != -1) {
-				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				case ':':
-					return BEFORE_VALUE;
-				default:
-					throw context.createParseException("json.parse.UnexpectedChar", c);
+			int n = skip(context);
+			if (n != -1) {
+				while ((n = context.next()) != -1) {
+					char c = (char)n;
+					switch(c) {
+					case ':':
+						return BEFORE_VALUE;
+					default:
+						throw context.createParseException("json.parse.UnexpectedChar", c);
+					}
 				}
 			}
 			throw context.createParseException("json.parse.ObjectNotClosedError");
@@ -154,58 +132,54 @@ public class StrictJSONParser implements JSONParser {
 	public static class BeforeValue implements ParseState {
 		@Override
 		public ParseState next(ParseContext context) throws IOException {
-			int n = -1;
-			while ((n = context.next()) != -1) {
-				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				case '{':
-					context.push(JSONEventType.BEGIN_OBJECT);
-					return BEFORE_NAME;
-				case '[':
-					context.push(JSONEventType.BEGIN_ARRAY);
-					return BEFORE_VALUE;
-				case '"':
-					context.set(JSONEventType.STRING, parseString(context));
-					return AFTER_VALUE;
-				case '-':
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					context.set(JSONEventType.NUMBER, parseNumber(context));
-					return AFTER_VALUE;	
-				case 't':
-					context.set(JSONEventType.TRUE, parseLiteral(context, "true", Boolean.TRUE));
-					return AFTER_VALUE;
-				case 'f':
-					context.set(JSONEventType.FALSE, parseLiteral(context, "false", Boolean.FALSE));
-					return AFTER_VALUE;
-				case 'n':
-					context.set(JSONEventType.NULL, parseLiteral(context, "null", null));
-					return AFTER_VALUE;
-				case ']':
-					if (context.getPrevType() == JSONEventType.BEGIN_ARRAY) {
-						context.pop();
-						if (context.getBeginType() == null) {
-							return AFTER_ROOT;
-						} else {
-							return AFTER_VALUE;							
+			int n = skip(context);
+			if (n != -1) {
+				while ((n = context.next()) != -1) {
+					char c = (char)n;
+					switch(c) {
+					case '{':
+						context.push(JSONEventType.BEGIN_OBJECT);
+						return BEFORE_NAME;
+					case '[':
+						context.push(JSONEventType.BEGIN_ARRAY);
+						return BEFORE_VALUE;
+					case '"':
+						context.set(JSONEventType.STRING, parseString(context));
+						return AFTER_VALUE;
+					case '-':
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+						context.set(JSONEventType.NUMBER, parseNumber(context));
+						return AFTER_VALUE;	
+					case 't':
+						context.set(JSONEventType.TRUE, parseLiteral(context, "true", Boolean.TRUE));
+						return AFTER_VALUE;
+					case 'f':
+						context.set(JSONEventType.FALSE, parseLiteral(context, "false", Boolean.FALSE));
+						return AFTER_VALUE;
+					case 'n':
+						context.set(JSONEventType.NULL, parseLiteral(context, "null", null));
+						return AFTER_VALUE;
+					case ']':
+						if (context.getPrevType() == JSONEventType.BEGIN_ARRAY) {
+							context.pop();
+							if (context.getBeginType() == null) {
+								return AFTER_ROOT;
+							} else {
+								return AFTER_VALUE;							
+							}
 						}
+					default:
+						throw context.createParseException("json.parse.UnexpectedChar", c);
 					}
-				default:
-					throw context.createParseException("json.parse.UnexpectedChar", c);
 				}
 			}
 			
@@ -223,42 +197,38 @@ public class StrictJSONParser implements JSONParser {
 	public static class AfterValue implements ParseState {
 		@Override
 		public ParseState next(ParseContext context) throws IOException {
-			int n = -1;
-			while ((n = context.next()) != -1) {
-				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				case ',':
-					if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
-						return BEFORE_NAME;
-					} else if (context.getBeginType() == JSONEventType.BEGIN_ARRAY) {
-						return BEFORE_VALUE;
-					}
-				case '}':
-					if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
-						context.pop();
-						if (context.getBeginType() == null) {
-							return AFTER_ROOT;
-						} else {
-							return AFTER_VALUE;							
+			int n = skip(context);
+			if (n != -1) {
+				while ((n = context.next()) != -1) {
+					char c = (char)n;
+					switch(c) {
+					case ',':
+						if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
+							return BEFORE_NAME;
+						} else if (context.getBeginType() == JSONEventType.BEGIN_ARRAY) {
+							return BEFORE_VALUE;
 						}
-					}
-				case ']':
-					if (context.getBeginType() == JSONEventType.BEGIN_ARRAY) {
-						context.pop();
-						if (context.getBeginType() == null) {
-							return AFTER_ROOT;
-						} else {
-							return AFTER_VALUE;							
+					case '}':
+						if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
+							context.pop();
+							if (context.getBeginType() == null) {
+								return AFTER_ROOT;
+							} else {
+								return AFTER_VALUE;							
+							}
 						}
+					case ']':
+						if (context.getBeginType() == JSONEventType.BEGIN_ARRAY) {
+							context.pop();
+							if (context.getBeginType() == null) {
+								return AFTER_ROOT;
+							} else {
+								return AFTER_VALUE;							
+							}
+						}
+					default:
+						throw context.createParseException("json.parse.UnexpectedChar", c);						
 					}
-				default:
-					throw context.createParseException("json.parse.UnexpectedChar", c);						
 				}
 			}
 			
@@ -271,6 +241,25 @@ public class StrictJSONParser implements JSONParser {
 				throw new IllegalStateException();
 			}
 		}
+	}
+	
+	private static int skip(ParseContext context) throws IOException {
+		int n = -1;
+		loop:while ((n = context.next()) != -1) {
+			char c = (char)n;
+			switch(c) {
+			case '\r':
+			case '\n':
+			case ' ':
+			case '\t':
+			case 0xFEFF: // BOM
+				break;
+			default:
+				context.back();
+				break loop;
+			}
+		}
+		return n;
 	}
 	
 	private static String parseString(ParseContext context) throws IOException {
@@ -286,7 +275,7 @@ public class StrictJSONParser implements JSONParser {
 					break;
 				case 1: // control chars
 					throw context.createParseException("json.parse.UnexpectedChar", c);
-				case 2: // "'
+				case 2: // "
 					break loop;						
 				case 3: // escape chars
 					c = parseEscape(context);
