@@ -1,15 +1,12 @@
-package net.arnx.jsonic.parser;
+package net.arnx.jsonic.internal.parser;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 import net.arnx.jsonic.JSONException;
-import net.arnx.jsonic.internal.io.CharSequenceInputSource;
 import net.arnx.jsonic.internal.io.InputSource;
-import net.arnx.jsonic.internal.io.ReaderInputSource;
 
 public class StrictJSONParser implements JSONParser {
 	private InputSource in;
@@ -18,15 +15,8 @@ public class StrictJSONParser implements JSONParser {
 	private int state = 0;
 	private Object value;
 	
-	public StrictJSONParser(CharSequence cs) {
-		in = new CharSequenceInputSource(cs);
-	}
-	
-	public StrictJSONParser(Reader reader) {
-		in = new ReaderInputSource(reader);
-	}
-	
-	public void setLocale(Locale locale) {
+	public StrictJSONParser(InputSource in, Locale locale) {
+		this.in = in;
 		this.locale = locale;
 	}
 	
@@ -70,6 +60,20 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private TokenType parseAfterRoot() throws IOException {
+		int n = -1;
+		while ((n = in.next()) != -1) {
+			char c = (char)n;
+			switch(c) {
+			case '\r':
+			case '\n':
+			case ' ':
+			case '\t':
+			case 0xFEFF: // BOM
+				continue;
+			default:
+				throw createParseException(getMessage("json.parse.UnexpectedChar", c), in);
+			}
+		}
 		return null;
 	}
 	

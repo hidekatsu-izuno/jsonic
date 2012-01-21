@@ -1,4 +1,4 @@
-package net.arnx.jsonic.parser;
+package net.arnx.jsonic.internal.parser;
 
 public enum TokenType {
 	BEGIN_OBJECT,

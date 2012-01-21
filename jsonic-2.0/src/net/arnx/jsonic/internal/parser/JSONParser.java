@@ -1,4 +1,4 @@
-package net.arnx.jsonic.parser;
+package net.arnx.jsonic.internal.parser;
 
 import java.io.IOException;
 
