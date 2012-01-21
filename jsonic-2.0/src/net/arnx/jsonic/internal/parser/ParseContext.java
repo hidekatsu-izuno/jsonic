@@ -2,7 +2,9 @@ package net.arnx.jsonic.internal.parser;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -16,7 +18,7 @@ class ParseContext {
 	Locale locale;
 	int maxDepth;
 	
-	private LinkedList<JSONEventType> stack = new LinkedList<JSONEventType>();
+	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
 	private StringBuilder builderCache;
 	
 	private JSONEventType prevType;
@@ -63,7 +65,7 @@ class ParseContext {
 	
 	public void pop() {
 		this.prevType = this.type;
-		JSONEventType beginType = stack.removeLast();
+		JSONEventType beginType = stack.remove(stack.size()-1);
 		if (beginType == JSONEventType.BEGIN_OBJECT) {
 			this.type = JSONEventType.END_OBJECT;
 		} else if (beginType == JSONEventType.BEGIN_ARRAY) {
@@ -74,7 +76,7 @@ class ParseContext {
 	}
 	
 	public JSONEventType getBeginType() {
-		return (!stack.isEmpty()) ? stack.getLast() : null;
+		return (!stack.isEmpty()) ? stack.get(stack.size()-1) : null;
 	}
 	
 	public JSONEventType getPrevType() {
