@@ -1374,8 +1374,8 @@ public class JSON {
 					if (sb != null) sb.append(c);
 					break;
 				}
-			} else {
-				if (sb != null && c != 0xFEFF) sb.append(c);
+			} else if (c != 0xFEFF) {
+				if (sb != null) sb.append(c);
 			}
 		}
 		
