@@ -16,10 +16,11 @@ class ParseContext {
 	Locale locale;
 	int maxDepth;
 	
-	private LinkedList<TokenType> stack = new LinkedList<TokenType>();
+	private LinkedList<JSONEventType> stack = new LinkedList<JSONEventType>();
 	private StringBuilder builderCache;
 	
-	private TokenType type;
+	private JSONEventType prevType;
+	private JSONEventType type;
 	private Object value;
 	
 	public ParseContext(InputSource in, Locale locale, int maxDepth) {
@@ -48,32 +49,39 @@ class ParseContext {
 		return stack.size();
 	}
 	
-	public void push(TokenType type) {
+	public void push(JSONEventType type) {
+		this.prevType = this.type;
 		this.type = type;
-		stack.push(type);
+		stack.add(type);
 	}
 	
-	public void set(TokenType type, Object value) {
+	public void set(JSONEventType type, Object value) {
+		this.prevType = this.type;
 		this.type = type;
 		this.value = value;
 	}
 	
 	public void pop() {
-		TokenType beginType = stack.removeLast();
-		if (beginType == TokenType.BEGIN_OBJECT) {
-			type = TokenType.END_OBJECT;
-		} else if (beginType == TokenType.BEGIN_ARRAY) {
-			type = TokenType.END_ARRAY;
+		this.prevType = this.type;
+		JSONEventType beginType = stack.removeLast();
+		if (beginType == JSONEventType.BEGIN_OBJECT) {
+			this.type = JSONEventType.END_OBJECT;
+		} else if (beginType == JSONEventType.BEGIN_ARRAY) {
+			this.type = JSONEventType.END_ARRAY;
 		} else {
 			throw new IllegalStateException();
 		}
 	}
 	
-	public TokenType getBeginType() {
+	public JSONEventType getBeginType() {
 		return (!stack.isEmpty()) ? stack.getLast() : null;
 	}
 	
-	public TokenType getType() {
+	public JSONEventType getPrevType() {
+		return prevType;
+	}
+	
+	public JSONEventType getType() {
 		return type;
 	}
 	

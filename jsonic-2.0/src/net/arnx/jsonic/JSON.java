@@ -74,6 +74,9 @@ import net.arnx.jsonic.internal.io.OutputSource;
 import net.arnx.jsonic.internal.io.ReaderInputSource;
 import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
+import net.arnx.jsonic.internal.parser.JSONEventType;
+import net.arnx.jsonic.internal.parser.JSONParser;
+import net.arnx.jsonic.internal.parser.StrictJSONParser;
 import net.arnx.jsonic.internal.util.BeanInfo;
 import net.arnx.jsonic.internal.util.ClassUtil;
 import net.arnx.jsonic.internal.util.ExtendedDateFormat;
@@ -980,7 +983,80 @@ public class JSON {
 		return (T)convert(context, parseInternal(context, new ReaderInputSource(reader)), type);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
+		if (context.getMode() == JSONMode.STRICT) {
+			Object root = null;
+			LinkedList<Object> stack = new LinkedList<Object>();
+			String name = null;
+			
+			JSONParser parser = new StrictJSONParser(s, context.getLocale(), context.getMaxDepth());
+			JSONEventType type = null;
+			while ((type = parser.next()) != null) {
+				switch (type) {
+				case BEGIN_OBJECT:
+					Map<String, Object> map = new LinkedHashMap<String, Object>();
+					if (!stack.isEmpty()) {
+						Object current = stack.getLast();
+						if (current instanceof Map<?, ?>) {
+							((Map<Object, Object>)current).put(name, map);
+						} else if (current instanceof List<?>) {
+							((List<Object>)current).add(map);
+						} else {
+							throw new IllegalStateException();
+						}
+					}
+					if (root == null) root = map;
+					stack.add(map);
+					break;
+				case BEGIN_ARRAY:
+					List<Object> list = new ArrayList<Object>();
+					if (!stack.isEmpty()) {
+						Object current = stack.getLast();
+						if (current instanceof Map<?, ?>) {
+							((Map<Object, Object>)current).put(name, list);
+						} else if (current instanceof List<?>) {
+							((List<Object>)current).add(list);
+						} else {
+							throw new IllegalStateException();
+						}
+					}
+					if (root == null) root = list;
+					stack.add(list);
+					break;
+				case END_ARRAY:
+				case END_OBJECT:
+					if (!stack.isEmpty()) {
+						stack.removeLast();
+					} else {
+						throw new IllegalStateException();
+					}
+					break;	
+				case NAME:
+					name = (String)parser.getValue();
+					break;
+				case STRING:
+				case NUMBER:
+				case TRUE:
+				case FALSE:
+				case NULL:
+					Object current = stack.getLast();
+					if (current instanceof Map<?, ?>) {
+						((Map<Object, Object>)current).put(name, parser.getValue());
+					} else if (current instanceof List<?>) {
+						((List<Object>)current).add(parser.getValue());
+					} else {
+						throw new IllegalStateException();
+					}
+					break;
+				default:
+					throw new IllegalStateException();
+				}
+			}
+			
+			return root;
+		}
+		
 		boolean isEmpty = true;
 		Object o = null;
 		
