@@ -7,14 +7,14 @@ import java.util.Locale;
 import net.arnx.jsonic.internal.io.InputSource;
 
 public class StrictJSONParser implements JSONParser {
-	public static final ParseState BEFORE_ROOT = new BeforeRoot();
-	public static final ParseState AFTER_ROOT = new AfterRoot();
-	public static final ParseState BEFORE_NAME = new BeforeName();
-	public static final ParseState AFTER_NAME = new AfterName();
-	public static final ParseState BEFORE_VALUE = new BeforeValue();
-	public static final ParseState AFTER_VALUE = new AfterValue();
+	private static final ParseState BEFORE_ROOT = new BeforeRoot();
+	private static final ParseState AFTER_ROOT = new AfterRoot();
+	private static final ParseState BEFORE_NAME = new BeforeName();
+	private static final ParseState AFTER_NAME = new AfterName();
+	private static final ParseState BEFORE_VALUE = new BeforeValue();
+	private static final ParseState AFTER_VALUE = new AfterValue();
 	
-	private ParseState state;
+	private ParseState state = BEFORE_ROOT;
 	private ParseContext context;
 	
 	private StrictJSONParser(InputSource in, Locale locale, int maxDepth) {
