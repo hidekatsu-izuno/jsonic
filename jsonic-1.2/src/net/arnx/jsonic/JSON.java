@@ -192,6 +192,7 @@ public class JSON {
 	
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
+	private static final int[] ESCAPE_CHARS = new int[128];
 	
 	static {
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
@@ -312,6 +313,14 @@ public class JSON {
 		CONVERT_MAP.put(TreeMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(LinkedHashMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(Properties.class, PropertiesConverter.INSTANCE);
+		
+		for (int i = 0; i < 32; i++) {
+			ESCAPE_CHARS[i] = 1;
+		}
+		ESCAPE_CHARS['\''] = 2;
+		ESCAPE_CHARS['"'] = 2;
+		ESCAPE_CHARS['\\'] = 3;
+		ESCAPE_CHARS[0x7F] = 1;
 	}
 	
 	static JSON newInstance() {
@@ -1320,55 +1329,54 @@ public class JSON {
 	}
 	
 	private String parseString(Context context, InputSource s, int level) throws IOException, JSONException {
-		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilder sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		char start = '\0';
 		
 		int n = -1;
 		loop:while ((n = s.next()) != -1) {
 			char c = (char)n;
-			switch(c) {
-			case 0xFEFF: // BOM
-				continue;
-			case '\\':
-				if (point == 1) {
-					if (context.getMode() != Mode.TRADITIONAL || start == '"') {
-						s.back();
-						c = parseEscape(s);
-						if (sb != null) sb.append(c);
-					} else {
-						if (sb != null) sb.append(c);
+			if (start == '\0') {
+				switch (c) {
+				case '\'':
+					if (context.getMode() == Mode.STRICT) {
+						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);				
 					}
-				} else {
+				case '"':
+					start = c;
+					break;
+				default:
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 				}
-				continue;
-			case '\'':
-				if (context.getMode() == Mode.STRICT) {
+			} else if (c < ESCAPE_CHARS.length) {
+				switch (ESCAPE_CHARS[c]) {
+				case 0:
+					if (sb != null) sb.append(c);
 					break;
-				}
-			case '"':
-				if (point == 0) {
-					start = c;
-					point = 1;
-					continue;
-				} else if (point == 1) {
+				case 1: // control chars
+					if (context.getMode() != Mode.STRICT) {
+						if (sb != null) sb.append(c);
+					} else {
+						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					}
+					break;
+				case 2: // "'
 					if (start == c) {
 						break loop;						
 					} else {
 						if (sb != null) sb.append(c);
 					}
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
+					break;
+				case 3: // escape chars
+					if (context.getMode() != Mode.TRADITIONAL || start == '"') {
+						s.back();
+						c = parseEscape(s);
+					}
+					if (sb != null) sb.append(c);
+					break;
 				}
-				continue;
+			} else {
+				if (sb != null && c != 0xFEFF) sb.append(c);
 			}
-			
-			if (point == 1 && (context.getMode() != Mode.STRICT  || c >= 0x20)) {
-				if (sb != null) sb.append(c);
-				continue;
-			}
-			throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
 		}
 		
 		if (n != start) {
