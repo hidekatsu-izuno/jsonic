@@ -8,6 +8,7 @@ public enum TokenType {
 	NAME,
 	STRING,
 	NUMBER,
-	BOOLEAN,
+	TRUE,
+	FALSE,
 	NULL
 }
