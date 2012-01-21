@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+	
+	<description>s2jsonic sample</description>
+    
+    <filter>
+        <filter-name>s2filter</filter-name>
+        <filter-class>org.seasar.framework.container.filter.S2ContainerFilter</filter-class>
+    </filter>
+	
+	<filter>
+		<filter-name>hotdeployfilter</filter-name>
+		<filter-class>org.seasar.framework.container.hotdeploy.HotdeployFilter</filter-class>
+	</filter>
+    
+    <filter-mapping>
+        <filter-name>s2filter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>hotdeployfilter</filter-name>
+	    <url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<servlet>
+	    <servlet-name>s2servlet</servlet-name>
+	    <servlet-class>org.seasar.framework.container.servlet.S2ContainerServlet</servlet-class>
+	    <init-param>
+	        <param-name>configPath</param-name>
+	        <param-value>app.dicon</param-value>
+	    </init-param>
+	    <init-param>
+	        <param-name>debug</param-name>
+	        <param-value>true</param-value>
+	    </init-param>
+	    <load-on-startup>1</load-on-startup>
+	</servlet>
+	
+ 
+	<servlet>
+		<description>JSON RPC Service</description>
+		<servlet-name>rpcServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RPCServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.web.extension.S2Container
+				debug: true
+				mappings: {
+					'/rpc/{package}/rpc.json': 'sample.seasar2.web.${package}.service.${class}Service'
+					'/rpc/{package}/{class}.json': 'sample.seasar2.web.${package}.service.${class}Service'
+					'/rpc/{class}.json': 'sample.seasar2.service.${class}Service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+ 
+	<servlet>
+		<description>JSON REST Service</description>
+		<servlet-name>restServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RESTServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.web.extension.S2Container
+				debug: true
+				mappings: {
+					'/{package}/{class}.{method:print|exception}.json': {
+						'target': 'sample.seasar2.web.${package}.service.${class}Service', 
+						'verb': 'GET'
+					},
+					'/{package}/{class}/{id}.json': {
+						'target': 'sample.seasar2.web.${package}.service.${class}Service',
+						'verb': ['GET', 'PUT', 'DELETE']
+					},
+					'/{package}/{class}.json': 'sample.seasar2.web.${package}.service.${class}Service'
+				},
+				errors: {
+					'sample.seasar2.web.rest.service.MemoException': 406
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>rpcServlet</servlet-name>
+		<url-pattern>/rpc/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>restServlet</servlet-name>
+		<url-pattern>*.json</url-pattern>
+	</servlet-mapping>
+</web-app>

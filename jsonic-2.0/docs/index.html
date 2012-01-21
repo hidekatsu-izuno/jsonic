@@ -1,0 +1,886 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>JSONIC - simple json encoder/decoder for java</title>
+<style type="text/css">
+	html { overflow-x: hidden; height:100%; }
+	body { width: 100%; height: 100%; margin: 0px; padding: 0px; font: 10pt sans-serif; z-index: 1; }
+	.sidebar { width: 160px; height: 100%;  margin: 0px; padding: 0px; background: white;
+		position: fixed; top: 0px; left: 0px; bottom: 0px; overflow: hidden; z-index: 2; }
+	.title { width: 160px; height: 46px; margin: 0px; padding: 0px; }
+	.title a { position: absolute; top: 8px; left: 5px; overflow: hidden; }
+	.menu { width: 160px; margin: 0px; padding: 0px; }
+	.head { width: 100%; margin: 0px 160px 0px 0px; padding: 0px; }
+	.head .subtitle { position: absolute; top: 18px; left: 160px; }
+	.sf { height: 46px; margin: 0px; padding: 0px; }
+	.sf a { position: absolute; top: 8px; right: 20px; }
+	.main { margin: 0px 0px 0px 160px; padding: 0px; }
+	.bar { margin: 0px; padding: 0px 10px; }
+	
+	.main { line-height: 1.5; border-left: 1px solid silver; padding: 15px 20px 15px 20px; }
+	.title { font: bold 20pt sans-serif; color: #6699FF; }
+	.title a { color: #6699FF; text-decoration: none; }
+	.subtitle { font: italic 12pt sans-serif; color: gray; }
+	.bar { color: white; background: gray; font: bold 8pt sans-serif; text-align: right; }
+	.menu { margin: 15px 0px 15px 15px; padding: 0px; list-style-type: none; }
+	.menu ul { margin: 0px; padding: 0px 0px 0px 20px; font-size: 8pt; list-style-image: url(images/marker.jpg); }
+	.menu li { line-height: 1.5; }
+	.menu li a { text-decoration: none; }
+	.main ul { list-style-image: url(images/marker.jpg); }
+	h2 { font: bold 12pt sans-serif; margin: 30px 0px 10px 0px; border-width: 2px ; border-style: solid; 
+		border-color: silver gray gray silver; padding: 3px;
+		background-image: url(images/header.jpg); background-position: center center; line-height: 1.0; }
+	h3 { font: bold 11pt sans-serif; border-bottom: 1px solid gray; margin: 30px 0px 12px 0px;
+		padding: 1px; line-height: 1.0; }
+	h3 .subtitle { font: 9pt sans-serif; padding: 1px; line-height: 1.0; }
+	a { color: darkblue; }
+	p { margin: 0px 0px 1em 0px; padding: 0px; }
+	.warning { border: 1px solid red; background-color: #FFFF66; padding: 5px; }
+	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
+	.console { border: 1px solid black; font: 9pt monospace; color: white; padding: 16px; background-color: navy; }
+	.comment { color: #0066FF; font-family: monospace; }
+	.em { font-weight: bold; color: #000099; font-family: monospace; }
+	.elem { font-weight: bold; color: #000099; }
+	.table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
+		margin: 0px 0px 1em 0px; }
+	.table th { background-color: silver; border: 1px solid gray; white-space: nowrap; }
+	.table td { border: 1px solid gray; padding: 2px 2px;}
+	sup { font-size: 8pt; }
+	.caption { font: 8pt sans-serif; margin: 10px; }
+	.copyright { text-align: right; }
+	dt { font-weight: bold; margin-bottom: 2px; }
+</style>
+<!--[if IE 6]>
+<style type="text/css">
+	.sidebar { position: absolute; }
+</style>
+<![endif]--> 
+</head>
+<body>
+<div class="sidebar">
+<h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
+<div class="bar">Version 1.2</div>
+<ul class="menu">
+	<li><a href="index.html">JSONICとは</a></li>
+	<li><a href="index.html#download">ダウンロード</a></li>
+	<li>JSON API
+		<ul>
+			<li><a href="index.html#encoder">JSONエンコーダー</a></li>
+			<li><a href="index.html#decoder">JSONデコーダー</a></li>
+			<li><a href="index.html#usage_advanced">高度な使い方</a></li>
+			<li><a href="index.html#as3">JSONIC for AS3</a></li>
+		</ul>
+	</li>
+	<li>Web サービス API
+		<ul>
+		<li><a href="webservice.html">基本的な説明</a></li>
+		<li><a href="webservice.html#rpcservlet">RPCサーブレット</a></li>
+		<li><a href="webservice.html#restservlet">RESTサーブレット</a></li>
+		<li><a href="webservice.html#dicontainer">DIコンテナ対応</a></li>
+		<li><a href="webservice.html#gatewayfilter">Gatewayフィルタ</a></li>
+		<li><a href="webservice_old.html">WebServiceServlet(旧)</a></li>
+		</ul>
+	</li>
+	<li>API リファレンス
+		<ul>
+		<li><a href="java/api/index.html">javadoc</a></li>
+		<li><a href="as3/api/index.html">asdoc</a></li>
+		</ul>
+	</li>
+	<li>旧バージョン
+		<ul>
+		<li><a href="http://jsonic.sourceforge.jp/1.1/index.html">version 1.1</a></li>
+		<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
+		</ul>
+	</li>
+	<li><a href="index.html#maven">Mavenリポジトリ</a></li> 
+	<li><a href="index.html#license">ライセンス</a></li>
+	<li><a href="index.html#report">バグ・要望の報告先</a></li>
+	<li><a href="index.html#releasenote">リリースノート</a></li>
+</ul>
+</div>
+
+<div class="head">
+<div class="subtitle">- simple json encoder/decoder for java</div>
+<div class="sf"><a href="http://sourceforge.jp/"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" style="border-width:0px;" alt="SourceForge.jp" /></a></div>
+<div class="bar">&nbsp;</div>
+</div>
+
+<div class="main">
+
+<h2 id="introduction" style="margin-top: 5px;">JSONICとは</h2>
+<p>JSONICは、Java用のシンプルかつ高機能なJSONエンコーダー/デコーダーライブラリです。<br />
+Java用のJSONライブラリはすでに多数存在しますが、JSONICは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に従った正式なJSON形式でのデコード/エンコードを行いながらも、プログラミング言語に依存する情報をJSON内に含めることなくPOJO(Plain Old Java Object)と自然な変換を行える点に特徴があります。</p>
+<p>使い方も非常に簡単です。</p>
+<pre class="source">
+import net.arnx.jsonic.JSON;
+
+<span class="comment">// POJOをJSONに変換します</span>
+String text = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// JSONをPOJOに変換します</span>
+Hoge hoge = <span class="em">JSON.decode(</span>text, Hoge.class<span class="em">)</span>;
+</pre>
+
+<p>Version 1.2.6 からは、JavaScript内での直接出力用に escapeScript が追加されました。JSONでは許されていない string, number など値の出力やXSS脆弱性を防ぐ&lt;&gt;のエスケープも行われます</p>
+<pre class="source">
+<span class="comment">// POJOをJavaScriptに変換します（）</span>
+var value = &lt;%= <span class="em">JSON.escapeScript(</span>value<span class="em">)</span> %&gt;;
+</pre>
+<p>JSONICには、JSON操作APIだけでなく、JSONを使ったWebサービスが簡単に構築できるサーブレットも用意されています。詳しくは<a href="webservice.html">WebサービスAPI</a>のドキュメントを御覧ください。</p>
+
+<h2 id="download">ダウンロード</h2>
+<p><a href="http://sourceforge.jp/projects/jsonic">ダウンロードはこちらから</a>できます。なお、JSONICのビルド/実行には、Java 5.0以上が必要です。</p>
+<div><script src="http://sourceforge.jp/projects/jsonic/files/compact.js" type="text/javascript" charset="utf-8"></script></div>
+
+<h2 id="encoder">JSONエンコーダー</h2>
+<p>POJOからJSONに変換する場合は、encodeを使います。デフォルトでは、空白などを含まない可読性の低いJSONが出力されますが、二番目の引数をtrueにすることで可読性の高いJSONが出力されるようになります（Pretty Printモード）。</p>
+<p>なお、JSONのフォーマット中に何らかの例外が発生した場合は、JSONExceptionでラップされ通知されます（Beanからの取得時に例外発生など）。</p>
+<pre class="source">
+<span class="comment">// 変換対象のPOJOを準備</span>
+Hoge hoge = new Hoge();
+hoge.number = 10;      <span class="comment">// public field</span>
+hoge.setString("aaa"); <span class="comment">// public property</span>
+hoge.setArray(new int[] {1, 2, 3});
+
+<span class="comment">// POJOをJSONに変換します。戻り値は {"number":10,"string":"aaa","array":[1,2,3]}となります</span>
+String text = <span class="em">JSON.encode(</span>hoge<span class="em">)</span>;
+
+<span class="comment">// POJOを可読性の高いJSONに変換します。戻り値は次のような文字列になります
+// {
+//     "number": 10,
+//     "string": "aaa",
+//     "array": [1, 2, 3]
+// }</span>
+String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>; 
+
+<span class="comment">// Appendable(StringBuffer, Writerなど)やOutputStreamを出力先にすることもできます<sup>(※1)</sup></span>
+<span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileWriter("hoge.txt")<span class="em">)</span>;
+<span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileOutputStream("hoge.txt")<span class="em">)</span>;
+</pre>
+<div class="caption">(※1) OutputStreamを指定した場合に出力される文字コードはUTF-8固定となります。
+また、close処理は自動では行われませんので必要に応じて別途行う必要があります。</div>
+
+<p>POJOからJSONへの変換ルールは次の通りです。</p>
+<table class="table" summary="POJOからJSONへの変換ルール">
+<tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
+<tr><td>Map, DynaBean<sup>(※2)</sup></td><td rowspan="2">object</td></tr>
+<tr><td>Object<sup>(※3)</sup></td></tr>
+<tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="4">array</td></tr>
+<tr><td>Iterable (Collection, Listなど)</td></tr>
+<tr><td>Iterator, Enumeration</td></tr>
+<tr><td>java.sql.Array, java.sql.Struct</td></tr>
+<tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
+<tr><td>char, Character</td></tr>
+<tr><td>TimeZone, Pattern, File, URL, URI, Type, Member, Charset, UUID</td></tr>
+<tr><td>byte[]</td><td>string (BASE64エンコード)</td></tr>
+<tr><td>java.sql.RowId</td><td>string (シリアル化後、BASE64エンコード)</td></tr>
+<tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
+<tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
+<tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※4)</sup></td></tr>
+<tr><td>Number</td></tr>
+<tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
+<tr><td>Enum</td><td>number (ordinalにより変換)</td></tr>
+<tr><td>boolean, Boolean</td><td>true/false</td></tr>
+<tr><td>null</td><td>null</td></tr>
+</table>
+<div class="caption">
+(※2) DynaBeanを利用する場合、<a href="http://commons.apache.org/beanutils/">Commons BeanUtils</a>のjarファイルをクラスパスに追加する必要があります。リフレクションを利用して処理を行っているため、利用しない場合は特に含める必要はありません。<br />
+(※3) 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。<br />
+(※4) NaN, Infinity, -Infinityに限りそれぞれ文字列"NaN", "Infinity", "-Infinity"に変換されます。
+</div>
+<p>また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「<a href="index.html#xmltojson">高度な使い方 - XMLからJSONへの変換</a>」の項をご覧ください。</p>
+<p>なお、JSONはobjectかarrayで始まる必要があるため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合エラーとなります。</p>
+
+<h2 id="decoder">JSONデコーダー</h2>
+<p>JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。</p>
+<p>なお、JSON文字列が不正であったり、型の変換に失敗した場合はJSONExceptionが投げられます。</p>
+<pre class="source">
+<span class="comment">// JSONをPOJOに変換します。戻り値としてサイズが4のArrayListが返されます</span>
+List list = (List)<span class="em">JSON.decode(</span>"[1, \"a\", {}, false]"<span class="em">)</span>;
+
+<span class="comment">// JSONをHogeクラスのインスタンスに変換します（キャストは不要です）</span>
+Hoge hoge = <span class="em">JSON.decode(</span>"{\"number\": 10, \"array\": [1, 2, 3]}", Hoge.class<span class="em">)</span>;
+
+<span class="comment">// クラスの配列型への変換も可能です。</span>
+Hoge[] data = <span class="em">JSON.decode(</span>"[{ \"id\": 1 }, { \"id\": 2 }, { \"id\": 3 }]", Hoge[].class<span class="em">)</span>;
+
+<span class="comment">// ReaderやInputStreamからJSONを読み込むことも可能です<sup>(※5)</sup></span>
+Hoge hoge = <span class="em">JSON.decode(</span>new FileReader("hoge.txt")<span class="em">,</span> Hoge.class<span class="em">)</span>;
+Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<span class="em">,</span> Hoge.class<span class="em">)</span>;
+</pre>
+<div class="caption">(※5) InputStreamから読み込む場合の文字コードは、UTF-8/UTF-16BE/UTF-16LE/UTF-32BE/UTF-32LEから自動判別されます。
+また、close処理は自動では行われませんので必要に応じて別途行う必要があります。</div>
+
+<p>JSONからPOJOへの変換ルールは次の通りです。</p>
+<table class="table" summary="JSONからPOJOへの変換ルール">
+<tr><th style="width: 20%">変換元（JSON）</th><th style="width: 40%">指定された型</th><th style="width: 40%">変換先（Java）</th></tr>
+<tr><td rowspan="4">object</td><td>なし, Object, Map</td><td>LinkedHashMap</td></tr>
+<tr><td>SortedMap</td><td>TreeMap</td></tr>
+<tr><td>その他のMap派生型</td><td>指定された型</td></tr>
+<tr><td>その他の型</td><td>指定された型（パブリック・フィールド／プロパティに値をセット)<sup>(※6)</sup></td></tr>
+<tr><td rowspan="9">array</td><td>なし, Object, Collection, List</td><td>ArrayList</td></tr>
+<tr><td>Set</td><td>LinkedHashSet</td></tr>
+<tr><td>SortedSet</td><td>TreeSet</td></tr>
+<tr><td>その他のCollection派生型</td><td>指定された型</td></tr>
+<tr><td>short[], byte[], int[], long[], float[], double[]<br />Object[]派生型</td><td>指定された型</td></tr>
+<tr><td>Locale</td><td>Locale（「言語コード」「国コード」「バリアントコード」からなる配列とみなし変換）</td></tr>
+<tr><td>Map</td><td>インデックスの値をキーとするLinkedHashMap</td></tr>
+<tr><td>SortedMap</td><td>インデックスの値をキーとするTreeMap</td></tr>
+<tr><td>その他のMap派生型</td><td>インデックスの値をキーとする指定された型のMap</td></tr>
+<tr><td rowspan="17">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
+<tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
+<tr><td>Appendable</td><td>StringBuilder</td></tr>
+<tr><td>その他のAppendable派生型</td><td>指定された型（値をappend）</td></tr>
+<tr><td>Enum派生型</td><td>指定された型（値をEnum.valueOfあるいはint型に変換後Enum.ordinal()で変換）</td></tr>
+<tr><td>Date派生型,<br />Calendar派生型</td><td>指定された型（文字列をDateFormatで変換）</td></tr>
+<tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger, BigDecimal</td><td>指定された型（文字列を数値とみなし変換）</td></tr>
+<tr><td>byte[]</td><td>byte[]（文字列をBASE64とみなし変換）</td></tr>
+<tr><td>Locale</td><td>Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換）</td></tr>
+<tr><td>Pattern</td><td>Pattern（文字列をcompileにより変換）</td></tr>
+<tr><td>Class, Charset</td><td>指定された型（文字列をforNameにより変換）</td></tr>
+<tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
+<tr><td>UUID</td><td>UUID（文字列をUUID.fromStringで変換）</td></tr>
+<tr><td>File, URI, URL</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
+<tr><td>InetAddress</td><td>InetAddress（文字列をInetAddress.getByNameで変換）</td></tr>
+<tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
+<tr><td rowspan="5">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
+<tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
+<tr><td>Date派生型,<br />Calendar派生型</td><td>指定された型（数値を1970年からのミリ秒とみなし変換）</td></tr>
+<tr><td>boolean, Boolean</td><td>指定された型（0以外の時true、0の時false）</td></tr>
+<tr><td>Enum派生型</td><td>指定された型（int値をEnum.ordinal()に従い変換）</td></tr>
+<tr><td rowspan="6">true/false</td><td>なし, Object, Boolean</td><td>Boolean</td></tr>
+<tr><td>char, Character</td><td>指定された型（trueの時'1'、falseの時'0'）</td></tr>
+<tr><td>float, double, Float, Double</td><td>指定された型（trueの時1.0、falseの時NaN）</td></tr>
+<tr><td>byte, short, int, long,<br />Byte, Short, Integer, Long,<br />BigInteger</td><td>指定された型（trueの時1、falseの時0）</td></tr>
+<tr><td>boolean</td><td>boolean</td></tr>
+<tr><td>Enum派生型</td><td>指定された型（trueを1、falseを0とみなしEnum.ordinal()に従い変換）</td></tr>
+<tr><td rowspan="4">null</td><td>なし, Object</td><td>null</td></tr>
+<tr><td>byte, short, int, long, float, double</td><td>0</td></tr>
+<tr><td>boolean</td><td>false</td></tr>
+<tr><td>char</td><td>'\u0000'</td></tr>
+</table>
+<div class="caption">
+(※6) 対象となるインスタンスに対しパブリックなsetterメソッド、パブリックなフィールドの優先順で探索します。
+staticやtransientのメソッド/フィールドは対象となりません。
+なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較します。
+</div>
+
+<h2 id="usage_advanced">高度な使い方</h2>
+<p>JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。</p>
+<ul>
+<li><a href="index.html#extends">継承による機能拡張</a></li>
+<li><a href="index.html#generics">総称型を指定してのdecode/parse</a></li>
+<li><a href="index.html#liberalparsing">柔軟な読み込み</a></li>
+<li><a href="index.html#validation">JSONの検証</a></li>
+<li><a href="index.html#jsfriendly">JavaScriptに親和的な出力</a></li>
+<li><a href="index.html#format">日時/数値書式の指定</a></li>
+<li><a href="index.html#namingstyle">プロパティ名/列挙型出力書式の指定</a></li>
+<li><a href="index.html#innerclass">内部クラスを利用したエンコード/デコード</a></li>
+<li><a href="index.html#maxdepth">最大深度の設定</a></li>
+<li><a href="index.html#suppressnull">null値の抑制</a></li>
+<li><a href="index.html#xmltojson">XMLからJSONへの変換</a></li>
+<li><a href="index.html#jsonhint">変換時ヒントの付加</a></li>
+<li><a href="index.html#tostring">データの文字列化</a></li>
+<li><a href="index.html#serializable">データの部分シリアル化</a></li>
+</ul>
+
+<h3 id="extends">■ 継承による機能拡張</h3>
+<p>JSONICは、フレームワークでの利用を考慮しインスタンスを生成したり、継承して拡張することができるように設計してあります。
+なお、インスタンスを生成して利用する場合は、encode/decodeメソッドの代わりにformat/parseメソッドを利用します。</p>
+<pre class="source">
+<span class="comment">// インスタンスを生成します</span>
+<span class="em">JSON</span> json = new <span class="em">JSON()</span>;
+
+<span class="comment">// POJOをJSONに変換します(encodeと同じ機能)</span>
+String text = json<span class="em">.format(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// POJOを可読性の高いJSONに変換します(Pretty Printモード)</span>
+json.<span class="em">setPrettyPrint(</span>true<span class="em">)</span>;
+String text = json<span class="em">.format(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// JSONをPOJOに変換します(decodeと同じ機能)</span>
+Map map = (Map)json<span class="em">.parse(</span>text<span class="em">)</span>;
+
+<span class="comment">// JSONをHogeクラスのインスタンスに変換します(decodeと同じ機能)</span>
+Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">)</span>;
+</pre>
+
+<p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を追加するために次のようなオーバーライド可能なメソッドが用意されています。</p>
+<pre class="source">
+JSON json = new JSON() {
+  
+  <span class="comment">// フォーマット可能なクラスに変換します（formatでのみ有効です）。
+  // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。</span>
+  protected <span class="em">Object preformat(Context context, Object value)</span> throws Exception {
+    <span class="comment">// java.awt.geom.Point2DをJSON arrayにフォーマットする例です。</span>
+    if (value instanceof Point2D) {
+      Point2D p = (Point2D)value;
+      List&lt;Double&gt; list = new ArrayList&lt;Double&gt;();
+      list.add(p.getX());
+      list.add(p.getY());
+      return list;
+    }
+    return super.preformat(context, value);
+  }
+  
+  <span class="comment">// 解析されたデータを指定したクラスに変換します（parseでのみ有効です）。
+  // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。
+  // さら下の階層を変換したい場合は、context.convert(キー, 値, 型)を呼び出してください。</span>
+  protected <span class="em">&lt;T&gt; T postparse(Context context, Object value,
+    Class&lt;? extends T&gt; c, Type t)</span> throws Exception {
+    
+    <span class="comment">// JSON arrayをjava.awt.geom.Point2Dに変換する例です。</span>
+    if (Point2D.class.isAssignableFrom(c) &amp;&amp; value instanceof List) {
+      List list = (List)value;
+      Point2D p = (Point2D)create(context, c);;
+      p.setLocation(
+        context.convert(0, list.get(0), double.class),
+        context.convert(1, list.get(1), double.class)
+      );
+      return c.cast(p);
+    }
+    return super.postparse(context, value, c, t);
+  }
+  
+  <span class="comment">// 型cに対するインスタンスを生成します（parseでのみ有効です）。</span>
+  protected <span class="em">&lt;T&gt; T create(Context context, Class&lt;? extends T&gt; c)</span> throws Exception {
+    if (Point2D.class.isAssignableFrom(c)) {
+      return c.cast(new Point2D.Double());
+    }
+    return super.create(context, c);
+  }
+      
+  <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）。</span>
+  protected <span class="em">boolean ignore(Context context, Class c, Member m)</span> {
+    <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言された
+    // メンバの場合、trueを返します。</span>
+    return super.ignore(context, c, m);
+  }    
+};
+</pre>
+
+<p>また、継承して作成した自作クラスをJSON.prototypeにセットすることで、JSON.encodeやJSON.decodeの動作を置き換えることも可能です。</p>
+<pre class="source">
+JSON.prototype = MyJSON.class;
+</pre>
+
+<h3 id="generics">■ 総称型を指定してのdecode/parse</h3>
+<p>decodeやparseの引数にはJava 5.0で追加された総称型も指定できます。しかし、総称型はコンパイル時に削除されてしまうため、decode/parseメソッドの引数として直接的に指定することができません。総称型を使う場合はルート要素をJSON objectにして、対応するクラス定義の中で総称型を使うことをおすすめします。</p>
+<pre class="source">
+public class Config() {
+    
+    public static class RowData {
+        public String id;
+        public String name;
+    }
+    
+    public List&lt;RowData&gt; rows;
+    
+    public static Config load(Reader reader) throws IOException {
+        return JSON.decode(reader, Config.class);
+    }
+}
+</pre>
+
+<p>多少トリッキーですが、FieldやMethodや無名クラスからリフレクションで総称型を取得することで間接的に指定する方法もあります。</p>
+<pre class="source">
+    private Map&lt;String, Hoge&gt; config;
+    
+    <span class="em">// Filedを使って総称型を指定</span>
+    public Map&lt;String, Hoge&gt; load(Reader reader) throws IOException {
+        return JSON.<span class="em">decode(</span>reader, 
+            this.getClass().getField("config").getGenericType()<span class="em">)</span>;
+    }
+    
+    <span class="em">// 総称型を継承した無名クラスを使って総称型を指定</span>
+    public List&lt;RowData&gt; load(Reader reader) throws IOException {
+	    return JSON.<span class="em">decode(</span>"[ { ... }, { ... } ]", 
+	        (new ArrayList&lt;RowData&gt;() {}).getClass().getGenericSuperclass());
+    }
+</pre>
+
+<h3 id="liberalparsing">■ 柔軟な読み込み <span class="subtitle">- TRADITIONALモード</span></h3>
+<p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、デフォルトでは、妥当でないJSONであっても読み込みが可能なTRADITIONALモードで動作するように作成されています。<br />
+<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
+<ul>
+  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）およびシェルスクリプトスタイルの行コメント（#）をコメントとして認識します。</li>
+  <li>[デコード] ルート要素がobjectの場合、一番外側の'{'と'}'を省略することができます（入力文字列が空白文字列やコメントのみの場合も空のobjectとみなされます）。</li>
+  <li>[デコード] シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します（ただし、シングルクォートで囲まれた場合はjavascriptと異なりエスケープを処理しません）。</li>
+  <li>[デコード] objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
+  <li>[デコード] objectにおいてキーに対する値がobjectの場合、':'を省略することができます。</li>
+  <li>[デコード] string中で改行やタブなどの制御文字を有効な文字として認識します。</li>
+  <li>[デコード] objectやarrayにおいて値が省略された場合、nullとして認識します。</li>
+</ul>
+<p>例えば、次のテキストは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>では無効ですが、JSONICでは読み込むことが可能です。</p>
+<pre class="source">
+# database settings
+database {
+  description: 'ms sql server
+	connecter settings'
+  user: sa
+  password: xxxx // you need to replace your password.
+}
+
+/* 
+  equals to {"database": {
+     "description": "ms sql server\n\tconnecter settings",
+     "user": "sa", "password": "xxxx"}}
+*/
+</pre>
+
+<p>この動作は<code>setMode(Mode.STRICT)</code>を指定することで、RFCに準じた妥当性チェックを行なうよう変更することができます。</p>
+
+<h3 id="validation">■ JSONの検証 <span class="subtitle">- STRICTモード</span></h3>
+<p>JSONICでは、従来柔軟な読み込みができる反面、<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に厳密に沿ったJSONであるか判定することができませんでした。
+JSONIC 1.2.1からはSTRICTモードが用意され、厳密な検証動作が可能となりました。</p>
+<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。</p>
+<pre class="source">
+	JSON json = new JSON(JSON.Mode.STRICT);
+	
+	json.setMode(JSON.Mode.STRICT);
+	
+	JSON.prototype = (new JSON() {
+		{
+			setMode(JSON.Mode.STRICT);
+		}
+	}).getClass();
+</pre>
+<p>また、データのデコードを行わず検証のみを行うvalidateメソッドも用意されています（これは、setDepth(0)、setMode(Mode.STRICT)を指定した時と同じです）。</p>
+<pre class="source">
+	JSON.validate(new FileInputStream("test.json"));
+</pre>
+
+<h3 id="jsfriendly">■ JavaScriptに親和的な出力 <span class="subtitle">- SCRIPTモード</span></h3>
+<p>JSONは、可搬性あるデータ連携フォーマットとしてだけでなく、HTML内に書かれるJavaScript内にJavaオブジェクトの内容をインライン出力するためにも便利です。
+JSONICでは、このような場合に使いやすいようSCRIPTモードを用意しています。<br />
+<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
+<ul>
+  <li>[エンコード] 引数にStringやIntegerなど、ルート要素が object や array にならないオブジェクトを指定し、JSONの断片を出力することができます。</li>
+  <li>[エンコード] HTMLやXML中ではエスケープが必要な「&lt;」「&gt;」が文字列中に見つかった場合、それぞれ「\u003C」「\u003E」と出力します。</li>
+  <li>[エンコード] java.util.Date 型を new Date(ミリ秒) で出力します。</li>
+  <li>[エンコード] NaN、POSITIVE_INFINITY, NEGATIVE_INFINITY を文字列ではなく、Number.NaN、Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITYとして出力します。</li>
+  <li>[デコード] 引数にstring、number、true/false/nullといったJSONの断片を指定し単純型の値を取得することができます。</li>
+  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）をコメントとして認識します（TRADITIONALモードと異なり#はコメントとして認識しません）。</li>
+  <li>[デコード] シングルクォートで囲まれた文字列をstringとして認識します（TRADITIONALモードと異なりダブルクォートで囲った場合と同様エスケープを認識します）。</li>
+  <li>[デコード] object のキーに限りシングルクォートで囲まれていないリテラルを文字列として認識します。</li>
+</ul>
+<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeScript を通じて簡単に使うことが可能です。</p>
+<pre class="source">
+	JSON json = new JSON(JSON.Mode.SCRIPT);
+	
+	json.setMode(JSON.Mode.SCRIPT);
+	
+	JSON.prototype = (new JSON() {
+		{
+			setMode(JSON.Mode.SCRIPT);
+		}
+	}).getClass();
+	
+	JSON.escapeScript(...);
+</pre>
+
+<h3 id="format">■ 日時/数値書式の指定 <span class="subtitle">- setDateFormat/setNumberFormat</span></h3>
+
+<p>日付型や数値型は、デフォルトではJSON numberとして出力されますが、JSONIC 1.2.8以降ではsetDateFormat/setNumberFormatを指定することでデフォルトの日時/数値書式を設定できます。フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※7）。なお、書式は JSONHint を使うことで上書きすることができます。</p>
+<pre class="source">
+	JSON json = new JSON();
+	<span class="comment">// デフォルトの日時書式を指定</span>
+	json.setDateFormat("yyyy/MM/dd");
+	
+	<span class="comment">// デフォルトの数値書式を指定</span>
+	json.setNumberFormat("###,##0.00");
+	
+	<span class="comment">// 戻り値は { "date": "2011/01/01", "number": "1,000.00" ] となります</span>
+	json.format(new Object() {
+		public Date date = new Date(2011, 0, 1);
+		public int number = 1000;
+	});
+</pre>
+<div class="caption">
+(※7) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
+</div>
+
+<h3 id="namingstyle">■ プロパティ名/列挙型出力書式の指定 <span class="subtitle">- setPropertyStyle/setEnumStyle</span></h3>
+<p>プロパティ名は、デフォルトではプロパティ名をJSON stringとして、列挙型は序数をJSON numberとして出力しますが、JSONIC 1.2.8以降ではsetPropertyStyle/setEnumStyleを使用することで出力書式を設定できます。</p>
+<pre class="source">
+	JSON json = new JSON();
+	<span class="comment">// プロパティ名を、アッパーキャメル記法に変換して出力</span>
+	json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
+	
+	<span class="comment">// 列挙値を、小文字アンダースコア区切りに変換して出力</span>
+	json.setEnumStyle(NamingStyle.LOWER_CAMEL);
+	
+	<span class="comment">// 戻り値は { "JSON_MODE": "halfEven" } となります</span>
+	json.format(new Object() {
+		public RoundingMode jsonMode = RoundingMode.HALF_EVEN;
+	});
+</pre>
+
+<h3 id="innerclass">■ 内部クラスを利用したエンコード/デコード</h3>
+<p>JSONの設定ファイルを解析したいような場合は、内部クラスやパッケージ・デフォルトのクラスを利用したいことがあります。<br />
+JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと同一パッケージの内部クラスや無名クラスを自動的にアクセス可能に変更します。<br />
+ただし、この場合に生成された内部クラスのインスタンスには包含するクラスのインスタンスがセットされていない状態になります。内部クラスから包含するクラスのインスタンスにアクセスしたい場合や引数に指定したクラス以外のコンテキストで実行したい場合は、setContextを利用して明示的に指定してください。</p>
+<pre class="source">
+public class EnclosingClass {
+  public void decode() {
+    JSON json = <span class="em">new JSON()</span>; 
+    InnerClass ic = json.parse("{\"a\": 100}", InnerClass.class); <span class="comment">// このクラスのコンテキストで動作</span>
+    
+    System.out.println("ic.a = " + ic.a); <span class="comment">// ic.a = 100</span>
+    
+    ic.accessEnclosingClass(); <span class="comment">// 実行時にNullPointerExceptionが発生</span>
+    
+    json.<span class="em">setContext(</span>this<span class="em">)</span>;  <span class="comment">// コンテキストを設定</span>
+    ic = json.parse("{\"a\": 100}", InnerClass.class);
+    
+    ic.accessEnclosingClass(); <span class="comment">// 正常に動作</span>
+  }
+  
+  class InnerClass {
+    public int a = 0;
+    
+    public void accessEnclosingClass() {
+      decode(); 
+    }
+  }
+}
+</pre>
+
+<h3 id="maxdepth">■ setMaxDepth <span class="subtitle">- 最大深度の設定</span></h3>
+<p>JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。
+しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため
+単純に入れ子の深さに制限を設けています。</p>
+<p>なお、最大深度の設定はdecode/parse時にも有効ですので深すぎるデータの取得を避けることも可能となります。</p>
+<p>この最大深度は、デフォルトでは32に設定されていますが変更することも可能です。</p>
+<pre class="source">
+<span class="comment">// 5階層以下の情報は取得しない</span>
+json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
+</pre>
+
+<h3 id="suppressnull">■ setSuppressNull <span class="subtitle">- null値の抑制</span></h3>
+<p>JSONICでは、format時に値がnullになっているJSON objectのメンバの出力を抑制したり、parse時にnull値の代入を抑制することができます。初期値はfalseです。</p>
+<p>余計なメンバが大量に出力されてしまう、プロパティの初期値を優先したいなどの場合に有効です。</p>
+<pre class="source">
+<span class="comment">// null値の出力や代入を抑制します。</span>
+json<span class="em">.setSuppressNull(</span>true<span class="em">)</span>;
+</pre>
+
+<h3 id="xmltojson">■ XMLからJSONへの変換</h3>
+<p>JSONICでは、org.w3c.dom.Document/Elementから<a href="http://jsonml.org/">JsonML</a>への変換をサポートしています。
+方法は、通常と同じようにencode/formatの引数にorg.w3c.dom.Document/Elementのインスタンスを設定するだけです。</p>
+<pre class="source">
+Document doc = builder.parse(new File("sample.xml"));
+String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span>;
+</pre>
+<p>例えば、下記のXMLの場合</p>
+<pre class="source">
+<span class="elem">&lt;feed xmlns="</span>http://www.w3.org/2005/Atom<span class="elem">"&gt;</span>
+  <span class="elem">&lt;title&gt;</span>Feed Title<span class="elem">&lt;/title&gt;</span>
+  <span class="elem">&lt;entry&gt;</span>
+    <span class="elem">&lt;title&gt;</span>Entry Title<span class="elem">&lt;/title&gt;</span>
+  <span class="elem">&lt;/entry&gt;</span>
+<span class="elem">&lt;/feed&gt;</span>
+</pre>
+<p>次のようなJSONが生成されます（実際にはタグ間の空白文字もTextNodeとして出力されます。不要な場合は、DOM作成時に取り除く必要があります）。</p>
+<pre class="source">
+["feed", {"xmlns": "http://www.w3.org/2005/Atom"}, 
+	["title", "Feed Title"],
+	["entry",
+		["title", "Entry Title"],
+	]
+]
+</pre>
+
+<h3 id="jsonhint">■ JSONHintアノテーション <span class="subtitle">- 変換時ヒントの付加</span></h3>
+<p>場合によってデフォルトの変換方式では不十分な場合があります。JSONICでは、メソッドやフィールドにJSONHintアノテーションを付加することで、
+動作を部分的に制御することが可能です。</p>
+<p>設定できる属性は次の通りです。</p>
+<table class="table" summary="JSONHintアノテーションの属性">
+<tr><th>属性名</th><th>値型</th><th>説明</th></tr>
+<tr><td>name</td><td>String</td><td>出力/代入するキー名を変更します</td></tr>
+<tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。<br />
+フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※8）。</td></tr>
+<tr><td>type</td><td>Class</td><td>parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。</td></tr>
+<tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
+<tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。デフォルトはfalseです。
+Format時はtoString()の値をそのまま出力<sup>(※9)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
+<tr><td>anonym</td><td>String</td><td>単純値型からMapや複合型に変換するときに単純値型を設定するプロパティ名を指定します。anonymを指定しない場合、Mapの場合はnullキーの値として設定されますが、複合型を指定した場合はエラーとなります。</td></tr>
+<tr><td>ordinal</td><td>int</td><td>JSON objectへの変換する際のキーの出力順を昇順で指定します。デフォルトはキー値の自然順序順（＝負値指定）です。</td></tr>
+</table>
+<div class="caption">
+(※8) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
+</div>
+<div class="caption">
+(※9) 出力される文字列は検証されないため妥当でないJSONが出力されてしまう可能性があることに注意してください。
+逆に言えば、この機能を使うことでコメントやfunction呼び出しを出力することも可能です。
+</div>
+
+<pre class="source">
+public class WithHintBean {
+  <span class="comment">// format/parse時のキー値を変更</span>
+  <span class="em">@JSONHint(</span>name="名前"<span class="em">)</span>
+  public int keyValue = 100;
+  
+  <span class="comment">// format/parse時のフォーマットを指定</span>
+  <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
+  public Date dateValue = new Date();
+    
+  <span class="comment">// 数値の時は、DecimalForamtとして認識される</span>
+  <span class="em">@JSONHint(</span>format="##0.00"<span class="em">)</span>
+  public int numberValue = 100;
+    
+  <span class="comment">// 配列やリストでもOK</span>
+  <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
+  public List&lt;Date&gt; dateArray;
+  
+  <span class="comment">// メソッドにも付与可能（getter/setterで別のヒントを与えることも可）</span>
+  <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
+  public int getMethodValue() {
+    return 100;
+  }
+  
+  <span class="comment">// ArrayListの代わりにLinkedListのインスタンスを生成</span>
+  <span class="em">@JSONHint(</span>type=LinkedList.class<span class="em">)</span>
+  public List&lt;String&gt; stringList;
+    
+  <span class="comment">// format/parse時に無視</span>
+  <span class="em">@JSONHint(</span>ignore=true<span class="em">)</span>
+  public int ignoreValue = 100;
+    
+  <span class="comment">// 値はJSON</span>
+  <span class="em">@JSONHint(</span>serialized=true<span class="em">)</span>
+  public String json = "{\"num\": 100, \"func\": sum(100, 200) /*illegal JSON*/}";
+}
+</pre>
+
+<h3 id="tostring">■ JSONHintによるString指定 <span class="subtitle">- データの文字列化</span></h3>
+<p>JSONHintアノテーションのtype属性に<code>String</code>を指定することで、データをtoString()およびString型を引数にとるコンストラクタを取る文字列相当型として扱うことができるようになります。</p>
+<pre class="source">
+public class TestBean {
+  <span class="em">@JSONHint(</span>type=String.class<span class="em">)</span>
+  public StringBean sb;
+}
+
+public class StringBean {
+  <span class="comment">// decode時は、String型を引数に取るコンストラクタが呼ばれます</span>
+  public StringBean(String str) {
+    ...
+  }
+  
+  <span class="comment">// encode時は、toStringが呼ばれます</span>
+  public String toString() {
+    ...
+  }
+}
+</pre>
+
+<h3 id="serializable">■ JSONHintによるSerializable指定 <span class="subtitle">- データの部分シリアル化</span></h3>
+<p>JSONHintアノテーションのtype属性に<code>java.io.Serializable</code>を指定することで、データをObjectInputStream/ObjectOutputStreamによりシリアル化されたバイト列データとして取り扱うことができます（バイト列はBase64でエンコードされJSON stringとして出力されます）。</p>
+<pre class="source">
+public class TestBean {
+  <span class="em">@JSONHint(</span>type=Serializable.class<span class="em">)</span>
+  public SerializableBean sb;
+}
+</pre>
+<p>この機能を使うことで、JSON化が困難なオブジェクトもJSON-RPCなどでやり取りすることが可能となります。</p>
+
+<h2 id="as3">JSONIC for AS3</h2>
+<p>JSONICでは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、AS3版のJSONクラスとRemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。</p>
+
+<h3>■ ActionScript3版 JSONライブラリ</h3>
+<p>Java版JSONクラスとほぼ同じです。ただし、decode/parseメソッドでの特定クラスへの変換はサポートしていません（動的型で十分だと思いますので……）。</p>
+<pre class="source">
+import net.arnx.jsonic.JSON;
+
+<span class="comment">// インスタンスをJSONに変換します</span>
+var text:String = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</span>;
+
+<span class="comment">// JSONをObjectに変換します</span>
+var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</span>;
+</pre>
+
+<h3>■ ActionScript3版 JSON-RPCクライアントライブラリ</h3>
+<p>RemoteObjectライクなJSON-RPCクライアントクラスです。使い方はmx:RemoteObjectやmx:WebServiceなどを参考にしてください（lastResultのBindingも可能です）。</p>
+<pre class="source">
+<span class="elem">&lt;mx:WindowedApplication xmlns:mx="</span>http://www.adobe.com/2006/mxml<span class="elem">" </span>
+  <span class="elem">xmlns:js="</span>http://arnx.net/jsonic<span class="elem">"&gt;</span>
+    
+  &lt;!-- sourceにコンポーネント名、Operationのnameにメソッド名を指定します。 --&gt;
+  <span class="elem">&lt;js:WebService id="</span>remote<span class="elem">" </span>
+    <span class="elem">endpoint="</span>http://localhost:8080/sample/rpc/rpc.json<span class="elem">" </span>
+    <span class="elem">source="</span>calc<span class="elem">" </span>
+    <span class="elem">makeObjectsBindable="</span>false<span class="elem">" </span>
+    <span class="elem">showBusyCursor="</span>true<span class="elem">"</span>
+    <span class="elem">result="</span>onResult(event)<span class="elem">"</span>
+    <span class="elem">fault="</span>onFault(event)<span class="elem">"&gt;</span>
+    
+    <span class="elem">&lt;js:Operation name="</span>plus<span class="elem">" result="</span>onResult(event)<span class="elem">" fault="</span>onFault(event)<span class="elem">" /&gt;</span>
+    ...
+  <span class="elem">&lt;/js:WebService&gt;</span>
+    
+  <span class="elem">&lt;mx:Button label="</span>実行<span class="elem">" click="</span>remote.plus(100, 200)<span class="elem">" /&gt;</span>
+  <span class="elem">&lt;mx:TextInput id="</span>output<span class="elem">" text="</span>{remote.plus.lastResult}<span class="elem">" /&gt;</span>
+    
+  <span class="elem">&lt;mx:Script&gt;</span>
+    &lt;![CDATA[
+      private function onResult(event:ResultEvent) {
+        trace(event.result); // 100+200 =&gt; 300
+      }
+      
+      private function onFault(event:FaultEvent) {
+        trace(event.fault.message);
+      }
+    ]]&gt;
+  <span class="elem">&lt;/mx:Script&gt;</span>
+<span class="elem">&lt;/mx:WindowedApplication&gt;</span>
+</pre>
+
+<h2 id="faq">FAQ</h2>
+<dl>
+<dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
+<dt>Q. 大量データを読み込むとOutOfMemoryErrorで落ちます。</dt><dd>A. JSONICは、ブラウザをクライアントとしたような大規模データの送受信を行わないシステムでの利用を想定して作成されています。XMLにおいてDOMに対してSAXやStAXがあるように、大量データを取り扱う場合にはストリームAPIを利用すべきですがJSONICには現状用意されておりませんので、Twitter Streaming APIのように行区切りのJSONで送受信するか、<a href="http://jackson.codehaus.org/">jackson</a>など代替ライブラリの採用を検討ください。</dd>
+</dl> 
+
+<h2 id="maven">Mavenリポジトリ</h2> 
+<p>JSONICは、1.2.7以降 Maven Central Repository に登録されるようになりました。groupId、artifactIdは次の通りです。</p>
+<pre class="source">
+&lt;groupId&gt;net.arnx&lt;/groupId&gt;
+&lt;artifactId&gt;jsonic&lt;/artifactId&gt;
+</pre>
+<p>それ以前のバージョンに関しては、 <a href="http://maven.seasar.org/maven2/">Seasar.orgのMavenリポジトリ</a> などをご利用ください。</p> 
+
+<h2 id="license">ライセンス</h2>
+<p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
+<p><b>自分のライブラリへの組み込んでいただいたり、その際にパッケージ名の変更や処理の変更など行っていただいて構いません。</b>保障はありませんが、ライセンスの範囲内でご自由にお使いください。</p>
+
+<h2 id="report">バグ・要望の報告先</h2>
+<p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
+
+<h2 id="releasenote">リリースノート</h2>
+
+<h3>2012/1/17 version 1.2.9</h3>
+
+<ul>
+<li>[不具合] マルチスレッド環境下で使用した場合に NullPointerExceptionが発生する問題を修正しました（#26993）</li>
+<li>[不具合] 同名のフィールドとGetter/Setterメソッドを持つ場合、フィールド側にJSONHint アノテーションを付けても無視される問題を修正しました。この問題のため name や ignore を設定した場合に 1.2.6 ～ 1.2.8 の動作は、それ以前の動作が異なる結果を返していました（#26992）</li>
+<li>[不具合/仕様変更] PropertyCaseStyle を指定すると、 JSONHint アノテーションにて name に指定された名前にも適用されてしまう問題を修正しました。</li>
+<li>1.2.8にて修正された JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取得されてしまう脆弱性について注意書きをドキュメントに追加しました。</li>
+</ul>
+
+<h3>2011/12/17 version 1.2.8</h3>
+
+<ul>
+<li>[不具合] JSONHint にて serialized = true の指定時、単純型を受け取れない問題を修正しました（#26577）</li>
+<li>[不具合] STRICTモードでparse時に文字列中のシングルクォートが消えてしまう問題を修正しました。</li>
+<li>[不具合] JSON Web Service の設定にて encoding を設定してもパラメータが文字化けしてしまう問題を修正しました（#26567）</li>
+<li>[不具合] JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取れてしまう場合がある問題を修正しました。</li>
+<li>[仕様変更] 上記、不具合への対応のため、Containerクラスからrequest/responseを削除しました。</li>
+<li>デフォルトの日時/数値フォーマットを指定する setDateFormat、setNumberFormat を追加しました。</li>
+<li>デフォルトのプロパティ名/列挙型の変換方式を指定する setPropertyStyle、setEnumStyle を追加しました。</li>
+<li>タイムゾーンを変更可能にしました。</li>
+<li>JSONHint アノテーションにプロパティ名の出力順序を指定する ordinal を追加しました。</li>
+<li>decode/parse 時に UnsupportedOperationException が起こった際のメッセージを追加しました。</li>
+</ul>
+
+<h3>2011/10/9 version 1.2.7</h3>
+
+<ul>
+<li>[仕様変更] JSON Web Serviceにて、パス名と一致するファイルがある場合、実ファイルを優先する機能が実装されておりましたが、マッピング制限が緩い場合、JSPなど意図せぬソースが公開される恐れがあるため削除しました（#26032）</li>
+<li>[不具合] encode/format 時に Calendar、TimeZone、Charset, java.sql.Array, Document, Element を List や Map などに詰めていた場合、ClassCastException が発生していた問題を修正しました（#26256）</li>
+<li>[不具合] JSON Web Serviceにて、SpringContainer を使っている場合、コンポーネントが見つからなかった場合、500 Internal Server Error が戻されていましたが、404 Not Found を返すよう修正しました。</li>
+<li>[不具合] JSON Web Serviceにて、web.xml に Hot Deploy 対象の例外クラスを指定していた場合、ClassCastException が発生していた問題を修正しました。</li>
+<li>JSON Web Serviceにて、可変長引数による呼び出しをサポートしました。</li>
+<li>JSON Web Serviceにて、オーバーロードされたメソッドの呼び出しをサポートしました。</li>
+<li>jar ファイルを Maven Central Repository に登録しました。</li>
+<li>JavadocをJDK7で生成するようにしました。</li>
+</ul>
+
+<h3>2011/8/7 version 1.2.6</h3>
+
+<ul>
+<li>[不具合] preformatの中でループ中に変換先クラスを変えた場合、formatに失敗する問題を修正しました（#24129）</li>
+<li>[不具合] プロパティ名に漢字など英数でない名称をしていた場合、formatやparseに失敗していた問題を修正しました（#25884）</li>
+<li>[不具合] 具体的な型が指定された総称型を継承したListやMapの型変換が正しく行われない問題を修正しました。</li>
+<li>JSONクラスにScriptモードでエスケープする escapeScript を追加しました。scriptタグ中に変数を出力する場合はencodeではなく、こちらを用いると便利です。</li>
+<li>1.2.5まではjsonic-1.2.6.jarにソースコードを含めていましたが、jsonic-1.2.6-sources.jarに分離しました。</li>
+</ul>
+
+<h3>2010/12/19 version 1.2.5</h3>
+
+<ul>
+<li>java.util.UUIDの双方向変換に対応しました。</li>
+<li>encode/formatの速度が50%ほど改善しました。</li>
+<li>decode/parseの速度が25%ほど改善しました。</li>
+<li>decode/parseにて文字列をDate型に変換する際、存在しない日付でも受け入れていた問題を修正しました（詳しくは、SimpleDateFormatのsetLenientを参照してください）。</li>
+<li>JavaScriptのevalでエラーとなるU+2028、U+2029をエスケープするよう修正しました。</li>
+<li>JSON Web Serviceにて、warファイルのまま実行すると配置済みjsonファイルを返さない問題を修正しました。</li>
+</ul>
+
+<h3>2010/10/19 version 1.2.4</h3>
+
+<ul>
+<li>[不具合] Google App Engine で java.net.InetAdress が利用できないためエラーが発生する問題を解消しました。</li>
+<li>[不具合] Google App Engine で ClassLoader.getSystemClassLoader() が例外を発生するため、実行に失敗する問題を解消しました。</li>
+<li>[不具合] ベータ1 ～ 2で発生していた様々な不具合を修正しました（#23436、#23472）</li>
+</ul>
+
+<h3>2010/10/05 version 1.2.3</h3>
+
+<ul>
+<li>[不具合] JSON.encode(Object obj, OutputStream out)などでflushされず文字が出力されないことがある（#23342）</li>
+</ul>
+
+<h3>2010/10/02 version 1.2.2</h3>
+
+<ul>
+<li>[不具合] JSONのデコードにて型変換の際、JSON string あるいは true/false から Map あるいは Object 型に変換する場合に hint 句がないと NullPointerException が発生する問題を修正しました（#23055）</li>
+<li>[不具合] クラスパスにBeanUtilsが含まれていない場合やJava5を使用している場合に、Class.forNameの失敗によりエンコードやコンバートが著しく遅くなる問題を修正しました（#23146）</li>
+<li>encode/parseの処理順や文字列のエスケープ方式を見直したことにより処理速度がやや向上しました。</li>
+</ul>
+
+<h3>2010/09/04 version 1.2.1</h3>
+
+<ul>
+<li>[不具合] JSONのエンコード時に改行やタブなど記号が割り当てられていない制御文字がエスケープされていなかった問題を修正しました（AS3版も同様です）。</li>
+<li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました。</li>
+<li>[不具合] JSON Web ServiceにてServletContext#getRealPathがnullを返すとき、NullPointerException が発生していた問題を修正しました（#22982）</li>
+<li>[仕様変更] Objectを戻すdecode/parseメソッドの戻り値をタイプパラメータ化し、キャストを不要にしました。</li>
+<li>JSONのparseやformat時の挙動を変えるモード変更機能を追加し、厳密なチェックを行う STRICT モードとインラインでのJavaScript記述に便利な SCRIPT モードを追加しました。</li>
+<li>JSONの検証を行うために JSON.validate メソッドを追加しました。</li>
+<li>やや高速化を図りました。</li>
+</ul>
+
+<h3>2010/04/04 version 1.2.0</h3>
+
+<div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために以前同様の形で利用可能ですが、今後はRESTServletおよびRPCServletを利用してください。</div>
+
+<ul>
+<li>[不具合] JSONクラスにて親クラスの型パラメータ変数を持つプロパティの取り扱いに失敗していた問題にある程度対応しました。</li>
+<li>[不具合] JSONクラスおよびWebサービスAPIにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました（バージョン1.0.5、1.1.2でも修正/リリース済みです）[#19766]</li>
+<li>[不具合] JSONのデコード時に指数部が2桁以上ある数値の解析に失敗していた点を修正しました（JSONIC AS3およびバージョン1.0.5、1.1.3でも修正/リリース済みです）。[#20537]</li>
+<li>[不具合] ストリームから読み込む際、JSONException#getErrorOffset()にて正しくないオフセット値が戻される不具合を修正しました。</li>
+<li>[不具合] WebサービスAPIにて、パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
+<li>JSONクラスがjava.beans.Introspectorに依存しているため、Androidで実行できない問題を解消しました（他にもあれば教えてください）。</li>
+<li>JSONHintアノテーションにて、formatの日付書式でISO8601形式のタイムゾーンを扱うZZを指定できるようにしました。</li>
+<li>JSONHintアノテーションにanonymを追加し、単純値型からMapや複合型への変換を可能にしました。</li>
+<li>JSON encoder/decoderにて１処理中に限りメソッド情報をキャッシュするように変更しました。</li>
+<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=String.class)</code>を指定した場合には<code>toString</code>およびStringを引数に取るコンストラクタを使い文字列の相互変換を行うようにしました。</li>
+<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=Serializable.class)</code>を指定した場合には<code>ObjectInputStream/ObjectOutputStream</code>を使いシリアライズによる変換を行うようにしました。</li>
+<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>java.sql.RowId</code>の相互変換に対応しました。</li>
+<li>JSON.encode(or format)にて<code>java.sql.Array, java.sql.Struct</code>のJSON化に対応しました（逆方向には対応していません。相互変換が必要な場合は<code>JSONHint(type=Serializable.class)</code>を指定しシリアル化してください）。</li>
+<li>AS3版JSONICにて、JSON.encode(or format)時にmine変数を無視するように変更しました。</li>
+<li>JSON-RPC2.0をサポートするRPCServletと強化されたREST操作を可能にするRESTServletを新設しました。WebServiceServletは互換性のため残されていますが非推奨となり機能追加もほとんど行われていません（Version 1.1互換）。RPCServletやRESTServletとWebServiceServletの各モードとの違いは、<a href="webservice.html#changerpc">JSONIC 1.1 RPCモードからの変更点</a>、<a href="webservice.html#changerest">JSONIC 1.1 RESTモードからの変更点</a>を参照してください。</li>
+<li>WebサービスAPIにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
+<li>WebサービスAPIにてContainerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
+<li>sampleに付属のjquery.jsのバージョンを1.4.2に更新しました。</li>
+</ul>
+
+<hr style="margin-top: 30px;" />
+<div class="copyright">Copyright (C) 2007-2011 Hidekatsu Izuno All right reserved.</div>
+</div>
+</body>
+</html>

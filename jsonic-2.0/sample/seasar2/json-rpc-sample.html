@@ -1,0 +1,94 @@
+<!doctype html>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>JSON-RPC sample</title>
+<script type="text/javascript" src="prototype-1.6.1.js"></script>
+<script type="text/javascript">
+	var ds = [];
+	
+	function setup(value) {
+		var name = $('name');
+		for (var i = 0; i < value.length; i++) {
+			name.options[name.options.length] = new Option(value[i].name, value[i].name);
+			ds[value[i].name] = value[i].methods;
+		}
+		changeName($('name').value);
+	}
+	
+	function submit() {
+		var name = $('name').value;
+		var ajax = new Ajax.Request('rpc/rpc/rpc.json', {
+			method: 'POST',
+			contentType: 'application/json',
+			postBody: Object.toJSON({
+				method: name + '.' + ds[name][$("method").value].name,
+				params: $('params').value.evalJSON(),
+				id: (new Date()).getTime()
+			}),
+			onSuccess: function(req) {
+				Element.update($("result"), req.responseText);
+			},
+			onFailure: function(req) {
+				Element.update($("result"), "error!");
+			}
+		});
+	}
+		
+	function changeName(value) {
+		var method = $('method');
+		var params = $('params');
+		method.options.length = 0;
+		
+		var methods = ds[value];
+		for (var i = 0; i < methods.length; i++) {
+			method.options[i] = new Option(methods[i].name, i);
+		}
+		changeMethod(0);
+	}
+	
+	function changeMethod(value) {
+		var name = $('name')
+		var params = $('params');
+		params.value = ds[name.value][value].example.toString();
+		Element.update($('code'), ds[name.value][value].code);
+	}
+	
+	function init() {
+		var ajax = new Ajax.Request('rpc/rpc_info.json', {
+			method: 'POST',
+			contentType: 'application/json',
+			postBody: Object.toJSON({
+				method: 'find',
+				params: [],
+				id: (new Date()).getTime()
+			}),
+			onSuccess: function(req) {
+				setup(req.responseText.evalJSON().result);
+			},
+			onFailure: function(req) {
+				Element.update($("result"), "error!");
+			}
+		});
+	}
+</script>
+</head>
+<body onload="init()">
+<h1>JSON-RPC sample</h1>
+
+<h2>request</h2>
+<div style="font: 9pt monospace;">
+name: <select id="name" onchange="changeName(this.value)"></select>
+method: <select id="method" onchange="changeMethod(this.value)"></select>
+params: <input id="params" type="text" size="50" value=""/>
+<input type="button" value="send" onclick="submit()" />
+</div>
+
+<pre id="code" style="font: 9pt monospace; border: 1px solid black; padding: 5px;">
+</pre>
+
+<h2>result</h2>
+<pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
+</body>
+</html>
