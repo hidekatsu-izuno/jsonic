@@ -61,7 +61,6 @@ import java.io.*;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import net.arnx.jsonic.JSON;
-import net.arnx.jsonic.JSON.Mode;
 import net.arnx.jsonic.internal.util.ClassUtil;
 import net.arnx.jsonic.internal.util.ExtendedDateFormat;
 
@@ -677,7 +676,7 @@ public class JSONTest {
 		
 		//SCRIPT
 		json = new JSON();
-		json.setMode(JSON.Mode.SCRIPT);
+		json.setMode(JSONMode.SCRIPT);
 		
 		assertEquals("null", json.format(null, new StringBuilder()).toString());
 		assertEquals("1000", json.format(1000, new StringBuilder()).toString());
@@ -691,7 +690,7 @@ public class JSONTest {
 		
 		//STRICT
 		json = new JSON();
-		json.setMode(Mode.STRICT);
+		json.setMode(JSONMode.STRICT);
 		
 		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
@@ -1115,7 +1114,7 @@ public class JSONTest {
 		assertEquals(TestBean.class, list5.get(0).getClass());
 		
 		//SCRIPT
-		json.setMode(JSON.Mode.SCRIPT);
+		json.setMode(JSONMode.SCRIPT);
 		
 		assertEquals("aaa", json.parse("\"aaa\""));
 		assertEquals(new BigDecimal("100"), json.parse("100"));
@@ -1176,7 +1175,7 @@ public class JSONTest {
 		}
 		
 		//STRICT
-		json.setMode(JSON.Mode.STRICT);
+		json.setMode(JSONMode.STRICT);
 		
 		try {
 			json.parse("");

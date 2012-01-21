@@ -166,26 +166,6 @@ import org.w3c.dom.Node;
  */
 public class JSON {
 	/**
-	 * JSON processing mode
-	 */
-	public enum Mode {
-		/**
-		 * Traditional Mode
-		 */
-		TRADITIONAL,
-		
-		/**
-		 * Strict Mode
-		 */
-		STRICT,
-		
-		/**
-		 * Script(=JavaScript) Mode
-		 */
-		SCRIPT
-	}
-	
-	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
 	public static volatile Class<? extends JSON> prototype = JSON.class;
@@ -412,7 +392,7 @@ public class JSON {
 	 */
 	public static String escapeScript(Object source) throws JSONException {
 		JSON json = newInstance();
-		json.setMode(Mode.SCRIPT);
+		json.setMode(JSONMode.SCRIPT);
 		return json.format(source);
 	}
 	
@@ -426,7 +406,7 @@ public class JSON {
 	 */
 	public static void escapeScript(Object source, OutputStream out) throws IOException, JSONException {
 		JSON json = newInstance();
-		json.setMode(Mode.SCRIPT);
+		json.setMode(JSONMode.SCRIPT);
 		json.format(source, out);
 	}
 	
@@ -440,7 +420,7 @@ public class JSON {
 	 */
 	public static void escapeScript(Object source, Appendable appendable) throws IOException, JSONException {
 		JSON json = newInstance();
-		json.setMode(Mode.SCRIPT);
+		json.setMode(JSONMode.SCRIPT);
 		json.format(source, appendable);
 	}
 	
@@ -569,7 +549,7 @@ public class JSON {
 	 */
 	public static void validate(CharSequence cs) throws JSONException {
 		JSON json = newInstance();
-		json.setMode(Mode.STRICT);
+		json.setMode(JSONMode.STRICT);
 		json.setMaxDepth(0);
 		json.parse(cs);
 	}
@@ -583,7 +563,7 @@ public class JSON {
 	 */
 	public static void validate(InputStream in) throws IOException, JSONException {
 		JSON json = newInstance();
-		json.setMode(Mode.STRICT);
+		json.setMode(JSONMode.STRICT);
 		json.setMaxDepth(0);
 		json.parse(in);
 	}
@@ -597,7 +577,7 @@ public class JSON {
 	 */
 	public static void validate(Reader reader) throws IOException, JSONException {
 		JSON json = newInstance();
-		json.setMode(Mode.STRICT);
+		json.setMode(JSONMode.STRICT);
 		json.setMaxDepth(0);
 		json.parse(reader);
 	}
@@ -608,7 +588,7 @@ public class JSON {
 	private boolean prettyPrint = false;
 	private int maxDepth = 32;
 	private boolean suppressNull = false;
-	private Mode mode = Mode.TRADITIONAL;
+	private JSONMode mode = JSONMode.TRADITIONAL;
 	private String dateFormat;
 	private String numberFormat;
 	private NamingStyle propertyStyle;
@@ -621,7 +601,7 @@ public class JSON {
 		setMaxDepth(maxDepth);
 	}
 	
-	public JSON(Mode mode) {
+	public JSON(JSONMode mode) {
 		setMode(mode);
 	}
 	
@@ -704,7 +684,7 @@ public class JSON {
 	 * 
 	 * @param mode JSON interpreter mode
 	 */
-	public void setMode(Mode mode) {
+	public void setMode(JSONMode mode) {
 		if (mode == null) {
 			throw new NullPointerException();
 		}
@@ -716,7 +696,7 @@ public class JSON {
 	 * 
 	 * @return JSON interpreter mode
 	 */
-	public Mode getMode() {
+	public JSONMode getMode() {
 		return mode;
 	}
 	
@@ -932,7 +912,7 @@ public class JSON {
 					JSONException.FORMAT_ERROR, e);
 		}
 		
-		if (!isStruct && context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
+		if (!isStruct && context.getLevel() == 0 && context.getMode() != JSONMode.SCRIPT) {
 			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
 					JSONException.FORMAT_ERROR);
 		}
@@ -1034,14 +1014,14 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
+				if (context.getMode() == JSONMode.TRADITIONAL || (context.getMode() == JSONMode.SCRIPT && c == '/')) {
 					s.back();
 					skipComment(context, s);
 					continue;
 				}
 			case '\'':
 			case '"':
-				if (context.getMode() == Mode.SCRIPT) {
+				if (context.getMode() == JSONMode.SCRIPT) {
 					if (isEmpty) {
 						s.back();
 						o = parseString(context, s, 1);
@@ -1052,7 +1032,7 @@ public class JSON {
 					continue;
 				}
 			default:
-				if (context.getMode() == Mode.SCRIPT) {
+				if (context.getMode() == JSONMode.SCRIPT) {
 					if (isEmpty) {
 						s.back();
 						o = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, 1) : parseLiteral(context, s, 1, false);
@@ -1064,7 +1044,7 @@ public class JSON {
 				}
 			}
 			
-			if (context.getMode() == Mode.TRADITIONAL && isEmpty) {
+			if (context.getMode() == JSONMode.TRADITIONAL && isEmpty) {
 				s.back();
 				o = parseObject(context, s, 1);
 				isEmpty = false;
@@ -1074,7 +1054,7 @@ public class JSON {
 		}
 		
 		if (isEmpty) {
-			if (context.getMode() == Mode.TRADITIONAL) {
+			if (context.getMode() == JSONMode.TRADITIONAL) {
 				o = new LinkedHashMap<String, Object>();
 			} else {
 				throw createParseException(getMessage("json.parse.EmptyInputError"), s);
@@ -1096,7 +1076,7 @@ public class JSON {
 			switch(c) {
 			case '\r':
 			case '\n':
-				if (context.getMode() == Mode.TRADITIONAL && point == 5) {
+				if (context.getMode() == JSONMode.TRADITIONAL && point == 5) {
 					point = 6;
 				}
 				continue;
@@ -1125,7 +1105,7 @@ public class JSON {
 				}
 				continue;
 			case ',':
-				if (point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3)) {
+				if (point == 5 || point == 6 || (context.getMode() == JSONMode.TRADITIONAL && point == 3)) {
 					if (point == 3 && level < context.getMaxDepth() && !context.isSuppressNull()) {
 						map.put(key, null);
 					}
@@ -1135,7 +1115,7 @@ public class JSON {
 				}
 				continue;
 			case '}':
-				if (start == '{' && (point == 1 || point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3))) {
+				if (start == '{' && (point == 1 || point == 5 || point == 6 || (context.getMode() == JSONMode.TRADITIONAL && point == 3))) {
 					if (point == 3 && level < context.getMaxDepth() && !context.isSuppressNull()) {
 						map.put(key, null);
 					}
@@ -1154,7 +1134,7 @@ public class JSON {
 				}
 				continue;
 			case '\'':
-				if (context.getMode() == Mode.STRICT) {
+				if (context.getMode() == JSONMode.STRICT) {
 					break;
 				}
 			case '"':
@@ -1176,7 +1156,7 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
+				if (context.getMode() == JSONMode.TRADITIONAL || (context.getMode() == JSONMode.SCRIPT && c == '/')) {
 					s.back();
 					skipComment(context, s);
 					if (point == 5) {
@@ -1191,11 +1171,11 @@ public class JSON {
 				point = 1;
 			} else if (point == 1 || point == 6) {
 				s.back();
-				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() != Mode.STRICT);
+				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() != JSONMode.STRICT);
 				point = 2;
 			} else if (point == 3) {
 				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == JSONMode.TRADITIONAL);
 				if (level < context.getMaxDepth() && (value != null || !context.isSuppressNull())) {
 					map.put(key, value);
 				}
@@ -1229,7 +1209,7 @@ public class JSON {
 			switch(c) {
 			case '\r':
 			case '\n':
-				if (context.getMode() == Mode.TRADITIONAL && point == 2) {
+				if (context.getMode() == JSONMode.TRADITIONAL && point == 2) {
 					point = 3;
 				}
 				continue;
@@ -1250,7 +1230,7 @@ public class JSON {
 				}
 				continue;
 			case ',':
-				if (context.getMode() == Mode.TRADITIONAL && (point == 1 || point == 4)) {
+				if (context.getMode() == JSONMode.TRADITIONAL && (point == 1 || point == 4)) {
 					if (level < context.getMaxDepth()) list.add(null);
 				} else if (point == 2 || point == 3) {
 					point = 4;
@@ -1261,7 +1241,7 @@ public class JSON {
 			case ']':
 				if (point == 1 || point == 2 || point == 3) {
 					// nothing
-				} else if (context.getMode() == Mode.TRADITIONAL && point == 4) {
+				} else if (context.getMode() == JSONMode.TRADITIONAL && point == 4) {
 					if (level < context.getMaxDepth()) list.add(null);
 				} else {
 					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
@@ -1278,7 +1258,7 @@ public class JSON {
 				}
 				continue;
 			case '\'':
-				if (context.getMode() == Mode.STRICT) {
+				if (context.getMode() == JSONMode.STRICT) {
 					break;
 				}
 			case '"':
@@ -1293,7 +1273,7 @@ public class JSON {
 				continue;
 			case '/':
 			case '#':
-				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
+				if (context.getMode() == JSONMode.TRADITIONAL || (context.getMode() == JSONMode.SCRIPT && c == '/')) {
 					s.back();
 					skipComment(context, s);
 					if (point == 2) {
@@ -1305,7 +1285,7 @@ public class JSON {
 			
 			if (point == 1 || point == 3 || point == 4) {
 				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
+				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == JSONMode.TRADITIONAL);
 				if (level < context.getMaxDepth()) list.add(value);
 				point = 2;
 			} else {
@@ -1332,7 +1312,7 @@ public class JSON {
 				continue;
 			case '\\':
 				if (point == 1) {
-					if (context.getMode() != Mode.TRADITIONAL || start == '"') {
+					if (context.getMode() != JSONMode.TRADITIONAL || start == '"') {
 						s.back();
 						c = parseEscape(s);
 						if (sb != null) sb.append(c);
@@ -1344,7 +1324,7 @@ public class JSON {
 				}
 				continue;
 			case '\'':
-				if (context.getMode() == Mode.STRICT) {
+				if (context.getMode() == JSONMode.STRICT) {
 					break;
 				}
 			case '"':
@@ -1364,7 +1344,7 @@ public class JSON {
 				continue;
 			}
 			
-			if (point == 1 && (context.getMode() != Mode.STRICT  || c >= 0x20)) {
+			if (point == 1 && (context.getMode() != JSONMode.STRICT  || c >= 0x20)) {
 				if (sb != null) sb.append(c);
 				continue;
 			}
@@ -1588,7 +1568,7 @@ public class JSON {
 				}
 				break;
 			case '#':
-				if (context.getMode() == Mode.TRADITIONAL) {
+				if (context.getMode() == JSONMode.TRADITIONAL) {
 					if (point == 0) {
 						point = 4;
 					} else if (point == 3) {
@@ -1811,7 +1791,7 @@ public class JSON {
 		private final int maxDepth;
 		private final boolean prettyPrint;
 		private final boolean suppressNull;
-		private final Mode mode;
+		private final JSONMode mode;
 		private final String numberFormat;
 		private final String dateFormat;
 		private final NamingStyle propertyStyle;
@@ -1889,7 +1869,7 @@ public class JSON {
 			return suppressNull;
 		}
 		
-		public Mode getMode() {
+		public JSONMode getMode() {
 			return mode;
 		}
 		

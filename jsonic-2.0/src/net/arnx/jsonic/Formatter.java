@@ -27,7 +27,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import net.arnx.jsonic.JSON.Context;
-import net.arnx.jsonic.JSON.Mode;
 import net.arnx.jsonic.internal.io.OutputSource;
 import net.arnx.jsonic.internal.util.Base64;
 import net.arnx.jsonic.internal.util.ClassUtil;
@@ -97,7 +96,7 @@ final class StringFormatter implements Formatter {
 					out.append('\\');
 					out.append((char) x);
 					start = i + 1;
-				} else if (x == -1 || (x == -2 && context.getMode() == Mode.SCRIPT)) {
+				} else if (x == -1 || (x == -2 && context.getMode() == JSONMode.SCRIPT)) {
 					if (start < i) out.append(s, start, i);
 					out.append("\\u00");
 					out.append("0123456789ABCDEF".charAt(c / 16));
@@ -191,7 +190,7 @@ final class FloatFormatter implements Formatter {
 		} else {
 			double d = ((Number) o).doubleValue();
 			if (Double.isNaN(d) || Double.isInfinite(d)) {
-				if (context.getMode() != Mode.SCRIPT) {
+				if (context.getMode() != JSONMode.SCRIPT) {
 					out.append('"');
 					out.append(o.toString());
 					out.append('"');
@@ -218,7 +217,7 @@ final class DateFormatter implements Formatter {
 		DateFormat f = context.getDateFormat();
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(o), out);
-		} else if (context.getMode() == Mode.SCRIPT) {
+		} else if (context.getMode() == JSONMode.SCRIPT) {
 			out.append("new Date(");
 			out.append(Long.toString(date.getTime()));
 			out.append(")");
@@ -353,7 +352,7 @@ final class FloatArrayFormatter implements Formatter {
 		out.append('[');
 		for (int i = 0; i < array.length; i++) {
 			if (Float.isNaN(array[i]) || Float.isInfinite(array[i])) {
-				if (context.getMode() != Mode.SCRIPT) {
+				if (context.getMode() != JSONMode.SCRIPT) {
 					out.append('"');
 					out.append(Float.toString(array[i]));
 					out.append('"');
@@ -389,7 +388,7 @@ final class DoubleArrayFormatter implements Formatter {
 		out.append('[');
 		for (int i = 0; i < array.length; i++) {
 			if (Double.isNaN(array[i]) || Double.isInfinite(array[i])) {
-				if (context.getMode() != Mode.SCRIPT) {
+				if (context.getMode() != JSONMode.SCRIPT) {
 					out.append('"');
 					out.append(Double.toString(array[i]));
 					out.append('"');
