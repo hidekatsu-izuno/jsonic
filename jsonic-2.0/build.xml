@@ -5,8 +5,6 @@
 	
 	<property name="version" value="${project.version}" />
 	<property name="debug" value="true" />
-	<property name="jsonic_as3.home" location="../jsonic_as3-1.2" />
-	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />
 	
 	<property name="webapps" location="sample"/>
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
@@ -84,18 +82,10 @@
 		<antcall target="dist">
 			<param name="tmp" location="${tmp}/java" />
 		</antcall>
-		<ant antfile="${jsonic_as3.home}/build.xml" target="build" inheritall="false">
-			<property name="tmp" location="${tmp}/as3" />
-			<property name="flex.home" location="${flex.home}" />
-		</ant>
 		<zip destfile="${dist}/${ant.project.name}-${version}.zip">
 			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src/java" />
 			<zipfileset dir="${tmp}/java/docs" prefix="${ant.project.name}-${version}/docs/java" />
 			<zipfileset file="${tmp}/java/${ant.project.name}-${version}*.jar" prefix="${ant.project.name}-${version}" />
-			
-			<zipfileset dir="${jsonic_as3.home}/src" prefix="${ant.project.name}-${version}/src/as3" />
-			<zipfileset dir="${tmp}/as3/docs" prefix="${ant.project.name}-${version}/docs/as3" />
-			<zipfileset file="${tmp}/as3/${ant.project.name}-${version}.swc" prefix="${ant.project.name}-${version}" />
 			
 			<zipfileset dir="${tmp}/java/sample/basic" prefix="${ant.project.name}-${version}/sample" />
 			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
