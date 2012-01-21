@@ -14,6 +14,17 @@ public class StrictJSONParser implements JSONParser {
 	private static final ParseState BEFORE_VALUE = new BeforeValue();
 	private static final ParseState AFTER_VALUE = new AfterValue();
 	
+	private static final int[] ESCAPE_CHARS = new int[128];
+	
+	static {
+		for (int i = 0; i < 32; i++) {
+			ESCAPE_CHARS[i] = 1;
+		}
+		ESCAPE_CHARS['"'] = 2;
+		ESCAPE_CHARS['\\'] = 3;
+		ESCAPE_CHARS[0x7F] = 1;
+	}
+	
 	private ParseState state = BEFORE_ROOT;
 	private ParseContext context;
 	
@@ -98,7 +109,6 @@ public class StrictJSONParser implements JSONParser {
 				case 0xFEFF: // BOM
 					break;
 				case '"':
-					context.back();
 					context.set(JSONEventType.NAME, parseString(context));
 					return AFTER_NAME;					
 				case '}':
@@ -161,7 +171,6 @@ public class StrictJSONParser implements JSONParser {
 					context.push(JSONEventType.BEGIN_ARRAY);
 					return BEFORE_VALUE;
 				case '"':
-					context.back();
 					context.set(JSONEventType.STRING, parseString(context));
 					return AFTER_VALUE;
 				case '-':
@@ -175,19 +184,15 @@ public class StrictJSONParser implements JSONParser {
 				case '7':
 				case '8':
 				case '9':
-					context.back();
 					context.set(JSONEventType.NUMBER, parseNumber(context));
 					return AFTER_VALUE;	
 				case 't':
-					context.back();
 					context.set(JSONEventType.TRUE, parseLiteral(context, "true", Boolean.TRUE));
 					return AFTER_VALUE;
 				case 'f':
-					context.back();
 					context.set(JSONEventType.FALSE, parseLiteral(context, "false", Boolean.FALSE));
 					return AFTER_VALUE;
 				case 'n':
-					context.back();
 					context.set(JSONEventType.NULL, parseLiteral(context, "null", null));
 					return AFTER_VALUE;
 				case ']':
@@ -269,56 +274,38 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private static String parseString(ParseContext context) throws IOException {
-		int point = 0; // 0 '"|'' 1 'c' ... '"|'' E
 		StringBuilder sb = (context.getDepth() <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
-		char start = '\0';
 		
 		int n = -1;
 		loop:while ((n = context.next()) != -1) {
 			char c = (char)n;
-			switch(c) {
-			case 0xFEFF: // BOM
-				break;
-			case '\\':
-				if (point == 1) {
-					context.back();
+			if (c < ESCAPE_CHARS.length) {
+				switch (ESCAPE_CHARS[c]) {
+				case 0:
+					if (sb != null) sb.append(c);
+					break;
+				case 1: // control chars
+					throw context.createParseException("json.parse.UnexpectedChar", c);
+				case 2: // "'
+					break loop;						
+				case 3: // escape chars
 					c = parseEscape(context);
 					if (sb != null) sb.append(c);
-				} else {
-					throw context.createParseException("json.parse.UnexpectedChar", c);
+					break;
 				}
-				break;
-			case '"':
-				if (point == 0) {
-					start = c;
-					point = 1;
-				} else if (point == 1) {
-					if (start == c) {
-						break loop;						
-					} else {
-						if (sb != null) sb.append(c);
-					}
-				} else {
-					throw context.createParseException("json.parse.UnexpectedChar", c);
-				}
-				break;
-			default:
-				if (point == 1 &&  c >= 0x20) {
-					if (sb != null) sb.append(c);
-				} else {
-					throw context.createParseException("json.parse.UnexpectedChar", c);
-				}
+			} else if (c != 0xFEFF) {
+				if (sb != null) sb.append(c);
 			}
 		}
 		
-		if (n != start) {
+		if (n != '\"') {
 			throw context.createParseException("json.parse.StringNotClosedError");
 		}
 		return (sb != null) ? sb.toString() : null;
 	}
 	
 	private static char parseEscape(ParseContext context) throws IOException {
-		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
+		int point = 1; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
 		int n = -1;
@@ -326,13 +313,7 @@ public class StrictJSONParser implements JSONParser {
 			char c = (char)n;
 			if (c == 0xFEFF) continue; // BOM
 			
-			if (point == 0) {
-				if (c == '\\') {
-					point = 1;
-				} else {
-					throw context.createParseException("json.parse.UnexpectedChar", c);
-				}
-			} else if (point == 1) {
+			if (point == 1) {
 				switch(c) {
 				case 'b':
 					escape = '\b';
@@ -377,6 +358,8 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private static BigDecimal parseNumber(ParseContext context) throws IOException {
+		context.back();
+		
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = (context.getDepth() <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		
@@ -451,6 +434,8 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private static Object parseLiteral(ParseContext context, String literal, Object result) throws IOException {
+		context.back();
+		
 		int pos = 0;
 		int n = -1;
 		while ((n = context.next()) != -1) {
