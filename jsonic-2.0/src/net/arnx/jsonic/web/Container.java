@@ -48,7 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
-import net.arnx.jsonic.internal.util.ClassUtil;
+import net.arnx.jsonic.NamingStyle;
 
 public class Container {	
 	public Boolean debug;
@@ -120,7 +120,9 @@ public class Container {
 	public Method getMethod(Object component, String methodName, List<?> params) throws NoSuchMethodException {
 		if (params == null) params = Collections.emptyList();
 		
-		if (namingConversion) methodName = ClassUtil.toLowerCamel(methodName);
+		if (namingConversion) {
+			methodName = NamingStyle.LOWER_CAMEL.to(methodName);
+		}
 		
 		if (methodName.equals(init) || methodName.equals(destroy)) {
 			debug("Method name is same init or destroy method name.");

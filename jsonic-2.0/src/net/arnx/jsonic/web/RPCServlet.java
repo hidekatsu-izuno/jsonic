@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.JSONHint;
+import net.arnx.jsonic.NamingStyle;
 import net.arnx.jsonic.internal.util.ClassUtil;
 
 import static javax.servlet.http.HttpServletResponse.*;
@@ -426,7 +427,7 @@ public class RPCServlet extends HttpServlet {
 				String value = getParameter(key);
 				
 				if (key.equals("class") && container.namingConversion) {
-					value = ClassUtil.toUpperCamel((value != null) ? value  : (sub != null) ? sub : "?");
+					value = NamingStyle.UPPER_CAMEL.to((value != null) ? value  : (sub != null) ? sub : "?");
 				} else if (key.equals("package")) {
 					value = value.replace('/', '.');
 				}

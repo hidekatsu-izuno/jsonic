@@ -85,43 +85,6 @@ public final class ClassUtil {
 		}
 	}
 	
-	public static String toUpperCamel(String name) {
-		StringBuilder sb = new StringBuilder(name.length());
-		boolean toUpperCase = true;
-		for (int i = 0; i < name.length(); i++) {
-			char c = name.charAt(i);
-			if (c == ' ' || c == '_' || c == '-') {
-				toUpperCase = true;
-			} else if (toUpperCase) {
-				sb.append(Character.toUpperCase(c));
-				toUpperCase = false;
-			} else {
-				sb.append(c);
-			}
-		}
-		return sb.toString();
-	}
-	
-	public static String toLowerCamel(String name) {
-		StringBuilder sb = new StringBuilder(name.length());
-		boolean toUpperCase = false;
-		for (int i = 0; i < name.length(); i++) {
-			char c = name.charAt(i);
-			if (c == ' ' || c == '_' || c == '-') {
-				toUpperCase = true;
-			} else if (toUpperCase) {
-				sb.append(Character.toUpperCase(c));
-				toUpperCase = false;
-			} else {
-				sb.append(c);
-			}
-		}
-		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && !Character.isUpperCase(sb.charAt(1))) {
-			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
-		}
-		return sb.toString();
-	}
-	
 	public static Class<?> getRawType(Type t) {
 		if (t instanceof Class<?>) {
 			return (Class<?>)t;

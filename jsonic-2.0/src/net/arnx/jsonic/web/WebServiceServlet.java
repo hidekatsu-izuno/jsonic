@@ -15,6 +15,16 @@
  */
 package net.arnx.jsonic.web;
 
+import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_CREATED;
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,9 +52,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSONException;
-import net.arnx.jsonic.internal.util.ClassUtil;
-
-import static javax.servlet.http.HttpServletResponse.*;
+import net.arnx.jsonic.NamingStyle;
 
 @Deprecated
 public class WebServiceServlet extends HttpServlet {
@@ -795,8 +803,7 @@ public class WebServiceServlet extends HttpServlet {
 				String value = getParameter(key);
 				
 				if (key.equals("class")) {
-					value = ClassUtil.toUpperCamel((sub != null) ? sub 
-						: (value != null) ? value : "");
+					value = NamingStyle.UPPER_CAMEL.to((sub != null) ? sub : (value != null) ? value : "");
 				} else if (value == null) {
 					value = "";
 				} else if (key.equals("package")) {
