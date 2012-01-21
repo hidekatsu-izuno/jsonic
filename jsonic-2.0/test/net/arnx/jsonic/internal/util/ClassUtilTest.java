@@ -1,4 +1,4 @@
-package net.arnx.jsonic.util;
+package net.arnx.jsonic.internal.util;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.internal.util.ClassUtil;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

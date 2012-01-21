@@ -48,7 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
-import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.internal.util.ClassUtil;
 
 public class Container {	
 	public Boolean debug;

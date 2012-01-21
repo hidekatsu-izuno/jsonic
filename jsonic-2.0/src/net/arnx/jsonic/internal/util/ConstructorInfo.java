@@ -1,4 +1,4 @@
-package net.arnx.jsonic.util;
+package net.arnx.jsonic.internal.util;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;

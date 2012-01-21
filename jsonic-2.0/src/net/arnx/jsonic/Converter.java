@@ -33,10 +33,10 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import net.arnx.jsonic.JSON.Context;
-import net.arnx.jsonic.io.StringBuilderOutputSource;
-import net.arnx.jsonic.util.Base64;
-import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.PropertyInfo;
+import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
+import net.arnx.jsonic.internal.util.Base64;
+import net.arnx.jsonic.internal.util.ClassUtil;
+import net.arnx.jsonic.internal.util.PropertyInfo;
 
 interface Converter {
 	Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception;

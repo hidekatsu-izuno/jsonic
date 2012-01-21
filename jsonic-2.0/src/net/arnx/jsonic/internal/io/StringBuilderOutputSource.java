@@ -1,4 +1,4 @@
-package net.arnx.jsonic.io;
+package net.arnx.jsonic.internal.io;
 
 public class StringBuilderOutputSource implements OutputSource {
 	private final StringBuilder sb;

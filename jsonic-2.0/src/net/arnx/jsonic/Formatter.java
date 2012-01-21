@@ -28,10 +28,10 @@ import org.w3c.dom.NodeList;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.JSON.Mode;
-import net.arnx.jsonic.io.OutputSource;
-import net.arnx.jsonic.util.Base64;
-import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.PropertyInfo;
+import net.arnx.jsonic.internal.io.OutputSource;
+import net.arnx.jsonic.internal.util.Base64;
+import net.arnx.jsonic.internal.util.ClassUtil;
+import net.arnx.jsonic.internal.util.PropertyInfo;
 
 interface Formatter {
 	boolean format(JSON json, Context context, Object src, Object o, OutputSource out) throws Exception;

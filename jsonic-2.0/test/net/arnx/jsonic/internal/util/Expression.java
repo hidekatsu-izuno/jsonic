@@ -1,4 +1,4 @@
-package net.arnx.jsonic.util;
+package net.arnx.jsonic.internal.util;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
 
-import net.arnx.jsonic.io.CharSequenceInputSource;
-import net.arnx.jsonic.io.InputSource;
+import net.arnx.jsonic.internal.io.CharSequenceInputSource;
+import net.arnx.jsonic.internal.io.InputSource;
 
 public class Expression {
 	private static final Map<String, Integer> LANK_MAP = new HashMap<String, Integer>();

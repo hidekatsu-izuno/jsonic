@@ -49,8 +49,8 @@
 			additionalparam="-J-Duser.language=en_US"
 			author="true">
 			<link href="http://download.oracle.com/javase/7/docs/api/" />
-			<excludepackage name="net.arnx.jsonic.util.*" />
-			<excludepackage name="net.arnx.jsonic.io.*" />
+			<excludepackage name="net.arnx.jsonic.internal.util.*" />
+			<excludepackage name="net.arnx.jsonic.internal.io.*" />
 			<classpath refid="dependencies.path"/>
 		</javadoc>
 		

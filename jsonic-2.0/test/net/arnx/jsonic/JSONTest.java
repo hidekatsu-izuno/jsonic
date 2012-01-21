@@ -62,8 +62,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSON.Mode;
-import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.ExtendedDateFormat;
+import net.arnx.jsonic.internal.util.ClassUtil;
+import net.arnx.jsonic.internal.util.ExtendedDateFormat;
 
 import org.junit.Test;
 import org.seasar.framework.util.ReaderUtil;

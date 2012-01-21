@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSONException;
-import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.internal.util.ClassUtil;
 
 import static javax.servlet.http.HttpServletResponse.*;
 

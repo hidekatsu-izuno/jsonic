@@ -1,9 +1,11 @@
-package net.arnx.jsonic.util;
+package net.arnx.jsonic.internal.util;
 
 import static org.junit.Assert.*;
 
 import java.util.Calendar;
 import java.util.Date;
+
+import net.arnx.jsonic.internal.util.ExtendedDateFormat;
 
 import org.junit.Test;
 

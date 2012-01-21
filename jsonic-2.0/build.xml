@@ -69,8 +69,8 @@
 		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true"
 			additionalparam="-J-Duser.language=en_US">
 			<link href="http://download.oracle.com/javase/7/docs/api/" />
-			<excludepackage name="net.arnx.jsonic.util.*" />
-			<excludepackage name="net.arnx.jsonic.io.*" />
+			<excludepackage name="net.arnx.jsonic.internal.util.*" />
+			<excludepackage name="net.arnx.jsonic.internal.io.*" />
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 				<fileset dir="${webapps}/seasar2/WEB-INF/lib" includes="*.jar" />

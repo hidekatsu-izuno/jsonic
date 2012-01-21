@@ -67,17 +67,17 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import net.arnx.jsonic.io.AppendableOutputSource;
-import net.arnx.jsonic.io.CharSequenceInputSource;
-import net.arnx.jsonic.io.InputSource;
-import net.arnx.jsonic.io.OutputSource;
-import net.arnx.jsonic.io.ReaderInputSource;
-import net.arnx.jsonic.io.StringBuilderOutputSource;
-import net.arnx.jsonic.io.WriterOutputSource;
-import net.arnx.jsonic.util.BeanInfo;
-import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.ExtendedDateFormat;
-import net.arnx.jsonic.util.PropertyInfo;
+import net.arnx.jsonic.internal.io.AppendableOutputSource;
+import net.arnx.jsonic.internal.io.CharSequenceInputSource;
+import net.arnx.jsonic.internal.io.InputSource;
+import net.arnx.jsonic.internal.io.OutputSource;
+import net.arnx.jsonic.internal.io.ReaderInputSource;
+import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
+import net.arnx.jsonic.internal.io.WriterOutputSource;
+import net.arnx.jsonic.internal.util.BeanInfo;
+import net.arnx.jsonic.internal.util.ClassUtil;
+import net.arnx.jsonic.internal.util.ExtendedDateFormat;
+import net.arnx.jsonic.internal.util.PropertyInfo;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
