@@ -34,7 +34,8 @@ public class ReaderInputSource implements InputSource {
 	@Override
 	public int next() throws IOException {
 		if (start > end) {
-			System.arraycopy(buf, end - BACK + 1, buf, 0, BACK);
+			buf[0] = buf[end];
+			// System.arraycopy(buf, end - BACK + 1, buf, 0, BACK);
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
 				mark = (mark > end && mark <= end + BACK) ? (end + BACK - mark) : -1;
