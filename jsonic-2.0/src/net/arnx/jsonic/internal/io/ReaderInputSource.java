@@ -33,6 +33,29 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	@Override
+	public int next(boolean skip) throws IOException {
+		if (skip) {
+			int n = -1;
+			loop:while ((n = next()) != -1) {
+				char c = (char)n;
+				switch(c) {
+				case '\r':
+				case '\n':
+				case ' ':
+				case '\t':
+				case 0xFEFF: // BOM
+					break;
+				default:
+					break loop;
+				}
+			}
+			return n;
+		} else {
+			return next();
+		}
+	}
+	
+	@Override
 	public int next() throws IOException {
 		if (start > end) {
 			buf[0] = buf[end];

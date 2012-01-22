@@ -1,5 +1,7 @@
 package net.arnx.jsonic.internal.io;
 
+import java.io.IOException;
+
 
 public class CharSequenceInputSource implements InputSource {
 	private int lines = 1;
@@ -15,6 +17,29 @@ public class CharSequenceInputSource implements InputSource {
 			throw new NullPointerException();
 		}
 		this.cs = cs;
+	}
+	
+	@Override
+	public int next(boolean skip) throws IOException {
+		if (skip) {
+			int n = -1;
+			loop:while ((n = next()) != -1) {
+				char c = (char)n;
+				switch(c) {
+				case '\r':
+				case '\n':
+				case ' ':
+				case '\t':
+				case 0xFEFF: // BOM
+					break;
+				default:
+					break loop;
+				}
+			}
+			return n;
+		} else {
+			return next();
+		}
 	}
 	
 	@Override

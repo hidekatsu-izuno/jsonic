@@ -56,7 +56,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private int beforeRoot() throws IOException {
-		int n = skip();
+		int n = in.next(true);
 		if (n == '{') {
 			context.push(JSONEventType.BEGIN_OBJECT);
 			return BEFORE_NAME;
@@ -71,7 +71,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private int afterRoot() throws IOException {
-		int n = skip();
+		int n = in.next(true);
 		if (n != -1) {
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
@@ -79,7 +79,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private int beforeName() throws IOException {
-		int n = skip();
+		int n = in.next(true);
 		if (n == '"') {
 			in.back();
 			context.set(JSONEventType.NAME, context.parseString(in));
@@ -99,7 +99,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 
 	private int afterName() throws IOException {
-		int n = skip();
+		int n = in.next(true);
 		if (n == ':') {
 			return BEFORE_VALUE;
 		} else if (n != -1) {
@@ -110,7 +110,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private int beforeValue() throws IOException {
-		int n = skip();
+		int n = in.next(true);
 		if (n != -1) {
 			switch((char)n) {
 			case '{':
@@ -175,7 +175,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private int afterValue() throws IOException {
-		int n = skip();
+		int n = in.next(true);
 		if (n == ',') {
 			if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
 				return BEFORE_NAME;
@@ -218,23 +218,5 @@ public class StrictJSONParser implements JSONParser {
 				throw new IllegalStateException();
 			}
 		}
-	}
-	
-	private int skip() throws IOException {
-		int n = -1;
-		loop:while ((n = in.next()) != -1) {
-			char c = (char)n;
-			switch(c) {
-			case '\r':
-			case '\n':
-			case ' ':
-			case '\t':
-			case 0xFEFF: // BOM
-				break;
-			default:
-				break loop;
-			}
-		}
-		return n;
 	}
 }
