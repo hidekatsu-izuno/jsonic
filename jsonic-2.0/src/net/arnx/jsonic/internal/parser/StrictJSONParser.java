@@ -275,10 +275,11 @@ public class StrictJSONParser implements JSONParser {
 					break loop;						
 				case 3: // escape chars
 					if (len > 0) in.copy(sc, len - 1);
+					rest = 0;
+					
 					in.back();
 					c = parseEscape(in, context);
 					sc.append(c);
-					rest = 0;
 					break;
 				}
 			} else if (c == 0xFEFF) {
@@ -358,14 +359,22 @@ public class StrictJSONParser implements JSONParser {
 		StringCache sc = context.getCachedBuffer();
 		
 		int n = -1;
+		
+		int rest = in.mark();
+		int len = 0;
 		loop:while ((n = in.next()) != -1) {
+			rest--;
+			len++;
+			
 			char c = (char)n;
 			switch(c) {
 			case 0xFEFF: // BOM
+				if (len > 0) in.copy(sc, len - 1);
+				rest = 0;
 				break;
 			case '+':
 				if (point == 7) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = 8;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -373,10 +382,10 @@ public class StrictJSONParser implements JSONParser {
 				break;
 			case '-':
 				if (point == 0) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = 1;
 				} else if (point == 7) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = 8;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -384,7 +393,7 @@ public class StrictJSONParser implements JSONParser {
 				break;
 			case '.':
 				if (point == 2 || point == 3) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = 4;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -393,7 +402,7 @@ public class StrictJSONParser implements JSONParser {
 			case 'e':
 			case 'E':
 				if (point == 2 || point == 3 || point == 5 || point == 6) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = 7;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -410,15 +419,15 @@ public class StrictJSONParser implements JSONParser {
 			case '8':
 			case '9':
 				if (point == 0 || point == 1) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = (c == '0') ? 3 : 2;
 				} else if (point == 2 || point == 5 || point == 9) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 				} else if (point == 4) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = 5;
 				} else if (point == 7 || point == 8) {
-					sc.append(c);
+					if (rest == 0) in.copy(sc, len);
 					point = 9;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -426,11 +435,17 @@ public class StrictJSONParser implements JSONParser {
 				break;
 			default:
 				if (point == 2 || point == 3 || point == 5 || point == 6 || point == 9) {
+					if (len > 0) in.copy(sc, len - 1);
 					in.back();
 					break loop;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
 				}
+			}
+			
+			if (rest == 0) {
+				rest = in.mark();
+				len = 0;
 			}
 		}
 		
