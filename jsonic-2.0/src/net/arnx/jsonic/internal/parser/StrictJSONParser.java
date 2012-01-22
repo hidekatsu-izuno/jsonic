@@ -27,22 +27,22 @@ public class StrictJSONParser implements JSONParser {
 			context.set(null, ParseContext.EMPTY);
 			switch (state) {
 			case BEFORE_ROOT:
-				state = beforeRoot(in, context);
+				state = beforeRoot();
 				break;
 			case AFTER_ROOT:
-				state = afterRoot(in, context);
+				state = afterRoot();
 				break;
 			case BEFORE_NAME:
-				state = beforeName(in, context);
+				state = beforeName();
 				break;
 			case AFTER_NAME:
-				state = afterName(in, context);
+				state = afterName();
 				break;
 			case BEFORE_VALUE:
-				state = beforeValue(in, context);
+				state = beforeValue();
 				break;
 			case AFTER_VALUE:
-				state = afterValue(in, context);
+				state = afterValue();
 				break;
 			}
 			if (state == -1) return null;
@@ -55,8 +55,8 @@ public class StrictJSONParser implements JSONParser {
 		return context.getValue();
 	}
 	
-	private static int beforeRoot(InputSource in, ParseContext context) throws IOException {
-		int n = skip(in, context);
+	private int beforeRoot() throws IOException {
+		int n = skip();
 		if (n == '{') {
 			context.push(JSONEventType.BEGIN_OBJECT);
 			return BEFORE_NAME;
@@ -70,16 +70,16 @@ public class StrictJSONParser implements JSONParser {
 		}
 	}
 	
-	private static int afterRoot(InputSource in, ParseContext context) throws IOException {
-		int n = skip(in, context);
+	private int afterRoot() throws IOException {
+		int n = skip();
 		if (n != -1) {
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 		return -1;
 	}
 	
-	private static int beforeName(InputSource in, ParseContext context) throws IOException {
-		int n = skip(in, context);
+	private int beforeName() throws IOException {
+		int n = skip();
 		if (n == '"') {
 			in.back();
 			context.set(JSONEventType.NAME, context.parseString(in));
@@ -98,8 +98,8 @@ public class StrictJSONParser implements JSONParser {
 		}
 	}
 
-	private static int afterName(InputSource in, ParseContext context) throws IOException {
-		int n = skip(in, context);
+	private int afterName() throws IOException {
+		int n = skip();
 		if (n == ':') {
 			return BEFORE_VALUE;
 		} else if (n != -1) {
@@ -109,8 +109,8 @@ public class StrictJSONParser implements JSONParser {
 		}
 	}
 	
-	private static int beforeValue(InputSource in, ParseContext context) throws IOException {
-		int n = skip(in, context);
+	private int beforeValue() throws IOException {
+		int n = skip();
 		if (n != -1) {
 			switch((char)n) {
 			case '{':
@@ -139,15 +139,15 @@ public class StrictJSONParser implements JSONParser {
 				return AFTER_VALUE;	
 			case 't':
 				in.back();
-				context.set(JSONEventType.TRUE, parseLiteral(in, context, "true", Boolean.TRUE));
+				context.set(JSONEventType.TRUE, parseLiteral("true", Boolean.TRUE));
 				return AFTER_VALUE;
 			case 'f':
 				in.back();
-				context.set(JSONEventType.FALSE, parseLiteral(in, context, "false", Boolean.FALSE));
+				context.set(JSONEventType.FALSE, parseLiteral("false", Boolean.FALSE));
 				return AFTER_VALUE;
 			case 'n':
 				in.back();
-				context.set(JSONEventType.NULL, parseLiteral(in, context, "null", null));
+				context.set(JSONEventType.NULL, parseLiteral("null", null));
 				return AFTER_VALUE;
 			case ']':
 				if (context.getPrevType() == JSONEventType.BEGIN_ARRAY) {
@@ -174,8 +174,8 @@ public class StrictJSONParser implements JSONParser {
 
 	}
 	
-	private static int afterValue(InputSource in, ParseContext context) throws IOException {
-		int n = skip(in, context);
+	private int afterValue() throws IOException {
+		int n = skip();
 		if (n == ',') {
 			if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
 				return BEFORE_NAME;
@@ -220,7 +220,7 @@ public class StrictJSONParser implements JSONParser {
 		}
 	}
 	
-	private static int skip(InputSource in, ParseContext context) throws IOException {
+	private int skip() throws IOException {
 		int n = -1;
 		loop:while ((n = in.next()) != -1) {
 			char c = (char)n;
@@ -238,7 +238,7 @@ public class StrictJSONParser implements JSONParser {
 		return n;
 	}
 	
-	private static Object parseLiteral(InputSource in, ParseContext context, String literal, Object result) throws IOException {
+	private Object parseLiteral(String literal, Object result) throws IOException {
 		int pos = 0;
 		int n = -1;
 		while ((n = in.next()) != -1) {
