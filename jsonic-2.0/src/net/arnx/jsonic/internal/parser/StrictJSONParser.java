@@ -398,23 +398,33 @@ public class StrictJSONParser implements JSONParser {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
 				}
 				break;
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				if (point == 0 || point == 1) {
+					if (sb != null) sb.append(c);
+					point = (c == '0') ? 3 : 2;
+				} else if (point == 2 || point == 5 || point == 9) {
+					if (sb != null) sb.append(c);
+				} else if (point == 4) {
+					if (sb != null) sb.append(c);
+					point = 5;
+				} else if (point == 7 || point == 8) {
+					if (sb != null) sb.append(c);
+					point = 9;
+				} else {
+					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
+				}
+				break;
 			default:
-				if (c >= '0' && c <= '9') {
-					if (point == 0 || point == 1) {
-						if (sb != null) sb.append(c);
-						point = (c == '0') ? 3 : 2;
-					} else if (point == 2 || point == 5 || point == 9) {
-						if (sb != null) sb.append(c);
-					} else if (point == 4) {
-						if (sb != null) sb.append(c);
-						point = 5;
-					} else if (point == 7 || point == 8) {
-						if (sb != null) sb.append(c);
-						point = 9;
-					} else {
-						throw context.createParseException(in, "json.parse.UnexpectedChar", c);
-					}
-				} else if (point == 2 || point == 3 || point == 5 || point == 6 || point == 9) {
+				if (point == 2 || point == 3 || point == 5 || point == 6 || point == 9) {
 					in.back();
 					break loop;
 				} else {
