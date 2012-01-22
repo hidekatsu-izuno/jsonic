@@ -309,6 +309,22 @@ class ParseContext {
 		return sc.toBigDecimal();
 	}
 	
+	public Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
+		int pos = 0;
+		int n = -1;
+		while ((n = in.next()) != -1) {
+			char c = (char)n;
+			if (pos < expected.length() && c == expected.charAt(pos++)) {
+				if (pos == expected.length()) {
+					return result;
+				}
+			} else {
+				break;
+			}
+		}
+		throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
+	}
+	
 	public JSONException createParseException(InputSource in, String id) {
 		return createParseException(in, id, (Object[])null);
 	}

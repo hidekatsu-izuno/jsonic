@@ -139,15 +139,15 @@ public class StrictJSONParser implements JSONParser {
 				return AFTER_VALUE;	
 			case 't':
 				in.back();
-				context.set(JSONEventType.TRUE, parseLiteral("true", Boolean.TRUE));
+				context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE));
 				return AFTER_VALUE;
 			case 'f':
 				in.back();
-				context.set(JSONEventType.FALSE, parseLiteral("false", Boolean.FALSE));
+				context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE));
 				return AFTER_VALUE;
 			case 'n':
 				in.back();
-				context.set(JSONEventType.NULL, parseLiteral("null", null));
+				context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null));
 				return AFTER_VALUE;
 			case ']':
 				if (context.getPrevType() == JSONEventType.BEGIN_ARRAY) {
@@ -236,22 +236,5 @@ public class StrictJSONParser implements JSONParser {
 			}
 		}
 		return n;
-	}
-	
-	private Object parseLiteral(String literal, Object result) throws IOException {
-		int pos = 0;
-		int n = -1;
-		while ((n = in.next()) != -1) {
-			char c = (char)n;
-			
-			if (pos < literal.length() && c == literal.charAt(pos++)) {
-				if (pos == literal.length()) {
-					return result;
-				}
-			} else {
-				break;
-			}
-		}
-		throw context.createParseException(in, "json.parse.UnrecognizedLiteral", literal.substring(0, pos));
 	}
 }
