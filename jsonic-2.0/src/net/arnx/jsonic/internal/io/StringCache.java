@@ -21,6 +21,7 @@ public class StringCache {
 		public void clear() {
 		}
 		
+		@Override
 		public BigDecimal toBigDecimal() {
 			return null;
 		};
