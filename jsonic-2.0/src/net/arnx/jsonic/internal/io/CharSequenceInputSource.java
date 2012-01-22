@@ -1,11 +1,13 @@
 package net.arnx.jsonic.internal.io;
 
 public class CharSequenceInputSource implements InputSource {
-	int lines = 1;
-	int columns = 1;
-	int offset = 0;
+	private int lines = 1;
+	private int columns = 1;
+	private int offset = 0;
 	
-	final CharSequence cs;
+	private int mark = -1;
+	
+	private final CharSequence cs;
 	
 	public CharSequenceInputSource(CharSequence cs) {
 		if (cs == null) {
@@ -31,6 +33,18 @@ public class CharSequenceInputSource implements InputSource {
 	public void back() {
 		offset--;
 		columns--;
+	}
+	
+	public int mark() {
+		mark = offset;
+		return cs.length() - mark;
+	}
+	
+	public void flush(StringBuilder sb, int len) {
+		if (mark == -1) {
+			throw new IllegalStateException("no mark");
+		}
+		sb.append(cs, mark, mark + len);
 	}
 	
 	public long getLineNumber() {

@@ -254,24 +254,39 @@ public class StrictJSONParser implements JSONParser {
 		StringBuilder sb = (context.getDepth() <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
 		
 		int n = in.next();
+
+		int rest = in.mark();
+		int len = 0;
 		loop:while ((n = in.next()) != -1) {
+			rest--;
+			len++;
+			
 			char c = (char)n;
 			if (c < ESCAPE_CHARS.length) {
 				switch (ESCAPE_CHARS[c]) {
 				case 0:
-					if (sb != null) sb.append(c);
+					if (rest == 0) in.flush(sb, len);
 					break;
 				case 1: // control chars
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
 				case 2: // "
 					break loop;						
 				case 3: // escape chars
+					if (len > 0) in.flush(sb, len - 1);
+					in.back();
 					c = parseEscape(in, context);
 					if (sb != null) sb.append(c);
 					break;
 				}
-			} else if (c != 0xFEFF) {
-				if (sb != null) sb.append(c);
+			} else if (c == 0xFEFF) {
+				if (len > 0) in.flush(sb, len - 1);			
+			} else {
+				if (rest == 0) in.flush(sb, len);
+			}
+			
+			if (rest == 0) {
+				rest = in.mark();
+				len = 0;
 			}
 		}
 		
@@ -285,7 +300,7 @@ public class StrictJSONParser implements JSONParser {
 		int point = 1; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
-		int n = -1;
+		int n = in.next();
 		loop:while ((n = in.next()) != -1) {
 			char c = (char)n;
 			if (c == 0xFEFF) continue; // BOM

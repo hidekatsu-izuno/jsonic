@@ -9,14 +9,15 @@ import java.io.Reader;
 public class ReaderInputSource implements InputSource {
 	private static int BACK = 1;
 	
-	long lines = 1l;
-	long columns = 1l;
-	long offset = 0;
+	private long lines = 1l;
+	private long columns = 1l;
+	private long offset = 0;
 
-	final Reader reader;
-	final char[] buf = new char[256];
-	int start = buf.length-1;
-	int end = buf.length-1;
+	private final Reader reader;
+	private final char[] buf = new char[256];
+	private int start = buf.length-1;
+	private int end = buf.length-1;
+	private int mark = -1;
 	
 	public ReaderInputSource(InputStream in) throws IOException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
@@ -30,15 +31,15 @@ public class ReaderInputSource implements InputSource {
 		this.reader = reader;
 	}
 	
+	@Override
 	public int next() throws IOException {
-		if (start < end) {
-			start++;
-		} else {
+		if (start > end) {
 			System.arraycopy(buf, end - BACK + 1, buf, 0, BACK);
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
 				start = BACK;
 				end = BACK + size - 1;
+				mark = -1;
 			} else {
 				return -1;
 			}
@@ -51,28 +52,45 @@ public class ReaderInputSource implements InputSource {
 		} else {
 			columns++;
 		}
+		start++;
 		offset++;
 		return c;
 	}
 	
+	@Override
 	public void back() {
+		if (start == 0) {
+			throw new IllegalStateException("no backup charcter");
+		}
 		offset--;
 		columns--;
 		start--;
-		
-		if (start < 0) {
-			throw new IllegalStateException("no backup charcter");
-		}
 	}
 	
+	public int mark() {
+		mark = start;
+		return end - mark + 1;
+	}
+	
+	public void flush(StringBuilder sb, int len) {
+		if (mark == -1) {
+			throw new IllegalStateException("no mark");
+		}
+		
+		sb.append(buf, mark, len);
+	}
+	
+	@Override
 	public long getLineNumber() {
 		return lines;
 	}
 	
+	@Override
 	public long getColumnNumber() {
 		return columns;
 	}
 	
+	@Override
 	public long getOffset() {
 		return offset;
 	}
