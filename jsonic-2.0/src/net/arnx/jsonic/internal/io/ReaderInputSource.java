@@ -7,14 +7,16 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 public class ReaderInputSource implements InputSource {
+	private static int BACK = 1;
+	
 	long lines = 1l;
 	long columns = 1l;
 	long offset = 0;
 
 	final Reader reader;
 	final char[] buf = new char[256];
-	int start = 0;
-	int end = 0;
+	int start = buf.length-1;
+	int end = buf.length-1;
 	
 	public ReaderInputSource(InputStream in) throws IOException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
@@ -29,30 +31,38 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	public int next() throws IOException {
-		if (start == end) {
-			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
+		if (start < end) {
+			start++;
+		} else {
+			System.arraycopy(buf, end - BACK + 1, buf, 0, BACK);
+			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
-				end = (end + size) % buf.length;
+				start = BACK;
+				end = BACK + size - 1;
 			} else {
 				return -1;
 			}
 		}
+		
 		char c = buf[start];
-		if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
+		if (c == '\r' || (c == '\n' && buf[start-1] != '\r')) {
 			lines++;
 			columns = 0;
 		} else {
 			columns++;
 		}
 		offset++;
-		start = (start+1) % buf.length;
 		return c;
 	}
 	
 	public void back() {
 		offset--;
 		columns--;
-		start = (start+buf.length-1) % buf.length;
+		start--;
+		
+		if (start < 0) {
+			throw new IllegalStateException("no backup charcter");
+		}
 	}
 	
 	public long getLineNumber() {

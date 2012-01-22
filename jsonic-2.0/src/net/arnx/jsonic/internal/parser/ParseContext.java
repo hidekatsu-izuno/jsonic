@@ -1,6 +1,5 @@
 package net.arnx.jsonic.internal.parser;
 
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +12,6 @@ import net.arnx.jsonic.internal.io.InputSource;
 class ParseContext {
 	public static final Object EMPTY = new Object();
 	
-	InputSource in;
 	Locale locale;
 	int maxDepth;
 	
@@ -24,18 +22,9 @@ class ParseContext {
 	private JSONEventType type;
 	private Object value;
 	
-	public ParseContext(InputSource in, Locale locale, int maxDepth) {
-		this.in = in;
+	public ParseContext(Locale locale, int maxDepth) {
 		this.locale = locale;
 		this.maxDepth = maxDepth;
-	}
-	
-	public int next() throws IOException {
-		return in.next();
-	}
-	
-	public void back() {
-		in.back();
 	}
 	
 	public Locale getLocale() {
@@ -99,11 +88,11 @@ class ParseContext {
 		return builderCache;
 	}
 	
-	public JSONException createParseException(String id) {
-		return createParseException(id, (Object[])null);
+	public JSONException createParseException(InputSource in, String id) {
+		return createParseException(in, id, (Object[])null);
 	}
 	
-	public JSONException createParseException(String id, Object... args) {
+	public JSONException createParseException(InputSource in, String id, Object... args) {
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		
 		String message;
