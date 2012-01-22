@@ -34,6 +34,8 @@ public class StringCache {
 	private char[] cbuf;
 	private int clen = 0;
 	
+	private String[] cache = new String[256];
+	
 	private StringCache() {
 	}
 	
@@ -108,6 +110,38 @@ public class StringCache {
 	
 	@Override
 	public String toString() {
+		if (clen == 0) return "";
+		if (clen < 32) {
+			int h = 0;
+			for (int i = 0; i < clen; i++) {
+				if (cbuf[i] < 128) {
+					h = h * 32 + cbuf[i];					
+				} else {
+					return new String(cbuf, 0, clen);
+				}
+			}
+			h ^= (h >>> 20) ^ (h >>> 12);
+			h ^= (h >>> 7) ^ (h >>> 4);
+			
+			int index = h & (cache.length-1);
+			
+			String str = cache[index];
+			if (str == null || str.length() != clen) {
+				str = new String(cbuf, 0, clen);
+				cache[index] = str;
+				return str;
+			}
+			
+			for (int i = 0; i < clen; i++) {
+				if (str.charAt(i) != cbuf[i]) {
+					str = new String(cbuf, 0, clen);
+					cache[index] = str;
+					return str;
+				}
+			}
+			return str;
+		}
+		
 		return new String(cbuf, 0, clen);
 	}
 	
