@@ -15,7 +15,7 @@ public class ReaderInputSource implements InputSource {
 
 	private final Reader reader;
 	private final char[] buf = new char[256];
-	private int start = buf.length-1;
+	private int start = buf.length;
 	private int end = buf.length-1;
 	private int mark = -1;
 	
