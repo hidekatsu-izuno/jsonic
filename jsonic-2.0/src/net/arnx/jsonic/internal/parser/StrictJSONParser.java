@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.Locale;
 
 import net.arnx.jsonic.internal.io.InputSource;
+import net.arnx.jsonic.internal.io.StringCache;
 
 public class StrictJSONParser implements JSONParser {
 	private static final int BEFORE_ROOT = 0;
@@ -251,7 +252,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private static String parseString(InputSource in, ParseContext context) throws IOException {
-		StringBuilder sb = (context.getDepth() <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
+		StringCache sc = context.getCachedBuffer();
 		
 		int n = in.next();
 
@@ -265,26 +266,26 @@ public class StrictJSONParser implements JSONParser {
 			if (c < ESCAPE_CHARS.length) {
 				switch (ESCAPE_CHARS[c]) {
 				case 0:
-					if (rest == 0 && sb != null) in.copy(sb, len);
+					if (rest == 0) in.copy(sc, len);
 					break;
 				case 1: // control chars
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
 				case 2: // "
-					if (len > 0 && sb != null) in.copy(sb, len - 1);
+					if (len > 0) in.copy(sc, len - 1);
 					break loop;						
 				case 3: // escape chars
-					if (len > 0 && sb != null) in.copy(sb, len - 1);
+					if (len > 0) in.copy(sc, len - 1);
 					in.back();
 					c = parseEscape(in, context);
-					if (sb != null && sb != null) sb.append(c);
+					sc.append(c);
 					rest = 0;
 					break;
 				}
 			} else if (c == 0xFEFF) {
-				if (len > 0 && sb != null) in.copy(sb, len - 1);
+				if (len > 0) in.copy(sc, len - 1);
 				rest = 0;
 			} else {
-				if (rest == 0 && sb != null) in.copy(sb, len);
+				if (rest == 0) in.copy(sc, len);
 			}
 			
 			if (rest == 0) {
@@ -296,7 +297,7 @@ public class StrictJSONParser implements JSONParser {
 		if (n != '\"') {
 			throw context.createParseException(in, "json.parse.StringNotClosedError");
 		}
-		return (sb != null) ? sb.toString() : null;
+		return sc.toString();
 	}
 	
 	private static char parseEscape(InputSource in, ParseContext context) throws IOException {
@@ -354,7 +355,7 @@ public class StrictJSONParser implements JSONParser {
 	
 	private static BigDecimal parseNumber(InputSource in, ParseContext context) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilder sb = (context.getDepth() <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
+		StringCache sc = context.getCachedBuffer();
 		
 		int n = -1;
 		loop:while ((n = in.next()) != -1) {
@@ -364,7 +365,7 @@ public class StrictJSONParser implements JSONParser {
 				break;
 			case '+':
 				if (point == 7) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = 8;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -372,10 +373,10 @@ public class StrictJSONParser implements JSONParser {
 				break;
 			case '-':
 				if (point == 0) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = 1;
 				} else if (point == 7) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = 8;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -383,7 +384,7 @@ public class StrictJSONParser implements JSONParser {
 				break;
 			case '.':
 				if (point == 2 || point == 3) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = 4;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -392,7 +393,7 @@ public class StrictJSONParser implements JSONParser {
 			case 'e':
 			case 'E':
 				if (point == 2 || point == 3 || point == 5 || point == 6) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = 7;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -409,15 +410,15 @@ public class StrictJSONParser implements JSONParser {
 			case '8':
 			case '9':
 				if (point == 0 || point == 1) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = (c == '0') ? 3 : 2;
 				} else if (point == 2 || point == 5 || point == 9) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 				} else if (point == 4) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = 5;
 				} else if (point == 7 || point == 8) {
-					if (sb != null) sb.append(c);
+					sc.append(c);
 					point = 9;
 				} else {
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
@@ -433,7 +434,7 @@ public class StrictJSONParser implements JSONParser {
 			}
 		}
 		
-		return (sb != null) ? new BigDecimal(sb.toString()) : null;
+		return sc.toBigDecimal();
 	}
 	
 	private static Object parseLiteral(InputSource in, ParseContext context, String literal, Object result) throws IOException {

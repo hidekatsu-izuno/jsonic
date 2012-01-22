@@ -8,6 +8,7 @@ import java.util.ResourceBundle;
 
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.internal.io.InputSource;
+import net.arnx.jsonic.internal.io.StringCache;
 
 class ParseContext {
 	public static final Object EMPTY = new Object();
@@ -16,7 +17,7 @@ class ParseContext {
 	int maxDepth;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
-	private StringBuilder builderCache;
+	private StringCache cache;
 	
 	private JSONEventType prevType;
 	private JSONEventType type;
@@ -79,13 +80,17 @@ class ParseContext {
 		return value;
 	}
 	
-	public StringBuilder getCachedBuffer() {
-		if (builderCache == null) {
-			builderCache = new StringBuilder();
-		} else {
-			builderCache.setLength(0);
+	public StringCache getCachedBuffer() {
+		if (getDepth() > getMaxDepth()) {
+			return StringCache.EMPTY_CACHE;
 		}
-		return builderCache;
+		
+		if (cache == null) {
+			cache = new StringCache(1000);
+		} else {
+			cache.setLength(0);
+		}
+		return cache;
 	}
 	
 	public JSONException createParseException(InputSource in, String id) {

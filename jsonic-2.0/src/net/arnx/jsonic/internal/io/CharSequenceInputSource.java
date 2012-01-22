@@ -1,5 +1,6 @@
 package net.arnx.jsonic.internal.io;
 
+
 public class CharSequenceInputSource implements InputSource {
 	private int lines = 1;
 	private int columns = 1;
@@ -44,11 +45,11 @@ public class CharSequenceInputSource implements InputSource {
 	}
 	
 	@Override
-	public void copy(StringBuilder sb, int len) {
+	public void copy(StringCache sc, int len) {
 		if (mark == -1) {
 			throw new IllegalStateException("no mark");
 		}
-		sb.append(cs, mark, mark + len);
+		sc.append(cs, mark, mark + len);
 	}
 	
 	@Override

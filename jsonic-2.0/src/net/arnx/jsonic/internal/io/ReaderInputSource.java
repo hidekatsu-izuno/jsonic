@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+
 public class ReaderInputSource implements InputSource {
 	private static int BACK = 1;
 	
@@ -75,12 +76,12 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	@Override
-	public void copy(StringBuilder sb, int len) {
+	public void copy(StringCache sc, int len) {
 		if (mark == -1) {
 			throw new IllegalStateException("no mark");
 		}
 		
-		sb.append(buf, mark, len);
+		sc.append(buf, mark, len);
 	}
 	
 	@Override
