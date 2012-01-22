@@ -37,9 +37,9 @@ public class ReaderInputSource implements InputSource {
 			System.arraycopy(buf, end - BACK + 1, buf, 0, BACK);
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
+				mark = (mark > end && mark <= end + BACK) ? (end + BACK - mark) : -1;
 				start = BACK;
 				end = BACK + size - 1;
-				mark = -1;
 			} else {
 				return -1;
 			}
