@@ -16,6 +16,7 @@ public class CharSequenceInputSource implements InputSource {
 		this.cs = cs;
 	}
 	
+	@Override
 	public int next() {
 		if (offset < cs.length()) {
 			char c = cs.charAt(offset++);
@@ -30,35 +31,42 @@ public class CharSequenceInputSource implements InputSource {
 		return -1;
 	}
 	
+	@Override
 	public void back() {
 		offset--;
 		columns--;
 	}
 	
+	@Override
 	public int mark() {
 		mark = offset;
 		return cs.length() - mark;
 	}
 	
-	public void flush(StringBuilder sb, int len) {
+	@Override
+	public void copy(StringBuilder sb, int len) {
 		if (mark == -1) {
 			throw new IllegalStateException("no mark");
 		}
 		sb.append(cs, mark, mark + len);
 	}
 	
+	@Override
 	public long getLineNumber() {
 		return lines;
 	}
 	
+	@Override
 	public long getColumnNumber() {
 		return columns;
 	}
 	
+	@Override
 	public long getOffset() {
 		return offset;
 	}
 	
+	@Override
 	public String toString() {
 		return cs.subSequence(offset-columns+1, offset).toString();
 	}

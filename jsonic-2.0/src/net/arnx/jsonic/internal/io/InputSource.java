@@ -6,7 +6,7 @@ public interface InputSource {
 	int next() throws IOException;
 	void back();
 	int mark();
-	void flush(StringBuilder sb, int len);
+	void copy(StringBuilder sb, int len);
 	long getLineNumber();
 	long getColumnNumber();
 	long getOffset();

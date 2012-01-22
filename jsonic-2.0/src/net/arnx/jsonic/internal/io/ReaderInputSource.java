@@ -67,12 +67,14 @@ public class ReaderInputSource implements InputSource {
 		start--;
 	}
 	
+	@Override
 	public int mark() {
 		mark = start;
 		return end - mark + 1;
 	}
 	
-	public void flush(StringBuilder sb, int len) {
+	@Override
+	public void copy(StringBuilder sb, int len) {
 		if (mark == -1) {
 			throw new IllegalStateException("no mark");
 		}
@@ -127,6 +129,7 @@ public class ReaderInputSource implements InputSource {
 		return encoding;
 	}
 	
+	@Override
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
