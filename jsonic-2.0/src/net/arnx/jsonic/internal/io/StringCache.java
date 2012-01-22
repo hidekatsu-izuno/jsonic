@@ -34,7 +34,8 @@ public class StringCache {
 	private char[] cbuf;
 	private int clen = 0;
 	
-	private String[] cache = new String[128];
+	private String[] scache = new String[256];
+	private BigDecimal[] dcache = new BigDecimal[256];
 	
 	private StringCache() {
 	}
@@ -105,7 +106,48 @@ public class StringCache {
 	}
 	
 	public BigDecimal toBigDecimal() {
-		return new BigDecimal(toString());
+		if (clen == 1) {
+			if (cbuf[0] == '0') {
+				return BigDecimal.ZERO;
+			} else if (cbuf[0] == '1') {
+				return BigDecimal.ONE;
+			}
+		}
+		
+		if (clen < 32) {
+			int index = index();
+			if (index < 0) {
+				return new BigDecimal(cbuf, 0, clen);
+			}
+						
+			String str = scache[index];
+			BigDecimal num = dcache[index];
+			if (str == null || str.length() != clen) {
+				str = new String(cbuf, 0, clen);
+				num = new BigDecimal(str);
+				scache[index] = str;
+				dcache[index] = num;
+				return num;
+			}
+			
+			for (int i = 0; i < clen; i++) {
+				if (str.charAt(i) != cbuf[i]) {
+					str = new String(cbuf, 0, clen);
+					num = new BigDecimal(str);
+					scache[index] = str;
+					dcache[index] = num;
+					return num;
+				}
+			}
+			
+			if (num == null) {
+				num = new BigDecimal(str);
+				dcache[index] = num;
+			}
+			return num;
+		}
+		
+		return new BigDecimal(cbuf, 0, clen);
 	}
 	
 	@Override
@@ -113,30 +155,24 @@ public class StringCache {
 		if (clen == 0) return "";
 		
 		if (clen < 32) {
-			int h = 0;
-			for (int i = 0; i < clen; i++) {
-				if (cbuf[i] < 128) {
-					h = h * 32 + cbuf[i];					
-				} else {
-					return new String(cbuf, 0, clen);
-				}
+			int index = index();
+			if (index < 0) {
+				return new String(cbuf, 0, clen);
 			}
-			h ^= (h >>> 20) ^ (h >>> 12);
-			h ^= (h >>> 7) ^ (h >>> 4);
 			
-			int index = h & (cache.length-1);
-			
-			String str = cache[index];
+			String str = scache[index];
 			if (str == null || str.length() != clen) {
 				str = new String(cbuf, 0, clen);
-				cache[index] = str;
+				scache[index] = str;
+				dcache[index] = null;
 				return str;
 			}
 			
 			for (int i = 0; i < clen; i++) {
 				if (str.charAt(i) != cbuf[i]) {
 					str = new String(cbuf, 0, clen);
-					cache[index] = str;
+					scache[index] = str;
+					dcache[index] = null;
 					return str;
 				}
 			}
@@ -144,6 +180,21 @@ public class StringCache {
 		}
 		
 		return new String(cbuf, 0, clen);
+	}
+	
+	private int index() {
+		int h = 0;
+		for (int i = 0; i < clen; i++) {
+			if (cbuf[i] < 128) {
+				h = h * 32 + cbuf[i];
+			} else {
+				return -1;
+			}
+		}
+		h ^= (h >>> 20) ^ (h >>> 12);
+		h ^= (h >>> 7) ^ (h >>> 4);
+		
+		return h & (scache.length-1);		
 	}
 	
 	private void expand(int newLength) {
