@@ -6,7 +6,7 @@ public class CharSequenceInputSource implements InputSource {
 	private int columns = 1;
 	private int offset = 0;
 	
-	private int mark = -1;
+	int mark = -1;
 	
 	private final CharSequence cs;
 	

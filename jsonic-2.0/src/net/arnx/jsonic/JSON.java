@@ -72,7 +72,11 @@ import net.arnx.jsonic.internal.io.CharSequenceInputSource;
 import net.arnx.jsonic.internal.io.InputSource;
 import net.arnx.jsonic.internal.io.OutputSource;
 import net.arnx.jsonic.internal.io.ReaderInputSource;
+import net.arnx.jsonic.internal.io.StringBufferInputSource;
+import net.arnx.jsonic.internal.io.StringBufferOutputSource;
+import net.arnx.jsonic.internal.io.StringBuilderInputSource;
 import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
+import net.arnx.jsonic.internal.io.StringInputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
 import net.arnx.jsonic.internal.parser.JSONEventType;
 import net.arnx.jsonic.internal.parser.JSONParser;
@@ -784,6 +788,8 @@ public class JSON {
 			fs = new WriterOutputSource((Writer)ap);
 		} else if (ap instanceof StringBuilder) {
 			fs = new StringBuilderOutputSource((StringBuilder)ap);
+		} else if (ap instanceof StringBuffer) {
+			fs = new StringBufferOutputSource((StringBuffer)ap);
 		} else {
 			fs = new AppendableOutputSource(ap);
 		}
@@ -925,9 +931,20 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence cs) throws JSONException {
+		InputSource is;
+		if (cs instanceof String) {
+			is = new StringInputSource((String)cs);
+		} else if (cs instanceof StringBuilder) {
+			is = new StringBuilderInputSource((StringBuilder)cs);
+		} else if (cs instanceof StringBuffer) {
+			is = new StringBufferInputSource((StringBuffer)cs);
+		} else {
+			is = new CharSequenceInputSource(cs);
+		}
+		
 		Object value = null;
 		try {
-			value = parseInternal(new Context(), new CharSequenceInputSource(cs));
+			value = parseInternal(new Context(), is);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -940,11 +957,22 @@ public class JSON {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T parse(CharSequence s, Type type) throws JSONException {
+	public <T> T parse(CharSequence cs, Type type) throws JSONException {
+		InputSource is;
+		if (cs instanceof String) {
+			is = new StringInputSource((String)cs);
+		} else if (cs instanceof StringBuilder) {
+			is = new StringBuilderInputSource((StringBuilder)cs);
+		} else if (cs instanceof StringBuffer) {
+			is = new StringBufferInputSource((StringBuffer)cs);
+		} else {
+			is = new CharSequenceInputSource(cs);
+		}
+		
 		T value = null;
 		try {
 			Context context = new Context();
-			value = (T)convert(context, parseInternal(context, new CharSequenceInputSource(s)), type);
+			value = (T)convert(context, parseInternal(context, is), type);
 		} catch (IOException e) {
 			// never occur
 		}

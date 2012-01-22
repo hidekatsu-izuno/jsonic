@@ -86,9 +86,9 @@ class ParseContext {
 		}
 		
 		if (cache == null) {
-			cache = new StringCache(1000);
+			cache = new StringCache(120);
 		} else {
-			cache.setLength(0);
+			cache.clear();
 		}
 		return cache;
 	}
