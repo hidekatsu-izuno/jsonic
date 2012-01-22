@@ -34,7 +34,7 @@ public class StringCache {
 	private char[] cbuf;
 	private int clen = 0;
 	
-	private String[] cache = new String[256];
+	private String[] cache = new String[128];
 	
 	private StringCache() {
 	}
@@ -111,6 +111,7 @@ public class StringCache {
 	@Override
 	public String toString() {
 		if (clen == 0) return "";
+		
 		if (clen < 32) {
 			int h = 0;
 			for (int i = 0; i < clen; i++) {
