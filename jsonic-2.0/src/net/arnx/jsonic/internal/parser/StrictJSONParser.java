@@ -265,9 +265,6 @@ public class StrictJSONParser implements JSONParser {
 			char c = (char)n;
 			if (c < ESCAPE_CHARS.length) {
 				switch (ESCAPE_CHARS[c]) {
-				case 0:
-					if (rest == 0) in.copy(sc, len);
-					break;
 				case 1: // control chars
 					throw context.createParseException(in, "json.parse.UnexpectedChar", c);
 				case 2: // "
@@ -278,9 +275,10 @@ public class StrictJSONParser implements JSONParser {
 					rest = 0;
 					
 					in.back();
-					c = parseEscape(in, context);
-					sc.append(c);
+					sc.append(parseEscape(in, context));
 					break;
+				default:
+					if (rest == 0) in.copy(sc, len);
 				}
 			} else if (c == 0xFEFF) {
 				if (len > 0) in.copy(sc, len - 1);
