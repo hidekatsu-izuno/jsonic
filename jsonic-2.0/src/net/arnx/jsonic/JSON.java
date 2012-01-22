@@ -1015,7 +1015,7 @@ public class JSON {
 	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
 		if (context.getMode() == JSONMode.STRICT) {
 			Object root = null;
-			LinkedList<Object> stack = new LinkedList<Object>();
+			List<Object> stack = new ArrayList<Object>();
 			String name = null;
 			
 			JSONParser parser = new StrictJSONParser(s, context.getLocale(), context.getMaxDepth());
@@ -1025,7 +1025,7 @@ public class JSON {
 				case BEGIN_OBJECT:
 					Map<String, Object> map = new LinkedHashMap<String, Object>();
 					if (!stack.isEmpty()) {
-						Object current = stack.getLast();
+						Object current = stack.get(stack.size()-1);
 						if (current instanceof Map<?, ?>) {
 							((Map<Object, Object>)current).put(name, map);
 						} else if (current instanceof List<?>) {
@@ -1040,7 +1040,7 @@ public class JSON {
 				case BEGIN_ARRAY:
 					List<Object> list = new ArrayList<Object>();
 					if (!stack.isEmpty()) {
-						Object current = stack.getLast();
+						Object current = stack.get(stack.size()-1);
 						if (current instanceof Map<?, ?>) {
 							((Map<Object, Object>)current).put(name, list);
 						} else if (current instanceof List<?>) {
@@ -1055,7 +1055,7 @@ public class JSON {
 				case END_ARRAY:
 				case END_OBJECT:
 					if (!stack.isEmpty()) {
-						stack.removeLast();
+						stack.remove(stack.size()-1);
 					} else {
 						throw new IllegalStateException();
 					}
@@ -1068,7 +1068,7 @@ public class JSON {
 				case TRUE:
 				case FALSE:
 				case NULL:
-					Object current = stack.getLast();
+					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {
 						((Map<Object, Object>)current).put(name, parser.getValue());
 					} else if (current instanceof List<?>) {
