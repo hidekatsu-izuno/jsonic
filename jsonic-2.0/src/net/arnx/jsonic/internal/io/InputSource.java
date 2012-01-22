@@ -4,7 +4,7 @@ import java.io.IOException;
 
 
 public interface InputSource {
-	int next(boolean skip) throws IOException;
+	int skip() throws IOException;
 	int next() throws IOException;
 	void back();
 	int mark();

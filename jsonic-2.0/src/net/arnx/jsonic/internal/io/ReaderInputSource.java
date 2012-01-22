@@ -33,33 +33,46 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	@Override
-	public int next(boolean skip) throws IOException {
-		if (skip) {
-			int n = -1;
-			loop:while ((n = next()) != -1) {
-				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				default:
-					break loop;
+	public int skip() throws IOException {
+		int n = -1;
+		while ((n = get()) != -1) {
+			if (n == ' ' || n == '\t' || n == 0xFEFF) {
+				columns++;
+			} else if (n == '\r') {
+				lines++;
+				columns = 0;
+			} else if (n == '\n') {
+				if (buf[start-2] != '\r') {
+					lines++;
+					columns = 0;
+				} else {
+					columns++;
 				}
+			} else {
+				columns++;
+				break;
 			}
-			return n;
-		} else {
-			return next();
 		}
+		return n;
 	}
 	
 	@Override
 	public int next() throws IOException {
+		int n = -1;
+		if ((n = get()) != -1) {
+			if (n == '\r' || (n == '\n' && buf[start-2] != '\r')) {
+				lines++;
+				columns = 0;
+			} else {
+				columns++;
+			}
+		}
+		return n;
+	}
+	
+	private int get() throws IOException {
 		if (start > end) {
 			buf[0] = buf[end];
-			// System.arraycopy(buf, end - BACK + 1, buf, 0, BACK);
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
 				mark = (mark > end && mark <= end + BACK) ? (end + BACK - mark) : -1;
@@ -69,17 +82,8 @@ public class ReaderInputSource implements InputSource {
 				return -1;
 			}
 		}
-		
-		char c = buf[start];
-		if (c == '\r' || (c == '\n' && buf[start-1] != '\r')) {
-			lines++;
-			columns = 0;
-		} else {
-			columns++;
-		}
-		start++;
 		offset++;
-		return c;
+		return buf[start++];
 	}
 	
 	@Override

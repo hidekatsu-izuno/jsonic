@@ -20,41 +20,43 @@ public class CharSequenceInputSource implements InputSource {
 	}
 	
 	@Override
-	public int next(boolean skip) throws IOException {
-		if (skip) {
-			int n = -1;
-			loop:while ((n = next()) != -1) {
-				char c = (char)n;
-				switch(c) {
-				case '\r':
-				case '\n':
-				case ' ':
-				case '\t':
-				case 0xFEFF: // BOM
-					break;
-				default:
-					break loop;
+	public int skip() throws IOException {
+		int n = -1;
+		for (int i = offset; i < cs.length(); i++) {
+			n = cs.charAt(offset++);
+			if (n == ' ' || n == '\t' || n == 0xFEFF) {
+				columns++;
+			} else if (n == '\r') {
+				lines++;
+				columns = 0;
+			} else if (n == '\n') {
+				if (offset > 1 && cs.charAt(offset-2) != '\r') {
+					lines++;
+					columns = 0;
+				} else {
+					columns++;
 				}
+			} else {
+				columns++;
+				break;
 			}
-			return n;
-		} else {
-			return next();
 		}
+		return n;
 	}
 	
 	@Override
 	public int next() {
+		int n = -1;
 		if (offset < cs.length()) {
-			char c = cs.charAt(offset++);
-			if (c == '\r' || (c == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
+			n = cs.charAt(offset++);
+			if (n == '\r' || (n == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
 				lines++;
 				columns = 0;
 			} else {
 				columns++;
 			}
-			return c;
 		}
-		return -1;
+		return n;
 	}
 	
 	@Override
