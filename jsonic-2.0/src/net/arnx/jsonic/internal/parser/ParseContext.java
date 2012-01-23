@@ -138,9 +138,6 @@ class ParseContext {
 				} else { // control chars
 					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
-			} else if (n == 0xFEFF) {
-				if (len > 0) in.copy(sc, len - 1);
-				rest = 0;
 			} else {
 				if (rest == 0) in.copy(sc, len);
 			}
@@ -164,7 +161,6 @@ class ParseContext {
 		int n = in.next();
 		loop:while ((n = in.next()) != -1) {
 			char c = (char)n;
-			if (c == 0xFEFF) continue; // BOM
 			
 			if (point == 1) {
 				switch(c) {
@@ -224,10 +220,6 @@ class ParseContext {
 			
 			char c = (char)n;
 			switch(c) {
-			case 0xFEFF: // BOM
-				if (len > 0) in.copy(sc, len - 1);
-				rest = 0;
-				break;
 			case '+':
 				if (point == 7) {
 					if (rest == 0) in.copy(sc, len);

@@ -23,6 +23,7 @@ public class ReaderInputSource implements InputSource {
 	public ReaderInputSource(InputStream in) throws IOException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		this.reader = new InputStreamReader(in, determineEncoding(in));
+		if (get() != 0xFEFF) back();
 	}
 	
 	public ReaderInputSource(Reader reader) throws IOException {
@@ -30,13 +31,14 @@ public class ReaderInputSource implements InputSource {
 			throw new NullPointerException();
 		}
 		this.reader = reader;
+		if (get() != 0xFEFF) back();
 	}
 	
 	@Override
 	public int skip() throws IOException {
 		int n = -1;
 		while ((n = get()) != -1) {
-			if (n == ' ' || n == '\t' || n == 0xFEFF) {
+			if (n == ' ' || n == '\t') {
 				columns++;
 			} else if (n == '\r') {
 				lines++;
@@ -126,7 +128,7 @@ public class ReaderInputSource implements InputSource {
 		return offset;
 	}
 	
-	String determineEncoding(InputStream in) throws IOException {
+	private static String determineEncoding(InputStream in) throws IOException {
 		String encoding = "UTF-8";
 
 		in.mark(4);
