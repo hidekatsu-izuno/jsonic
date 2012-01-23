@@ -55,6 +55,7 @@ public class ReaderInputSource implements InputSource {
 				start = BACK;
 				end = BACK + size - 1;
 			} else {
+				start++;
 				return -1;
 			}
 		}
@@ -67,9 +68,11 @@ public class ReaderInputSource implements InputSource {
 		if (start == 0) {
 			throw new IllegalStateException("no backup charcter");
 		}
-		offset--;
-		columns--;
 		start--;
+		if (start < end) {
+			offset--;
+			columns--;
+		}
 	}
 	
 	@Override

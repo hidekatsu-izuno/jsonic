@@ -366,6 +366,7 @@ class ParseContext {
 				return (cache) ? Boolean.FALSE : null;
 			}
 		}
+		type = JSONEventType.STRING;
 		return (cache) ? str : null;
 	}
 	
