@@ -35,14 +35,16 @@ public class StringCache {
 	private char[] cbuf;
 	private int clen = 0;
 	
-	private String[] scache = new String[256];
-	private BigDecimal[] dcache = new BigDecimal[256];
+	private String[] scache;
+	private BigDecimal[] dcache;
 	
 	private StringCache() {
 	}
 	
 	public StringCache(int size) {
 		cbuf = new char[size];
+		scache = new String[256];
+		dcache = new BigDecimal[256];
 	}
 	
 	public void append(char c) {

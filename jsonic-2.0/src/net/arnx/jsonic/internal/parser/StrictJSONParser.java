@@ -17,9 +17,9 @@ public class StrictJSONParser implements JSONParser {
 	private InputSource in;
 	private ParseContext context;
 	
-	public StrictJSONParser(InputSource in, Locale locale, int maxDepth) {
+	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean skipComment) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth);
+		this.context = new ParseContext(locale, maxDepth, skipComment);
 	}
 	
 	public JSONEventType next() throws IOException {

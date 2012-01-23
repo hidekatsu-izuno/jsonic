@@ -26,8 +26,9 @@ class ParseContext {
 		ESCAPE_CHARS[0x7F] = 3;
 	}
 	
-	Locale locale;
-	int maxDepth;
+	private Locale locale;
+	private int maxDepth;
+	private boolean skipComment;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
 	private StringCache cache;
@@ -36,9 +37,10 @@ class ParseContext {
 	private JSONEventType type;
 	private Object value;
 	
-	public ParseContext(Locale locale, int maxDepth) {
+	public ParseContext(Locale locale, int maxDepth, boolean skipComment) {
 		this.locale = locale;
 		this.maxDepth = maxDepth;
+		this.skipComment = skipComment;
 	}
 	
 	public Locale getLocale() {
@@ -51,6 +53,10 @@ class ParseContext {
 	
 	public int getDepth() {
 		return stack.size();
+	}
+	
+	public boolean isSkipComment() {
+		return skipComment;
 	}
 	
 	public void push(JSONEventType type) {
@@ -94,10 +100,6 @@ class ParseContext {
 	}
 	
 	public StringCache getCachedBuffer() {
-		if (getDepth() > getMaxDepth()) {
-			return StringCache.EMPTY_CACHE;
-		}
-		
 		if (cache == null) {
 			cache = new StringCache(120);
 		} else {
@@ -107,7 +109,8 @@ class ParseContext {
 	}
 	
 	public final String parseString(InputSource in) throws IOException {
-		StringCache sc = getCachedBuffer();
+		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		
 		int start = in.next();
 
 		int rest = in.mark();
@@ -208,7 +211,7 @@ class ParseContext {
 	
 	public BigDecimal parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringCache sc = getCachedBuffer();
+		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
 		
@@ -316,6 +319,72 @@ class ParseContext {
 		throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
 	}
 	
+	private String parseComment(InputSource in) throws IOException {
+		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
+		StringCache sc = isSkipComment() ? StringCache.EMPTY_CACHE : getCachedBuffer();
+		
+		int n = -1;
+		
+		int rest = in.mark();
+		int len = 0;
+		loop:while ((n = in.next()) != -1) {
+			char c = (char)n;
+			switch(c) {
+			case '/':
+				if (point == 0) {
+					point = 1;
+				} else if (point == 1) {
+					point = 4;
+				} else if (point == 3) {
+					break loop;
+				} else if (point == 2 || point == 4) {
+					if (rest == 0) in.copy(sc, len);
+				} else {
+					throw createParseException(in, "json.parse.UnexpectedChar", c);
+				}
+				break;
+			case '*':
+				if (point == 1) {
+					point = 2;
+				} else if (point == 2) {
+					point = 3;
+				} else if (point == 3 || point == 4) {
+					if (rest == 0) in.copy(sc, len);
+				} else {
+					throw createParseException(in, "json.parse.UnexpectedChar", c);
+				}
+				break;
+			case '\n':
+			case '\r':
+				if (point == 2 || point == 3) {
+					if (rest == 0) in.copy(sc, len);
+					point = 2;
+				} else if (point == 4) {
+					break loop;
+				} else {
+					throw createParseException(in, "json.parse.UnexpectedChar", c);
+				}
+				break;
+			default:
+				if (point == 3) {
+					if (rest == 0) in.copy(sc, len);
+					point = 2;
+				} else if (point == 2 || point == 4) {
+					if (rest == 0) in.copy(sc, len);
+				} else {
+					throw createParseException(in, "json.parse.UnexpectedChar", c);
+				}
+			}
+			
+			if (rest == 0) {
+				rest = in.mark();
+				len = 0;
+			}
+		}
+		
+		return sc.toString();
+	}
+	
 	public JSONException createParseException(InputSource in, String id) {
 		return createParseException(in, id, (Object[])null);
 	}
@@ -333,4 +402,36 @@ class ParseContext {
 		return new JSONException("" + in.getLineNumber() + ": " + message + "\n" + in.toString() + " <- ?",
 				JSONException.PARSE_ERROR, in.getLineNumber(), in.getColumnNumber(), in.getOffset());
 	}
+	
+	private static class EmptyStringCache extends StringCache {
+		public EmptyStringCache() {
+			super(-1);
+		}
+
+		@Override
+		public void append(char c) {
+		}
+		
+		@Override
+		public void append(CharSequence cs, int start, int end) {
+		}
+		
+		@Override
+		public void append(char[] buf, int offset, int len) {
+		}
+		
+		@Override
+		public void clear() {
+		}
+		
+		@Override
+		public BigDecimal toBigDecimal() {
+			return null;
+		};
+		
+		@Override
+		public String toString() {
+			return null;
+		}
+	};
 }

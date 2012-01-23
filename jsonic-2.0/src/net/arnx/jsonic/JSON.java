@@ -1018,7 +1018,7 @@ public class JSON {
 			List<Object> stack = new ArrayList<Object>();
 			String name = null;
 			
-			JSONParser parser = new StrictJSONParser(s, context.getLocale(), context.getMaxDepth());
+			JSONParser parser = new StrictJSONParser(s, context.getLocale(), context.getMaxDepth(), true);
 			JSONEventType type = null;
 			while ((type = parser.next()) != null) {
 				switch (type) {
