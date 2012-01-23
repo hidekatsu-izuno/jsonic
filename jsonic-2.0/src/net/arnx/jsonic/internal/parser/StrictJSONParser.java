@@ -17,14 +17,14 @@ public class StrictJSONParser implements JSONParser {
 	private InputSource in;
 	private ParseContext context;
 	
-	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean skipComment) {
+	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean skipWhitespace) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth, skipComment);
+		this.context = new ParseContext(locale, maxDepth, skipWhitespace, true);
 	}
 	
 	public JSONEventType next() throws IOException {
 		do {
-			context.set(null, ParseContext.EMPTY);
+			context.set(null, ParseContext.EMPTY, false);
 			switch (state) {
 			case BEFORE_ROOT:
 				state = beforeRoot();
@@ -56,127 +56,196 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	private int beforeRoot() throws IOException {
-		int n = in.skip();
-		if (n == '{') {
+		int n = in.next();
+		if (n == 0xFEFF) n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = context.parseWhitespace(in);
+			if (!context.isSkipWhitespace()) {
+				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return BEFORE_ROOT;
+		case '{':
 			context.push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
-		} else if (n == '[') {
+		case '[':
 			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
-		} else if (n != -1) {
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
-		} else {
+		case -1:
 			throw context.createParseException(in, "json.parse.EmptyInputError");
+		default:
+			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
 	
 	private int afterRoot() throws IOException {
-		int n = in.skip();
-		if (n != -1) {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = context.parseWhitespace(in);
+			if (!context.isSkipWhitespace()) {
+				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_ROOT;
+		case -1:
+			return -1;
+		default:
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
-		return -1;
 	}
 	
 	private int beforeName() throws IOException {
-		int n = in.skip();
-		if (n == '"') {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
 			in.back();
-			context.set(JSONEventType.NAME, context.parseString(in));
-			return AFTER_NAME;					
-		} else if (n == '}' && context.getPrevType() == JSONEventType.START_OBJECT) {
-			context.pop();
-			if (context.getBeginType() == null) {
-				return AFTER_ROOT;
-			} else {
-				return AFTER_VALUE;							
+			String ws = context.parseWhitespace(in);
+			if (!context.isSkipWhitespace()) {
+				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
-		} else if (n != -1) {
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
-		} else {
+			return BEFORE_NAME;
+		case '"':
+			in.back();
+			context.set(JSONEventType.NAME, context.parseString(in), false);
+			return AFTER_NAME;
+		case '}':
+			if (context.isFirst() && context.getBeginType() == JSONEventType.START_OBJECT) {
+				context.pop();
+				if (context.getBeginType() == null) {
+					return AFTER_ROOT;
+				} else {
+					return AFTER_VALUE;							
+				}
+			} else {
+				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
+		case -1:
 			throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+		default:
+			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
 
 	private int afterName() throws IOException {
-		int n = in.skip();
-		if (n == ':') {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = context.parseWhitespace(in);
+			if (!context.isSkipWhitespace()) {
+				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_NAME;
+		case ':':
 			return BEFORE_VALUE;
-		} else if (n != -1) {
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
-		} else {
+		case -1:
 			throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+		default:
+			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
 	
 	private int beforeValue() throws IOException {
-		int n = in.skip();
-		if (n != -1) {
-			switch((char)n) {
-			case '{':
-				context.push(JSONEventType.START_OBJECT);
-				return BEFORE_NAME;
-			case '[':
-				context.push(JSONEventType.START_ARRAY);
-				return BEFORE_VALUE;
-			case '"':
-				in.back();
-				context.set(JSONEventType.STRING, context.parseString(in));
-				return AFTER_VALUE;
-			case '-':
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				in.back();
-				context.set(JSONEventType.NUMBER, context.parseNumber(in));
-				return AFTER_VALUE;	
-			case 't':
-				in.back();
-				context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE, false));
-				return AFTER_VALUE;
-			case 'f':
-				in.back();
-				context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE, false));
-				return AFTER_VALUE;
-			case 'n':
-				in.back();
-				context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null, false));
-				return AFTER_VALUE;
-			case ']':
-				if (context.getPrevType() == JSONEventType.START_ARRAY) {
-					context.pop();
-					if (context.getBeginType() == null) {
-						return AFTER_ROOT;
-					} else {
-						return AFTER_VALUE;							
-					}
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = context.parseWhitespace(in);
+			if (!context.isSkipWhitespace()) {
+				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return BEFORE_VALUE;
+		case '{':
+			context.push(JSONEventType.START_OBJECT);
+			return BEFORE_NAME;
+		case '[':
+			context.push(JSONEventType.START_ARRAY);
+			return BEFORE_VALUE;
+		case '"':
+			in.back();
+			context.set(JSONEventType.STRING, context.parseString(in), true);
+			return AFTER_VALUE;
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			in.back();
+			context.set(JSONEventType.NUMBER, context.parseNumber(in), true);
+			return AFTER_VALUE;	
+		case 't':
+			in.back();
+			context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE, false), true);
+			return AFTER_VALUE;
+		case 'f':
+			in.back();
+			context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE, false), true);
+			return AFTER_VALUE;
+		case 'n':
+			in.back();
+			context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null, false), true);
+			return AFTER_VALUE;
+		case ']':
+			if (context.isFirst() && context.getBeginType() == JSONEventType.START_ARRAY) {
+				context.pop();
+				if (context.getBeginType() == null) {
+					return AFTER_ROOT;
+				} else {
+					return AFTER_VALUE;							
 				}
-			default:
+			} else{
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
-		} else {
-			switch (context.getBeginType()) {
-			case START_OBJECT:
+		case -1:
+			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
-			case START_ARRAY:
+			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
-			default:
+			} else {
 				throw new IllegalStateException();
 			}
+		default:
+			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
-
 	}
 	
 	private int afterValue() throws IOException {
-		int n = in.skip();
-		if (n == ',') {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = context.parseWhitespace(in);
+			if (!context.isSkipWhitespace()) {
+				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_VALUE;
+		case ',':
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				return BEFORE_NAME;
 			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
@@ -184,7 +253,7 @@ public class StrictJSONParser implements JSONParser {
 			} else {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
-		} else if (n == '}') {
+		case '}':
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				context.pop();
 				if (context.getBeginType() == null) {
@@ -195,7 +264,7 @@ public class StrictJSONParser implements JSONParser {
 			} else {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
-		} else if (n == ']') {
+		case ']':
 			if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				context.pop();
 				if (context.getBeginType() == null) {
@@ -206,17 +275,16 @@ public class StrictJSONParser implements JSONParser {
 			} else {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
-		} else if (n != -1) {
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
-		} else {
-			switch (context.getBeginType()) {
-			case START_OBJECT:
+		case -1:
+			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
-			case START_ARRAY:
+			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
-			default:
+			} else {
 				throw new IllegalStateException();
 			}
+		default:
+			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
 }

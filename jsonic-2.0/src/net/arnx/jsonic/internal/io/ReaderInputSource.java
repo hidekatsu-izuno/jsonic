@@ -33,30 +33,6 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	@Override
-	public int skip() throws IOException {
-		int n = -1;
-		while ((n = get()) != -1) {
-			if (n == ' ' || n == '\t') {
-				columns++;
-			} else if (n == '\r') {
-				lines++;
-				columns = 0;
-			} else if (n == '\n') {
-				if (buf[start-2] != '\r') {
-					lines++;
-					columns = 0;
-				} else {
-					columns++;
-				}
-			} else {
-				columns++;
-				break;
-			}
-		}
-		return n;
-	}
-	
-	@Override
 	public int next() throws IOException {
 		int n = -1;
 		if ((n = get()) != -1) {
@@ -76,12 +52,7 @@ public class ReaderInputSource implements InputSource {
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
 				mark = (mark > end && mark <= end + BACK) ? (end + BACK - mark) : -1;
-				if (offset == 0 && buf[BACK] == 0xFEFF) {
-					offset++;
-					start = BACK + 1;
-				} else {
-					start = BACK;
-				}
+				start = BACK;
 				end = BACK + size - 1;
 			} else {
 				return -1;

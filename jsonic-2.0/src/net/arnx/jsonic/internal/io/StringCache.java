@@ -10,6 +10,18 @@ public class StringCache {
 		}
 		
 		@Override
+		public void append(String str, int start, int end) {
+		}
+		
+		@Override
+		public void append(StringBuffer sb, int start, int end) {
+		}
+		
+		@Override
+		public void append(StringBuilder sb, int start, int end) {
+		}
+		
+		@Override
 		public void append(CharSequence cs, int start, int end) {
 		}
 		

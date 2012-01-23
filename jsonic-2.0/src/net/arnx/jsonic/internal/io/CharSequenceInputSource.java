@@ -1,8 +1,5 @@
 package net.arnx.jsonic.internal.io;
 
-import java.io.IOException;
-
-
 public class CharSequenceInputSource implements InputSource {
 	private int lines = 1;
 	private int columns = 1;
@@ -17,31 +14,6 @@ public class CharSequenceInputSource implements InputSource {
 			throw new NullPointerException();
 		}
 		this.cs = cs;
-	}
-	
-	@Override
-	public int skip() throws IOException {
-		int n = -1;
-		for (int i = offset; i < cs.length(); i++) {
-			n = cs.charAt(offset++);
-			if (n == ' ' || n == '\t' || n == 0xFEFF) {
-				columns++;
-			} else if (n == '\r') {
-				lines++;
-				columns = 0;
-			} else if (n == '\n') {
-				if (offset > 1 && cs.charAt(offset-2) != '\r') {
-					lines++;
-					columns = 0;
-				} else {
-					columns++;
-				}
-			} else {
-				columns++;
-				break;
-			}
-		}
-		return n;
 	}
 	
 	@Override

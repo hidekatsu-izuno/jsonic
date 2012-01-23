@@ -28,18 +28,20 @@ class ParseContext {
 	
 	private Locale locale;
 	private int maxDepth;
+	private boolean skipWhitespace;
 	private boolean skipComment;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
 	private StringCache cache;
 	
-	private JSONEventType prevType;
 	private JSONEventType type;
 	private Object value;
+	private boolean first;
 	
-	public ParseContext(Locale locale, int maxDepth, boolean skipComment) {
+	public ParseContext(Locale locale, int maxDepth, boolean skipWhitespace, boolean skipComment) {
 		this.locale = locale;
 		this.maxDepth = maxDepth;
+		this.skipWhitespace = skipWhitespace;
 		this.skipComment = skipComment;
 	}
 	
@@ -55,24 +57,27 @@ class ParseContext {
 		return stack.size();
 	}
 	
+	public boolean isSkipWhitespace() {
+		return skipWhitespace;
+	}
+	
 	public boolean isSkipComment() {
 		return skipComment;
 	}
 	
 	public void push(JSONEventType type) {
-		this.prevType = this.type;
 		this.type = type;
 		stack.add(type);
+		this.first = true;
 	}
 	
-	public void set(JSONEventType type, Object value) {
-		this.prevType = this.type;
+	public void set(JSONEventType type, Object value, boolean isValue) {
 		this.type = type;
 		this.value = value;
+		if (isValue) first = false;
 	}
 	
 	public void pop() {
-		this.prevType = this.type;
 		JSONEventType beginType = stack.remove(stack.size()-1);
 		if (beginType == JSONEventType.START_OBJECT) {
 			this.type = JSONEventType.END_OBJECT;
@@ -81,14 +86,11 @@ class ParseContext {
 		} else {
 			throw new IllegalStateException();
 		}
+		this.first = false;
 	}
 	
 	public JSONEventType getBeginType() {
 		return (!stack.isEmpty()) ? stack.get(stack.size()-1) : null;
-	}
-	
-	public JSONEventType getPrevType() {
-		return prevType;
 	}
 	
 	public JSONEventType getType() {
@@ -97,6 +99,10 @@ class ParseContext {
 	
 	public Object getValue() {
 		return value;
+	}
+	
+	public boolean isFirst() {
+		return first;
 	}
 	
 	public StringCache getCachedBuffer() {
@@ -133,7 +139,7 @@ class ParseContext {
 					sc.append(parseEscape(in));
 				} else if (type == 2) { // "'
 					if (n == start) {
-						if (len > 0) in.copy(sc, len - 1);
+						if (len > 1) in.copy(sc, len - 1);
 						break;
 					} else {
 						if (rest == 0) in.copy(sc, len);
@@ -286,7 +292,7 @@ class ParseContext {
 				break;
 			default:
 				if (point == 2 || point == 3 || point == 5 || point == 6 || point == 9) {
-					if (len > 0) in.copy(sc, len - 1);
+					if (len > 1) in.copy(sc, len - 1);
 					in.back();
 					break loop;
 				} else {
@@ -343,7 +349,7 @@ class ParseContext {
 		}
 	}
 	
-	private String parseComment(InputSource in) throws IOException {
+	public String parseComment(InputSource in) throws IOException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		StringCache sc = isSkipComment() ? StringCache.EMPTY_CACHE : getCachedBuffer();
 		
@@ -352,19 +358,22 @@ class ParseContext {
 		int rest = in.mark();
 		int len = 0;
 		loop:while ((n = in.next()) != -1) {
-			char c = (char)n;
-			switch(c) {
+			rest--;
+			len++;
+			
+			switch(n) {
 			case '/':
 				if (point == 0) {
 					point = 1;
 				} else if (point == 1) {
 					point = 4;
 				} else if (point == 3) {
+					if (len > 1) in.copy(sc, len - 2);
 					break loop;
 				} else if (point == 2 || point == 4) {
 					if (rest == 0) in.copy(sc, len);
 				} else {
-					throw createParseException(in, "json.parse.UnexpectedChar", c);
+					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
 				break;
 			case '*':
@@ -375,7 +384,7 @@ class ParseContext {
 				} else if (point == 3 || point == 4) {
 					if (rest == 0) in.copy(sc, len);
 				} else {
-					throw createParseException(in, "json.parse.UnexpectedChar", c);
+					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
 				break;
 			case '\n':
@@ -384,9 +393,10 @@ class ParseContext {
 					if (rest == 0) in.copy(sc, len);
 					point = 2;
 				} else if (point == 4) {
+					if (len > 1) in.copy(sc, len - 1);
 					break loop;
 				} else {
-					throw createParseException(in, "json.parse.UnexpectedChar", c);
+					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
 				break;
 			default:
@@ -396,8 +406,36 @@ class ParseContext {
 				} else if (point == 2 || point == 4) {
 					if (rest == 0) in.copy(sc, len);
 				} else {
-					throw createParseException(in, "json.parse.UnexpectedChar", c);
+					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
+			}
+			
+			if (rest == 0) {
+				rest = in.mark();
+				len = 0;
+			}
+		}
+		
+		return sc.toString();
+	}
+	
+	public String parseWhitespace(InputSource in) throws IOException {
+		StringCache sc = isSkipWhitespace() ? StringCache.EMPTY_CACHE : getCachedBuffer();
+		
+		int n = -1;
+		
+		int rest = in.mark();
+		int len = 0;
+		while ((n = in.next()) != -1) {
+			rest--;
+			len++;
+			
+			if (n == ' ' || n == '\t' || n == '\r' || n == '\n') {
+				if (rest == 0) in.copy(sc, len);
+			} else {
+				if (len > 1) in.copy(sc, len - 1);
+				in.back();
+				break;
 			}
 			
 			if (rest == 0) {
