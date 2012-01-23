@@ -17,9 +17,9 @@ public class StrictJSONParser implements JSONParser {
 	private InputSource in;
 	private ParseContext context;
 	
-	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean skipWhitespace) {
+	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean ignoreWhitespace) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth, skipWhitespace, true);
+		this.context = new ParseContext(locale, maxDepth, ignoreWhitespace);
 	}
 	
 	public JSONEventType next() throws IOException {
@@ -65,7 +65,7 @@ public class StrictJSONParser implements JSONParser {
 		case '\n':
 			in.back();
 			String ws = context.parseWhitespace(in);
-			if (!context.isSkipWhitespace()) {
+			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_ROOT;
@@ -91,7 +91,7 @@ public class StrictJSONParser implements JSONParser {
 		case '\n':
 			in.back();
 			String ws = context.parseWhitespace(in);
-			if (!context.isSkipWhitespace()) {
+			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_ROOT;
@@ -111,7 +111,7 @@ public class StrictJSONParser implements JSONParser {
 		case '\n':
 			in.back();
 			String ws = context.parseWhitespace(in);
-			if (!context.isSkipWhitespace()) {
+			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_NAME;
@@ -146,7 +146,7 @@ public class StrictJSONParser implements JSONParser {
 		case '\n':
 			in.back();
 			String ws = context.parseWhitespace(in);
-			if (!context.isSkipWhitespace()) {
+			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_NAME;
@@ -168,7 +168,7 @@ public class StrictJSONParser implements JSONParser {
 		case '\n':
 			in.back();
 			String ws = context.parseWhitespace(in);
-			if (!context.isSkipWhitespace()) {
+			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_VALUE;
@@ -241,7 +241,7 @@ public class StrictJSONParser implements JSONParser {
 		case '\n':
 			in.back();
 			String ws = context.parseWhitespace(in);
-			if (!context.isSkipWhitespace()) {
+			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_VALUE;
