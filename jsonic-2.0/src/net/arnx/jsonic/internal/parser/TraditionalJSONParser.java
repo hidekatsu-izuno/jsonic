@@ -180,12 +180,8 @@ public class TraditionalJSONParser implements JSONParser {
 			}
 		case -1:
 			context.pop();
-			if (context.getBeginType() == null) {
-				if (emptyRoot) {
-					return -1;
-				} else {
-					throw context.createParseException(in, "json.parse.ObjectNotClosedError");
-				}
+			if (context.getBeginType() == null && emptyRoot) {
+				return -1;
 			} else {
 				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
 			}
@@ -315,7 +311,9 @@ public class TraditionalJSONParser implements JSONParser {
 			}
 		case -1:
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
-				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+				in.back();
+				context.set(JSONEventType.NULL, null, true);
+				return AFTER_VALUE;
 			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
 			} else {
@@ -387,12 +385,8 @@ public class TraditionalJSONParser implements JSONParser {
 		case -1:
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				context.pop();
-				if (context.getBeginType() == null) {
-					if (emptyRoot) {
-						return -1;
-					} else {
-						throw context.createParseException(in, "json.parse.ObjectNotClosedError");
-					}
+				if (context.getBeginType() == null && emptyRoot) {
+					return -1;
 				} else {
 					throw context.createParseException(in, "json.parse.ObjectNotClosedError");
 				}

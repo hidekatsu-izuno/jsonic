@@ -402,7 +402,7 @@ public class JSONTest {
 		map4.put("aaa", new BigDecimal("1"));
 		map4.put("bbb", null);
 		
-		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));		
+		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));
 		assertEquals(map4, JSON.decode("aaa: 1, bbb:\n "));
 		
 		assertEquals(JSON.decode("{\"sample1\":\"テスト1\",\"sample2\":\"テスト2\"}"),
