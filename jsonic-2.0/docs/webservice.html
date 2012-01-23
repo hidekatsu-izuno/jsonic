@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>WebサービスAPI (JSONIC 1.2)</title>
+<title>WebサービスAPI (JSONIC 2.0)</title>
 <style type="text/css">
 	html { overflow-x: hidden; height:100%; }
 	body { width: 100%; height: 100%; margin: 0px; padding: 0px; font: 10pt sans-serif; z-index: 1; }
@@ -60,7 +60,7 @@
 <body>
 <div class="sidebar">
 <h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
-<div class="bar">Version 1.2</div>
+<div class="bar">Version 2.0</div>
 <ul class="menu">
 	<li><a href="index.html">JSONICとは</a></li>
 	<li><a href="index.html#download">ダウンロード</a></li>
@@ -69,7 +69,6 @@
 		<li><a href="index.html#encoder">JSONエンコーダー</a></li>
 		<li><a href="index.html#decoder">JSONデコーダー</a></li>
 		<li><a href="index.html#usage_advanced">高度な使い方</a></li>
-		<li><a href="index.html#as3">JSONIC for AS3</a></li>
 		</ul>
 	</li>
 	<li>Web サービス API
@@ -79,7 +78,6 @@
 		<li><a href="webservice.html#restservlet">RESTサーブレット</a></li>
 		<li><a href="webservice.html#dicontainer">DIコンテナ対応</a></li>
 		<li><a href="webservice.html#gatewayfilter">Gatewayフィルタ</a></li>
-		<li><a href="webservice_old.html">WebServiceServlet(旧)</a></li>
 		</ul>
 	</li>
 	<li>API リファレンス
@@ -90,10 +88,12 @@
 	</li>
 	<li>旧バージョン
 		<ul>
+		<li><a href="http://jsonic.sourceforge.jp/1.2/index.html">version 1.2</a></li>
 		<li><a href="http://jsonic.sourceforge.jp/1.1/index.html">version 1.1</a></li>
 		<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
 		</ul>
 	</li>
+	<li><a href="index.html#maven">Mavenリポジトリ</a></li> 
 	<li><a href="index.html#license">ライセンス</a></li>
 	<li><a href="index.html#report">バグ・要望の報告先</a></li>
 	<li><a href="index.html#releasenote">リリースノート</a></li>
@@ -118,7 +118,7 @@
 <tr><td>RESTServlet</td><td>GET/POST/PUT/DELETEなどHTTP Methodをベースに操作を行うRESTfullなWebサービスを構築できます。</td></tr>
 </table>
 
-<div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために以前同様の形で利用可能ですが、今後はRESTServletおよびRPCServletを利用してください。</div>
+<div class="warning">WebServiceServletは、JSONIC 2.0にて削除されました。今後はRESTServletおよびRPCServletを利用してください。</div>
 
 <h2 id="rpcservlet">RPCサーブレット</h2>
 <p>RPCサーブレットは、<a href="http://json-rpc.org/wiki/specification">JSON-RPC 1.0</a> および <a href="http://groups.google.com/group/json-rpc/web/json-rpc-2-0">JSON-RPC 2.0</a> の両方をサポートしたWEBサービス構築用サーブレットです。</p>
@@ -660,7 +660,7 @@ public class TransactionalContainer extends Container {
 <p>なお、encodingとexpireに関してはRPCサーブレットやRESTサーブレット側にも同様の設定が用意されており、そちら側の設定が優先されます。</p>
 
 <hr style="margin-top: 30px;" />
-<div class="copyright">Copyright (C) 2007-2010 Hidekatsu Izuno All right reserved.</div>
+<div class="copyright">Copyright (C) 2007-2012 Hidekatsu Izuno All right reserved.</div>
 </div>
 </body>
 </html>

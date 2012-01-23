@@ -5,17 +5,17 @@ package net.arnx.jsonic;
  */
 public enum JSONMode {
 	/**
-	 * Traditional JSONMode
+	 * Traditional NMode
 	 */
 	TRADITIONAL,
 	
 	/**
-	 * Strict JSONMode
+	 * Strict Mode
 	 */
 	STRICT,
 	
 	/**
-	 * Script(=JavaScript) JSONMode
+	 * Script(=JavaScript) Mode
 	 */
 	SCRIPT
 }
