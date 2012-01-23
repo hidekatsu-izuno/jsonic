@@ -106,10 +106,9 @@ class ParseContext {
 		return cache;
 	}
 	
-	
-	public String parseString(InputSource in) throws IOException {
+	public final String parseString(InputSource in) throws IOException {
 		StringCache sc = getCachedBuffer();
-		char start = (char)in.next();
+		int start = in.next();
 
 		int rest = in.mark();
 		int len = 0;
@@ -119,9 +118,8 @@ class ParseContext {
 			rest--;
 			len++;
 			
-			char c = (char)n;
-			if (c < ESCAPE_CHARS.length) {
-				int type = ESCAPE_CHARS[c];
+			if (n < ESCAPE_CHARS.length) {
+				int type = ESCAPE_CHARS[n];
 				if (type == 0) {
 					if (rest == 0) in.copy(sc, len);
 				} else if (type == 1) { // escape chars
@@ -131,16 +129,16 @@ class ParseContext {
 					in.back();
 					sc.append(parseEscape(in));
 				} else if (type == 2) { // "'
-					if (c == start) {
+					if (n == start) {
 						if (len > 0) in.copy(sc, len - 1);
 						break;
 					} else {
 						if (rest == 0) in.copy(sc, len);
 					}
 				} else { // control chars
-					throw createParseException(in, "json.parse.UnexpectedChar", c);
+					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
-			} else if (c == 0xFEFF) {
+			} else if (n == 0xFEFF) {
 				if (len > 0) in.copy(sc, len - 1);
 				rest = 0;
 			} else {
