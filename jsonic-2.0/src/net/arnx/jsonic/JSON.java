@@ -1022,7 +1022,7 @@ public class JSON {
 			JSONEventType type = null;
 			while ((type = parser.next()) != null) {
 				switch (type) {
-				case BEGIN_OBJECT:
+				case START_OBJECT:
 					Map<String, Object> map = new LinkedHashMap<String, Object>();
 					if (!stack.isEmpty()) {
 						Object current = stack.get(stack.size()-1);
@@ -1037,7 +1037,7 @@ public class JSON {
 					if (root == null) root = map;
 					stack.add(map);
 					break;
-				case BEGIN_ARRAY:
+				case START_ARRAY:
 					List<Object> list = new ArrayList<Object>();
 					if (!stack.isEmpty()) {
 						Object current = stack.get(stack.size()-1);

@@ -58,10 +58,10 @@ public class StrictJSONParser implements JSONParser {
 	private int beforeRoot() throws IOException {
 		int n = in.skip();
 		if (n == '{') {
-			context.push(JSONEventType.BEGIN_OBJECT);
+			context.push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
 		} else if (n == '[') {
-			context.push(JSONEventType.BEGIN_ARRAY);
+			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
 		} else if (n != -1) {
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
@@ -84,7 +84,7 @@ public class StrictJSONParser implements JSONParser {
 			in.back();
 			context.set(JSONEventType.NAME, context.parseString(in));
 			return AFTER_NAME;					
-		} else if (n == '}' && context.getPrevType() == JSONEventType.BEGIN_OBJECT) {
+		} else if (n == '}' && context.getPrevType() == JSONEventType.START_OBJECT) {
 			context.pop();
 			if (context.getBeginType() == null) {
 				return AFTER_ROOT;
@@ -114,10 +114,10 @@ public class StrictJSONParser implements JSONParser {
 		if (n != -1) {
 			switch((char)n) {
 			case '{':
-				context.push(JSONEventType.BEGIN_OBJECT);
+				context.push(JSONEventType.START_OBJECT);
 				return BEFORE_NAME;
 			case '[':
-				context.push(JSONEventType.BEGIN_ARRAY);
+				context.push(JSONEventType.START_ARRAY);
 				return BEFORE_VALUE;
 			case '"':
 				in.back();
@@ -150,7 +150,7 @@ public class StrictJSONParser implements JSONParser {
 				context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null));
 				return AFTER_VALUE;
 			case ']':
-				if (context.getPrevType() == JSONEventType.BEGIN_ARRAY) {
+				if (context.getPrevType() == JSONEventType.START_ARRAY) {
 					context.pop();
 					if (context.getBeginType() == null) {
 						return AFTER_ROOT;
@@ -163,9 +163,9 @@ public class StrictJSONParser implements JSONParser {
 			}
 		} else {
 			switch (context.getBeginType()) {
-			case BEGIN_OBJECT:
+			case START_OBJECT:
 				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
-			case BEGIN_ARRAY:
+			case START_ARRAY:
 				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
 			default:
 				throw new IllegalStateException();
@@ -177,15 +177,15 @@ public class StrictJSONParser implements JSONParser {
 	private int afterValue() throws IOException {
 		int n = in.skip();
 		if (n == ',') {
-			if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
+			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				return BEFORE_NAME;
-			} else if (context.getBeginType() == JSONEventType.BEGIN_ARRAY) {
+			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				return BEFORE_VALUE;
 			} else {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
 		} else if (n == '}') {
-			if (context.getBeginType() == JSONEventType.BEGIN_OBJECT) {
+			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				context.pop();
 				if (context.getBeginType() == null) {
 					return AFTER_ROOT;
@@ -196,7 +196,7 @@ public class StrictJSONParser implements JSONParser {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
 		} else if (n == ']') {
-			if (context.getBeginType() == JSONEventType.BEGIN_ARRAY) {
+			if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				context.pop();
 				if (context.getBeginType() == null) {
 					return AFTER_ROOT;
@@ -210,9 +210,9 @@ public class StrictJSONParser implements JSONParser {
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		} else {
 			switch (context.getBeginType()) {
-			case BEGIN_OBJECT:
+			case START_OBJECT:
 				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
-			case BEGIN_ARRAY:
+			case START_ARRAY:
 				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
 			default:
 				throw new IllegalStateException();

@@ -68,9 +68,9 @@ class ParseContext {
 	public void pop() {
 		this.prevType = this.type;
 		JSONEventType beginType = stack.remove(stack.size()-1);
-		if (beginType == JSONEventType.BEGIN_OBJECT) {
+		if (beginType == JSONEventType.START_OBJECT) {
 			this.type = JSONEventType.END_OBJECT;
-		} else if (beginType == JSONEventType.BEGIN_ARRAY) {
+		} else if (beginType == JSONEventType.START_ARRAY) {
 			this.type = JSONEventType.END_ARRAY;
 		} else {
 			throw new IllegalStateException();
