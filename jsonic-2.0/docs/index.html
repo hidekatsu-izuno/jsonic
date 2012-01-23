@@ -716,7 +716,7 @@ public class TestBean {
 <ul>
 <li>decode/parseが新たに追加されたJSONReaderベースに書きなおされ、また、速度も大幅に改善しました。</li>
 <li>[仕様変更] JSON.Mode 列挙型を JSONMode 列挙型に名称を変更しました。</li>
-<li>[仕様変更] ReaderあるいはInputStreamの先頭にあるBOM以外は無視せず例外を出すように変更しました。</li>
+<li>[仕様変更] ReaderあるいはInputStreamの先頭以外でBOM（Byte Order Mark）が見つかった場合は、例外を出すように変更しました。</li>
 <li>[仕様変更] TRADITIONAL モードでサポートされていたシェルスクリプトスタイルの行コメント（#) を廃止しました。</li>
 <li>[仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、エスケープを無視する仕様を廃止しました。</li>
 <li>[仕様変更] ActionScript版のJSONICは、ActionScriptで正規にJSONライブラリがサポートされ、必要性が薄くなったため廃止しました。</li>
