@@ -23,7 +23,6 @@ public class ReaderInputSource implements InputSource {
 	public ReaderInputSource(InputStream in) throws IOException {
 		if (!in.markSupported()) in = new BufferedInputStream(in);
 		this.reader = new InputStreamReader(in, determineEncoding(in));
-		if (get() != 0xFEFF) back();
 	}
 	
 	public ReaderInputSource(Reader reader) throws IOException {
@@ -31,7 +30,6 @@ public class ReaderInputSource implements InputSource {
 			throw new NullPointerException();
 		}
 		this.reader = reader;
-		if (get() != 0xFEFF) back();
 	}
 	
 	@Override
@@ -78,7 +76,12 @@ public class ReaderInputSource implements InputSource {
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
 				mark = (mark > end && mark <= end + BACK) ? (end + BACK - mark) : -1;
-				start = BACK;
+				if (offset == 0 && buf[BACK] == 0xFEFF) {
+					offset++;
+					start = BACK + 1;
+				} else {
+					start = BACK;
+				}
 				end = BACK + size - 1;
 			} else {
 				return -1;
