@@ -41,7 +41,7 @@ public class ReaderInputSource implements InputSource {
 				lines++;
 				columns = 1;
 			} else if (n == '\n') {
-				if (start > 1 && buf[start-2] != '\r') {
+				if (start < 2 || buf[start-2] != '\r') {
 					lines++;
 					columns = 1;
 				}

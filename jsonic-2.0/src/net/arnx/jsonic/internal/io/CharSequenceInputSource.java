@@ -25,7 +25,7 @@ public class CharSequenceInputSource implements InputSource {
 				lines++;
 				columns = 1;
 			} else if (n == '\n') {
-				if (offset > 1 && cs.charAt(offset-2) == '\r') {
+				if (offset < 2 || cs.charAt(offset-2) != '\r') {
 					lines++;
 					columns = 1;
 				}
