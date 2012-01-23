@@ -139,15 +139,15 @@ public class StrictJSONParser implements JSONParser {
 				return AFTER_VALUE;	
 			case 't':
 				in.back();
-				context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE));
+				context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE, false));
 				return AFTER_VALUE;
 			case 'f':
 				in.back();
-				context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE));
+				context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE, false));
 				return AFTER_VALUE;
 			case 'n':
 				in.back();
-				context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null));
+				context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null, false));
 				return AFTER_VALUE;
 			case ']':
 				if (context.getPrevType() == JSONEventType.START_ARRAY) {

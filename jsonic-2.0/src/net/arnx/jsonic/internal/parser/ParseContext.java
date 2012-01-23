@@ -303,20 +303,44 @@ class ParseContext {
 		return sc.toBigDecimal();
 	}
 	
-	public Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
+	public Object parseLiteral(InputSource in, String expected, Object result, boolean any) throws IOException {
 		int pos = 0;
 		int n = -1;
 		while ((n = in.next()) != -1) {
 			char c = (char)n;
 			if (pos < expected.length() && c == expected.charAt(pos++)) {
 				if (pos == expected.length()) {
-					return result;
+					return (getDepth() <= getMaxDepth()) ? result : null;
 				}
 			} else {
 				break;
 			}
 		}
-		throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
+		
+		if (any) {
+			int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
+			StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+			
+			while ((n = in.next()) != -1) {
+				if (n == '\\') {
+					in.back();
+					n = parseEscape(in);
+				}
+				
+				if (point == 0 && Character.isJavaIdentifierStart(n)) {
+					sc.append((char)n);
+					point = 1;
+				} else if (point == 1 && (Character.isJavaIdentifierPart(n) || n == '.')) {
+					sc.append((char)n);
+				} else {
+					in.back();
+					break;
+				}
+			}
+			return sc.toString();
+		} else {
+			throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
+		}
 	}
 	
 	private String parseComment(InputSource in) throws IOException {
