@@ -291,17 +291,23 @@ public class TraditionalJSONParser implements JSONParser {
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				context.set(JSONEventType.NULL, null, true);
 				in.back();
-				return BEFORE_NAME;
+				return AFTER_VALUE;
 			} else {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case ']':
-			if (context.isFirst() && context.getBeginType() == JSONEventType.START_ARRAY) {
-				context.pop();
-				if (context.getBeginType() == null) {
-					return AFTER_ROOT;
+			if (context.getBeginType() == JSONEventType.START_ARRAY) {
+				if (context.isFirst()) {
+					context.pop();
+					if (context.getBeginType() == null) {
+						return AFTER_ROOT;
+					} else {
+						nameLineNumber = in.getLineNumber();
+						return AFTER_VALUE;
+					}
 				} else {
-					nameLineNumber = in.getLineNumber();
+					context.set(JSONEventType.NULL, null, true);
+					in.back();
 					return AFTER_VALUE;
 				}
 			} else{

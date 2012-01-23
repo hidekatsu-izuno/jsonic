@@ -21,9 +21,14 @@ public class CharSequenceInputSource implements InputSource {
 		int n = -1;
 		if (offset < cs.length()) {
 			n = cs.charAt(offset++);
-			if (n == '\r' || (n == '\n' && offset > 1 && cs.charAt(offset-2) != '\r')) {
+			if (n == '\r') {
 				lines++;
-				columns = 0;
+				columns = 1;
+			} else if (n == '\n') {
+				if (offset > 1 && cs.charAt(offset-2) == '\r') {
+					lines++;
+					columns = 1;
+				}
 			} else {
 				columns++;
 			}
@@ -68,6 +73,11 @@ public class CharSequenceInputSource implements InputSource {
 	
 	@Override
 	public String toString() {
-		return cs.subSequence(offset-columns+1, offset).toString();
+		int spos = offset - (columns - 1);
+		if (spos == offset) {
+			spos = Math.max(0, offset - 20);
+			if (spos == 0) return "";
+		}
+		return cs.subSequence(spos, offset).toString();
 	}
 }

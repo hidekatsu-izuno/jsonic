@@ -988,7 +988,7 @@ public class JSONTest {
 		
 		json.setMaxDepth(1);
 		assertEquals(map4, json.parse("{'1': '1'}"));
-
+		
 		json.setMaxDepth(2);
 		map4.put("1", "1");
 		assertEquals(map4, json.parse("{'1': '1'}"));
@@ -1025,7 +1025,7 @@ public class JSONTest {
 				});
 			}
 		};
-		assertEquals(map3, json.parse("# database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
+		assertEquals(map3, json.parse("// database settings\ndatabase {\n  description: 'ms sql server\n\tconnecter settings'\n  user: sa\n  password:"
 				+ " xxxx // you need to replace your password.\n}\n/* {\"database\": {\"description\": \"ms sql server\", \"user\": \"sa\", \"password\": \"xxxx\"}} */\n"));
 
 		InheritedBean ibean = new InheritedBean();

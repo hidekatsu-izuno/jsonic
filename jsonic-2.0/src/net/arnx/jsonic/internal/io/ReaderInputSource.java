@@ -36,9 +36,15 @@ public class ReaderInputSource implements InputSource {
 	public int next() throws IOException {
 		int n = -1;
 		if ((n = get()) != -1) {
-			if (n == '\r' || (n == '\n' && buf[start-2] != '\r')) {
+			offset++;
+			if (n == '\r') {
 				lines++;
-				columns = 0;
+				columns = 1;
+			} else if (n == '\n') {
+				if (start > 1 && buf[start-2] != '\r') {
+					lines++;
+					columns = 1;
+				}
 			} else {
 				columns++;
 			}
@@ -59,7 +65,6 @@ public class ReaderInputSource implements InputSource {
 				return -1;
 			}
 		}
-		offset++;
 		return buf[start++];
 	}
 	

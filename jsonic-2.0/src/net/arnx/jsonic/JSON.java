@@ -1039,12 +1039,13 @@ public class JSON {
 		
 		JSONEventType type = null;
 		while ((type = parser.next()) != null) {
+			if (parser.getDepth() > context.getMaxDepth()) {
+				continue;
+			}
+			
 			switch (type) {
 			case START_OBJECT:
-				Map<String, Object> map = null;
-				if (parser.getDepth() < context.getMaxDepth()) {
-					map = new LinkedHashMap<String, Object>();
-				}
+				Map<String, Object> map = new LinkedHashMap<String, Object>();
 				if (!stack.isEmpty()) {
 					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {
@@ -1059,10 +1060,7 @@ public class JSON {
 				stack.add(map);
 				break;
 			case START_ARRAY:
-				List<Object> list = null;
-				if (parser.getDepth() < context.getMaxDepth()) {
-					list = new ArrayList<Object>();
-				}
+				List<Object> list = new ArrayList<Object>();
 				if (!stack.isEmpty()) {
 					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {

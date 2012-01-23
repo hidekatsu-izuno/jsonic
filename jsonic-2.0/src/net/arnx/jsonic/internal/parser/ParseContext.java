@@ -50,7 +50,11 @@ class ParseContext {
 	}
 	
 	public int getDepth() {
-		return stack.size();
+		if (type == JSONEventType.START_OBJECT || type == JSONEventType.START_ARRAY) {
+			return stack.size();
+		} else {
+			return stack.size() + 1;
+		}
 	}
 	
 	public boolean isIgnoreWhitespace() {
@@ -60,7 +64,7 @@ class ParseContext {
 	public void push(JSONEventType type) {
 		this.type = type;
 		stack.add(type);
-		this.first = true;
+		first = true;
 	}
 	
 	public void set(JSONEventType type, Object value, boolean isValue) {
@@ -107,7 +111,7 @@ class ParseContext {
 	}
 	
 	public final Object parseString(InputSource in) throws IOException {
-		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		StringCache sc = (stack.size() < maxDepth) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
 		int start = in.next();
 
@@ -209,7 +213,7 @@ class ParseContext {
 	
 	public Object parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		StringCache sc = (stack.size() < maxDepth) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
 		
@@ -308,7 +312,7 @@ class ParseContext {
 			char c = (char)n;
 			if (pos < expected.length() && c == expected.charAt(pos++)) {
 				if (pos == expected.length()) {
-					return (getDepth() <= getMaxDepth()) ? result : null;
+					return (stack.size() < maxDepth) ? result : null;
 				}
 			} else {
 				break;
@@ -320,7 +324,7 @@ class ParseContext {
 
 	public Object parseLiteral(InputSource in) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		boolean cache = (getDepth() <= getMaxDepth());
+		boolean cache = (stack.size() < maxDepth);
 		StringCache sc = cache ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
