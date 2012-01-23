@@ -17,9 +17,9 @@ public class StrictJSONParser implements JSONParser {
 	private InputSource in;
 	private ParseContext context;
 	
-	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean suppressNull, boolean ignoreWhitespace) {
+	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean ignoreWhitespace) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth, suppressNull, ignoreWhitespace);
+		this.context = new ParseContext(locale, maxDepth, ignoreWhitespace);
 	}
 	
 	public JSONEventType next() throws IOException {
@@ -53,6 +53,10 @@ public class StrictJSONParser implements JSONParser {
 	
 	public Object getValue() {
 		return context.getValue();
+	}
+	
+	public int getDepth() {
+		return context.getDepth();
 	}
 	
 	private int beforeRoot() throws IOException {

@@ -1024,44 +1024,48 @@ public class JSON {
 				parser = new StrictJSONParser(s, 
 					context.getLocale(), 
 					context.getMaxDepth(), 
-					context.isSuppressNull(),
 					true);
 			} else {
 				parser = new ScriptJSONParser(s, 
-						context.getLocale(), 
-						context.getMaxDepth(), 
-						context.isSuppressNull(),
-						true);
+					context.getLocale(), 
+					context.getMaxDepth(), 
+					true);
 			}
 			
 			JSONEventType type = null;
 			while ((type = parser.next()) != null) {
 				switch (type) {
 				case START_OBJECT:
-					Map<String, Object> map = new LinkedHashMap<String, Object>();
+					Map<String, Object> map = null;
+					if (parser.getDepth() < context.getMaxDepth()) {
+						map = new LinkedHashMap<String, Object>();
+					}
 					if (!stack.isEmpty()) {
 						Object current = stack.get(stack.size()-1);
 						if (current instanceof Map<?, ?>) {
-							((Map<Object, Object>)current).put(name, map);
+							if (!(map == null && context.isSuppressNull())) {
+								((Map<Object, Object>)current).put(name, map);
+							}
 						} else if (current instanceof List<?>) {
 							((List<Object>)current).add(map);
-						} else {
-							throw new IllegalStateException();
 						}
 					}
 					if (root == null) root = map;
 					stack.add(map);
 					break;
 				case START_ARRAY:
-					List<Object> list = new ArrayList<Object>();
+					List<Object> list = null;
+					if (parser.getDepth() < context.getMaxDepth()) {
+						list = new ArrayList<Object>();
+					}
 					if (!stack.isEmpty()) {
 						Object current = stack.get(stack.size()-1);
 						if (current instanceof Map<?, ?>) {
-							((Map<Object, Object>)current).put(name, list);
+							if (!(list == null && context.isSuppressNull())) {
+								((Map<Object, Object>)current).put(name, list);
+							}
 						} else if (current instanceof List<?>) {
 							((List<Object>)current).add(list);
-						} else {
-							throw new IllegalStateException();
 						}
 					}
 					if (root == null) root = list;
@@ -1083,13 +1087,18 @@ public class JSON {
 				case TRUE:
 				case FALSE:
 				case NULL:
-					Object current = stack.get(stack.size()-1);
-					if (current instanceof Map<?, ?>) {
-						((Map<Object, Object>)current).put(name, parser.getValue());
-					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(parser.getValue());
+					if (!stack.isEmpty()) {
+						Object current = stack.get(stack.size()-1);
+						if (current instanceof Map<?, ?>) {
+							Object value = parser.getValue();
+							if (!(value == null && context.isSuppressNull())) {
+								((Map<Object, Object>)current).put(name, value);
+							}
+						} else if (current instanceof List<?>) {
+							((List<Object>)current).add(parser.getValue());
+						}
 					} else {
-						throw new IllegalStateException();
+						root = parser.getValue();
 					}
 					break;
 				default:

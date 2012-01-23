@@ -18,9 +18,9 @@ public class ScriptJSONParser implements JSONParser {
 	private InputSource in;
 	private ParseContext context;
 	
-	public ScriptJSONParser(InputSource in, Locale locale, int maxDepth, boolean suppressNull, boolean ignoreWhirespace) {
+	public ScriptJSONParser(InputSource in, Locale locale, int maxDepth, boolean ignoreWhirespace) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth, suppressNull, ignoreWhirespace);
+		this.context = new ParseContext(locale, maxDepth, ignoreWhirespace);
 	}
 	
 	public JSONEventType next() throws IOException {
@@ -56,6 +56,10 @@ public class ScriptJSONParser implements JSONParser {
 		return context.getValue();
 	}
 	
+	public int getDepth() {
+		return context.getDepth();
+	}
+	
 	private int beforeRoot() throws IOException {
 		int n = in.next();
 		if (n == 0xFEFF) n = in.next();
@@ -83,6 +87,37 @@ public class ScriptJSONParser implements JSONParser {
 		case '[':
 			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
+		case '"':
+		case '\'':
+			in.back();
+			context.set(JSONEventType.STRING, context.parseString(in), true);
+			return AFTER_ROOT;
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			in.back();
+			context.set(JSONEventType.NUMBER, context.parseNumber(in), true);
+			return AFTER_ROOT;	
+		case 't':
+			in.back();
+			context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE, false), true);
+			return AFTER_ROOT;
+		case 'f':
+			in.back();
+			context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE, false), true);
+			return AFTER_ROOT;
+		case 'n':
+			in.back();
+			context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null, false), true);
+			return AFTER_ROOT;
 		case -1:
 			throw context.createParseException(in, "json.parse.EmptyInputError");
 		default:

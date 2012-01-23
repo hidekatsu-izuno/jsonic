@@ -28,7 +28,6 @@ class ParseContext {
 	
 	private Locale locale;
 	private int maxDepth;
-	private boolean suppressNull;
 	private boolean ignoreWhirespace;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
@@ -38,10 +37,9 @@ class ParseContext {
 	private Object value;
 	private boolean first;
 	
-	public ParseContext(Locale locale, int maxDepth, boolean suppressNull, boolean ignoreWhirespace) {
+	public ParseContext(Locale locale, int maxDepth, boolean ignoreWhirespace) {
 		this.locale = locale;
 		this.maxDepth = maxDepth;
-		this.suppressNull = suppressNull;
 		this.ignoreWhirespace = ignoreWhirespace;
 	}
 	
@@ -55,10 +53,6 @@ class ParseContext {
 	
 	public int getDepth() {
 		return stack.size();
-	}
-	
-	public boolean isSuppressNull() {
-		return suppressNull;
 	}
 	
 	public boolean isIgnoreWhitespace() {
