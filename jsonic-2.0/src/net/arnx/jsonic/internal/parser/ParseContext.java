@@ -110,7 +110,7 @@ class ParseContext {
 		return cache;
 	}
 	
-	public final Object parseString(InputSource in) throws IOException {
+	public final Object parseString(InputSource in, boolean any) throws IOException {
 		StringCache sc = (stack.size() < maxDepth) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
 		int start = in.next();
@@ -141,7 +141,11 @@ class ParseContext {
 						if (rest == 0) in.copy(sc, len);
 					}
 				} else { // control chars
-					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+					if (any) {
+						if (rest == 0) in.copy(sc, len);
+					} else {
+						throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+					}
 				}
 			} else {
 				if (rest == 0) in.copy(sc, len);

@@ -121,7 +121,7 @@ public class StrictJSONParser implements JSONParser {
 			return BEFORE_NAME;
 		case '"':
 			in.back();
-			context.set(JSONEventType.NAME, context.parseString(in), false);
+			context.set(JSONEventType.NAME, context.parseString(in, false), false);
 			return AFTER_NAME;
 		case '}':
 			if (context.isFirst() && context.getBeginType() == JSONEventType.START_OBJECT) {
@@ -184,7 +184,7 @@ public class StrictJSONParser implements JSONParser {
 			return BEFORE_VALUE;
 		case '"':
 			in.back();
-			context.set(JSONEventType.STRING, context.parseString(in), true);
+			context.set(JSONEventType.STRING, context.parseString(in, false), true);
 			return AFTER_VALUE;
 		case '-':
 		case '0':

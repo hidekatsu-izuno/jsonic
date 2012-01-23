@@ -89,7 +89,7 @@ public class ScriptJSONParser implements JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			context.set(JSONEventType.STRING, context.parseString(in), true);
+			context.set(JSONEventType.STRING, context.parseString(in, true), true);
 			return AFTER_ROOT;
 		case '-':
 		case '0':
@@ -174,7 +174,7 @@ public class ScriptJSONParser implements JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			context.set(JSONEventType.NAME, context.parseString(in), false);
+			context.set(JSONEventType.NAME, context.parseString(in, true), false);
 			return AFTER_NAME;
 		case '0':
 		case '1':
@@ -269,7 +269,7 @@ public class ScriptJSONParser implements JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			context.set(JSONEventType.STRING, context.parseString(in), true);
+			context.set(JSONEventType.STRING, context.parseString(in, true), true);
 			return AFTER_VALUE;
 		case '-':
 		case '0':

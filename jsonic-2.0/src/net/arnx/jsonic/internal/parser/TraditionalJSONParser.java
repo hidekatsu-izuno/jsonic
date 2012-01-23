@@ -146,7 +146,7 @@ public class TraditionalJSONParser implements JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			context.set(JSONEventType.NAME, context.parseString(in), false);
+			context.set(JSONEventType.NAME, context.parseString(in, true), false);
 			return AFTER_NAME;
 		case '-':
 		case '0':
@@ -259,7 +259,7 @@ public class TraditionalJSONParser implements JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			context.set(JSONEventType.STRING, context.parseString(in), true);
+			context.set(JSONEventType.STRING, context.parseString(in, true), true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		case '-':
