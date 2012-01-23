@@ -18,12 +18,12 @@ class ParseContext {
 	
 	static {
 		for (int i = 0; i < 32; i++) {
-			ESCAPE_CHARS[i] = 1;
+			ESCAPE_CHARS[i] = 3;
 		}
-		ESCAPE_CHARS['\\'] = 2;
-		ESCAPE_CHARS['"'] = 3;
-		ESCAPE_CHARS['\''] = 3;
-		ESCAPE_CHARS[0x7F] = 1;
+		ESCAPE_CHARS['\\'] = 1;
+		ESCAPE_CHARS['"'] = 2;
+		ESCAPE_CHARS['\''] = 2;
+		ESCAPE_CHARS[0x7F] = 3;
 	}
 	
 	Locale locale;
@@ -115,29 +115,30 @@ class ParseContext {
 		int len = 0;
 		
 		int n = -1;
-		loop:while ((n = in.next()) != -1) {
+		while ((n = in.next()) != -1) {
 			rest--;
 			len++;
 			
 			char c = (char)n;
 			if (c < ESCAPE_CHARS.length) {
-				switch (ESCAPE_CHARS[c]) {
-				case 1: // control chars
-					throw createParseException(in, "json.parse.UnexpectedChar", c);
-				case 2: // escape chars
+				int type = ESCAPE_CHARS[c];
+				if (type == 0) {
+					if (rest == 0) in.copy(sc, len);
+				} else if (type == 1) { // escape chars
 					if (len > 0) in.copy(sc, len - 1);
 					rest = 0;
 					
 					in.back();
 					sc.append(parseEscape(in));
-					break;
-				case 3: // "'
+				} else if (type == 2) { // "'
 					if (c == start) {
 						if (len > 0) in.copy(sc, len - 1);
-						break loop;
+						break;
+					} else {
+						if (rest == 0) in.copy(sc, len);
 					}
-				default:
-					if (rest == 0) in.copy(sc, len);
+				} else { // control chars
+					throw createParseException(in, "json.parse.UnexpectedChar", c);
 				}
 			} else if (c == 0xFEFF) {
 				if (len > 0) in.copy(sc, len - 1);
