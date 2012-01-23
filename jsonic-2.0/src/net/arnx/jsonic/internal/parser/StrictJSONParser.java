@@ -24,7 +24,7 @@ public class StrictJSONParser implements JSONParser {
 	
 	public JSONEventType next() throws IOException {
 		do {
-			context.set(null, ParseContext.EMPTY, false);
+			context.set(null, null, false);
 			switch (state) {
 			case BEFORE_ROOT:
 				state = beforeRoot();
@@ -202,15 +202,15 @@ public class StrictJSONParser implements JSONParser {
 			return AFTER_VALUE;	
 		case 't':
 			in.back();
-			context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE, false), true);
+			context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE), true);
 			return AFTER_VALUE;
 		case 'f':
 			in.back();
-			context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE, false), true);
+			context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE), true);
 			return AFTER_VALUE;
 		case 'n':
 			in.back();
-			context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null, false), true);
+			context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null), true);
 			return AFTER_VALUE;
 		case ']':
 			if (context.isFirst() && context.getBeginType() == JSONEventType.START_ARRAY) {

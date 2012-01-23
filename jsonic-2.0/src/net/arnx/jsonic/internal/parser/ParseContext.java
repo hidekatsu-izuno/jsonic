@@ -1,7 +1,6 @@
 package net.arnx.jsonic.internal.parser;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +12,6 @@ import net.arnx.jsonic.internal.io.InputSource;
 import net.arnx.jsonic.internal.io.StringCache;
 
 class ParseContext {
-	public static final Object EMPTY = new Object();
 	private static final int[] ESCAPE_CHARS = new int[128];
 	
 	static {
@@ -108,7 +106,7 @@ class ParseContext {
 		return cache;
 	}
 	
-	public final String parseString(InputSource in) throws IOException {
+	public final Object parseString(InputSource in) throws IOException {
 		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
 		int start = in.next();
@@ -209,7 +207,7 @@ class ParseContext {
 		return escape;
 	}
 	
-	public BigDecimal parseNumber(InputSource in) throws IOException {
+	public Object parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
@@ -303,7 +301,7 @@ class ParseContext {
 		return sc.toBigDecimal();
 	}
 	
-	public Object parseLiteral(InputSource in, String expected, Object result, boolean any) throws IOException {
+	public Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
 		int pos = 0;
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -317,16 +315,13 @@ class ParseContext {
 			}
 		}
 		
-		if (any) {
-			return parseLiteral(in);
-		} else {
-			throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
-		}
+		throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
 	}
 
 	public Object parseLiteral(InputSource in) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		boolean cache = (getDepth() <= getMaxDepth());
+		StringCache sc = cache ? getCachedBuffer() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -337,19 +332,41 @@ class ParseContext {
 			
 			if (point == 0) {
 				if (Character.isJavaIdentifierStart(n)) {
+					if (!cache && (n == 'n' || n == 't' || n == 'f')) {
+						sc = getCachedBuffer();
+					}
+					
 					sc.append((char)n);
 					point = 1;
 				} else {
 					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
 			} else if (point == 1 && (Character.isJavaIdentifierPart(n) || n == '.')) {
+				if (!cache && sc.getLength() == 5) {
+					sc = StringCache.EMPTY_CACHE;
+				}
+				
 				sc.append((char)n);
 			} else {
 				in.back();
 				break;
 			}
 		}
-		return sc.toString();
+		
+		String str = sc.toString();
+		if (str != null) {
+			if ("null".equals(str)) {
+				type = JSONEventType.NULL;
+				return null;
+			} else if ("true".equals(str)) {
+				type = JSONEventType.TRUE;
+				return (cache) ? Boolean.TRUE : null;
+			} else if ("false".equals(str)) {
+				type = JSONEventType.FALSE;
+				return (cache) ? Boolean.FALSE : null;
+			}
+		}
+		return (cache) ? str : null;
 	}
 	
 	public String parseComment(InputSource in) throws IOException {

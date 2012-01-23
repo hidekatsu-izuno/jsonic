@@ -818,13 +818,7 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
-		try {
-			json.parse("[{'maa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]");
-			fail();
-		} catch (Exception e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals(list, json.parse("[{'maa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]"));
 		
 		assertEquals(list, json.parse("[{\\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
 		
@@ -875,14 +869,14 @@ public class JSONTest {
 				put("\\u006daa\\", "bbb");
 			}
 		});
-		assertEquals(list, json.parse("[{'\\u006daa\\': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
+		assertEquals(list, json.parse("[{'\\\\u006daa\\\\': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 
 		list.set(0, new HashMap() {
 			{
 				put("\\u006Daa", "bbb");
 			}
 		});		
-		assertEquals(list, json.parse("[{'\\u006Daa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
+		assertEquals(list, json.parse("[{'\\\\u006Daa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 
 		list.set(0, new HashMap() {
 			{
@@ -939,8 +933,8 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 		
-		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,#d\r\r\r\r"
-				+ " [/*#\n x\r */], 1, \"str\\'in\\g\",/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ #  aaaa"));
+		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,//d\r\r\r\r"
+				+ " [/*#\n x\r */], 1, \"str\\'in\\g\",/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ //  aaaa"));
 		
 		NamedBean nb = new NamedBean();
 		nb.namedPropertyAaa = 100;

@@ -82,6 +82,7 @@ import net.arnx.jsonic.internal.parser.JSONEventType;
 import net.arnx.jsonic.internal.parser.JSONParser;
 import net.arnx.jsonic.internal.parser.ScriptJSONParser;
 import net.arnx.jsonic.internal.parser.StrictJSONParser;
+import net.arnx.jsonic.internal.parser.TraditionalJSONParser;
 import net.arnx.jsonic.internal.util.BeanInfo;
 import net.arnx.jsonic.internal.util.ClassUtil;
 import net.arnx.jsonic.internal.util.ExtendedDateFormat;
@@ -1014,101 +1015,105 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
-		if (context.getMode() != JSONMode.TRADITIONAL) {
-			Object root = null;
-			List<Object> stack = new ArrayList<Object>();
-			String name = null;
-			
-			JSONParser parser;
-			if (context.getMode() == JSONMode.STRICT) {
-				parser = new StrictJSONParser(s, 
+		Object root = null;
+		List<Object> stack = new ArrayList<Object>();
+		Object name = null;
+		
+		JSONParser parser;
+		if (context.getMode() == JSONMode.STRICT) {
+			parser = new StrictJSONParser(s, 
+				context.getLocale(), 
+				context.getMaxDepth(), 
+				true);
+		} else if (context.getMode() == JSONMode.SCRIPT) {
+			parser = new ScriptJSONParser(s, 
+				context.getLocale(), 
+				context.getMaxDepth(), 
+				true);
+		} else {
+			parser = new TraditionalJSONParser(s, 
 					context.getLocale(), 
 					context.getMaxDepth(), 
 					true);
-			} else {
-				parser = new ScriptJSONParser(s, 
-					context.getLocale(), 
-					context.getMaxDepth(), 
-					true);
-			}
-			
-			JSONEventType type = null;
-			while ((type = parser.next()) != null) {
-				switch (type) {
-				case START_OBJECT:
-					Map<String, Object> map = null;
-					if (parser.getDepth() < context.getMaxDepth()) {
-						map = new LinkedHashMap<String, Object>();
-					}
-					if (!stack.isEmpty()) {
-						Object current = stack.get(stack.size()-1);
-						if (current instanceof Map<?, ?>) {
-							if (!(map == null && context.isSuppressNull())) {
-								((Map<Object, Object>)current).put(name, map);
-							}
-						} else if (current instanceof List<?>) {
-							((List<Object>)current).add(map);
-						}
-					}
-					if (root == null) root = map;
-					stack.add(map);
-					break;
-				case START_ARRAY:
-					List<Object> list = null;
-					if (parser.getDepth() < context.getMaxDepth()) {
-						list = new ArrayList<Object>();
-					}
-					if (!stack.isEmpty()) {
-						Object current = stack.get(stack.size()-1);
-						if (current instanceof Map<?, ?>) {
-							if (!(list == null && context.isSuppressNull())) {
-								((Map<Object, Object>)current).put(name, list);
-							}
-						} else if (current instanceof List<?>) {
-							((List<Object>)current).add(list);
-						}
-					}
-					if (root == null) root = list;
-					stack.add(list);
-					break;
-				case END_ARRAY:
-				case END_OBJECT:
-					if (!stack.isEmpty()) {
-						stack.remove(stack.size()-1);
-					} else {
-						throw new IllegalStateException();
-					}
-					break;	
-				case NAME:
-					name = (String)parser.getValue();
-					break;
-				case STRING:
-				case NUMBER:
-				case TRUE:
-				case FALSE:
-				case NULL:
-					if (!stack.isEmpty()) {
-						Object current = stack.get(stack.size()-1);
-						if (current instanceof Map<?, ?>) {
-							Object value = parser.getValue();
-							if (!(value == null && context.isSuppressNull())) {
-								((Map<Object, Object>)current).put(name, value);
-							}
-						} else if (current instanceof List<?>) {
-							((List<Object>)current).add(parser.getValue());
-						}
-					} else {
-						root = parser.getValue();
-					}
-					break;
-				default:
-					throw new IllegalStateException();
-				}
-			}
-			
-			return root;
 		}
 		
+		JSONEventType type = null;
+		while ((type = parser.next()) != null) {
+			switch (type) {
+			case START_OBJECT:
+				Map<String, Object> map = null;
+				if (parser.getDepth() < context.getMaxDepth()) {
+					map = new LinkedHashMap<String, Object>();
+				}
+				if (!stack.isEmpty()) {
+					Object current = stack.get(stack.size()-1);
+					if (current instanceof Map<?, ?>) {
+						if (!(map == null && context.isSuppressNull())) {
+							((Map<Object, Object>)current).put(name, map);
+						}
+					} else if (current instanceof List<?>) {
+						((List<Object>)current).add(map);
+					}
+				}
+				if (root == null) root = map;
+				stack.add(map);
+				break;
+			case START_ARRAY:
+				List<Object> list = null;
+				if (parser.getDepth() < context.getMaxDepth()) {
+					list = new ArrayList<Object>();
+				}
+				if (!stack.isEmpty()) {
+					Object current = stack.get(stack.size()-1);
+					if (current instanceof Map<?, ?>) {
+						if (!(list == null && context.isSuppressNull())) {
+							((Map<Object, Object>)current).put(name, list);
+						}
+					} else if (current instanceof List<?>) {
+						((List<Object>)current).add(list);
+					}
+				}
+				if (root == null) root = list;
+				stack.add(list);
+				break;
+			case END_ARRAY:
+			case END_OBJECT:
+				if (!stack.isEmpty()) {
+					stack.remove(stack.size()-1);
+				} else {
+					throw new IllegalStateException();
+				}
+				break;	
+			case NAME:
+				name = parser.getValue();
+				break;
+			case STRING:
+			case NUMBER:
+			case TRUE:
+			case FALSE:
+			case NULL:
+				if (!stack.isEmpty()) {
+					Object current = stack.get(stack.size()-1);
+					if (current instanceof Map<?, ?>) {
+						Object value = parser.getValue();
+						if (!(value == null && context.isSuppressNull())) {
+							((Map<Object, Object>)current).put(name, value);
+						}
+					} else if (current instanceof List<?>) {
+						((List<Object>)current).add(parser.getValue());
+					}
+				} else {
+					root = parser.getValue();
+				}
+				break;
+			default:
+				throw new IllegalStateException();
+			}
+		}
+		
+		return root;
+
+/*		
 		boolean isEmpty = true;
 		Object o = null;
 		
@@ -1190,6 +1195,7 @@ public class JSON {
 		}
 		
 		return o;
+*/
 	}
 	
 	private Map<Object, Object> parseObject(Context context, InputSource s, int level) throws IOException, JSONException {

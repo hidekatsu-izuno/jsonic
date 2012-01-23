@@ -34,6 +34,11 @@ public class StringCache {
 		}
 		
 		@Override
+		public int getLength() {
+			return 0;
+		}
+		
+		@Override
 		public BigDecimal toBigDecimal() {
 			return null;
 		};
@@ -118,6 +123,10 @@ public class StringCache {
 	
 	public void clear() {
 		clen = 0;
+	}
+	
+	public int getLength() {
+		return clen;
 	}
 	
 	public BigDecimal toBigDecimal() {
