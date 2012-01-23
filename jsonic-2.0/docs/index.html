@@ -61,7 +61,7 @@
 <body>
 <div class="sidebar">
 <h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
-<div class="bar">Version 1.2</div>
+<div class="bar">Version 2.0</div>
 <ul class="menu">
 	<li><a href="index.html">JSONICとは</a></li>
 	<li><a href="index.html#download">ダウンロード</a></li>
@@ -70,7 +70,6 @@
 			<li><a href="index.html#encoder">JSONエンコーダー</a></li>
 			<li><a href="index.html#decoder">JSONデコーダー</a></li>
 			<li><a href="index.html#usage_advanced">高度な使い方</a></li>
-			<li><a href="index.html#as3">JSONIC for AS3</a></li>
 		</ul>
 	</li>
 	<li>Web サービス API
@@ -91,6 +90,7 @@
 	</li>
 	<li>旧バージョン
 		<ul>
+		<li><a href="http://jsonic.sourceforge.jp/1.2/index.html">version 1.2</a></li>
 		<li><a href="http://jsonic.sourceforge.jp/1.1/index.html">version 1.1</a></li>
 		<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
 		</ul>
@@ -407,7 +407,7 @@ public class Config() {
 <p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、デフォルトでは、妥当でないJSONであっても読み込みが可能なTRADITIONALモードで動作するように作成されています。<br />
 <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
 <ul>
-  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）およびシェルスクリプトスタイルの行コメント（#）をコメントとして認識します。</li>
+  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）をコメントとして認識します。</li>
   <li>[デコード] ルート要素がobjectの場合、一番外側の'{'と'}'を省略することができます（入力文字列が空白文字列やコメントのみの場合も空のobjectとみなされます）。</li>
   <li>[デコード] シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します（ただし、シングルクォートで囲まれた場合はjavascriptと異なりエスケープを処理しません）。</li>
   <li>[デコード] objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
@@ -432,24 +432,24 @@ database {
 */
 </pre>
 
-<p>この動作は<code>setMode(Mode.STRICT)</code>を指定することで、RFCに準じた妥当性チェックを行なうよう変更することができます。</p>
+<p>この動作は<code>setMode(JSONMode.STRICT)</code>を指定することで、RFCに準じた妥当性チェックを行なうよう変更することができます。</p>
 
 <h3 id="validation">■ JSONの検証 <span class="subtitle">- STRICTモード</span></h3>
 <p>JSONICでは、従来柔軟な読み込みができる反面、<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に厳密に沿ったJSONであるか判定することができませんでした。
 JSONIC 1.2.1からはSTRICTモードが用意され、厳密な検証動作が可能となりました。</p>
 <p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。</p>
 <pre class="source">
-	JSON json = new JSON(JSON.Mode.STRICT);
+	JSON json = new JSON(JSONMode.STRICT);
 	
-	json.setMode(JSON.Mode.STRICT);
+	json.setMode(JSONMode.STRICT);
 	
 	JSON.prototype = (new JSON() {
 		{
-			setMode(JSON.Mode.STRICT);
+			setMode(JSONMode.STRICT);
 		}
 	}).getClass();
 </pre>
-<p>また、データのデコードを行わず検証のみを行うvalidateメソッドも用意されています（これは、setDepth(0)、setMode(Mode.STRICT)を指定した時と同じです）。</p>
+<p>また、データのデコードを行わず検証のみを行うvalidateメソッドも用意されています（これは、setDepth(0)、setMode(JSONMode.STRICT)を指定した時と同じです）。</p>
 <pre class="source">
 	JSON.validate(new FileInputStream("test.json"));
 </pre>
@@ -468,15 +468,15 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
   <li>[デコード] シングルクォートで囲まれた文字列をstringとして認識します（TRADITIONALモードと異なりダブルクォートで囲った場合と同様エスケープを認識します）。</li>
   <li>[デコード] object のキーに限りシングルクォートで囲まれていないリテラルを文字列として認識します。</li>
 </ul>
-<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeScript を通じて簡単に使うことが可能です。</p>
+<p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにJSONModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeScript を通じて簡単に使うことが可能です。</p>
 <pre class="source">
-	JSON json = new JSON(JSON.Mode.SCRIPT);
+	JSON json = new JSON(JSONMode.SCRIPT);
 	
-	json.setMode(JSON.Mode.SCRIPT);
+	json.setMode(JSONMode.SCRIPT);
 	
 	JSON.prototype = (new JSON() {
 		{
-			setMode(JSON.Mode.SCRIPT);
+			setMode(JSONMode.SCRIPT);
 		}
 	}).getClass();
 	
@@ -688,57 +688,6 @@ public class TestBean {
 </pre>
 <p>この機能を使うことで、JSON化が困難なオブジェクトもJSON-RPCなどでやり取りすることが可能となります。</p>
 
-<h2 id="as3">JSONIC for AS3</h2>
-<p>JSONICでは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、AS3版のJSONクラスとRemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。</p>
-
-<h3>■ ActionScript3版 JSONライブラリ</h3>
-<p>Java版JSONクラスとほぼ同じです。ただし、decode/parseメソッドでの特定クラスへの変換はサポートしていません（動的型で十分だと思いますので……）。</p>
-<pre class="source">
-import net.arnx.jsonic.JSON;
-
-<span class="comment">// インスタンスをJSONに変換します</span>
-var text:String = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</span>;
-
-<span class="comment">// JSONをObjectに変換します</span>
-var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</span>;
-</pre>
-
-<h3>■ ActionScript3版 JSON-RPCクライアントライブラリ</h3>
-<p>RemoteObjectライクなJSON-RPCクライアントクラスです。使い方はmx:RemoteObjectやmx:WebServiceなどを参考にしてください（lastResultのBindingも可能です）。</p>
-<pre class="source">
-<span class="elem">&lt;mx:WindowedApplication xmlns:mx="</span>http://www.adobe.com/2006/mxml<span class="elem">" </span>
-  <span class="elem">xmlns:js="</span>http://arnx.net/jsonic<span class="elem">"&gt;</span>
-    
-  &lt;!-- sourceにコンポーネント名、Operationのnameにメソッド名を指定します。 --&gt;
-  <span class="elem">&lt;js:WebService id="</span>remote<span class="elem">" </span>
-    <span class="elem">endpoint="</span>http://localhost:8080/sample/rpc/rpc.json<span class="elem">" </span>
-    <span class="elem">source="</span>calc<span class="elem">" </span>
-    <span class="elem">makeObjectsBindable="</span>false<span class="elem">" </span>
-    <span class="elem">showBusyCursor="</span>true<span class="elem">"</span>
-    <span class="elem">result="</span>onResult(event)<span class="elem">"</span>
-    <span class="elem">fault="</span>onFault(event)<span class="elem">"&gt;</span>
-    
-    <span class="elem">&lt;js:Operation name="</span>plus<span class="elem">" result="</span>onResult(event)<span class="elem">" fault="</span>onFault(event)<span class="elem">" /&gt;</span>
-    ...
-  <span class="elem">&lt;/js:WebService&gt;</span>
-    
-  <span class="elem">&lt;mx:Button label="</span>実行<span class="elem">" click="</span>remote.plus(100, 200)<span class="elem">" /&gt;</span>
-  <span class="elem">&lt;mx:TextInput id="</span>output<span class="elem">" text="</span>{remote.plus.lastResult}<span class="elem">" /&gt;</span>
-    
-  <span class="elem">&lt;mx:Script&gt;</span>
-    &lt;![CDATA[
-      private function onResult(event:ResultEvent) {
-        trace(event.result); // 100+200 =&gt; 300
-      }
-      
-      private function onFault(event:FaultEvent) {
-        trace(event.fault.message);
-      }
-    ]]&gt;
-  <span class="elem">&lt;/mx:Script&gt;</span>
-<span class="elem">&lt;/mx:WindowedApplication&gt;</span>
-</pre>
-
 <h2 id="faq">FAQ</h2>
 <dl>
 <dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
@@ -761,6 +710,18 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2012/1/17 version 2.0.0 ベータ1</h3>
+
+<ul>
+<li>decode/parseが新たに追加されたJSONReaderベースに書きなおされ、また、速度も大幅に改善しました。</li>
+<li>[仕様変更] JSON.Mode 列挙型を JSONMode 列挙型に名称を変更しました。</li>
+<li>[仕様変更] ReaderあるいはInputStreamの先頭にあるBOM以外は無視せず例外を出すように変更しました。</li>
+<li>[仕様変更] TRADITIONAL モードでサポートされていたシェルスクリプトスタイルの行コメント（#) を廃止しました。</li>
+<li>[仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、エスケープを無視する仕様を廃止しました。</li>
+<li>[仕様変更] ActionScript版のJSONICは、ActionScriptで正規にJSONライブラリがサポートされ、必要性が薄くなったため廃止しました。</li>
+<li>[仕様変更] 内部クラスを internal パッケージ下に移動しました。</li>
+</ul>
 
 <h3>2012/1/17 version 1.2.9</h3>
 

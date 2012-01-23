@@ -402,36 +402,4 @@ class ParseContext {
 		return new JSONException("" + in.getLineNumber() + ": " + message + "\n" + in.toString() + " <- ?",
 				JSONException.PARSE_ERROR, in.getLineNumber(), in.getColumnNumber(), in.getOffset());
 	}
-	
-	private static class EmptyStringCache extends StringCache {
-		public EmptyStringCache() {
-			super(-1);
-		}
-
-		@Override
-		public void append(char c) {
-		}
-		
-		@Override
-		public void append(CharSequence cs, int start, int end) {
-		}
-		
-		@Override
-		public void append(char[] buf, int offset, int len) {
-		}
-		
-		@Override
-		public void clear() {
-		}
-		
-		@Override
-		public BigDecimal toBigDecimal() {
-			return null;
-		};
-		
-		@Override
-		public String toString() {
-			return null;
-		}
-	};
 }
