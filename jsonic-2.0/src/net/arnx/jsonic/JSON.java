@@ -80,6 +80,7 @@ import net.arnx.jsonic.internal.io.StringInputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
 import net.arnx.jsonic.internal.parser.JSONEventType;
 import net.arnx.jsonic.internal.parser.JSONParser;
+import net.arnx.jsonic.internal.parser.ScriptJSONParser;
 import net.arnx.jsonic.internal.parser.StrictJSONParser;
 import net.arnx.jsonic.internal.util.BeanInfo;
 import net.arnx.jsonic.internal.util.ClassUtil;
@@ -1013,12 +1014,26 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
-		if (context.getMode() == JSONMode.STRICT) {
+		if (context.getMode() != JSONMode.TRADITIONAL) {
 			Object root = null;
 			List<Object> stack = new ArrayList<Object>();
 			String name = null;
 			
-			JSONParser parser = new StrictJSONParser(s, context.getLocale(), context.getMaxDepth(), true);
+			JSONParser parser;
+			if (context.getMode() == JSONMode.STRICT) {
+				parser = new StrictJSONParser(s, 
+					context.getLocale(), 
+					context.getMaxDepth(), 
+					context.isSuppressNull(),
+					true);
+			} else {
+				parser = new ScriptJSONParser(s, 
+						context.getLocale(), 
+						context.getMaxDepth(), 
+						context.isSuppressNull(),
+						true);
+			}
+			
 			JSONEventType type = null;
 			while ((type = parser.next()) != null) {
 				switch (type) {

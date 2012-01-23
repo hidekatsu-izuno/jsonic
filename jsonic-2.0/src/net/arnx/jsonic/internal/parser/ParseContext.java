@@ -28,8 +28,8 @@ class ParseContext {
 	
 	private Locale locale;
 	private int maxDepth;
-	private boolean skipWhitespace;
-	private boolean skipComment;
+	private boolean suppressNull;
+	private boolean ignoreWhirespace;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
 	private StringCache cache;
@@ -38,11 +38,11 @@ class ParseContext {
 	private Object value;
 	private boolean first;
 	
-	public ParseContext(Locale locale, int maxDepth, boolean skipWhitespace, boolean skipComment) {
+	public ParseContext(Locale locale, int maxDepth, boolean suppressNull, boolean ignoreWhirespace) {
 		this.locale = locale;
 		this.maxDepth = maxDepth;
-		this.skipWhitespace = skipWhitespace;
-		this.skipComment = skipComment;
+		this.suppressNull = suppressNull;
+		this.ignoreWhirespace = ignoreWhirespace;
 	}
 	
 	public Locale getLocale() {
@@ -57,12 +57,12 @@ class ParseContext {
 		return stack.size();
 	}
 	
-	public boolean isSkipWhitespace() {
-		return skipWhitespace;
+	public boolean isSuppressNull() {
+		return suppressNull;
 	}
 	
-	public boolean isSkipComment() {
-		return skipComment;
+	public boolean isIgnoreWhitespace() {
+		return ignoreWhirespace;
 	}
 	
 	public void push(JSONEventType type) {
@@ -324,34 +324,43 @@ class ParseContext {
 		}
 		
 		if (any) {
-			int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-			StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
-			
-			while ((n = in.next()) != -1) {
-				if (n == '\\') {
-					in.back();
-					n = parseEscape(in);
-				}
-				
-				if (point == 0 && Character.isJavaIdentifierStart(n)) {
-					sc.append((char)n);
-					point = 1;
-				} else if (point == 1 && (Character.isJavaIdentifierPart(n) || n == '.')) {
-					sc.append((char)n);
-				} else {
-					in.back();
-					break;
-				}
-			}
-			return sc.toString();
+			return parseLiteral(in);
 		} else {
 			throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
 		}
 	}
+
+	public Object parseLiteral(InputSource in) throws IOException {
+		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
+		StringCache sc = (getDepth() <= getMaxDepth()) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		
+		int n = -1;
+		while ((n = in.next()) != -1) {
+			if (n == '\\') {
+				in.back();
+				n = parseEscape(in);
+			}
+			
+			if (point == 0) {
+				if (Character.isJavaIdentifierStart(n)) {
+					sc.append((char)n);
+					point = 1;
+				} else {
+					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+				}
+			} else if (point == 1 && (Character.isJavaIdentifierPart(n) || n == '.')) {
+				sc.append((char)n);
+			} else {
+				in.back();
+				break;
+			}
+		}
+		return sc.toString();
+	}
 	
 	public String parseComment(InputSource in) throws IOException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
-		StringCache sc = isSkipComment() ? StringCache.EMPTY_CACHE : getCachedBuffer();
+		StringCache sc = isIgnoreWhitespace() ? StringCache.EMPTY_CACHE : getCachedBuffer();
 		
 		int n = -1;
 		
@@ -420,7 +429,7 @@ class ParseContext {
 	}
 	
 	public String parseWhitespace(InputSource in) throws IOException {
-		StringCache sc = isSkipWhitespace() ? StringCache.EMPTY_CACHE : getCachedBuffer();
+		StringCache sc = isIgnoreWhitespace() ? StringCache.EMPTY_CACHE : getCachedBuffer();
 		
 		int n = -1;
 		
@@ -452,7 +461,7 @@ class ParseContext {
 	}
 	
 	public JSONException createParseException(InputSource in, String id, Object... args) {
-		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
+		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", getLocale());
 		
 		String message;
 		if (args != null && args.length > 0) {

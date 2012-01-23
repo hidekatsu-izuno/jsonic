@@ -1,11 +1,12 @@
 package net.arnx.jsonic.internal.parser;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Locale;
 
 import net.arnx.jsonic.internal.io.InputSource;
 
-public class StrictJSONParser implements JSONParser {
+public class ScriptJSONParser implements JSONParser {
 	private static final int BEFORE_ROOT = 0;
 	private static final int AFTER_ROOT = 1;
 	private static final int BEFORE_NAME = 2;
@@ -17,9 +18,9 @@ public class StrictJSONParser implements JSONParser {
 	private InputSource in;
 	private ParseContext context;
 	
-	public StrictJSONParser(InputSource in, Locale locale, int maxDepth, boolean suppressNull, boolean ignoreWhitespace) {
+	public ScriptJSONParser(InputSource in, Locale locale, int maxDepth, boolean suppressNull, boolean ignoreWhirespace) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth, suppressNull, ignoreWhitespace);
+		this.context = new ParseContext(locale, maxDepth, suppressNull, ignoreWhirespace);
 	}
 	
 	public JSONEventType next() throws IOException {
@@ -69,6 +70,13 @@ public class StrictJSONParser implements JSONParser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_ROOT;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return BEFORE_ROOT;
 		case '{':
 			context.push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
@@ -95,6 +103,13 @@ public class StrictJSONParser implements JSONParser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_ROOT;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return AFTER_ROOT;
 		case -1:
 			return -1;
 		default:
@@ -115,9 +130,31 @@ public class StrictJSONParser implements JSONParser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_NAME;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return BEFORE_NAME;
 		case '"':
+		case '\'':
 			in.back();
 			context.set(JSONEventType.NAME, context.parseString(in), false);
+			return AFTER_NAME;
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			in.back();
+			BigDecimal num = context.parseNumber(in);
+			context.set(JSONEventType.NAME, (num != null) ? num.toString() : null, false);
 			return AFTER_NAME;
 		case '}':
 			if (context.isFirst() && context.getBeginType() == JSONEventType.START_OBJECT) {
@@ -125,7 +162,7 @@ public class StrictJSONParser implements JSONParser {
 				if (context.getBeginType() == null) {
 					return AFTER_ROOT;
 				} else {
-					return AFTER_VALUE;
+					return AFTER_VALUE;							
 				}
 			} else {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
@@ -133,7 +170,9 @@ public class StrictJSONParser implements JSONParser {
 		case -1:
 			throw context.createParseException(in, "json.parse.ObjectNotClosedError");
 		default:
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			in.back();
+			context.set(JSONEventType.NAME, context.parseLiteral(in), false);
+			return AFTER_NAME;
 		}
 	}
 
@@ -148,6 +187,13 @@ public class StrictJSONParser implements JSONParser {
 			String ws = context.parseWhitespace(in);
 			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_NAME;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
 			}
 			return AFTER_NAME;
 		case ':':
@@ -172,6 +218,13 @@ public class StrictJSONParser implements JSONParser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_VALUE;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return BEFORE_VALUE;
 		case '{':
 			context.push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
@@ -179,6 +232,7 @@ public class StrictJSONParser implements JSONParser {
 			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
 		case '"':
+		case '\'':
 			in.back();
 			context.set(JSONEventType.STRING, context.parseString(in), true);
 			return AFTER_VALUE;
@@ -243,6 +297,13 @@ public class StrictJSONParser implements JSONParser {
 			String ws = context.parseWhitespace(in);
 			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_VALUE;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
 			}
 			return AFTER_VALUE;
 		case ',':
