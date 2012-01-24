@@ -149,8 +149,18 @@ public class ReaderInputSource implements InputSource {
 	
 	@Override
 	public String toString() {
-		int pos = Math.min((int)(start-columns), BACK);
-		int len = Math.min((int)(end-pos+1), 0);
-		return (len > 0) ? String.valueOf(buf, pos, len) : "";
+		int spos = back;
+		int max = Math.min(start, end);
+		int charCount = 0;
+		for (int i = 0; i < max + 1 - back && i < BACK; i++) {
+			char c = buf[max-i];
+			if (c == '\r' || (c == '\n' && (max-i-1 < 0 || buf[max-i-1] != '\r'))) {
+				if (charCount > 0) break;
+			} else if (c != '\n') {
+				spos = max-i;
+				charCount++;
+			}
+		}
+		return (spos <= max) ? String.valueOf(buf, spos, max - spos + 1) : "";
 	}
 }

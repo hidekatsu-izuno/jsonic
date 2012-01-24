@@ -74,17 +74,17 @@ public class CharSequenceInputSource implements InputSource {
 	@Override
 	public String toString() {
 		int spos = 0;
-		int max = Math.min(offset, cs.length()) - 1;
+		int max = Math.min(offset-1, cs.length()-1);
 		int charCount = 0;
-		for (int i = 0; i <= max && i < 20; i++) {
-			char c = cs.charAt(max - i);
-			if (c == '\r' || (c == '\n' && (i + 1 > max || cs.charAt(max - (i + 1)) != '\r'))) {
+		for (int i = 0; i < max + 1 && i < 20; i++) {
+			char c = cs.charAt(max-i);
+			if (c == '\r' || (c == '\n' && (max-i-1 < 0 || cs.charAt(max-i-1) != '\r'))) {
 				if (charCount > 0) break;
 			} else if (c != '\n') {
-				spos = max - i;
+				spos = max-i;
 				charCount++;
 			}
 		}
-		return (spos < offset) ? cs.subSequence(spos, offset).toString() : "";
+		return (spos <= max) ? cs.subSequence(spos, max+1).toString() : "";
 	}
 }
