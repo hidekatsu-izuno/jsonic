@@ -56,8 +56,8 @@ public class ReaderInputSource implements InputSource {
 	private int get() throws IOException {
 		if (start > end) {
 			if (end > BACK) {
-				int len = Math.min(BACK, end + 1 - BACK);
-				System.arraycopy(buf, end - len, buf, BACK - len, len);
+				int len = Math.min(BACK, end - BACK  + 1);
+				System.arraycopy(buf, end + 1 - len, buf, BACK - len, len);
 				back = BACK - len;
 			}
 			int size = reader.read(buf, BACK, buf.length-BACK);
