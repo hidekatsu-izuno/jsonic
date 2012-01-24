@@ -73,11 +73,18 @@ public class CharSequenceInputSource implements InputSource {
 	
 	@Override
 	public String toString() {
-		int spos = offset - columns;
-		if (spos == offset) {
-			spos = Math.max(0, offset - 20);
-			if (spos == 0) return "";
+		int max = Math.min(offset, cs.length()) - 1;
+		int spos = 0;
+		int charCount = 0;
+		for (int i = 0; i < max && i < 20; i++) {
+			char c = cs.charAt(max - i);
+			if (c == '\r' || (c == '\n' && (i + 1 > max || cs.charAt(max - (i + 1)) != '\r'))) {
+				if (charCount > 0) break;
+			} else if (c != '\n') {
+				spos = max - i;
+				charCount++;
+			}
 		}
-		return cs.subSequence(spos, offset).toString();
+		return (spos < offset) ? cs.subSequence(spos, offset).toString() : "";
 	}
 }
