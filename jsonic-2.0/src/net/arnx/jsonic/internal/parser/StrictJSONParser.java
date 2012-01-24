@@ -23,6 +23,7 @@ public class StrictJSONParser implements JSONParser {
 	}
 	
 	public JSONEventType next() throws IOException {
+		JSONEventType type = null;
 		do {
 			context.set(null, null, false);
 			switch (state) {
@@ -45,10 +46,13 @@ public class StrictJSONParser implements JSONParser {
 				state = afterValue();
 				break;
 			}
-			if (state == -1) return null;
-		} while (context.getType() == null);
+			
+			if (context.getDepth() <= context.getMaxDepth()) {
+				type = context.getType();
+			}
+		} while (state != -1 && type == null);
 		
-		return context.getType();
+		return type;
 	}
 	
 	public Object getValue() {

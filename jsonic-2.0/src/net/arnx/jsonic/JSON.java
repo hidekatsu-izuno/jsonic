@@ -1039,10 +1039,6 @@ public class JSON {
 		
 		JSONEventType type = null;
 		while ((type = parser.next()) != null) {
-			if (parser.getDepth() > context.getMaxDepth()) {
-				continue;
-			}
-			
 			switch (type) {
 			case START_OBJECT:
 				Map<String, Object> map = new LinkedHashMap<String, Object>();
