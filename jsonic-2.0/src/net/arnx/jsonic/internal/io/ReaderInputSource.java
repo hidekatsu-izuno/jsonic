@@ -8,16 +8,17 @@ import java.io.Reader;
 
 
 public class ReaderInputSource implements InputSource {
-	private static int BACK = 1;
+	private static int BACK = 20;
 	
 	private long lines = 1L;
 	private long columns = 0L;
 	private long offset = 0L;
 
 	private final Reader reader;
-	private final char[] buf = new char[256];
-	private int start = buf.length;
-	private int end = buf.length-1;
+	private final char[] buf = new char[256 + BACK];
+	private int back = BACK;
+	private int start = BACK;
+	private int end = BACK - 1;
 	private int mark = -1;
 	
 	public ReaderInputSource(InputStream in) throws IOException {
@@ -54,10 +55,14 @@ public class ReaderInputSource implements InputSource {
 	
 	private int get() throws IOException {
 		if (start > end) {
-			buf[0] = buf[end];
+			if (end > BACK) {
+				int len = Math.min(BACK, end + 1 - BACK);
+				System.arraycopy(buf, end - len, buf, BACK - len, len);
+				back = BACK - len;
+			}
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {
-				mark = (mark > end && mark <= end + BACK) ? (end + BACK - mark) : -1;
+				mark = (mark > end - BACK) ? BACK - (end - mark + 1) : -1;
 				start = BACK;
 				end = BACK + size - 1;
 			} else {
@@ -70,7 +75,7 @@ public class ReaderInputSource implements InputSource {
 	
 	@Override
 	public void back() {
-		if (start == 0) {
+		if (start <= back) {
 			throw new IllegalStateException("no backup charcter");
 		}
 		start--;

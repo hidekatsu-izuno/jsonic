@@ -73,8 +73,8 @@ public class CharSequenceInputSource implements InputSource {
 	
 	@Override
 	public String toString() {
-		int max = Math.min(offset, cs.length()) - 1;
 		int spos = 0;
+		int max = Math.min(offset, cs.length()) - 1;
 		int charCount = 0;
 		for (int i = 0; i <= max && i < 20; i++) {
 			char c = cs.charAt(max - i);
