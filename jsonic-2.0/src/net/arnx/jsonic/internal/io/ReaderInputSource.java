@@ -10,9 +10,9 @@ import java.io.Reader;
 public class ReaderInputSource implements InputSource {
 	private static int BACK = 1;
 	
-	private long lines = 1l;
-	private long columns = 1l;
-	private long offset = 0;
+	private long lines = 1L;
+	private long columns = 0L;
+	private long offset = 0L;
 
 	private final Reader reader;
 	private final char[] buf = new char[256];
@@ -39,11 +39,11 @@ public class ReaderInputSource implements InputSource {
 			offset++;
 			if (n == '\r') {
 				lines++;
-				columns = 1;
+				columns = 0;
 			} else if (n == '\n') {
 				if (start < 2 || buf[start-2] != '\r') {
 					lines++;
-					columns = 1;
+					columns = 0;
 				}
 			} else {
 				columns++;
@@ -144,11 +144,8 @@ public class ReaderInputSource implements InputSource {
 	
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
-		for (int i = maxlength; i >= 0; i--) {
-			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
-		}
-		return sb.toString();
+		int pos = Math.min((int)(start-columns), BACK);
+		int len = Math.min((int)(end-pos+1), 0);
+		return (len > 0) ? String.valueOf(buf, pos, len) : "";
 	}
 }

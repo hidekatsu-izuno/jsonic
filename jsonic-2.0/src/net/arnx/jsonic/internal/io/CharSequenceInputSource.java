@@ -2,7 +2,7 @@ package net.arnx.jsonic.internal.io;
 
 public class CharSequenceInputSource implements InputSource {
 	private int lines = 1;
-	private int columns = 1;
+	private int columns = 0;
 	private int offset = 0;
 	
 	int mark = -1;
@@ -23,11 +23,11 @@ public class CharSequenceInputSource implements InputSource {
 			n = cs.charAt(offset++);
 			if (n == '\r') {
 				lines++;
-				columns = 1;
+				columns = 0;
 			} else if (n == '\n') {
 				if (offset < 2 || cs.charAt(offset-2) != '\r') {
 					lines++;
-					columns = 1;
+					columns = 0;
 				}
 			} else {
 				columns++;
@@ -73,7 +73,7 @@ public class CharSequenceInputSource implements InputSource {
 	
 	@Override
 	public String toString() {
-		int spos = offset - (columns - 1);
+		int spos = offset - columns;
 		if (spos == offset) {
 			spos = Math.max(0, offset - 20);
 			if (spos == 0) return "";

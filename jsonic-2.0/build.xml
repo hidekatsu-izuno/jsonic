@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE project>
-<project name="jsonic" basedir="." default="dist-all">	
+<project name="jsonic-2.0" basedir="." default="dist-all">	
 	<xmlproperty file="pom.xml" />
 	
 	<property name="version" value="${project.version}" />
