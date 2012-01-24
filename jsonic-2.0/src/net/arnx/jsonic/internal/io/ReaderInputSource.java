@@ -150,7 +150,7 @@ public class ReaderInputSource implements InputSource {
 	@Override
 	public String toString() {
 		int spos = back;
-		int max = Math.min(start, end);
+		int max = Math.min(start-1, end);
 		int charCount = 0;
 		for (int i = 0; i < max + 1 - back && i < BACK; i++) {
 			char c = buf[max-i];
