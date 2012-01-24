@@ -5,6 +5,7 @@ public class CharSequenceInputSource implements InputSource {
 	private int columns = 0;
 	private int offset = 0;
 	
+	private int start = 0;
 	int mark = -1;
 	
 	private final CharSequence cs;
@@ -19,8 +20,9 @@ public class CharSequenceInputSource implements InputSource {
 	@Override
 	public int next() {
 		int n = -1;
-		if (offset < cs.length()) {
-			n = cs.charAt(offset++);
+		if (start < cs.length()) {
+			n = cs.charAt(start++);
+			offset++;
 			if (n == '\r') {
 				lines++;
 				columns = 0;
@@ -32,19 +34,28 @@ public class CharSequenceInputSource implements InputSource {
 			} else {
 				columns++;
 			}
+		} else {
+			start++;
+			return -1;
 		}
 		return n;
 	}
 	
 	@Override
 	public void back() {
-		offset--;
-		columns--;
+		if (start == 0) {
+			throw new IllegalStateException("no backup charcter");
+		}
+		start--;
+		if (start < cs.length()) {
+			offset--;
+			columns--;
+		}
 	}
 	
 	@Override
 	public int mark() {
-		mark = offset;
+		mark = start;
 		return cs.length() - mark;
 	}
 	
@@ -74,7 +85,7 @@ public class CharSequenceInputSource implements InputSource {
 	@Override
 	public String toString() {
 		int spos = 0;
-		int max = Math.min(offset-1, cs.length()-1);
+		int max = Math.min(start-1, cs.length()-1);
 		int charCount = 0;
 		for (int i = 0; i < max + 1 && i < 20; i++) {
 			char c = cs.charAt(max-i);

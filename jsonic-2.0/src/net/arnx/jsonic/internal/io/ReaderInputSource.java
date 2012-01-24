@@ -79,7 +79,7 @@ public class ReaderInputSource implements InputSource {
 			throw new IllegalStateException("no backup charcter");
 		}
 		start--;
-		if (start < end) {
+		if (start <= end) {
 			offset--;
 			columns--;
 		}
