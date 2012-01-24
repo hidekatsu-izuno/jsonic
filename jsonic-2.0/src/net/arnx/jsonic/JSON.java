@@ -78,8 +78,8 @@ import net.arnx.jsonic.internal.io.StringBuilderInputSource;
 import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
 import net.arnx.jsonic.internal.io.StringInputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
-import net.arnx.jsonic.internal.parser.JSONEventType;
 import net.arnx.jsonic.internal.parser.JSONParser;
+import net.arnx.jsonic.internal.parser.ParseContext;
 import net.arnx.jsonic.internal.parser.ScriptJSONParser;
 import net.arnx.jsonic.internal.parser.StrictJSONParser;
 import net.arnx.jsonic.internal.parser.TraditionalJSONParser;
@@ -1015,28 +1015,24 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
+		ParseContext pcontext = new ParseContext(context.getLocale(), context.getMaxDepth(), true);
+		
+		JSONParser parser;
+		switch (context.getMode()) {
+		case STRICT:
+			parser = new StrictJSONParser(s, pcontext);
+			break;
+		case SCRIPT:
+			parser = new ScriptJSONParser(s, pcontext);
+			break;
+		default:
+			parser = new TraditionalJSONParser(s, pcontext);
+		}
+		
 		Object root = null;
 		List<Object> stack = new ArrayList<Object>();
 		Object name = null;
-		
-		JSONParser parser;
-		if (context.getMode() == JSONMode.STRICT) {
-			parser = new StrictJSONParser(s, 
-				context.getLocale(), 
-				context.getMaxDepth(), 
-				true);
-		} else if (context.getMode() == JSONMode.SCRIPT) {
-			parser = new ScriptJSONParser(s, 
-				context.getLocale(), 
-				context.getMaxDepth(), 
-				true);
-		} else {
-			parser = new TraditionalJSONParser(s, 
-					context.getLocale(), 
-					context.getMaxDepth(), 
-					true);
-		}
-		
+				
 		JSONEventType type = null;
 		while ((type = parser.next()) != null) {
 			switch (type) {

@@ -1,8 +1,8 @@
 package net.arnx.jsonic.internal.parser;
 
 import java.io.IOException;
-import java.util.Locale;
 
+import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.internal.io.InputSource;
 
 public class TraditionalJSONParser implements JSONParser {
@@ -19,9 +19,9 @@ public class TraditionalJSONParser implements JSONParser {
 	private boolean emptyRoot = false;
 	private long nameLineNumber = Long.MAX_VALUE;
 	
-	public TraditionalJSONParser(InputSource in, Locale locale, int maxDepth, boolean ignoreWhirespace) {
+	public TraditionalJSONParser(InputSource in, ParseContext context) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth, ignoreWhirespace);
+		this.context = context;
 	}
 	
 	public JSONEventType next() throws IOException {

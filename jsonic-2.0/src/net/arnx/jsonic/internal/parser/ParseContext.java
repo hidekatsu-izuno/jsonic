@@ -7,11 +7,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.internal.io.InputSource;
 import net.arnx.jsonic.internal.io.StringCache;
 
-class ParseContext {
+public class ParseContext {
 	private static final int[] ESCAPE_CHARS = new int[128];
 	
 	static {
@@ -49,16 +50,16 @@ class ParseContext {
 		return maxDepth;
 	}
 	
+	public boolean isIgnoreWhitespace() {
+		return ignoreWhirespace;
+	}
+	
 	public int getDepth() {
 		if (type == JSONEventType.START_OBJECT || type == JSONEventType.START_ARRAY) {
 			return stack.size();
 		} else {
 			return stack.size() + 1;
 		}
-	}
-	
-	public boolean isIgnoreWhitespace() {
-		return ignoreWhirespace;
 	}
 	
 	public void push(JSONEventType type) {

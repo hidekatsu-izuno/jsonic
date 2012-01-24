@@ -1,4 +1,4 @@
-package net.arnx.jsonic.internal.parser;
+package net.arnx.jsonic;
 
 public enum JSONEventType {
 	START_OBJECT(true),

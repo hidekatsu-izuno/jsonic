@@ -1,8 +1,8 @@
 package net.arnx.jsonic.internal.parser;
 
 import java.io.IOException;
-import java.util.Locale;
 
+import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.internal.io.InputSource;
 
 public class ScriptJSONParser implements JSONParser {
@@ -17,9 +17,9 @@ public class ScriptJSONParser implements JSONParser {
 	private InputSource in;
 	private ParseContext context;
 	
-	public ScriptJSONParser(InputSource in, Locale locale, int maxDepth, boolean ignoreWhirespace) {
+	public ScriptJSONParser(InputSource in, ParseContext context) {
 		this.in = in;
-		this.context = new ParseContext(locale, maxDepth, ignoreWhirespace);
+		this.context = context;
 	}
 	
 	public JSONEventType next() throws IOException {
