@@ -115,7 +115,9 @@ public class JSONReader {
 	@SuppressWarnings("unchecked")
 	Object getValue() throws IOException {
 		if (type == null) type = next();
+		if (type == null) return null;
 		
+		Object root = null;
 		List<Object> stack = null;
 		Object name = null;
 
@@ -156,23 +158,23 @@ public class JSONReader {
 				if (stack.size() > 1) {
 					stack.remove(stack.size()-1);
 				} else if (stack.size() == 1) {
-					return stack.get(0);
+					if (parser.getDepth() > 1) {
+						return stack.remove(0);
+					} else {
+						root = stack.remove(0);
+					}
 				} else {
 					throw new IllegalStateException();
 				}
 				break;	
 			case NAME:
-				if (stack != null && !stack.isEmpty()) {
-					name = parser.getValue();
-				} else {
-					return parser.getValue();
-				}
+				name = parser.getValue();
 				break;
 			case STRING:
 			case NUMBER:
 			case BOOLEAN:
 			case NULL:
-				if (stack != null && !stack.isEmpty()) {
+				if (stack != null) {
 					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {
 						Object value = parser.getValue();
@@ -183,13 +185,17 @@ public class JSONReader {
 						((List<Object>)current).add(parser.getValue());
 					}
 				} else {
-					return parser.getValue();
+					if (parser.getDepth() > 1) {
+						return parser.getValue();
+					} else {
+						root = parser.getValue();
+					}
 				}
 				break;
 			}
 		} while ((type = parser.next()) != null);
 		
-		throw new IllegalStateException();
+		return root;
 	}
 	
 	public int getDepth() {
