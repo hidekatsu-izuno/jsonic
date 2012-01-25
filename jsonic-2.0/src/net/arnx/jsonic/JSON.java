@@ -942,7 +942,7 @@ public class JSON {
 		
 		Object value = null;
 		try {
-			value = parseInternal(is);
+			value = parseInternal(new Context(), is);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -969,7 +969,8 @@ public class JSON {
 		
 		T value = null;
 		try {
-			value = (T)convert(new Context(), parseInternal(is), type);
+			Context context = new Context();
+			value = (T)convert(context, parseInternal(context, is), type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -978,7 +979,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		return (T)parseInternal(new ReaderInputSource(in));
+		return (T)parseInternal(new Context(), new ReaderInputSource(in));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -988,12 +989,13 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
-		return (T)convert(new Context(), parseInternal(new ReaderInputSource(in)), type);
+		Context context = new Context();
+		return (T)convert(context, parseInternal(context, new ReaderInputSource(in)), type);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
-		return (T)parseInternal(new ReaderInputSource(reader));
+		return (T)parseInternal(new Context(), new ReaderInputSource(reader));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1004,11 +1006,11 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parseInternal(new ReaderInputSource(reader)), type);
+		return (T)convert(context, parseInternal(context, new ReaderInputSource(reader)), type);
 	}
 	
-	private Object parseInternal(InputSource in) throws IOException, JSONException {
-		JSONReader reader = new JSONReader(mode, in, locale, maxDepth, suppressNull, true);
+	private Object parseInternal(Context context, InputSource in) throws IOException, JSONException {
+		JSONReader reader = new JSONReader(context, in, true);
 		return reader.getValue();
 	}
 	
@@ -1142,17 +1144,15 @@ public class JSON {
 			: (cs instanceof StringBuffer) ? new StringBufferInputSource((StringBuffer)cs)
 			: new CharSequenceInputSource(cs);
 		
-		return new JSONReader(mode, in, locale, maxDepth, suppressNull, ignoreWhitespace);
+		return new JSONReader(new Context(), in, ignoreWhitespace);
 	}
 	
 	public JSONReader createReader(InputStream in, boolean ignoreWhitespace) {
-		return new JSONReader(mode, new ReaderInputSource(in), 
-				locale, maxDepth, suppressNull, ignoreWhitespace);
+		return new JSONReader(new Context(), new ReaderInputSource(in), ignoreWhitespace);
 	}
 	
 	public JSONReader createReader(Reader reader, boolean ignoreWhitespace) {
-		return new JSONReader(mode, new ReaderInputSource(reader), 
-				locale, maxDepth, suppressNull, ignoreWhitespace);
+		return new JSONReader(new Context(), new ReaderInputSource(reader), ignoreWhitespace);
 	}
 	
 	protected String normalize(String name) {

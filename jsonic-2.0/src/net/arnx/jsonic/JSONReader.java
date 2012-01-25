@@ -5,9 +5,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
+import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.internal.io.InputSource;
 import net.arnx.jsonic.internal.parser.JSONParser;
 import net.arnx.jsonic.internal.parser.ParseContext;
@@ -16,24 +16,23 @@ import net.arnx.jsonic.internal.parser.StrictJSONParser;
 import net.arnx.jsonic.internal.parser.TraditionalJSONParser;
 
 public class JSONReader {
-	private final boolean suppressNull;
-	
+	private Context context;
 	private JSONParser parser;
 	private JSONEventType type;
 	
-	JSONReader(JSONMode mode, InputSource in, Locale locale, int maxDepth, boolean suppressNull, boolean ignoreWhitespace) {
-		this.suppressNull = suppressNull;
+	JSONReader(Context context, InputSource in, boolean ignoreWhitespace) {
+		this.context = context;
 		
-		ParseContext context = new ParseContext(locale, maxDepth, ignoreWhitespace);
-		switch (mode) {
+		ParseContext pcontext = new ParseContext(context.getLocale(), context.getMaxDepth(), ignoreWhitespace);
+		switch (context.getMode()) {
 		case STRICT:
-			parser = new StrictJSONParser(in, context);
+			parser = new StrictJSONParser(in, pcontext);
 			break;
 		case SCRIPT:
-			parser = new ScriptJSONParser(in, context);
+			parser = new ScriptJSONParser(in, pcontext);
 			break;
 		default:
-			parser = new TraditionalJSONParser(in, context);
+			parser = new TraditionalJSONParser(in, pcontext);
 		}
 	}
 	
@@ -129,7 +128,7 @@ public class JSONReader {
 				if (!stack.isEmpty()) {
 					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {
-						if (!(map == null && suppressNull)) {
+						if (!(map == null && context.isSuppressNull())) {
 							((Map<Object, Object>)current).put(name, map);
 						}
 					} else if (current instanceof List<?>) {
@@ -144,7 +143,7 @@ public class JSONReader {
 				if (!stack.isEmpty()) {
 					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {
-						if (!(list == null && suppressNull)) {
+						if (!(list == null && context.isSuppressNull())) {
 							((Map<Object, Object>)current).put(name, list);
 						}
 					} else if (current instanceof List<?>) {
@@ -178,7 +177,7 @@ public class JSONReader {
 					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {
 						Object value = parser.getValue();
-						if (!(value == null && suppressNull)) {
+						if (!(value == null && context.isSuppressNull())) {
 							((Map<Object, Object>)current).put(name, value);
 						}
 					} else if (current instanceof List<?>) {
