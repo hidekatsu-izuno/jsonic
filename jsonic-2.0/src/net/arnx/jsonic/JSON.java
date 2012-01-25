@@ -970,11 +970,6 @@ public class JSON {
 		return (T)convert(context, result, type);
 	}
 	
-	private String getMessage(String id, Object... args) {
-		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
-		return MessageFormat.format(bundle.getString(id), args);
-	}
-	
 	public Object convert(Object value, Type type)  throws JSONException {
 		return convert(new Context(), value, type);
 	}
@@ -1188,6 +1183,11 @@ public class JSON {
 	
 	private static boolean isAssignableFrom(Class<?> target, Class<?> cls) {
 		return (target != null) && target.isAssignableFrom(cls);
+	}
+	
+	private String getMessage(String id, Object... args) {
+		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
+		return MessageFormat.format(bundle.getString(id), args);
 	}
 	
 	public final class Context {
