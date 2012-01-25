@@ -66,7 +66,7 @@ public class JSONReader {
 		if (type == null) type = next();
 
 		if (type == JSONEventType.STRING) {
-			return (String)getValue();
+			return (String)parser.getValue();
 		} else {
 			throw new IllegalStateException();
 		}
@@ -76,7 +76,7 @@ public class JSONReader {
 		if (type == null) type = next();
 
 		if (type == JSONEventType.NUMBER) {
-			return (BigDecimal)getValue();
+			return (BigDecimal)parser.getValue();
 		} else {
 			throw new IllegalStateException();
 		}
@@ -84,9 +84,29 @@ public class JSONReader {
 	
 	public Boolean getBoolean() throws IOException {
 		if (type == null) type = next();
-
+		
 		if (type == JSONEventType.BOOLEAN) {
-			return (Boolean)getValue();
+			return (Boolean)parser.getValue();
+		} else {
+			throw new IllegalStateException();
+		}
+	}
+	
+	public String getComment() throws IOException {
+		if (type == null) type = next();
+		
+		if (type == JSONEventType.COMMENT) {
+			return (String)parser.getValue();
+		} else {
+			throw new IllegalStateException();
+		}
+	}
+	
+	public String getWhitespace() throws IOException {
+		if (type == null) type = next();
+		
+		if (type == JSONEventType.WHITESPACE) {
+			return (String)parser.getValue();
 		} else {
 			throw new IllegalStateException();
 		}
