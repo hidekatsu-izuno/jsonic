@@ -67,6 +67,42 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import net.arnx.jsonic.internal.converter.AppendableConverter;
+import net.arnx.jsonic.internal.converter.ArrayConverter;
+import net.arnx.jsonic.internal.converter.BigDecimalConverter;
+import net.arnx.jsonic.internal.converter.BigIntegerConverter;
+import net.arnx.jsonic.internal.converter.BooleanConverter;
+import net.arnx.jsonic.internal.converter.ByteConverter;
+import net.arnx.jsonic.internal.converter.CalendarConverter;
+import net.arnx.jsonic.internal.converter.CharSequenceConverter;
+import net.arnx.jsonic.internal.converter.CharacterConverter;
+import net.arnx.jsonic.internal.converter.CharsetConverter;
+import net.arnx.jsonic.internal.converter.ClassConverter;
+import net.arnx.jsonic.internal.converter.CollectionConverter;
+import net.arnx.jsonic.internal.converter.Converter;
+import net.arnx.jsonic.internal.converter.DateConverter;
+import net.arnx.jsonic.internal.converter.DoubleConverter;
+import net.arnx.jsonic.internal.converter.EnumConverter;
+import net.arnx.jsonic.internal.converter.FileConverter;
+import net.arnx.jsonic.internal.converter.FloatConverter;
+import net.arnx.jsonic.internal.converter.FormatConverter;
+import net.arnx.jsonic.internal.converter.InetAddressConverter;
+import net.arnx.jsonic.internal.converter.IntegerConverter;
+import net.arnx.jsonic.internal.converter.LocaleConverter;
+import net.arnx.jsonic.internal.converter.LongConverter;
+import net.arnx.jsonic.internal.converter.MapConverter;
+import net.arnx.jsonic.internal.converter.NullConverter;
+import net.arnx.jsonic.internal.converter.ObjectConverter;
+import net.arnx.jsonic.internal.converter.PatternConverter;
+import net.arnx.jsonic.internal.converter.PlainConverter;
+import net.arnx.jsonic.internal.converter.PropertiesConverter;
+import net.arnx.jsonic.internal.converter.SerializableConverter;
+import net.arnx.jsonic.internal.converter.ShortConverter;
+import net.arnx.jsonic.internal.converter.StringSerializableConverter;
+import net.arnx.jsonic.internal.converter.TimeZoneConverter;
+import net.arnx.jsonic.internal.converter.URIConverter;
+import net.arnx.jsonic.internal.converter.URLConverter;
+import net.arnx.jsonic.internal.converter.UUIDConverter;
 import net.arnx.jsonic.internal.io.AppendableOutputSource;
 import net.arnx.jsonic.internal.io.CharSequenceInputSource;
 import net.arnx.jsonic.internal.io.InputSource;
@@ -1140,7 +1176,7 @@ public class JSON {
 		private Map<String, NumberFormat> numberFormatCache;
 		private StringCache cache;
 		
-		boolean skipHint = false;
+		public boolean skipHint = false;
 		
 		public Context() {
 			synchronized (JSON.this) {
@@ -1397,7 +1433,7 @@ public class JSON {
 			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
 		
-		void enter(Object key, JSONHint hint) {
+		public void enter(Object key, JSONHint hint) {
 			level++;
 			if (path == null) path = new Object[8];
 			if (path.length < level*2+2) {
@@ -1409,11 +1445,11 @@ public class JSON {
 			path[level*2+1] = hint;
 		}
 		
-		void enter(Object key) {
+		public void enter(Object key) {
 			enter(key, (JSONHint)((level != -1) ? path[level*2+1] : null));
 		}
 		
-		void exit() {
+		public void exit() {
 			level--;
 		}
 		
@@ -1422,7 +1458,7 @@ public class JSON {
 		}
 		
 		@SuppressWarnings("unchecked")
-		List<PropertyInfo> getGetProperties(Class<?> c) {
+		public List<PropertyInfo> getGetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
 			List<PropertyInfo> props = (List<PropertyInfo>)memberCache.get(c);
@@ -1492,7 +1528,7 @@ public class JSON {
 		}
 		
 		@SuppressWarnings("unchecked")
-		Map<String, PropertyInfo> getSetProperties(Class<?> c) {
+		public Map<String, PropertyInfo> getSetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
 			
 			Map<String, PropertyInfo> props = (Map<String, PropertyInfo>)memberCache.get(c);
@@ -1543,7 +1579,7 @@ public class JSON {
 			return props;
 		}
 		
-		NumberFormat getNumberFormat() {
+		public NumberFormat getNumberFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;			
 			if (format != null) {
@@ -1563,7 +1599,7 @@ public class JSON {
 			}
 		}
 		
-		DateFormat getDateFormat() {
+		public DateFormat getDateFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;			
 			if (format != null) {
