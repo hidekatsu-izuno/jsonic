@@ -78,11 +78,7 @@ import net.arnx.jsonic.internal.io.StringBuilderInputSource;
 import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
 import net.arnx.jsonic.internal.io.StringInputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
-import net.arnx.jsonic.internal.parser.JSONParser;
 import net.arnx.jsonic.internal.parser.ParseContext;
-import net.arnx.jsonic.internal.parser.ScriptJSONParser;
-import net.arnx.jsonic.internal.parser.StrictJSONParser;
-import net.arnx.jsonic.internal.parser.TraditionalJSONParser;
 import net.arnx.jsonic.internal.util.BeanInfo;
 import net.arnx.jsonic.internal.util.ClassUtil;
 import net.arnx.jsonic.internal.util.ExtendedDateFormat;
@@ -1014,27 +1010,16 @@ public class JSON {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
-		ParseContext pcontext = new ParseContext(context.getLocale(), context.getMaxDepth(), true);
-		
-		JSONParser parser;
-		switch (context.getMode()) {
-		case STRICT:
-			parser = new StrictJSONParser(s, pcontext);
-			break;
-		case SCRIPT:
-			parser = new ScriptJSONParser(s, pcontext);
-			break;
-		default:
-			parser = new TraditionalJSONParser(s, pcontext);
-		}
+	private Object parseInternal(Context context, InputSource in) throws IOException, JSONException {
+		JSONReader reader = new JSONReader(context.getMode(), in, 
+				new ParseContext(context.getLocale(), context.getMaxDepth(), true));
 		
 		Object root = null;
 		List<Object> stack = new ArrayList<Object>();
 		Object name = null;
 				
 		JSONEventType type = null;
-		while ((type = parser.next()) != null) {
+		while ((type = reader.next()) != null) {
 			switch (type) {
 			case START_OBJECT:
 				Map<String, Object> map = new LinkedHashMap<String, Object>();
@@ -1075,7 +1060,7 @@ public class JSON {
 				}
 				break;	
 			case NAME:
-				name = parser.getValue();
+				name = reader.getValue();
 				break;
 			case STRING:
 			case NUMBER:
@@ -1085,15 +1070,15 @@ public class JSON {
 				if (!stack.isEmpty()) {
 					Object current = stack.get(stack.size()-1);
 					if (current instanceof Map<?, ?>) {
-						Object value = parser.getValue();
+						Object value = reader.getValue();
 						if (!(value == null && context.isSuppressNull())) {
 							((Map<Object, Object>)current).put(name, value);
 						}
 					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(parser.getValue());
+						((List<Object>)current).add(reader.getValue());
 					}
 				} else {
-					root = parser.getValue();
+					root = reader.getValue();
 				}
 				break;
 			default:
