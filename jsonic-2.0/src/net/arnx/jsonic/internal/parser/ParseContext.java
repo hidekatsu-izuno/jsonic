@@ -10,7 +10,7 @@ import java.util.ResourceBundle;
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.internal.io.InputSource;
-import net.arnx.jsonic.internal.io.StringCache;
+import net.arnx.jsonic.internal.util.StringCache;
 
 public class ParseContext {
 	private static final int[] ESCAPE_CHARS = new int[128];

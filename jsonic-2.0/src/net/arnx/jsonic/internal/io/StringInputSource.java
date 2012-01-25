@@ -1,5 +1,7 @@
 package net.arnx.jsonic.internal.io;
 
+import net.arnx.jsonic.internal.util.StringCache;
+
 public class StringInputSource extends CharSequenceInputSource {
 	private final String str;
 	

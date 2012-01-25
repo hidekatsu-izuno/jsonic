@@ -1,5 +1,7 @@
 package net.arnx.jsonic.internal.io;
 
+import net.arnx.jsonic.internal.util.StringCache;
+
 public class CharSequenceInputSource implements InputSource {
 	private int lines = 1;
 	private int columns = 0;

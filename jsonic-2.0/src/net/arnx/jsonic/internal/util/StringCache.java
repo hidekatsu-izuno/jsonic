@@ -1,4 +1,4 @@
-package net.arnx.jsonic.internal.io;
+package net.arnx.jsonic.internal.util;
 
 import java.math.BigDecimal;
 import java.util.Arrays;

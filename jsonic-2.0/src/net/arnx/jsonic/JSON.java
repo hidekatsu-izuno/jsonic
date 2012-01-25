@@ -149,13 +149,13 @@ import net.arnx.jsonic.internal.io.StringBufferInputSource;
 import net.arnx.jsonic.internal.io.StringBufferOutputSource;
 import net.arnx.jsonic.internal.io.StringBuilderInputSource;
 import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
-import net.arnx.jsonic.internal.io.StringCache;
 import net.arnx.jsonic.internal.io.StringInputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
 import net.arnx.jsonic.internal.util.BeanInfo;
 import net.arnx.jsonic.internal.util.ClassUtil;
 import net.arnx.jsonic.internal.util.ExtendedDateFormat;
 import net.arnx.jsonic.internal.util.PropertyInfo;
+import net.arnx.jsonic.internal.util.StringCache;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;

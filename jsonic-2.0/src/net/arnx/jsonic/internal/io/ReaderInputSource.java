@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import net.arnx.jsonic.internal.util.StringCache;
+
 
 public class ReaderInputSource implements InputSource {
 	private static int BACK = 20;
