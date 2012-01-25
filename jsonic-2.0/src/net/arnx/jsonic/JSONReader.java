@@ -1,6 +1,7 @@
 package net.arnx.jsonic;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,6 +57,36 @@ public class JSONReader {
 
 		if (type == JSONEventType.START_ARRAY) {
 			return (List<?>)getValue();
+		} else {
+			throw new IllegalStateException();
+		}
+	}
+	
+	public String getString() throws IOException {
+		if (type == null) type = next();
+
+		if (type == JSONEventType.STRING) {
+			return (String)getValue();
+		} else {
+			throw new IllegalStateException();
+		}
+	}
+	
+	public BigDecimal getNumber() throws IOException {
+		if (type == null) type = next();
+
+		if (type == JSONEventType.NUMBER) {
+			return (BigDecimal)getValue();
+		} else {
+			throw new IllegalStateException();
+		}
+	}
+	
+	public Boolean getBoolean() throws IOException {
+		if (type == null) type = next();
+
+		if (type == JSONEventType.BOOLEAN) {
+			return (Boolean)getValue();
 		} else {
 			throw new IllegalStateException();
 		}
@@ -119,8 +150,7 @@ public class JSONReader {
 				break;
 			case STRING:
 			case NUMBER:
-			case TRUE:
-			case FALSE:
+			case BOOLEAN:
 			case NULL:
 				if (stack != null && !stack.isEmpty()) {
 					Object current = stack.get(stack.size()-1);
@@ -136,8 +166,6 @@ public class JSONReader {
 					return parser.getValue();
 				}
 				break;
-			default:
-				throw new IllegalStateException();
 			}
 		} while ((type = parser.next()) != null);
 		

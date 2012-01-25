@@ -206,11 +206,11 @@ public class StrictJSONParser implements JSONParser {
 			return AFTER_VALUE;	
 		case 't':
 			in.back();
-			context.set(JSONEventType.TRUE, context.parseLiteral(in, "true", Boolean.TRUE), true);
+			context.set(JSONEventType.BOOLEAN, context.parseLiteral(in, "true", Boolean.TRUE), true);
 			return AFTER_VALUE;
 		case 'f':
 			in.back();
-			context.set(JSONEventType.FALSE, context.parseLiteral(in, "false", Boolean.FALSE), true);
+			context.set(JSONEventType.BOOLEAN, context.parseLiteral(in, "false", Boolean.FALSE), true);
 			return AFTER_VALUE;
 		case 'n':
 			in.back();

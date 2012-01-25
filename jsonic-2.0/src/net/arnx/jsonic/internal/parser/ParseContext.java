@@ -368,10 +368,10 @@ public class ParseContext {
 				type = JSONEventType.NULL;
 				return null;
 			} else if ("true".equals(str)) {
-				type = JSONEventType.TRUE;
+				type = JSONEventType.BOOLEAN;
 				return (cache) ? Boolean.TRUE : null;
 			} else if ("false".equals(str)) {
-				type = JSONEventType.FALSE;
+				type = JSONEventType.BOOLEAN;
 				return (cache) ? Boolean.FALSE : null;
 			}
 		}

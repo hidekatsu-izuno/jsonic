@@ -8,8 +8,7 @@ public enum JSONEventType {
 	NAME,
 	STRING,
 	NUMBER,
-	TRUE,
-	FALSE,
+	BOOLEAN,
 	NULL,
 	WHITESPACE,
 	COMMENT
