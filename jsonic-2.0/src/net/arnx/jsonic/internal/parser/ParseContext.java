@@ -102,7 +102,7 @@ public class ParseContext {
 		return first;
 	}
 	
-	public StringCache getCachedBuffer() {
+	public StringCache getStringCache() {
 		if (cache == null) {
 			cache = new StringCache(120);
 		} else {
@@ -112,7 +112,7 @@ public class ParseContext {
 	}
 	
 	public final Object parseString(InputSource in, boolean any) throws IOException {
-		StringCache sc = (stack.size() < maxDepth) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		StringCache sc = (stack.size() < maxDepth) ? getStringCache() : StringCache.EMPTY_CACHE;
 		
 		int start = in.next();
 
@@ -218,7 +218,7 @@ public class ParseContext {
 	
 	public Object parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringCache sc = (stack.size() < maxDepth) ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		StringCache sc = (stack.size() < maxDepth) ? getStringCache() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
 		
@@ -330,7 +330,7 @@ public class ParseContext {
 	public Object parseLiteral(InputSource in) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		boolean cache = (stack.size() < maxDepth);
-		StringCache sc = cache ? getCachedBuffer() : StringCache.EMPTY_CACHE;
+		StringCache sc = cache ? getStringCache() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -342,7 +342,7 @@ public class ParseContext {
 			if (point == 0) {
 				if (Character.isJavaIdentifierStart(n)) {
 					if (!cache && (n == 'n' || n == 't' || n == 'f')) {
-						sc = getCachedBuffer();
+						sc = getStringCache();
 					}
 					
 					sc.append((char)n);
@@ -381,7 +381,7 @@ public class ParseContext {
 	
 	public String parseComment(InputSource in) throws IOException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
-		StringCache sc = isIgnoreWhitespace() ? StringCache.EMPTY_CACHE : getCachedBuffer();
+		StringCache sc = isIgnoreWhitespace() ? StringCache.EMPTY_CACHE : getStringCache();
 		
 		int n = -1;
 		
@@ -454,7 +454,7 @@ public class ParseContext {
 	}
 	
 	public String parseWhitespace(InputSource in) throws IOException {
-		StringCache sc = isIgnoreWhitespace() ? StringCache.EMPTY_CACHE : getCachedBuffer();
+		StringCache sc = isIgnoreWhitespace() ? StringCache.EMPTY_CACHE : getStringCache();
 		
 		int n = -1;
 		

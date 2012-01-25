@@ -79,7 +79,6 @@ import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
 import net.arnx.jsonic.internal.io.StringCache;
 import net.arnx.jsonic.internal.io.StringInputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
-import net.arnx.jsonic.internal.parser.ParseContext;
 import net.arnx.jsonic.internal.util.BeanInfo;
 import net.arnx.jsonic.internal.util.ClassUtil;
 import net.arnx.jsonic.internal.util.ExtendedDateFormat;
@@ -943,7 +942,7 @@ public class JSON {
 		
 		Object value = null;
 		try {
-			value = parseInternal(new Context(), is);
+			value = parseInternal(is);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -970,8 +969,7 @@ public class JSON {
 		
 		T value = null;
 		try {
-			Context context = new Context();
-			value = (T)convert(context, parseInternal(context, is), type);
+			value = (T)convert(new Context(), parseInternal(is), type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -980,7 +978,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		return (T)parseInternal(new Context(), new ReaderInputSource(in));
+		return (T)parseInternal(new ReaderInputSource(in));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -990,13 +988,12 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
-		Context context = new Context();
-		return (T)convert(context, parseInternal(context, new ReaderInputSource(in)), type);
+		return (T)convert(new Context(), parseInternal(new ReaderInputSource(in)), type);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
-		return (T)parseInternal(new Context(), new ReaderInputSource(reader));
+		return (T)parseInternal(new ReaderInputSource(reader));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1007,87 +1004,12 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parseInternal(context, new ReaderInputSource(reader)), type);
+		return (T)convert(context, parseInternal(new ReaderInputSource(reader)), type);
 	}
 	
-	@SuppressWarnings("unchecked")
-	private Object parseInternal(Context context, InputSource in) throws IOException, JSONException {
-		JSONReader reader = new JSONReader(context.getMode(), in, 
-				new ParseContext(context.getLocale(), context.getMaxDepth(), true));
-		
-		Object root = null;
-		List<Object> stack = new ArrayList<Object>();
-		Object name = null;
-				
-		JSONEventType type = null;
-		while ((type = reader.next()) != null) {
-			switch (type) {
-			case START_OBJECT:
-				Map<String, Object> map = new LinkedHashMap<String, Object>();
-				if (!stack.isEmpty()) {
-					Object current = stack.get(stack.size()-1);
-					if (current instanceof Map<?, ?>) {
-						if (!(map == null && context.isSuppressNull())) {
-							((Map<Object, Object>)current).put(name, map);
-						}
-					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(map);
-					}
-				}
-				if (root == null) root = map;
-				stack.add(map);
-				break;
-			case START_ARRAY:
-				List<Object> list = new ArrayList<Object>();
-				if (!stack.isEmpty()) {
-					Object current = stack.get(stack.size()-1);
-					if (current instanceof Map<?, ?>) {
-						if (!(list == null && context.isSuppressNull())) {
-							((Map<Object, Object>)current).put(name, list);
-						}
-					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(list);
-					}
-				}
-				if (root == null) root = list;
-				stack.add(list);
-				break;
-			case END_ARRAY:
-			case END_OBJECT:
-				if (!stack.isEmpty()) {
-					stack.remove(stack.size()-1);
-				} else {
-					throw new IllegalStateException();
-				}
-				break;	
-			case NAME:
-				name = reader.getValue();
-				break;
-			case STRING:
-			case NUMBER:
-			case TRUE:
-			case FALSE:
-			case NULL:
-				if (!stack.isEmpty()) {
-					Object current = stack.get(stack.size()-1);
-					if (current instanceof Map<?, ?>) {
-						Object value = reader.getValue();
-						if (!(value == null && context.isSuppressNull())) {
-							((Map<Object, Object>)current).put(name, value);
-						}
-					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(reader.getValue());
-					}
-				} else {
-					root = reader.getValue();
-				}
-				break;
-			default:
-				throw new IllegalStateException();
-			}
-		}
-		
-		return root;
+	private Object parseInternal(InputSource in) throws IOException, JSONException {
+		JSONReader reader = new JSONReader(mode, in, locale, maxDepth, suppressNull, true);
+		return reader.getValue();
 	}
 	
 	private String getMessage(String id, Object... args) {
@@ -1220,17 +1142,17 @@ public class JSON {
 			: (cs instanceof StringBuffer) ? new StringBufferInputSource((StringBuffer)cs)
 			: new CharSequenceInputSource(cs);
 		
-		return new JSONReader(mode, in, new ParseContext(locale, maxDepth, ignoreWhitespace));
+		return new JSONReader(mode, in, locale, maxDepth, suppressNull, ignoreWhitespace);
 	}
 	
 	public JSONReader createReader(InputStream in, boolean ignoreWhitespace) {
 		return new JSONReader(mode, new ReaderInputSource(in), 
-				new ParseContext(locale, maxDepth, ignoreWhitespace));
+				locale, maxDepth, suppressNull, ignoreWhitespace);
 	}
 	
 	public JSONReader createReader(Reader reader, boolean ignoreWhitespace) {
 		return new JSONReader(mode, new ReaderInputSource(reader), 
-				new ParseContext(locale, maxDepth, ignoreWhitespace));
+				locale, maxDepth, suppressNull, ignoreWhitespace);
 	}
 	
 	protected String normalize(String name) {
