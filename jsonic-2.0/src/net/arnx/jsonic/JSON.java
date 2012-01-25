@@ -76,6 +76,7 @@ import net.arnx.jsonic.internal.io.StringBufferInputSource;
 import net.arnx.jsonic.internal.io.StringBufferOutputSource;
 import net.arnx.jsonic.internal.io.StringBuilderInputSource;
 import net.arnx.jsonic.internal.io.StringBuilderOutputSource;
+import net.arnx.jsonic.internal.io.StringCache;
 import net.arnx.jsonic.internal.io.StringInputSource;
 import net.arnx.jsonic.internal.io.WriterOutputSource;
 import net.arnx.jsonic.internal.parser.ParseContext;
@@ -1329,7 +1330,7 @@ public class JSON {
 		private Map<Class<?>, Object> memberCache;
 		private Map<String, DateFormat> dateFormatCache;
 		private Map<String, NumberFormat> numberFormatCache;
-		private StringBuilder builderCache;
+		private StringCache cache;
 		
 		boolean skipHint = false;
 		
@@ -1367,13 +1368,13 @@ public class JSON {
 			}
 		}
 		
-		public StringBuilder getCachedBuffer() {
-			if (builderCache == null) {
-				builderCache = new StringBuilder();
+		StringCache getStringCache() {
+			if (cache == null) {
+				cache = new StringCache(128);
 			} else {
-				builderCache.setLength(0);
+				cache.clear();
 			}
-			return builderCache;
+			return cache;
 		}
 		
 		public Locale getLocale() {
@@ -1649,7 +1650,7 @@ public class JSON {
 		}
 		
 		public String toString() {
-			StringBuilderOutputSource sb = new StringBuilderOutputSource(getCachedBuffer());
+			StringBuilderOutputSource sb = new StringBuilderOutputSource(new StringBuilder());
 			for (int i = 0; i < path.length; i+=2) {
 				Object key = path[i];
 				if (key == null) {

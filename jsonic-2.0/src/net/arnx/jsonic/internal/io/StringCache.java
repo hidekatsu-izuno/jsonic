@@ -70,6 +70,13 @@ public class StringCache {
         cbuf[clen++] = c;
 	}
 	
+	public void append(String str) {
+        int nlen = clen + str.length();
+        if (nlen > cbuf.length) expand(nlen);
+        str.getChars(0, str.length(), cbuf, clen);
+        clen = nlen;
+	}
+	
 	public void append(String str, int start, int end) {
 		int len = end - start;
 		if (len == 0) return;
@@ -123,6 +130,16 @@ public class StringCache {
 	
 	public void clear() {
 		clen = 0;
+	}
+	
+	public char charAt(int i) {
+		if (i >= clen) throw new IndexOutOfBoundsException();
+		return cbuf[i];
+	}
+	
+	public void setCharAt(int i, char c) {
+		if (i >= clen) throw new IndexOutOfBoundsException();
+		cbuf[i] = c;
 	}
 	
 	public int getLength() {
