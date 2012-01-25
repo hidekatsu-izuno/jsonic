@@ -884,7 +884,6 @@ public class JSON {
 	protected Object preformat(Context context, Object value) throws Exception {
 		return value;
 	}
-
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence cs) throws JSONException {
@@ -901,7 +900,7 @@ public class JSON {
 		
 		Object value = null;
 		try {
-			value = parseInternal(new Context(), is);
+			value = new JSONReader(new Context(), is, true).getValue();
 		} catch (IOException e) {
 			// never occur
 		}
@@ -929,7 +928,8 @@ public class JSON {
 		T value = null;
 		try {
 			Context context = new Context();
-			value = (T)convert(context, parseInternal(context, is), type);
+			Object result = new JSONReader(context, is, true).getValue();
+			value = (T)convert(context, result, type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -938,7 +938,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		return (T)parseInternal(new Context(), new ReaderInputSource(in));
+		return (T)new JSONReader(new Context(), new ReaderInputSource(in), true).getValue();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -949,12 +949,13 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parseInternal(context, new ReaderInputSource(in)), type);
+		Object result = new JSONReader(context, new ReaderInputSource(in), true).getValue();
+		return (T)convert(context, result, type);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
-		return (T)parseInternal(new Context(), new ReaderInputSource(reader));
+		return (T)new JSONReader(new Context(), new ReaderInputSource(reader), true).getValue();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -965,12 +966,8 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parseInternal(context, new ReaderInputSource(reader)), type);
-	}
-	
-	private Object parseInternal(Context context, InputSource in) throws IOException, JSONException {
-		JSONReader reader = new JSONReader(context, in, true);
-		return reader.getValue();
+		Object result = new JSONReader(context, new ReaderInputSource(reader), true).getValue();
+		return (T)convert(context, result, type);
 	}
 	
 	private String getMessage(String id, Object... args) {
@@ -1085,19 +1082,19 @@ public class JSON {
 		}
 	}
 
-	public JSONReader createReader(CharSequence cs) {
-		return createReader(cs, true);
+	public JSONReader getReader(CharSequence cs) {
+		return getReader(cs, true);
 	}
 
-	public JSONReader createReader(InputStream in) {
-		return createReader(in, true);
+	public JSONReader getReader(InputStream in) {
+		return getReader(in, true);
 	}
 	
-	public JSONReader createReader(Reader reader) {
-		return createReader(reader, true);
+	public JSONReader getReader(Reader reader) {
+		return getReader(reader, true);
 	}
 
-	public JSONReader createReader(CharSequence cs, boolean ignoreWhitespace) {
+	public JSONReader getReader(CharSequence cs, boolean ignoreWhitespace) {
 		InputSource in = (cs instanceof String) ? new StringInputSource((String)cs)
 			: (cs instanceof StringBuilder) ? new StringBuilderInputSource((StringBuilder)cs)
 			: (cs instanceof StringBuffer) ? new StringBufferInputSource((StringBuffer)cs)
@@ -1106,11 +1103,11 @@ public class JSON {
 		return new JSONReader(new Context(), in, ignoreWhitespace);
 	}
 	
-	public JSONReader createReader(InputStream in, boolean ignoreWhitespace) {
+	public JSONReader getReader(InputStream in, boolean ignoreWhitespace) {
 		return new JSONReader(new Context(), new ReaderInputSource(in), ignoreWhitespace);
 	}
 	
-	public JSONReader createReader(Reader reader, boolean ignoreWhitespace) {
+	public JSONReader getReader(Reader reader, boolean ignoreWhitespace) {
 		return new JSONReader(new Context(), new ReaderInputSource(reader), ignoreWhitespace);
 	}
 	
