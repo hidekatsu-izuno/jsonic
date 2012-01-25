@@ -394,8 +394,10 @@ public class ParseContext {
 			switch(n) {
 			case '/':
 				if (point == 0) {
+					if (rest == 0) in.copy(sc, len);
 					point = 1;
 				} else if (point == 1) {
+					if (rest == 0) in.copy(sc, len);
 					point = 4;
 				} else if (point == 3) {
 					if (len > 1) in.copy(sc, len - 2);
@@ -408,8 +410,10 @@ public class ParseContext {
 				break;
 			case '*':
 				if (point == 1) {
+					if (rest == 0) in.copy(sc, len);
 					point = 2;
 				} else if (point == 2) {
+					if (rest == 0) in.copy(sc, len);
 					point = 3;
 				} else if (point == 3 || point == 4) {
 					if (rest == 0) in.copy(sc, len);

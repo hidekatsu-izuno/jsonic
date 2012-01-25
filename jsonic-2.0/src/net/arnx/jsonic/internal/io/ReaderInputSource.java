@@ -13,23 +13,22 @@ public class ReaderInputSource implements InputSource {
 	private long lines = 1L;
 	private long columns = 0L;
 	private long offset = 0L;
-
-	private final Reader reader;
+	
+	private InputStream in;
+	private Reader reader;
 	private final char[] buf = new char[256 + BACK];
 	private int back = BACK;
 	private int start = BACK;
 	private int end = BACK - 1;
 	private int mark = -1;
 	
-	public ReaderInputSource(InputStream in) throws IOException {
-		if (!in.markSupported()) in = new BufferedInputStream(in);
-		this.reader = new InputStreamReader(in, determineEncoding(in));
+	public ReaderInputSource(InputStream in) {
+		if (in == null) throw new NullPointerException();
+		this.in = in;
 	}
 	
-	public ReaderInputSource(Reader reader) throws IOException {
-		if (reader == null) {
-			throw new NullPointerException();
-		}
+	public ReaderInputSource(Reader reader) {
+		if (reader == null) throw new NullPointerException();
 		this.reader = reader;
 	}
 	
@@ -59,6 +58,11 @@ public class ReaderInputSource implements InputSource {
 				int len = Math.min(BACK, end - BACK  + 1);
 				System.arraycopy(buf, end + 1 - len, buf, BACK - len, len);
 				back = BACK - len;
+			}
+			if (in != null) {
+				if (!in.markSupported()) in = new BufferedInputStream(in);
+				this.reader = new InputStreamReader(in, determineEncoding(in));
+				this.in = null;
 			}
 			int size = reader.read(buf, BACK, buf.length-BACK);
 			if (size != -1) {

@@ -1215,6 +1215,37 @@ public class JSON {
 			throw new UnsupportedOperationException();
 		}
 	}
+
+	public JSONReader createReader(CharSequence cs) {
+		return createReader(cs, true);
+	}
+
+	public JSONReader createReader(InputStream in) {
+		return createReader(in, true);
+	}
+	
+	public JSONReader createReader(Reader reader) {
+		return createReader(reader, true);
+	}
+
+	public JSONReader createReader(CharSequence cs, boolean ignoreWhitespace) {
+		InputSource in = (cs instanceof String) ? new StringInputSource((String)cs)
+			: (cs instanceof StringBuilder) ? new StringBuilderInputSource((StringBuilder)cs)
+			: (cs instanceof StringBuffer) ? new StringBufferInputSource((StringBuffer)cs)
+			: new CharSequenceInputSource(cs);
+		
+		return new JSONReader(mode, in, new ParseContext(locale, maxDepth, ignoreWhitespace));
+	}
+	
+	public JSONReader createReader(InputStream in, boolean ignoreWhitespace) {
+		return new JSONReader(mode, new ReaderInputSource(in), 
+				new ParseContext(locale, maxDepth, ignoreWhitespace));
+	}
+	
+	public JSONReader createReader(Reader reader, boolean ignoreWhitespace) {
+		return new JSONReader(mode, new ReaderInputSource(reader), 
+				new ParseContext(locale, maxDepth, ignoreWhitespace));
+	}
 	
 	protected String normalize(String name) {
 		return name;
