@@ -23,7 +23,7 @@ public class JSONReader {
 	JSONReader(Context context, InputSource in, boolean ignoreWhitespace) {
 		this.context = context;
 		
-		ParseContext pcontext = new ParseContext(context.getLocale(), context.getMaxDepth(), ignoreWhitespace);
+		ParseContext pcontext = new ParseContext(context, ignoreWhitespace);
 		switch (context.getMode()) {
 		case STRICT:
 			parser = new StrictParser(in, pcontext);

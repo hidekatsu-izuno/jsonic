@@ -1250,7 +1250,7 @@ public class JSON {
 			return new Context(this);
 		}
 		
-		StringCache getStringCache() {
+		public StringCache getStringCache() {
 			if (cache == null) {
 				cache = new StringCache(128);
 			} else {

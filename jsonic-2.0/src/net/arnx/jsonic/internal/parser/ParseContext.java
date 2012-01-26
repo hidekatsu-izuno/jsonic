@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.internal.io.InputSource;
@@ -25,32 +26,26 @@ public class ParseContext {
 		ESCAPE_CHARS[0x7F] = 3;
 	}
 	
-	private Locale locale;
-	private int maxDepth;
+	private Context context;
 	private boolean ignoreWhirespace;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
-	private StringCache cache;
 	
 	private JSONEventType type;
 	private Object value;
 	private boolean first;
 	
-	public ParseContext(
-			Locale locale, 
-			int maxDepth, 
-			boolean ignoreWhirespace) {
-		this.locale = locale;
-		this.maxDepth = maxDepth;
+	public ParseContext(Context context, boolean ignoreWhirespace) {
+		this.context = context;
 		this.ignoreWhirespace = ignoreWhirespace;
 	}
 	
 	public Locale getLocale() {
-		return locale;
+		return context.getLocale();
 	}
 	
 	public int getMaxDepth() {
-		return maxDepth;
+		return context.getMaxDepth();
 	}
 	
 	public boolean isIgnoreWhitespace() {
@@ -106,16 +101,11 @@ public class ParseContext {
 	}
 	
 	public StringCache getStringCache() {
-		if (cache == null) {
-			cache = new StringCache(120);
-		} else {
-			cache.clear();
-		}
-		return cache;
+		return context.getStringCache();
 	}
 	
 	public final Object parseString(InputSource in, boolean any) throws IOException {
-		StringCache sc = (stack.size() < maxDepth) ? getStringCache() : StringCache.EMPTY_CACHE;
+		StringCache sc = (stack.size() < context.getMaxDepth()) ? getStringCache() : StringCache.EMPTY_CACHE;
 		
 		int start = in.next();
 
@@ -221,7 +211,7 @@ public class ParseContext {
 	
 	public Object parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringCache sc = (stack.size() < maxDepth) ? getStringCache() : StringCache.EMPTY_CACHE;
+		StringCache sc = (stack.size() < context.getMaxDepth()) ? getStringCache() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
 		
@@ -320,7 +310,7 @@ public class ParseContext {
 			char c = (char)n;
 			if (pos < expected.length() && c == expected.charAt(pos++)) {
 				if (pos == expected.length()) {
-					return (stack.size() < maxDepth) ? result : null;
+					return (stack.size() < context.getMaxDepth()) ? result : null;
 				}
 			} else {
 				break;
@@ -332,7 +322,7 @@ public class ParseContext {
 
 	public Object parseLiteral(InputSource in) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		boolean cache = (stack.size() < maxDepth);
+		boolean cache = (stack.size() < context.getMaxDepth());
 		StringCache sc = cache ? getStringCache() : StringCache.EMPTY_CACHE;
 		
 		int n = -1;
