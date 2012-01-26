@@ -1283,11 +1283,11 @@ public class JSON {
 			return mode;
 		}
 		
-		public NamingStyle getPropertyCaseStyle() {
+		public NamingStyle getPropertyStyle() {
 			return propertyStyle;
 		}
 		
-		public NamingStyle getEnumCaseStyle() {
+		public NamingStyle getEnumStyle() {
 			return enumStyle;
 		}
 		
@@ -1505,14 +1505,14 @@ public class JSON {
 								mName = prop.getName();
 								if (!hint.name().isEmpty()) {
 									mName = hint.name();
-								} else if (getPropertyCaseStyle() != null) {
-									mName = getPropertyCaseStyle().to(mName);
+								} else if (getPropertyStyle() != null) {
+									mName = getPropertyStyle().to(mName);
 								}
 								props.add(new PropertyInfo(prop.getBeanClass(), mName, 
 										null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), hint.ordinal()));
 							}
-						} else if (getPropertyCaseStyle() != null) {
-							mName = getPropertyCaseStyle().to(prop.getName());
+						} else if (getPropertyStyle() != null) {
+							mName = getPropertyStyle().to(prop.getName());
 							props.add(new PropertyInfo(prop.getBeanClass(), mName, 
 									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
 						} else {
@@ -1527,8 +1527,8 @@ public class JSON {
 							String name = prop.getName();
 							if (!hint.name().isEmpty()) {
 								name = hint.name();
-							} else if (getPropertyCaseStyle() != null) {
-								name = getPropertyCaseStyle().to(name);
+							} else if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
 							}
 							if (!name.equals(mName) && !hint.ignore()) {
 								props.add(new PropertyInfo(prop.getBeanClass(), name, 
@@ -1536,15 +1536,15 @@ public class JSON {
 							}
 						} else if (mName != null) {
 							String name = prop.getName();
-							if (getPropertyCaseStyle() != null) {
-								name = getPropertyCaseStyle().to(name);
+							if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
 							}
 							if (!name.equals(mName)) {
 								props.add(new PropertyInfo(prop.getBeanClass(), name, 
 										prop.getField(), null, null, prop.isStatic(), prop.getOrdinal()));
 							}
-						} else if (getPropertyCaseStyle() != null) {
-							props.add(new PropertyInfo(prop.getBeanClass(), getPropertyCaseStyle().to(prop.getName()), 
+						} else if (getPropertyStyle() != null) {
+							props.add(new PropertyInfo(prop.getBeanClass(), getPropertyStyle().to(prop.getName()), 
 									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
 						} else {
 							props.add(prop);
@@ -1596,8 +1596,8 @@ public class JSON {
 					}
 				
 					props.put(prop.getName(), prop);
-					if (getPropertyCaseStyle() != null) {
-						name = getPropertyCaseStyle().to(prop.getName());
+					if (getPropertyStyle() != null) {
+						name = getPropertyStyle().to(prop.getName());
 						if (!prop.getName().equals(name)) {
 							props.put(name, prop);
 						}

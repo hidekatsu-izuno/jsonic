@@ -35,9 +35,9 @@ public class EnumConverter implements Converter {
 					if (str.equals(e.name()))
 						return e;
 				}
-				if (context.getEnumCaseStyle() != null) {
+				if (context.getEnumStyle() != null) {
 					for (Enum e : enums) {
-						if (str.equals(context.getEnumCaseStyle().to(e.name())))
+						if (str.equals(context.getEnumStyle().to(e.name())))
 							return e;
 					}
 				}
