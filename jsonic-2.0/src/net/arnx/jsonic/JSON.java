@@ -1467,6 +1467,10 @@ public class JSON {
 			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
 		
+		public void enter(Object key) {
+			enter(key, getHint());
+		}
+		
 		public void enter(Object key, JSONHint hint) {
 			depth++;
 			if (path == null) path = new Object[8];
