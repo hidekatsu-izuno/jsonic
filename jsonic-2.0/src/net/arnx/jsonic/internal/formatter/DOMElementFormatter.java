@@ -25,7 +25,7 @@ public class DOMElementFormatter implements Formatter {
 		out.append(',');
 		if (context.isPrettyPrint()) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel() + 1; j++)
+			for (int j = 0; j < context.getDepth() + 1; j++)
 				out.append('\t');
 		}
 		out.append('{');
@@ -37,7 +37,7 @@ public class DOMElementFormatter implements Formatter {
 				}
 				if (context.isPrettyPrint() && names.getLength() > 1) {
 					out.append('\n');
-					for (int j = 0; j < context.getLevel() + 2; j++)
+					for (int j = 0; j < context.getDepth() + 2; j++)
 						out.append('\t');
 				}
 				Node node = names.item(i);
@@ -52,7 +52,7 @@ public class DOMElementFormatter implements Formatter {
 			}
 			if (context.isPrettyPrint() && names.getLength() > 1) {
 				out.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
+				for (int j = 0; j < context.getDepth() + 1; j++)
 					out.append('\t');
 			}
 		}
@@ -66,7 +66,7 @@ public class DOMElementFormatter implements Formatter {
 					out.append(',');
 					if (context.isPrettyPrint()) {
 						out.append('\n');
-						for (int j = 0; j < context.getLevel() + 1; j++)
+						for (int j = 0; j < context.getDepth() + 1; j++)
 							out.append('\t');
 					}
 					context.enter(i + 2, context.getHint());
@@ -80,7 +80,7 @@ public class DOMElementFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint()) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append(']');

@@ -726,10 +726,10 @@ public class JSON {
 	}
 	
 	/**
-	 * Sets maximum depth for the nest level.
+	 * Sets maximum depth for the nest depth.
 	 * default value is 32.
 	 * 
-	 * @param value maximum depth for the nest level.
+	 * @param value maximum depth for the nest depth.
 	 */
 	public void setMaxDepth(int value) {
 		if (value < 0) {
@@ -739,7 +739,7 @@ public class JSON {
 	}
 	
 	/**
-	 * Gets maximum depth for the nest level.
+	 * Gets maximum depth for the nest depth.
 	 * 
 	 * @return a maximum depth
 	 */
@@ -1204,7 +1204,7 @@ public class JSON {
 		private final NamingStyle enumStyle;
 
 		private Object[] path;
-		private int level = -1;
+		private int depth = -1;
 		private Map<Class<?>, Object> memberCache;
 		private Map<String, DateFormat> dateFormatCache;
 		private Map<String, NumberFormat> numberFormatCache;
@@ -1241,7 +1241,7 @@ public class JSON {
 				dateFormat = context.dateFormat;
 				propertyStyle = context.propertyStyle;
 				enumStyle = context.enumStyle;
-				level = context.level;
+				depth = context.depth;
 				path = context.path.clone();
 			}
 		}
@@ -1292,12 +1292,12 @@ public class JSON {
 		}
 		
 		/**
-		 * Returns the current level.
+		 * Returns the current depth.
 		 * 
-		 * @return level number. 0 is root node.
+		 * @return depth number. 0 is root node.
 		 */
-		public int getLevel() {
-			return level;
+		public int getDepth() {
+			return depth;
 		}
 		
 		/**
@@ -1306,17 +1306,17 @@ public class JSON {
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
 		public Object getKey() {
-			return path[level*2];
+			return path[depth*2];
 		}
 		
 		/**
-		 * Returns the key object in any level. the negative value means relative to current level.
+		 * Returns the key object in any depth. the negative value means relative to current depth.
 		 * 
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
-		public Object getKey(int level) {
-			if (level < 0) level = getLevel()+level;
-			return path[level*2];
+		public Object getKey(int depth) {
+			if (depth < 0) depth = getDepth()+depth;
+			return path[depth*2];
 		}
 		
 		/**
@@ -1325,13 +1325,13 @@ public class JSON {
 		 * @return the current annotation if present on this context, else null.
 		 */
 		public JSONHint getHint() {
-			return (JSONHint)path[level*2+1];
+			return (JSONHint)path[depth*2+1];
 		}
 		
 		public Object preformat(Object value) {
 			if (value == null) {
 				return null;
-			} else if (getLevel() > getMaxDepth()) {
+			} else if (getDepth() > getMaxDepth()) {
 				return null;
 			} else if (JSON.this.getClass() != JSON.class) {
 				try {
@@ -1435,7 +1435,7 @@ public class JSON {
 						JSONException.FORMAT_ERROR, e);
 			}
 			
-			if (!isStruct && getLevel() == 0 && getMode() != JSONMode.SCRIPT) {
+			if (!isStruct && getDepth() == 0 && getMode() != JSONMode.SCRIPT) {
 				throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
 						JSONException.FORMAT_ERROR);
 			}
@@ -1468,19 +1468,19 @@ public class JSON {
 		}
 		
 		public void enter(Object key, JSONHint hint) {
-			level++;
+			depth++;
 			if (path == null) path = new Object[8];
-			if (path.length < level*2+2) {
-				Object[] newPath = new Object[Math.max(path.length*2, level*2+2)];
+			if (path.length < depth*2+2) {
+				Object[] newPath = new Object[Math.max(path.length*2, depth*2+2)];
 				System.arraycopy(path, 0, newPath, 0, path.length);
 				path = newPath;
 			}
-			path[level*2] = key;
-			path[level*2+1] = hint;
+			path[depth*2] = key;
+			path[depth*2+1] = hint;
 		}
 		
 		public void exit() {
-			level--;
+			depth--;
 		}
 		
 		boolean hasMemberCache(Class<?> c) {

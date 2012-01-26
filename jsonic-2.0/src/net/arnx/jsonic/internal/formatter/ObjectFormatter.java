@@ -31,7 +31,7 @@ public class ObjectFormatter implements Formatter {
 					out.append(',');
 				if (context.isPrettyPrint()) {
 					out.append('\n');
-					for (int j = 0; j < context.getLevel() + 1; j++)
+					for (int j = 0; j < context.getDepth() + 1; j++)
 						out.append('\t');
 				}
 			} catch (Exception e) {
@@ -54,7 +54,7 @@ public class ObjectFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append('}');
