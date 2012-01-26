@@ -69,7 +69,7 @@ public class DOMElementFormatter implements Formatter {
 						for (int j = 0; j < context.getLevel() + 1; j++)
 							out.append('\t');
 					}
-					context.enter(i + 2);
+					context.enter(i + 2, context.getHint());
 					value = context.preformat(value);
 					context.format(value, out);
 					context.exit();

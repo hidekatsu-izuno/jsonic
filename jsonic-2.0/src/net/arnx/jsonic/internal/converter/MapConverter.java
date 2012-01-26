@@ -34,12 +34,13 @@ public class MapConverter implements Converter {
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
 				map.putAll((Map<?, ?>) value);
 			} else {
+				JSONHint hint = context.getHint();
 				for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
-					context.enter('.');
+					context.enter('.', hint);
 					Object key = context.postparse(entry.getKey(), pc0, pt0);
 					context.exit();
 
-					context.enter(entry.getKey());
+					context.enter(entry.getKey(), hint);
 					map.put(key, context.postparse(entry.getValue(), pc1, pt1));
 					context.exit();
 				}
@@ -52,12 +53,13 @@ public class MapConverter implements Converter {
 				}
 			} else {
 				List<?> src = (List<?>) value;
+				JSONHint hint = context.getHint();
 				for (int i = 0; i < src.size(); i++) {
-					context.enter('.');
+					context.enter('.', hint);
 					Object key = context.postparse(i, pc0, pt0);
 					context.exit();
 
-					context.enter(i);
+					context.enter(i, hint);
 					map.put(key, context.postparse(src.get(i), pc1, pt1));
 					context.exit();
 				}
@@ -70,11 +72,11 @@ public class MapConverter implements Converter {
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
 				map.put(value, null);
 			} else {
-				context.enter('.');
+				context.enter('.', hint);
 				key = context.postparse(key, pc0, pt0);
 				context.exit();
 
-				context.enter(key);
+				context.enter(key, hint);
 				map.put(key, context.postparse(value, pc1, pt1));
 				context.exit();
 			}

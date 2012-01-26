@@ -36,7 +36,10 @@ public class ParseContext {
 	private Object value;
 	private boolean first;
 	
-	public ParseContext(Locale locale, int maxDepth, boolean ignoreWhirespace) {
+	public ParseContext(
+			Locale locale, 
+			int maxDepth, 
+			boolean ignoreWhirespace) {
 		this.locale = locale;
 		this.maxDepth = maxDepth;
 		this.ignoreWhirespace = ignoreWhirespace;

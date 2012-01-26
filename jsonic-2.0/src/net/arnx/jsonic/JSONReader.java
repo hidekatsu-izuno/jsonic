@@ -9,15 +9,15 @@ import java.util.Map;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.internal.io.InputSource;
-import net.arnx.jsonic.internal.parser.JSONParser;
+import net.arnx.jsonic.internal.parser.Parser;
 import net.arnx.jsonic.internal.parser.ParseContext;
-import net.arnx.jsonic.internal.parser.ScriptJSONParser;
-import net.arnx.jsonic.internal.parser.StrictJSONParser;
-import net.arnx.jsonic.internal.parser.TraditionalJSONParser;
+import net.arnx.jsonic.internal.parser.ScriptParser;
+import net.arnx.jsonic.internal.parser.StrictParser;
+import net.arnx.jsonic.internal.parser.TraditionalParser;
 
 public class JSONReader {
 	private Context context;
-	private JSONParser parser;
+	private Parser parser;
 	private JSONEventType type;
 	
 	JSONReader(Context context, InputSource in, boolean ignoreWhitespace) {
@@ -26,13 +26,13 @@ public class JSONReader {
 		ParseContext pcontext = new ParseContext(context.getLocale(), context.getMaxDepth(), ignoreWhitespace);
 		switch (context.getMode()) {
 		case STRICT:
-			parser = new StrictJSONParser(in, pcontext);
+			parser = new StrictParser(in, pcontext);
 			break;
 		case SCRIPT:
-			parser = new ScriptJSONParser(in, pcontext);
+			parser = new ScriptParser(in, pcontext);
 			break;
 		default:
-			parser = new TraditionalJSONParser(in, pcontext);
+			parser = new TraditionalParser(in, pcontext);
 		}
 	}
 	

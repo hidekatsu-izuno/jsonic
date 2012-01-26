@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import net.arnx.jsonic.JSONEventType;
 
-public interface JSONParser {
+public interface Parser {
 	public JSONEventType next() throws IOException;
 	
 	public Object getValue();

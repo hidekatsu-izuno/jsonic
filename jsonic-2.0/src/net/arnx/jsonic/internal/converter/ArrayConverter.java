@@ -10,6 +10,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.JSONHint;
 import net.arnx.jsonic.internal.util.Base64;
 
 public class ArrayConverter implements Converter {
@@ -33,8 +34,9 @@ public class ArrayConverter implements Converter {
 					.getGenericComponentType() : pc;
 
 			Iterator<?> it = src.iterator();
+			JSONHint hint = context.getHint();
 			for (int i = 0; it.hasNext(); i++) {
-				context.enter(i);
+				context.enter(i, hint);
 				Array.set(array, i, context.postparse(it.next(), pc, pt));
 				context.exit();
 			}
@@ -52,7 +54,7 @@ public class ArrayConverter implements Converter {
 			Class<?> pc = ctype;
 			Type pt = (t instanceof GenericArrayType) ? ((GenericArrayType) t)
 					.getGenericComponentType() : pc;
-			context.enter(0);
+			context.enter(0, context.getHint());
 			Array.set(array, 0, context.postparse(value, pc, pt));
 			context.exit();
 			return array;

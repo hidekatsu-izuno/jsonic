@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import net.arnx.jsonic.JSONHint;
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.internal.util.ClassUtil;
 
@@ -41,8 +42,9 @@ public class CollectionConverter implements Converter {
 
 			if (!Object.class.equals(pc)) {
 				Iterator<?> it = src.iterator();
+				JSONHint hint = context.getHint();
 				for (int i = 0; it.hasNext(); i++) {
-					context.enter(i);
+					context.enter(i, hint);
 					collection.add(context.postparse(it.next(), pc, pt));
 					context.exit();
 				}
@@ -51,7 +53,7 @@ public class CollectionConverter implements Converter {
 			}
 		} else {
 			if (!Object.class.equals(pc)) {
-				context.enter(0);
+				context.enter(0, context.getHint());
 				collection.add(context.postparse(value, pc, pt));
 				context.exit();
 			} else {

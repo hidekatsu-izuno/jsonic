@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.JSONHint;
 import net.arnx.jsonic.internal.io.OutputSource;
 import net.arnx.jsonic.internal.util.ClassUtil;
 
@@ -27,7 +28,8 @@ public class DynaBeanFormatter implements Formatter {
 				Method getName = dynaProperties[0].getClass().getMethod(
 						"getName");
 				Method get = dynaBeanClass.getMethod("get", String.class);
-
+				
+				JSONHint hint = context.getHint();
 				for (Object dp : dynaProperties) {
 					Object name = null;
 					try {
@@ -64,7 +66,7 @@ public class DynaBeanFormatter implements Formatter {
 					out.append(':');
 					if (context.isPrettyPrint())
 						out.append(' ');
-					context.enter(name);
+					context.enter(name, hint);
 					if (cause != null)
 						throw cause;
 					value = context.preformat(value);

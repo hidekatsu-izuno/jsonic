@@ -14,7 +14,7 @@ public class ObjectArrayFormatter implements Formatter {
 
 		Class<?> lastClass = null;
 		Formatter lastFormatter = null;
-
+		
 		out.append('[');
 		int i = 0;
 		for (; i < array.length; i++) {
@@ -29,7 +29,7 @@ public class ObjectArrayFormatter implements Formatter {
 				for (int j = 0; j < context.getLevel() + 1; j++)
 					out.append('\t');
 			}
-			context.enter(i);
+			context.enter(i, hint);
 			item = context.preformat(item);
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
