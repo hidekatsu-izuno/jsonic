@@ -121,7 +121,8 @@ public class ParseContext {
 					rest = 0;
 					
 					in.back();
-					if (sb != null) sb.append(parseEscape(in));
+					char c = parseEscape(in);
+					if (sb != null) sb.append(c);
 				} else if (type == 2) { // "'
 					if (n == start) {
 						if (len > 1 && sb != null) in.copy(sb, len - 1);
