@@ -380,6 +380,7 @@ public class JSONTest {
 		map3.put("'3", new BigDecimal("3"));
 		
 		assertEquals(map1, JSON.decode("{\"map2\": {\"'2'\": 2, \"map3\": {\"'3\": 3}}, \"1\": 1}"));
+		assertEquals(map1, JSON.decode("{\"map2\"= {\"'2'\"= 2, \"map3\"= {\"'3\": 3}}, \"1\"= 1}"));
 		
 		Object[] input = new Object[2];
 		input[0] = new Date();

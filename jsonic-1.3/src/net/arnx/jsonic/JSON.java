@@ -680,10 +680,10 @@ public class JSON {
 	}
 	
 	/**
-	 * Sets maximum depth for the nest level.
+	 * Sets maximum depth for the nest depth.
 	 * default value is 32.
 	 * 
-	 * @param value maximum depth for the nest level.
+	 * @param value maximum depth for the nest depth.
 	 */
 	public void setMaxDepth(int value) {
 		if (value < 0) {
@@ -693,7 +693,7 @@ public class JSON {
 	}
 	
 	/**
-	 * Gets maximum depth for the nest level.
+	 * Gets maximum depth for the nest depth.
 	 * 
 	 * @return a maximum depth
 	 */
@@ -840,7 +840,7 @@ public class JSON {
 	final Object preformatInternal(Context context, Object value) {
 		if (value == null) {
 			return null;
-		} else if (context.getLevel() > context.getMaxDepth()) {
+		} else if (context.getDepth() > context.getMaxDepth()) {
 			return null;
 		} else if (getClass() != JSON.class) {
 			try {
@@ -944,7 +944,7 @@ public class JSON {
 					JSONException.FORMAT_ERROR, e);
 		}
 		
-		if (!isStruct && context.getLevel() == 0 && context.getMode() != Mode.SCRIPT) {
+		if (!isStruct && context.getDepth() == 0 && context.getMode() != Mode.SCRIPT) {
 			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
 					JSONException.FORMAT_ERROR);
 		}
@@ -1273,7 +1273,7 @@ public class JSON {
 		private final NamingStyle enumStyle;
 
 		private Object[] path;
-		private int level = -1;
+		private int depth = -1;
 		
 		private Map<Class<?>, Object> memberCache;
 		private Map<String, DateFormat> dateFormatCache;
@@ -1313,7 +1313,7 @@ public class JSON {
 				dateFormat = context.dateFormat;
 				propertyStyle = context.propertyStyle;
 				enumStyle = context.enumStyle;
-				level = context.level;
+				depth = context.depth;
 				path = context.path.clone();
 			}
 		}
@@ -1457,12 +1457,22 @@ public class JSON {
 		}
 		
 		/**
-		 * Returns the current level.
+		 * Returns the current level. This method renames to getDepth
 		 * 
-		 * @return level number. 0 is root node.
+		 * @return depth number. 0 is root node.
 		 */
+		@Deprecated
 		public int getLevel() {
-			return level;
+			return getDepth();
+		}
+		
+		/**
+		 * Returns the current depth.
+		 * 
+		 * @return depth number. 0 is root node.
+		 */
+		public int getDepth() {
+			return depth;
 		}
 		
 		/**
@@ -1471,17 +1481,17 @@ public class JSON {
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
 		public Object getKey() {
-			return path[level*2];
+			return path[depth*2];
 		}
 		
 		/**
-		 * Returns the key object in any level. the negative value means relative to current level.
+		 * Returns the key object in any depth. the negative value means relative to current depth.
 		 * 
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
-		public Object getKey(int level) {
-			if (level < 0) level = getLevel()+level;
-			return path[level*2];
+		public Object getKey(int depth) {
+			if (depth < 0) depth = getDepth()+depth;
+			return path[depth*2];
 		}
 		
 		/**
@@ -1490,7 +1500,7 @@ public class JSON {
 		 * @return the current annotation if present on this context, else null.
 		 */
 		public JSONHint getHint() {
-			return (JSONHint)path[level*2+1];
+			return (JSONHint)path[depth*2+1];
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -1510,23 +1520,23 @@ public class JSON {
 		}
 		
 		void enter(Object key, JSONHint hint) {
-			level++;
+			depth++;
 			if (path == null) path = new Object[8];
-			if (path.length < level*2+2) {
-				Object[] newPath = new Object[Math.max(path.length*2, level*2+2)];
+			if (path.length < depth*2+2) {
+				Object[] newPath = new Object[Math.max(path.length*2, depth*2+2)];
 				System.arraycopy(path, 0, newPath, 0, path.length);
 				path = newPath;
 			}
-			path[level*2] = key;
-			path[level*2+1] = hint;
+			path[depth*2] = key;
+			path[depth*2+1] = hint;
 		}
 		
 		void enter(Object key) {
-			enter(key, (JSONHint)((level != -1) ? path[level*2+1] : null));
+			enter(key, (JSONHint)((depth != -1) ? path[depth*2+1] : null));
 		}
 		
 		void exit() {
-			level--;
+			depth--;
 		}
 		
 		boolean hasMemberCache(Class<?> c) {

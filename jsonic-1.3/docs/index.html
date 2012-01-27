@@ -61,7 +61,7 @@
 <body>
 <div class="sidebar">
 <h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
-<div class="bar">Version 1.2</div>
+<div class="bar">Version 1.3</div>
 <ul class="menu">
 	<li><a href="index.html">JSONICとは</a></li>
 	<li><a href="index.html#download">ダウンロード</a></li>
@@ -70,7 +70,6 @@
 			<li><a href="index.html#encoder">JSONエンコーダー</a></li>
 			<li><a href="index.html#decoder">JSONデコーダー</a></li>
 			<li><a href="index.html#usage_advanced">高度な使い方</a></li>
-			<li><a href="index.html#as3">JSONIC for AS3</a></li>
 		</ul>
 	</li>
 	<li>Web サービス API
@@ -80,7 +79,6 @@
 		<li><a href="webservice.html#restservlet">RESTサーブレット</a></li>
 		<li><a href="webservice.html#dicontainer">DIコンテナ対応</a></li>
 		<li><a href="webservice.html#gatewayfilter">Gatewayフィルタ</a></li>
-		<li><a href="webservice_old.html">WebServiceServlet(旧)</a></li>
 		</ul>
 	</li>
 	<li>API リファレンス
@@ -91,6 +89,7 @@
 	</li>
 	<li>旧バージョン
 		<ul>
+		<li><a href="http://jsonic.sourceforge.jp/1.2/index.html">version 1.2</a></li>
 		<li><a href="http://jsonic.sourceforge.jp/1.1/index.html">version 1.1</a></li>
 		<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
 		</ul>
@@ -691,54 +690,6 @@ public class TestBean {
 <h2 id="as3">JSONIC for AS3</h2>
 <p>JSONICでは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、AS3版のJSONクラスとRemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。</p>
 
-<h3>■ ActionScript3版 JSONライブラリ</h3>
-<p>Java版JSONクラスとほぼ同じです。ただし、decode/parseメソッドでの特定クラスへの変換はサポートしていません（動的型で十分だと思いますので……）。</p>
-<pre class="source">
-import net.arnx.jsonic.JSON;
-
-<span class="comment">// インスタンスをJSONに変換します</span>
-var text:String = <span class="em">JSON.encode(</span>new Hoge()<span class="em">)</span>;
-
-<span class="comment">// JSONをObjectに変換します</span>
-var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</span>;
-</pre>
-
-<h3>■ ActionScript3版 JSON-RPCクライアントライブラリ</h3>
-<p>RemoteObjectライクなJSON-RPCクライアントクラスです。使い方はmx:RemoteObjectやmx:WebServiceなどを参考にしてください（lastResultのBindingも可能です）。</p>
-<pre class="source">
-<span class="elem">&lt;mx:WindowedApplication xmlns:mx="</span>http://www.adobe.com/2006/mxml<span class="elem">" </span>
-  <span class="elem">xmlns:js="</span>http://arnx.net/jsonic<span class="elem">"&gt;</span>
-    
-  &lt;!-- sourceにコンポーネント名、Operationのnameにメソッド名を指定します。 --&gt;
-  <span class="elem">&lt;js:WebService id="</span>remote<span class="elem">" </span>
-    <span class="elem">endpoint="</span>http://localhost:8080/sample/rpc/rpc.json<span class="elem">" </span>
-    <span class="elem">source="</span>calc<span class="elem">" </span>
-    <span class="elem">makeObjectsBindable="</span>false<span class="elem">" </span>
-    <span class="elem">showBusyCursor="</span>true<span class="elem">"</span>
-    <span class="elem">result="</span>onResult(event)<span class="elem">"</span>
-    <span class="elem">fault="</span>onFault(event)<span class="elem">"&gt;</span>
-    
-    <span class="elem">&lt;js:Operation name="</span>plus<span class="elem">" result="</span>onResult(event)<span class="elem">" fault="</span>onFault(event)<span class="elem">" /&gt;</span>
-    ...
-  <span class="elem">&lt;/js:WebService&gt;</span>
-    
-  <span class="elem">&lt;mx:Button label="</span>実行<span class="elem">" click="</span>remote.plus(100, 200)<span class="elem">" /&gt;</span>
-  <span class="elem">&lt;mx:TextInput id="</span>output<span class="elem">" text="</span>{remote.plus.lastResult}<span class="elem">" /&gt;</span>
-    
-  <span class="elem">&lt;mx:Script&gt;</span>
-    &lt;![CDATA[
-      private function onResult(event:ResultEvent) {
-        trace(event.result); // 100+200 =&gt; 300
-      }
-      
-      private function onFault(event:FaultEvent) {
-        trace(event.fault.message);
-      }
-    ]]&gt;
-  <span class="elem">&lt;/mx:Script&gt;</span>
-<span class="elem">&lt;/mx:WindowedApplication&gt;</span>
-</pre>
-
 <h2 id="faq">FAQ</h2>
 <dl>
 <dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
@@ -762,121 +713,20 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2012/1/17 version 1.2.9</h3>
+<h3>2012/01/28 version 1.3.0</h3>
 
 <ul>
-<li>[不具合] マルチスレッド環境下で使用した場合に NullPointerExceptionが発生する問題を修正しました（#26993）</li>
-<li>[不具合] 同名のフィールドとGetter/Setterメソッドを持つ場合、フィールド側にJSONHint アノテーションを付けても無視される問題を修正しました。この問題のため name や ignore を設定した場合に 1.2.6 ～ 1.2.8 の動作は、それ以前の動作が異なる結果を返していました（#26992）</li>
-<li>[不具合/仕様変更] PropertyCaseStyle を指定すると、 JSONHint アノテーションにて name に指定された名前にも適用されてしまう問題を修正しました。</li>
-<li>1.2.8にて修正された JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取得されてしまう脆弱性について注意書きをドキュメントに追加しました。</li>
-</ul>
-
-<h3>2011/12/17 version 1.2.8</h3>
-
-<ul>
-<li>[不具合] JSONHint にて serialized = true の指定時、単純型を受け取れない問題を修正しました（#26577）</li>
-<li>[不具合] STRICTモードでparse時に文字列中のシングルクォートが消えてしまう問題を修正しました。</li>
-<li>[不具合] JSON Web Service の設定にて encoding を設定してもパラメータが文字化けしてしまう問題を修正しました（#26567）</li>
-<li>[不具合] JSON Web Service にてデフォルトのコンテナを使って HttpServletRequest, HttpServletResponse をDIすると他スレッドのオブジェクトが取れてしまう場合がある問題を修正しました。</li>
-<li>[仕様変更] 上記、不具合への対応のため、Containerクラスからrequest/responseを削除しました。</li>
-<li>デフォルトの日時/数値フォーマットを指定する setDateFormat、setNumberFormat を追加しました。</li>
-<li>デフォルトのプロパティ名/列挙型の変換方式を指定する setPropertyStyle、setEnumStyle を追加しました。</li>
-<li>タイムゾーンを変更可能にしました。</li>
-<li>JSONHint アノテーションにプロパティ名の出力順序を指定する ordinal を追加しました。</li>
-<li>decode/parse 時に UnsupportedOperationException が起こった際のメッセージを追加しました。</li>
-</ul>
-
-<h3>2011/10/9 version 1.2.7</h3>
-
-<ul>
-<li>[仕様変更] JSON Web Serviceにて、パス名と一致するファイルがある場合、実ファイルを優先する機能が実装されておりましたが、マッピング制限が緩い場合、JSPなど意図せぬソースが公開される恐れがあるため削除しました（#26032）</li>
-<li>[不具合] encode/format 時に Calendar、TimeZone、Charset, java.sql.Array, Document, Element を List や Map などに詰めていた場合、ClassCastException が発生していた問題を修正しました（#26256）</li>
-<li>[不具合] JSON Web Serviceにて、SpringContainer を使っている場合、コンポーネントが見つからなかった場合、500 Internal Server Error が戻されていましたが、404 Not Found を返すよう修正しました。</li>
-<li>[不具合] JSON Web Serviceにて、web.xml に Hot Deploy 対象の例外クラスを指定していた場合、ClassCastException が発生していた問題を修正しました。</li>
-<li>JSON Web Serviceにて、可変長引数による呼び出しをサポートしました。</li>
-<li>JSON Web Serviceにて、オーバーロードされたメソッドの呼び出しをサポートしました。</li>
-<li>jar ファイルを Maven Central Repository に登録しました。</li>
-<li>JavadocをJDK7で生成するようにしました。</li>
-</ul>
-
-<h3>2011/8/7 version 1.2.6</h3>
-
-<ul>
-<li>[不具合] preformatの中でループ中に変換先クラスを変えた場合、formatに失敗する問題を修正しました（#24129）</li>
-<li>[不具合] プロパティ名に漢字など英数でない名称をしていた場合、formatやparseに失敗していた問題を修正しました（#25884）</li>
-<li>[不具合] 具体的な型が指定された総称型を継承したListやMapの型変換が正しく行われない問題を修正しました。</li>
-<li>JSONクラスにScriptモードでエスケープする escapeScript を追加しました。scriptタグ中に変数を出力する場合はencodeではなく、こちらを用いると便利です。</li>
-<li>1.2.5まではjsonic-1.2.6.jarにソースコードを含めていましたが、jsonic-1.2.6-sources.jarに分離しました。</li>
-</ul>
-
-<h3>2010/12/19 version 1.2.5</h3>
-
-<ul>
-<li>java.util.UUIDの双方向変換に対応しました。</li>
-<li>encode/formatの速度が50%ほど改善しました。</li>
-<li>decode/parseの速度が25%ほど改善しました。</li>
-<li>decode/parseにて文字列をDate型に変換する際、存在しない日付でも受け入れていた問題を修正しました（詳しくは、SimpleDateFormatのsetLenientを参照してください）。</li>
-<li>JavaScriptのevalでエラーとなるU+2028、U+2029をエスケープするよう修正しました。</li>
-<li>JSON Web Serviceにて、warファイルのまま実行すると配置済みjsonファイルを返さない問題を修正しました。</li>
-</ul>
-
-<h3>2010/10/19 version 1.2.4</h3>
-
-<ul>
-<li>[不具合] Google App Engine で java.net.InetAdress が利用できないためエラーが発生する問題を解消しました。</li>
-<li>[不具合] Google App Engine で ClassLoader.getSystemClassLoader() が例外を発生するため、実行に失敗する問題を解消しました。</li>
-<li>[不具合] ベータ1 ～ 2で発生していた様々な不具合を修正しました（#23436、#23472）</li>
-</ul>
-
-<h3>2010/10/05 version 1.2.3</h3>
-
-<ul>
-<li>[不具合] JSON.encode(Object obj, OutputStream out)などでflushされず文字が出力されないことがある（#23342）</li>
-</ul>
-
-<h3>2010/10/02 version 1.2.2</h3>
-
-<ul>
-<li>[不具合] JSONのデコードにて型変換の際、JSON string あるいは true/false から Map あるいは Object 型に変換する場合に hint 句がないと NullPointerException が発生する問題を修正しました（#23055）</li>
-<li>[不具合] クラスパスにBeanUtilsが含まれていない場合やJava5を使用している場合に、Class.forNameの失敗によりエンコードやコンバートが著しく遅くなる問題を修正しました（#23146）</li>
-<li>encode/parseの処理順や文字列のエスケープ方式を見直したことにより処理速度がやや向上しました。</li>
-</ul>
-
-<h3>2010/09/04 version 1.2.1</h3>
-
-<ul>
-<li>[不具合] JSONのエンコード時に改行やタブなど記号が割り当てられていない制御文字がエスケープされていなかった問題を修正しました（AS3版も同様です）。</li>
-<li>[不具合] クラスキャッシュが残っているため、Slim3などでホットリローディングに失敗する問題にある程度対応しました。</li>
-<li>[不具合] JSON Web ServiceにてServletContext#getRealPathがnullを返すとき、NullPointerException が発生していた問題を修正しました（#22982）</li>
-<li>[仕様変更] Objectを戻すdecode/parseメソッドの戻り値をタイプパラメータ化し、キャストを不要にしました。</li>
-<li>JSONのparseやformat時の挙動を変えるモード変更機能を追加し、厳密なチェックを行う STRICT モードとインラインでのJavaScript記述に便利な SCRIPT モードを追加しました。</li>
-<li>JSONの検証を行うために JSON.validate メソッドを追加しました。</li>
-<li>やや高速化を図りました。</li>
-</ul>
-
-<h3>2010/04/04 version 1.2.0</h3>
-
-<div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために以前同様の形で利用可能ですが、今後はRESTServletおよびRPCServletを利用してください。</div>
-
-<ul>
-<li>[不具合] JSONクラスにて親クラスの型パラメータ変数を持つプロパティの取り扱いに失敗していた問題にある程度対応しました。</li>
-<li>[不具合] JSONクラスおよびWebサービスAPIにてメソッドを探す際、合成メソッドやブリッジメソッドも対象に含めてしまっていた問題に対応しました（バージョン1.0.5、1.1.2でも修正/リリース済みです）[#19766]</li>
-<li>[不具合] JSONのデコード時に指数部が2桁以上ある数値の解析に失敗していた点を修正しました（JSONIC AS3およびバージョン1.0.5、1.1.3でも修正/リリース済みです）。[#20537]</li>
-<li>[不具合] ストリームから読み込む際、JSONException#getErrorOffset()にて正しくないオフセット値が戻される不具合を修正しました。</li>
-<li>[不具合] WebサービスAPIにて、パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
-<li>JSONクラスがjava.beans.Introspectorに依存しているため、Androidで実行できない問題を解消しました（他にもあれば教えてください）。</li>
-<li>JSONHintアノテーションにて、formatの日付書式でISO8601形式のタイムゾーンを扱うZZを指定できるようにしました。</li>
-<li>JSONHintアノテーションにanonymを追加し、単純値型からMapや複合型への変換を可能にしました。</li>
-<li>JSON encoder/decoderにて１処理中に限りメソッド情報をキャッシュするように変更しました。</li>
-<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=String.class)</code>を指定した場合には<code>toString</code>およびStringを引数に取るコンストラクタを使い文字列の相互変換を行うようにしました。</li>
-<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>JSONHint(type=Serializable.class)</code>を指定した場合には<code>ObjectInputStream/ObjectOutputStream</code>を使いシリアライズによる変換を行うようにしました。</li>
-<li>JSON.encode(or format)およびJSON.decode(or parse)にて<code>java.sql.RowId</code>の相互変換に対応しました。</li>
-<li>JSON.encode(or format)にて<code>java.sql.Array, java.sql.Struct</code>のJSON化に対応しました（逆方向には対応していません。相互変換が必要な場合は<code>JSONHint(type=Serializable.class)</code>を指定しシリアル化してください）。</li>
-<li>AS3版JSONICにて、JSON.encode(or format)時にmine変数を無視するように変更しました。</li>
-<li>JSON-RPC2.0をサポートするRPCServletと強化されたREST操作を可能にするRESTServletを新設しました。WebServiceServletは互換性のため残されていますが非推奨となり機能追加もほとんど行われていません（Version 1.1互換）。RPCServletやRESTServletとWebServiceServletの各モードとの違いは、<a href="webservice.html#changerpc">JSONIC 1.1 RPCモードからの変更点</a>、<a href="webservice.html#changerest">JSONIC 1.1 RESTモードからの変更点</a>を参照してください。</li>
-<li>WebサービスAPIにて各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ご注意ください（ただし、WebServiceServletに限り互換性維持のため、指定されたパッケージ名が旧来のものでも動作します）。</li>
-<li>WebサービスAPIにてContainerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
-<li>sampleに付属のjquery.jsのバージョンを1.4.2に更新しました。</li>
+<li>[機能追加] JSON のストリーム的に読み取るプルパーサ API である JSONReader を追加しました。JSONReader は、 JSON#getReader() メソッドを使うことで取得できます。</li>
+<li>[機能追加] decode/parseが新たに追加されたJSONReaderベースに書きなおされ、また、速度も大幅に改善しました。</li>
+<li>[仕様変更] ReaderあるいはInputStreamの先頭以外でBOM（Byte Order Mark）が見つかった場合は、例外を出すように変更しました。</li>
+<li>[仕様変更] TRADITIONAL モードでサポートされていたシェルスクリプトスタイルの行コメント（#) を廃止しました。</li>
+<li>[仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、エスケープを無視する仕様を廃止しました。</li>
+<li>[仕様変更] SCRIPT モードで JSON Object のキー値としてとれる値を JavaScript の仕様に合わせ、マイナスの数値の場合エラーとし、また値が常に文字列型に変換されます。</li>
+<li>[仕様変更] メソッド名が不統一となっていたため JSON.Context#getLevel() を非推奨とし、 JSON.Context#getDepth() に変更しました。</li>
+<li>[仕様変更] メソッド名が不統一となっていたため JSON.Context#getPropertyCaseStyle(), JSON.Context#getEnumCaseStyle() を廃止し、それぞれ JSON.Context#getPropertyStyle(), JSON.Context#getEnumStyle() に変更しました。</li>
+<li>[仕様変更] ActionScript版のJSONICは、ActionScriptで正規にJSONライブラリがサポートされ、必要性が薄くなったため廃止しました。</li>
+<li>[仕様変更] 非推奨となっていたWebServiceServletを廃止しました。</li>
+<li>[不具合] エラー発生時のカラム位置がずれる問題を修正しました。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />
