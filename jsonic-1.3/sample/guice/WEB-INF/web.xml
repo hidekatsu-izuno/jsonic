@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+	
+	<description>guice jsonic sample</description>
+
+	<listener>
+		<!-- You need to replace your customized class. -->
+		<listener-class>sample.guice.GuiceServletContextListener</listener-class>
+	</listener>
+		
+	<filter>
+		<filter-name>guiceFilter</filter-name>
+		<filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>guiceFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>	
+ 
+ 
+	<servlet>
+		<description>JSON RPC Service</description>
+		<servlet-name>rpcServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RPCServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.web.extension.GuiceContainer
+				debug: true
+				mappings: {
+					'/rpc/{package}/rpc.json': 'sample.guice.web.${package}.service.${class}Service'
+					'/rpc/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
+					'/rpc/{class}.json': 'sample.guice.service.${class}Service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+ 
+	<servlet>
+		<description>JSON REST Service</description>
+		<servlet-name>restServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RESTServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.web.extension.GuiceContainer
+				debug: true
+				mappings: {
+					'/{package}/{class}.{method:print|exception}.json': {
+						'target': 'sample.guice.web.${package}.service.${class}Service', 
+						'verb': 'GET'
+					},
+					'/{package}/{class}/{id}.json': {
+						'target': 'sample.guice.web.${package}.service.${class}Service',
+						'verb': ['GET', 'PUT', 'DELETE']
+					},
+					'/{package}/{class}.json': 'sample.guice.web.${package}.service.${class}Service'
+				},
+				errors: {
+					'sample.guice.web.rest.service.MemoException': 406
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>rpcServlet</servlet-name>
+		<url-pattern>/rpc/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>restServlet</servlet-name>
+		<url-pattern>*.json</url-pattern>
+	</servlet-mapping>
+</web-app>

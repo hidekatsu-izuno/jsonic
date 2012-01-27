@@ -1,0 +1,90 @@
+<!doctype html>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>JSON-REST sample</title>
+<style type="text/css">
+input {
+	font-size: 9pt;
+}
+textarea {
+	font-size: 9pt;
+}
+div#list table {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+div#list table th {
+	border: 1px solid black;
+	font-size: 9pt;
+
+}
+div#list table td {
+	border: 1px solid black;
+	font-size: 9pt;
+}
+</style>
+<script type="text/javascript" src="prototype-1.6.1.js"></script>
+<script type="text/javascript">
+function show() {
+	var request = new Ajax.Request('rest/memo.json', {
+		method:'get',
+		onSuccess: function (req) {
+			var o = req.responseText.evalJSON();
+			var content = '<table><tr><th width="30">ID</th><th width="50">Title</th><th width="300">Text</th><th width="50">&nbsp;</th></tr>';
+			for (i = 0; i < o.length; i++) {
+				content += '<tr>'
+					+ '<td>' + o[i].id + '</td>'
+					+ '<td><input id="title' + o[i].id + '" type="text" style="width:100%" value="' + o[i].title + '" /></td>'
+					+ '<td><input id="text' + o[i].id + '" type="text" style="width:100%" value="' + o[i].text + '" /></td>'
+					+ '<td><input type="button" id="update' + o[i].id + '" value="Update" onclick="updateRow(' + o[i].id + ')" />'
+					+ '<input type="button" id="delete' + o[i].id + '" value="Delete" onclick="deleteRow(' + o[i].id + ')" /></td>'
+					+ '</tr>';
+			}
+			content += '<tr>'
+				+ '<td>&nbsp;</td>'
+				+ '<td><input id="title" type="text" style="width:100%" /></td>'
+				+ '<td><input id="text" type="text" style="width:100%" /></td>'
+				+ '<td><input type="button" id="add" value="Add" onclick="addRow()"/></td>'
+				+ '</tr></table>';
+			$('list').innerHTML = content;
+		}
+	});
+}
+
+function addRow() {
+	var request = new Ajax.Request('rest/memo.json', {
+		method: 'post',
+		contentType: 'application/json',
+		postBody: Object.toJSON({title: $F('title'), text: $F('text')}),
+		onSuccess: show
+	});
+}
+
+function updateRow(id) {
+	var request = new Ajax.Request('rest/memo/'+id+'.json?_method=put', {
+		contentType: 'application/json',
+		postBody: Object.toJSON({title: $F('title' + id), text: $F('text' + id)}),
+		onSuccess: show
+	});
+}
+
+function deleteRow(id) {
+	var request = new Ajax.Request('rest/memo/'+id+'.json?_method=delete', {
+		method: 'post',
+		contentType: 'application/json',
+		onSuccess: show
+	});
+}
+</script>
+</head>
+
+<body onload="show()">
+<h1>JSON-REST sample</h1>
+<hr />
+<h2>Memo Service</h2>
+<div id="list"></div>
+<a href="rest/memo.print.json">ダウンロード</a>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+	
+	<description>spring-jsonic sample</description>
+	
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>/WEB-INF/applicationContext.xml</param-value>
+	</context-param>
+	
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+	</listener>
+ 
+	<servlet>
+		<description>JSON RPC Service</description>
+		<servlet-name>rpcServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RPCServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.web.extension.SpringContainer
+				debug: true
+				mappings: {
+					'/rpc/{package}/rpc.json': 'sample.spring.web.${package}.service.${class}Service'
+					'/rpc/{package}/{class}.json': 'sample.spring.web.${package}.service.${class}Service'
+					'/rpc/{class}.json': 'sample.spring.service.${class}Service'
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+ 
+	<servlet>
+		<description>JSON REST Service</description>
+		<servlet-name>restServlet</servlet-name>
+		<servlet-class>net.arnx.jsonic.web.RESTServlet</servlet-class>
+		<init-param>
+			<param-name>config</param-name>
+			<param-value>
+				container: net.arnx.jsonic.web.extension.SpringContainer
+				debug: true
+				mappings: {
+					'/{package}/{class}.{method:print|exception}.json': {
+						'target': 'sample.spring.web.${package}.service.${class}Service', 
+						'verb': 'GET'
+					},
+					'/{package}/{class}/{id}.json': {
+						'target': 'sample.spring.web.${package}.service.${class}Service',
+						'verb': ['GET', 'PUT', 'DELETE']
+					},
+					'/{package}/{class}.json': 'sample.spring.web.${package}.service.${class}Service'
+				},
+				errors: {
+					'sample.spring.web.rest.service.MemoException': 406
+				}
+			</param-value>
+		</init-param>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>rpcServlet</servlet-name>
+		<url-pattern>/rpc/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>restServlet</servlet-name>
+		<url-pattern>*.json</url-pattern>
+	</servlet-mapping>
+</web-app>

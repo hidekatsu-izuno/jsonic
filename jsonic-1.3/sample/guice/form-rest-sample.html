@@ -1,0 +1,75 @@
+<!doctype html>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>FORM-REST sample</title>
+<style type="text/css">
+input {
+	font-size: 9pt;
+}
+textarea {
+	font-size: 9pt;
+}
+div#list table {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+div#list table th {
+	border: 1px solid black;
+	font-size: 9pt;
+
+}
+div#list table td {
+	border: 1px solid black;
+	font-size: 9pt;
+}
+</style>
+<script type="text/javascript" src="jquery-1.4.2.min.js"></script>
+<script type="text/javascript">
+$.ajaxSetup({ cache: false });
+
+function show() {
+	var request = $.getJSON('rest/memo.json', null, function(o) {
+		var content = '<table><tr><th width="30">ID</th><th width="50">Title</th><th width="300">Text</th><th width="50">&nbsp;</th></tr>';
+		for (i = 0; i < o.length; i++) {
+			content += '<tr>'
+				+ '<td>' + o[i].id + '</td>'
+				+ '<td><input id="title' + o[i].id + '" type="text" style="width:100%" value="' + o[i].title + '" /></td>'
+				+ '<td><input id="text' + o[i].id + '" type="text" style="width:100%" value="' + o[i].text + '" /></td>'
+				+ '<td><input type="button" id="update' + o[i].id + '" value="Update" onclick="updateRow(' + o[i].id + ')" />'
+				+ '<input type="button" id="delete' + o[i].id + '" value="Delete" onclick="deleteRow(' + o[i].id + ')" /></td>'
+				+ '</tr>';
+		}
+		content += '<tr>'
+			+ '<td>&nbsp;</td>'
+			+ '<td><input id="title" type="text" style="width:100%" /></td>'
+			+ '<td><input id="text" type="text" style="width:100%" /></td>'
+			+ '<td><input type="button" id="add" value="Add" onclick="addRow()"/></td>'
+			+ '</tr></table>';
+		$('#list').html(content);
+	});
+}
+
+function addRow() {
+	$.post('rest/memo.json', {title: $('#title').val(), text: $('#text').val()}, show);
+}
+
+function updateRow(id) {
+	$.post('rest/memo/'+id+'.json?_method=put', {title: $('#title' + id).val(), text: $('#text' + id).val()}, show);
+}
+
+function deleteRow(id) {
+	$.post('rest/memo/'+id+'.json?_method=delete', {title: $('#title' + id).val(), text: $('#text' + id).val()}, show);
+}
+</script>
+</head>
+
+<body onload="show()">
+<h1>FORM-REST sample</h1>
+<hr />
+<h2>Memo Service</h2>
+<div id="list"></div>
+<a href="rest/memo.print.json">ダウンロード</a>
+</body>
+</html>

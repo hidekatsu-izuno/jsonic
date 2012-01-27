@@ -1,0 +1,354 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WebServiceServlet (JSONIC 1.2)</title>
+<style type="text/css">
+	html { overflow-x: hidden; height:100%; }
+	body { width: 100%; height: 100%; margin: 0px; padding: 0px; font: 10pt sans-serif; z-index: 1; }
+	.sidebar { width: 160px; height: 100%;  margin: 0px; padding: 0px; background: white;
+		position: fixed; top: 0px; left: 0px; bottom: 0px; overflow: hidden; z-index: 2; }
+	.title { width: 160px; height: 46px; margin: 0px; padding: 0px; }
+	.title a { position: absolute; top: 8px; left: 5px; overflow: hidden; }
+	.menu { width: 160px; margin: 0px; padding: 0px; }
+	.head { width: 100%; margin: 0px 160px 0px 0px; padding: 0px; }
+	.head .subtitle { position: absolute; top: 18px; left: 160px; }
+	.sf { height: 46px; margin: 0px; padding: 0px; }
+	.sf a { position: absolute; top: 8px; right: 20px; }
+	.main { margin: 0px 0px 0px 160px; padding: 0px; }
+	.bar { margin: 0px; padding: 0px 10px; }
+	
+	.main { line-height: 1.5; border-left: 1px solid silver; padding: 15px 20px 15px 20px; }
+	.title { font: bold 20pt sans-serif; color: #6699FF; }
+	.title a { color: #6699FF; text-decoration: none; }
+	.subtitle { font: italic 12pt sans-serif; color: gray; }
+	.bar { color: white; background: gray; font: bold 8pt sans-serif; text-align: right; }
+	.menu { margin: 15px 0px 15px 15px; padding: 0px; list-style-type: none; }
+	.menu ul { margin: 0px; padding: 0px 0px 0px 20px; font-size: 8pt; list-style-image: url(images/marker.jpg); }
+	.menu li { line-height: 1.5; }
+	.menu li a { text-decoration: none; }
+	.main ul { list-style-image: url(images/marker.jpg); }
+	h2 { font: bold 12pt sans-serif; margin: 30px 0px 10px 0px; border-width: 2px ; border-style: solid; 
+		border-color: silver gray gray silver; padding: 3px;
+		background-image: url(images/header.jpg); background-position: center center; line-height: 1.0; }
+	h3 { font: bold 11pt sans-serif; border-bottom: 1px solid gray; margin: 30px 0px 12px 0px;
+		padding: 1px; line-height: 1.0; }
+	h3 .subtitle { font: 9pt sans-serif; padding: 1px; line-height: 1.0; }
+	a { color: darkblue; }
+	p { margin: 0px 0px 1em 0px; padding: 0px; }
+	.warning { border: 1px solid red; background-color: #FFFF66; padding: 5px; margin-bottom: 5px; }
+	.source { border: 1px solid silver; font: 9pt monospace; padding: 16px; background-color: #E0FFFF; }
+	.comment { color: #0066FF; font-family: monospace; }
+	.em { font-weight: bold; color: #000099; font-family: monospace; }
+	.elem { font-weight: bold; color: #000099; }
+	.table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
+		margin: 0px 0px 1em 0px; }
+	.table th { background-color: silver; border: 1px solid gray; white-space: nowrap; }
+	.table td { border: 1px solid gray; padding: 2px 2px;}
+	sup { font-size: 8pt; }
+	.caption { font: 8pt sans-serif; margin: 10px; }
+	.copyright { text-align: right; }
+</style>
+<!--[if IE 6]>
+<style type="text/css">
+	.sidebar { position: absolute; }
+</style>
+<![endif]--> 
+</head>
+<body>
+<div class="sidebar">
+<h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
+<div class="bar">Version 1.2</div>
+<ul class="menu">
+	<li><a href="index.html">JSONICとは</a></li>
+	<li><a href="index.html#download">ダウンロード</a></li>
+	<li>JSON API
+		<ul>
+		<li><a href="index.html#encoder">JSONエンコーダー</a></li>
+		<li><a href="index.html#decoder">JSONデコーダー</a></li>
+		<li><a href="index.html#usage_advanced">高度な使い方</a></li>
+		<li><a href="index.html#as3">JSONIC for AS3</a></li>
+		</ul>
+	</li>
+	<li>Web サービス API
+		<ul>
+		<li><a href="webservice.html">基本的な説明</a></li>
+		<li><a href="webservice.html#rpcservlet">RPCサーブレット</a></li>
+		<li><a href="webservice.html#restservlet">RESTサーブレット</a></li>
+		<li><a href="webservice.html#dicontainer">DIコンテナ対応</a></li>
+		<li><a href="webservice.html#gatewayfilter">Gatewayフィルタ</a></li>
+		<li>WebServiceServlet(旧)
+			<ul>
+			<li><a href="webservice_old.html#configuration">設定方法</a></li>
+			<li><a href="webservice_old.html#rpcmode">RPCモード</a></li>
+			<li><a href="webservice_old.html#restmode">RESTモード</a></li>
+			<li><a href="webservice_old.html#jsonp">JSONP</a></li>
+			<li><a href="webservice_old.html#initdestroy">JSONP</a></li>
+			<li><a href="webservice_old.html#changes">1.1からの変更点</a></li>
+			</ul>
+		</li>
+		</ul>
+	</li>
+	<li>API リファレンス
+		<ul>
+		<li><a href="java/api/index.html">javadoc</a></li>
+		<li><a href="as3/api/index.html">asdoc</a></li>
+		</ul>
+	</li>
+	<li>旧バージョン
+		<ul>
+		<li><a href="http://jsonic.sourceforge.jp/1.1/index.html">version 1.1</a></li>
+		<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
+		</ul>
+	</li>
+	<li><a href="index.html#license">ライセンス</a></li>
+	<li><a href="index.html#report">バグ・要望の報告先</a></li>
+	<li><a href="index.html#releasenote">リリースノート</a></li>
+</ul>
+</div>
+
+<div class="head">
+<div class="subtitle">- simple json encoder/decoder for java</div>
+<div class="sf"><a href="http://sourceforge.jp/"><img src="http://sourceforge.jp/sflogo.php?group_id=2893" width="96" height="31" style="border-width:0px;" alt="SourceForge.jp" /></a></div>
+<div class="bar">&nbsp;</div>
+</div>
+
+<div class="main">
+
+<h2 id="webservice" style="margin-top: 5px;">Web Service Servlet</h2>
+
+<p>JSONICには、JSON-RPC1.0によるRPCモードとRestfull APIによるRESTモードの2 Way Web Service機能が用意されています。</p>
+
+<div class="warning">WebServiceServletは、JSONIC 1.2以降は非推奨となりました。互換性維持のために以前同様の形で利用可能ですが、今後はRESTServletおよびRPCServletを利用してください。</div>
+
+<h2 id="configuration">設定方法</h2>
+<p>JSON Web Service Servletの設定は簡単です。web.xmlにWebServiceServletを指定し、パスとClassのマッピングなどの設定を行うだけです。</p>
+<pre class="source">
+<span class="elem">&lt;servlet&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>json-ws<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;servlet-class&gt;</span>net.arnx.jsonic.web.WebServiceServlet<span class="elem">&lt;/servlet-class&gt;</span>
+  <span class="elem">&lt;init-param&gt;</span>
+    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+    <span class="elem">&lt;param-value&gt;</span>
+    {
+      "debug": true,
+      "encoding": "UTF-8",
+      "expire": true,
+      "mappings": {
+        "/{package}/{class}.{ext}": "sample.web.${package}.service.${class}Service",
+        "/{class}.{ext}": "sample.${class}Service"
+      }
+    }
+    <span class="elem">&lt;/param-value&gt;</span>
+  <span class="elem">&lt;/init-param&gt;</span>
+<span class="elem">&lt;/servlet&gt;</span>
+
+<span class="elem">&lt;servlet-mapping&gt;</span>
+  <span class="elem">&lt;servlet-name&gt;</span>json-ws<span class="elem">&lt;/servlet-name&gt;</span>
+  <span class="elem">&lt;url-pattern&gt;</span>*.json<span class="elem">&lt;/url-pattern&gt;</span>
+<span class="elem">&lt;/servlet-mapping&gt;</span>
+</pre>
+<p>configで設定できる値は次の通りです。</p>
+<table class="table" summary="Config設定">
+<tr><th>キー</th><th>値型</th><th>説明</th></tr>
+<tr><td>container</td><td><code>net.arnx.jsonic.web.Container</code></td><td>クラスのインスタンスを取得するためのコンテナを設定します。デフォルトは、<code>net.arnx.jsonic.web.Container</code>です。</td></tr>
+<tr><td>encoding</td><td><code>java.lang.String</code></td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはUTF-8です。</td></tr>
+<tr><td>expire</td><td><code>java.lang.Boolean</code></td><td>クライアントキャッシュを抑制するHTTPヘッダを出力します(<code>Cache-Control:&nbsp;no-cache, Pragma:&nbsp;no-cache, Expires:&nbsp;Tue,&nbsp;29&nbsp;Feb&nbsp;2000&nbsp;12:00:00&nbsp;GMT</code>)。デフォルトはtrueです。</td></tr>
+<tr><td>debug</td><td><code>java.lang.Boolean</code></td><td>デバッグモードの有効/無効を切り替えます。デフォルトはfalseです。</td></tr>
+<tr><td>mappings</td><td><code>java.util.Map&lt;String, String&gt;</code></td><td>URLパスとクラスのマッピングを行います。
+パス中の<code>{<i>name</i>}</code>で囲まれた部分はクラス名の<code>${<i>name</i>}</code>に置換されます<sup>(※1)</sup>。
+なお、RESTモードの場合、利用されなかった変数は引数としてメソッドに引き渡されます（RPCモードの場合は設定されません。詳しくはRESTモードの説明をご覧ください）。また、<code>{<i>name</i>:<i>regex</i>}</code>と記載することで、JSR-311同様パターンを設定することができます。</td></tr>
+<tr><td>definitions</td><td><code>java.util.Map&lt;String, Pattern&gt;</code></td><td>mappings中の変数の定義を正規表現で設定します。設定されない場合は<code>[^/().]+</code>が設定されたものと扱われます。</td></tr>
+<tr><td>init</td><td><code>java.lang.String</code></td><td>処理の実行前に呼び出されるメソッド名を設定します。デフォルトは<code>"init"</code>です。</td></tr>
+<tr><td>destroy</td><td><code>java.lang.String</code></td><td>処理の実行後に呼び出されるメソッド名を設定します。デフォルトは<code>"destroy"</code>です。</td></tr>
+<tr><td>processor</td><td><code>net.arnx.jsonic.JSON</code></td><td>処理に使用するJSONクラスを設定します。デフォルトは、<code>net.arnx.jsonic.web.WebServiceServlet.JSON</code>です。</td></tr>
+</table>
+<div class="caption">
+(※1) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。
+また、URLパスにはコンテキストパスを含める必要はありません。
+</div>
+
+<h2 id="rpcmode">RPCモード</h2>
+<p><a href="http://json-rpc.org/">JSON-RPC</a>は、JSONを使ったシンプルなRemote Procedure Callプロトコルです。JSON Web Service Servletでは、class変数の値が<code>"rpc"</code>であった場合、RPCモードとなります。</p>
+
+<p>RPCモードでは、対象のパスに対し次のようなJSONをPOSTすることで、対象クラスのメソッドを呼び出すことができます（GET/PUT/DELETEは無効です）。paramsに指定された配列の値はメソッドの引数に指定された型に従い自動的に変換されます。なお、クラス名はUpperCamel、メソッド名はLowerCamelに自動的に変換されます。そして、実行後、戻り値がJSONに変換されクライアントに返されます。</p>
+<pre class="source">
+{
+  "method": "class.method",
+  "params": [ arg1, arg2, ... ],
+  "id": request_id
+}
+</pre>
+<p>class, methodにはそれぞれ変数の値、argNにはメソッドの引数を設定してください。requesst_idには送受信の同期確認用のキーとしてnull以外の任意の値を設定してください（HTTPでは、送信と受信は同期処理ですのでほとんど意味はありませんが、省略すると通知(Notification)モードとなりレスポンスのメッセージボディが返されませんので必ず値を指定してください）。</p>
+<p>例えば、mappingsに "/[package]/[class].[ext]": "boo.${package}.${class}Service" という指定があった場合、 /foo/woo/rpc.jsonというパスに次のJSONがPOSTすると、boo.foo.woo.CalcServiceクラスのint plus(int a, int b)のようなメソッドが呼び出されます。</p>
+<pre class="source">
+{
+  "method": "calc.plus",
+  "params": [1,2],
+  "id": 1
+}
+</pre>
+<p>この時、レスポンスのメッセージボディとしては次のような結果が返されます。</p>
+<pre class="source">
+{
+  "result": 3,
+  "error": null,
+  "id": 1
+}
+</pre>
+
+<p>RPCモードでエラーが発生した場合にはレスポンスのメッセージボディでクライアントに通知されます。ステータスコードは、エラーの有無に関わらず200 OKが返されます。</p>
+<p>errorの値には code, message, dataの三つのキーを持つJSON objectが設定されます。codeとmessageについては次表を参照してください。dataには投げられた例外のプロパティがセットされます（ただし、Throwableクラスのプロパティは除外されます）。</p>
+<table class="table" summary="RPC エラー一覧">
+<tr><th>エラー内容</th><th>HTTP Status Code</th><th>JSON error</th></tr>
+<tr>
+<td>JSONリクエストがJSON-RPCのリクエストとして不正</td>
+<td>200&nbsp;OK</td>
+<td><pre style="margin:0;">{
+  "code": -32600,
+  "message": "Invalid Request."
+}</pre></td>
+</tr>
+<tr>
+<td>methodで指定したクラス/メソッドが見つからない<sup>(※2)</sup></td>
+<td>200&nbsp;OK</td>
+<td><pre style="margin:0;">{
+  "code": -32601,
+  "message": "Method not found."
+}</pre></td>
+</tr>
+<tr>
+<td>paramsが不適切<sup>(※3)</sup></td>
+<td>200&nbsp;OK</td>
+<td><pre style="margin:0;">{
+  "code": -32602,
+  "message": "Invalid params."
+}</pre></td>
+</tr>
+<tr>
+<td>JSONの解析に失敗した</td>
+<td>200&nbsp;OK</td>
+<td><pre style="margin:0;">{
+  "code": -32700,
+  "message": "Parse error."
+}</pre></td>
+</tr>
+<tr>
+<td>その他のエラー</td>
+<td>200&nbsp;OK</td>
+<td><pre style="margin:0;">{
+  "code": -32603,
+  "message": "Internal error." or Throwable#getMessage()
+  "data": Throwable
+}</pre></td>
+</tr>
+</table>
+<div class="caption">(※2) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが投げられた場合も同じエラーが返されます。</div>
+<div class="caption">(※3) Convertに失敗した場合だけでなく、メソッドからIllegalArgumentExceptionが投げられた場合も同じエラーが返されます。</div>
+
+<h2 id="restmode">RESTモード</h2>
+<p>class変数の値が"rpc"以外の場合はRESTモードになります。RESTモードでは、GET/POST/PUT/DELETEの四つのHTTP Methodに従い対象となったクラスの次の名前のメソッドが呼び出されます<sup>(※4)</sup>。そして、実行後、戻り値がJSONに変換されクライアントに返されます<sup>(※5)</sup>。</p>
+<table class="table" summary="REST Method マッピング">
+<tr><th>HTTP Method</th><th>Java メソッド名</th><th>引数</th></tr>
+<tr><td>GET</td><td>find</td><td>リクエストパラメータのMapを「.」あるいは「[...]」で区切られた階層構造とみなし引数の型に従い変換し設定</td></tr>
+<tr><td>POST</td><td>create</td><td rowspan="3">メッセージボディのJSON文字列を引数の型に従い変換し設定<sup>(※6)</sup></td></tr>
+<tr><td>PUT</td><td>update</td></tr>
+<tr><td>DELETE</td><td>delete</td></tr>
+</table>
+<p>なお、上記のメソッド名は変更することが可能です。その場合は対象のマッピングを配列化し、二番目の引数にHTTP Methodとメソッド名のマッピングを記載します。例えば、.csvに対してGETでアクセスされた場合にprintというメソッドを呼び出したい場合は次のようにします。</p>
+<pre class="source">
+<span class="elem">&lt;servlet&gt;</span>
+  ...
+  <span class="elem">&lt;init-param&gt;</span>
+    <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
+    <span class="elem">&lt;param-value&gt;</span>
+    {
+      "mappings": {
+      　<span class="comment">// GET *.csvにアクセスされた場合はprintメソッドを呼び出します。</span>
+        "/{package}/{class}.csv": ["sample.web.${package}.service.${class}Service", {"GET": "print"}]
+        "/{package}/{class}.{ext}": "sample.web.${package}.service.${class}Service"
+      }
+    }
+    <span class="elem">&lt;/param-value&gt;</span>
+  <span class="elem">&lt;/init-param&gt;</span>
+<span class="elem">&lt;/servlet&gt;</span>
+</pre>
+
+<p>引数には送信されたJSONが指定された型に従い変換されセットされます。引数への設定は、JSONの型によって次のような違いがあります。</p>
+<table class="table" summary="引数設定一覧">
+<tr><th>Request&nbsp;Type</th><th>説明</th></tr>
+<tr><td>object</td><td>パラメータ変数、パス変数の順に上書きされたJSON objectが設定されます（同じキーが複数出現した場合は配列化されます）。</td></tr>
+<tr><td>array</td><td>送信されたJSON arrayを引数リストとして扱います。
+なお、第一引数がJSON objectである場合には、上記と同様にパラメータ変数、パス変数、第一引数の順でデータが上書きされる形で設定されます。
+その他の型であった場合や第二引数以降はそのまま設定されます。</td></tr>
+</table>
+<div class="caption">
+(※4) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
+(※5) JSONはobjectかarrayより始まる必要があるため、それ以外の要素に変換される型の戻り値（例えば、boolean/int/Dateなど）の場合にはSC_NO_CONTENTが返されます。<br />
+(※6) Content-Typeが「<code>application/x-www-form-urlencoded</code>」の場合には、GETの場合と同様にフォームのパラメータ名を「.」で区切られた階層構造とみなして扱います。
+</div>
+
+<p>RESTモードでは、エラーの発生はHTTP Status Codeによりクライアントに通知されます。</p>
+<table class="table" summary="RPC エラー一覧">
+<tr><th>エラー内容</th><th>HTTP Status Code</th></tr>
+<tr>
+<td>クラス/メソッドが見つからない<sup>(※7)</sup></td>
+<td>404&nbsp;Not&nbsp;found</td>
+</tr>
+<tr>
+<td>送信されたJSONの解析/変換に失敗した<sup>(※8)</sup></td>
+<td>400&nbsp;Bad&nbsp;request</td>
+</tr>
+<tr>
+<td>その他のエラー</td>
+<td>500&nbsp;Internal&nbsp;Server&nbsp;Error</td>
+</tr>
+</table>
+<div class="caption">(※7) クラス/メソッドが見つからなかった時だけでなく、メソッドからIllegalStateExceptionやUnsupportedOperationExceptionが発生した場合も同じエラーが返されます。</div>
+<div class="caption">(※8) Convertに失敗した場合だけでなく、メソッドからIllegalStateException、UnsupportedOperationException、Error<b>以外</b>の例外が発生した場合も同じエラーが返されます。
+なお、この場合、発生した例外がJSON objectとしてメッセージボディに設定されます（ただし、Throwableクラスのプロパティは除外されます）。</div>
+
+<h2 id="jsonp">JSONP</h2>
+<p>RESTモードでかつHTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
+<pre class="source">
+&lt;script type="text/javascript" &gt;
+  function call(value) {
+    alert(value);
+  }
+&lt;/script&gt;
+
+...
+
+&lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;
+</pre>
+
+<h2 id="initdestroy">初期化/終了処理</h2>
+<p>呼び出し対象となるクラスにinitあるいはdestroyという名前のメソッドがある場合、それぞれ処理の前後によびだされます。<sup>(※9)</sup></p>
+<pre class="source">
+public class HogeService {
+  <span class="comment">// 処理の前に呼び出されます。</span>
+  public void init() {
+  }
+  
+  ...
+  
+  <span class="comment">// 処理の後に呼び出されます。</span>
+  public void destroy() {
+  }
+}
+</pre>
+<div class="caption">(※9) 呼び出されるメソッド名は設定で変更可能です。</div>
+
+<h2 id="changes">1.1からの変更点</h2>
+<ul>
+<li>[不具合] パス変数に「.」を指定できるため、意図せぬクラスの呼び出しが可能になる場合があったため、デフォルトのパターンを<code>[^/().]+</code>に変更しました。</li>
+<li>各種DI Container用Containerクラスのパッケージを<code>net.arnx.jsonic.web</code>から<code>net.arnx.jsonic.web.extension</code>に変更しました。ただし、WebServiceServletに限り互換性維持のため、以前のパッケージ名を指定しても動作します。</li>
+<li>Containerにリクエストの最初と最後に呼ばれるstartメソッドとendメソッドを追加しました（WebServiceServletでも利用できます）。</li>
+</ul>
+
+<hr style="margin-top: 30px;" />
+<div class="copyright">Copyright (C) 2007-2010 Hidekatsu Izuno All right reserved.</div>
+</div>
+</body>
+</html>

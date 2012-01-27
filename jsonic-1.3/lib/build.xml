@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<project name="jsonic" basedir="." default="build-all">
+	<property name="version" value="1.2.1" />
+
+	<property name="debug" value="true" />
+	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />	
+	<property name="dist" location="." />
+	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
+
+	<target name="init" depends="clean">
+		<tstamp />
+		<mkdir dir="${tmp}" />
+	</target>
+	
+	<target name="build-all" depends="build-java, build-as3" />
+
+	<target name="build-java" depends="init">
+		<mkdir dir="${tmp}/lib" />
+		<get src="http://repo1.maven.org/maven2/servletapi/servlet-api/2.4/servlet-api-2.4.jar" dest="${tmp}/lib/servlet-api.jar" />
+		<get src="http://maven.seasar.org/maven2/org/seasar/container/s2-framework/2.4.34/s2-framework-2.4.34.jar" dest="${tmp}/lib/s2-framework.jar" />
+		<get src="http://repo1.maven.org/maven2/springframework/spring/1.2/spring-1.2.jar" dest="${tmp}/lib/spring.jar" />
+		<get src="http://repo1.maven.org/maven2/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar" dest="${tmp}/lib/commons-logging-1.1.1.jar" />
+		<get src="http://guice-maven.googlecode.com/svn/trunk/com/google/code/guice/guice/2.0/guice-2.0.jar" dest="${tmp}/lib/guice-2.0.jar" />
+		<get src="http://guice-maven.googlecode.com/svn/trunk/com/google/code/guice/guice-servlet/2.0/guice-servlet-2.0.jar" dest="${tmp}/lib/guice-servlet-2.0.jar" />
+		
+		<mkdir dir="${tmp}/build" />
+		<javac source="1.5" target="1.5" srcdir="src/java" destdir="${tmp}/build" debug="${debug}" fork="true">
+			<classpath>
+				<fileset dir="${tmp}/lib" includes="*.jar" />
+			</classpath>
+		</javac>
+		
+		<condition property="jar.excludes" value="**/*.java">
+			<isfalse value="${debug}"/>
+		</condition>
+
+		<jar destfile="${dist}/${ant.project.name}-${version}.jar">
+			<fileset dir="${tmp}/build" includes="**/*.class" />
+			<fileset dir="src/java" excludes="${jar.excludes}" />
+		</jar>
+		<delete dir="${tmp}/build" />
+	</target>
+	
+	<target name="build-as3" depends="init">
+		<java taskname="compc" jar="${flex.home}/lib/compc.jar" fork="true" failonerror="true" dir="${flex.home}/frameworks">
+			<arg line="-accessible=true" />
+			<arg line="-locale=en_US,ja_JP" />
+			<arg line="-namespace 'http://arnx.net/jsonic' '${basedir}/src/as3/manifest.xml'" />
+			<arg line="-source-path '${basedir}/src/as3' '${basedir}/src/as3/{locale}'" />
+			<arg line="-output '${dist}/${ant.project.name}-${version}.swc'" />
+			<arg line="-allow-source-path-overlap=true" />
+			<arg line="-include-namespaces 'http://arnx.net/jsonic'" />
+			<arg line="-include-classes 'net.arnx.jsonic.web.mxml.WebService'" />
+		</java>
+	</target>
+
+	<target name="clean">
+		<delete dir="${tmp}" failonerror="off" />
+		<delete file="${dist}/${ant.project.name}-${version}.jar" failonerror="off" />
+		<delete file="${dist}/${ant.project.name}-${version}.swc" failonerror="off" />
+	</target>
+</project>
