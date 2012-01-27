@@ -1,15 +1,13 @@
 <?xml version="1.0"?>
 <!DOCTYPE project>
-<project name="jsonic" basedir="." default="dist-all">	
+<project name="jsonic-1.3" basedir="." default="dist-all">	
 	<xmlproperty file="pom.xml" />
 	
 	<property name="version" value="${project.version}" />
 	<property name="debug" value="true" />
-	<property name="jsonic_as3.home" location="../jsonic_as3-1.2" />
-	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />
-	
+		
 	<property name="webapps" location="sample"/>
-	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
+	<property name="tmp" location="${java.io.tmpdir}/jsonic" />
 	<property name="dist" location="." />
 
 	<target name="init" depends="clean">
@@ -34,11 +32,11 @@
 			<isfalse value="${debug}"/>
 		</condition>
 
-		<jar destfile="${tmp}/${ant.project.name}-${version}.jar">
+		<jar destfile="${tmp}/jsonic-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
 			<fileset dir="src" excludes="**/*.java" />
 		</jar>
-		<jar destfile="${tmp}/${ant.project.name}-${version}-sources.jar">
+		<jar destfile="${tmp}/jsonic-${version}-sources.jar">
 			<fileset dir="src" />
 		</jar>
 		<delete dir="${tmp}/build" />
@@ -53,7 +51,7 @@
 		<copy file="${webapps}/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_seasar2.xml" />
 		<copy file="${webapps}/spring/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_spring.xml" />
 		<copy file="${webapps}/guice/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_guice.xml" />
-		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
+		<copy file="${tmp}/jsonic-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
 		<javac source="1.5" target="1.5" 
 			srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
@@ -84,23 +82,15 @@
 		<antcall target="dist">
 			<param name="tmp" location="${tmp}/java" />
 		</antcall>
-		<ant antfile="${jsonic_as3.home}/build.xml" target="build" inheritall="false">
-			<property name="tmp" location="${tmp}/as3" />
-			<property name="flex.home" location="${flex.home}" />
-		</ant>
-		<zip destfile="${dist}/${ant.project.name}-${version}.zip">
-			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src/java" />
-			<zipfileset dir="${tmp}/java/docs" prefix="${ant.project.name}-${version}/docs/java" />
-			<zipfileset file="${tmp}/java/${ant.project.name}-${version}*.jar" prefix="${ant.project.name}-${version}" />
-			
-			<zipfileset dir="${jsonic_as3.home}/src" prefix="${ant.project.name}-${version}/src/as3" />
-			<zipfileset dir="${tmp}/as3/docs" prefix="${ant.project.name}-${version}/docs/as3" />
-			<zipfileset file="${tmp}/as3/${ant.project.name}-${version}.swc" prefix="${ant.project.name}-${version}" />
-			
-			<zipfileset dir="${tmp}/java/sample/basic" prefix="${ant.project.name}-${version}/sample" />
-			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
-			<zipfileset dir="lib" includes="build.xml" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="." prefix="${ant.project.name}-${version}" >
+		<zip destfile="${dist}/jsonic-${version}.zip">
+			<zipfileset dir="src" prefix="jsonic-${version}/src/java" />
+			<zipfileset dir="${tmp}/java/docs" prefix="jsonic-${version}/docs/java" />
+			<zipfileset file="${tmp}/java/jsonic-${version}*.jar" prefix="jsonic-${version}" />
+						
+			<zipfileset dir="${tmp}/java/sample/basic" prefix="jsonic-${version}/sample" />
+			<zipfileset dir="docs" prefix="jsonic-${version}/docs" />
+			<zipfileset dir="lib" includes="build.xml" prefix="jsonic-${version}" />
+			<zipfileset dir="." prefix="jsonic-${version}" >
 				<include name="LICENSE.txt" />
 				<include name="pom.xml" />
 			</zipfileset>			
@@ -110,7 +100,7 @@
 	
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
-		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
+		<delete file="${dist}/jsonic-${version}.zip" failonerror="off" />
 	</target>
 	
 	<target name="copy-samples">
