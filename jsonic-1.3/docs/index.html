@@ -406,9 +406,9 @@ public class Config() {
 <p>JSONICはポステルの法則（送信するものに関しては厳密に、受信するものに関しては寛容に）に従い、デフォルトでは、妥当でないJSONであっても読み込みが可能なTRADITIONALモードで動作するように作成されています。<br />
 <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>に規定された内容との相違点は以下の通りです。</p>
 <ul>
-  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）およびシェルスクリプトスタイルの行コメント（#）をコメントとして認識します。</li>
+  <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）をコメントとして認識します。</li>
   <li>[デコード] ルート要素がobjectの場合、一番外側の'{'と'}'を省略することができます（入力文字列が空白文字列やコメントのみの場合も空のobjectとみなされます）。</li>
-  <li>[デコード] シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します（ただし、シングルクォートで囲まれた場合はjavascriptと異なりエスケープを処理しません）。</li>
+  <li>[デコード] シングルクォートで囲まれた文字列やJavaリテラルを文字列として認識します。</li>
   <li>[デコード] objectやarrayにおいて各要素が改行で区切られているとき','を省略することができます。</li>
   <li>[デコード] objectにおいてキーに対する値がobjectの場合、':'を省略することができます。</li>
   <li>[デコード] string中で改行やタブなどの制御文字を有効な文字として認識します。</li>
@@ -416,7 +416,7 @@ public class Config() {
 </ul>
 <p>例えば、次のテキストは<a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>では無効ですが、JSONICでは読み込むことが可能です。</p>
 <pre class="source">
-# database settings
+// database settings
 database {
   description: 'ms sql server
 	connecter settings'
@@ -464,7 +464,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
   <li>[エンコード] NaN、POSITIVE_INFINITY, NEGATIVE_INFINITY を文字列ではなく、Number.NaN、Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITYとして出力します。</li>
   <li>[デコード] 引数にstring、number、true/false/nullといったJSONの断片を指定し単純型の値を取得することができます。</li>
   <li>[デコード] Cスタイルの複数行コメント（/**/）、C++スタイルの行コメント（//）をコメントとして認識します（TRADITIONALモードと異なり#はコメントとして認識しません）。</li>
-  <li>[デコード] シングルクォートで囲まれた文字列をstringとして認識します（TRADITIONALモードと異なりダブルクォートで囲った場合と同様エスケープを認識します）。</li>
+  <li>[デコード] シングルクォートで囲まれた文字列をstringとして認識します。</li>
   <li>[デコード] object のキーに限りシングルクォートで囲まれていないリテラルを文字列として認識します。</li>
 </ul>
 <p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeScript を通じて簡単に使うことが可能です。</p>
@@ -687,9 +687,6 @@ public class TestBean {
 </pre>
 <p>この機能を使うことで、JSON化が困難なオブジェクトもJSON-RPCなどでやり取りすることが可能となります。</p>
 
-<h2 id="as3">JSONIC for AS3</h2>
-<p>JSONICでは、クライアントにAdobe FlexやAdobe Airを使用する場合を想定し、AS3版のJSONクラスとRemoteObjectライクなJSON-RPCクライアントライブラリを同梱しています。</p>
-
 <h2 id="faq">FAQ</h2>
 <dl>
 <dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
@@ -719,8 +716,7 @@ public class TestBean {
 <li>[機能追加] JSON のストリーム的に読み取るプルパーサ API である JSONReader を追加しました。JSONReader は、 JSON#getReader() メソッドを使うことで取得できます。</li>
 <li>[機能追加] decode/parseが新たに追加されたJSONReaderベースに書きなおされ、また、速度も大幅に改善しました。</li>
 <li>[仕様変更] ReaderあるいはInputStreamの先頭以外でBOM（Byte Order Mark）が見つかった場合は、例外を出すように変更しました。</li>
-<li>[仕様変更] TRADITIONAL モードでサポートされていたシェルスクリプトスタイルの行コメント（#) を廃止しました。</li>
-<li>[仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、エスケープを無視する仕様を廃止しました。</li>
+<li>[仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、エスケープを無視する仕様は誤解が多かったため廃止しました。</li>
 <li>[仕様変更] SCRIPT モードで JSON Object のキー値としてとれる値を JavaScript の仕様に合わせ、マイナスの数値の場合エラーとし、また値が常に文字列型に変換されます。</li>
 <li>[仕様変更] メソッド名が不統一となっていたため JSON.Context#getLevel() を非推奨とし、 JSON.Context#getDepth() に変更しました。</li>
 <li>[仕様変更] メソッド名が不統一となっていたため JSON.Context#getPropertyCaseStyle(), JSON.Context#getEnumCaseStyle() を廃止し、それぞれ JSON.Context#getPropertyStyle(), JSON.Context#getEnumStyle() に変更しました。</li>

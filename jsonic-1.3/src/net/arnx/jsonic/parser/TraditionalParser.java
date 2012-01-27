@@ -217,7 +217,6 @@ public class TraditionalParser implements Parser {
 			}
 			return AFTER_NAME;
 		case ':':
-		case '=':
 			return BEFORE_VALUE;
 		case '{':
 		case '[':
