@@ -67,6 +67,9 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import net.arnx.jsonic.io.StringBufferInputSource;
+import net.arnx.jsonic.io.StringBuilderInputSource;
+import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.AppendableOutputSource;
 import net.arnx.jsonic.io.CharSequenceInputSource;
 import net.arnx.jsonic.io.InputSource;
@@ -951,9 +954,20 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence cs) throws JSONException {
+		InputSource is;
+		if (cs instanceof String) {
+			is = new StringInputSource((String)cs);
+		} else if (cs instanceof StringBuilder) {
+			is = new StringBuilderInputSource((StringBuilder)cs);
+		} else if (cs instanceof StringBuffer) {
+			is = new StringBufferInputSource((StringBuffer)cs);
+		} else {
+			is = new CharSequenceInputSource(cs);
+		}
+		
 		Object value = null;
 		try {
-			value = parseInternal(new Context(), new CharSequenceInputSource(cs));
+			value = new JSONReader(new Context(), is, true).getValue();
 		} catch (IOException e) {
 			// never occur
 		}
@@ -966,11 +980,23 @@ public class JSON {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T parse(CharSequence s, Type type) throws JSONException {
+	public <T> T parse(CharSequence cs, Type type) throws JSONException {
+		InputSource is;
+		if (cs instanceof String) {
+			is = new StringInputSource((String)cs);
+		} else if (cs instanceof StringBuilder) {
+			is = new StringBuilderInputSource((StringBuilder)cs);
+		} else if (cs instanceof StringBuffer) {
+			is = new StringBufferInputSource((StringBuffer)cs);
+		} else {
+			is = new CharSequenceInputSource(cs);
+		}
+		
 		T value = null;
 		try {
 			Context context = new Context();
-			value = (T)convert(context, parseInternal(context, new CharSequenceInputSource(s)), type);
+			Object result = new JSONReader(context, is, true).getValue();
+			value = (T)convert(context, result, type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -979,7 +1005,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		return (T)parseInternal(new Context(), new ReaderInputSource(in));
+		return (T)new JSONReader(new Context(), new ReaderInputSource(in), true).getValue();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -990,12 +1016,13 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parseInternal(context, new ReaderInputSource(in)), type);
+		Object result = new JSONReader(context, new ReaderInputSource(in), true).getValue();
+		return (T)convert(context, result, type);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
-		return (T)parseInternal(new Context(), new ReaderInputSource(reader));
+		return (T)new JSONReader(new Context(), new ReaderInputSource(reader), true).getValue();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1006,615 +1033,39 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		return (T)convert(context, parseInternal(context, new ReaderInputSource(reader)), type);
+		Object result = new JSONReader(context, new ReaderInputSource(reader), true).getValue();
+		return (T)convert(context, result, type);
 	}
-	
-	private Object parseInternal(Context context, InputSource s) throws IOException, JSONException {
-		boolean isEmpty = true;
-		Object o = null;
-		
-		int n = -1;
-		while ((n = s.next()) != -1) {
-			char c = (char)n;
-			switch(c) {
-			case '\r':
-			case '\n':
-			case ' ':
-			case '\t':
-			case 0xFEFF: // BOM
-				continue;
-			case '{':
-				if (isEmpty) {
-					s.back();
-					o = parseObject(context, s, 1);
-					isEmpty = false;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case '[':
-				if (isEmpty) {
-					s.back();
-					o = parseArray(context, s, 1);
-					isEmpty = false;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case '/':
-			case '#':
-				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
-					s.back();
-					skipComment(context, s);
-					continue;
-				}
-			case '\'':
-			case '"':
-				if (context.getMode() == Mode.SCRIPT) {
-					if (isEmpty) {
-						s.back();
-						o = parseString(context, s, 1);
-						isEmpty = false;
-					} else {
-						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-					}
-					continue;
-				}
-			default:
-				if (context.getMode() == Mode.SCRIPT) {
-					if (isEmpty) {
-						s.back();
-						o = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, 1) : parseLiteral(context, s, 1, false);
-						isEmpty = false;
-					} else {
-						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-					}
-					continue;
-				}
-			}
-			
-			if (context.getMode() == Mode.TRADITIONAL && isEmpty) {
-				s.back();
-				o = parseObject(context, s, 1);
-				isEmpty = false;
-			} else {
-				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-			}
-		}
-		
-		if (isEmpty) {
-			if (context.getMode() == Mode.TRADITIONAL) {
-				o = new LinkedHashMap<String, Object>();
-			} else {
-				throw createParseException(getMessage("json.parse.EmptyInputError"), s);
-			}
-		}
-		
-		return o;
-	}
-	
-	private Map<Object, Object> parseObject(Context context, InputSource s, int level) throws IOException, JSONException {
-		int point = 0; // 0 '{' 1 'key' 2 ':' 3 '\n'? 4 'value' 5 '\n'? 6 ',' ... '}' E
-		Map<Object, Object> map = (level <= context.getMaxDepth()) ? new LinkedHashMap<Object, Object>() : null;
-		Object key = null;
-		char start = '\0';
-		
-		int n = -1;
-		loop:while ((n = s.next()) != -1) {
-			char c = (char)n;
-			switch(c) {
-			case '\r':
-			case '\n':
-				if (context.getMode() == Mode.TRADITIONAL && point == 5) {
-					point = 6;
-				}
-				continue;
-			case ' ':
-			case '\t':
-			case 0xFEFF: // BOM
-				continue;
-			case '{':
-				if (point == 0) {
-					start = '{';
-					point = 1;
-				} else if (point == 2 || point == 3){
-					s.back();
-					Object value = parseObject(context, s, level+1);
-					if (level < context.getMaxDepth()) map.put(key, value);
-					point = 5;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case ':':
-				if (point == 2) {
-					point = 3;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case ',':
-				if (point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3)) {
-					if (point == 3 && level < context.getMaxDepth() && !context.isSuppressNull()) {
-						map.put(key, null);
-					}
-					point = 1;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case '}':
-				if (start == '{' && (point == 1 || point == 5 || point == 6 || (context.getMode() == Mode.TRADITIONAL && point == 3))) {
-					if (point == 3 && level < context.getMaxDepth() && !context.isSuppressNull()) {
-						map.put(key, null);
-					}
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break loop;
-			case '[':
-				if (point == 3) {
-					s.back();
-					List<Object> value = parseArray(context, s, level+1);
-					if (level < context.getMaxDepth()) map.put(key, value);
-					point = 5;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case '\'':
-				if (context.getMode() == Mode.STRICT) {
-					break;
-				}
-			case '"':
-				if (point == 0) {
-					s.back();
-					point = 1;
-				} else if (point == 1 || point == 6) {
-					s.back();
-					key = parseString(context, s, level+1);
-					point = 2;
-				} else if (point == 3) {
-					s.back();
-					String value = parseString(context, s, level+1);
-					if (level < context.getMaxDepth()) map.put(key, value);
-					point = 5;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case '/':
-			case '#':
-				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
-					s.back();
-					skipComment(context, s);
-					if (point == 5) {
-						point = 6;
-					}
-					continue;
-				}
-			}
-			
-			if (point == 0) {
-				s.back();
-				point = 1;
-			} else if (point == 1 || point == 6) {
-				s.back();
-				key = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() != Mode.STRICT);
-				point = 2;
-			} else if (point == 3) {
-				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
-				if (level < context.getMaxDepth() && (value != null || !context.isSuppressNull())) {
-					map.put(key, value);
-				}
-				point = 5;
-			} else {
-				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-			}
-		}
-		
-		if (n == -1) {
-			if (point == 3 || point == 4) {
-				if (level < context.getMaxDepth() && !context.isSuppressNull()) map.put(key, null);
-			} else if (point == 2) {
-				throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
-			}
-		}
-		
-		if ((n == -1) ? (start != '\0') : (n != '}')) {
-			throw createParseException(getMessage("json.parse.ObjectNotClosedError"), s);
-		}
-		return map;
-	}
-	
-	private List<Object> parseArray(Context context, InputSource s, int level) throws IOException, JSONException {
-		int point = 0; // 0 '[' 1 'value' 2 '\n'? 3 ',' 4  ... ']' E
-		List<Object> list = (level <= context.getMaxDepth()) ? new ArrayList<Object>() : null;
-		
-		int n = -1;
-		loop:while ((n = s.next()) != -1) {
-			char c = (char)n;
-			switch(c) {
-			case '\r':
-			case '\n':
-				if (context.getMode() == Mode.TRADITIONAL && point == 2) {
-					point = 3;
-				}
-				continue;
-			case ' ':
-			case '\t':
-			case 0xFEFF: // BOM
-				continue;
-			case '[':
-				if (point == 0) {
-					point = 1;
-				} else if (point == 1 || point == 3 || point == 4) {
-					s.back();
-					List<Object> value = parseArray(context, s, level+1);
-					if (level < context.getMaxDepth()) list.add(value);
-					point = 2;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case ',':
-				if (context.getMode() == Mode.TRADITIONAL && (point == 1 || point == 4)) {
-					if (level < context.getMaxDepth()) list.add(null);
-				} else if (point == 2 || point == 3) {
-					point = 4;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case ']':
-				if (point == 1 || point == 2 || point == 3) {
-					// nothing
-				} else if (context.getMode() == Mode.TRADITIONAL && point == 4) {
-					if (level < context.getMaxDepth()) list.add(null);
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break loop;	
-			case '{':
-				if (point == 1 || point == 3 || point == 4){
-					s.back();
-					Map<Object, Object> value = parseObject(context, s, level+1);
-					if (level < context.getMaxDepth()) list.add(value);
-					point = 2;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case '\'':
-				if (context.getMode() == Mode.STRICT) {
-					break;
-				}
-			case '"':
-				if (point == 1 || point == 3 || point == 4) {
-					s.back();
-					String value = parseString(context, s, level+1);
-					if (level < context.getMaxDepth()) list.add(value);
-					point = 2;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				continue;
-			case '/':
-			case '#':
-				if (context.getMode() == Mode.TRADITIONAL || (context.getMode() == Mode.SCRIPT && c == '/')) {
-					s.back();
-					skipComment(context, s);
-					if (point == 2) {
-						point = 3;
-					}
-					continue;
-				}
-			}
-			
-			if (point == 1 || point == 3 || point == 4) {
-				s.back();
-				Object value = ((c == '-') || (c >= '0' && c <= '9')) ? parseNumber(context, s, level+1) : parseLiteral(context, s, level+1, context.getMode() == Mode.TRADITIONAL);
-				if (level < context.getMaxDepth()) list.add(value);
-				point = 2;
-			} else {
-				throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-			}
-		}
-		
-		if (n != ']') {
-			throw createParseException(getMessage("json.parse.ArrayNotClosedError"), s);
-		}
-		return list;
-	}
-	
-	private String parseString(Context context, InputSource s, int level) throws IOException, JSONException {
-		StringBuilder sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
-		char start = '\0';
-		
-		int n = -1;
-		loop:while ((n = s.next()) != -1) {
-			char c = (char)n;
-			if (start == '\0') {
-				switch (c) {
-				case '\'':
-					if (context.getMode() == Mode.STRICT) {
-						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);				
-					}
-				case '"':
-					start = c;
-					break;
-				default:
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-			} else if (c < ESCAPE_CHARS.length) {
-				switch (ESCAPE_CHARS[c]) {
-				case 0:
-					if (sb != null) sb.append(c);
-					break;
-				case 1: // control chars
-					if (context.getMode() != Mode.STRICT) {
-						if (sb != null) sb.append(c);
-					} else {
-						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-					}
-					break;
-				case 2: // "'
-					if (start == c) {
-						break loop;						
-					} else {
-						if (sb != null) sb.append(c);
-					}
-					break;
-				case 3: // escape chars
-					if (context.getMode() != Mode.TRADITIONAL || start == '"') {
-						s.back();
-						c = parseEscape(s);
-					}
-					if (sb != null) sb.append(c);
-					break;
-				}
-			} else if (c != 0xFEFF) {
-				if (sb != null) sb.append(c);
-			}
-		}
-		
-		if (n != start) {
-			throw createParseException(getMessage("json.parse.StringNotClosedError"), s);
-		}
-		return (sb != null) ? sb.toString() : null;
-	}
-	
-	private Object parseLiteral(Context context, InputSource s, int level, boolean any) throws IOException, JSONException {
-		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilder sb = context.getCachedBuffer();
 
-		int n = -1;
-		loop:while ((n = s.next()) != -1) {
-			char c = (char)n;
-			if (c == 0xFEFF) continue;
-			
-			if (c == '\\') {
-				s.back();
-				c = parseEscape(s);
-			}
-			
-			if (point == 0 && Character.isJavaIdentifierStart(c)) {
-				sb.append(c);
-				point = 1;
-			} else if (point == 1 && (Character.isJavaIdentifierPart(c) || c == '.')) {
-				sb.append(c);
-			} else {
-				s.back();
-				break loop;
-			}
-		}
-		
-		String str = sb.toString();
-		
-		if ("null".equals(str)) return null;
-		if ("true".equals(str)) return true;
-		if ("false".equals(str)) return false;
-		
-		if (!any) {
-			throw createParseException(getMessage("json.parse.UnrecognizedLiteral", str), s);
-		}
-		
-		return str;
-	}	
-	
-	private Number parseNumber(Context context, InputSource s, int level) throws IOException, JSONException {
-		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilder sb = (level <= context.getMaxDepth()) ? context.getCachedBuffer() : null;
-		
-		int n = -1;
-		loop:while ((n = s.next()) != -1) {
-			char c = (char)n;
-			switch(c) {
-			case 0xFEFF: // BOM
-				break;
-			case '+':
-				if (point == 7) {
-					if (sb != null) sb.append(c);
-					point = 8;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
-			case '-':
-				if (point == 0) {
-					if (sb != null) sb.append(c);
-					point = 1;
-				} else if (point == 7) {
-					if (sb != null) sb.append(c);
-					point = 8;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
-			case '.':
-				if (point == 2 || point == 3) {
-					if (sb != null) sb.append(c);
-					point = 4;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
-			case 'e':
-			case 'E':
-				if (point == 2 || point == 3 || point == 5 || point == 6) {
-					if (sb != null) sb.append(c);
-					point = 7;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
-			default:
-				if (c >= '0' && c <= '9') {
-					if (point == 0 || point == 1) {
-						if (sb != null) sb.append(c);
-						point = (c == '0') ? 3 : 2;
-					} else if (point == 2 || point == 5 || point == 9) {
-						if (sb != null) sb.append(c);
-					} else if (point == 4) {
-						if (sb != null) sb.append(c);
-						point = 5;
-					} else if (point == 7 || point == 8) {
-						if (sb != null) sb.append(c);
-						point = 9;
-					} else {
-						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-					}
-				} else if (point == 2 || point == 3 || point == 5 || point == 6 || point == 9) {
-					s.back();
-					break loop;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-			}
-		}
-		
-		return (sb != null) ? new BigDecimal(sb.toString()) : null;
+	public JSONReader getReader(CharSequence cs) {
+		return getReader(cs, true);
+	}
+
+	public JSONReader getReader(InputStream in) {
+		return getReader(in, true);
 	}
 	
-	private char parseEscape(InputSource s) throws IOException, JSONException {
-		int point = 0; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
-		char escape = '\0';
+	public JSONReader getReader(Reader reader) {
+		return getReader(reader, true);
+	}
+
+	public JSONReader getReader(CharSequence cs, boolean ignoreWhitespace) {
+		InputSource in = (cs instanceof String) ? new StringInputSource((String)cs)
+			: (cs instanceof StringBuilder) ? new StringBuilderInputSource((StringBuilder)cs)
+			: (cs instanceof StringBuffer) ? new StringBufferInputSource((StringBuffer)cs)
+			: new CharSequenceInputSource(cs);
 		
-		int n = -1;
-		loop:while ((n = s.next()) != -1) {
-			char c = (char)n;
-			if (c == 0xFEFF) continue; // BOM
-			
-			if (point == 0) {
-				if (c == '\\') {
-					point = 1;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-			} else if (point == 1) {
-				switch(c) {
-				case 'b':
-					escape = '\b';
-					break loop;
-				case 'f':
-					escape = '\f';
-					break loop;
-				case 'n':
-					escape = '\n';
-					break loop;
-				case 'r':
-					escape = '\r';
-					break loop;
-				case 't':
-					escape = '\t';
-					break loop;
-				case 'u':
-					point = 2;
-					break;
-				default:
-					escape = c;
-					break loop;
-				}
-			} else {
-				int hex = (c >= '0' && c <= '9') ? c-48 :
-					(c >= 'A' && c <= 'F') ? c-65+10 :
-					(c >= 'a' && c <= 'f') ? c-97+10 : -1;
-				if (hex != -1) {
-					escape |= (hex << ((5-point)*4));
-					if (point != 5) {
-						point++;
-					} else {
-						break loop;
-					}
-				} else {
-					throw createParseException(getMessage("json.parse.IllegalUnicodeEscape", c), s);
-				}
-			}
-		}
-		
-		return escape;
+		return new JSONReader(new Context(), in, ignoreWhitespace);
 	}
 	
-	private void skipComment(Context context, InputSource s) throws IOException, JSONException {
-		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
-		
-		int n = -1;
-		loop:while ((n = s.next()) != -1) {
-			char c = (char)n;
-			switch(c) {
-			case 0xFEFF:
-				break;
-			case '/':
-				if (point == 0) {
-					point = 1;
-				} else if (point == 1) {
-					point = 4;
-				} else if (point == 3) {
-					break loop;
-				} else if (!(point == 2 || point == 4)) {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
-			case '*':
-				if (point == 1) {
-					point = 2;
-				} else if (point == 2) {
-					point = 3;
-				} else if (!(point == 3 || point == 4)) {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
-			case '\n':
-			case '\r':
-				if (point == 2 || point == 3) {
-					point = 2;
-				} else if (point == 4) {
-					break loop;
-				} else {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-				break;
-			case '#':
-				if (context.getMode() == Mode.TRADITIONAL) {
-					if (point == 0) {
-						point = 4;
-					} else if (point == 3) {
-						point = 2;
-					} else if (!(point == 2 || point == 4)) {
-						throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-					}
-					break;
-				}
-			default:
-				if (point == 3) {
-					point = 2;
-				} else if (!(point == 2 || point == 4)) {
-					throw createParseException(getMessage("json.parse.UnexpectedChar", c), s);
-				}
-			}
-		}	
+	public JSONReader getReader(InputStream in, boolean ignoreWhitespace) {
+		return new JSONReader(new Context(), new ReaderInputSource(in), ignoreWhitespace);
 	}
+	
+	public JSONReader getReader(Reader reader, boolean ignoreWhitespace) {
+		return new JSONReader(new Context(), new ReaderInputSource(reader), ignoreWhitespace);
+	}
+	
 	
 	JSONException createParseException(String message, InputSource s) {
 		return new JSONException("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?",
@@ -1812,6 +1263,8 @@ public class JSON {
 		return (target != null) && target.isAssignableFrom(cls);
 	}
 	
+	private static final int CACHE_SIZE = 256;
+	
 	public final class Context {
 		private final Locale locale;
 		private final TimeZone timeZone;
@@ -1827,10 +1280,13 @@ public class JSON {
 
 		private Object[] path;
 		private int level = -1;
+		
 		private Map<Class<?>, Object> memberCache;
 		private Map<String, DateFormat> dateFormatCache;
 		private Map<String, NumberFormat> numberFormatCache;
 		private StringBuilder builderCache;
+		private String[] stringCache;
+		private BigDecimal[] numberCache;
 		
 		boolean skipHint = false;
 		
@@ -1877,6 +1333,103 @@ public class JSON {
 			return builderCache;
 		}
 		
+		public String getString(StringBuilder sb) {
+			if (sb.length() == 0) return "";
+			
+			if (sb.length() < 32) {
+				int index = getCacheIndex(sb);
+				if (index < 0) {
+					return sb.toString();
+				}
+				
+				if (stringCache == null) stringCache = new String[CACHE_SIZE];
+				if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
+				
+				String str = stringCache[index];
+				if (str == null || str.length() != sb.length()) {
+					str = sb.toString();
+					stringCache[index] = str;
+					numberCache[index] = null;
+					return str;
+				}
+				
+				for (int i = 0; i < sb.length(); i++) {
+					if (str.charAt(i) != sb.charAt(i)) {
+						str = sb.toString();
+						stringCache[index] = str;
+						numberCache[index] = null;
+						return str;
+					}
+				}
+				return str;
+			}
+			
+			return sb.toString();
+		}
+		
+		public BigDecimal getBigDecimal(StringBuilder sb) {
+			if (sb.length() == 1) {
+				if (sb.charAt(0) == '0') {
+					return BigDecimal.ZERO;
+				} else if (sb.charAt(0) == '1') {
+					return BigDecimal.ONE;
+				}
+			}
+			
+			if (sb.length() < 32) {
+				int index = getCacheIndex(sb);
+				if (index < 0) {
+					return new BigDecimal(sb.toString());
+				}
+							
+				if (stringCache == null) stringCache = new String[CACHE_SIZE];
+				if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
+				
+				String str = stringCache[index];
+				BigDecimal num = numberCache[index];
+				if (str == null || str.length() != sb.length()) {
+					str = sb.toString();
+					num = new BigDecimal(str);
+					stringCache[index] = str;
+					numberCache[index] = num;
+					return num;
+				}
+				
+				for (int i = 0; i < sb.length(); i++) {
+					if (str.charAt(i) != sb.charAt(i)) {
+						str = sb.toString();
+						num = new BigDecimal(str);
+						stringCache[index] = str;
+						numberCache[index] = num;
+						return num;
+					}
+				}
+				
+				if (num == null) {
+					num = new BigDecimal(str);
+					numberCache[index] = num;
+				}
+				return num;
+			}
+			
+			return new BigDecimal(sb.toString());
+		}
+		
+		private int getCacheIndex(StringBuilder sb) {
+			int h = 0;
+			for (int i = 0; i < sb.length(); i++) {
+				if (sb.charAt(i) < 128) {
+					h = h * 32 + sb.charAt(i);
+				} else {
+					return -1;
+				}
+			}
+			h ^= (h >>> 20) ^ (h >>> 12);
+			h ^= (h >>> 7) ^ (h >>> 4);
+			
+			return h & (CACHE_SIZE-1);
+		}
+		
 		public Locale getLocale() {
 			return locale;
 		}
@@ -1901,11 +1454,11 @@ public class JSON {
 			return mode;
 		}
 		
-		public NamingStyle getPropertyCaseStyle() {
+		public NamingStyle getPropertyStyle() {
 			return propertyStyle;
 		}
 		
-		public NamingStyle getEnumCaseStyle() {
+		public NamingStyle getEnumStyle() {
 			return enumStyle;
 		}
 		
@@ -2004,14 +1557,14 @@ public class JSON {
 								mName = prop.getName();
 								if (!hint.name().isEmpty()) {
 									mName = hint.name();
-								} else if (getPropertyCaseStyle() != null) {
-									mName = getPropertyCaseStyle().to(mName);
+								} else if (getPropertyStyle() != null) {
+									mName = getPropertyStyle().to(mName);
 								}
 								props.add(new PropertyInfo(prop.getBeanClass(), mName, 
 										null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), hint.ordinal()));
 							}
-						} else if (getPropertyCaseStyle() != null) {
-							mName = getPropertyCaseStyle().to(prop.getName());
+						} else if (getPropertyStyle() != null) {
+							mName = getPropertyStyle().to(prop.getName());
 							props.add(new PropertyInfo(prop.getBeanClass(), mName, 
 									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
 						} else {
@@ -2026,8 +1579,8 @@ public class JSON {
 							String name = prop.getName();
 							if (!hint.name().isEmpty()) {
 								name = hint.name();
-							} else if (getPropertyCaseStyle() != null) {
-								name = getPropertyCaseStyle().to(name);
+							} else if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
 							}
 							if (!name.equals(mName) && !hint.ignore()) {
 								props.add(new PropertyInfo(prop.getBeanClass(), name, 
@@ -2035,15 +1588,15 @@ public class JSON {
 							}
 						} else if (mName != null) {
 							String name = prop.getName();
-							if (getPropertyCaseStyle() != null) {
-								name = getPropertyCaseStyle().to(name);
+							if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
 							}
 							if (!name.equals(mName)) {
 								props.add(new PropertyInfo(prop.getBeanClass(), name, 
 										prop.getField(), null, null, prop.isStatic(), prop.getOrdinal()));
 							}
-						} else if (getPropertyCaseStyle() != null) {
-							props.add(new PropertyInfo(prop.getBeanClass(), getPropertyCaseStyle().to(prop.getName()), 
+						} else if (getPropertyStyle() != null) {
+							props.add(new PropertyInfo(prop.getBeanClass(), getPropertyStyle().to(prop.getName()), 
 									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
 						} else {
 							props.add(prop);
@@ -2095,8 +1648,8 @@ public class JSON {
 					}
 				
 					props.put(prop.getName(), prop);
-					if (getPropertyCaseStyle() != null) {
-						name = getPropertyCaseStyle().to(prop.getName());
+					if (getPropertyStyle() != null) {
+						name = getPropertyStyle().to(prop.getName());
 						if (!prop.getName().equals(name)) {
 							props.put(name, prop);
 						}

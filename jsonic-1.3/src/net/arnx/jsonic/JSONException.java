@@ -51,7 +51,7 @@ public class JSONException extends RuntimeException {
 	private long columnNumber = -1l;
 	private long offset = -1l;
 	
-	JSONException(String message, int id, long lineNumber, long columnNumber, long offset) {
+	public JSONException(String message, int id, long lineNumber, long columnNumber, long offset) {
 		super(message);
 		this.errorID = id;
 		this.lineNumber = lineNumber;

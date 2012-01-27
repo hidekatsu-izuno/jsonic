@@ -814,9 +814,9 @@ final class EnumConverter implements Converter {
 				for (Enum e : enums) {
 					if (str.equals(e.name())) return e;
 				}
-				if (context.getEnumCaseStyle() != null) {
+				if (context.getEnumStyle() != null) {
 					for (Enum e : enums) {
-						if (str.equals(context.getEnumCaseStyle().to(e.name()))) return e;
+						if (str.equals(context.getEnumStyle().to(e.name()))) return e;
 					}
 				}
 				throw new IllegalArgumentException(str + " is not " + c);
@@ -846,7 +846,7 @@ final class DateConverter implements Converter {
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
-				millis = convertDate(str, context);
+				millis = convertDate(context, str);
 				date = (Date)json.create(context, c);						
 			}
 		}
@@ -875,7 +875,7 @@ final class DateConverter implements Converter {
 		return date;
 	}
 	
-	static Long convertDate(String value, Context context) throws ParseException {
+	static Long convertDate(Context context, String value) throws ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
@@ -884,7 +884,7 @@ final class DateConverter implements Converter {
 		
 		DateFormat format = null;
 		if (Character.isDigit(value.charAt(0))) {
-			StringBuilder sb = new StringBuilder(value.length() * 2);
+			StringBuilder sb = context.getCachedBuffer();
 
 			String types = "yMdHmsSZ";
 			// 0: year, 1:month, 2: day, 3: hour, 4: minute, 5: sec, 6:msec, 7: timezone
@@ -979,7 +979,7 @@ final class CalendarConverter implements Converter {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				Calendar cal = (Calendar)json.create(context, c);
-				cal.setTimeInMillis(DateConverter.convertDate(str, context));
+				cal.setTimeInMillis(DateConverter.convertDate(context, str));
 				return  cal;
 			}
 		}
@@ -1110,7 +1110,7 @@ final class PropertiesConverter implements Converter {
 	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
 		Properties prop = (Properties)json.create(context, c);
 		if (value instanceof Map<?, ?> || value instanceof List<?>) {
-			flattenProperties(new StringBuilder(32), value, prop);
+			flattenProperties(context.getCachedBuffer(), value, prop);
 		} else if (value != null) {
 			prop.setProperty(value.toString(), null);
 		}
@@ -1280,7 +1280,7 @@ final class ObjectConverter implements Converter {
 		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && !Character.isUpperCase(sb.charAt(1))) {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
 		}
-		return sb.toString();
+		return context.getString(sb);
 	}
 	
 	private static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
