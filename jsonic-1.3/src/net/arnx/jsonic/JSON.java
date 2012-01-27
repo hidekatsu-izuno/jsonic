@@ -1066,12 +1066,6 @@ public class JSON {
 		return new JSONReader(new Context(), new ReaderInputSource(reader), ignoreWhitespace);
 	}
 	
-	
-	JSONException createParseException(String message, InputSource s) {
-		return new JSONException("" + s.getLineNumber() + ": " + message + "\n" + s.toString() + " <- ?",
-				JSONException.PARSE_ERROR, s.getLineNumber(), s.getColumnNumber(), s.getOffset());
-	}
-	
 	String getMessage(String id, Object... args) {
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);
