@@ -614,17 +614,17 @@ public class JSON {
 		json.parse(reader);
 	}
 	
-	private Object contextObject;
-	private Locale locale = Locale.getDefault();
-	private TimeZone timeZone = TimeZone.getDefault();
-	private boolean prettyPrint = false;
-	private int maxDepth = 32;
-	private boolean suppressNull = false;
-	private Mode mode = Mode.TRADITIONAL;
-	private String dateFormat;
-	private String numberFormat;
-	private NamingStyle propertyStyle;
-	private NamingStyle enumStyle;
+	Object contextObject;
+	Locale locale = Locale.getDefault();
+	TimeZone timeZone = TimeZone.getDefault();
+	boolean prettyPrint = false;
+	int maxDepth = 32;
+	boolean suppressNull = false;
+	Mode mode = Mode.TRADITIONAL;
+	String dateFormat;
+	String numberFormat;
+	NamingStyle propertyStyle;
+	NamingStyle enumStyle;
 	
 	public JSON() {
 	}
