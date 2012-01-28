@@ -15,12 +15,4 @@ public class StringBuilderInputSource extends CharSequenceInputSource {
 		
 		sb.append(this.sb, mark, mark + len);
 	}
-	
-	@Override
-	public String copy(int len) {
-		if (mark == -1) throw new IllegalStateException("no mark");
-		if (mark + len > sb.length()) throw new IndexOutOfBoundsException();
-		
-		return sb.substring(mark, mark + len);
-	}
 }
