@@ -41,6 +41,10 @@ public class JSONReader {
 		return type;
 	}
 	
+	public <T> T get(Class<T> cls) throws IOException {
+		return null;
+	}
+	
 	public Map<?, ?> getObject() throws IOException {
 		if (type == null) type = next();
 		

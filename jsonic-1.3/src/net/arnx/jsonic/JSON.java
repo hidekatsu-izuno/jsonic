@@ -817,7 +817,7 @@ public class JSON {
 			fs = new AppendableOutputSource(ap);
 		}
 		
-		context.enter('$');
+		context.enter('$', null);
 		source = preformatInternal(context, source);
 		formatInternal(context, source, fs);
 		context.exit();
@@ -1081,7 +1081,7 @@ public class JSON {
 		
 		T result = null;
 		try {
-			context.enter('$');
+			context.enter('$', null);
 			result = (T)postparse(context, value, cls, type);
 			context.exit();
 		} catch (Exception e) {
@@ -1505,7 +1505,7 @@ public class JSON {
 		
 		@SuppressWarnings("unchecked")
 		public <T> T convert(Object key, Object value, Class<? extends T> c) throws Exception {
-			enter(key);
+			enter(key, getHint());
 			T o = JSON.this.postparse(this, value, c, c);
 			exit();
 			return (T)((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
@@ -1513,7 +1513,7 @@ public class JSON {
 		
 		public Object convert(Object key, Object value, Type t) throws Exception {
 			Class<?> c = ClassUtil.getRawType(t);
-			enter(key);
+			enter(key, getHint());
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
 			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
@@ -1530,11 +1530,11 @@ public class JSON {
 			path[depth*2] = key;
 			path[depth*2+1] = hint;
 		}
-		
+/*		
 		void enter(Object key) {
-			enter(key, (JSONHint)((depth != -1) ? path[depth*2+1] : null));
+			enter(key, getHint());
 		}
-		
+*/		
 		void exit() {
 			depth--;
 		}

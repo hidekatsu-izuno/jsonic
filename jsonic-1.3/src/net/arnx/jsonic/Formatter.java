@@ -439,7 +439,7 @@ final class ObjectArrayFormatter implements Formatter {
 				for (int j = 0; j < context.getDepth() + 1; j++)
 					out.append('\t');
 			}
-			context.enter(i);
+			context.enter(i, hint);
 			item = json.preformatInternal(context, item);
 			if (item == null) {
 				NullFormatter.INSTANCE.format(json, context, src, item, out);
@@ -800,10 +800,10 @@ final class DynaBeanFormatter implements Formatter {
 					.getMethod("getDynaProperties").invoke(dynaClass);
 
 			if (dynaProperties != null && dynaProperties.length > 0) {
-				Method getName = dynaProperties[0].getClass().getMethod(
-						"getName");
+				Method getName = dynaProperties[0].getClass().getMethod("getName");
 				Method get = dynaBeanClass.getMethod("get", String.class);
-
+				JSONHint hint = context.getHint();
+				
 				for (Object dp : dynaProperties) {
 					Object name = null;
 					try {
@@ -836,7 +836,7 @@ final class DynaBeanFormatter implements Formatter {
 					StringFormatter.serialize(context, name.toString(), out);
 					out.append(':');
 					if (context.isPrettyPrint()) out.append(' ');
-					context.enter(name);
+					context.enter(name, hint);
 					if (cause != null) throw cause;
 					value = json.preformatInternal(context, value);
 					json.formatInternal(context, value, out);
@@ -909,6 +909,7 @@ final class DOMElementFormatter implements Formatter {
 		out.append('}');
 		if (elem.hasChildNodes()) {
 			NodeList nodes = elem.getChildNodes();
+			JSONHint hint = context.getHint();
 			for (int i = 0; i < nodes.getLength(); i++) {
 				Object value = nodes.item(i);
 				if ((value instanceof Element)
@@ -919,7 +920,7 @@ final class DOMElementFormatter implements Formatter {
 						for (int j = 0; j < context.getDepth() + 1; j++)
 							out.append('\t');
 					}
-					context.enter(i + 2);
+					context.enter(i + 2, hint);
 					value = json.preformatInternal(context, value);
 					json.formatInternal(context, value, out);
 					context.exit();
