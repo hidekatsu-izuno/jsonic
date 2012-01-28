@@ -814,9 +814,9 @@ final class EnumConverter implements Converter {
 				for (Enum e : enums) {
 					if (str.equals(e.name())) return e;
 				}
-				if (context.getEnumCaseStyle() != null) {
+				if (context.getEnumStyle() != null) {
 					for (Enum e : enums) {
-						if (str.equals(context.getEnumCaseStyle().to(e.name()))) return e;
+						if (str.equals(context.getEnumStyle().to(e.name()))) return e;
 					}
 				}
 				throw new IllegalArgumentException(str + " is not " + c);

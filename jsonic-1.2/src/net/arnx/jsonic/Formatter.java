@@ -173,8 +173,8 @@ final class EnumFormatter implements Formatter {
 	public static final EnumFormatter INSTANCE = new EnumFormatter();
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		if (context.getEnumCaseStyle() != null) {
-			return StringFormatter.INSTANCE.format(json, context, src, context.getPropertyCaseStyle().to(((Enum<?>)o).name()), out);
+		if (context.getEnumStyle() != null) {
+			return StringFormatter.INSTANCE.format(json, context, src, context.getPropertyStyle().to(((Enum<?>)o).name()), out);
 		} else {
 			return NumberFormatter.INSTANCE.format(json, context, src, ((Enum<?>)o).ordinal(), out);
 		}
@@ -436,7 +436,7 @@ final class ObjectArrayFormatter implements Formatter {
 				out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
+				for (int j = 0; j < context.getDepth() + 1; j++)
 					out.append('\t');
 			}
 			context.enter(i);
@@ -457,7 +457,7 @@ final class ObjectArrayFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && i > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append(']');
@@ -548,7 +548,7 @@ final class ListFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++) out.append('\t');
+				for (int j = 0; j < context.getDepth() + 1; j++) out.append('\t');
 			}
 			context.enter(count, hint);
 			item = json.preformatInternal(context, item);
@@ -569,7 +569,7 @@ final class ListFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++) out.append('\t');
+			for (int j = 0; j < context.getDepth(); j++) out.append('\t');
 		}
 		out.append(']');
 		return true;
@@ -596,7 +596,7 @@ final class IteratorFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++) out.append('\t');
+				for (int j = 0; j < context.getDepth() + 1; j++) out.append('\t');
 			}
 			context.enter(count, hint);
 			item = json.preformatInternal(context, item);
@@ -617,7 +617,7 @@ final class IteratorFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++) out.append('\t');
+			for (int j = 0; j < context.getDepth(); j++) out.append('\t');
 		}
 		out.append(']');
 		return true;
@@ -651,7 +651,7 @@ final class EnumerationFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
+				for (int j = 0; j < context.getDepth() + 1; j++)
 					out.append('\t');
 			}
 			context.enter(count, hint);
@@ -673,7 +673,7 @@ final class EnumerationFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append(']');
@@ -703,7 +703,7 @@ final class MapFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++) out.append('\t');
+				for (int j = 0; j < context.getDepth() + 1; j++) out.append('\t');
 			}
 			StringFormatter.serialize(context, key.toString(), out);
 			out.append(':');
@@ -727,7 +727,7 @@ final class MapFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append('}');
@@ -757,7 +757,7 @@ final class ObjectFormatter implements Formatter {
 				if (count != 0) out.append(',');
 				if (context.isPrettyPrint()) {
 					out.append('\n');
-					for (int j = 0; j < context.getLevel() + 1; j++)
+					for (int j = 0; j < context.getDepth() + 1; j++)
 						out.append('\t');
 				}
 			} catch (Exception e) {
@@ -777,7 +777,7 @@ final class ObjectFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append('}');
@@ -830,7 +830,7 @@ final class DynaBeanFormatter implements Formatter {
 					if (count != 0) out.append(',');
 					if (context.isPrettyPrint()) {
 						out.append('\n');
-						for (int j = 0; j < context.getLevel() + 1; j++)
+						for (int j = 0; j < context.getDepth() + 1; j++)
 							out.append('\t');
 					}
 					StringFormatter.serialize(context, name.toString(), out);
@@ -857,7 +857,7 @@ final class DynaBeanFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append('}');
@@ -876,7 +876,7 @@ final class DOMElementFormatter implements Formatter {
 		out.append(',');
 		if (context.isPrettyPrint()) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel() + 1; j++)
+			for (int j = 0; j < context.getDepth() + 1; j++)
 				out.append('\t');
 		}
 		out.append('{');
@@ -888,7 +888,7 @@ final class DOMElementFormatter implements Formatter {
 				}
 				if (context.isPrettyPrint() && names.getLength() > 1) {
 					out.append('\n');
-					for (int j = 0; j < context.getLevel() + 2; j++)
+					for (int j = 0; j < context.getDepth() + 2; j++)
 						out.append('\t');
 				}
 				Node node = names.item(i);
@@ -902,7 +902,7 @@ final class DOMElementFormatter implements Formatter {
 			}
 			if (context.isPrettyPrint() && names.getLength() > 1) {
 				out.append('\n');
-				for (int j = 0; j < context.getLevel() + 1; j++)
+				for (int j = 0; j < context.getDepth() + 1; j++)
 					out.append('\t');
 			}
 		}
@@ -916,7 +916,7 @@ final class DOMElementFormatter implements Formatter {
 					out.append(',');
 					if (context.isPrettyPrint()) {
 						out.append('\n');
-						for (int j = 0; j < context.getLevel() + 1; j++)
+						for (int j = 0; j < context.getDepth() + 1; j++)
 							out.append('\t');
 					}
 					context.enter(i + 2);
@@ -930,7 +930,7 @@ final class DOMElementFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint()) {
 			out.append('\n');
-			for (int j = 0; j < context.getLevel(); j++)
+			for (int j = 0; j < context.getDepth(); j++)
 				out.append('\t');
 		}
 		out.append(']');
