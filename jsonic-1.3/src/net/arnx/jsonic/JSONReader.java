@@ -42,11 +42,11 @@ public class JSONReader {
 		return type;
 	}
 	
-	public <T> T get(Class<T> cls) throws IOException {
+	public <T> T getValue(Class<T> cls) throws IOException {
 		return context.convertInternal(getValue(), cls);
 	}
 	
-	public Object get(Type t) throws IOException {
+	public Object getValue(Type t) throws IOException {
 		return context.convertInternal(getValue(), t);
 	}
 	
