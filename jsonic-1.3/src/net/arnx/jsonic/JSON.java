@@ -818,8 +818,8 @@ public class JSON {
 		}
 		
 		context.enter('$', null);
-		source = preformatInternal(context, source);
-		formatInternal(context, source, fs);
+		source = context.preformatInternal(source);
+		context.formatInternal(source, fs);
 		context.exit();
 		fs.flush();
 		return ap;
@@ -835,121 +835,6 @@ public class JSON {
 	 */
 	protected Object preformat(Context context, Object value) throws Exception {
 		return value;
-	}
-	
-	final Object preformatInternal(Context context, Object value) {
-		if (value == null) {
-			return null;
-		} else if (context.getDepth() > context.getMaxDepth()) {
-			return null;
-		} else if (getClass() != JSON.class) {
-			try {
-				return preformat(context, value);
-			} catch (Exception e) {
-				throw new JSONException(getMessage("json.format.ConversionError", value, context),
-					JSONException.PREFORMAT_ERROR, e);
-			}
-		}
-		return value;
-	}
-	
-	final Formatter formatInternal(final Context context, final Object src, final OutputSource ap) throws IOException {
-		Object o = src;
-		
-		Formatter f = null;
-		
-		if (o == null) {
-			f = NullFormatter.INSTANCE;
-		} else {
-			JSONHint hint = context.getHint();
-			if (hint == null) {
-				// no handle
-			} else if (context.skipHint) {
-				context.skipHint = false;
-			} else if (hint.serialized()) {
-				f = PlainFormatter.INSTANCE;
-			} else if (String.class.equals(hint.type())) {
-				f = StringFormatter.INSTANCE;
-			} else if (Serializable.class.equals(hint.type())) {
-				f = SerializableFormatter.INSTANCE;
-			}
-		}
-		
-		if (f == null) f = FORMAT_MAP.get(o.getClass());
-		
-		if (f == null) {
-			if (context.hasMemberCache(o.getClass())) {
-				f = ObjectFormatter.INSTANCE;
-			} else if (o instanceof Map<?, ?>) {
-				f = MapFormatter.INSTANCE;
-			} else if (o instanceof Iterable<?>) {
-				if (o instanceof RandomAccess && o instanceof List<?>) {
-					f = ListFormatter.INSTANCE;
-				} else {
-					f = IterableFormatter.INSTANCE;
-				}
-			} else if (o instanceof Object[]) {
-				f = ObjectArrayFormatter.INSTANCE;
-			} else if (o instanceof Enum<?>) {
-				f = EnumFormatter.INSTANCE;
-			} else if (o instanceof CharSequence) {
-				f = StringFormatter.INSTANCE;
-			} else if (o instanceof Date) {
-				f = DateFormatter.INSTANCE;
-			} else if (o instanceof Calendar) {
-				f = CalendarFormatter.INSTANCE;
-			} else if (o instanceof Number) {
-				f = NumberFormatter.INSTANCE;
-			} else if (o instanceof Iterator<?>) {
-				f = IteratorFormatter.INSTANCE;
-			} else if (o instanceof Enumeration) {
-				f = EnumerationFormatter.INSTANCE;
-			} else if (o instanceof Type || o instanceof Member || o instanceof File) {
-				f = StringFormatter.INSTANCE;
-			} else if (o instanceof TimeZone) {
-				f = TimeZoneFormatter.INSTANCE;
-			} else if (o instanceof Charset) {
-				f = CharsetFormatter.INSTANCE;
-			} else if (o instanceof java.sql.Array) {
-				f = SQLArrayFormatter.INSTANCE;
-			} else if (o instanceof Struct) {
-				f = StructFormmatter.INSTANCE;
-			} else if (o instanceof Node) {
-				if (o instanceof CharacterData && !(o instanceof Comment)) {
-					f = CharacterDataFormatter.INSTANCE;
-				} else if (o instanceof Document) {
-					f = DOMDocumentFormatter.INSTANCE;
-				} else if (o instanceof Element) {
-					f = DOMElementFormatter.INSTANCE;
-				}
-			} else if (isAssignableFrom(ClassUtil.findClass("java.sql.RowId"), o.getClass())) {
-				f = SerializableFormatter.INSTANCE;
-			} else if (isAssignableFrom(ClassUtil.findClass("java.net.InetAddress"), o.getClass())) {
-				f = InetAddressFormatter.INSTANCE;
-			} else if (isAssignableFrom(ClassUtil.findClass("org.apache.commons.beanutils.DynaBean"), o.getClass())) {
-				f = DynaBeanFormatter.INSTANCE;
-			} else {
-				f = ObjectFormatter.INSTANCE;
-			}
-		}
-		
-		boolean isStruct;
-		try {
-			isStruct = f.format(this, context, src, o, ap);
-		} catch (IOException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new JSONException(getMessage("json.format.ConversionError",
-				(src instanceof CharSequence) ? "\"" + src + "\"" : src, context),
-					JSONException.FORMAT_ERROR, e);
-		}
-		
-		if (!isStruct && context.getDepth() == 0 && context.getMode() != Mode.SCRIPT) {
-			throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
-					JSONException.FORMAT_ERROR);
-		}
-		
-		return f;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1111,7 +996,6 @@ public class JSON {
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
-	@SuppressWarnings("unchecked")
 	protected <T> T postparse(Context context, Object value, Class<? extends T> cls, Type type) throws Exception {
 		Converter c = null;
 		
@@ -1172,7 +1056,9 @@ public class JSON {
 		}
 		
 		if (c != null) {
-			return (T)c.convert(this, context, value, cls, type);
+			@SuppressWarnings("unchecked")
+			T ret = (T)c.convert(context, value, cls, type);
+			return ret;
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -1300,7 +1186,7 @@ public class JSON {
 			}
 		}
 		
-		Context(Context context) {
+		private Context(Context context) {
 			synchronized (context) {
 				locale = context.locale;
 				timeZone = context.timeZone;
@@ -1316,6 +1202,10 @@ public class JSON {
 				depth = context.depth;
 				path = context.path.clone();
 			}
+		}
+		
+		Context copy() {
+			return new Context(this);
 		}
 		
 		public StringBuilder getCachedBuffer() {
@@ -1530,11 +1420,11 @@ public class JSON {
 			path[depth*2] = key;
 			path[depth*2+1] = hint;
 		}
-/*		
+		
 		void enter(Object key) {
 			enter(key, getHint());
 		}
-*/		
+		
 		void exit() {
 			depth--;
 		}
@@ -1745,6 +1635,129 @@ public class JSON {
 				}
 			}
 			return sb.toString();
+		}
+		
+		final Object preformatInternal(Object value) {
+			if (value == null) {
+				return null;
+			} else if (getDepth() > getMaxDepth()) {
+				return null;
+			} else if (JSON.this.getClass() != JSON.class) {
+				try {
+					return preformat(this, value);
+				} catch (Exception e) {
+					throw new JSONException(getMessage("json.format.ConversionError", value, this),
+						JSONException.PREFORMAT_ERROR, e);
+				}
+			}
+			return value;
+		}
+		
+		final Formatter formatInternal(final Object src, final OutputSource ap) throws IOException {
+			Object o = src;
+			
+			Formatter f = null;
+			
+			if (o == null) {
+				f = NullFormatter.INSTANCE;
+			} else {
+				JSONHint hint = getHint();
+				if (hint == null) {
+					// no handle
+				} else if (skipHint) {
+					skipHint = false;
+				} else if (hint.serialized()) {
+					f = PlainFormatter.INSTANCE;
+				} else if (String.class.equals(hint.type())) {
+					f = StringFormatter.INSTANCE;
+				} else if (Serializable.class.equals(hint.type())) {
+					f = SerializableFormatter.INSTANCE;
+				}
+			}
+			
+			if (f == null) f = FORMAT_MAP.get(o.getClass());
+			
+			if (f == null) {
+				if (hasMemberCache(o.getClass())) {
+					f = ObjectFormatter.INSTANCE;
+				} else if (o instanceof Map<?, ?>) {
+					f = MapFormatter.INSTANCE;
+				} else if (o instanceof Iterable<?>) {
+					if (o instanceof RandomAccess && o instanceof List<?>) {
+						f = ListFormatter.INSTANCE;
+					} else {
+						f = IterableFormatter.INSTANCE;
+					}
+				} else if (o instanceof Object[]) {
+					f = ObjectArrayFormatter.INSTANCE;
+				} else if (o instanceof Enum<?>) {
+					f = EnumFormatter.INSTANCE;
+				} else if (o instanceof CharSequence) {
+					f = StringFormatter.INSTANCE;
+				} else if (o instanceof Date) {
+					f = DateFormatter.INSTANCE;
+				} else if (o instanceof Calendar) {
+					f = CalendarFormatter.INSTANCE;
+				} else if (o instanceof Number) {
+					f = NumberFormatter.INSTANCE;
+				} else if (o instanceof Iterator<?>) {
+					f = IteratorFormatter.INSTANCE;
+				} else if (o instanceof Enumeration) {
+					f = EnumerationFormatter.INSTANCE;
+				} else if (o instanceof Type || o instanceof Member || o instanceof File) {
+					f = StringFormatter.INSTANCE;
+				} else if (o instanceof TimeZone) {
+					f = TimeZoneFormatter.INSTANCE;
+				} else if (o instanceof Charset) {
+					f = CharsetFormatter.INSTANCE;
+				} else if (o instanceof java.sql.Array) {
+					f = SQLArrayFormatter.INSTANCE;
+				} else if (o instanceof Struct) {
+					f = StructFormmatter.INSTANCE;
+				} else if (o instanceof Node) {
+					if (o instanceof CharacterData && !(o instanceof Comment)) {
+						f = CharacterDataFormatter.INSTANCE;
+					} else if (o instanceof Document) {
+						f = DOMDocumentFormatter.INSTANCE;
+					} else if (o instanceof Element) {
+						f = DOMElementFormatter.INSTANCE;
+					}
+				} else if (isAssignableFrom(ClassUtil.findClass("java.sql.RowId"), o.getClass())) {
+					f = SerializableFormatter.INSTANCE;
+				} else if (isAssignableFrom(ClassUtil.findClass("java.net.InetAddress"), o.getClass())) {
+					f = InetAddressFormatter.INSTANCE;
+				} else if (isAssignableFrom(ClassUtil.findClass("org.apache.commons.beanutils.DynaBean"), o.getClass())) {
+					f = DynaBeanFormatter.INSTANCE;
+				} else {
+					f = ObjectFormatter.INSTANCE;
+				}
+			}
+			
+			boolean isStruct;
+			try {
+				isStruct = f.format(this, src, o, ap);
+			} catch (IOException e) {
+				throw e;
+			} catch (Exception e) {
+				throw new JSONException(getMessage("json.format.ConversionError",
+					(src instanceof CharSequence) ? "\"" + src + "\"" : src, this),
+						JSONException.FORMAT_ERROR, e);
+			}
+			
+			if (!isStruct && getDepth() == 0 && getMode() != Mode.SCRIPT) {
+				throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
+						JSONException.FORMAT_ERROR);
+			}
+			
+			return f;
+		}
+		
+		protected <T> T postparseInternal(Object value, Class<? extends T> cls, Type type) throws Exception {
+			return postparse(this, value, cls, type);
+		}
+		
+		protected <T> T createInternal(Class<? extends T> c) throws Exception {
+			return create(this, c);
 		}
 	}
 }

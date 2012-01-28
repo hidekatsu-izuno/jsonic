@@ -39,13 +39,13 @@ import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
 
 interface Converter {
-	Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception;
+	Object convert(Context context, Object value, Class<?> c, Type t) throws Exception;
 }
 
 final class NullConverter implements Converter {
 	public static final NullConverter INSTANCE = new NullConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) {
+	public Object convert(Context context, Object value, Class<?> c, Type t) {
 		return null;
 	}
 }
@@ -66,7 +66,7 @@ final class PlainConverter implements Converter {
 		PRIMITIVE_MAP.put(char.class, '\0');
 	}
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) {
+	public Object convert(Context context, Object value, Class<?> c, Type t) {
 		return value;
 	}
 	
@@ -78,27 +78,27 @@ final class PlainConverter implements Converter {
 final class FormatConverter implements Converter {
 	public static final FormatConverter INSTANCE = new FormatConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
-		Context context2 = json.new Context(context);
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		Context context2 = context.copy();
 		context2.skipHint = true;
-		value = json.preformatInternal(context2, value);
+		value = context2.preformatInternal(value);
 		StringBuilderOutputSource fs = new StringBuilderOutputSource(new StringBuilder(200));
 		try {
-			json.formatInternal(context2, value, fs);
+			context2.formatInternal(value, fs);
 		} catch (IOException e) {
 			// no handle
 		}
 		fs.flush();
 		
 		context.skipHint = true;
-		return json.postparse(context, fs.toString(), c, t);
+		return context.postparseInternal(fs.toString(), c, t);
 	}
 }
 
 final class StringSerializableConverter implements Converter {
 	public static final StringSerializableConverter INSTANCE = new StringSerializableConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
 			try {
 				Constructor<?> con = c.getConstructor(String.class);
@@ -117,7 +117,7 @@ final class StringSerializableConverter implements Converter {
 final class SerializableConverter implements Converter {
 	public static final SerializableConverter INSTANCE = new SerializableConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
 			return ClassUtil.deserialize(Base64.decode((String)value));
 		} else if (value != null) {
@@ -130,7 +130,7 @@ final class SerializableConverter implements Converter {
 final class BooleanConverter implements Converter {
 	public static final BooleanConverter INSTANCE = new BooleanConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -167,7 +167,7 @@ final class BooleanConverter implements Converter {
 final class CharacterConverter implements Converter {
 	public static final CharacterConverter INSTANCE = new CharacterConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -196,7 +196,7 @@ final class CharacterConverter implements Converter {
 final class ByteConverter implements Converter {
 	public static final ByteConverter INSTANCE = new ByteConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -244,7 +244,7 @@ final class ByteConverter implements Converter {
 final class ShortConverter implements Converter {
 	public static final ShortConverter INSTANCE = new ShortConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -289,7 +289,7 @@ final class ShortConverter implements Converter {
 final class IntegerConverter  implements Converter {
 	public static final IntegerConverter INSTANCE = new IntegerConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -334,7 +334,7 @@ final class IntegerConverter  implements Converter {
 final class LongConverter implements Converter {
 	public static final LongConverter INSTANCE = new LongConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -379,7 +379,7 @@ final class LongConverter implements Converter {
 final class FloatConverter  implements Converter {
 	public static final FloatConverter INSTANCE = new FloatConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -413,7 +413,7 @@ final class FloatConverter  implements Converter {
 final class DoubleConverter  implements Converter {
 	public static final DoubleConverter INSTANCE = new DoubleConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -447,7 +447,7 @@ final class DoubleConverter  implements Converter {
 final class BigIntegerConverter  implements Converter {
 	public static final BigIntegerConverter INSTANCE = new BigIntegerConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -493,7 +493,7 @@ final class BigIntegerConverter  implements Converter {
 final class BigDecimalConverter  implements Converter {
 	public static final BigDecimalConverter INSTANCE = new BigDecimalConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -526,7 +526,7 @@ final class BigDecimalConverter  implements Converter {
 final class PatternConverter implements Converter {
 	public static final PatternConverter INSTANCE = new PatternConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -546,7 +546,7 @@ final class PatternConverter implements Converter {
 final class TimeZoneConverter implements Converter {
 	public static final TimeZoneConverter INSTANCE = new TimeZoneConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -566,7 +566,7 @@ final class TimeZoneConverter implements Converter {
 final class LocaleConverter implements Converter {
 	public static final LocaleConverter INSTANCE = new LocaleConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof List<?>) {
 			List<?> src = (List<?>)value;
 			if (src.size() == 1) {
@@ -606,7 +606,7 @@ final class LocaleConverter implements Converter {
 final class FileConverter implements Converter {
 	public static final FileConverter INSTANCE = new FileConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -625,7 +625,7 @@ final class FileConverter implements Converter {
 final class URLConverter implements Converter {
 	public static final URLConverter INSTANCE = new URLConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -650,7 +650,7 @@ final class URLConverter implements Converter {
 final class URIConverter implements Converter {
 	public static final URIConverter INSTANCE = new URIConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -675,7 +675,7 @@ final class URIConverter implements Converter {
 final class UUIDConverter implements Converter {
 	public static final UUIDConverter INSTANCE = new UUIDConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -694,7 +694,7 @@ final class UUIDConverter implements Converter {
 final class CharsetConverter implements Converter {
 	public static final CharsetConverter INSTANCE = new CharsetConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -713,7 +713,7 @@ final class CharsetConverter implements Converter {
 final class ClassConverter implements Converter {
 	public static final ClassConverter INSTANCE = new ClassConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -754,7 +754,7 @@ final class ClassConverter implements Converter {
 final class CharSequenceConverter implements Converter {
 	public static final CharSequenceConverter INSTANCE = new CharSequenceConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -771,7 +771,7 @@ final class CharSequenceConverter implements Converter {
 final class AppendableConverter implements Converter {
 	public static final AppendableConverter INSTANCE = new AppendableConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -780,7 +780,7 @@ final class AppendableConverter implements Converter {
 		}
 		
 		if (value != null) {
-			Appendable a = (Appendable)json.create(context, c);
+			Appendable a = (Appendable)context.createInternal(c);
 			return a.append(value.toString());
 		}
 		return null;
@@ -791,7 +791,7 @@ final class EnumConverter implements Converter {
 	public static final EnumConverter INSTANCE = new EnumConverter();
 	
 	@SuppressWarnings({ "rawtypes" })
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -830,7 +830,7 @@ final class DateConverter implements Converter {
 	public static final DateConverter INSTANCE = new DateConverter();
 	private static final Pattern TIMEZONE_PATTERN = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})");
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -842,12 +842,12 @@ final class DateConverter implements Converter {
 		long millis = -1;
 		if (value instanceof Number) {
 			millis = ((Number)value).longValue();
-			date = (Date)json.create(context, c);
+			date = (Date)context.createInternal(c);
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				millis = convertDate(context, str);
-				date = (Date)json.create(context, c);						
+				date = (Date)context.createInternal(c);						
 			}
 		}
 		
@@ -963,7 +963,7 @@ final class DateConverter implements Converter {
 final class CalendarConverter implements Converter {
 	public static final CalendarConverter INSTANCE = new CalendarConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -972,13 +972,13 @@ final class CalendarConverter implements Converter {
 		}
 		
 		if (value instanceof Number) {
-			Calendar cal = (Calendar)json.create(context, c);
+			Calendar cal = (Calendar)context.createInternal(c);
 			cal.setTimeInMillis(((Number)value).longValue());
 			return cal;
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
-				Calendar cal = (Calendar)json.create(context, c);
+				Calendar cal = (Calendar)context.createInternal(c);
 				cal.setTimeInMillis(DateConverter.convertDate(context, str));
 				return  cal;
 			}
@@ -990,7 +990,7 @@ final class CalendarConverter implements Converter {
 final class InetAddressConverter implements Converter {
 	public static final InetAddressConverter INSTANCE = new InetAddressConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
 		} else if (value instanceof List<?>) {
@@ -1009,7 +1009,7 @@ final class InetAddressConverter implements Converter {
 final class ArrayConverter implements Converter {
 	public static final ArrayConverter INSTANCE = new ArrayConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			Map<?, ?> src = (Map<?, ?>)value;
 			if (!(src instanceof SortedMap<?, ?>)) {
@@ -1029,7 +1029,7 @@ final class ArrayConverter implements Converter {
 			JSONHint hint = context.getHint();
 			for (int i = 0; it.hasNext(); i++) {
 				context.enter(i, hint);
-				Array.set(array, i, json.postparse(context, it.next(), pc, pt));
+				Array.set(array, i, context.postparseInternal(it.next(), pc, pt));
 				context.exit();
 			}
 			return array;
@@ -1047,7 +1047,7 @@ final class ArrayConverter implements Converter {
 			Type pt = (t instanceof GenericArrayType) ? 
 					((GenericArrayType)t).getGenericComponentType() : pc;
 			context.enter(0, context.getHint());
-			Array.set(array, 0, json.postparse(context, value, pc, pt));
+			Array.set(array, 0, context.postparseInternal(value, pc, pt));
 			context.exit();
 			return array;
 		}
@@ -1058,7 +1058,7 @@ final class CollectionConverter implements Converter {
 	public static final CollectionConverter INSTANCE = new CollectionConverter();
 	
 	@SuppressWarnings("unchecked")
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map) {
 			Map<?, ?> src = (Map<?, ?>)value;
 			if (!(src instanceof SortedMap<?, ?>)) {
@@ -1067,7 +1067,7 @@ final class CollectionConverter implements Converter {
 			value = src.values();
 		}
 		
-		Collection<Object> collection = (Collection<Object>)json.create(context, c);
+		Collection<Object> collection = (Collection<Object>)context.createInternal(c);
 		t = ClassUtil.resolveParameterizedType(t, Collection.class);
 		
 		Class<?> pc = Object.class;
@@ -1086,7 +1086,7 @@ final class CollectionConverter implements Converter {
 				JSONHint hint = context.getHint();
 				for (int i = 0; it.hasNext(); i++) {
 					context.enter(i, hint);
-					collection.add(json.postparse(context, it.next(), pc, pt));
+					collection.add(context.postparseInternal(it.next(), pc, pt));
 					context.exit();
 				}
 			} else {
@@ -1095,7 +1095,7 @@ final class CollectionConverter implements Converter {
 		} else {
 			if (!Object.class.equals(pc)) {
 				context.enter(0, context.getHint());
-				collection.add(json.postparse(context, value, pc, pt));
+				collection.add(context.postparseInternal(value, pc, pt));
 				context.exit();
 			} else {
 				collection.add(value);
@@ -1109,8 +1109,8 @@ final class CollectionConverter implements Converter {
 final class PropertiesConverter implements Converter {
 	public static final PropertiesConverter INSTANCE = new PropertiesConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
-		Properties prop = (Properties)json.create(context, c);
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		Properties prop = (Properties)context.createInternal(c);
 		if (value instanceof Map<?, ?> || value instanceof List<?>) {
 			flattenProperties(context.getCachedBuffer(), value, prop);
 		} else if (value != null) {
@@ -1147,8 +1147,8 @@ final class MapConverter implements Converter {
 	public static final MapConverter INSTANCE = new MapConverter();
 	
 	@SuppressWarnings("unchecked")
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
-		Map<Object, Object> map = (Map<Object, Object>)json.create(context, c);
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		Map<Object, Object> map = (Map<Object, Object>)context.createInternal(c);
 		t = ClassUtil.resolveParameterizedType(t, Map.class);
 		
 		Type pt0 = Object.class;
@@ -1170,11 +1170,11 @@ final class MapConverter implements Converter {
 				JSONHint hint = context.getHint();
 				for (Map.Entry<?, ?> entry : ((Map<?,?>)value).entrySet()) {
 					context.enter('.', hint);
-					Object key = json.postparse(context, entry.getKey(), pc0, pt0);
+					Object key = context.postparseInternal(entry.getKey(), pc0, pt0);
 					context.exit();
 					
 					context.enter(entry.getKey(), hint);
-					map.put(key, json.postparse(context, entry.getValue(), pc1, pt1));
+					map.put(key, context.postparseInternal(entry.getValue(), pc1, pt1));
 					context.exit();
 				}
 			}
@@ -1189,11 +1189,11 @@ final class MapConverter implements Converter {
 				JSONHint hint = context.getHint();
 				for (int i = 0; i < src.size(); i++) {
 					context.enter('.', hint);
-					Object key = json.postparse(context, i, pc0, pt0);
+					Object key = context.postparseInternal(i, pc0, pt0);
 					context.exit();
 					
 					context.enter(i, hint);
-					map.put(key, json.postparse(context, src.get(i), pc1, pt1));
+					map.put(key, context.postparseInternal(src.get(i), pc1, pt1));
 					context.exit();
 				}
 			}
@@ -1205,11 +1205,11 @@ final class MapConverter implements Converter {
 				map.put(value, null);
 			} else {
 				context.enter('.', hint);
-				key = json.postparse(context, key, pc0, pt0);
+				key = context.postparseInternal(key, pc0, pt0);
 				context.exit();
 				
 				context.enter(key, hint);
-				map.put(key, json.postparse(context, value, pc1, pt1));
+				map.put(key, context.postparseInternal(value, pc1, pt1));
 				context.exit();
 			}
 		}
@@ -1220,10 +1220,10 @@ final class MapConverter implements Converter {
 final class ObjectConverter implements Converter {
 	public static final ObjectConverter INSTANCE = new ObjectConverter();
 	
-	public Object convert(JSON json, Context context, Object value, Class<?> c, Type t) throws Exception {
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Map<String, PropertyInfo> props = context.getSetProperties(c);
 		if (value instanceof Map<?, ?>) {
-			Object o = json.create(context, c);
+			Object o = context.createInternal(c);
 			if (o == null) return null;
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				String name = entry.getKey().toString();
@@ -1238,7 +1238,7 @@ final class ObjectConverter implements Converter {
 					gtype = resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
 					cls = ClassUtil.getRawType(gtype);
 				}
-				target.set(o, json.postparse(context, entry.getValue(), cls, gtype));
+				target.set(o, context.postparseInternal(entry.getValue(), cls, gtype));
 				context.exit();
 			}
 			return o;
@@ -1249,7 +1249,7 @@ final class ObjectConverter implements Converter {
 			if (hint != null && hint.anonym().length() > 0) {
 				PropertyInfo target = props.get(hint.anonym());
 				if (target == null) return null;
-				Object o = json.create(context, c);
+				Object o = context.createInternal(c);
 				if (o == null) return null;
 				context.enter(hint.anonym(), target.getWriteAnnotation(JSONHint.class));
 				Class<?> cls = target.getWriteType();
@@ -1258,7 +1258,7 @@ final class ObjectConverter implements Converter {
 					gtype = resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
 					cls = ClassUtil.getRawType(gtype);
 				}
-				target.set(o, json.postparse(context, value, cls, gtype));
+				target.set(o, context.postparseInternal(value, cls, gtype));
 				context.exit();
 				return o;
 			} else {
