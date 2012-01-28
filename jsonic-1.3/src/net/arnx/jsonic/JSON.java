@@ -195,7 +195,6 @@ public class JSON {
 	
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
-	private static final int[] ESCAPE_CHARS = new int[128];
 	
 	static {
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
@@ -316,14 +315,6 @@ public class JSON {
 		CONVERT_MAP.put(TreeMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(LinkedHashMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(Properties.class, PropertiesConverter.INSTANCE);
-		
-		for (int i = 0; i < 32; i++) {
-			ESCAPE_CHARS[i] = 1;
-		}
-		ESCAPE_CHARS['\''] = 2;
-		ESCAPE_CHARS['"'] = 2;
-		ESCAPE_CHARS['\\'] = 3;
-		ESCAPE_CHARS[0x7F] = 1;
 	}
 	
 	static JSON newInstance() {
