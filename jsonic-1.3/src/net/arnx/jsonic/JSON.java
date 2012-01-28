@@ -1729,6 +1729,10 @@ public class JSON {
 		
 		@SuppressWarnings("unchecked")
 		<T> T convertInternal(Object value, Type type) throws JSONException {
+			if (type instanceof TypeReference<?>) {
+				type = ((TypeReference<?>)type).getType();
+			}
+			
 			Class<?> cls = ClassUtil.getRawType(type);
 			
 			T result = null;

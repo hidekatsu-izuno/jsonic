@@ -1108,6 +1108,9 @@ public class JSONTest {
 		List<TestBean> list5 = JSON.decode("[ {} ]",  (new ArrayList<TestBean>() {}).getClass().getGenericSuperclass());
 		assertEquals(TestBean.class, list5.get(0).getClass());
 		
+		List<TestBean> list6 = JSON.decode("[ {} ]",  new TypeReference<List<TestBean>>() {});
+		assertEquals(TestBean.class, list5.get(0).getClass());
+		
 		//SCRIPT
 		json.setMode(JSON.Mode.SCRIPT);
 		
@@ -2475,24 +2478,6 @@ class SuppressNullBean {
 
 enum ExampleEnum {
 	Example0, Example1, Example2
-}
-
-class KenAll {
-	public String localPublicOrgCode;
-	public String postalCode5;
-	public String postalCode7;
-	public String prefectureCode;
-	public String mairieCode;
-	public String cityCode;
-	public String prefectureName;
-	public String mairieName;
-	public String cityName;
-	public int duplicateNo;
-	public int cityNo;
-	public int blockNo;
-	public int complexNo;
-	public int updateNo;
-	public int reasonNo;
 }
 
 class Point2DJSON extends JSON {
