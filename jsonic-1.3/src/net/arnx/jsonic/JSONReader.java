@@ -42,8 +42,9 @@ public class JSONReader {
 		return type;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T getValue(Class<T> cls) throws IOException {
-		return context.convertInternal(getValue(), cls);
+		return (T)context.convertInternal(getValue(), cls);
 	}
 	
 	public Object getValue(Type t) throws IOException {
