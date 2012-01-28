@@ -1,6 +1,7 @@
 package net.arnx.jsonic;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -42,12 +43,14 @@ public class JSONReader {
 	}
 	
 	public <T> T get(Class<T> cls) throws IOException {
-		return null;
+		return context.convertInternal(getValue(), cls);
+	}
+	
+	public Object get(Type t) throws IOException {
+		return context.convertInternal(getValue(), t);
 	}
 	
 	public Map<?, ?> getObject() throws IOException {
-		if (type == null) type = next();
-		
 		if (type == JSONEventType.START_OBJECT) {
 			return (Map<?, ?>)getValue();
 		} else {
@@ -56,8 +59,6 @@ public class JSONReader {
 	}
 	
 	public List<?> getArray() throws IOException {
-		if (type == null) type = next();
-
 		if (type == JSONEventType.START_ARRAY) {
 			return (List<?>)getValue();
 		} else {
@@ -66,8 +67,6 @@ public class JSONReader {
 	}
 	
 	public String getString() throws IOException {
-		if (type == null) type = next();
-
 		if (type == JSONEventType.STRING) {
 			return (String)parser.getValue();
 		} else {
@@ -76,8 +75,6 @@ public class JSONReader {
 	}
 	
 	public BigDecimal getNumber() throws IOException {
-		if (type == null) type = next();
-
 		if (type == JSONEventType.NUMBER) {
 			return (BigDecimal)parser.getValue();
 		} else {
@@ -86,8 +83,6 @@ public class JSONReader {
 	}
 	
 	public Boolean getBoolean() throws IOException {
-		if (type == null) type = next();
-		
 		if (type == JSONEventType.BOOLEAN) {
 			return (Boolean)parser.getValue();
 		} else {
@@ -96,8 +91,6 @@ public class JSONReader {
 	}
 	
 	public String getComment() throws IOException {
-		if (type == null) type = next();
-		
 		if (type == JSONEventType.COMMENT) {
 			return (String)parser.getValue();
 		} else {
@@ -106,8 +99,6 @@ public class JSONReader {
 	}
 	
 	public String getWhitespace() throws IOException {
-		if (type == null) type = next();
-		
 		if (type == JSONEventType.WHITESPACE) {
 			return (String)parser.getValue();
 		} else {
@@ -117,8 +108,9 @@ public class JSONReader {
 	
 	@SuppressWarnings("unchecked")
 	Object getValue() throws IOException {
-		if (type == null) type = next();
-		if (type == null) return null;
+		if (type == null) {
+			throw new IllegalStateException("you should call next.");
+		}
 		
 		Object root = null;
 		List<Object> stack = null;
