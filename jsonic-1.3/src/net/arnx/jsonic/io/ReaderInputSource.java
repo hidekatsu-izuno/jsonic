@@ -103,6 +103,14 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	@Override
+	public String copy(int len) {
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + len > end + 1) throw new IndexOutOfBoundsException();
+		
+		return String.valueOf(buf, mark, len);
+	}
+	
+	@Override
 	public long getLineNumber() {
 		return lines;
 	}

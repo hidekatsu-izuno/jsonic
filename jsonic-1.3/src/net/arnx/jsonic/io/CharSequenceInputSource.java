@@ -68,6 +68,18 @@ public class CharSequenceInputSource implements InputSource {
 	}
 	
 	@Override
+	public String copy(int len) {
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + len > cs.length()) throw new IndexOutOfBoundsException();
+		
+		char[] array = new char[len];
+		for (int i = 0; i < len; i++) {
+			array[i] = cs.charAt(mark + i);
+		}
+		return String.valueOf(array);
+	}
+	
+	@Override
 	public long getLineNumber() {
 		return lines;
 	}

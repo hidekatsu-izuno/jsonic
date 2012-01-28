@@ -12,4 +12,5 @@ public interface InputSource {
 	
 	int mark();
 	void copy(StringBuilder sb, int len);
+	String copy(int len);
 }
