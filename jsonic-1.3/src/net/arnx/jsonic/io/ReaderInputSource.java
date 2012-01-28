@@ -96,11 +96,26 @@ public class ReaderInputSource implements InputSource {
 	
 	@Override
 	public void copy(StringBuilder sb, int len) {
-		if (mark == -1) {
-			throw new IllegalStateException("no mark");
-		}
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + len > end + 1) throw new IndexOutOfBoundsException();
 		
 		sb.append(buf, mark, len);
+	}
+	
+	@Override
+	public String copy(int len) {
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + len > end + 1) throw new IndexOutOfBoundsException();
+
+		return new String(buf, mark, len);
+	}
+	
+	@Override
+	public char charAt(int i) {
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + i > end) throw new IndexOutOfBoundsException();
+		
+		return buf[mark + i];
 	}
 	
 	@Override

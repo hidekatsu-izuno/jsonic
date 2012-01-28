@@ -61,10 +61,30 @@ public class CharSequenceInputSource implements InputSource {
 	
 	@Override
 	public void copy(StringBuilder sb, int len) {
-		if (mark == -1) {
-			throw new IllegalStateException("no mark");
-		}
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + len > cs.length()) throw new IndexOutOfBoundsException();
+		
 		sb.append(cs, mark, mark + len);
+	}
+	
+	@Override
+	public String copy(int len) {
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + len > cs.length()) throw new IndexOutOfBoundsException();
+		
+		char[] array = new char[len];
+		for (int i = 0; i < len; i++) {
+			array[i] = cs.charAt(mark + i);
+		}
+		return new String(array);
+	}
+	
+	@Override
+	public char charAt(int i) {
+		if (mark == -1) throw new IllegalStateException("no mark");
+		if (mark + i >= cs.length()) throw new IndexOutOfBoundsException();
+		
+		return cs.charAt(mark + i);
 	}
 	
 	@Override
