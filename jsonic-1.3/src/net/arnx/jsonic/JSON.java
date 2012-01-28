@@ -881,7 +881,7 @@ public class JSON {
 		try {
 			Context context = new Context();
 			Object result = new JSONReader(context, is, true).getValue();
-			value = (T)convert(context, result, type);
+			value = (T)context.convertInternal(result, type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -902,7 +902,7 @@ public class JSON {
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
 		Object result = new JSONReader(context, new ReaderInputSource(in), true).getValue();
-		return (T)convert(context, result, type);
+		return (T)context.convertInternal(result, type);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -919,13 +919,13 @@ public class JSON {
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
 		Object result = new JSONReader(context, new ReaderInputSource(reader), true).getValue();
-		return (T)convert(context, result, type);
+		return (T)context.convertInternal(result, type);
 	}
 
 	public JSONReader getReader(CharSequence cs) {
 		return getReader(cs, true);
 	}
-
+	
 	public JSONReader getReader(InputStream in) {
 		return getReader(in, true);
 	}
@@ -957,35 +957,9 @@ public class JSON {
 	}
 	
 	public Object convert(Object value, Type type)  throws JSONException {
-		return convert(new Context(), value, type);
+		return (new Context()).convertInternal(value, type);
 	}
 	
-	@SuppressWarnings("unchecked")
-	private <T> T convert(Context context, Object value, Type type) throws JSONException {
-		Class<?> cls = ClassUtil.getRawType(type);
-		
-		T result = null;
-		try {
-			context.enter('$', null);
-			result = (T)postparse(context, value, cls, type);
-			context.exit();
-		} catch (Exception e) {
-			String text;
-			if (value instanceof CharSequence) {
-				text = "\"" + value + "\"";
-			} else {
-				try {
-					text = value.toString();
-				} catch (Exception e2) {
-					text = value.getClass().toString();
-				}
-			}
-			throw new JSONException(getMessage("json.parse.ConversionError", text, type, context), 
-					JSONException.POSTPARSE_ERROR, e);
-		}
-		return result;
-	}
-		
 	/**
 	 * Converts Map, List, Number, String, Boolean or null to other Java Objects after parsing. 
 	 * 
@@ -1752,11 +1726,37 @@ public class JSON {
 			return f;
 		}
 		
-		protected <T> T postparseInternal(Object value, Class<? extends T> cls, Type type) throws Exception {
+		<T> T postparseInternal(Object value, Class<? extends T> cls, Type type) throws Exception {
 			return postparse(this, value, cls, type);
 		}
 		
-		protected <T> T createInternal(Class<? extends T> c) throws Exception {
+		@SuppressWarnings("unchecked")
+		<T> T convertInternal(Object value, Type type) throws JSONException {
+			Class<?> cls = ClassUtil.getRawType(type);
+			
+			T result = null;
+			try {
+				enter('$', null);
+				result = (T)postparse(this, value, cls, type);
+				exit();
+			} catch (Exception e) {
+				String text;
+				if (value instanceof CharSequence) {
+					text = "\"" + value + "\"";
+				} else {
+					try {
+						text = value.toString();
+					} catch (Exception e2) {
+						text = value.getClass().toString();
+					}
+				}
+				throw new JSONException(getMessage("json.parse.ConversionError", text, type, this), 
+						JSONException.POSTPARSE_ERROR, e);
+			}
+			return result;
+		}
+		
+		<T> T createInternal(Class<? extends T> c) throws Exception {
 			return create(this, c);
 		}
 	}
