@@ -2,6 +2,8 @@ package net.arnx.jsonic.io;
 
 import java.io.IOException;
 
+import net.arnx.jsonic.util.ValueCache;
+
 public interface InputSource {
 	int next() throws IOException;
 	void back();
@@ -12,5 +14,5 @@ public interface InputSource {
 	
 	int mark();
 	void copy(StringBuilder sb, int len);
-	String copy(int len);
+	String copy(ValueCache cache, int len);
 }

@@ -81,6 +81,7 @@ import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.ExtendedDateFormat;
 import net.arnx.jsonic.util.PropertyInfo;
+import net.arnx.jsonic.util.ValueCache;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -1114,8 +1115,6 @@ public class JSON {
 		return (target != null) && target.isAssignableFrom(cls);
 	}
 	
-	private static final int CACHE_SIZE = 256;
-	
 	public final class Context {
 		private final Locale locale;
 		private final TimeZone timeZone;
@@ -1136,8 +1135,7 @@ public class JSON {
 		private Map<String, DateFormat> dateFormatCache;
 		private Map<String, NumberFormat> numberFormatCache;
 		private StringBuilder builderCache;
-		private String[] stringCache;
-		private BigDecimal[] numberCache;
+		private ValueCache valueCache;
 		
 		boolean skipHint = false;
 		
@@ -1188,101 +1186,11 @@ public class JSON {
 			return builderCache;
 		}
 		
-		public String getString(StringBuilder sb) {
-			if (sb.length() == 0) return "";
-			
-			if (sb.length() < 32) {
-				int index = getCacheIndex(sb);
-				if (index < 0) {
-					return sb.toString();
-				}
-				
-				if (stringCache == null) stringCache = new String[CACHE_SIZE];
-				if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
-				
-				String str = stringCache[index];
-				if (str == null || str.length() != sb.length()) {
-					str = sb.toString();
-					stringCache[index] = str;
-					numberCache[index] = null;
-					return str;
-				}
-				
-				for (int i = 0; i < sb.length(); i++) {
-					if (str.charAt(i) != sb.charAt(i)) {
-						str = sb.toString();
-						stringCache[index] = str;
-						numberCache[index] = null;
-						return str;
-					}
-				}
-				return str;
+		public ValueCache getValueCache() {
+			if (valueCache == null) {
+				valueCache = new ValueCache();
 			}
-			
-			return sb.toString();
-		}
-		
-		public BigDecimal getBigDecimal(StringBuilder sb) {
-			if (sb.length() == 1) {
-				if (sb.charAt(0) == '0') {
-					return BigDecimal.ZERO;
-				} else if (sb.charAt(0) == '1') {
-					return BigDecimal.ONE;
-				}
-			}
-			
-			if (sb.length() < 32) {
-				int index = getCacheIndex(sb);
-				if (index < 0) {
-					return new BigDecimal(sb.toString());
-				}
-							
-				if (stringCache == null) stringCache = new String[CACHE_SIZE];
-				if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
-				
-				String str = stringCache[index];
-				BigDecimal num = numberCache[index];
-				if (str == null || str.length() != sb.length()) {
-					str = sb.toString();
-					num = new BigDecimal(str);
-					stringCache[index] = str;
-					numberCache[index] = num;
-					return num;
-				}
-				
-				for (int i = 0; i < sb.length(); i++) {
-					if (str.charAt(i) != sb.charAt(i)) {
-						str = sb.toString();
-						num = new BigDecimal(str);
-						stringCache[index] = str;
-						numberCache[index] = num;
-						return num;
-					}
-				}
-				
-				if (num == null) {
-					num = new BigDecimal(str);
-					numberCache[index] = num;
-				}
-				return num;
-			}
-			
-			return new BigDecimal(sb.toString());
-		}
-		
-		private int getCacheIndex(StringBuilder sb) {
-			int h = 0;
-			for (int i = 0; i < sb.length(); i++) {
-				if (sb.charAt(i) < 128) {
-					h = h * 32 + sb.charAt(i);
-				} else {
-					return -1;
-				}
-			}
-			h ^= (h >>> 20) ^ (h >>> 12);
-			h ^= (h >>> 7) ^ (h >>> 4);
-			
-			return h & (CACHE_SIZE-1);
+			return valueCache;
 		}
 		
 		public Locale getLocale() {
