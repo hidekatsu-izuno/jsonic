@@ -1,7 +1,5 @@
 package net.arnx.jsonic.io;
 
-import net.arnx.jsonic.util.ValueCache;
-
 public class CharSequenceInputSource implements InputSource {
 	private int lines = 1;
 	private int columns = 0;
@@ -70,11 +68,15 @@ public class CharSequenceInputSource implements InputSource {
 	}
 	
 	@Override
-	public String copy(ValueCache cache, int len) {
+	public String copy(int len) {
 		if (mark == -1) throw new IllegalStateException("no mark");
 		if (mark + len > cs.length()) throw new IndexOutOfBoundsException();
 		
-		return cache.getString(cs, mark, len);
+		char[] array = new char[len];
+		for (int i = 0; i < len; i++) {
+			array[i] = cs.charAt(mark + i);
+		}
+		return String.valueOf(array);
 	}
 	
 	@Override

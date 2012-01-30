@@ -1,7 +1,5 @@
 package net.arnx.jsonic.io;
 
-import net.arnx.jsonic.util.ValueCache;
-
 public class StringBuilderInputSource extends CharSequenceInputSource {
 	private final StringBuilder sb;
 	
@@ -19,10 +17,10 @@ public class StringBuilderInputSource extends CharSequenceInputSource {
 	}
 	
 	@Override
-	public String copy(ValueCache cache, int len) {
+	public String copy(int len) {
 		if (mark == -1) throw new IllegalStateException("no mark");
 		if (mark + len > sb.length()) throw new IndexOutOfBoundsException();
 		
-		return cache.getString(sb, mark, len);
+		return sb.substring(mark, mark + len);
 	}
 }

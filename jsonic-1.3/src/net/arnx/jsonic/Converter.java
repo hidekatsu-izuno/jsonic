@@ -1284,7 +1284,7 @@ final class ObjectConverter implements Converter {
 		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && !Character.isUpperCase(sb.charAt(1))) {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
 		}
-		return context.getValueCache().getString(sb, 0, sb.length());
+		return context.getString(sb);
 	}
 	
 	private static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {

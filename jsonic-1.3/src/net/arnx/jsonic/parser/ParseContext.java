@@ -125,13 +125,7 @@ public class ParseContext {
 					if (sb != null) sb.append(c);
 				} else if (type == 2) { // "'
 					if (n == start) {
-						if (len > 1 && sb != null) {
-							if (sb.length() > 0) {
-								in.copy(sb, len - 1);
-							} else {
-								return in.copy(context.getValueCache(), len - 1);
-							}
-						}
+						if (len > 1 && sb != null) in.copy(sb, len - 1);
 						break;
 					} else {
 						if (rest == 0 && sb != null) in.copy(sb, len);
@@ -156,7 +150,7 @@ public class ParseContext {
 		if (n != start) {
 			throw createParseException(in, "json.parse.StringNotClosedError");
 		}
-		return (sb != null) ? context.getValueCache().getString(sb, 0, sb.length()) : null;
+		return (sb != null) ? context.getString(sb) : null;
 	}
 	
 	public char parseEscape(InputSource in) throws IOException {
@@ -302,7 +296,7 @@ public class ParseContext {
 			}
 		}
 		
-		return (sb != null) ? context.getValueCache().getBigDecimal(sb, 0, sb.length()) : null;
+		return (sb != null) ? context.getBigDecimal(sb) : null;
 	}
 	
 	public Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
@@ -357,7 +351,7 @@ public class ParseContext {
 			}
 		}
 		
-		String str = (sb != null) ? context.getValueCache().getString(sb, 0, sb.length()) : null;
+		String str = (sb != null) ? context.getString(sb) : null;
 		if (str != null) {
 			if ("null".equals(str)) {
 				type = JSONEventType.NULL;
@@ -445,7 +439,7 @@ public class ParseContext {
 			}
 		}
 		
-		return (sb != null) ? context.getValueCache().getString(sb, 0, sb.length()) : null;
+		return (sb != null) ? context.getString(sb) : null;
 	}
 	
 	public String parseWhitespace(InputSource in) throws IOException {
@@ -473,7 +467,7 @@ public class ParseContext {
 			}
 		}
 		
-		return (sb != null) ? context.getValueCache().getString(sb, 0, sb.length()) : null;
+		return (sb != null) ? context.getString(sb) : null;
 	}
 	
 	public JSONException createParseException(InputSource in, String id) {

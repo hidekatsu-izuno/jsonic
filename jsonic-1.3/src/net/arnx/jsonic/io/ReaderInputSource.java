@@ -6,8 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import net.arnx.jsonic.util.ValueCache;
-
 public class ReaderInputSource implements InputSource {
 	private static int BACK = 20;
 	
@@ -105,11 +103,11 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	@Override
-	public String copy(ValueCache cache, int len) {
+	public String copy(int len) {
 		if (mark == -1) throw new IllegalStateException("no mark");
 		if (mark + len > end + 1) throw new IndexOutOfBoundsException();
 		
-		return cache.getString(buf, mark, len);
+		return String.valueOf(buf, mark, len);
 	}
 	
 	@Override
