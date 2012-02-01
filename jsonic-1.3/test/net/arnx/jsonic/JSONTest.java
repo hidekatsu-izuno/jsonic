@@ -658,7 +658,7 @@ public class JSONTest {
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Float(10.5f, 10.5f)));
 		assertEquals("[10.0,10.0]", json.format(new Point(10, 10)));
 		
-		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
+		assertEquals("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
 		json = new JSON();
 		Object obj2 = new Object() {

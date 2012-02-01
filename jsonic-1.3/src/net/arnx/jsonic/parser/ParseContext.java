@@ -19,9 +19,9 @@ public class ParseContext {
 		for (int i = 0; i < 32; i++) {
 			ESCAPE_CHARS[i] = 3;
 		}
-		ESCAPE_CHARS['\\'] = 1;
-		ESCAPE_CHARS['"'] = 2;
-		ESCAPE_CHARS['\''] = 2;
+		ESCAPE_CHARS['"'] = 1;
+		ESCAPE_CHARS['\''] = 1;
+		ESCAPE_CHARS['\\'] = 2;
 		ESCAPE_CHARS[0x7F] = 3;
 	}
 	
@@ -33,10 +33,12 @@ public class ParseContext {
 	private JSONEventType type;
 	private Object value;
 	private boolean first;
+	private boolean active;
 	
 	public ParseContext(Context context, boolean ignoreWhirespace) {
 		this.context = context;
 		this.ignoreWhirespace = ignoreWhirespace;
+		this.active = stack.size() < context.getMaxDepth();
 	}
 	
 	public Locale getLocale() {
@@ -63,6 +65,7 @@ public class ParseContext {
 		this.type = type;
 		stack.add(type);
 		first = true;
+		active = stack.size() < context.getMaxDepth();
 	}
 	
 	public void set(JSONEventType type, Object value, boolean isValue) {
@@ -80,7 +83,8 @@ public class ParseContext {
 		} else {
 			throw new IllegalStateException();
 		}
-		this.first = false;
+		first = false;
+		active = stack.size() < context.getMaxDepth();
 	}
 	
 	public JSONEventType getBeginType() {
@@ -100,7 +104,7 @@ public class ParseContext {
 	}
 	
 	public final Object parseString(InputSource in, boolean any) throws IOException {
-		StringBuilder sb = (stack.size() < context.getMaxDepth()) ? context.getCachedBuffer() : null;
+		StringBuilder sb = active ? context.getCachedBuffer() : null;
 		
 		int start = in.next();
 
@@ -116,20 +120,20 @@ public class ParseContext {
 				int type = ESCAPE_CHARS[n];
 				if (type == 0) {
 					if (rest == 0 && sb != null) in.copy(sb, len);
-				} else if (type == 1) { // escape chars
-					if (len > 0 && sb != null) in.copy(sb, len - 1);
-					rest = 0;
-					
-					in.back();
-					char c = parseEscape(in);
-					if (sb != null) sb.append(c);
-				} else if (type == 2) { // "'
+				} else if (type == 1) { // "'
 					if (n == start) {
 						if (len > 1 && sb != null) in.copy(sb, len - 1);
 						break;
 					} else {
 						if (rest == 0 && sb != null) in.copy(sb, len);
 					}
+				} else if (type == 2) { // escape chars
+					if (len > 0 && sb != null) in.copy(sb, len - 1);
+					rest = 0;
+					
+					in.back();
+					char c = parseEscape(in);
+					if (sb != null) sb.append(c);
 				} else { // control chars
 					if (any) {
 						if (rest == 0 && sb != null) in.copy(sb, len);
@@ -207,7 +211,7 @@ public class ParseContext {
 	
 	public Object parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilder sb = (stack.size() < context.getMaxDepth()) ? context.getCachedBuffer() : null;
+		StringBuilder sb = active ? context.getCachedBuffer() : null;
 		
 		int n = -1;
 		
@@ -318,8 +322,7 @@ public class ParseContext {
 
 	public Object parseLiteral(InputSource in) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		boolean cache = (stack.size() < context.getMaxDepth());
-		StringBuilder sb = cache ? context.getCachedBuffer() : null;
+		StringBuilder sb = active ? context.getCachedBuffer() : null;
 		
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -330,7 +333,7 @@ public class ParseContext {
 			
 			if (point == 0) {
 				if (Character.isJavaIdentifierStart(n)) {
-					if (!cache && (n == 'n' || n == 't' || n == 'f') && sb != null) {
+					if (!active && (n == 'n' || n == 't' || n == 'f') && sb != null) {
 						sb = context.getCachedBuffer();
 					}
 					
@@ -340,7 +343,7 @@ public class ParseContext {
 					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
 			} else if (point == 1 && (Character.isJavaIdentifierPart(n) || n == '.')) {
-				if (!cache && sb != null && sb.length() == 5) {
+				if (!active && sb != null && sb.length() == 5) {
 					sb = null;
 				}
 				
@@ -358,14 +361,14 @@ public class ParseContext {
 				return null;
 			} else if ("true".equals(str)) {
 				type = JSONEventType.BOOLEAN;
-				return (cache) ? Boolean.TRUE : null;
+				return (active) ? Boolean.TRUE : null;
 			} else if ("false".equals(str)) {
 				type = JSONEventType.BOOLEAN;
-				return (cache) ? Boolean.FALSE : null;
+				return (active) ? Boolean.FALSE : null;
 			}
 		}
 		type = JSONEventType.STRING;
-		return (cache) ? str : null;
+		return (active) ? str : null;
 	}
 	
 	public String parseComment(InputSource in) throws IOException {

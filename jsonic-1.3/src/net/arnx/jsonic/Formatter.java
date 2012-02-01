@@ -95,9 +95,9 @@ final class StringFormatter implements Formatter {
 				} else if (x > 0) {
 					if (start < i) out.append(s, start, i);
 					out.append('\\');
-					out.append((char) x);
+					out.append((char)x);
 					start = i + 1;
-				} else if (x == -1 || (x == -2 && context.getMode() == Mode.SCRIPT)) {
+				} else if (x == -1 || (x == -2 && context.getMode() != Mode.STRICT)) {
 					if (start < i) out.append(s, start, i);
 					out.append("\\u00");
 					out.append("0123456789ABCDEF".charAt(c / 16));
