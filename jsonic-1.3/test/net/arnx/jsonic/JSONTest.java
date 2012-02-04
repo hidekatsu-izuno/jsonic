@@ -598,17 +598,19 @@ public class JSONTest {
 				+ "\n\t{\n\t\t\"a\": \"a\",\n\t\t\"b\": [1, 2, 3, 4, 5],\n\t\t\"c\": {\n\t\t\t\"a\": \"a\"\n\t\t}\n\t},\n\t[1, 2, 3, 4, 5]\n]",
 				json.format(list, new StringBuilder()).toString());
 		
-		try {
-			json.format(true, new StringBuilder());
-			fail();
-		} catch (JSONException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		json.setIndentText(" ");
+		assertEquals("[\n 1,\n 1.0,\n \"c\",\n \"char[]\",\n \"string\",\n true,\n false,\n null," 
+				+ "\n {\n  \"a\": \"a\",\n  \"b\": [1, 2, 3, 4, 5],\n  \"c\": {\n   \"a\": \"a\"\n  }\n },\n [1, 2, 3, 4, 5]\n]",
+				json.format(list, new StringBuilder()).toString());
+		
+		json.setInitialIndent(3);
+		assertEquals("   [\n    1,\n    1.0,\n    \"c\",\n    \"char[]\",\n    \"string\",\n    true,\n    false,\n    null," 
+				+ "\n    {\n     \"a\": \"a\",\n     \"b\": [1, 2, 3, 4, 5],\n     \"c\": {\n      \"a\": \"a\"\n     }\n    },\n    [1, 2, 3, 4, 5]\n   ]",
+				json.format(list, new StringBuilder()).toString());
 		
 		json.setPrettyPrint(false);
 		try {
-			assertEquals("true", json.format(true, new StringBuilder()).toString());
+			json.format(true, new StringBuilder());
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);

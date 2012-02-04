@@ -833,6 +833,14 @@ public class JSON {
 		
 		context.enter('$', null);
 		source = context.preformatInternal(source);
+		
+		if (context.isPrettyPrint() && context.getInitialIndent() > 0) {
+			int indent = context.getInitialIndent();
+			for (int j = 0; j < indent; j++) {
+				ap.append(context.getIndentText());
+			}
+		}
+		
 		context.formatInternal(source, fs);
 		context.exit();
 		fs.flush();
