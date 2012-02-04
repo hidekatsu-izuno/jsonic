@@ -1309,16 +1309,10 @@ public class JSON {
 		
 		private int getCacheIndex(StringBuilder sb) {
 			int h = 0;
-			for (int i = 0; i < sb.length(); i++) {
-				if (sb.charAt(i) < 128) {
-					h = h * 32 + sb.charAt(i);
-				} else {
-					return -1;
-				}
+			int max = Math.min(16, sb.length());
+			for (int i = 0; i < max; i++) {
+				h = h * 13 + sb.charAt(i);
 			}
-			h ^= (h >>> 20) ^ (h >>> 12);
-			h ^= (h >>> 7) ^ (h >>> 4);
-			
 			return h & (CACHE_SIZE-1);
 		}
 		
