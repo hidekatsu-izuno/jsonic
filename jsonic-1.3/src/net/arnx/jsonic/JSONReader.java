@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,94 +108,88 @@ public class JSONReader {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	Object getValue() throws IOException {
 		if (type == null) {
 			throw new IllegalStateException("you should call next.");
 		}
 		
-		Object root = null;
-		List<Object> stack = null;
-		Object name = null;
-
+		int ilen = 0;
+		int[] istack = new int[16];
+		
+		int olen = 0;
+		Object[] ostack = new Object[32];
+		
+		JSONEventType btype = null;
 		do {
 			switch (type) {
 			case START_OBJECT:
-				Map<Object, Object> map = new LinkedHashMap<Object, Object>();
-				if (stack == null) stack = new ArrayList<Object>();
-				if (!stack.isEmpty()) {
-					Object current = stack.get(stack.size()-1);
-					if (current instanceof Map<?, ?>) {
-						if (!(map == null && context.isSuppressNull())) {
-							((Map<Object, Object>)current).put(name, map);
-						}
-					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(map);
-					}
-				}
-				stack.add(map);
-				break;
 			case START_ARRAY:
-				List<Object> list = new ArrayList<Object>();
-				if (stack == null) stack = new ArrayList<Object>();
-				if (!stack.isEmpty()) {
-					Object current = stack.get(stack.size()-1);
-					if (current instanceof Map<?, ?>) {
-						if (!(list == null && context.isSuppressNull())) {
-							((Map<Object, Object>)current).put(name, list);
-						}
-					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(list);
-					}
-				}
-				stack.add(list);
+				istack = iexpand(istack, ilen + 1);
+				istack[ilen++] = olen;
 				break;
-			case END_ARRAY:
-			case END_OBJECT:
-				if (stack.size() > 1) {
-					stack.remove(stack.size()-1);
-				} else if (stack.size() == 1) {
-					if (parser.getDepth() > 1) {
-						return stack.remove(0);
-					} else {
-						root = stack.remove(0);
-					}
-				} else {
-					throw new IllegalStateException();
-				}
-				break;	
 			case NAME:
-				name = parser.getValue();
-				break;
 			case STRING:
 			case NUMBER:
 			case BOOLEAN:
 			case NULL:
-				if (stack != null) {
-					Object current = stack.get(stack.size()-1);
-					if (current instanceof Map<?, ?>) {
-						Object value = parser.getValue();
-						if (!(value == null && context.isSuppressNull())) {
-							((Map<Object, Object>)current).put(name, value);
-						}
-					} else if (current instanceof List<?>) {
-						((List<Object>)current).add(parser.getValue());
-					}
+				Object value = parser.getValue();
+				if (value == null && context.isSuppressNull() && btype == JSONEventType.NAME) {
+					olen--;
 				} else {
-					if (parser.getDepth() > 1) {
-						return parser.getValue();
-					} else {
-						root = parser.getValue();
-					}
+					ostack = oexpand(ostack, olen + 1);
+					ostack[olen++] = value;
 				}
 				break;
+			case END_ARRAY: {
+				int start = istack[--ilen];
+				int len = olen - start;
+				List<Object> array = new ArrayList<Object>(len);
+				for (int i = start; i < olen; i++) {
+					array.add(ostack[i]);
+				}
+				olen = start;
+				ostack = oexpand(ostack, olen + 1);
+				ostack[olen++] = array;
+				break;
 			}
+			case END_OBJECT:
+				int start = istack[--ilen];
+				int len = olen - start;
+				Map<Object, Object> object = new LinkedHashMap<Object, Object>(
+						(len < 2) ? 4 : 
+						(len < 4) ? 8 : 
+						(len < 12) ? 16 : 
+						(int)(len / 0.75f) + 1);
+				for (int i = start; i < olen; i+=2) {
+					object.put(ostack[i], ostack[i+1]);
+				}
+				olen = start;
+				ostack = oexpand(ostack, olen + 1);
+				ostack[olen++] = object;
+				break;
+			}
+			
+			btype = type;
 		} while ((type = parser.next()) != null);
 		
-		return root;
+		return ostack[0];
 	}
 	
 	public int getDepth() {
 		return parser.getDepth();
+	}
+	
+	private int[] iexpand(int[] array, int min) {
+		if (min > array.length) {
+			array = Arrays.copyOf(array, array.length * 3 / 2 + 1);
+		}
+		return array;
+	}
+	
+	private Object[] oexpand(Object[] array, int min) {
+		if (min > array.length) {
+			array = Arrays.copyOf(array, array.length * 3 / 2 + 1);
+		}
+		return array;
 	}
 }
