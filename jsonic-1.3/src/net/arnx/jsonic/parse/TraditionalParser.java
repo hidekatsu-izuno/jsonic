@@ -1,11 +1,11 @@
-package net.arnx.jsonic.parser;
+package net.arnx.jsonic.parse;
 
 import java.io.IOException;
 
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.io.InputSource;
 
-public class StrictParser implements Parser {
+public class TraditionalParser implements Parser {
 	private static final int BEFORE_ROOT = 0;
 	private static final int AFTER_ROOT = 1;
 	private static final int BEFORE_NAME = 2;
@@ -16,8 +16,10 @@ public class StrictParser implements Parser {
 	private int state = BEFORE_ROOT;
 	private InputSource in;
 	private ParseContext context;
+	private boolean emptyRoot = false;
+	private long nameLineNumber = Long.MAX_VALUE;
 	
-	public StrictParser(InputSource in, ParseContext context) {
+	public TraditionalParser(InputSource in, ParseContext context) {
 		this.in = in;
 		this.context = context;
 	}
@@ -77,16 +79,24 @@ public class StrictParser implements Parser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_ROOT;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return BEFORE_ROOT;
 		case '{':
 			context.push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
 		case '[':
 			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
-		case -1:
-			throw context.createParseException(in, "json.parse.EmptyInputError");
 		default:
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			if (n != -1) in.back();
+			emptyRoot = true;
+			context.push(JSONEventType.START_OBJECT);
+			return BEFORE_NAME;
 		}
 	}
 	
@@ -101,6 +111,13 @@ public class StrictParser implements Parser {
 			String ws = context.parseWhitespace(in);
 			if (!context.isIgnoreWhitespace()) {
 				context.set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_ROOT;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
 			}
 			return AFTER_ROOT;
 		case -1:
@@ -123,25 +140,59 @@ public class StrictParser implements Parser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_NAME;
-		case '"':
+		case '/':
 			in.back();
-			context.set(JSONEventType.NAME, context.parseString(in, false), false);
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return BEFORE_NAME;
+		case '"':
+		case '\'':
+			in.back();
+			context.set(JSONEventType.NAME, context.parseString(in, true), false);
+			return AFTER_NAME;
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			in.back();
+			context.set(JSONEventType.NAME, context.parseNumber(in), false);
 			return AFTER_NAME;
 		case '}':
-			if (context.isFirst() && context.getBeginType() == JSONEventType.START_OBJECT) {
+			if (context.isFirst()) {
 				context.pop();
 				if (context.getBeginType() == null) {
-					return AFTER_ROOT;
+					if (emptyRoot) {
+						throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+					} else {
+						return AFTER_ROOT;
+					}
 				} else {
-					return AFTER_VALUE;
+					nameLineNumber = in.getLineNumber();
+					return AFTER_VALUE;							
 				}
 			} else {
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case -1:
-			throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+			context.pop();
+			if (context.getBeginType() == null && emptyRoot) {
+				return -1;
+			} else {
+				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+			}
 		default:
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			in.back();
+			context.set(JSONEventType.NAME, context.parseLiteral(in), false);
+			return AFTER_NAME;
 		}
 	}
 
@@ -158,7 +209,18 @@ public class StrictParser implements Parser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_NAME;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return AFTER_NAME;
 		case ':':
+			return BEFORE_VALUE;
+		case '{':
+		case '[':
+			in.back();
 			return BEFORE_VALUE;
 		case -1:
 			throw context.createParseException(in, "json.parse.ObjectNotClosedError");
@@ -180,6 +242,13 @@ public class StrictParser implements Parser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_VALUE;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return BEFORE_VALUE;
 		case '{':
 			context.push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
@@ -187,8 +256,10 @@ public class StrictParser implements Parser {
 			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
 		case '"':
+		case '\'':
 			in.back();
-			context.set(JSONEventType.STRING, context.parseString(in, false), true);
+			context.set(JSONEventType.STRING, context.parseString(in, true), true);
+			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		case '-':
 		case '0':
@@ -203,40 +274,60 @@ public class StrictParser implements Parser {
 		case '9':
 			in.back();
 			context.set(JSONEventType.NUMBER, context.parseNumber(in), true);
-			return AFTER_VALUE;	
-		case 't':
-			in.back();
-			context.set(JSONEventType.BOOLEAN, context.parseLiteral(in, "true", Boolean.TRUE), true);
+			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
-		case 'f':
-			in.back();
-			context.set(JSONEventType.BOOLEAN, context.parseLiteral(in, "false", Boolean.FALSE), true);
-			return AFTER_VALUE;
-		case 'n':
-			in.back();
-			context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null), true);
-			return AFTER_VALUE;
+		case ',':
+			if (context.getBeginType() == JSONEventType.START_OBJECT) {
+				context.set(JSONEventType.NULL, null, true);
+				return BEFORE_NAME;
+			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
+				context.set(JSONEventType.NULL, null, true);
+				return BEFORE_VALUE;
+			} else {
+				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
+		case '}':
+			if (context.getBeginType() == JSONEventType.START_OBJECT) {
+				context.set(JSONEventType.NULL, null, true);
+				in.back();
+				return AFTER_VALUE;
+			} else {
+				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
 		case ']':
-			if (context.isFirst() && context.getBeginType() == JSONEventType.START_ARRAY) {
-				context.pop();
-				if (context.getBeginType() == null) {
-					return AFTER_ROOT;
+			if (context.getBeginType() == JSONEventType.START_ARRAY) {
+				if (context.isFirst()) {
+					context.pop();
+					if (context.getBeginType() == null) {
+						return AFTER_ROOT;
+					} else {
+						nameLineNumber = in.getLineNumber();
+						return AFTER_VALUE;
+					}
 				} else {
-					return AFTER_VALUE;							
+					context.set(JSONEventType.NULL, null, true);
+					in.back();
+					return AFTER_VALUE;
 				}
 			} else{
 				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case -1:
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
-				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+				in.back();
+				context.set(JSONEventType.NULL, null, true);
+				return AFTER_VALUE;
 			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
 			} else {
 				throw new IllegalStateException();
 			}
 		default:
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			in.back();
+			Object literal = context.parseLiteral(in);
+			context.set(context.getType(), literal, true);
+			nameLineNumber = in.getLineNumber();
+			return AFTER_VALUE;
 		}
 	}
 	
@@ -253,6 +344,13 @@ public class StrictParser implements Parser {
 				context.set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_VALUE;
+		case '/':
+			in.back();
+			String comment = context.parseComment(in);
+			if (!context.isIgnoreWhitespace()) {
+				context.set(JSONEventType.COMMENT, comment, false);
+			}
+			return AFTER_VALUE;
 		case ',':
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				return BEFORE_NAME;
@@ -265,7 +363,11 @@ public class StrictParser implements Parser {
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
 				context.pop();
 				if (context.getBeginType() == null) {
-					return AFTER_ROOT;
+					if (emptyRoot) {
+						throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+					} else {
+						return AFTER_ROOT;
+					}
 				} else {
 					return AFTER_VALUE;							
 				}
@@ -285,14 +387,31 @@ public class StrictParser implements Parser {
 			}
 		case -1:
 			if (context.getBeginType() == JSONEventType.START_OBJECT) {
-				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+				context.pop();
+				if (context.getBeginType() == null && emptyRoot) {
+					return -1;
+				} else {
+					throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+				}
 			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
 				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
 			} else {
 				throw new IllegalStateException();
 			}
 		default:
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			if (in.getLineNumber() > nameLineNumber) {
+				in.back();
+				nameLineNumber = Long.MAX_VALUE;
+				if (context.getBeginType() == JSONEventType.START_OBJECT) {
+					return BEFORE_NAME;
+				} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
+					return BEFORE_VALUE;
+				} else {
+					throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+				}
+			} else {
+				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
 		}
 	}
 }

@@ -714,7 +714,7 @@ public class TestBean {
 <h2 id="faq">FAQ</h2>
 <dl>
 <dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
-<dt>Q. 大量データを読み込むとOutOfMemoryErrorで落ちます。</dt><dd>A. JSONICは、ブラウザをクライアントとしたような大規模データの送受信を行わないシステムでの利用を想定して作成されています。XMLにおいてDOMに対してSAXやStAXがあるように、大量データを取り扱う場合にはストリームAPIを利用すべきですがJSONICには現状用意されておりませんので、Twitter Streaming APIのように行区切りのJSONで送受信するか、<a href="http://jackson.codehaus.org/">jackson</a>など代替ライブラリの採用を検討ください。</dd>
+<dt>Q. 大量データを読み込むとOutOfMemoryErrorで落ちます。</dt><dd>A. JSON.decode() や JSON.parse() は、JSON文字列をオブジェクトツリーとして生成するため、大量のデータを取り扱うとメモリを大量に消費してしまいます。そのような場合には、JSON.getReader() メソッドを使うことでデータをひとつずつ読み込み処理することができます。</dd>
 </dl> 
 
 <h2 id="maven">Mavenリポジトリ</h2> 

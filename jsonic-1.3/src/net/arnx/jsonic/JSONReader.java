@@ -10,11 +10,11 @@ import java.util.Map;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.io.InputSource;
-import net.arnx.jsonic.parser.Parser;
-import net.arnx.jsonic.parser.ParseContext;
-import net.arnx.jsonic.parser.ScriptParser;
-import net.arnx.jsonic.parser.StrictParser;
-import net.arnx.jsonic.parser.TraditionalParser;
+import net.arnx.jsonic.parse.ParseContext;
+import net.arnx.jsonic.parse.Parser;
+import net.arnx.jsonic.parse.ScriptParser;
+import net.arnx.jsonic.parse.StrictParser;
+import net.arnx.jsonic.parse.TraditionalParser;
 
 public class JSONReader {
 	private Context context;
