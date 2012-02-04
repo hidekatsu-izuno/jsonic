@@ -609,6 +609,8 @@ public class JSON {
 	Locale locale = Locale.getDefault();
 	TimeZone timeZone = TimeZone.getDefault();
 	boolean prettyPrint = false;
+	int initialIndent = 0;
+	String indentText = "\t";
 	int maxDepth = 32;
 	boolean suppressNull = false;
 	Mode mode = Mode.TRADITIONAL;
@@ -668,6 +670,27 @@ public class JSON {
 	 */
 	public void setPrettyPrint(boolean value) {
 		this.prettyPrint = value;
+	}
+	
+	/**
+	 * Set initial indent for pretty printing.
+	 * 
+	 * @param indent initial indent
+	 */
+	public void setInitialIndent(int indent) {
+		if (indent < 0) {
+			throw new IllegalArgumentException(getMessage("json.TooSmallArgumentError", "initialIndent", 0));
+		}
+		this.initialIndent = indent;
+	}
+	
+	/**
+	 * Set indent text for pretty printing.
+	 * 
+	 * @param text indent text
+	 */
+	public void setIndentText(String text) {
+		this.indentText = text;
 	}
 	
 	/**
@@ -1122,6 +1145,8 @@ public class JSON {
 		private final Object contextObject;
 		private final int maxDepth;
 		private final boolean prettyPrint;
+		private final int initialIndent;
+		private final String indentText;
 		private final boolean suppressNull;
 		private final Mode mode;
 		private final String numberFormat;
@@ -1148,6 +1173,8 @@ public class JSON {
 				contextObject = JSON.this.contextObject;
 				maxDepth = JSON.this.maxDepth;
 				prettyPrint = JSON.this.prettyPrint;
+				initialIndent = JSON.this.initialIndent;
+				indentText = JSON.this.indentText;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
 				numberFormat = JSON.this.numberFormat;
@@ -1164,6 +1191,8 @@ public class JSON {
 				contextObject = context.contextObject;
 				maxDepth = context.maxDepth;
 				prettyPrint = context.prettyPrint;
+				initialIndent = context.initialIndent;
+				indentText = context.indentText;
 				suppressNull = context.suppressNull;
 				mode = context.mode;
 				numberFormat = context.numberFormat;
@@ -1299,6 +1328,14 @@ public class JSON {
 		
 		public boolean isPrettyPrint() {
 			return prettyPrint;
+		}
+		
+		public int getInitialIndent() {
+			return initialIndent;
+		}
+		
+		public String getIndentText() {
+			return indentText;
 		}
 		
 		public boolean isSuppressNull() {
