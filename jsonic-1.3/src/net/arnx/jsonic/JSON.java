@@ -874,7 +874,7 @@ public class JSON {
 		
 		Object value = null;
 		try {
-			JSONReader jreader = new JSONReader(new Context(), is, true);
+			JSONReader jreader = new JSONReader(new Context(), is, false, true);
 			value = (jreader.next() != null) ? jreader.getValue() : null;
 		} catch (IOException e) {
 			// never occur
@@ -903,7 +903,7 @@ public class JSON {
 		T value = null;
 		try {
 			Context context = new Context();
-			JSONReader jreader = new JSONReader(context, is, true);
+			JSONReader jreader = new JSONReader(context, is, false, true);
 			Object result = (jreader.next() != null) ? jreader.getValue() : null;
 			value = (T)context.convertInternal(result, type);
 		} catch (IOException e) {
@@ -914,7 +914,7 @@ public class JSON {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		JSONReader jreader = new JSONReader(new Context(), new ReaderInputSource(in), true);
+		JSONReader jreader = new JSONReader(new Context(), new ReaderInputSource(in), false, true);
 		return (jreader.next() != null) ? (T)jreader.getValue() : null;
 	}
 	
@@ -926,14 +926,14 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		JSONReader jreader = new JSONReader(context, new ReaderInputSource(in), true);
+		JSONReader jreader = new JSONReader(context, new ReaderInputSource(in), false, true);
 		Object result = (jreader.next() != null) ? jreader.getValue() : null;
 		return (T)context.convertInternal(result, type);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
-		JSONReader jreader = new JSONReader(new Context(), new ReaderInputSource(reader), true);
+		JSONReader jreader = new JSONReader(new Context(), new ReaderInputSource(reader), false, true);
 		return (jreader.next() != null) ? (T)jreader.getValue() : null;
 	}
 	
@@ -945,7 +945,7 @@ public class JSON {
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
-		JSONReader jreader = new JSONReader(context, new ReaderInputSource(reader), true);
+		JSONReader jreader = new JSONReader(context, new ReaderInputSource(reader), false, true);
 		Object result = (jreader.next() != null) ? jreader.getValue() : null;
 		return (T)context.convertInternal(result, type);
 	}
@@ -968,15 +968,15 @@ public class JSON {
 			: (cs instanceof StringBuffer) ? new StringBufferInputSource((StringBuffer)cs)
 			: new CharSequenceInputSource(cs);
 		
-		return new JSONReader(new Context(), in, ignoreWhitespace);
+		return new JSONReader(new Context(), in, true, ignoreWhitespace);
 	}
 	
 	public JSONReader getReader(InputStream in, boolean ignoreWhitespace) {
-		return new JSONReader(new Context(), new ReaderInputSource(in), ignoreWhitespace);
+		return new JSONReader(new Context(), new ReaderInputSource(in), true, ignoreWhitespace);
 	}
 	
 	public JSONReader getReader(Reader reader, boolean ignoreWhitespace) {
-		return new JSONReader(new Context(), new ReaderInputSource(reader), ignoreWhitespace);
+		return new JSONReader(new Context(), new ReaderInputSource(reader), true, ignoreWhitespace);
 	}
 	
 	String getMessage(String id, Object... args) {

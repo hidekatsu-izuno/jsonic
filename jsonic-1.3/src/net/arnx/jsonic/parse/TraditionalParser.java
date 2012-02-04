@@ -16,6 +16,7 @@ public class TraditionalParser implements Parser {
 	private int state = BEFORE_ROOT;
 	private InputSource in;
 	private ParseContext context;
+	
 	private boolean emptyRoot = false;
 	private long nameLineNumber = Long.MAX_VALUE;
 	
@@ -122,6 +123,12 @@ public class TraditionalParser implements Parser {
 			return AFTER_ROOT;
 		case -1:
 			return -1;
+		case '{':
+		case '[':
+			if (context.isMultilineMode()) {
+				in.back();
+				return BEFORE_ROOT;
+			}
 		default:
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}

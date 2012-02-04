@@ -21,10 +21,10 @@ public class JSONReader {
 	private Parser parser;
 	private JSONEventType type;
 	
-	JSONReader(Context context, InputSource in, boolean ignoreWhitespace) {
+	JSONReader(Context context, InputSource in, boolean multilineMode, boolean ignoreWhitespace) {
 		this.context = context;
 		
-		ParseContext pcontext = new ParseContext(context, ignoreWhitespace);
+		ParseContext pcontext = new ParseContext(context, multilineMode, ignoreWhitespace);
 		switch (context.getMode()) {
 		case STRICT:
 			parser = new StrictParser(in, pcontext);

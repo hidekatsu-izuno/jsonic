@@ -105,6 +105,12 @@ public class StrictParser implements Parser {
 			return AFTER_ROOT;
 		case -1:
 			return -1;
+		case '{':
+		case '[':
+			if (context.isMultilineMode()) {
+				in.back();
+				return BEFORE_ROOT;
+			}
 		default:
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}

@@ -26,6 +26,7 @@ public class ParseContext {
 	}
 	
 	private Context context;
+	private boolean multilineMode;
 	private boolean ignoreWhirespace;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
@@ -35,8 +36,9 @@ public class ParseContext {
 	private boolean first;
 	private boolean active;
 	
-	public ParseContext(Context context, boolean ignoreWhirespace) {
+	public ParseContext(Context context, boolean multilineMode, boolean ignoreWhirespace) {
 		this.context = context;
+		this.multilineMode = multilineMode;
 		this.ignoreWhirespace = ignoreWhirespace;
 		this.active = stack.size() < context.getMaxDepth();
 	}
@@ -47,6 +49,10 @@ public class ParseContext {
 	
 	public int getMaxDepth() {
 		return context.getMaxDepth();
+	}
+	
+	public boolean isMultilineMode() {
+		return multilineMode;
 	}
 	
 	public boolean isIgnoreWhitespace() {
