@@ -1464,7 +1464,7 @@ public class JSON {
 						JSONHint hint = prop.getReadMethod().getAnnotation(JSONHint.class);
 						if (hint != null) {
 							if (!hint.ignore()) {
-								mName = prop.getName();
+								mName = normalize(prop.getName());
 								if (!hint.name().isEmpty()) {
 									mName = hint.name();
 								} else if (getPropertyStyle() != null) {
@@ -1473,20 +1473,24 @@ public class JSON {
 								props.add(new PropertyInfo(prop.getBeanClass(), mName, 
 										null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), hint.ordinal()));
 							}
-						} else if (getPropertyStyle() != null) {
-							mName = getPropertyStyle().to(prop.getName());
-							props.add(new PropertyInfo(prop.getBeanClass(), mName, 
-									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
 						} else {
-							mName = prop.getName();
-							props.add(prop);
+							mName = normalize(prop.getName());
+							if (getPropertyStyle() != null) {
+								mName = getPropertyStyle().to(mName);
+							}
+							if (!mName.equals(prop.getName())) {
+								props.add(new PropertyInfo(prop.getBeanClass(), mName, 
+									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
+							} else {
+								props.add(prop);
+							}
 						}
 					}
 					
 					if (prop.getField() != null && !ignore(this, c, prop.getField())) {
 						JSONHint hint = prop.getField().getAnnotation(JSONHint.class);
 						if (hint != null) {
-							String name = prop.getName();
+							String name = normalize(prop.getName());
 							if (!hint.name().isEmpty()) {
 								name = hint.name();
 							} else if (getPropertyStyle() != null) {
@@ -1497,7 +1501,7 @@ public class JSON {
 										prop.getField(), null, null, prop.isStatic(), hint.ordinal()));
 							}
 						} else if (mName != null) {
-							String name = prop.getName();
+							String name = normalize(prop.getName());
 							if (getPropertyStyle() != null) {
 								name = getPropertyStyle().to(name);
 							}
@@ -1505,11 +1509,17 @@ public class JSON {
 								props.add(new PropertyInfo(prop.getBeanClass(), name, 
 										prop.getField(), null, null, prop.isStatic(), prop.getOrdinal()));
 							}
-						} else if (getPropertyStyle() != null) {
-							props.add(new PropertyInfo(prop.getBeanClass(), getPropertyStyle().to(prop.getName()), 
-									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
 						} else {
-							props.add(prop);
+							String name = normalize(prop.getName());
+							if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
+							}
+							if (!name.equals(prop.getName())) {
+								props.add(new PropertyInfo(prop.getBeanClass(), name, 
+										prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
+							} else {
+								props.add(prop);
+							}								
 						}
 					}
 				}
