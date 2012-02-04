@@ -747,6 +747,20 @@ public class JSONTest {
 		named.AAA_BBB_CCC = NamedTestEnum.AAA_BBB_CCC;
 		named.aaaあああ = NamedTestEnum.aaaあああ;
 		
+		json = new JSON() {
+			@Override
+			protected String normalize(String name) {
+				if (name.equals("aaaAaaAaa")) {
+					return "ABC_DEF";
+				}
+				return super.normalize(name);
+			}
+		};
+		assertEquals("{\"AAA_BBB_CCC\":1,\"ABC_DEF\":0,\"aaaあああ\":2}", json.format(named));
+		
+		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
+		assertEquals("{\"aaaBbbCcc\":1,\"aaaあああ\":2,\"abcDef\":0}", json.format(named));
+		
 		json = new JSON();
 		json.setPropertyStyle(NamingStyle.LOWER_CASE);
 		json.setEnumStyle(NamingStyle.LOWER_CASE);
