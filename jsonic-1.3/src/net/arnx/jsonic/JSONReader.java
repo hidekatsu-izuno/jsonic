@@ -40,8 +40,8 @@ public class JSONReader {
 	JSONReader(Context context, InputSource in, boolean multilineMode, boolean ignoreWhitespace) {
 		this.context = context;
 		
-		ParseContext pcontext = new ParseContext(context.getLocale(), 
-				context.getMaxDepth(), multilineMode, ignoreWhitespace, context.getLocalCache());
+		ParseContext pcontext = new ParseContext(context.getMaxDepth(), multilineMode, ignoreWhitespace, 
+				context.getLocalCache());
 		
 		switch (context.getMode()) {
 		case STRICT:

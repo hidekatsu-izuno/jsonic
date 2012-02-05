@@ -1,11 +1,8 @@
 package net.arnx.jsonic.parse;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.JSONException;
@@ -25,7 +22,6 @@ public class ParseContext {
 		ESCAPE_CHARS[0x7F] = 3;
 	}
 	
-	private Locale locale;
 	private int maxDepth;
 	private boolean interpretterMode;
 	private boolean ignoreWhirespace;
@@ -38,18 +34,13 @@ public class ParseContext {
 	private boolean first;
 	private boolean active;
 	
-	public ParseContext(Locale locale, int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
-		this.locale = locale;
+	public ParseContext(int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
 		this.maxDepth = maxDepth;
 		this.interpretterMode = interpretterMode;
 		this.ignoreWhirespace = ignoreWhirespace;
 		this.cache = cache;
 		
 		this.active = stack.size() < maxDepth;
-	}
-	
-	public Locale getLocale() {
-		return locale;
 	}
 	
 	public int getMaxDepth() {
@@ -489,15 +480,7 @@ public class ParseContext {
 	}
 	
 	public JSONException createParseException(InputSource in, String id, Object... args) {
-		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", getLocale());
-		
-		String message;
-		if (args != null && args.length > 0) {
-			message = MessageFormat.format(bundle.getString(id), args);
-		} else {
-			message = bundle.getString(id);
-		}
-		
+		String message = cache.getMessage(id, args);
 		return new JSONException("" + in.getLineNumber() + ": " + message + "\n" + in.toString() + " <- ?",
 				JSONException.PARSE_ERROR, in.getLineNumber(), in.getColumnNumber(), in.getOffset());
 	}

@@ -1184,7 +1184,7 @@ public class JSON {
 				propertyStyle = JSON.this.propertyStyle;
 				enumStyle = JSON.this.enumStyle;
 				
-				cache = new LocalCache(locale, timeZone);
+				cache = new LocalCache("net.arnx.jsonic.Messages", locale, timeZone);
 			}
 		}
 		

@@ -4,15 +4,18 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.TimeZone;
 
 public class LocalCache {
 	private static final int CACHE_SIZE = 256;
 	
+	private ResourceBundle resources;
 	private Locale locale;
 	private TimeZone timeZone;
 	
@@ -22,7 +25,8 @@ public class LocalCache {
 	private Map<String, DateFormat> dateFormatCache;
 	private Map<String, NumberFormat> numberFormatCache;
 	
-	public LocalCache(Locale locale, TimeZone timeZone) {
+	public LocalCache(String bundle, Locale locale, TimeZone timeZone) {
+		this.resources = ResourceBundle.getBundle(bundle, locale);
 		this.locale = locale;
 		this.timeZone = timeZone;
 	}
@@ -154,5 +158,17 @@ public class LocalCache {
 			dateFormatCache.put(format, dformat);
 		}
 		return dformat;
+	}
+	
+	public String getMessage(String id) {
+		return getMessage(id, (Object[])null);
+	}
+	
+	public String getMessage(String id, Object... args) {
+		if (args != null && args.length > 0) {
+			return MessageFormat.format(resources.getString(id), args);
+		} else {
+			return resources.getString(id);
+		}
 	}
 }
