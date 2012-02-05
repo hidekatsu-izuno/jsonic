@@ -2073,7 +2073,7 @@ public class JSON {
 							}
 							if (!name.equals(prop.getName())) {
 								props.add(new PropertyInfo(prop.getBeanClass(), name, 
-										prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
+										prop.getField(), null, null, prop.isStatic(), prop.getOrdinal()));
 							} else {
 								props.add(prop);
 							}								
@@ -2084,7 +2084,8 @@ public class JSON {
 				memberCache.put(c, props);				
 			}
 			return props;
-		}		
+		}
+		
 		@SuppressWarnings("unchecked")
 		Map<String, PropertyInfo> getSetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
@@ -2093,41 +2094,71 @@ public class JSON {
 			if (props == null) {
 				props = new HashMap<String, PropertyInfo>();
 				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					if (prop.isStatic() || !prop.isWritable() || ignore(this, c, prop.getWriteMember())) {
+					if (prop.isStatic() || !prop.isWritable()) {
 						continue;
 					}
 					
-					String name = null;
-					int order = -1;
-										
-					JSONHint hint = prop.getWriteAnnotation(JSONHint.class);
-					if (hint != null) {
-						if (hint.ignore()) continue;
-						if (hint.name().length() > 0) name = hint.name();
-						order = hint.ordinal();
+					String mName = null;
+					if (prop.getWriteMethod() != null && !ignore(this, c, prop.getWriteMethod())) {
+						JSONHint hint = prop.getWriteMethod().getAnnotation(JSONHint.class);
+						if (hint != null) {
+							if (!hint.ignore()) {
+								mName = normalize(prop.getName());
+								if (!hint.name().isEmpty()) {
+									mName = hint.name();
+								} else if (getPropertyStyle() != null) {
+									mName = getPropertyStyle().to(mName);
+								}
+								props.put(mName, new PropertyInfo(prop.getBeanClass(), mName, 
+										null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), hint.ordinal()));
+							}
+						} else {
+							mName = normalize(prop.getName());
+							if (getPropertyStyle() != null) {
+								mName = getPropertyStyle().to(mName);
+							}
+							if (!mName.equals(prop.getName())) {
+								props.put(mName, new PropertyInfo(prop.getBeanClass(), mName, 
+									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), prop.getOrdinal()));
+							} else {
+								props.put(mName, prop);
+							}
+						}
 					}
 					
-					if (name != null) {
-						if (prop.getWriteMethod() != null && prop.getField() != null && !Modifier.isFinal(prop.getField().getModifiers())) {
-							props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-									null, prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
-							prop = new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-									prop.getField(), null, null, prop.isStatic(), order);
+					if (prop.getField() != null && !ignore(this, c, prop.getField())) {
+						JSONHint hint = prop.getField().getAnnotation(JSONHint.class);
+						if (hint != null) {
+							String name = normalize(prop.getName());
+							if (!hint.name().isEmpty()) {
+								name = hint.name();
+							} else if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
+							}
+							if (!name.equals(mName) && !hint.ignore()) {
+								props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+										prop.getField(), null, null, prop.isStatic(), hint.ordinal()));
+							}
+						} else if (mName != null) {
+							String name = normalize(prop.getName());
+							if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
+							}
+							if (!name.equals(mName)) {
+								props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+										prop.getField(), null, null, prop.isStatic(), prop.getOrdinal()));
+							}
 						} else {
-							props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-									prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order));
-							continue;
-						}
-					} else if (order >= 0) {
-						prop = new PropertyInfo(prop.getBeanClass(), prop.getName(), 
-								prop.getField(), prop.getReadMethod(), prop.getWriteMethod(), prop.isStatic(), order);
-					}
-				
-					props.put(prop.getName(), prop);
-					if (getPropertyStyle() != null) {
-						name = getPropertyStyle().to(prop.getName());
-						if (!prop.getName().equals(name)) {
-							props.put(name, prop);
+							String name = normalize(prop.getName());
+							if (getPropertyStyle() != null) {
+								name = getPropertyStyle().to(name);
+							}
+							if (!name.equals(prop.getName())) {
+								props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+										prop.getField(), null, null, prop.isStatic(), prop.getOrdinal()));
+							} else {
+								props.put(name, prop);
+							}								
 						}
 					}
 				}
