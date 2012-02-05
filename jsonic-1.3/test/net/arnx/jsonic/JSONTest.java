@@ -663,6 +663,12 @@ public class JSONTest {
 		assertEquals("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		
 		json = new JSON();
+		
+		NamedBean2 nb2 = new NamedBean2();
+		nb2.aaaBbb = 2;
+		nb2.bbbAaa = 0;
+		assertEquals("{\"aaaBbb\":2,\"bbbAaa\":2}", json.format(nb2));
+		
 		Object obj2 = new Object() {
 			public int abcDef = 100;
 			public int GhiJkl = 100;
@@ -959,6 +965,11 @@ public class JSONTest {
 		assertEquals(nb, json.parse("{\"named property aaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"named_property_aaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"Named Property Aaa\":100}", NamedBean.class));
+		
+		NamedBean2 nb2 = new NamedBean2();
+		nb2.aaaBbb = 2;
+		nb2.bbbAaa = 0;
+		assertEquals(nb2, json.parse("{\"bbbAaa\":2}", NamedBean2.class));
 		
 		Map map1 = new LinkedHashMap() {
 			{
@@ -1913,6 +1924,52 @@ class NamedBean {
 	
 	public String toString() {
 		return JSON.encode(this);
+	}
+}
+
+class NamedBean2 {
+	public int aaaBbb;
+	
+	public int bbbAaa;
+	
+	@JSONHint(name = "bbbAaa")
+	public void setAaaBbb(int value) {
+		aaaBbb = value;
+	}
+	
+	@JSONHint(name = "bbbAaa")
+	public int getAaaBbb() {
+		return aaaBbb;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + aaaBbb;
+		result = prime * result + bbbAaa;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		NamedBean2 other = (NamedBean2) obj;
+		if (aaaBbb != other.aaaBbb)
+			return false;
+		if (bbbAaa != other.bbbAaa)
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "NamedBean2 [aaaBbb=" + aaaBbb + ", bbbAaa=" + bbbAaa + "]";
 	}
 }
 
