@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.io.InputSource;
+import net.arnx.jsonic.util.LocalCache;
 
 public class ParseContext {
 	private static final int[] ESCAPE_CHARS = new int[128];
@@ -25,9 +25,11 @@ public class ParseContext {
 		ESCAPE_CHARS[0x7F] = 3;
 	}
 	
-	private Context context;
+	private Locale locale;
+	private int maxDepth;
 	private boolean interpretterMode;
 	private boolean ignoreWhirespace;
+	private LocalCache cache;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
 	
@@ -36,19 +38,22 @@ public class ParseContext {
 	private boolean first;
 	private boolean active;
 	
-	public ParseContext(Context context, boolean interpretterMode, boolean ignoreWhirespace) {
-		this.context = context;
+	public ParseContext(Locale locale, int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
+		this.locale = locale;
+		this.maxDepth = maxDepth;
 		this.interpretterMode = interpretterMode;
 		this.ignoreWhirespace = ignoreWhirespace;
-		this.active = stack.size() < context.getMaxDepth();
+		this.cache = cache;
+		
+		this.active = stack.size() < maxDepth;
 	}
 	
 	public Locale getLocale() {
-		return context.getLocale();
+		return locale;
 	}
 	
 	public int getMaxDepth() {
-		return context.getMaxDepth();
+		return maxDepth;
 	}
 	
 	public boolean isInterpretterMode() {
@@ -71,7 +76,7 @@ public class ParseContext {
 		this.type = type;
 		stack.add(type);
 		first = true;
-		active = stack.size() < context.getMaxDepth();
+		active = stack.size() < maxDepth;
 	}
 	
 	public void set(JSONEventType type, Object value, boolean isValue) {
@@ -90,7 +95,7 @@ public class ParseContext {
 			throw new IllegalStateException();
 		}
 		first = false;
-		active = stack.size() < context.getMaxDepth();
+		active = stack.size() < maxDepth;
 	}
 	
 	public JSONEventType getBeginType() {
@@ -110,7 +115,7 @@ public class ParseContext {
 	}
 	
 	public final Object parseString(InputSource in, boolean any) throws IOException {
-		StringBuilder sb = active ? context.getCachedBuffer() : null;
+		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
 		int start = in.next();
 
@@ -160,7 +165,7 @@ public class ParseContext {
 		if (n != start) {
 			throw createParseException(in, "json.parse.StringNotClosedError");
 		}
-		return (sb != null) ? context.getString(sb) : null;
+		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
 	public char parseEscape(InputSource in) throws IOException {
@@ -217,7 +222,7 @@ public class ParseContext {
 	
 	public Object parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
-		StringBuilder sb = active ? context.getCachedBuffer() : null;
+		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
 		int n = -1;
 		
@@ -306,7 +311,7 @@ public class ParseContext {
 			}
 		}
 		
-		return (sb != null) ? context.getBigDecimal(sb) : null;
+		return (sb != null) ? cache.getBigDecimal(sb) : null;
 	}
 	
 	public Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
@@ -316,7 +321,7 @@ public class ParseContext {
 			char c = (char)n;
 			if (pos < expected.length() && c == expected.charAt(pos++)) {
 				if (pos == expected.length()) {
-					return (stack.size() < context.getMaxDepth()) ? result : null;
+					return (stack.size() < maxDepth) ? result : null;
 				}
 			} else {
 				break;
@@ -328,7 +333,7 @@ public class ParseContext {
 
 	public Object parseLiteral(InputSource in, boolean asValue) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
-		StringBuilder sb = active ? context.getCachedBuffer() : null;
+		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -340,7 +345,7 @@ public class ParseContext {
 			if (point == 0) {
 				if (Character.isJavaIdentifierStart(n)) {
 					if (!active && (n == 'n' || n == 't' || n == 'f') && sb != null) {
-						sb = context.getCachedBuffer();
+						sb = cache.getCachedBuffer();
 					}
 					
 					if (sb != null) sb.append((char)n);
@@ -360,7 +365,7 @@ public class ParseContext {
 			}
 		}
 		
-		String str = (sb != null) ? context.getString(sb) : null;
+		String str = (sb != null) ? cache.getString(sb) : null;
 		if (asValue && str != null) {
 			if ("null".equals(str)) {
 				type = JSONEventType.NULL;
@@ -379,7 +384,7 @@ public class ParseContext {
 	
 	public String parseComment(InputSource in) throws IOException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
-		StringBuilder sb = !isIgnoreWhitespace() ? context.getCachedBuffer() : null;
+		StringBuilder sb = !isIgnoreWhitespace() ? cache.getCachedBuffer() : null;
 		
 		int n = -1;
 		
@@ -448,11 +453,11 @@ public class ParseContext {
 			}
 		}
 		
-		return (sb != null) ? context.getString(sb) : null;
+		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
 	public String parseWhitespace(InputSource in) throws IOException {
-		StringBuilder sb = !isIgnoreWhitespace() ? context.getCachedBuffer() : null;
+		StringBuilder sb = !isIgnoreWhitespace() ? cache.getCachedBuffer() : null;
 		
 		int n = -1;
 		
@@ -476,7 +481,7 @@ public class ParseContext {
 			}
 		}
 		
-		return (sb != null) ? context.getString(sb) : null;
+		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
 	public JSONException createParseException(InputSource in, String id) {

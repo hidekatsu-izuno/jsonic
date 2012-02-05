@@ -884,7 +884,7 @@ final class DateConverter implements Converter {
 		
 		DateFormat format = null;
 		if (Character.isDigit(value.charAt(0))) {
-			StringBuilder sb = context.getCachedBuffer();
+			StringBuilder sb = context.getLocalCache().getCachedBuffer();
 
 			String types = "yMdHmsSZ";
 			// 0: year, 1:month, 2: day, 3: hour, 4: minute, 5: sec, 6:msec, 7: timezone
@@ -1112,7 +1112,7 @@ final class PropertiesConverter implements Converter {
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Properties prop = (Properties)context.createInternal(c);
 		if (value instanceof Map<?, ?> || value instanceof List<?>) {
-			flattenProperties(context.getCachedBuffer(), value, prop);
+			flattenProperties(context.getLocalCache().getCachedBuffer(), value, prop);
 		} else if (value != null) {
 			prop.setProperty(value.toString(), null);
 		}
@@ -1268,7 +1268,7 @@ final class ObjectConverter implements Converter {
 	}
 	
 	private static String toLowerCamel(Context context, String name) {
-		StringBuilder sb = context.getCachedBuffer();
+		StringBuilder sb = context.getLocalCache().getCachedBuffer();
 		boolean toUpperCase = false;
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
@@ -1284,7 +1284,7 @@ final class ObjectConverter implements Converter {
 		if (sb.length() > 1 && Character.isUpperCase(sb.charAt(0)) && !Character.isUpperCase(sb.charAt(1))) {
 			sb.setCharAt(0, Character.toLowerCase(sb.charAt(0)));
 		}
-		return context.getString(sb);
+		return context.getLocalCache().getString(sb);
 	}
 	
 	private static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {

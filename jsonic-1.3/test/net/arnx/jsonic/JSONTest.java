@@ -911,7 +911,7 @@ public class JSONTest {
 		assertEquals(new HashMap() {{put("true", true);}}, json.parse("  true: true  "));
 		assertEquals(new HashMap() {{put("false", false);}}, json.parse("  false: false  "));
 		assertEquals(new HashMap() {{put("100", new BigDecimal("100"));}}, json.parse("  100: 100  "));
-		assertEquals(new HashMap() {{put("null", null);}}, json.parse("  null: null  "));
+		assertEquals(new HashMap() {{put(null, null);}}, json.parse("  null: null  "));
 		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  "));
 		
 		try {
@@ -1146,6 +1146,12 @@ public class JSONTest {
 		assertEquals(true, json.parse("true"));
 		assertEquals(false, json.parse("false"));
 		assertNull(json.parse("null"));
+		
+		assertEquals(new HashMap() {{put("true", true);}}, json.parse("{  true: true  }"));
+		assertEquals(new HashMap() {{put("false", false);}}, json.parse("{  false: false  }"));
+		assertEquals(new HashMap() {{put("100", new BigDecimal("100"));}}, json.parse("{  100: 100  }"));
+		assertEquals(new HashMap() {{put("null", null);}}, json.parse("{  null: null  }"));
+		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse("{ number: -100  }"));
 		
 		try {
 			json.parse("{-100: 100}");

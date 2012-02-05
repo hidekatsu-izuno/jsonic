@@ -37,8 +37,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.sql.Struct;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -69,19 +67,19 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import net.arnx.jsonic.io.StringBufferInputSource;
-import net.arnx.jsonic.io.StringBuilderInputSource;
-import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.AppendableOutputSource;
 import net.arnx.jsonic.io.CharSequenceInputSource;
 import net.arnx.jsonic.io.InputSource;
 import net.arnx.jsonic.io.OutputSource;
 import net.arnx.jsonic.io.ReaderInputSource;
+import net.arnx.jsonic.io.StringBufferInputSource;
+import net.arnx.jsonic.io.StringBuilderInputSource;
 import net.arnx.jsonic.io.StringBuilderOutputSource;
+import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.ExtendedDateFormat;
+import net.arnx.jsonic.util.LocalCache;
 import net.arnx.jsonic.util.PropertyInfo;
 
 import org.w3c.dom.CharacterData;
@@ -1147,8 +1145,6 @@ public class JSON {
 		return (target != null) && target.isAssignableFrom(cls);
 	}
 	
-	private static final int CACHE_SIZE = 256;
-	
 	public final class Context {
 		private final Locale locale;
 		private final TimeZone timeZone;
@@ -1168,11 +1164,7 @@ public class JSON {
 		private int depth = -1;
 		
 		private Map<Class<?>, Object> memberCache;
-		private Map<String, DateFormat> dateFormatCache;
-		private Map<String, NumberFormat> numberFormatCache;
-		private StringBuilder builderCache;
-		private String[] stringCache;
-		private BigDecimal[] numberCache;
+		private final LocalCache cache;
 		
 		boolean skipHint = false;
 		
@@ -1191,6 +1183,8 @@ public class JSON {
 				dateFormat = JSON.this.dateFormat;
 				propertyStyle = JSON.this.propertyStyle;
 				enumStyle = JSON.this.enumStyle;
+				
+				cache = new LocalCache(locale, timeZone);
 			}
 		}
 		
@@ -1211,111 +1205,13 @@ public class JSON {
 				enumStyle = context.enumStyle;
 				depth = context.depth;
 				path = context.path.clone();
+				
+				cache = context.cache;
 			}
 		}
 		
 		Context copy() {
 			return new Context(this);
-		}
-		
-		public StringBuilder getCachedBuffer() {
-			if (builderCache == null) {
-				builderCache = new StringBuilder();
-			} else {
-				builderCache.setLength(0);
-			}
-			return builderCache;
-		}
-		
-		public String getString(StringBuilder sb) {
-			if (sb.length() == 0) return "";
-			
-			if (sb.length() < 32) {
-				int index = getCacheIndex(sb);
-				if (index < 0) {
-					return sb.toString();
-				}
-				
-				if (stringCache == null) stringCache = new String[CACHE_SIZE];
-				if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
-				
-				String str = stringCache[index];
-				if (str == null || str.length() != sb.length()) {
-					str = sb.toString();
-					stringCache[index] = str;
-					numberCache[index] = null;
-					return str;
-				}
-				
-				for (int i = 0; i < sb.length(); i++) {
-					if (str.charAt(i) != sb.charAt(i)) {
-						str = sb.toString();
-						stringCache[index] = str;
-						numberCache[index] = null;
-						return str;
-					}
-				}
-				return str;
-			}
-			
-			return sb.toString();
-		}
-		
-		public BigDecimal getBigDecimal(StringBuilder sb) {
-			if (sb.length() == 1) {
-				if (sb.charAt(0) == '0') {
-					return BigDecimal.ZERO;
-				} else if (sb.charAt(0) == '1') {
-					return BigDecimal.ONE;
-				}
-			}
-			
-			if (sb.length() < 32) {
-				int index = getCacheIndex(sb);
-				if (index < 0) {
-					return new BigDecimal(sb.toString());
-				}
-							
-				if (stringCache == null) stringCache = new String[CACHE_SIZE];
-				if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
-				
-				String str = stringCache[index];
-				BigDecimal num = numberCache[index];
-				if (str == null || str.length() != sb.length()) {
-					str = sb.toString();
-					num = new BigDecimal(str);
-					stringCache[index] = str;
-					numberCache[index] = num;
-					return num;
-				}
-				
-				for (int i = 0; i < sb.length(); i++) {
-					if (str.charAt(i) != sb.charAt(i)) {
-						str = sb.toString();
-						num = new BigDecimal(str);
-						stringCache[index] = str;
-						numberCache[index] = num;
-						return num;
-					}
-				}
-				
-				if (num == null) {
-					num = new BigDecimal(str);
-					numberCache[index] = num;
-				}
-				return num;
-			}
-			
-			return new BigDecimal(sb.toString());
-		}
-		
-		private int getCacheIndex(StringBuilder sb) {
-			int h = 0;
-			int max = Math.min(16, sb.length());
-			for (int i = 0; i < max; i++) {
-				h = h * 31 + sb.charAt(i);
-			}
-			return h & (CACHE_SIZE-1);
 		}
 		
 		public Locale getLocale() {
@@ -1356,6 +1252,10 @@ public class JSON {
 		
 		public NamingStyle getEnumStyle() {
 			return enumStyle;
+		}
+		
+		public LocalCache getLocalCache() {
+			return cache;
 		}
 		
 		/**
@@ -1444,6 +1344,7 @@ public class JSON {
 		boolean hasMemberCache(Class<?> c) {
 			return memberCache != null && memberCache.containsKey(c);
 		}
+		
 		@SuppressWarnings("unchecked")
 		List<PropertyInfo> getGetProperties(Class<?> c) {
 			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
@@ -1592,46 +1493,17 @@ public class JSON {
 		NumberFormat getNumberFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;			
-			if (format != null) {
-				NumberFormat nformat = null;
-				if (numberFormatCache == null) {
-					numberFormatCache = new HashMap<String, NumberFormat>();
-				} else {
-					nformat = numberFormatCache.get(format);
-				}
-				if (nformat == null) {
-					nformat = new DecimalFormat(format, new DecimalFormatSymbols(locale));
-					numberFormatCache.put(format, nformat);
-				}
-				return nformat;
-			} else {
-				return null;
-			}
+			return (format != null) ? getLocalCache().getNumberFormat(format) : null;
 		}
 		
 		DateFormat getDateFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;			
-			if (format != null) {
-				DateFormat dformat = null;
-				if (dateFormatCache == null) {
-					dateFormatCache = new HashMap<String, DateFormat>();
-				} else {
-					dformat = dateFormatCache.get(format);
-				}
-				if (dformat == null) {
-					dformat = new ExtendedDateFormat(format, locale);
-					dformat.setTimeZone(timeZone);
-					dateFormatCache.put(format, dformat);
-				}
-				return dformat;
-			} else {
-				return null;
-			}
+			return (format != null) ? getLocalCache().getDateFormat(format) : null;
 		}
 		
 		public String toString() {
-			StringBuilderOutputSource sb = new StringBuilderOutputSource(getCachedBuffer());
+			StringBuilderOutputSource sb = new StringBuilderOutputSource(new StringBuilder());
 			for (int i = 0; i < path.length; i+=2) {
 				Object key = path[i];
 				if (key == null) {

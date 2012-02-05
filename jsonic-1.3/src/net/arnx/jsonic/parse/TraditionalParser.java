@@ -212,7 +212,8 @@ public class TraditionalParser implements Parser {
 			}
 		default:
 			in.back();
-			context.set(JSONEventType.NAME, context.parseLiteral(in, false), false);
+			Object literal = context.parseLiteral(in, true);
+			context.set(JSONEventType.NAME, (literal != null) ? literal.toString() : null, false);
 			return AFTER_NAME;
 		}
 	}
