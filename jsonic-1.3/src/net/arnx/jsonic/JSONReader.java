@@ -129,10 +129,10 @@ public class JSONReader {
 		}
 		
 		int ilen = 0;
-		int[] istack = new int[16];
+		int[] istack = new int[8];
 		
 		int olen = 0;
-		Object[] ostack = new Object[32];
+		Object[] ostack = new Object[16];
 		
 		JSONEventType btype = null;
 		do {
@@ -185,6 +185,10 @@ public class JSONReader {
 			}
 			
 			btype = type;
+			
+			if (parser.getContext().isMultilineMode() && ilen == 0) {
+				break;
+			}
 		} while ((type = parser.next()) != null);
 		
 		return ostack[0];

@@ -25,6 +25,11 @@ public class TraditionalParser implements Parser {
 		this.context = context;
 	}
 	
+	@Override
+	public ParseContext getContext() {
+		return context;
+	}
+	
 	public JSONEventType next() throws IOException {
 		JSONEventType type = null;
 		do {
