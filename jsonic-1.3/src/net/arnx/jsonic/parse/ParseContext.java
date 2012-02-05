@@ -394,7 +394,7 @@ public class ParseContext {
 					if (rest == 0 && sb != null) in.copy(sb, len);
 					point = 4;
 				} else if (point == 3) {
-					if (len > 1 && sb != null) in.copy(sb, len - 2);
+					if (len > 1 && sb != null) in.copy(sb, len);
 					break loop;
 				} else if (point == 2 || point == 4) {
 					if (rest == 0 && sb != null) in.copy(sb, len);
@@ -415,14 +415,22 @@ public class ParseContext {
 					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
 				break;
-			case '\n':
 			case '\r':
+			case '\n':
 				if (point == 2 || point == 3) {
 					if (rest == 0 && sb != null) in.copy(sb, len);
 					point = 2;
 				} else if (point == 4) {
-					if (len > 1 && sb != null) in.copy(sb, len - 1);
-					break loop;
+					if (n == '\r') {
+						n = in.next();
+						in.back();
+						if (n == '\n') {
+							if (rest == 0 && sb != null) in.copy(sb, len);
+							break;
+						}
+					}
+					if (len > 1 && sb != null) in.copy(sb, len);
+					break loop;	
 				} else {
 					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}

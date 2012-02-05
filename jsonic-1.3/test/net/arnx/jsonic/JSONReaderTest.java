@@ -115,8 +115,6 @@ public class JSONReaderTest {
 		while ((type = reader.next()) != null) {
 			switch (type) {
 			case NAME:
-				list.add(reader.getString());
-				break;
 			case STRING:
 				list.add(reader.getString());
 				break;
@@ -140,6 +138,50 @@ public class JSONReaderTest {
 		assertEquals(Boolean.TRUE, list.get(5));
 		assertEquals(Boolean.FALSE, list.get(6));
 		assertNull(list.get(7));
+		
+		list.clear();
+		
+		if (mode != JSON.Mode.STRICT) { 
+			reader = json.getReader("   [1, /* aaa */ 2, 3]//\n\n // { \"name\" : \"value\" }\r\n\t[true, false, null] \n\n ", false);
+			while ((type = reader.next()) != null) {
+				switch (type) {
+				case WHITESPACE:
+				case COMMENT:
+				case NAME:
+				case STRING:
+					list.add(reader.getString());
+					break;
+				case NUMBER:
+					list.add(reader.getNumber());
+					break;
+				case BOOLEAN:
+					list.add(reader.getBoolean());
+					break;
+				case NULL:
+					list.add(null);
+					break;
+				}
+			}
+			assertEquals(18, list.size());
+			assertEquals("   ", list.get(0));
+			assertEquals(new BigDecimal(1), list.get(1));
+			assertEquals(" ", list.get(2));
+			assertEquals("/* aaa */", list.get(3));
+			assertEquals(" ", list.get(4));
+			assertEquals(new BigDecimal(2), list.get(5));
+			assertEquals(" ", list.get(6));
+			assertEquals(new BigDecimal(3), list.get(7));
+			assertEquals("//\n", list.get(8));
+			assertEquals("\n ", list.get(9));
+			assertEquals("// { \"name\" : \"value\" }\r\n", list.get(10));
+			assertEquals("\t", list.get(11));
+			assertEquals(Boolean.TRUE, list.get(12));
+			assertEquals(" ", list.get(13));
+			assertEquals(Boolean.FALSE, list.get(14));
+			assertEquals(" ", list.get(15));
+			assertNull(list.get(16));
+			assertEquals(" \n\n ", list.get(17));
+		}
 	}
 }
 
