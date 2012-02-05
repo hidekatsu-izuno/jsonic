@@ -10,12 +10,26 @@ import org.junit.Test;
 
 public class JSONReaderTest {
 	@Test
-	public void testGetReader() throws Exception {
+	public void testGetReaderTraditional() throws Exception {
+		testGetReader(JSON.Mode.TRADITIONAL);
+	}
+	
+	@Test
+	public void testGetReaderScript() throws Exception {
+		testGetReader(JSON.Mode.SCRIPT);
+	}
+	
+	@Test
+	public void testGetReaderStrict() throws Exception {
+		testGetReader(JSON.Mode.STRICT);
+	}
+	
+	private void testGetReader(JSON.Mode mode) throws Exception {
 		List<Object> list = new ArrayList<Object>();
 		JSONEventType type;
 		JSONReader reader;
 
-		JSON json = new JSON();
+		JSON json = new JSON(mode);
 		reader = json.getReader("");
 		while ((type = reader.next()) != null) {
 			switch (type) {
