@@ -766,6 +766,8 @@ var hoge:Object = <span class="em">JSON.decode(</span>text<span class="em">)</sp
 
 <ul>
 <li>[不具合] 1.2.6 以降で normalize() メソッドをオーバーライドしても有効になっていなかった問題を修正しました。</li>
+<li>[不具合] encode/format時、JSONHint の name 属性で指定した名前と同じプロパティが存在するとキーが重複して出力される問題を修正しました。</li>
+<li>[不具合] encode/format時、「\u2028」「\u2029」が文字列中にあると、その前の文字が一部出力されない問題を修正しました。</li>
 </ul>
 
 <h3>2012/1/17 version 1.2.9</h3>
