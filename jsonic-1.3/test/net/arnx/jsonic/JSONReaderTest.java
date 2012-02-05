@@ -81,7 +81,7 @@ public class JSONReaderTest {
 				list.add(reader.getBoolean());
 				break;
 			case NULL:
-				list.add(reader.getValue());
+				list.add(null);
 				break;
 			}
 		}
