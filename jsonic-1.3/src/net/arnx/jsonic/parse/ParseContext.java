@@ -26,7 +26,7 @@ public class ParseContext {
 	}
 	
 	private Context context;
-	private boolean multilineMode;
+	private boolean interpretterMode;
 	private boolean ignoreWhirespace;
 	
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
@@ -36,9 +36,9 @@ public class ParseContext {
 	private boolean first;
 	private boolean active;
 	
-	public ParseContext(Context context, boolean multilineMode, boolean ignoreWhirespace) {
+	public ParseContext(Context context, boolean interpretterMode, boolean ignoreWhirespace) {
 		this.context = context;
-		this.multilineMode = multilineMode;
+		this.interpretterMode = interpretterMode;
 		this.ignoreWhirespace = ignoreWhirespace;
 		this.active = stack.size() < context.getMaxDepth();
 	}
@@ -51,8 +51,8 @@ public class ParseContext {
 		return context.getMaxDepth();
 	}
 	
-	public boolean isMultilineMode() {
-		return multilineMode;
+	public boolean isInterpretterMode() {
+		return interpretterMode;
 	}
 	
 	public boolean isIgnoreWhitespace() {
@@ -326,7 +326,7 @@ public class ParseContext {
 		throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
 	}
 
-	public Object parseLiteral(InputSource in) throws IOException {
+	public Object parseLiteral(InputSource in, boolean asValue) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = active ? context.getCachedBuffer() : null;
 		
@@ -361,7 +361,7 @@ public class ParseContext {
 		}
 		
 		String str = (sb != null) ? context.getString(sb) : null;
-		if (str != null) {
+		if (asValue && str != null) {
 			if ("null".equals(str)) {
 				type = JSONEventType.NULL;
 				return null;

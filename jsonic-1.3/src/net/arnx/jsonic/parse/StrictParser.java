@@ -112,7 +112,7 @@ public class StrictParser implements Parser {
 			return -1;
 		case '{':
 		case '[':
-			if (context.isMultilineMode()) {
+			if (context.isInterpretterMode()) {
 				in.back();
 				return BEFORE_ROOT;
 			}

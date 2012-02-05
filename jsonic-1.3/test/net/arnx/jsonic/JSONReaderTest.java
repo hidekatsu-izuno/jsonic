@@ -2,6 +2,7 @@ package net.arnx.jsonic;
 
 import static org.junit.Assert.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,16 +31,19 @@ public class JSONReaderTest {
 		JSONReader reader;
 
 		JSON json = new JSON(mode);
-		reader = json.getReader("");
-		while ((type = reader.next()) != null) {
-			switch (type) {
-			case START_OBJECT:
-				list.add(reader.getObject());
-				break;
+		
+		if (mode == JSON.Mode.TRADITIONAL) {
+			reader = json.getReader("");
+			while ((type = reader.next()) != null) {
+				switch (type) {
+				case START_OBJECT:
+					list.add(reader.getObject());
+					break;
+				}
 			}
+			assertEquals(1, list.size());
+			assertEquals(new LinkedHashMap<Object, Object>(), list.get(0));
 		}
-		assertEquals(1, list.size());
-		assertEquals(new LinkedHashMap<Object, Object>(), list.get(0));
 		
 		list.clear();
 		
@@ -58,5 +62,37 @@ public class JSONReaderTest {
 		assertEquals(new ArrayList<Object>(), list.get(0));
 		assertEquals(new LinkedHashMap<Object, Object>(), list.get(1));
 		assertEquals(new ArrayList<Object>(), list.get(2));
+		
+		list.clear();
+		
+		reader = json.getReader("[1, 2, 3]\n{ \"name\" : \"value\" }\n[true, false, null]");
+		while ((type = reader.next()) != null) {
+			switch (type) {
+			case NAME:
+				list.add(reader.getString());
+				break;
+			case STRING:
+				list.add(reader.getString());
+				break;
+			case NUMBER:
+				list.add(reader.getNumber());
+				break;
+			case BOOLEAN:
+				list.add(reader.getBoolean());
+				break;
+			case NULL:
+				list.add(reader.getValue());
+				break;
+			}
+		}
+		assertEquals(8, list.size());
+		assertEquals(new BigDecimal(1), list.get(0));
+		assertEquals(new BigDecimal(2), list.get(1));
+		assertEquals(new BigDecimal(3), list.get(2));
+		assertEquals("name", list.get(3));
+		assertEquals("value", list.get(4));
+		assertEquals(Boolean.TRUE, list.get(5));
+		assertEquals(Boolean.FALSE, list.get(6));
+		assertNull(list.get(7));
 	}
 }

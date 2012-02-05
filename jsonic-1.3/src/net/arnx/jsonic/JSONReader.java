@@ -84,7 +84,7 @@ public class JSONReader {
 	}
 	
 	public String getString() throws IOException {
-		if (type == JSONEventType.STRING) {
+		if (type == JSONEventType.NAME || type == JSONEventType.STRING) {
 			return (String)parser.getValue();
 		} else {
 			throw new IllegalStateException();
@@ -186,7 +186,7 @@ public class JSONReader {
 			
 			btype = type;
 			
-			if (parser.getContext().isMultilineMode() && ilen == 0) {
+			if (parser.getContext().isInterpretterMode() && ilen == 0) {
 				break;
 			}
 		} while ((type = parser.next()) != null);

@@ -130,7 +130,7 @@ public class TraditionalParser implements Parser {
 			return -1;
 		case '{':
 		case '[':
-			if (context.isMultilineMode()) {
+			if (context.isInterpretterMode()) {
 				in.back();
 				return BEFORE_ROOT;
 			}
@@ -176,7 +176,8 @@ public class TraditionalParser implements Parser {
 		case '8':
 		case '9':
 			in.back();
-			context.set(JSONEventType.NAME, context.parseNumber(in), false);
+			Object num = context.parseNumber(in);
+			context.set(JSONEventType.NAME, (num != null) ? num.toString() : null, false);
 			return AFTER_NAME;
 		case '}':
 			if (context.isFirst()) {
@@ -203,7 +204,7 @@ public class TraditionalParser implements Parser {
 			}
 		default:
 			in.back();
-			context.set(JSONEventType.NAME, context.parseLiteral(in), false);
+			context.set(JSONEventType.NAME, context.parseLiteral(in, false), false);
 			return AFTER_NAME;
 		}
 	}
@@ -336,7 +337,7 @@ public class TraditionalParser implements Parser {
 			}
 		default:
 			in.back();
-			Object literal = context.parseLiteral(in);
+			Object literal = context.parseLiteral(in, true);
 			context.set(context.getType(), literal, true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;

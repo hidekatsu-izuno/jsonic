@@ -173,7 +173,7 @@ public class ScriptParser implements Parser {
 		case 't':
 		case 'f':
 		case 'n':
-			if (context.isMultilineMode()) {
+			if (context.isInterpretterMode()) {
 				in.back();
 				return BEFORE_ROOT;
 			}
@@ -236,8 +236,7 @@ public class ScriptParser implements Parser {
 			throw context.createParseException(in, "json.parse.ObjectNotClosedError");
 		default:
 			in.back();
-			Object literal = context.parseLiteral(in);
-			context.set(JSONEventType.NAME, (literal != null) ? literal.toString() : null, false);
+			context.set(JSONEventType.NAME, context.parseLiteral(in, false), false);
 			return AFTER_NAME;
 		}
 	}
