@@ -67,60 +67,24 @@ public class JSONReader {
 		return context.convertInternal(getValue(), t);
 	}
 	
-	public Map<?, ?> getObject() throws IOException {
-		if (type == JSONEventType.START_OBJECT) {
-			return (Map<?, ?>)getValue();
-		} else {
-			throw new IllegalStateException();
-		}
+	public Map<?, ?> getMap() throws IOException {
+		return (Map<?, ?>)getValue();
 	}
 	
-	public List<?> getArray() throws IOException {
-		if (type == JSONEventType.START_ARRAY) {
-			return (List<?>)getValue();
-		} else {
-			throw new IllegalStateException();
-		}
+	public List<?> getList() throws IOException {
+		return (List<?>)getValue();
 	}
 	
 	public String getString() throws IOException {
-		if (type == JSONEventType.NAME || type == JSONEventType.STRING) {
-			return (String)parser.getValue();
-		} else {
-			throw new IllegalStateException();
-		}
+		return (String)parser.getValue();
 	}
 	
 	public BigDecimal getNumber() throws IOException {
-		if (type == JSONEventType.NUMBER) {
-			return (BigDecimal)parser.getValue();
-		} else {
-			throw new IllegalStateException();
-		}
+		return (BigDecimal)parser.getValue();
 	}
 	
 	public Boolean getBoolean() throws IOException {
-		if (type == JSONEventType.BOOLEAN) {
-			return (Boolean)parser.getValue();
-		} else {
-			throw new IllegalStateException();
-		}
-	}
-	
-	public String getComment() throws IOException {
-		if (type == JSONEventType.COMMENT) {
-			return (String)parser.getValue();
-		} else {
-			throw new IllegalStateException();
-		}
-	}
-	
-	public String getWhitespace() throws IOException {
-		if (type == JSONEventType.WHITESPACE) {
-			return (String)parser.getValue();
-		} else {
-			throw new IllegalStateException();
-		}
+		return (Boolean)parser.getValue();
 	}
 	
 	Object getValue() throws IOException {

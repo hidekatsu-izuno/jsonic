@@ -37,7 +37,7 @@ public class JSONReaderTest {
 			while ((type = reader.next()) != null) {
 				switch (type) {
 				case START_OBJECT:
-					list.add(reader.getObject());
+					list.add(reader.getMap());
 					break;
 				}
 			}
@@ -51,10 +51,10 @@ public class JSONReaderTest {
 		while ((type = reader.next()) != null) {
 			switch (type) {
 			case START_OBJECT:
-				list.add(reader.getObject());
+				list.add(reader.getMap());
 				break;
 			case START_ARRAY:
-				list.add(reader.getArray());
+				list.add(reader.getList());
 				break;
 			}
 		}
