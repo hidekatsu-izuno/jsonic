@@ -105,9 +105,11 @@ final class StringFormatter implements Formatter {
 					start = i + 1;
 				}
 			} else if (c == '\u2028') {
+				if (start < i) out.append(s, start, i);
 				out.append("\\u2028");
 				start = i + 1;
 			} else if (c == '\u2029') {
+				if (start < i) out.append(s, start, i);
 				out.append("\\u2029");
 				start = i + 1;
 			}
@@ -784,8 +786,9 @@ final class ObjectFormatter implements Formatter {
 
 			try {
 				value = prop.get(o);
-				if (value == src || (context.isSuppressNull() && value == null))
+				if (value == src || (context.isSuppressNull() && value == null)) {
 					continue;
+				}
 
 				if (count != 0) out.append(',');
 				if (context.isPrettyPrint()) {

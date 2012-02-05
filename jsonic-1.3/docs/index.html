@@ -737,6 +737,10 @@ public class TestBean {
 <h3>2012/01/28 version 1.3.0 ベータ2</h3>
 <ul>
 <li>[機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。</li>
+<li>[機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。</li>
+<li>[不具合] 1.2.6 以降で normalize() メソッドをオーバーライドしても有効になっていなかった問題を修正しました。</li>
+<li>[不具合] encode/format時、JSONHint の name 属性で指定した名前と同じプロパティが存在するとキーが重複して出力される問題を修正しました。</li>
+<li>[不具合] encode/format時、「\u2028」「\u2029」が文字列中にあると、その前の文字が一部出力されない問題を修正しました。</li>
 </ul>
 
 <h3>2012/01/28 version 1.3.0 ベータ1</h3>
@@ -754,8 +758,7 @@ public class TestBean {
 <li>[仕様変更] メソッド名が不統一となっていたため JSON.Context#getPropertyCaseStyle(), JSON.Context#getEnumCaseStyle() を廃止し、それぞれ JSON.Context#getPropertyStyle(), JSON.Context#getEnumStyle() に変更しました。</li>
 <li>[仕様変更] ActionScript版のJSONICは、ActionScriptで正規にJSONライブラリがサポートされ、必要性が薄くなったため廃止しました。</li>
 <li>[仕様変更] 非推奨となっていたWebServiceServletを廃止しました。</li>
-<li>[不具合] 1.2.6 以降で normalize() メソッドをオーバーライドしても有効になっていなかった問題を修正しました。</li>
-<li>[不具合] エラー発生時のカラム位置がずれる問題を修正しました。</li>
+<li>[不具合] 例外発生時に表示されるカラム位置がずれる問題を修正しました。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />
