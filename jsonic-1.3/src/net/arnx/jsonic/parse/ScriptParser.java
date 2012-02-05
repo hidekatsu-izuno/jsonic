@@ -127,6 +127,9 @@ public class ScriptParser implements Parser {
 			context.set(JSONEventType.NULL, context.parseLiteral(in, "null", null), true);
 			return AFTER_ROOT;
 		case -1:
+			if (context.isInterpretterMode()) {
+				return -1;
+			}
 			throw context.createParseException(in, "json.parse.EmptyInputError");
 		default:
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);

@@ -89,6 +89,9 @@ public class StrictParser implements Parser {
 			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
 		case -1:
+			if (context.isInterpretterMode()) {
+				return -1;
+			}
 			throw context.createParseException(in, "json.parse.EmptyInputError");
 		default:
 			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);

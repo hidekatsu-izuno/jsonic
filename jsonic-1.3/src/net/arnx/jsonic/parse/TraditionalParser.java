@@ -98,6 +98,10 @@ public class TraditionalParser implements Parser {
 		case '[':
 			context.push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
+		case -1:
+			if (context.isInterpretterMode()) {
+				return -1;
+			}
 		default:
 			if (n != -1) in.back();
 			emptyRoot = true;
@@ -128,6 +132,10 @@ public class TraditionalParser implements Parser {
 			return AFTER_ROOT;
 		case -1:
 			return -1;
+		case ',':
+			if (context.isInterpretterMode()) {
+				return BEFORE_ROOT;
+			}
 		case '{':
 		case '[':
 			if (context.isInterpretterMode()) {

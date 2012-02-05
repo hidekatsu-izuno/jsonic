@@ -32,17 +32,9 @@ public class JSONReaderTest {
 
 		JSON json = new JSON(mode);
 		
-		if (mode == JSON.Mode.TRADITIONAL) {
-			reader = json.getReader("");
-			while ((type = reader.next()) != null) {
-				switch (type) {
-				case START_OBJECT:
-					list.add(reader.getMap());
-					break;
-				}
-			}
-			assertEquals(1, list.size());
-			assertEquals(new LinkedHashMap<Object, Object>(), list.get(0));
+		reader = json.getReader("");
+		while ((type = reader.next()) != null) {
+			fail();
 		}
 		
 		list.clear();
@@ -92,6 +84,30 @@ public class JSONReaderTest {
 		assertEquals(new ReaderBean("a", null), list.get(0));
 		assertEquals(new ReaderBean("b", new ReaderBean("b1", null)), list.get(1));
 		assertEquals(new ReaderBean("c", null), list.get(2));
+		
+		list.clear();
+		if (mode == JSON.Mode.TRADITIONAL) {
+			reader = json.getReader("{\"value\": \"a\"},\n{\"value\": \"b\", \"child\": {\"value\": \"b1\"} },\n{\"value\": \"c\"}");
+			while ((type = reader.next()) != null) {
+				switch (type) {
+				case START_OBJECT:
+					list.add(reader.getValue(ReaderBean.class));
+					break;
+				}
+			}
+			assertEquals(3, list.size());
+			assertEquals(new ReaderBean("a", null), list.get(0));
+			assertEquals(new ReaderBean("b", new ReaderBean("b1", null)), list.get(1));
+			assertEquals(new ReaderBean("c", null), list.get(2));
+		} else {
+			try {
+				reader = json.getReader("{\"value\": \"a\"},\n{\"value\": \"b\", \"child\": {\"value\": \"b1\"} },\n{\"value\": \"c\"}");
+				while ((type = reader.next()) != null);
+				fail();
+			} catch (Exception e) {
+				assertNotNull(e);
+			}
+		}
 		
 		list.clear();
 		
