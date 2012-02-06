@@ -839,43 +839,48 @@ final class DateConverter implements Converter {
 		}
 		
 		Date date = null;
-		long millis = -1;
 		if (value instanceof Number) {
-			millis = ((Number)value).longValue();
 			date = (Date)context.createInternal(c);
+			date.setTime(((Number)value).longValue());
 		} else if (value != null) {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
-				millis = convertDate(context, str);
-				date = (Date)context.createInternal(c);						
+				DateFormat format = context.getDateFormat();
+				if (format != null) {
+					date = format.parse(str);
+				} else {
+					date = convertDate(context, str);
+				}
+				
+				if (date != null && !c.isAssignableFrom(date.getClass())) {
+					long time = date.getTime();
+					date = (Date)context.createInternal(c);
+					date.setTime(time);
+				}
 			}
 		}
 		
-		if (date != null) {
-			if (date instanceof java.sql.Date) {
-				Calendar cal = Calendar.getInstance();
-				cal.setTimeInMillis(millis);
-				cal.set(Calendar.HOUR_OF_DAY, 0);
-				cal.set(Calendar.MINUTE, 0);
-				cal.set(Calendar.SECOND, 0);
-				cal.set(Calendar.MILLISECOND, 0);
-				date.setTime(cal.getTimeInMillis());
-			} else if (date instanceof java.sql.Time) {
-				Calendar cal = Calendar.getInstance();
-				cal.setTimeInMillis(millis);
-				cal.set(Calendar.YEAR, 1970);
-				cal.set(Calendar.MONTH, Calendar.JANUARY);
-				cal.set(Calendar.DATE, 1);
-				date.setTime(cal.getTimeInMillis());
-			} else {
-				date.setTime(millis);
-			}
+		if (date instanceof java.sql.Date) {
+			Calendar cal = Calendar.getInstance(context.getTimeZone(), context.getLocale());
+			cal.setTimeInMillis(date.getTime());
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			date.setTime(cal.getTimeInMillis());
+		} else if (date instanceof java.sql.Time) {
+			Calendar cal = Calendar.getInstance(context.getTimeZone(), context.getLocale());
+			cal.setTimeInMillis(date.getTime());
+			cal.set(Calendar.YEAR, 1970);
+			cal.set(Calendar.MONTH, Calendar.JANUARY);
+			cal.set(Calendar.DATE, 1);
+			date.setTime(cal.getTimeInMillis());
 		}
 		
 		return date;
 	}
 	
-	static Long convertDate(Context context, String value) throws ParseException {
+	static Date convertDate(Context context, String value) throws ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
@@ -956,7 +961,7 @@ final class DateConverter implements Converter {
 		format.setLenient(false);
 		format.setTimeZone(context.getTimeZone());
 		
-		return format.parse(value).getTime();
+		return format.parse(value);
 	}
 }
 
@@ -979,7 +984,13 @@ final class CalendarConverter implements Converter {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				Calendar cal = (Calendar)context.createInternal(c);
-				cal.setTimeInMillis(DateConverter.convertDate(context, str));
+				
+				DateFormat format = context.getDateFormat();
+				if (format != null) {
+					cal.setTime(format.parse(str));
+				} else {
+					cal.setTime(DateConverter.convertDate(context, str));
+				}
 				return  cal;
 			}
 		}
