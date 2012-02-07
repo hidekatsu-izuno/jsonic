@@ -739,6 +739,7 @@ public class TestBean {
 <li>[機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。</li>
 <li>[機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。</li>
 <li>[仕様変更] parse/decode 時は formatの指定に関わらず日時文字列からDate型へ書式の自動解析による変換を行なっていましたが、formatが指定された場合は書式に従った解析を行なうよう変更しました。</li>
+<li>[不具合] JSONHint にて serialized = true を指定してdecode/parseした場合、2階層目以降のオブジェクトが正しく書式化されない問題を修正しました（#27430）</li>
 <li>[不具合] 1.2.6 以降で normalize() メソッドをオーバーライドしても有効になっていなかった問題を修正しました。</li>
 <li>[不具合] encode/format時、JSONHint の name 属性で指定した名前と同じプロパティが存在するとキーが重複して出力される問題を修正しました。</li>
 <li>[不具合] encode/format時、「\u2028」「\u2029」が文字列中にあると、その前の文字が一部出力されない問題を修正しました。</li>

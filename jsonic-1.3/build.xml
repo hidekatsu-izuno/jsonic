@@ -7,7 +7,7 @@
 	<property name="debug" value="true" />
 		
 	<property name="webapps" location="sample"/>
-	<property name="tmp" location="${java.io.tmpdir}/jsonic" />
+	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 	<property name="dist" location="." />
 
 	<target name="init" depends="clean">
@@ -32,11 +32,11 @@
 			<isfalse value="${debug}"/>
 		</condition>
 
-		<jar destfile="${tmp}/jsonic-${version}.jar">
+		<jar destfile="${tmp}/${project.name}-${project.version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
 			<fileset dir="src" excludes="**/*.java" />
 		</jar>
-		<jar destfile="${tmp}/jsonic-${version}-sources.jar">
+		<jar destfile="${tmp}/${project.name}-${project.version}-sources.jar">
 			<fileset dir="src" />
 		</jar>
 		<delete dir="${tmp}/build" />
@@ -51,7 +51,7 @@
 		<copy file="${webapps}/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_seasar2.xml" />
 		<copy file="${webapps}/spring/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_spring.xml" />
 		<copy file="${webapps}/guice/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_guice.xml" />
-		<copy file="${tmp}/jsonic-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
+		<copy file="${tmp}/${project.name}-${project.version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
 		<javac source="1.5" target="1.5" 
 			srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
@@ -67,8 +67,9 @@
 		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true"
 			additionalparam="-J-Duser.language=en_US">
 			<link href="http://download.oracle.com/javase/7/docs/api/" />
-			<excludepackage name="net.arnx.jsonic.util.*" />
 			<excludepackage name="net.arnx.jsonic.io.*" />
+			<excludepackage name="net.arnx.jsonic.parse.*" />
+			<excludepackage name="net.arnx.jsonic.util.*" />
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 				<fileset dir="${webapps}/seasar2/WEB-INF/lib" includes="*.jar" />
@@ -82,15 +83,15 @@
 		<antcall target="dist">
 			<param name="tmp" location="${tmp}/java" />
 		</antcall>
-		<zip destfile="${dist}/jsonic-${version}.zip">
-			<zipfileset dir="src" prefix="jsonic-${version}/src/java" />
-			<zipfileset dir="${tmp}/java/docs" prefix="jsonic-${version}/docs/java" />
-			<zipfileset file="${tmp}/java/jsonic-${version}*.jar" prefix="jsonic-${version}" />
+		<zip destfile="${dist}/${project.name}-${project.version}.zip">
+			<zipfileset dir="src" prefix="${project.name}-${project.version}/src/java" />
+			<zipfileset dir="${tmp}/java/docs" prefix="${project.name}-${project.version}/docs/java" />
+			<zipfileset file="${tmp}/java/${project.name}-${project.version}*.jar" prefix="${project.name}-${project.version}" />
 						
-			<zipfileset dir="${tmp}/java/sample/basic" prefix="jsonic-${version}/sample" />
-			<zipfileset dir="docs" prefix="jsonic-${version}/docs" />
-			<zipfileset dir="lib" includes="build.xml" prefix="jsonic-${version}" />
-			<zipfileset dir="." prefix="jsonic-${version}" >
+			<zipfileset dir="${tmp}/java/sample/basic" prefix="${project.name}-${project.version}/sample" />
+			<zipfileset dir="docs" prefix="${project.name}-${project.version}/docs" />
+			<zipfileset dir="lib" includes="build.xml" prefix="${project.name}-${project.version}" />
+			<zipfileset dir="." prefix="${project.name}-${project.version}" >
 				<include name="LICENSE.txt" />
 				<include name="pom.xml" />
 			</zipfileset>			
@@ -100,7 +101,7 @@
 	
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
-		<delete file="${dist}/jsonic-${version}.zip" failonerror="off" />
+		<delete file="${dist}/${project.name}-${project.version}.zip" failonerror="off" />
 	</target>
 	
 	<target name="copy-samples">
