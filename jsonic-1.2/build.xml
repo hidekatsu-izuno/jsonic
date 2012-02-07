@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE project>
-<project name="jsonic" basedir="." default="dist-all">	
+<project name="jsonic-1.2" basedir="." default="dist-all">	
 	<xmlproperty file="pom.xml" />
 	
 	<property name="version" value="${project.version}" />
@@ -34,11 +34,11 @@
 			<isfalse value="${debug}"/>
 		</condition>
 
-		<jar destfile="${tmp}/${ant.project.name}-${version}.jar">
+		<jar destfile="${tmp}/${project.name}-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
 			<fileset dir="src" excludes="**/*.java" />
 		</jar>
-		<jar destfile="${tmp}/${ant.project.name}-${version}-sources.jar">
+		<jar destfile="${tmp}/${project.name}-${version}-sources.jar">
 			<fileset dir="src" />
 		</jar>
 		<delete dir="${tmp}/build" />
@@ -53,7 +53,7 @@
 		<copy file="${webapps}/seasar2/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_seasar2.xml" />
 		<copy file="${webapps}/spring/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_spring.xml" />
 		<copy file="${webapps}/guice/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_guice.xml" />
-		<copy file="${tmp}/${ant.project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
+		<copy file="${tmp}/${project.name}-${version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
 		<javac source="1.5" target="1.5" 
 			srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
@@ -88,19 +88,19 @@
 			<property name="tmp" location="${tmp}/as3" />
 			<property name="flex.home" location="${flex.home}" />
 		</ant>
-		<zip destfile="${dist}/${ant.project.name}-${version}.zip">
-			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src/java" />
-			<zipfileset dir="${tmp}/java/docs" prefix="${ant.project.name}-${version}/docs/java" />
+		<zip destfile="${dist}/${project.name}-${version}.zip">
+			<zipfileset dir="src" prefix="${project.name}-${version}/src/java" />
+			<zipfileset dir="${tmp}/java/docs" prefix="${project.name}-${version}/docs/java" />
 			<zipfileset file="${tmp}/java/${ant.project.name}-${version}*.jar" prefix="${ant.project.name}-${version}" />
 			
-			<zipfileset dir="${jsonic_as3.home}/src" prefix="${ant.project.name}-${version}/src/as3" />
+			<zipfileset dir="${jsonic_as3.home}/src" prefix="${project.name}-${version}/src/as3" />
 			<zipfileset dir="${tmp}/as3/docs" prefix="${ant.project.name}-${version}/docs/as3" />
 			<zipfileset file="${tmp}/as3/${ant.project.name}-${version}.swc" prefix="${ant.project.name}-${version}" />
 			
-			<zipfileset dir="${tmp}/java/sample/basic" prefix="${ant.project.name}-${version}/sample" />
-			<zipfileset dir="docs" prefix="${ant.project.name}-${version}/docs" />
-			<zipfileset dir="lib" includes="build.xml" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="." prefix="${ant.project.name}-${version}" >
+			<zipfileset dir="${tmp}/java/sample/basic" prefix="${project.name}-${version}/sample" />
+			<zipfileset dir="docs" prefix="${project.name}-${version}/docs" />
+			<zipfileset dir="lib" includes="build.xml" prefix="${project.name}-${version}" />
+			<zipfileset dir="." prefix="${project.name}-${version}" >
 				<include name="LICENSE.txt" />
 				<include name="pom.xml" />
 			</zipfileset>			
@@ -110,7 +110,7 @@
 	
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
-		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
+		<delete file="${dist}/${project.name}-${version}.zip" failonerror="off" />
 	</target>
 	
 	<target name="copy-samples">
