@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="jsonic_as3" basedir="." default="dist">
-	<property name="version" value="1.2.9" />
-
+<project name="jsonic-1.2_as3" basedir="." default="dist">
+	<xmlproperty file="../jsonic-1.2/pom.xml" />
+	
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 	<property name="dist" location="." />
 
@@ -19,7 +19,7 @@
 			<arg line="-locale=en_US,ja_JP" />
 			<arg line="-namespace 'http://arnx.net/jsonic' '${basedir}/src/manifest.xml'" />
 			<arg line="-source-path '${basedir}/src' '${basedir}/src/{locale}'" />
-			<arg line="-output '${tmp}/jsonic-${version}.swc'" />
+			<arg line="-output '${tmp}/jsonic-${project.version}.swc'" />
 			<arg line="-allow-source-path-overlap=true" />
 			<arg line="-include-namespaces 'http://arnx.net/jsonic'" />
 			<arg line="-include-classes 'net.arnx.jsonic.web.mxml.WebService'" />
@@ -33,17 +33,17 @@
 	</target>
 
 	<target name="dist" depends="build">
-		<zip destfile="${dist}/${ant.project.name}-${version}.zip">
-			<zipfileset dir="${tmp}" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="src" prefix="${ant.project.name}-${version}/src" />
-			<zipfileset dir="." includes="build.xml" prefix="${ant.project.name}-${version}" />
-			<zipfileset dir="." includes="LICENSE.txt" prefix="${ant.project.name}-${version}" />
+		<zip destfile="${dist}/${project.name}-${project.version}.zip">
+			<zipfileset dir="${tmp}" prefix="${project.name}-${project.version}" />
+			<zipfileset dir="src" prefix="${project.name}-${project.version}/src" />
+			<zipfileset dir="." includes="build.xml" prefix="${project.name}-${project.version}" />
+			<zipfileset dir="." includes="LICENSE.txt" prefix="${project.name}-${project.version}" />
 		</zip>
 		<delete dir="${tmp}" />
 	</target>
 
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
-		<delete file="${dist}/${ant.project.name}-${version}.zip" failonerror="off" />
+		<delete file="${dist}/${project.name}-${project.version}.zip" failonerror="off" />
 	</target>
 </project>
