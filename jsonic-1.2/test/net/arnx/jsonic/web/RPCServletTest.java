@@ -144,7 +144,7 @@ public class RPCServletTest {
 		write(con, "{a*");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
-		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"Parse error.\",\"data\":{\"columnNumber\":4,\"errorCode\":200,\"errorOffset\":3,\"lineNumber\":1}},\"id\":null}"), 
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"Parse error.\",\"data\":{\"columnNumber\":3,\"errorCode\":200,\"errorOffset\":3,\"lineNumber\":1}},\"id\":null}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 

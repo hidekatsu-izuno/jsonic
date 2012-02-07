@@ -7,67 +7,103 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 public class ReaderInputSource implements InputSource {
-	long lines = 1l;
-	long columns = 1l;
-	long offset = 0;
-
-	final Reader reader;
-	final char[] buf = new char[256];
-	int start = 0;
-	int end = 0;
+	private static int BACK = 20;
 	
-	public ReaderInputSource(InputStream in) throws IOException {
-		if (!in.markSupported()) in = new BufferedInputStream(in);
-		this.reader = new InputStreamReader(in, determineEncoding(in));
+	private long lines = 1L;
+	private long columns = 0L;
+	private long offset = 0L;
+	
+	private InputStream in;
+	private Reader reader;
+	private final char[] buf = new char[256 + BACK];
+	private int back = BACK;
+	private int start = BACK;
+	private int end = BACK - 1;
+	private int mark = -1;
+	
+	public ReaderInputSource(InputStream in) {
+		if (in == null) throw new NullPointerException();
+		this.in = in;
 	}
 	
 	public ReaderInputSource(Reader reader) {
-		if (reader == null) {
-			throw new NullPointerException();
-		}
+		if (reader == null) throw new NullPointerException();
 		this.reader = reader;
 	}
 	
+	@Override
 	public int next() throws IOException {
-		if (start == end) {
-			int size = reader.read(buf, start, Math.min(buf.length-start, buf.length/2));
-			if (size != -1) {
-				end = (end + size) % buf.length;
+		int n = -1;
+		if ((n = get()) != -1) {
+			offset++;
+			if (n == '\r') {
+				lines++;
+				columns = 0;
+			} else if (n == '\n') {
+				if (start < 2 || buf[start-2] != '\r') {
+					lines++;
+					columns = 0;
+				}
 			} else {
+				columns++;
+			}
+		}
+		return n;
+	}
+	
+	private int get() throws IOException {
+		if (start > end) {
+			if (end > BACK) {
+				int len = Math.min(BACK, end - BACK  + 1);
+				System.arraycopy(buf, end + 1 - len, buf, BACK - len, len);
+				back = BACK - len;
+			}
+			if (in != null) {
+				if (!in.markSupported()) in = new BufferedInputStream(in);
+				this.reader = new InputStreamReader(in, determineEncoding(in));
+				this.in = null;
+			}
+			int size = reader.read(buf, BACK, buf.length-BACK);
+			if (size != -1) {
+				mark = (mark > end - BACK) ? BACK - (end - mark + 1) : -1;
+				start = BACK;
+				end = BACK + size - 1;
+			} else {
+				start++;
 				return -1;
 			}
 		}
-		char c = buf[start];
-		if (c == '\r' || (c == '\n' && buf[(start+buf.length-1) % (buf.length)] != '\r')) {
-			lines++;
-			columns = 0;
-		} else {
-			columns++;
-		}
-		offset++;
-		start = (start+1) % buf.length;
-		return c;
+		return buf[start++];
 	}
 	
+	@Override
 	public void back() {
-		offset--;
-		columns--;
-		start = (start+buf.length-1) % buf.length;
+		if (start <= back) {
+			throw new IllegalStateException("no backup charcter");
+		}
+		start--;
+		if (start <= end) {
+			offset--;
+			columns--;
+		}
 	}
 	
+	@Override
 	public long getLineNumber() {
 		return lines;
 	}
 	
+	@Override
 	public long getColumnNumber() {
 		return columns;
 	}
 	
+	@Override
 	public long getOffset() {
 		return offset;
 	}
 	
-	String determineEncoding(InputStream in) throws IOException {
+	private static String determineEncoding(InputStream in) throws IOException {
 		String encoding = "UTF-8";
 
 		in.mark(4);
@@ -99,12 +135,20 @@ public class ReaderInputSource implements InputSource {
 		return encoding;
 	}
 	
+	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		int maxlength = (columns-1 < buf.length) ? (int)columns-1 : buf.length-1;
-		for (int i = maxlength; i >= 0; i--) {
-			sb.append(buf[(start-2+buf.length-i) % (buf.length-1)]);
+		int spos = back;
+		int max = Math.min(start-1, end);
+		int charCount = 0;
+		for (int i = 0; i < max + 1 - back && i < BACK; i++) {
+			char c = buf[max-i];
+			if (c == '\r' || (c == '\n' && (max-i-1 < 0 || buf[max-i-1] != '\r'))) {
+				if (charCount > 0) break;
+			} else if (c != '\n') {
+				spos = max-i;
+				charCount++;
+			}
 		}
-		return sb.toString();
+		return (spos <= max) ? String.valueOf(buf, spos, max - spos + 1) : "";
 	}
 }
