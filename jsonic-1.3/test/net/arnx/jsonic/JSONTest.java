@@ -272,7 +272,7 @@ public class JSONTest {
 		aBean.array1 = new int[] {1, 2, 3};
 		aBean.array2 = new Integer[] {1, 2, 3};
 		aBean.json_data = "{\"a\": 100 /* ほげほげ */}";
-		aBean.simple_json_data = "0";
+		aBean.simple_json_data = "\"aaaa\"";
 		aBean.number_json_data = 0.0;
 		
 		List<Integer> array3 = new ArrayList<Integer>();
@@ -281,7 +281,7 @@ public class JSONTest {
 		array3.add(3);
 		aBean.array3 = array3;
 		assertEquals(
-				"{\"json_data\":{\"a\": 100 /* ほげほげ */},\"simple_json_data\":0,\"number_json_data\":0.0,"
+				"{\"json_data\":{\"a\": 100 /* ほげほげ */},\"simple_json_data\":\"aaaa\",\"number_json_data\":0.0,"
 				+ "\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2,"
 				+ "\"name_a\":\"aaa\",\"name_b\":\"aaa\",\"namex\":\"aaa\",\"namez\":\"aaa\"}", JSON.encode(aBean));
@@ -539,8 +539,8 @@ public class JSONTest {
 		aBean.date = toDate(2009, 1, 1, 0, 0, 0, 0);
 		aBean.array1 = new int[] {1, 2, 3};
 		aBean.array2 = new Integer[] {1, 2, 3};
-		aBean.json_data = "{\"a\":100}";
-		aBean.simple_json_data = "0";
+		aBean.json_data = "{\"a\":[100,null,\"aaa\",{\"key\":\"value\"}]}";
+		aBean.simple_json_data = "\"aaaa\"";
 		aBean.number_json_data = 0.0;
 		
 		List<Integer> array3 = new Vector<Integer>();
@@ -556,7 +556,7 @@ public class JSONTest {
 		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"anonymMap\":\"test\"," 
 				+ "\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"]," 
 				+ "\"b\":\"2.01\",\"date\":\"2009/01/01\","
-				+ "json_data: {\"a\": 100 /* ほげほげ */}, \"simple_json_data\": 0, \"number_json_data\": 0,"
+				+ "json_data: {\"a\": [100 /* ほげほげ */, \nnull,'aaa',{key : \"value\"}]  }, \"simple_json_data\": 'aaaa', \"number_json_data\": 0,"
 				+ "\"method\":2}", AnnotationBean.class);
 		aBean.hashCode();
 		aBeanResult.hashCode();

@@ -1009,9 +1009,7 @@ public class JSON {
 			JSONHint hint = context.getHint();
 			if (hint == null) {
 				// no handle
-			} else if (context.skipHint) {
-				context.skipHint = false;
-			} else if (hint.serialized()) {
+			} else if (hint.serialized() && hint != context.skipHint) {
 				c = FormatConverter.INSTANCE;
 			} else if (Serializable.class.equals(hint.type())) {
 				c = SerializableConverter.INSTANCE;
@@ -1166,7 +1164,7 @@ public class JSON {
 		private Map<Class<?>, Object> memberCache;
 		private final LocalCache cache;
 		
-		boolean skipHint = false;
+		JSONHint skipHint;
 		
 		public Context() {
 			synchronized (JSON.this) {
@@ -1570,9 +1568,7 @@ public class JSON {
 				JSONHint hint = getHint();
 				if (hint == null) {
 					// no handle
-				} else if (skipHint) {
-					skipHint = false;
-				} else if (hint.serialized()) {
+				} else if (hint.serialized() && hint != skipHint) {
 					f = PlainFormatter.INSTANCE;
 				} else if (String.class.equals(hint.type())) {
 					f = StringFormatter.INSTANCE;

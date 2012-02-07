@@ -80,7 +80,7 @@ final class FormatConverter implements Converter {
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Context context2 = context.copy();
-		context2.skipHint = true;
+		context2.skipHint = context.getHint();
 		value = context2.preformatInternal(value);
 		StringBuilderOutputSource fs = new StringBuilderOutputSource(new StringBuilder(200));
 		try {
@@ -90,8 +90,11 @@ final class FormatConverter implements Converter {
 		}
 		fs.flush();
 		
-		context.skipHint = true;
-		return context.postparseInternal(fs.toString(), c, t);
+		context.skipHint = context2.skipHint;
+		Object ret =  context.postparseInternal(fs.toString(), c, t);
+		context.skipHint = null;
+		
+		return ret;
 	}
 }
 
