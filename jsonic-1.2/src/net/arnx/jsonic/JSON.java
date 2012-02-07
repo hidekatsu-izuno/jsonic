@@ -863,9 +863,7 @@ public class JSON {
 			JSONHint hint = context.getHint();
 			if (hint == null) {
 				// no handle
-			} else if (context.skipHint) {
-				context.skipHint = false;
-			} else if (hint.serialized()) {
+			} else if (hint.serialized() && hint != context.skipHint) {
 				f = PlainFormatter.INSTANCE;
 			} else if (String.class.equals(hint.type())) {
 				f = StringFormatter.INSTANCE;
@@ -1680,9 +1678,7 @@ public class JSON {
 			JSONHint hint = context.getHint();
 			if (hint == null) {
 				// no handle
-			} else if (context.skipHint) {
-				context.skipHint = false;
-			} else if (hint.serialized()) {
+			} else if (hint.serialized() && hint != context.skipHint) {
 				c = FormatConverter.INSTANCE;
 			} else if (Serializable.class.equals(hint.type())) {
 				c = SerializableConverter.INSTANCE;
@@ -1834,7 +1830,7 @@ public class JSON {
 		private Map<String, NumberFormat> numberFormatCache;
 		private StringBuilder builderCache;
 		
-		boolean skipHint = false;
+		JSONHint skipHint;
 		
 		public Context() {
 			synchronized (JSON.this) {
