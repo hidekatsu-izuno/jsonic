@@ -277,6 +277,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="index.html#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="index.html#validation">JSONの検証</a></li>
 <li><a href="index.html#jsfriendly">JavaScriptに親和的な出力</a></li>
+<li><a href="index.html#reader">JSONストリームの順次読み込み</a></li>
 <li><a href="index.html#format">日時/数値書式の指定</a></li>
 <li><a href="index.html#namingstyle">プロパティ名/列挙型出力書式の指定</a></li>
 <li><a href="index.html#innerclass">内部クラスを利用したエンコード/デコード</a></li>
@@ -368,12 +369,12 @@ JSON.prototype = MyJSON.class;
 <p>decodeやparseの引数にはJava 5.0で追加された総称型も指定できます。しかし、総称型はコンパイル時に削除されてしまうため、decode/parseメソッドの引数として直接的に指定することができません。総称型を使う場合は TypeReference を使って型を埋めこむか、ルート要素をJSON objectにして対応するクラス定義の中で総称型を使います。</p>
 <pre class="source">
 class Config() {
-	<span class="comment">// TypeReference を使う</span>
+    <span class="comment">// TypeReference を使う</span>
     public static List<RowData> load(Reader reader) throws IOException {
-        return JSON.decode(reader, new TypeReference<List<RowData>>() {});
+        return JSON.decode(reader, new <span class="em">TypeReference</span>&lt;List&lt;RowData&gt;&gt;<span class="em">()</span> {});
     }
 
-	<span class="comment">// 型を定義してその中で総称型を利用する</span>
+    <span class="comment">// 型を定義してその中で総称型を利用する</span>
     public static Config load(Reader reader) throws IOException {
         return JSON.decode(reader, Config.class);
     }
@@ -391,13 +392,13 @@ class Config() {
 <pre class="source">
     private Map&lt;String, Hoge&gt; config;
     
-    <span class="em">// Filedを使って総称型を指定</span>
+    <span class="comment">// Filedを使って総称型を指定</span>
     public Map&lt;String, Hoge&gt; load(Reader reader) throws IOException {
         return JSON.<span class="em">decode(</span>reader, 
             this.getClass().getField("config").getGenericType()<span class="em">)</span>;
     }
     
-    <span class="em">// 総称型を継承した無名クラスを使って総称型を指定</span>
+    <span class="comment">// 総称型を継承した無名クラスを使って総称型を指定</span>
     public List&lt;RowData&gt; load(Reader reader) throws IOException {
 	    return JSON.<span class="em">decode(</span>"[ { ... }, { ... } ]", 
 	        (new ArrayList&lt;RowData&gt;() {}).getClass().getGenericSuperclass());
@@ -407,22 +408,22 @@ class Config() {
 <h3 id="prettyprinting">■ 可読性の高い出力 <span class="subtitle">- Pretty Print モード</span></h3>
 <p>JSONICでは、encode の第二引数に true を渡すか、setPrettyPrint() メソッドを使うことでインデントや改行などが付いた可動性の高いJSONを出力することができます。</p>
 <pre class="source">
-    <span class="em">// encode の第二引数に true を設定</span>
+    <span class="comment">// encode の第二引数に true を設定</span>
     JSON.encode(obj, true);
     
-    <span class="em">// setPrettyPrint に true を設定</span>
+    <span class="comment">// setPrettyPrint に true を設定</span>
     JSON json = new JSON();
-    json.setPrettyPrint(true);
+    json.<span class="em">setPrettyPrint(</span>true<span class="em">)</span>;
     json.format(obj);
 </pre>
 
 <p>デフォルトでは、初期インデントがなく、タブを使用してインデントを出力しますが、setInitialIndent() メソッドや setIndentText() メソッドを使うことでインデントの書式を変更することができます（これらの設定は、setPrettyPrint に true を設定した場合のみ有効となります）。</p>
 <pre class="source">
-    <span class="em">// 初期インデントを 1、インデントとして空白4文字を使用</span>
+    <span class="comment">// 初期インデントを 1、インデントとして空白4文字を使用</span>
     JSON json = new JSON();
     json.setPrettyPrint(true);
-    json.setInitialIndent(1);
-    json.setIndentText("    ");
+    json.<span class="em">setInitialIndent(</span>1<span class="em">)</span>;
+    json.<span class="em">setIndentText(</span>"    "<span class="em">)</span>;
     json.format(obj);
 </pre>
 
@@ -474,7 +475,7 @@ JSONIC 1.2.1からはSTRICTモードが用意され、厳密な検証動作が�
 </pre>
 <p>また、データのデコードを行わず検証のみを行うvalidateメソッドも用意されています（これは、setDepth(0)、setMode(Mode.STRICT)を指定した時と同じです）。</p>
 <pre class="source">
-	JSON.validate(new FileInputStream("test.json"));
+	JSON.<span class="em">validate(</span>new FileInputStream("test.json")<span class="em">)</span>;
 </pre>
 
 <h3 id="jsfriendly">■ JavaScriptに親和的な出力 <span class="subtitle">- SCRIPTモード</span></h3>
@@ -503,12 +504,101 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 		}
 	}).getClass();
 	
-	JSON.escapeScript(...);
+	JSON.<span class="em">escapeScript(</span>...<span class="em">)</span>;
 </pre>
+
+<h3 id="reader">■ JSONストリームの順次読み込み <span class="subtitle">- JSONReader</span></h3>
+<p>JSONICのdecode/parse は、通常 XMLでの DOM(Document Object Model)に当たる API となっており、JSON 
+を読み取りJavaオブジェクトモデルを構築しますが、この方式で大規模なJSONファイルを扱うと、メモリを大量に消費してしまい OutOfMemoryError が発生してしまいます。</p>
+<p>version 1.3 では、この問題に対応するために、StAX(Streaming API for XML) に相当する JSONReader クラスを提供しています。JSONReader は、readerメソッドを介して取得します（reader メソッドの ignoreWhitespace を false にすることで、コメントや空白も取得できます）。</p>
+<pre class="source">
+    <span class="comment">// JSONReader を取得</span>
+    JSONReader reader = new JSON().<span class="em">getReader(</span>"[1, 2, 3, 4, 5]"<span class="em">)</span>;
+    
+    JSONEventType type;
+    <span class="comment">// next で次のトークンを読み取り</span>
+    while ((type = reader.<span class="em">next()</span>) != null) {
+        switch (type) {
+        case START_OBJECT:
+            System.out.println("{");
+            break;
+        case END_OBJECT:
+            System.out.println("}");
+            break;
+        case START_ARRAY:
+            System.out.println("[");
+            break;
+        case END_ARRAY:
+            System.out.println("]");
+            break;
+        case NAME:
+            System.out.print(reader.getString() + ": ");
+            break;
+        case STRING:
+            System.out.println(reader.getString());
+            break;
+        case NUMBER:
+            System.out.println(reader.getNumber());
+            break;
+        case BOOLEAN:
+            System.out.println(reader.getBoolean());
+            break;
+        case NULL:
+            System.out.println("null");
+            break;
+        }
+    }
+
+    <span class="comment">// ignoreWhitespace を false にするとコメントやスペースも取得可能</span>
+    JSONReader reader = new JSON().<span class="em">getReader(</span>"[1, 2, 3, 4, 5]", <span class="em">false)</span>;
+    while ((type = reader.next()) != null) {
+        switch (type) {
+        case WHITESPACE:
+            System.out.println(reader.getString());
+            break;
+        case COMMENT:
+            System.out.println(reader.getString());
+            break;
+        }
+    }
+</pre>
+
+<p>JSONReader には、単独の値を取得するだけでなく、現在位置以下のツリーをひとかたまりで取得し Java オブジェクトに変換する getValue メソッドも用意されています。</p>
+<pre class="source">
+    <span class="comment">// オブジェクトの配列を処理する</span>
+    JSONReader reader = new JSON().getReader("[{...}, {...}, {...}, {...}, {...}]");
+    
+    List<FooBean> list = new ArrayList<FooBean>();
+    
+    JSONEventType type;
+    while ((type = reader.next()) != null) {
+        if (type == JSONEventType.START_OBJECT) {
+            <span class="comment">// 現在位置のオブジェクトを取得して FooBean に変換</span>
+            list.add(reader.<span class="em">getValue(</span>FooBean.class<span class="em">)</span>);
+        }
+    }
+</pre>
+
+<p>JSONReader の JSON 解釈は、設定された JSON.Mode に準じます（※7）が、複数の連続した JSON も処理できるようになっていますので、Twitter API で返されるような、改行で区切られた JSON Streaming を扱うことができます。</p>
+<pre class="source">
+    <span class="comment">// オブジェクトの配列を処理する</span>
+    JSONReader reader = new JSON().getReader("{...}\n{...}\n{...}\n{...}\n{...}");
+    
+    JSONEventType type;
+    while ((type = reader.next()) != null) {
+        if (type == JSONEventType.START_OBJECT) {
+            <span class="comment">// 現在位置のオブジェクトを取得して Tweet に変換</span>
+            System.out.println(reader.getValue(Tweet.class));
+        }
+    }
+</pre>
+<div class="caption">
+(※7) TRADITIONAL モードでは、ルート要素がobjectの場合、一番外側の'{'と'}'を省略することができますが、JSONReader を使用する場合、連続したJSONの解釈と競合するため省略できません。
+</div>
 
 <h3 id="format">■ 日時/数値書式の指定 <span class="subtitle">- setDateFormat/setNumberFormat</span></h3>
 
-<p>日付型や数値型は、デフォルトではJSON numberとして出力されますが、JSONIC 1.2.8以降ではsetDateFormat/setNumberFormatを指定することでデフォルトの日時/数値書式を設定できます。フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※7）。なお、書式は JSONHint を使うことで上書きすることができます。</p>
+<p>日付型や数値型は、デフォルトではJSON numberとして出力されますが、JSONIC 1.2.8以降ではsetDateFormat/setNumberFormatを指定することでデフォルトの日時/数値書式を設定できます。フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※8）。なお、書式は JSONHint を使うことで上書きすることができます。</p>
 <pre class="source">
 	JSON json = new JSON();
 	<span class="comment">// デフォルトの日時書式を指定</span>
@@ -524,7 +614,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 	});
 </pre>
 <div class="caption">
-(※7) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
+(※8) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
 </div>
 
 <h3 id="namingstyle">■ プロパティ名/列挙型出力書式の指定 <span class="subtitle">- setPropertyStyle/setEnumStyle</span></h3>
@@ -626,19 +716,19 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 <tr><th>属性名</th><th>値型</th><th>説明</th></tr>
 <tr><td>name</td><td>String</td><td>出力/代入するキー名を変更します</td></tr>
 <tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。<br />
-フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※8）。</td></tr>
+フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください（※9）。</td></tr>
 <tr><td>type</td><td>Class</td><td>parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。</td></tr>
 <tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
 <tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。デフォルトはfalseです。
-Format時はtoString()の値をそのまま出力<sup>(※9)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
+Format時はtoString()の値をそのまま出力<sup>(※10)</sup> 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
 <tr><td>anonym</td><td>String</td><td>単純値型からMapや複合型に変換するときに単純値型を設定するプロパティ名を指定します。anonymを指定しない場合、Mapの場合はnullキーの値として設定されますが、複合型を指定した場合はエラーとなります。</td></tr>
 <tr><td>ordinal</td><td>int</td><td>JSON objectへの変換する際のキーの出力順を昇順で指定します。デフォルトはキー値の自然順序順（＝負値指定）です。</td></tr>
 </table>
 <div class="caption">
-(※8) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
+(※9) 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
 </div>
 <div class="caption">
-(※9) 出力される文字列は検証されないため妥当でないJSONが出力されてしまう可能性があることに注意してください。
+(※10) 出力される文字列は検証されないため妥当でないJSONが出力されてしまう可能性があることに注意してください。
 逆に言えば、この機能を使うことでコメントやfunction呼び出しを出力することも可能です。
 </div>
 
@@ -734,11 +824,12 @@ public class TestBean {
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2012/01/28 version 1.3.0 ベータ2</h3>
+<h3>2012/02/11 version 1.3.0 ベータ2</h3>
 <ul>
 <li>[機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。</li>
 <li>[機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。</li>
 <li>[仕様変更] parse/decode 時は formatの指定に関わらず日時文字列からDate型へ書式の自動解析による変換を行なっていましたが、formatが指定された場合は書式に従った解析を行なうよう変更しました。</li>
+<li>[仕様変更] TRADITIONAL モードでも、値が常に文字列型に変換されるよう仕様を変更しました（ただし、SCRIPTモードと異なり、マイナスの値も指定可能です。また、nullは文字列ではなく従来通りnull値に変換されます）。</li>
 <li>[不具合] JSONHint にて serialized = true を指定してdecode/parseした場合、2階層目以降のオブジェクトが正しく書式化されない問題を修正しました（#27430）</li>
 <li>[不具合] 1.2.6 以降で normalize() メソッドをオーバーライドしても有効になっていなかった問題を修正しました。</li>
 <li>[不具合] encode/format時、JSONHint の name 属性で指定した名前と同じプロパティが存在するとキーが重複して出力される問題を修正しました。</li>
@@ -764,7 +855,7 @@ public class TestBean {
 </ul>
 
 <hr style="margin-top: 30px;" />
-<div class="copyright">Copyright (C) 2007-2011 Hidekatsu Izuno All right reserved.</div>
+<div class="copyright">Copyright (C) 2007-2012 Hidekatsu Izuno All right reserved.</div>
 </div>
 </body>
 </html>
