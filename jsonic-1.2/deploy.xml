@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="jsonic-deploy" default="dist" basedir="." 
+<project name="jsonic-1.2-deploy" default="dist" basedir="." 
 	xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
 	<xmlproperty file="pom.xml" />
