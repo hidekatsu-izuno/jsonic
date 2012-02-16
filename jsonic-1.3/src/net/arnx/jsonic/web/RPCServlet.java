@@ -120,7 +120,9 @@ public class RPCServlet extends HttpServlet {
 			Route route = null;
 			for (RouteMapping m : config.mappings.values()) {
 				if ((route = m.matches(request, uri)) != null) {
-					container.debug("Route found: " + request.getMethod() + " " + uri);
+					if (container.isDebugMode()) {
+						container.debug("Route found: " + request.getMethod() + " " + uri + " -> " + route);
+					}
 					break;
 				}
 			}
@@ -390,8 +392,8 @@ public class RPCServlet extends HttpServlet {
 	static class Route {
 		static final Pattern REPLACE_PATTERN = Pattern.compile("\\$\\{(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\}");
 
-		String target;
-		Map<Object, Object> params;
+		private String target;
+		private Map<Object, Object> params;
 		
 		public Route(String target, Map<String, Object> params) throws IOException {
 			this.target = target;
@@ -471,6 +473,11 @@ public class RPCServlet extends HttpServlet {
 				}
 			}
 			return params;
+		}
+
+		@Override
+		public String toString() {
+			return "Route [target=" + target + ", params=" + params + "]";
 		}
 	}
 }

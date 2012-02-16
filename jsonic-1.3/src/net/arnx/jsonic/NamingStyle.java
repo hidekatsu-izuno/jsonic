@@ -123,7 +123,7 @@ public abstract class NamingStyle {
 	}
 	
 	private static String toSimpleCase(String value, boolean upper) {
-		if (value == null || value.isEmpty()) {
+		if (value == null || value.length() == 0) {
 			return value;
 		}
 		char[] ca = value.toCharArray();
@@ -139,7 +139,7 @@ public abstract class NamingStyle {
 	}
 	
 	private static String toCamelCase(String value, boolean upper) {
-		if (value == null || value.isEmpty()) {
+		if (value == null || value.length() == 0) {
 			return value;
 		}
 		
@@ -208,7 +208,7 @@ public abstract class NamingStyle {
 	}
 	
 	private static String toSeparatedCase(String value, boolean upper, char sep) {
-		if (value == null || value.isEmpty()) {
+		if (value == null || value.length() == 0) {
 			return value;
 		}
 		

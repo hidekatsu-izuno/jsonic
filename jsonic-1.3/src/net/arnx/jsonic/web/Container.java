@@ -57,6 +57,7 @@ public class Container {
 	public String encoding;
 	public Boolean expire;
 	public boolean namingConversion = true;
+	
 	public Class<? extends JSON> processor;
 	
 	protected ServletConfig config;

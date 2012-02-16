@@ -1362,7 +1362,7 @@ public class JSON {
 					if (hint != null) {
 						if (hint.ignore()) continue;
 						ordinal = hint.ordinal();
-						if (!hint.name().isEmpty()) name = hint.name();
+						if (hint.name().length() != 0) name = hint.name();
 					}
 					
 					if (name == null) {
@@ -1391,7 +1391,7 @@ public class JSON {
 					if (hint != null) {
 						if (hint.ignore()) continue;
 						ordinal = hint.ordinal();
-						if (!hint.name().isEmpty()) name = hint.name();
+						if (hint.name().length() != 0) name = hint.name();
 					}
 					
 					if (name == null) {
@@ -1435,7 +1435,7 @@ public class JSON {
 					if (hint != null) {
 						if (hint.ignore()) continue;
 						ordinal = hint.ordinal();
-						if (!hint.name().isEmpty()) name = hint.name();
+						if (hint.name().length() != 0) name = hint.name();
 					}
 					
 					if (name == null) {
@@ -1464,7 +1464,7 @@ public class JSON {
 					if (hint != null) {
 						if (hint.ignore()) continue;
 						ordinal = hint.ordinal();
-						if (!hint.name().isEmpty()) name = hint.name();
+						if (hint.name().length() != 0) name = hint.name();
 					}
 					
 					if (name == null) {

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,14 +165,18 @@ public class JSONReader {
 	
 	private int[] iexpand(int[] array, int min) {
 		if (min > array.length) {
-			array = Arrays.copyOf(array, array.length * 3 / 2 + 1);
+			int[] narray = new int[array.length * 3 / 2 + 1];
+			System.arraycopy(array, 0, narray, 0, array.length);
+			array = narray;
 		}
 		return array;
 	}
 	
 	private Object[] oexpand(Object[] array, int min) {
 		if (min > array.length) {
-			array = Arrays.copyOf(array, array.length * 3 / 2 + 1);
+			Object[] narray = new Object[array.length * 3 / 2 + 1];
+			System.arraycopy(array, 0, narray, 0, array.length);
+			array = narray;
 		}
 		return array;
 	}
