@@ -281,17 +281,22 @@ public class Container {
 			if (this.isDebugMode()) {
 				this.debug("Execute: " + toPrintString(component.getClass(), init.getName(), null));
 			}
+			if (!init.isAccessible()) init.setAccessible(true);
 			init.invoke(component);
 		}
 		
 		args = this.preinvoke(component, method, args);
+		
+		if (!method.isAccessible()) method.setAccessible(true);
 		result = method.invoke(component, args);
+		
 		result = this.postinvoke(component, method, result);
 		
 		if (destroy != null) {
 			if (this.isDebugMode()) {
 				this.debug("Execute: " + toPrintString(component.getClass(), destroy.getName(), null));
 			}
+			if (!destroy.isAccessible()) destroy.setAccessible(true);
 			destroy.invoke(component);
 		}
 		
