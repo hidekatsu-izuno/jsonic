@@ -805,6 +805,7 @@ public class TestBean {
 <dl>
 <dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
 <dt>Q. 大量データを読み込むとOutOfMemoryErrorで落ちます。</dt><dd>A. JSON.decode() や JSON.parse() は、JSON文字列をオブジェクトツリーとして生成するため、大量のデータを取り扱うとメモリを大量に消費してしまいます。そのような場合には、JSON.getReader() メソッドを使うことでデータをひとつずつ読み込み処理することができます。</dd>
+<dt>Q. Resin サーバで RESTServletやRPCServletが動作しません。</dt><dd>A. Resin サーバでは、web.xml中にある ${...} を変数として扱うため、\${...} と書かないといけないようです。</dd>
 </dl> 
 
 <h2 id="maven">Mavenリポジトリ</h2> 
@@ -823,6 +824,13 @@ public class TestBean {
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2012/1/17 version 1.3.0</h3>
+
+<ul>
+<li>[不具合] JDK5.0でサポートされていないメソッドが使われていた問題を修正しました（#27563）</li>
+<li>[不具合] Web Service API にて引数の型として public 型しかとれない問題を修正しました。</li>
+</ul>
 
 <h3>2012/02/11 version 1.3.0 ベータ2</h3>
 <ul>
