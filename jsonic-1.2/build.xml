@@ -6,6 +6,7 @@
 	<property name="debug" value="true" />
 	<property name="jsonic_as3.home" location="../jsonic_as3-1.2" />
 	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />
+	<property name="javac.bootclasspath" location="C:/Program Files (x86)/Java/jdk1.5.0_22/jre/lib/rt.jar" />
 	
 	<property name="webapps" location="sample"/>
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
@@ -27,6 +28,7 @@
 				<fileset dir="${webapps}/spring/WEB-INF/lib" includes="*.jar" />
 				<fileset dir="${webapps}/guice/WEB-INF/lib" includes="*.jar" />
 			</classpath>
+			<bootclasspath location="${javac.bootclasspath}" />
 		</javac>
 		
 		<condition property="jar.excludes" value="**/*.java">
@@ -61,6 +63,7 @@
 				<fileset dir="lib" includes="*.jar" />
 				<fileset dir="${tmp}/sample/basic/WEB-INF/lib" includes="*.jar" />
 			</classpath>
+			<bootclasspath location="${javac.bootclasspath}" />
 		</javac>
 	</target>
 
