@@ -249,7 +249,7 @@ public class RPCServlet extends HttpServlet {
 							if (errorCode != null) {
 								error.put("code", errorCode);
 								error.put("message",  cause.getClass().getSimpleName() + ": " + cause.getMessage());
-								error.put("data", cause);
+								error.put("data", container.getErrorData(cause));
 							} else {
 								container.error("Internal error occurred.", cause);
 								error.put("code", -32603);
@@ -282,7 +282,7 @@ public class RPCServlet extends HttpServlet {
 				container.debug("Fails to parse JSON.", e);
 				error.put("code", -32700);
 				error.put("message", "Parse error.");
-				error.put("data", e);
+				error.put("data", container.getErrorData(e));
 			} else {
 				container.debug("Invalid Request.", e);
 				error.put("code", -32600);

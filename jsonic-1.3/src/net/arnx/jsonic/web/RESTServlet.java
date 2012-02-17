@@ -269,12 +269,11 @@ public class RESTServlet extends HttpServlet {
 						}
 					}
 					if (errorCode != null) {
-						response.setStatus(errorCode);
-						
+						response.setStatus(errorCode);												
 						Map<String, Object> error = new LinkedHashMap<String, Object>();
 						error.put("name", cause.getClass().getSimpleName());
 						error.put("message", cause.getMessage());
-						error.put("data", cause);
+						error.put("data", container.getErrorData(cause));
 						result = error;
 					} else {
 						response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");				

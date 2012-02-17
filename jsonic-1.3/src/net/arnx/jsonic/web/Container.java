@@ -17,7 +17,6 @@ package net.arnx.jsonic.web;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -48,7 +47,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.PropertyInfo;
 
 public class Container {	
 	public Boolean debug;
@@ -381,15 +382,28 @@ public class Container {
 		}
 	}
 	
+	public Object getErrorData(Throwable cause) {
+		Map<String, Object> data = null;
+		for (PropertyInfo pi : BeanInfo.get(cause.getClass()).getProperties()) {
+			if (pi.getReadMember().getDeclaringClass().equals(Throwable.class)
+					|| pi.getReadMember().getDeclaringClass().equals(Object.class)) {
+				continue;
+			}
+			
+			Object value = pi.get(cause);
+			if (value == cause) {
+				continue;
+			}
+			
+			if (data == null) data = new LinkedHashMap<String, Object>();
+			data.put(pi.getName(), value);
+		}
+		return (data != null) ? data : Collections.emptyMap();
+	}
+	
 	JSON createJSON(Locale locale) throws ServletException  {
 		try {
-			JSON json = (processor != null) ? processor.newInstance() : new JSON() {
-				@Override
-				protected boolean ignore(Context context, Class<?> target, Member member) {
-					return member.getDeclaringClass().equals(Throwable.class)
-						|| super.ignore(context, target, member);
-				}
-			};
+			JSON json = (processor != null) ? processor.newInstance() : new JSON();
 			json.setLocale(locale);
 			return json;
 		} catch (Exception e) {
