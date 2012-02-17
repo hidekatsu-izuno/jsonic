@@ -3,9 +3,10 @@ package net.arnx.jsonic.util;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
-public class MethodInfo implements Comparable<MethodInfo> {
+public class MethodInfo implements Iterable<Method>, Comparable<MethodInfo> {
 	private Class<?> beanClass;
 	private String name;
 	private boolean isStatic;
@@ -125,5 +126,14 @@ public class MethodInfo implements Comparable<MethodInfo> {
 		}
 		
 		return method;		
+	}
+
+	@Override
+	public Iterator<Method> iterator() {
+		return methods.iterator();
+	}
+	
+	public int size() {
+		return methods.size();
 	}
 }
