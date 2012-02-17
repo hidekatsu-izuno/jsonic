@@ -36,7 +36,20 @@ public class CalcService {
 		return result;
 	}
 	
+	public long size(Parameters params) {
+		if ("K".equals(params.unit)) {
+			return params.number * 1024;
+		} else {
+			return params.number;
+		}
+	}
+	
 	public void destroy() {
 		// destruction
+	}
+	
+	private static class Parameters {
+		public int number;
+		public String unit;
 	}
 }

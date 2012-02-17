@@ -298,7 +298,18 @@ public class RPCServletTest {
 		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"result\":3,\"id\":1}"), 
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
-
+		
+		con = (HttpURLConnection)url.openConnection();
+		con.setDoOutput(true);
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		write(con, "{\"jsonrpc\":\"2.0\",\"method\":\"calc.size\",\"params\":[{\"number\": 10, \"unit\": \"K\"}],\"id\":1}");
+		con.connect();
+		assertEquals(SC_OK, con.getResponseCode());
+		assertEquals(JSON.decode("{\"jsonrpc\":\"2.0\",\"result\":10240,\"id\":1}"), 
+				JSON.decode(read(con.getInputStream())));
+		con.disconnect();
+		
 		con = (HttpURLConnection)url.openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
