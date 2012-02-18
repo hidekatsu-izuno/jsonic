@@ -99,7 +99,6 @@ public class JSONReader {
 		int olen = 0;
 		Object[] ostack = new Object[16];
 		
-		JSONEventType btype = null;
 		do {
 			switch (type) {
 			case START_OBJECT:
@@ -113,12 +112,8 @@ public class JSONReader {
 			case BOOLEAN:
 			case NULL:
 				Object value = parser.getValue();
-				if (value == null && context.isSuppressNull() && btype == JSONEventType.NAME) {
-					olen--;
-				} else {
-					ostack = oexpand(ostack, olen + 1);
-					ostack[olen++] = value;
-				}
+				ostack = oexpand(ostack, olen + 1);
+				ostack[olen++] = value;
 				break;
 			case END_ARRAY: {
 				int start = istack[--ilen];
@@ -148,8 +143,6 @@ public class JSONReader {
 				ostack[olen++] = object;
 				break;
 			}
-			
-			btype = type;
 			
 			if (parser.getContext().isInterpretterMode() && ilen == 0) {
 				break;

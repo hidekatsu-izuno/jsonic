@@ -31,6 +31,7 @@ import net.arnx.jsonic.JSON.Mode;
 import net.arnx.jsonic.io.OutputSource;
 import net.arnx.jsonic.util.Base64;
 import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.JSONable;
 import net.arnx.jsonic.util.PropertyInfo;
 
 interface Formatter {
@@ -51,6 +52,15 @@ final class PlainFormatter implements Formatter {
 
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append(o.toString());
+		return false;
+	}
+}
+
+final class JSONableFormatter implements Formatter {
+	public static final JSONableFormatter INSTANCE = new JSONableFormatter();
+
+	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		out.append(((JSONable)o).toJSON());
 		return false;
 	}
 }

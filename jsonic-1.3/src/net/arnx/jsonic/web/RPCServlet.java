@@ -40,6 +40,7 @@ import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.JSONHint;
 import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.JSONable;
 
 import static javax.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
@@ -269,10 +270,15 @@ public class RPCServlet extends HttpServlet {
 				}
 				
 				Map<String, Object> responseData = new LinkedHashMap<String, Object>();
-				if (rjsonrpc != null) responseData.put("jsonrpc", rjsonrpc);
-				if (rjsonrpc == null || result != null) responseData.put("result", result);
-				if (rjsonrpc == null || error != null) responseData.put("error", error);
-				responseData.put("id", rid);
+				if (rjsonrpc != null) {
+					responseData.put("jsonrpc", rjsonrpc);
+					if (result != null) responseData.put("result", result);
+					if (error != null) responseData.put("error", error);
+				} else {
+					responseData.put("result", (result != null) ? result : JSONable.NULL);
+					responseData.put("error", (error != null) ? error : JSONable.NULL);
+				}
+				responseData.put("id", (rid != null) ? rid : JSONable.NULL);
 				
 				responseList.add(responseData);
 			}
@@ -292,7 +298,7 @@ public class RPCServlet extends HttpServlet {
 			Map<String, Object> responseData = new LinkedHashMap<String, Object>();
 			responseData.put("jsonrpc", "2.0");
 			responseData.put("error", error);
-			responseData.put("id", null);
+			responseData.put("id", JSONable.NULL);
 			
 			responseList.add(responseData);
 		} finally {

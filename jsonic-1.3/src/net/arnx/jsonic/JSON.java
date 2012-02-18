@@ -79,6 +79,7 @@ import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.JSONable;
 import net.arnx.jsonic.util.LocalCache;
 import net.arnx.jsonic.util.PropertyInfo;
 
@@ -1582,6 +1583,8 @@ public class JSON {
 			if (f == null) {
 				if (hasMemberCache(o.getClass())) {
 					f = ObjectFormatter.INSTANCE;
+				} else if (o instanceof JSONable) {
+					f = JSONableFormatter.INSTANCE;
 				} else if (o instanceof Map<?, ?>) {
 					f = MapFormatter.INSTANCE;
 				} else if (o instanceof Iterable<?>) {

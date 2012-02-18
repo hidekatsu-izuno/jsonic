@@ -48,8 +48,8 @@ import static javax.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
 
 public class RESTServlet extends HttpServlet {
-	static final Map<String, String> DEFAULT_METHOD = new HashMap<String, String>();
-	static final Set<String> DEFAULT_VERB = new HashSet<String>();
+	private static final Map<String, String> DEFAULT_METHOD = new HashMap<String, String>();
+	private static final Set<String> DEFAULT_VERB = new HashSet<String>();
 	
 	static {
 		DEFAULT_METHOD.put("GET", "find");

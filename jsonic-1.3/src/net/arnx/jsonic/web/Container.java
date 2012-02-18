@@ -53,7 +53,7 @@ import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
 
-public class Container {	
+public class Container {
 	public Boolean debug;
 	public String init = "init";
 	public String destroy = "destroy";
