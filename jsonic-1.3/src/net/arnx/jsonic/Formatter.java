@@ -774,7 +774,26 @@ final class ObjectFormatter implements Formatter {
 	public static final ObjectFormatter INSTANCE = new ObjectFormatter();
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		List<PropertyInfo> props = context.getGetProperties(o.getClass());
+		Object cache = context.getGetProperties(o.getClass());
+		if (cache instanceof Method) {
+			Method m = (Method)cache;
+			try {
+				Object value = m.invoke(o);
+				out.append((value != null) ? value.toString() : null);
+			} catch (InvocationTargetException e) {
+				if (e.getCause() instanceof Error) {
+					throw (Error)e.getCause();
+				} else if (e.getCause() instanceof Exception) {
+					throw (Exception)e.getCause();
+				} else {
+					throw e;
+				}
+			}
+			return true;
+		}
+		
+		@SuppressWarnings("unchecked")
+		List<PropertyInfo> props = (List<PropertyInfo>)cache;
 
 		out.append('{');
 		int count = 0;
