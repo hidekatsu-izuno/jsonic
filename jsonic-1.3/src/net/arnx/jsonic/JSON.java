@@ -611,7 +611,6 @@ public class JSON {
 	boolean prettyPrint = false;
 	int initialIndent = 0;
 	String indentText = "\t";
-	String formatMethod = "toJSON";
 	int maxDepth = 32;
 	boolean suppressNull = false;
 	Mode mode = Mode.TRADITIONAL;
@@ -692,15 +691,6 @@ public class JSON {
 	 */
 	public void setIndentText(String text) {
 		this.indentText = text;
-	}
-	
-	/**
-	 * Set format method name. default name is toJSON
-	 * 
-	 * @param name format method name
-	 */
-	public void setFormatMethod(String name) {
-		this.formatMethod = name;
 	}
 	
 	/**
@@ -1161,7 +1151,6 @@ public class JSON {
 		private final boolean prettyPrint;
 		private final int initialIndent;
 		private final String indentText;
-		private final String formatMethod;
 		private final boolean suppressNull;
 		private final Mode mode;
 		private final String numberFormat;
@@ -1186,7 +1175,6 @@ public class JSON {
 				prettyPrint = JSON.this.prettyPrint;
 				initialIndent = JSON.this.initialIndent;
 				indentText = JSON.this.indentText;
-				formatMethod = JSON.this.formatMethod;
 				suppressNull = JSON.this.suppressNull;
 				mode = JSON.this.mode;
 				numberFormat = JSON.this.numberFormat;
@@ -1207,7 +1195,6 @@ public class JSON {
 				prettyPrint = context.prettyPrint;
 				initialIndent = context.initialIndent;
 				indentText = context.indentText;
-				formatMethod = context.formatMethod;
 				suppressNull = context.suppressNull;
 				mode = context.mode;
 				numberFormat = context.numberFormat;
@@ -1247,10 +1234,6 @@ public class JSON {
 		
 		public String getIndentText() {
 			return indentText;
-		}
-		
-		public String getFormatMethod() {
-			return formatMethod;
 		}
 		
 		public boolean isSuppressNull() {
