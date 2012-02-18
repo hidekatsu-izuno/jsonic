@@ -19,6 +19,12 @@
 					'/rpc/{package}/rpc.json': 'sample.basic.web.${package}.service.${class}Service'
 					'/rpc/{package}/{class}.json': 'sample.basic.web.${package}.service.${class}Service'
 					'/rpc/{class}.json': 'sample.basic.service.${class}Service'
+				},
+				processor: {
+					'prettyPrint': true
+					'initialIndent': 2
+					'indentText': '  '
+					'suppressNull': true
 				}
 			</param-value>
 		</init-param>
@@ -31,7 +37,7 @@
 		<init-param>
 			<param-name>config</param-name>
 			<param-value>
-				debug: true
+				debug: false
 				mappings: {
 					'/{package}/{class}.{method:print|exception}.json': {
 						'target': 'sample.basic.web.${package}.service.${class}Service', 
@@ -45,6 +51,11 @@
 				},
 				errors: {
 					'sample.basic.web.rest.service.MemoException': 406
+				},
+				processor: {
+					'prettyPrint': true
+					'initialIndent': 2
+					'indentText': '  '
 				}
 			</param-value>
 		</init-param>
