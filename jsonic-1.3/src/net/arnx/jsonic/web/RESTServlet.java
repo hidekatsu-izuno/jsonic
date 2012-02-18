@@ -305,8 +305,6 @@ public class RESTServlet extends HttpServlet {
 		} else {
 			response.setContentType((callback != null) ? "text/javascript" : "application/json");
 			Writer writer = response.getWriter();
-			json.setPrettyPrint(container.isDebugMode());
-			
 			if (callback != null) writer.append(callback).append("(");
 			json.format(result, writer);
 			if (callback != null) writer.append(");");

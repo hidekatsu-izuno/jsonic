@@ -47,6 +47,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import net.arnx.jsonic.JSON;
+import net.arnx.jsonic.JSONHint;
+import net.arnx.jsonic.NamingStyle;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
@@ -59,7 +61,8 @@ public class Container {
 	public Boolean expire;
 	public boolean namingConversion = true;
 	
-	public Class<? extends JSON> processor;
+	@JSONHint(anonym = "class")
+	public ProcessorConfig processor;
 	
 	protected ServletConfig config;
 	protected ServletContext context;
@@ -402,13 +405,34 @@ public class Container {
 	}
 	
 	JSON createJSON(Locale locale) throws ServletException  {
-		try {
-			JSON json = (processor != null) ? processor.newInstance() : new JSON();
+		JSON json;
+		if (processor != null) {
+			try {
+				json = processor.type.newInstance();
+				if (processor.locale != null) {
+					json.setLocale(processor.locale);
+				} else {
+					json.setLocale(locale);
+				}
+				if (processor.mode != null) json.setMode(processor.mode);
+				if (processor.timeZone != null) json.setTimeZone(processor.timeZone);
+				if (processor.maxDepth != null) json.setMaxDepth(processor.maxDepth);
+				if (processor.prettyPrint != null) json.setPrettyPrint(processor.prettyPrint);
+				if (processor.initialIndent != null) json.setInitialIndent(processor.initialIndent);
+				if (processor.indentText != null) json.setIndentText(processor.indentText);
+				if (processor.suppressNull != null) json.setSuppressNull(processor.suppressNull);
+				if (processor.dateFormat != null) json.setDateFormat(processor.dateFormat);
+				if (processor.numberFormat != null) json.setNumberFormat(processor.numberFormat);
+				if (processor.propertyStyle != null) json.setPropertyStyle(processor.propertyStyle);
+				if (processor.enumStyle != null) json.setEnumStyle(processor.enumStyle);
+			} catch (Exception e) {
+				throw new ServletException(e);
+			}
+		} else {
+			json = new JSON();
 			json.setLocale(locale);
-			return json;
-		} catch (Exception e) {
-			throw new ServletException(e);
 		}
+		return json;
 	}
 	
 	static boolean isJSONType(String contentType) {
@@ -540,5 +564,23 @@ public class Container {
 	@SuppressWarnings("unchecked")
 	static <T> T cast(Object o) {
 		return (T)o;
+	}
+	
+	static class ProcessorConfig {
+		@JSONHint(name = "class")
+		public Class<? extends JSON> type = JSON.class;
+		
+		public JSON.Mode mode;
+		public Locale locale;
+		public TimeZone timeZone;
+		public Integer maxDepth;
+		public Boolean prettyPrint;
+		public Integer initialIndent;
+		public String indentText;
+		public Boolean suppressNull;
+		public String dateFormat;
+		public String numberFormat;
+		public NamingStyle propertyStyle;
+		public NamingStyle enumStyle;
 	}
 }

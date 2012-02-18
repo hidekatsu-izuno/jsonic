@@ -318,7 +318,6 @@ public class RPCServlet extends HttpServlet {
 		
 		Object target = (isBatch) ? responseList : responseList.get(0);
 		json.setContext(target);
-		json.setPrettyPrint(container.isDebugMode());
 		json.format(target, writer);
 	}
 	

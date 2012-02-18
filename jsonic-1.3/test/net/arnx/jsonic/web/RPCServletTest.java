@@ -396,6 +396,7 @@ public class RPCServletTest {
 			sb.append(cb, 0, length);
 		}
 		reader.close();
+		System.out.println(sb.toString());
 		return sb.toString();
 	}
 }
