@@ -40,7 +40,6 @@ import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.JSONHint;
 import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.JSONable;
 
 import static javax.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
@@ -275,10 +274,10 @@ public class RPCServlet extends HttpServlet {
 					if (result != null) responseData.put("result", result);
 					if (error != null) responseData.put("error", error);
 				} else {
-					responseData.put("result", (result != null) ? result : JSONable.NULL);
-					responseData.put("error", (error != null) ? error : JSONable.NULL);
+					responseData.put("result", result);
+					responseData.put("error", error);
 				}
-				responseData.put("id", (rid != null) ? rid : JSONable.NULL);
+				responseData.put("id", rid);
 				
 				responseList.add(responseData);
 			}
@@ -298,7 +297,7 @@ public class RPCServlet extends HttpServlet {
 			Map<String, Object> responseData = new LinkedHashMap<String, Object>();
 			responseData.put("jsonrpc", "2.0");
 			responseData.put("error", error);
-			responseData.put("id", JSONable.NULL);
+			responseData.put("id", null);
 			
 			responseList.add(responseData);
 		} finally {

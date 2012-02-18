@@ -79,7 +79,6 @@ import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.JSONable;
 import net.arnx.jsonic.util.LocalCache;
 import net.arnx.jsonic.util.PropertyInfo;
 
@@ -717,10 +716,10 @@ public class JSON {
 	}
 	
 	/**
-	 * If this property is true, the member of null value in JSON object is ignored.
+	 * If this property is true, the null value's items of Bean or DynaBean is ignored.
 	 * default value is false.
 	 * 
-	 * @param value true to ignore the member of null value in JSON object.
+	 * @param value true to ignore the null value's items of Bean or DynaBean.
 	 */
 	public void setSuppressNull(boolean value) {
 		this.suppressNull = value;
@@ -1583,8 +1582,6 @@ public class JSON {
 			if (f == null) {
 				if (hasMemberCache(o.getClass())) {
 					f = ObjectFormatter.INSTANCE;
-				} else if (o instanceof JSONable) {
-					f = JSONableFormatter.INSTANCE;
 				} else if (o instanceof Map<?, ?>) {
 					f = MapFormatter.INSTANCE;
 				} else if (o instanceof Iterable<?>) {

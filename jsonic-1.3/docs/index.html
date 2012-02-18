@@ -675,12 +675,12 @@ json<span class="em">.setMaxDepth(</span>5<span class="em">)</span>;
 </pre>
 
 <h3 id="suppressnull">■ setSuppressNull <span class="subtitle">- null値の抑制</span></h3>
-<p>JSONICでは、format時に値がnullになっているJSON objectのメンバの出力を抑制したり、parse時にnull値の代入を抑制することができます。初期値はfalseです。</p>
-<p>余計なメンバが大量に出力されてしまう、プロパティの初期値を優先したいなどの場合に有効です。</p>
+<p>JSONICでは、format時に値がnullになっているJSON objectのメンバの出力を抑制できます。初期値はfalseです。余計なメンバが大量に出力されてしまう、プロパティの初期値を優先したいなどの場合に有効です。</p>
 <pre class="source">
-<span class="comment">// null値の出力や代入を抑制します。</span>
+<span class="comment">// null値の出力を抑制します。</span>
 json<span class="em">.setSuppressNull(</span>true<span class="em">)</span>;
 </pre>
+<p>なお、Version 1.2 系では、parse 時や Map の format に対しても null 値が抑制されていましたが、不適切な場合が多いため1.3系では抑制しないよう変更されました。</p>
 
 <h3 id="xmltojson">■ XMLからJSONへの変換</h3>
 <p>JSONICでは、org.w3c.dom.Document/Elementから<a href="http://jsonml.org/">JsonML</a>への変換をサポートしています。
@@ -830,10 +830,9 @@ public class TestBean {
 <ul>
 <li>[機能追加] Web Service API にて処理に使用する JSON クラスのプロパティ値をコンフィグから指定できるようになりました。</li>
 <li>[仕様変更] Web Service API にて debug: true が指定された場合、PrettyPrint が自動的に有効になっていましたが、1.3では明示的に指定する必要があります。</li>
-<li>[仕様変更] setSuppressNull を指定すると parse 時にも null を無視していましたが、不適切な動作であるため、format 時のみ有効なように変更しました。</li>
+<li>[仕様変更] setSuppressNull を指定すると parse 時や Map の format 時も null を無視していましたが不適切な場合が多いため、JavaBean あるいは DynaBean の format 時のみ有効となるよう変更しました。</li>
 <li>[不具合] JDK5.0でサポートされていないメソッドが使われていた問題を修正しました（#27563）</li>
 <li>[不具合] Web Service API にて引数の型として public 型しかとれない問題を修正しました。</li>
-<li>[不具合] RPCServlet にて setSuppressNull を指定すると、JSON-RPCとして不適切なレスポンスを返す問題を修正しました。</li>
 </ul>
 
 <h3>2012/02/11 version 1.3.0 ベータ2</h3>
