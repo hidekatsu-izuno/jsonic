@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 /**
  * The JSONHint annotation gives the hint for conversion.
  */
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JSONHint {
 	/**
