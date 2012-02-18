@@ -263,7 +263,7 @@ public class RESTServlet extends HttpServlet {
 					Integer errorCode = null;
 					for (Map.Entry<String, Integer> entry : config.errors.entrySet()) {
 						Class<?> cls = ClassUtil.findClass(entry.getKey());
-						if (cls.isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
+						if (cls != null && cls.isAssignableFrom(cause.getClass()) && entry.getValue() != null) {
 							errorCode = entry.getValue();
 							break;
 						}

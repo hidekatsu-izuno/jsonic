@@ -783,7 +783,7 @@ final class ObjectFormatter implements Formatter {
 			PropertyInfo prop = props.get(p);
 			Object value = null;
 			Exception cause = null;
-
+			
 			try {
 				value = prop.get(o);
 				if (value == src || (context.isSuppressNull() && value == null)) {
