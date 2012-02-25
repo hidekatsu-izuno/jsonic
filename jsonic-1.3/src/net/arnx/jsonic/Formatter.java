@@ -784,9 +784,7 @@ final class ObjectFormatter implements Formatter {
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		if (props == null) {
-			props = getGetProperties(context, cls);
-		}
+		if (props == null) props = getGetProperties(context, cls);
 		
 		out.append('{');
 		int count = 0;
@@ -837,7 +835,7 @@ final class ObjectFormatter implements Formatter {
 	}
 	
 	static List<PropertyInfo> getGetProperties(Context context, Class<?> c) {
-		Map<String, PropertyInfo> map = new HashMap<String, PropertyInfo>();
+		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
 		
 		// Field
 		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
@@ -861,10 +859,10 @@ final class ObjectFormatter implements Formatter {
 			}
 			
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getReadMember()) {
-				map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
 					prop.getField(), null, null, prop.isStatic(), ordinal));
 			} else {
-				map.put(name, prop);
+				props.put(name, prop);
 			}
 		}
 		
@@ -890,16 +888,16 @@ final class ObjectFormatter implements Formatter {
 			}
 			
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
-				map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
 					null, prop.getReadMethod(), null, prop.isStatic(), ordinal));
 			} else {
-				map.put(name, prop);
+				props.put(name, prop);
 			}
 		}
 		
-		List<PropertyInfo> props = new ArrayList<PropertyInfo>(map.values());
-		Collections.sort(props);
-		return props;
+		List<PropertyInfo> list = new ArrayList<PropertyInfo>(props.values());
+		Collections.sort(list);
+		return list;
 	}
 }
 

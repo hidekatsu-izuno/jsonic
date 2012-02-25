@@ -1237,13 +1237,15 @@ final class MapConverter implements Converter {
 
 final class ObjectConverter implements Converter {
 	private Class<?> cls;
+	private transient Map<String, PropertyInfo> props;
 	
 	public ObjectConverter(Class<?> cls) {
 		this.cls = cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
-		Map<String, PropertyInfo> props = getSetProperties(context, cls);
+		if (props == null) props = getSetProperties(context, cls);
+		
 		if (value instanceof Map<?, ?>) {
 			Object o = context.createInternal(c);
 			if (o == null) return null;
