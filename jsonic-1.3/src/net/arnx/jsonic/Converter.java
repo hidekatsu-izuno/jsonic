@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -35,6 +38,7 @@ import java.util.regex.Pattern;
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.io.StringBuilderOutputSource;
 import net.arnx.jsonic.util.Base64;
+import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
 
@@ -1232,10 +1236,14 @@ final class MapConverter implements Converter {
 }
 
 final class ObjectConverter implements Converter {
-	public static final ObjectConverter INSTANCE = new ObjectConverter();
+	private Class<?> cls;
+	
+	public ObjectConverter(Class<?> cls) {
+		this.cls = cls;
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
-		Map<String, PropertyInfo> props = context.getSetProperties(c);
+		Map<String, PropertyInfo> props = getSetProperties(context, cls);
 		if (value instanceof Map<?, ?>) {
 			Object o = context.createInternal(c);
 			if (o == null) return null;
@@ -1279,6 +1287,69 @@ final class ObjectConverter implements Converter {
 				throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 			}
 		}
+	}
+	
+	private static Map<String, PropertyInfo> getSetProperties(Context context, Class<?> c) {
+		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
+		
+		// Field
+		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
+			Field f = prop.getField();
+			if (f == null || Modifier.isFinal(f.getModifiers()) || context.ignoreInternal(c, f)) continue;
+			
+			JSONHint hint = f.getAnnotation(JSONHint.class);
+			String name = null;
+			int ordinal = prop.getOrdinal();
+			if (hint != null) {
+				if (hint.ignore()) continue;
+				ordinal = hint.ordinal();
+				if (hint.name().length() != 0) name = hint.name();
+			}
+			
+			if (name == null) {
+				name = context.normalizeInternal(prop.getName());
+				if (context.getPropertyStyle() != null) {
+					name = context.getPropertyStyle().to(name);
+				}
+			}
+			
+			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getWriteMember()) {
+				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+					prop.getField(), null, null, prop.isStatic(), ordinal));
+			} else {
+				props.put(name, prop);
+			}
+		}
+		
+		// Method
+		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
+			Method m = prop.getWriteMethod();
+			if (m == null || context.ignoreInternal(c, m)) continue;
+			
+			JSONHint hint = m.getAnnotation(JSONHint.class);
+			String name = null;
+			int ordinal = prop.getOrdinal();
+			if (hint != null) {
+				if (hint.ignore()) continue;
+				ordinal = hint.ordinal();
+				if (hint.name().length() != 0) name = hint.name();
+			}
+			
+			if (name == null) {
+				name = context.normalizeInternal(prop.getName());
+				if (context.getPropertyStyle() != null) {
+					name = context.getPropertyStyle().to(name);
+				}
+			}
+			
+			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
+				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+					null, null, prop.getWriteMethod(), prop.isStatic(), ordinal));
+			} else {
+				props.put(name, prop);
+			}
+		}
+		return props;
 	}
 	
 	private static String toLowerCamel(Context context, String name) {

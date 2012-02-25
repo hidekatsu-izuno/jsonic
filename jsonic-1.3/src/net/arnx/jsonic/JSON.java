@@ -25,9 +25,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Member;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -42,7 +40,6 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -77,10 +74,8 @@ import net.arnx.jsonic.io.StringBuilderInputSource;
 import net.arnx.jsonic.io.StringBuilderOutputSource;
 import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
-import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.LocalCache;
-import net.arnx.jsonic.util.PropertyInfo;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -1017,6 +1012,7 @@ public class JSON {
 				c = StringSerializableConverter.INSTANCE;
 			}
 		}
+		
 		if (c == null) {
 			if (value != null && cls.equals(type) && cls.isAssignableFrom(value.getClass())) {
 				c = PlainConverter.INSTANCE;
@@ -1024,10 +1020,13 @@ public class JSON {
 				c = CONVERT_MAP.get(cls);
 			}
 		}
+		
+		if (c == null && context.memberCache != null) {
+			c = (Converter)context.memberCache.get(cls);
+		}
+		
 		if (c == null) {
-			if (context.hasMemberCache(cls)) {
-				c = ObjectConverter.INSTANCE;
-			} else if (Properties.class.isAssignableFrom(cls)) {
+			if (Properties.class.isAssignableFrom(cls)) {
 				c = PropertiesConverter.INSTANCE;
 			} else if (Map.class.isAssignableFrom(cls)) {
 				c = MapConverter.INSTANCE;
@@ -1051,8 +1050,13 @@ public class JSON {
 					|| Struct.class.isAssignableFrom(cls)) {
 				c = NullConverter.INSTANCE;
 			} else {
-				c = ObjectConverter.INSTANCE;
+				c = new ObjectConverter(cls);
 			}
+			
+			if (context.memberCache == null) {
+				context.memberCache = new HashMap<Class<?>, Object>();
+			}
+			context.memberCache.put(cls, c);
 		}
 		
 		if (c != null) {
@@ -1342,152 +1346,6 @@ public class JSON {
 		boolean hasMemberCache(Class<?> c) {
 			return memberCache != null && memberCache.containsKey(c);
 		}
-		
-		@SuppressWarnings("unchecked")
-		List<PropertyInfo> getGetProperties(Class<?> c) {
-			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
-			
-			List<PropertyInfo> props = (List<PropertyInfo>)memberCache.get(c);
-			if (props == null) {
-				Map<String, PropertyInfo> map = new HashMap<String, PropertyInfo>();
-				
-				// Field
-				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					Field f = prop.getField();
-					if (f == null || ignore(this, c, f)) continue;
-					
-					JSONHint hint = f.getAnnotation(JSONHint.class);
-					String name = null;
-					int ordinal = prop.getOrdinal();
-					if (hint != null) {
-						if (hint.ignore()) continue;
-						ordinal = hint.ordinal();
-						if (hint.name().length() != 0) name = hint.name();
-					}
-					
-					if (name == null) {
-						name = normalize(prop.getName());
-						if (getPropertyStyle() != null) {
-							name = getPropertyStyle().to(name);
-						}
-					}
-					
-					if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getReadMember()) {
-						map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-							prop.getField(), null, null, prop.isStatic(), ordinal));
-					} else {
-						map.put(name, prop);
-					}
-				}
-				
-				// Method
-				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					Method m = prop.getReadMethod();
-					if (m == null || ignore(this, c, m)) continue;
-					
-					JSONHint hint = m.getAnnotation(JSONHint.class);
-					String name = null;
-					int ordinal = prop.getOrdinal();
-					if (hint != null) {
-						if (hint.ignore()) continue;
-						ordinal = hint.ordinal();
-						if (hint.name().length() != 0) name = hint.name();
-					}
-					
-					if (name == null) {
-						name = normalize(prop.getName());
-						if (getPropertyStyle() != null) {
-							name = getPropertyStyle().to(name);
-						}
-					}
-					
-					if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
-						map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-							null, prop.getReadMethod(), null, prop.isStatic(), ordinal));
-					} else {
-						map.put(name, prop);
-					}
-				}
-				
-				props = new ArrayList<PropertyInfo>(map.values());
-				Collections.sort(props);
-				memberCache.put(c, props);
-			}
-			return props;
-		}
-		
-		@SuppressWarnings("unchecked")
-		Map<String, PropertyInfo> getSetProperties(Class<?> c) {
-			if (memberCache == null) memberCache = new HashMap<Class<?>, Object>();
-			
-			Map<String, PropertyInfo> props = (Map<String, PropertyInfo>)memberCache.get(c);
-			if (props == null) {
-				Map<String, PropertyInfo> map = new HashMap<String, PropertyInfo>();
-				
-				// Field
-				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					Field f = prop.getField();
-					if (f == null || Modifier.isFinal(f.getModifiers()) || ignore(this, c, f)) continue;
-					
-					JSONHint hint = f.getAnnotation(JSONHint.class);
-					String name = null;
-					int ordinal = prop.getOrdinal();
-					if (hint != null) {
-						if (hint.ignore()) continue;
-						ordinal = hint.ordinal();
-						if (hint.name().length() != 0) name = hint.name();
-					}
-					
-					if (name == null) {
-						name = normalize(prop.getName());
-						if (getPropertyStyle() != null) {
-							name = getPropertyStyle().to(name);
-						}
-					}
-					
-					if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getWriteMember()) {
-						map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-							prop.getField(), null, null, prop.isStatic(), ordinal));
-					} else {
-						map.put(name, prop);
-					}
-				}
-				
-				// Method
-				for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
-					Method m = prop.getWriteMethod();
-					if (m == null || ignore(this, c, m)) continue;
-					
-					JSONHint hint = m.getAnnotation(JSONHint.class);
-					String name = null;
-					int ordinal = prop.getOrdinal();
-					if (hint != null) {
-						if (hint.ignore()) continue;
-						ordinal = hint.ordinal();
-						if (hint.name().length() != 0) name = hint.name();
-					}
-					
-					if (name == null) {
-						name = normalize(prop.getName());
-						if (getPropertyStyle() != null) {
-							name = getPropertyStyle().to(name);
-						}
-					}
-					
-					if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
-						map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-							null, null, prop.getWriteMethod(), prop.isStatic(), ordinal));
-					} else {
-						map.put(name, prop);
-					}
-				}
-				
-				props = map;
-				memberCache.put(c, props);
-			}
-			return props;
-		}
-		
 		NumberFormat getNumberFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;			
@@ -1577,11 +1435,17 @@ public class JSON {
 				}
 			}
 			
-			if (f == null) f = FORMAT_MAP.get(o.getClass());
+			if (f == null) {
+				f = FORMAT_MAP.get(o.getClass());
+			}
+			
+			if (f == null && memberCache != null) {
+				f = (Formatter)memberCache.get(o.getClass());
+			}
 			
 			if (f == null) {
-				if (hasMemberCache(o.getClass())) {
-					f = ObjectFormatter.INSTANCE;
+				if (o.getClass().isEnum()) {
+					f = EnumFormatter.INSTANCE;
 				} else if (o instanceof Map<?, ?>) {
 					f = MapFormatter.INSTANCE;
 				} else if (o instanceof Iterable<?>) {
@@ -1590,10 +1454,8 @@ public class JSON {
 					} else {
 						f = IterableFormatter.INSTANCE;
 					}
-				} else if (o instanceof Object[]) {
+				} else if (o.getClass().isArray()) {
 					f = ObjectArrayFormatter.INSTANCE;
-				} else if (o instanceof Enum<?>) {
-					f = EnumFormatter.INSTANCE;
 				} else if (o instanceof CharSequence) {
 					f = StringFormatter.INSTANCE;
 				} else if (o instanceof Date) {
@@ -1631,8 +1493,13 @@ public class JSON {
 				} else if (isAssignableFrom(ClassUtil.findClass("org.apache.commons.beanutils.DynaBean"), o.getClass())) {
 					f = DynaBeanFormatter.INSTANCE;
 				} else {
-					f = ObjectFormatter.INSTANCE;
+					f = new ObjectFormatter(o.getClass());
 				}
+				
+				if (memberCache == null) {
+					memberCache = new HashMap<Class<?>, Object>();
+				}
+				memberCache.put(o.getClass(), f);
 			}
 			
 			boolean isStruct;
@@ -1690,6 +1557,14 @@ public class JSON {
 		
 		<T> T createInternal(Class<? extends T> c) throws Exception {
 			return create(this, c);
+		}
+		
+		boolean ignoreInternal(Class<?> target, Member member) {
+			return ignore(this, target, member);
+		}
+		
+		String normalizeInternal(String name) {
+			return normalize(name);
 		}
 	}
 }

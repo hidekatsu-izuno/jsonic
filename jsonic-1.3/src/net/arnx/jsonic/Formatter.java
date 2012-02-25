@@ -1,6 +1,7 @@
 package net.arnx.jsonic;
 
 import java.io.Flushable;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
@@ -8,9 +9,12 @@ import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -30,6 +34,7 @@ import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.JSON.Mode;
 import net.arnx.jsonic.io.OutputSource;
 import net.arnx.jsonic.util.Base64;
+import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
 
@@ -771,11 +776,18 @@ final class MapFormatter implements Formatter {
 }
 
 final class ObjectFormatter implements Formatter {
-	public static final ObjectFormatter INSTANCE = new ObjectFormatter();
+	private Class<?> cls;
+	private transient List<PropertyInfo> props;
+	
+	public  ObjectFormatter(Class<?> cls) {
+		this.cls = cls;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		List<PropertyInfo> props = context.getGetProperties(o.getClass());
-
+		if (props == null) {
+			props = getGetProperties(context, cls);
+		}
+		
 		out.append('{');
 		int count = 0;
 		final int length = props.size();
@@ -822,6 +834,72 @@ final class ObjectFormatter implements Formatter {
 		}
 		out.append('}');
 		return true;
+	}
+	
+	static List<PropertyInfo> getGetProperties(Context context, Class<?> c) {
+		Map<String, PropertyInfo> map = new HashMap<String, PropertyInfo>();
+		
+		// Field
+		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
+			Field f = prop.getField();
+			if (f == null || context.ignoreInternal(c, f)) continue;
+			
+			JSONHint hint = f.getAnnotation(JSONHint.class);
+			String name = null;
+			int ordinal = prop.getOrdinal();
+			if (hint != null) {
+				if (hint.ignore()) continue;
+				ordinal = hint.ordinal();
+				if (hint.name().length() != 0) name = hint.name();
+			}
+			
+			if (name == null) {
+				name = context.normalizeInternal(prop.getName());
+				if (context.getPropertyStyle() != null) {
+					name = context.getPropertyStyle().to(name);
+				}
+			}
+			
+			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getReadMember()) {
+				map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+					prop.getField(), null, null, prop.isStatic(), ordinal));
+			} else {
+				map.put(name, prop);
+			}
+		}
+		
+		// Method
+		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
+			Method m = prop.getReadMethod();
+			if (m == null || context.ignoreInternal(c, m)) continue;
+			
+			JSONHint hint = m.getAnnotation(JSONHint.class);
+			String name = null;
+			int ordinal = prop.getOrdinal();
+			if (hint != null) {
+				if (hint.ignore()) continue;
+				ordinal = hint.ordinal();
+				if (hint.name().length() != 0) name = hint.name();
+			}
+			
+			if (name == null) {
+				name = context.normalizeInternal(prop.getName());
+				if (context.getPropertyStyle() != null) {
+					name = context.getPropertyStyle().to(name);
+				}
+			}
+			
+			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
+				map.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+					null, prop.getReadMethod(), null, prop.isStatic(), ordinal));
+			} else {
+				map.put(name, prop);
+			}
+		}
+		
+		List<PropertyInfo> props = new ArrayList<PropertyInfo>(map.values());
+		Collections.sort(props);
+		return props;
 	}
 }
 
