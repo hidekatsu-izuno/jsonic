@@ -1343,9 +1343,6 @@ public class JSON {
 			depth--;
 		}
 		
-		boolean hasMemberCache(Class<?> c) {
-			return memberCache != null && memberCache.containsKey(c);
-		}
 		NumberFormat getNumberFormat() {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;			
