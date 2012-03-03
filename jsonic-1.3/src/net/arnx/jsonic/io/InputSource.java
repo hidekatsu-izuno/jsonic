@@ -10,7 +10,7 @@ public interface InputSource {
 	long getColumnNumber();
 	long getOffset();
 	
-	int mark();
+	int mark() throws IOException;
 	void copy(StringBuilder sb, int len);
 	String copy(int len);
 }

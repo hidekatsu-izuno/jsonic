@@ -419,6 +419,19 @@ public class JSONTest {
 		
 		assertEquals(gptw, JSON.decode("{\"test\":{\"property\":\"test\"}}", GenericPropertyTestWrapper.class));
 		
+		InputStream in = this.getClass().getResourceAsStream("LongString.json");
+		ArrayList list2 = new ArrayList();
+		list2.add(repeat("a", 1000));
+		assertEquals(list2, JSON.decode(in));
+		in.close();
+	}
+	
+	private static String repeat(String text, int count) {
+		StringBuilder sb = new StringBuilder(text.length() * count);
+		for (int i = 0; i < count; i++) {
+			sb.append(text);
+		}
+		return sb.toString();
 	}
 	
 	public static class HogeList extends ArrayList<MyData> {

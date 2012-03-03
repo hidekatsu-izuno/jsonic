@@ -89,7 +89,16 @@ public class ReaderInputSource implements InputSource {
 	}
 	
 	@Override
-	public int mark() {
+	public int mark() throws IOException {
+		if (start > end) {
+			int c = get();
+			back();
+			if (c == -1) {
+				mark = -1;
+				return 0;
+			}
+		}
+		
 		mark = start;
 		return end - mark + 1;
 	}
