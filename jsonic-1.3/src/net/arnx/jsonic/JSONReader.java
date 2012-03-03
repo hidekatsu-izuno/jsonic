@@ -25,32 +25,30 @@ import java.util.Map;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.io.InputSource;
-import net.arnx.jsonic.parse.ParseContext;
-import net.arnx.jsonic.parse.Parser;
+import net.arnx.jsonic.parse.JSONParser;
 import net.arnx.jsonic.parse.ScriptParser;
-import net.arnx.jsonic.parse.StrictParser;
 import net.arnx.jsonic.parse.TraditionalParser;
 
 public class JSONReader {
 	private Context context;
-	private Parser parser;
+	private JSONParser parser;
 	private JSONEventType type;
 	
 	JSONReader(Context context, InputSource in, boolean multilineMode, boolean ignoreWhitespace) {
 		this.context = context;
 		
-		ParseContext pcontext = new ParseContext(context.getMaxDepth(), multilineMode, ignoreWhitespace, 
-				context.getLocalCache());
-		
 		switch (context.getMode()) {
 		case STRICT:
-			parser = new StrictParser(in, pcontext);
+			parser = new JSONParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace, 
+					context.getLocalCache());
 			break;
 		case SCRIPT:
-			parser = new ScriptParser(in, pcontext);
+			parser = new ScriptParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace, 
+					context.getLocalCache());
 			break;
 		default:
-			parser = new TraditionalParser(in, pcontext);
+			parser = new TraditionalParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace, 
+					context.getLocalCache());
 		}
 	}
 	
@@ -144,7 +142,7 @@ public class JSONReader {
 				break;
 			}
 			
-			if (parser.getContext().isInterpretterMode() && ilen == 0) {
+			if (parser.isInterpretterMode() && ilen == 0) {
 				break;
 			}
 		} while ((type = parser.next()) != null);

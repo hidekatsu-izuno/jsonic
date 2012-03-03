@@ -9,7 +9,14 @@ import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.io.InputSource;
 import net.arnx.jsonic.util.LocalCache;
 
-public class ParseContext {
+public class JSONParser {
+	static final int BEFORE_ROOT = 0;
+	static final int AFTER_ROOT = 1;
+	static final int BEFORE_NAME = 2;
+	static final int AFTER_NAME = 3;
+	static final int BEFORE_VALUE = 4;
+	static final int AFTER_VALUE = 5;
+	
 	private static final int[] ESCAPE_CHARS = new int[128];
 	
 	static {
@@ -22,11 +29,14 @@ public class ParseContext {
 		ESCAPE_CHARS[0x7F] = 3;
 	}
 	
+	private InputSource in;
+	
 	private int maxDepth;
 	private boolean interpretterMode;
 	private boolean ignoreWhirespace;
 	private LocalCache cache;
 	
+	private int state = BEFORE_ROOT;
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
 	
 	private JSONEventType type;
@@ -34,7 +44,8 @@ public class ParseContext {
 	private boolean first;
 	private boolean active;
 	
-	public ParseContext(int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
+	public JSONParser(InputSource in, int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
+		this.in = in;
 		this.maxDepth = maxDepth;
 		this.interpretterMode = interpretterMode;
 		this.ignoreWhirespace = ignoreWhirespace;
@@ -55,6 +66,10 @@ public class ParseContext {
 		return ignoreWhirespace;
 	}
 	
+	public Object getValue() {
+		return value;
+	}
+	
 	public int getDepth() {
 		if (type == JSONEventType.START_OBJECT || type == JSONEventType.START_ARRAY) {
 			return stack.size();
@@ -63,20 +78,295 @@ public class ParseContext {
 		}
 	}
 	
-	public void push(JSONEventType type) {
+	public JSONEventType next() throws IOException {
+		JSONEventType type = null;
+		do {
+			set(null, null, false);
+			switch (state) {
+			case BEFORE_ROOT:
+				state = beforeRoot();
+				break;
+			case AFTER_ROOT:
+				state = afterRoot();
+				break;
+			case BEFORE_NAME:
+				state = beforeName();
+				break;
+			case AFTER_NAME:
+				state = afterName();
+				break;
+			case BEFORE_VALUE:
+				state = beforeValue();
+				break;
+			case AFTER_VALUE:
+				state = afterValue();
+				break;
+			}
+			
+			if (getDepth() <= getMaxDepth()) {
+				type = getType();
+			}
+		} while (state != -1 && type == null);
+		
+		return type;
+	}
+	
+	int beforeRoot() throws IOException {
+		int n = in.next();
+		if (n == 0xFEFF) n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return BEFORE_ROOT;
+		case '{':
+			push(JSONEventType.START_OBJECT);
+			return BEFORE_NAME;
+		case '[':
+			push(JSONEventType.START_ARRAY);
+			return BEFORE_VALUE;
+		case -1:
+			if (isInterpretterMode()) {
+				return -1;
+			}
+			throw createParseException(in, "json.parse.EmptyInputError");
+		default:
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+		}
+	}
+	
+	int afterRoot() throws IOException {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_ROOT;
+		case -1:
+			return -1;
+		case '{':
+		case '[':
+			if (isInterpretterMode()) {
+				in.back();
+				return BEFORE_ROOT;
+			}
+		default:
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+		}
+	}
+	
+	int beforeName() throws IOException {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return BEFORE_NAME;
+		case '"':
+			in.back();
+			set(JSONEventType.NAME, parseString(in, false), false);
+			return AFTER_NAME;
+		case '}':
+			if (isFirst() && getBeginType() == JSONEventType.START_OBJECT) {
+				pop();
+				if (getBeginType() == null) {
+					return AFTER_ROOT;
+				} else {
+					return AFTER_VALUE;
+				}
+			} else {
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
+		case -1:
+			throw createParseException(in, "json.parse.ObjectNotClosedError");
+		default:
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+		}
+	}
+	
+	int afterName() throws IOException {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_NAME;
+		case ':':
+			return BEFORE_VALUE;
+		case -1:
+			throw createParseException(in, "json.parse.ObjectNotClosedError");
+		default:
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+		}
+	}
+	
+	int beforeValue() throws IOException {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return BEFORE_VALUE;
+		case '{':
+			push(JSONEventType.START_OBJECT);
+			return BEFORE_NAME;
+		case '[':
+			push(JSONEventType.START_ARRAY);
+			return BEFORE_VALUE;
+		case '"':
+			in.back();
+			set(JSONEventType.STRING, parseString(in, false), true);
+			return AFTER_VALUE;
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			in.back();
+			set(JSONEventType.NUMBER, parseNumber(in), true);
+			return AFTER_VALUE;	
+		case 't':
+			in.back();
+			set(JSONEventType.BOOLEAN, parseLiteral(in, "true", Boolean.TRUE), true);
+			return AFTER_VALUE;
+		case 'f':
+			in.back();
+			set(JSONEventType.BOOLEAN, parseLiteral(in, "false", Boolean.FALSE), true);
+			return AFTER_VALUE;
+		case 'n':
+			in.back();
+			set(JSONEventType.NULL, parseLiteral(in, "null", null), true);
+			return AFTER_VALUE;
+		case ']':
+			if (isFirst() && getBeginType() == JSONEventType.START_ARRAY) {
+				pop();
+				if (getBeginType() == null) {
+					return AFTER_ROOT;
+				} else {
+					return AFTER_VALUE;							
+				}
+			} else{
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
+		case -1:
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				throw createParseException(in, "json.parse.ObjectNotClosedError");
+			} else if (getBeginType() == JSONEventType.START_ARRAY) {
+				throw createParseException(in, "json.parse.ArrayNotClosedError");
+			} else {
+				throw new IllegalStateException();
+			}
+		default:
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+		}
+	}
+	
+	int afterValue() throws IOException {
+		int n = in.next();
+		switch (n) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			in.back();
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
+			}
+			return AFTER_VALUE;
+		case ',':
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				return BEFORE_NAME;
+			} else if (getBeginType() == JSONEventType.START_ARRAY) {
+				return BEFORE_VALUE;
+			} else {
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+			}
+		case '}':
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				pop();
+				if (getBeginType() == null) {
+					return AFTER_ROOT;
+				} else {
+					return AFTER_VALUE;							
+				}
+			} else {
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+			}
+		case ']':
+			if (getBeginType() == JSONEventType.START_ARRAY) {
+				pop();
+				if (getBeginType() == null) {
+					return AFTER_ROOT;
+				} else {
+					return AFTER_VALUE;							
+				}
+			} else {
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+			}
+		case -1:
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				throw createParseException(in, "json.parse.ObjectNotClosedError");
+			} else if (getBeginType() == JSONEventType.START_ARRAY) {
+				throw createParseException(in, "json.parse.ArrayNotClosedError");
+			} else {
+				throw new IllegalStateException();
+			}
+		default:
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+		}
+	}
+	
+	void push(JSONEventType type) {
 		this.type = type;
 		stack.add(type);
 		first = true;
 		active = stack.size() < maxDepth;
 	}
 	
-	public void set(JSONEventType type, Object value, boolean isValue) {
+	void set(JSONEventType type, Object value, boolean isValue) {
 		this.type = type;
 		this.value = value;
 		if (isValue) first = false;
 	}
 	
-	public void pop() {
+	void pop() {
 		JSONEventType beginType = stack.remove(stack.size()-1);
 		if (beginType == JSONEventType.START_OBJECT) {
 			this.type = JSONEventType.END_OBJECT;
@@ -89,23 +379,19 @@ public class ParseContext {
 		active = stack.size() < maxDepth;
 	}
 	
-	public JSONEventType getBeginType() {
+	JSONEventType getBeginType() {
 		return (!stack.isEmpty()) ? stack.get(stack.size()-1) : null;
 	}
 	
-	public JSONEventType getType() {
+	JSONEventType getType() {
 		return type;
 	}
 	
-	public Object getValue() {
-		return value;
-	}
-	
-	public boolean isFirst() {
+	boolean isFirst() {
 		return first;
 	}
 	
-	public final Object parseString(InputSource in, boolean any) throws IOException {
+	Object parseString(InputSource in, boolean any) throws IOException {
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
 		int start = in.next();
@@ -159,7 +445,7 @@ public class ParseContext {
 		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
-	public char parseEscape(InputSource in) throws IOException {
+	char parseEscape(InputSource in) throws IOException {
 		int point = 1; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -211,7 +497,7 @@ public class ParseContext {
 		return escape;
 	}
 	
-	public Object parseNumber(InputSource in) throws IOException {
+	Object parseNumber(InputSource in) throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
@@ -305,7 +591,7 @@ public class ParseContext {
 		return (sb != null) ? cache.getBigDecimal(sb) : null;
 	}
 	
-	public Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
+	Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
 		int pos = 0;
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -322,7 +608,7 @@ public class ParseContext {
 		throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
 	}
 
-	public Object parseLiteral(InputSource in, boolean asValue) throws IOException {
+	Object parseLiteral(InputSource in, boolean asValue) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
@@ -373,7 +659,7 @@ public class ParseContext {
 		return (active) ? str : null;
 	}
 	
-	public String parseComment(InputSource in) throws IOException {
+	String parseComment(InputSource in) throws IOException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		StringBuilder sb = !isIgnoreWhitespace() ? cache.getCachedBuffer() : null;
 		
@@ -455,7 +741,7 @@ public class ParseContext {
 		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
-	public String parseWhitespace(InputSource in) throws IOException {
+	String parseWhitespace(InputSource in) throws IOException {
 		StringBuilder sb = !isIgnoreWhitespace() ? cache.getCachedBuffer() : null;
 		
 		int n = -1;
@@ -483,11 +769,11 @@ public class ParseContext {
 		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
-	public JSONException createParseException(InputSource in, String id) {
+	JSONException createParseException(InputSource in, String id) {
 		return createParseException(in, id, (Object[])null);
 	}
 	
-	public JSONException createParseException(InputSource in, String id, Object... args) {
+	JSONException createParseException(InputSource in, String id, Object... args) {
 		String message = cache.getMessage(id, args);
 		return new JSONException("" + in.getLineNumber() + ": " + message + "\n" + in.toString() + " <- ?",
 				JSONException.PARSE_ERROR, in.getLineNumber(), in.getColumnNumber(), in.getOffset());

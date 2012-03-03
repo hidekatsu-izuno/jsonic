@@ -4,74 +4,21 @@ import java.io.IOException;
 
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.io.InputSource;
+import net.arnx.jsonic.util.LocalCache;
 
-public class TraditionalParser implements Parser {
-	private static final int BEFORE_ROOT = 0;
-	private static final int AFTER_ROOT = 1;
-	private static final int BEFORE_NAME = 2;
-	private static final int AFTER_NAME = 3;
-	private static final int BEFORE_VALUE = 4;
-	private static final int AFTER_VALUE = 5;
-	
-	private int state = BEFORE_ROOT;
+public class TraditionalParser extends JSONParser {
 	private InputSource in;
-	private ParseContext context;
 	
 	private boolean emptyRoot = false;
 	private long nameLineNumber = Long.MAX_VALUE;
 	
-	public TraditionalParser(InputSource in, ParseContext context) {
+	public TraditionalParser(InputSource in, int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
+		super(in, maxDepth, interpretterMode, ignoreWhirespace, cache);
 		this.in = in;
-		this.context = context;
 	}
 	
 	@Override
-	public ParseContext getContext() {
-		return context;
-	}
-	
-	public JSONEventType next() throws IOException {
-		JSONEventType type = null;
-		do {
-			context.set(null, null, false);
-			switch (state) {
-			case BEFORE_ROOT:
-				state = beforeRoot();
-				break;
-			case AFTER_ROOT:
-				state = afterRoot();
-				break;
-			case BEFORE_NAME:
-				state = beforeName();
-				break;
-			case AFTER_NAME:
-				state = afterName();
-				break;
-			case BEFORE_VALUE:
-				state = beforeValue();
-				break;
-			case AFTER_VALUE:
-				state = afterValue();
-				break;
-			}
-			
-			if (context.getDepth() <= context.getMaxDepth()) {
-				type = context.getType();
-			}
-		} while (state != -1 && type == null);
-		
-		return type;
-	}
-	
-	public Object getValue() {
-		return context.getValue();
-	}
-	
-	public int getDepth() {
-		return context.getDepth();
-	}
-	
-	private int beforeRoot() throws IOException {
+	int beforeRoot() throws IOException {
 		int n = in.next();
 		if (n == 0xFEFF) n = in.next();
 		switch (n) {
@@ -80,37 +27,38 @@ public class TraditionalParser implements Parser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = context.parseWhitespace(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.WHITESPACE, ws, false);
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_ROOT;
 		case '/':
 			in.back();
-			String comment = context.parseComment(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.COMMENT, comment, false);
+			String comment = parseComment(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.COMMENT, comment, false);
 			}
 			return BEFORE_ROOT;
 		case '{':
-			context.push(JSONEventType.START_OBJECT);
+			push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
 		case '[':
-			context.push(JSONEventType.START_ARRAY);
+			push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
 		case -1:
-			if (context.isInterpretterMode()) {
+			if (isInterpretterMode()) {
 				return -1;
 			}
 		default:
 			if (n != -1) in.back();
 			emptyRoot = true;
-			context.push(JSONEventType.START_OBJECT);
+			push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
 		}
 	}
 	
-	private int afterRoot() throws IOException {
+	@Override
+	int afterRoot() throws IOException {
 		int n = in.next();
 		switch (n) {
 		case ' ':
@@ -118,36 +66,37 @@ public class TraditionalParser implements Parser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = context.parseWhitespace(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.WHITESPACE, ws, false);
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_ROOT;
 		case '/':
 			in.back();
-			String comment = context.parseComment(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.COMMENT, comment, false);
+			String comment = parseComment(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.COMMENT, comment, false);
 			}
 			return AFTER_ROOT;
 		case -1:
 			return -1;
 		case ',':
-			if (context.isInterpretterMode()) {
+			if (isInterpretterMode()) {
 				return BEFORE_ROOT;
 			}
 		case '{':
 		case '[':
-			if (context.isInterpretterMode()) {
+			if (isInterpretterMode()) {
 				in.back();
 				return BEFORE_ROOT;
 			}
 		default:
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
 	
-	private int beforeName() throws IOException {
+	@Override
+	int beforeName() throws IOException {
 		int n = in.next();
 		switch (n) {
 		case ' ':
@@ -155,22 +104,22 @@ public class TraditionalParser implements Parser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = context.parseWhitespace(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.WHITESPACE, ws, false);
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_NAME;
 		case '/':
 			in.back();
-			String comment = context.parseComment(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.COMMENT, comment, false);
+			String comment = parseComment(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.COMMENT, comment, false);
 			}
 			return BEFORE_NAME;
 		case '"':
 		case '\'':
 			in.back();
-			context.set(JSONEventType.NAME, context.parseString(in, true), false);
+			set(JSONEventType.NAME, parseString(in, true), false);
 			return AFTER_NAME;
 		case '-':
 		case '0':
@@ -184,15 +133,15 @@ public class TraditionalParser implements Parser {
 		case '8':
 		case '9':
 			in.back();
-			Object num = context.parseNumber(in);
-			context.set(JSONEventType.NAME, (num != null) ? num.toString() : null, false);
+			Object num = parseNumber(in);
+			set(JSONEventType.NAME, (num != null) ? num.toString() : null, false);
 			return AFTER_NAME;
 		case '}':
-			if (context.isFirst()) {
-				context.pop();
-				if (context.getBeginType() == null) {
+			if (isFirst()) {
+				pop();
+				if (getBeginType() == null) {
 					if (emptyRoot) {
-						throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+						throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 					} else {
 						return AFTER_ROOT;
 					}
@@ -201,24 +150,25 @@ public class TraditionalParser implements Parser {
 					return AFTER_VALUE;							
 				}
 			} else {
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case -1:
-			context.pop();
-			if (context.getBeginType() == null && emptyRoot) {
+			pop();
+			if (getBeginType() == null && emptyRoot) {
 				return -1;
 			} else {
-				throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+				throw createParseException(in, "json.parse.ObjectNotClosedError");
 			}
 		default:
 			in.back();
-			Object literal = context.parseLiteral(in, true);
-			context.set(JSONEventType.NAME, (literal != null) ? literal.toString() : null, false);
+			Object literal = parseLiteral(in, true);
+			set(JSONEventType.NAME, (literal != null) ? literal.toString() : null, false);
 			return AFTER_NAME;
 		}
 	}
 
-	private int afterName() throws IOException {
+	@Override
+	int afterName() throws IOException {
 		int n = in.next();
 		switch (n) {
 		case ' ':
@@ -226,16 +176,16 @@ public class TraditionalParser implements Parser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = context.parseWhitespace(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.WHITESPACE, ws, false);
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_NAME;
 		case '/':
 			in.back();
-			String comment = context.parseComment(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.COMMENT, comment, false);
+			String comment = parseComment(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.COMMENT, comment, false);
 			}
 			return AFTER_NAME;
 		case ':':
@@ -245,13 +195,14 @@ public class TraditionalParser implements Parser {
 			in.back();
 			return BEFORE_VALUE;
 		case -1:
-			throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+			throw createParseException(in, "json.parse.ObjectNotClosedError");
 		default:
-			throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
 	
-	private int beforeValue() throws IOException {
+	@Override
+	int beforeValue() throws IOException {
 		int n = in.next();
 		switch (n) {
 		case ' ':
@@ -259,28 +210,28 @@ public class TraditionalParser implements Parser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = context.parseWhitespace(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.WHITESPACE, ws, false);
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_VALUE;
 		case '/':
 			in.back();
-			String comment = context.parseComment(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.COMMENT, comment, false);
+			String comment = parseComment(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.COMMENT, comment, false);
 			}
 			return BEFORE_VALUE;
 		case '{':
-			context.push(JSONEventType.START_OBJECT);
+			push(JSONEventType.START_OBJECT);
 			return BEFORE_NAME;
 		case '[':
-			context.push(JSONEventType.START_ARRAY);
+			push(JSONEventType.START_ARRAY);
 			return BEFORE_VALUE;
 		case '"':
 		case '\'':
 			in.back();
-			context.set(JSONEventType.STRING, context.parseString(in, true), true);
+			set(JSONEventType.STRING, parseString(in, true), true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		case '-':
@@ -295,65 +246,66 @@ public class TraditionalParser implements Parser {
 		case '8':
 		case '9':
 			in.back();
-			context.set(JSONEventType.NUMBER, context.parseNumber(in), true);
+			set(JSONEventType.NUMBER, parseNumber(in), true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		case ',':
-			if (context.getBeginType() == JSONEventType.START_OBJECT) {
-				context.set(JSONEventType.NULL, null, true);
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				set(JSONEventType.NULL, null, true);
 				return BEFORE_NAME;
-			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
-				context.set(JSONEventType.NULL, null, true);
+			} else if (getBeginType() == JSONEventType.START_ARRAY) {
+				set(JSONEventType.NULL, null, true);
 				return BEFORE_VALUE;
 			} else {
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case '}':
-			if (context.getBeginType() == JSONEventType.START_OBJECT) {
-				context.set(JSONEventType.NULL, null, true);
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				set(JSONEventType.NULL, null, true);
 				in.back();
 				return AFTER_VALUE;
 			} else {
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case ']':
-			if (context.getBeginType() == JSONEventType.START_ARRAY) {
-				if (context.isFirst()) {
-					context.pop();
-					if (context.getBeginType() == null) {
+			if (getBeginType() == JSONEventType.START_ARRAY) {
+				if (isFirst()) {
+					pop();
+					if (getBeginType() == null) {
 						return AFTER_ROOT;
 					} else {
 						nameLineNumber = in.getLineNumber();
 						return AFTER_VALUE;
 					}
 				} else {
-					context.set(JSONEventType.NULL, null, true);
+					set(JSONEventType.NULL, null, true);
 					in.back();
 					return AFTER_VALUE;
 				}
 			} else{
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case -1:
-			if (context.getBeginType() == JSONEventType.START_OBJECT) {
+			if (getBeginType() == JSONEventType.START_OBJECT) {
 				in.back();
-				context.set(JSONEventType.NULL, null, true);
+				set(JSONEventType.NULL, null, true);
 				return AFTER_VALUE;
-			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
-				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
+			} else if (getBeginType() == JSONEventType.START_ARRAY) {
+				throw createParseException(in, "json.parse.ArrayNotClosedError");
 			} else {
 				throw new IllegalStateException();
 			}
 		default:
 			in.back();
-			Object literal = context.parseLiteral(in, true);
-			context.set(context.getType(), literal, true);
+			Object literal = parseLiteral(in, true);
+			set(getType(), literal, true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		}
 	}
 	
-	private int afterValue() throws IOException {
+	@Override
+	int afterValue() throws IOException {
 		int n = in.next();
 		switch (n) {
 		case ' ':
@@ -361,32 +313,32 @@ public class TraditionalParser implements Parser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = context.parseWhitespace(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.WHITESPACE, ws, false);
+			String ws = parseWhitespace(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_VALUE;
 		case '/':
 			in.back();
-			String comment = context.parseComment(in);
-			if (!context.isIgnoreWhitespace()) {
-				context.set(JSONEventType.COMMENT, comment, false);
+			String comment = parseComment(in);
+			if (!isIgnoreWhitespace()) {
+				set(JSONEventType.COMMENT, comment, false);
 			}
 			return AFTER_VALUE;
 		case ',':
-			if (context.getBeginType() == JSONEventType.START_OBJECT) {
+			if (getBeginType() == JSONEventType.START_OBJECT) {
 				return BEFORE_NAME;
-			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
+			} else if (getBeginType() == JSONEventType.START_ARRAY) {
 				return BEFORE_VALUE;
 			} else {
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
 		case '}':
-			if (context.getBeginType() == JSONEventType.START_OBJECT) {
-				context.pop();
-				if (context.getBeginType() == null) {
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				pop();
+				if (getBeginType() == null) {
 					if (emptyRoot) {
-						throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+						throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 					} else {
 						return AFTER_ROOT;
 					}
@@ -394,29 +346,29 @@ public class TraditionalParser implements Parser {
 					return AFTER_VALUE;							
 				}
 			} else {
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
 		case ']':
-			if (context.getBeginType() == JSONEventType.START_ARRAY) {
-				context.pop();
-				if (context.getBeginType() == null) {
+			if (getBeginType() == JSONEventType.START_ARRAY) {
+				pop();
+				if (getBeginType() == null) {
 					return AFTER_ROOT;
 				} else {
 					return AFTER_VALUE;							
 				}
 			} else {
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
 			}
 		case -1:
-			if (context.getBeginType() == JSONEventType.START_OBJECT) {
-				context.pop();
-				if (context.getBeginType() == null && emptyRoot) {
+			if (getBeginType() == JSONEventType.START_OBJECT) {
+				pop();
+				if (getBeginType() == null && emptyRoot) {
 					return -1;
 				} else {
-					throw context.createParseException(in, "json.parse.ObjectNotClosedError");
+					throw createParseException(in, "json.parse.ObjectNotClosedError");
 				}
-			} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
-				throw context.createParseException(in, "json.parse.ArrayNotClosedError");
+			} else if (getBeginType() == JSONEventType.START_ARRAY) {
+				throw createParseException(in, "json.parse.ArrayNotClosedError");
 			} else {
 				throw new IllegalStateException();
 			}
@@ -424,15 +376,15 @@ public class TraditionalParser implements Parser {
 			if (in.getLineNumber() > nameLineNumber) {
 				in.back();
 				nameLineNumber = Long.MAX_VALUE;
-				if (context.getBeginType() == JSONEventType.START_OBJECT) {
+				if (getBeginType() == JSONEventType.START_OBJECT) {
 					return BEFORE_NAME;
-				} else if (context.getBeginType() == JSONEventType.START_ARRAY) {
+				} else if (getBeginType() == JSONEventType.START_ARRAY) {
 					return BEFORE_VALUE;
 				} else {
-					throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+					throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 				}
 			} else {
-				throw context.createParseException(in, "json.parse.UnexpectedChar", (char)n);
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		}
 	}
