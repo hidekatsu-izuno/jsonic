@@ -176,7 +176,7 @@ final class EnumFormatter implements Formatter {
 	
 	public boolean format(final JSON json, final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		if (context.getEnumStyle() != null) {
-			return StringFormatter.INSTANCE.format(json, context, src, context.getPropertyStyle().to(((Enum<?>)o).name()), out);
+			return StringFormatter.INSTANCE.format(json, context, src, context.getEnumStyle().to(((Enum<?>)o).name()), out);
 		} else {
 			return NumberFormatter.INSTANCE.format(json, context, src, ((Enum<?>)o).ordinal(), out);
 		}
