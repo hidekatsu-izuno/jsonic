@@ -16,6 +16,13 @@
 package net.arnx.jsonic;
 
 public abstract class NamingStyle {
+	public static final NamingStyle NONE = new NamingStyle("NONE") {
+		@Override
+		public String to(String value) {
+			return value;
+		}
+	};
+	
 	public static final NamingStyle LOWER_CASE = new NamingStyle("LOWER_CASE") {
 		@Override
 		public String to(String value) {
