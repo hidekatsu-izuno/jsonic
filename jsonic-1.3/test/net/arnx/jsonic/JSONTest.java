@@ -127,10 +127,10 @@ public class JSONTest {
 		list.add(boolean.class);
 		list.add(ExampleEnum.Example0);
 		
-		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",0]", JSON.encode(list));
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\"]", JSON.encode(list));
 		
 		list.add(list);
-		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",0,null]", JSON.encode(list));
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\",null]", JSON.encode(list));
 		
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
@@ -152,7 +152,7 @@ public class JSONTest {
 		assertEquals("[" + cal.getTimeInMillis() + "]", JSON.encode(new Object[] {cal}));
 		assertEquals("[" + cal.getTimeInMillis() + "," + cal.getTimeInMillis() + "," + cal.getTimeInMillis() + "]", JSON.encode(new Object[] {cal, cal, cal}));
 
-		assertEquals("[0,0,0]", JSON.encode(new Object[] {Thread.State.NEW, Thread.State.NEW, Thread.State.NEW}));
+		assertEquals("[\"NEW\",\"NEW\",\"NEW\"]", JSON.encode(new Object[] {Thread.State.NEW, Thread.State.NEW, Thread.State.NEW}));
 
 		TimeZone timeZone = TimeZone.getDefault();
 		assertEquals("[\"" + timeZone.getID() + "\",\"" + timeZone.getID() + "\"]", JSON.encode(new Object[] {timeZone, timeZone}));
@@ -777,35 +777,35 @@ public class JSONTest {
 				return super.normalize(name);
 			}
 		};
-		assertEquals("{\"AAA_BBB_CCC\":1,\"ABC_DEF\":0,\"aaaあああ\":2}", json.format(named));
+		assertEquals("{\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"ABC_DEF\":\"aaaAaaAaa\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
 		
 		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
-		assertEquals("{\"aaaBbbCcc\":1,\"aaaあああ\":2,\"abcDef\":0}", json.format(named));
+		assertEquals("{\"aaaBbbCcc\":\"AAA_BBB_CCC\",\"aaaあああ\":\"aaaあああ\",\"abcDef\":\"aaaAaaAaa\"}", json.format(named));
 		
 		json = new JSON();
 		json.setPropertyStyle(NamingStyle.LOWER_CASE);
-		json.setEnumStyle(NamingStyle.LOWER_CASE);
-		assertEquals("{\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaaaaaaa\":\"aaaaaaaaa\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
+		json.setEnumStyle(NamingStyle.UPPER_CASE);
+		assertEquals("{\"aaa_bbb_ccc\":\"AAA_BBB_CCC\",\"aaaaaaaaa\":\"AAAAAAAAA\",\"aaaあああ\":\"AAAあああ\"}", json.format(named));
 		
 		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
-		json.setEnumStyle(NamingStyle.LOWER_CAMEL);
-		assertEquals("{\"aaaAaaAaa\":\"aaaAaaAaa\",\"aaaBbbCcc\":\"aaaBbbCcc\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
+		json.setEnumStyle(NamingStyle.UPPER_CAMEL);
+		assertEquals("{\"aaaAaaAaa\":\"AaaAaaAaa\",\"aaaBbbCcc\":\"AaaBbbCcc\",\"aaaあああ\":\"Aaaあああ\"}", json.format(named));
 		
 		json.setPropertyStyle(NamingStyle.LOWER_UNDERSCORE);
-		json.setEnumStyle(NamingStyle.LOWER_UNDERSCORE);
-		assertEquals("{\"aaa_aaa_aaa\":\"aaa_aaa_aaa\",\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
+		json.setEnumStyle(NamingStyle.UPPER_UNDERSCORE);
+		assertEquals("{\"aaa_aaa_aaa\":\"AAA_AAA_AAA\",\"aaa_bbb_ccc\":\"AAA_BBB_CCC\",\"aaaあああ\":\"AAAあああ\"}", json.format(named));
 
 		json.setPropertyStyle(NamingStyle.UPPER_CASE);
-		json.setEnumStyle(NamingStyle.UPPER_CASE);
-		assertEquals("{\"AAAAAAAAA\":\"AAAAAAAAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", json.format(named));
+		json.setEnumStyle(NamingStyle.LOWER_CASE);
+		assertEquals("{\"AAAAAAAAA\":\"aaaaaaaaa\",\"AAA_BBB_CCC\":\"aaa_bbb_ccc\",\"AAAあああ\":\"aaaあああ\"}", json.format(named));
 		
 		json.setPropertyStyle(NamingStyle.UPPER_CAMEL);
-		json.setEnumStyle(NamingStyle.UPPER_CAMEL);
-		assertEquals("{\"AaaAaaAaa\":\"AaaAaaAaa\",\"AaaBbbCcc\":\"AaaBbbCcc\",\"Aaaあああ\":\"Aaaあああ\"}", json.format(named));
+		json.setEnumStyle(NamingStyle.LOWER_CAMEL);
+		assertEquals("{\"AaaAaaAaa\":\"aaaAaaAaa\",\"AaaBbbCcc\":\"aaaBbbCcc\",\"Aaaあああ\":\"aaaあああ\"}", json.format(named));
 		
 		json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
-		json.setEnumStyle(NamingStyle.UPPER_UNDERSCORE);
-		assertEquals("{\"AAA_AAA_AAA\":\"AAA_AAA_AAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", json.format(named));
+		json.setEnumStyle(NamingStyle.LOWER_UNDERSCORE);
+		assertEquals("{\"AAA_AAA_AAA\":\"aaa_aaa_aaa\",\"AAA_BBB_CCC\":\"aaa_bbb_ccc\",\"AAAあああ\":\"aaaあああ\"}", json.format(named));
 	}
 	
 	@Test

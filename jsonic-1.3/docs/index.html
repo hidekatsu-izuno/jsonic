@@ -829,9 +829,11 @@ public class TestBean {
 
 <ul>
 <li>[機能追加] Web Service API にて処理に使用する JSON クラスのプロパティ値をコンフィグから指定できるようになりました。</li>
+<li>[機能追加] NamingStyle に何もしない NONE を追加しました。また、EnumStyle のデフォルトスタイルが NamingStyle.NONE に変更されました（1.2まではインデックス値に変換していました）。</li>
 <li>[仕様変更] Web Service API にて debug: true が指定された場合、PrettyPrint が自動的に有効になっていましたが、1.3では明示的に指定する必要があります。</li>
 <li>[仕様変更] setSuppressNull を指定すると parse 時や Map の format 時も null を無視していましたが不適切な場合が多いため、JavaBean あるいは DynaBean の format 時のみ有効となるよう変更しました。</li>
 <li>[不具合] JDK5.0でサポートされていないメソッドが使われていた問題を修正しました（#27563）</li>
+<li>[不具合] setEnumStyle が適切に動作していなかった問題を修正しました。</li>
 <li>[不具合] Web Service API にて引数の型として public 型しかとれない問題を修正しました。</li>
 <li>[不具合] decode/parseにて、長いJSON stringの読み込みに失敗する問題を修正しました。</li>
 </ul>
