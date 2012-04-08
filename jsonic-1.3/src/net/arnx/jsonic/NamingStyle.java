@@ -16,7 +16,7 @@
 package net.arnx.jsonic;
 
 public abstract class NamingStyle {
-	public static final NamingStyle NONE = new NamingStyle("NONE") {
+	public static final NamingStyle NOOP = new NamingStyle("NOOP") {
 		@Override
 		public String to(String value) {
 			return value;

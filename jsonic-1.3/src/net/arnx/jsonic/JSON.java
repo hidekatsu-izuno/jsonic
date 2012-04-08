@@ -611,8 +611,8 @@ public class JSON {
 	Mode mode = Mode.TRADITIONAL;
 	String dateFormat;
 	String numberFormat;
-	NamingStyle propertyStyle = NamingStyle.NONE;
-	NamingStyle enumStyle = NamingStyle.NONE;
+	NamingStyle propertyStyle = NamingStyle.NOOP;
+	NamingStyle enumStyle = NamingStyle.NOOP;
 	
 	public JSON() {
 	}
