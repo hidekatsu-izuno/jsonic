@@ -768,6 +768,11 @@ public class JSONTest {
 		assertEquals("{\"aaaBbbCcc\":1,\"aaaあああ\":2,\"abcDef\":0}", json.format(named));
 		
 		json = new JSON();
+		
+		json.setPropertyStyle(NamingStyle.NOOP);
+		json.setEnumStyle(NamingStyle.NOOP);
+		assertEquals("{\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"aaaAaaAaa\":\"aaaAaaAaa\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
+
 		json.setPropertyStyle(NamingStyle.LOWER_CASE);
 		json.setEnumStyle(NamingStyle.UPPER_CASE);
 		assertEquals("{\"aaa_bbb_ccc\":\"AAA_BBB_CCC\",\"aaaaaaaaa\":\"AAAAAAAAA\",\"aaaあああ\":\"AAAあああ\"}", json.format(named));
