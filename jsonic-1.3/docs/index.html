@@ -825,47 +825,29 @@ public class TestBean {
 
 <h2 id="releasenote">リリースノート</h2>
 
-<h3>2012/3/17 version 1.3.0</h3>
-
-<ul>
-<li>[機能追加] Web Service API にて処理に使用する JSON クラスのプロパティ値をコンフィグから指定できるようになりました。</li>
-<li>[機能追加] NamingStyle に何もしない NOOP を追加しました。また、EnumStyle のデフォルトスタイルが NamingStyle.NOOP に変更されました（1.2まではインデックス値に変換していました）。</li>
-<li>[仕様変更] Web Service API にて debug: true が指定された場合、PrettyPrint が自動的に有効になっていましたが、1.3では明示的に指定する必要があります。</li>
-<li>[仕様変更] setSuppressNull を指定すると parse 時や Map の format 時も null を無視していましたが不適切な場合が多いため、JavaBean あるいは DynaBean の format 時のみ有効となるよう変更しました。</li>
-<li>[不具合] JDK5.0でサポートされていないメソッドが使われていた問題を修正しました（#27563）</li>
-<li>[不具合] setEnumStyle が適切に動作していなかった問題を修正しました。</li>
-<li>[不具合] Web Service API にて引数の型として public 型しかとれない問題を修正しました。</li>
-<li>[不具合] decode/parseにて、長いJSON stringの読み込みに失敗する問題を修正しました。</li>
-</ul>
-
-<h3>2012/02/11 version 1.3.0 ベータ2</h3>
-<ul>
-<li>[機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。</li>
-<li>[機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。</li>
-<li>[仕様変更] parse/decode 時は formatの指定に関わらず日時文字列からDate型へ書式の自動解析による変換を行なっていましたが、formatが指定された場合は書式に従った解析を行なうよう変更しました。</li>
-<li>[仕様変更] TRADITIONAL モードでも、値が常に文字列型に変換されるよう仕様を変更しました（ただし、SCRIPTモードと異なり、マイナスの値も指定可能です。また、nullは文字列ではなく従来通りnull値に変換されます）。</li>
-<li>[不具合] JSONHint にて serialized = true を指定してdecode/parseした場合、2階層目以降のオブジェクトが正しく書式化されない問題を修正しました（#27430）</li>
-<li>[不具合] 1.2.6 以降で normalize() メソッドをオーバーライドしても有効になっていなかった問題を修正しました。</li>
-<li>[不具合] encode/format時、JSONHint の name 属性で指定した名前と同じプロパティが存在するとキーが重複して出力される問題を修正しました。</li>
-<li>[不具合] encode/format時、「\u2028」「\u2029」が文字列中にあると、その前の文字が一部出力されない問題を修正しました。</li>
-</ul>
-
-<h3>2012/01/28 version 1.3.0 ベータ1</h3>
+<h3>2012/8/4 version 1.3.0</h3>
 
 <ul>
 <li>[機能追加] JSON のストリーム的に読み取るプルパーサ API である JSONReader を追加しました。JSONReader は、 JSON#getReader() メソッドを使うことで取得できます。</li>
 <li>[機能追加] decode/parseが新たに追加されたJSONReaderベースに書きなおされ、また、速度も大幅に改善しました。</li>
 <li>[機能追加] 総称型を埋め込める TypeReference を追加しました。</li>
+<li>[機能追加] Web Service API にて処理に使用する JSON クラスのプロパティ値をコンフィグから指定できるようになりました。</li>
+<li>[機能追加] NamingStyle に何もしない NOOP を追加しました。また、EnumStyle のデフォルトスタイルが NamingStyle.NOOP に変更されました（1.2まではインデックス値に変換していました）。</li>
+<li>[機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。</li>
+<li>[機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。</li>
+<li>[仕様変更] Web Service API にて debug: true が指定された場合、PrettyPrint が自動的に有効になっていましたが、1.3では明示的に指定する必要があります。</li>
+<li>[仕様変更] setSuppressNull を指定すると parse 時や Map の format 時も null を無視していましたが不適切な場合が多いため、JavaBean あるいは DynaBean の format 時のみ有効となるよう変更しました。</li>
+<li>[仕様変更] parse/decode 時は formatの指定に関わらず日時文字列からDate型へ書式の自動解析による変換を行なっていましたが、formatが指定された場合は書式に従った解析を行なうよう変更しました。</li>
+<li>[仕様変更] TRADITIONAL モードでも、値が常に文字列型に変換されるよう仕様を変更しました（ただし、SCRIPTモードと異なり、マイナスの値も指定可能です。また、nullは文字列ではなく従来通りnull値に変換されます）。</li>
 <li>[仕様変更] ReaderあるいはInputStreamの先頭以外でBOM（Byte Order Mark）が見つかった場合は、例外を出すように変更しました。</li>
 <li>[仕様変更] TRADITIONAL モードでサポートされていたシェルスクリプトスタイルの行コメント（#) を廃止しました。</li>
-<li>[仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、エスケープを無視する仕様は誤解が多かったため廃止しました。</li>
+<li>[仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、シェルスクリプトのようにエスケープを無視する仕様にしていましたが、誤解する人が多数いたため廃止しました。</li>
 <li>[仕様変更] TRADITIONAL モードでもSCRIPTモードと同様に&lt;、&gt;を\u003C、\u003Eにエスケープするように変更しました。</li>
 <li>[仕様変更] SCRIPT モードで JSON Object のキー値としてとれる値を JavaScript の仕様に合わせ、マイナスの数値の場合エラーとし、また値が常に文字列型に変換されます。</li>
 <li>[仕様変更] メソッド名が不統一となっていたため JSON.Context#getLevel() を非推奨とし、 JSON.Context#getDepth() に変更しました。</li>
 <li>[仕様変更] メソッド名が不統一となっていたため JSON.Context#getPropertyCaseStyle(), JSON.Context#getEnumCaseStyle() を廃止し、それぞれ JSON.Context#getPropertyStyle(), JSON.Context#getEnumStyle() に変更しました。</li>
 <li>[仕様変更] ActionScript版のJSONICは、ActionScriptで正規にJSONライブラリがサポートされ、必要性が薄くなったため廃止しました。</li>
 <li>[仕様変更] 非推奨となっていたWebServiceServletを廃止しました。</li>
-<li>[不具合] 例外発生時に表示されるカラム位置がずれる問題を修正しました。</li>
 </ul>
 
 <hr style="margin-top: 30px;" />
