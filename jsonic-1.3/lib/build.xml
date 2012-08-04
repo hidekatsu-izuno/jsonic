@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 
-<project name="jsonic" basedir="." default="build-all">
-	<property name="version" value="1.2.1" />
+<project name="jsonic" basedir="." default="build">
+	<property name="version" value="1.3.0" />
 
 	<property name="debug" value="true" />
-	<property name="flex.home" location="C:\Program Files (x86)\Adobe\Adobe Flash Builder 4 Plug-in\sdks\4.1.0" />	
 	<property name="dist" location="." />
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 
@@ -12,10 +11,8 @@
 		<tstamp />
 		<mkdir dir="${tmp}" />
 	</target>
-	
-	<target name="build-all" depends="build-java, build-as3" />
 
-	<target name="build-java" depends="init">
+	<target name="build" depends="init">
 		<mkdir dir="${tmp}/lib" />
 		<get src="http://repo1.maven.org/maven2/servletapi/servlet-api/2.4/servlet-api-2.4.jar" dest="${tmp}/lib/servlet-api.jar" />
 		<get src="http://maven.seasar.org/maven2/org/seasar/container/s2-framework/2.4.34/s2-framework-2.4.34.jar" dest="${tmp}/lib/s2-framework.jar" />
@@ -30,29 +27,15 @@
 				<fileset dir="${tmp}/lib" includes="*.jar" />
 			</classpath>
 		</javac>
-		
-		<condition property="jar.excludes" value="**/*.java">
-			<isfalse value="${debug}"/>
-		</condition>
 
 		<jar destfile="${dist}/${ant.project.name}-${version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
-			<fileset dir="src/java" excludes="${jar.excludes}" />
+			<fileset dir="src/java" excludes="**/*.java" />
+		</jar>
+		<jar destfile="${dist}/${ant.project.name}-${version}-sources.jar">
+			<fileset dir="src/java" />
 		</jar>
 		<delete dir="${tmp}/build" />
-	</target>
-	
-	<target name="build-as3" depends="init">
-		<java taskname="compc" jar="${flex.home}/lib/compc.jar" fork="true" failonerror="true" dir="${flex.home}/frameworks">
-			<arg line="-accessible=true" />
-			<arg line="-locale=en_US,ja_JP" />
-			<arg line="-namespace 'http://arnx.net/jsonic' '${basedir}/src/as3/manifest.xml'" />
-			<arg line="-source-path '${basedir}/src/as3' '${basedir}/src/as3/{locale}'" />
-			<arg line="-output '${dist}/${ant.project.name}-${version}.swc'" />
-			<arg line="-allow-source-path-overlap=true" />
-			<arg line="-include-namespaces 'http://arnx.net/jsonic'" />
-			<arg line="-include-classes 'net.arnx.jsonic.web.mxml.WebService'" />
-		</java>
 	</target>
 
 	<target name="clean">
