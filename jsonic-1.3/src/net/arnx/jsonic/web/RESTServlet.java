@@ -238,22 +238,29 @@ public class RESTServlet extends HttpServlet {
 		} catch (Exception e) {
 			if (e instanceof ClassNotFoundException) {
 				container.debug("Class Not Found.", e);
+				container.exception(e, request, response);
 				response.sendError(SC_NOT_FOUND, "Not Found");
 				response.flushBuffer();
 			} else if (e instanceof NoSuchMethodException) {
 				container.debug("Method Not Found.", e);
+				container.exception(e, request, response);
 				response.sendError(SC_NOT_FOUND, "Not Found");
 				response.flushBuffer();
 			} else if (e instanceof JSONException) {
 				container.debug("Fails to parse JSON.", e);
+				container.exception(e, request, response);
 				response.sendError(SC_BAD_REQUEST, "Bad Request");
 				response.flushBuffer();
 			} else if (e instanceof InvocationTargetException) {
 				Throwable cause = e.getCause();
-				container.debug("Cause error on invocation.", cause);
 				if (cause instanceof Error) {
 					throw (Error)cause;
-				} else if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
+				}
+				
+				container.debug("Cause error on invocation.", cause);
+				container.exception((Exception)cause, request, response);
+				
+				if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
 					response.sendError(SC_NOT_FOUND, "Not Found");
 					response.flushBuffer();
 				} else if (cause instanceof IllegalArgumentException) {
@@ -282,6 +289,7 @@ public class RESTServlet extends HttpServlet {
 				}
 			} else {
 				container.error("Internal error occurred.", e);
+				container.exception(e, request, response);
 				response.sendError(SC_INTERNAL_SERVER_ERROR, "Internal Server Error");				
 				response.flushBuffer();
 			}

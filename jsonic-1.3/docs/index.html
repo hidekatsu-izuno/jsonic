@@ -835,6 +835,7 @@ public class TestBean {
 <li>[機能追加] NamingStyle に何もしない NOOP を追加しました。また、EnumStyle のデフォルトスタイルが NamingStyle.NOOP に変更されました（1.2まではインデックス値に変換していました）。</li>
 <li>[機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。</li>
 <li>[機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。</li>
+<li>[機能追加] Container クラスに例外処理を受け取れる exception メソッドを追加しました（#28806）</li>
 <li>[仕様変更] Web Service API にて debug: true が指定された場合、PrettyPrint が自動的に有効になっていましたが、1.3では明示的に指定する必要があります。</li>
 <li>[仕様変更] setSuppressNull を指定すると parse 時や Map の format 時も null を無視していましたが不適切な場合が多いため、JavaBean あるいは DynaBean の format 時のみ有効となるよう変更しました。</li>
 <li>[仕様変更] parse/decode 時は formatの指定に関わらず日時文字列からDate型へ書式の自動解析による変換を行なっていましたが、formatが指定された場合は書式に従った解析を行なうよう変更しました。</li>

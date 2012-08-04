@@ -212,26 +212,34 @@ public class RPCServlet extends HttpServlet {
 					error = new LinkedHashMap<String, Object>();
 					if (e instanceof IllegalArgumentException) {
 						container.debug("Invalid Request.", e);
+						container.exception(e, request, response);
 						error.put("code", -32600);
 						error.put("message", "Invalid Request.");
 					} else if (e instanceof ClassNotFoundException) {
 						container.debug("Class Not Found.", e);
+						container.exception(e, request, response);
 						error.put("code", -32601);
 						error.put("message", "Method not found.");
 					} else if (e instanceof NoSuchMethodException) {
 						container.debug("Method Not Found.", e);
+						container.exception(e, request, response);
 						error.put("code", -32601);
 						error.put("message", "Method not found.");
 					} else if (e instanceof JSONException) {
 						container.debug("Invalid params.", e);
+						container.exception(e, request, response);
 						error.put("code", -32602);
 						error.put("message", "Invalid params.");
 					} else if (e instanceof InvocationTargetException) {
 						Throwable cause = e.getCause();
-						container.debug("Fails to invoke method.", cause);
 						if (cause instanceof Error) {
 							throw (Error)cause;
-						} else 	if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
+						}
+						
+						container.debug("Fails to invoke method.", cause);
+						container.exception((Exception)cause, request, response);
+						
+						if (cause instanceof IllegalStateException || cause instanceof UnsupportedOperationException) {
 							error.put("code", -32601);
 							error.put("message", "Method not found.");
 						} else if (cause instanceof IllegalArgumentException) {
@@ -258,6 +266,7 @@ public class RPCServlet extends HttpServlet {
 						}
 					} else {
 						container.error("Internal error occurred.", e);
+						container.exception(e, request, response);
 						error.put("code", -32603);
 						error.put("message", "Internal error.");
 					}

@@ -320,6 +320,9 @@ public class Container {
 		return result;
 	}
 	
+	public void exception(Exception e, HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	}
+	
 	public void end(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	}
 
