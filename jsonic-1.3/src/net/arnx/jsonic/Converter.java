@@ -1085,38 +1085,39 @@ final class CollectionConverter implements Converter {
 			value = src.values();
 		}
 		
-		Collection<Object> collection = (Collection<Object>)context.createInternal(c);
-		t = ClassUtil.resolveParameterizedType(t, Collection.class);
+		Type pt = context.getParameterType(t, Collection.class, 0);
+		Class<?> pc = ClassUtil.getRawType(pt);
+		JSONHint hint = context.getHint();
 		
-		Class<?> pc = Object.class;
-		Type pt = Object.class;
-		if (t instanceof ParameterizedType) {
-			Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-			pt = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-			pc = ClassUtil.getRawType(pt);
-		}
-		
+		Collection<Object> collection = null;
 		if (value instanceof Collection) {
 			Collection<?> src = (Collection<?>)value;
-						
-			if (!Object.class.equals(pc)) {
+			
+			context.createSizeHint = src.size();
+			collection = (Collection<Object>)context.createInternal(c);
+			context.createSizeHint = -1;
+			
+			if (Object.class.equals(pc)) {
+				collection.addAll(src);
+			} else {
 				Iterator<?> it = src.iterator();
-				JSONHint hint = context.getHint();
 				for (int i = 0; it.hasNext(); i++) {
 					context.enter(i, hint);
 					collection.add(context.postparseInternal(it.next(), pc, pt));
 					context.exit();
 				}
-			} else {
-				collection.addAll(src);
 			}
 		} else {
-			if (!Object.class.equals(pc)) {
-				context.enter(0, context.getHint());
+			context.createSizeHint = 1;
+			collection = (Collection<Object>)context.createInternal(c);
+			context.createSizeHint = -1;
+			
+			if (Object.class.equals(pc)) {
+				collection.add(value);
+			} else {
+				context.enter(0, hint);
 				collection.add(context.postparseInternal(value, pc, pt));
 				context.exit();
-			} else {
-				collection.add(value);
 			}
 		}
 		
@@ -1167,19 +1168,11 @@ final class MapConverter implements Converter {
 	@SuppressWarnings("unchecked")
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Map<Object, Object> map = (Map<Object, Object>)context.createInternal(c);
-		t = ClassUtil.resolveParameterizedType(t, Map.class);
 		
-		Type pt0 = Object.class;
-		Type pt1 = Object.class;
-		Class<?> pc0 = Object.class;
-		Class<?> pc1 = Object.class;
-		if (t instanceof ParameterizedType) {
-			Type[] pts = ((ParameterizedType)t).getActualTypeArguments();
-			pt0 = (pts != null && pts.length > 0) ? pts[0] : Object.class;
-			pt1 = (pts != null && pts.length > 1) ? pts[1] : Object.class;
-			pc0 = ClassUtil.getRawType(pt0);
-			pc1 = ClassUtil.getRawType(pt1);
-		}
+		Type pt0 = context.getParameterType(t, Map.class, 0);
+		Type pt1 = context.getParameterType(t, Map.class, 1);
+		Class<?> pc0 = ClassUtil.getRawType(pt0);
+		Class<?> pc1 = ClassUtil.getRawType(pt1);
 		
 		if (value instanceof Map<?, ?>) {	
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {

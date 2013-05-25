@@ -1093,19 +1093,21 @@ public class JSON {
 		JSONHint hint = context.getHint();
 		if (hint != null && hint.type() != Object.class) c = hint.type().asSubclass(c);
 		
-		if (c.isInterface()) {
+		if (Collection.class.equals(c) || List.class.equals(c) || ArrayList.class.equals(c)) {
+			if (context.createSizeHint != -1) {
+				instance = new ArrayList<Object>(context.createSizeHint);
+			} else {
+				instance = new ArrayList<Object>();
+			}
+		} else if (Map.class.equals(c)) {
+			instance = new LinkedHashMap<Object, Object>();
+		} else if (c.isInterface()) {
 			if (SortedMap.class.equals(c)) {
 				instance = new TreeMap<Object, Object>();
-			} else if (Map.class.equals(c)) {
-				instance = new LinkedHashMap<Object, Object>();
 			} else if (SortedSet.class.equals(c)) {
 				instance = new TreeSet<Object>();
 			} else if (Set.class.equals(c)) {
 				instance = new LinkedHashSet<Object>();
-			} else if (List.class.equals(c)) {
-				instance = new ArrayList<Object>();
-			} else if (Collection.class.equals(c)) {
-				instance = new ArrayList<Object>();
 			} else if (Appendable.class.equals(c)) {
 				instance = new StringBuilder();
 			}
@@ -1169,6 +1171,7 @@ public class JSON {
 		private final LocalCache cache;
 		
 		JSONHint skipHint;
+		int createSizeHint = -1;
 		
 		public Context() {
 			synchronized (JSON.this) {
@@ -1353,6 +1356,10 @@ public class JSON {
 			JSONHint hint = getHint();
 			String format = (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;			
 			return (format != null) ? getLocalCache().getDateFormat(format) : null;
+		}
+		
+		Type getParameterType(Type t, Class<?> cls, int pos) {
+			return getLocalCache().getParameterType(t, cls, pos);
 		}
 		
 		public String toString() {

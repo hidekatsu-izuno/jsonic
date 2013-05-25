@@ -1,5 +1,6 @@
 package net.arnx.jsonic.util;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -24,6 +25,7 @@ public class LocalCache {
 	private BigDecimal[] numberCache;
 	private Map<String, DateFormat> dateFormatCache;
 	private Map<String, NumberFormat> numberFormatCache;
+	private Map<ParameterTypeKey, Type> parameterTypeCache;
 	
 	public LocalCache(String bundle, Locale locale, TimeZone timeZone) {
 		this.resources = ResourceBundle.getBundle(bundle, locale);
@@ -160,6 +162,21 @@ public class LocalCache {
 		return dformat;
 	}
 	
+	public Type getParameterType(Type t, Class<?> cls, int pos) {
+		ParameterTypeKey key = new ParameterTypeKey(t, cls, pos);
+		Type result = null;
+		if (parameterTypeCache == null) {
+			parameterTypeCache = new HashMap<ParameterTypeKey, Type>();
+		} else {
+			result = parameterTypeCache.get(key);
+		}
+		if (result == null) {
+			result = ClassUtil.getParameterType(t, cls, pos);
+			parameterTypeCache.put(key, result);
+		}
+		return result;
+	}
+	
 	public String getMessage(String id) {
 		return getMessage(id, (Object[])null);
 	}
@@ -169,6 +186,52 @@ public class LocalCache {
 			return MessageFormat.format(resources.getString(id), args);
 		} else {
 			return resources.getString(id);
+		}
+	}
+	
+	private static class ParameterTypeKey {
+		private Type t;
+		private Class<?> cls;
+		private int pos;
+		
+		public ParameterTypeKey(Type t, Class<?> cls, int pos) {
+			this.t = t;
+			this.cls = cls;
+			this.pos = pos;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((cls == null) ? 0 : cls.hashCode());
+			result = prime * result + pos;
+			result = prime * result + ((t == null) ? 0 : t.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ParameterTypeKey other = (ParameterTypeKey) obj;
+			if (cls == null) {
+				if (other.cls != null)
+					return false;
+			} else if (!cls.equals(other.cls))
+				return false;
+			if (pos != other.pos)
+				return false;
+			if (t == null) {
+				if (other.t != null)
+					return false;
+			} else if (!t.equals(other.t))
+				return false;
+			return true;
 		}
 	}
 }

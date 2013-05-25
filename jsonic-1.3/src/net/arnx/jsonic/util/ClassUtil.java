@@ -28,8 +28,10 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -162,6 +164,65 @@ public final class ClassUtil {
 			}
 		}
 		return null;
+	}
+	
+	public static Type getParameterType(Type t, Class<?> base, int pos) {
+		Class<?> c = ClassUtil.getRawType(t);
+		if (!base.isAssignableFrom(c)) return null;
+		
+		Map<Type, Type> map = new HashMap<Type, Type>();
+		collectTypeVariableMap(t, c, map);
+		
+		TypeVariable<?> current = base.getTypeParameters()[pos];
+		Type result;
+		do {
+			result = map.get(current);
+			if (result instanceof TypeVariable<?>) {
+				current = (TypeVariable<?>)result;
+			} else {
+				break;
+			}
+		} while (current != null);
+		
+		return result;
+	}
+	
+	private static void collectTypeVariableMap(Type t, Class<?> c, Map<Type, Type> map) {
+		if (t instanceof ParameterizedType) {
+			TypeVariable<?>[] vs = c.getTypeParameters();
+			Type[] as = ((ParameterizedType)t).getActualTypeArguments();
+			if (vs != null && as != null && vs.length == as.length) {
+				for (int i = 0; i < vs.length; i++) {
+					map.put(vs[i], as[i]);
+				}
+			}
+			
+			Type ot = ((ParameterizedType)t).getOwnerType();
+			if (ot instanceof ParameterizedType) {
+				vs = ClassUtil.getRawType(ot).getTypeParameters();
+				as = ((ParameterizedType)ot).getActualTypeArguments();
+				if (vs != null && as != null && vs.length == as.length) {
+					for (int i = 0; i < vs.length; i++) {
+						map.put(vs[i], as[i]);
+					}
+				}
+			}
+		}
+		
+		Type[] its = c.getGenericInterfaces();
+		if (its != null) {
+			for (Type it : its) {
+				Class<?> ic = ClassUtil.getRawType(it);				
+				collectTypeVariableMap(it, ic, map);
+			}
+		}
+		
+		Type st = c.getGenericSuperclass();
+		while (st != null && st != Object.class) {
+			Class<?> sc = ClassUtil.getRawType(st);
+			collectTypeVariableMap(st, sc, map);
+			st = sc.getGenericSuperclass();
+		}
 	}
 	
 	public static byte[] serialize(Object o) throws ObjectStreamException {
