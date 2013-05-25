@@ -212,6 +212,12 @@ public class JSONTest {
 		};
 		assertEquals("{\"publicValue\":1}", JSON.encode(obj));
 		
+		JavaBean bean = new JavaBean();
+		bean.setaname("aname");
+		bean.setbName("bName");
+		bean.setCName("CName");
+		assertEquals("{\"CName\":\"CName\",\"bName\":\"bName\"}", JSON.encode(bean));
+		
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
@@ -465,6 +471,17 @@ public class JSONTest {
 		
 		assertEquals(map, JSON.decode(JSON.encode(map), TreeMap.class));
 
+		JavaBean bean = new JavaBean();
+		bean.setaname("aname");
+		bean.setbName("bName");
+		bean.setCName("CName");
+		
+		JavaBean beanResult = new JavaBean();
+		beanResult.setbName("bName");
+		beanResult.setCName("CName");
+		
+		assertEquals(beanResult, JSON.decode(JSON.encode(bean), bean.getClass()));
+		
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.b = "hoge-hoge";
@@ -1926,6 +1943,81 @@ class TestBean implements Serializable {
 	
 	public String toString() {
 		return JSON.encode(this);
+	}
+}
+
+class JavaBean {
+	private String aname;
+	private String bName;
+	private String CName;
+	
+	public void setaname(String aname) {
+		this.aname = aname;
+	}
+	
+	public String getaname() {
+		return aname;
+	}
+	
+	public void setbName(String bName) {
+		this.bName = bName;
+	}
+	
+	public String getbName() {
+		return bName;
+	}
+	
+	public void setCName(String CName) {
+		this.CName = CName;
+	}
+	
+	public String getCName() {
+		return CName;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((CName == null) ? 0 : CName.hashCode());
+		result = prime * result + ((aname == null) ? 0 : aname.hashCode());
+		result = prime * result + ((bName == null) ? 0 : bName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JavaBean other = (JavaBean) obj;
+		if (CName == null) {
+			if (other.CName != null)
+				return false;
+		} else if (!CName.equals(other.CName))
+			return false;
+		if (aname == null) {
+			if (other.aname != null)
+				return false;
+		} else if (!aname.equals(other.aname))
+			return false;
+		if (bName == null) {
+			if (other.bName != null)
+				return false;
+		} else if (!bName.equals(other.bName))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "JavaBean [aname=" + aname 
+				+ ", bName=" + bName 
+				+ ", CName=" + CName 
+				+ "]";
 	}
 }
 

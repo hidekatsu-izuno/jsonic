@@ -136,30 +136,34 @@ public final class BeanInfo {
 			m.setAccessible(true);
 			mi.methods.add(m);
 			
-			int type = -1;
-			if (name.startsWith("get") 
-					&& name.length() > 3 && !Character.isLowerCase(name.charAt(3))
+			boolean isReadMethod;
+			int start = 0;
+			if (name.startsWith("get")
 					&& paramTypes.length == 0 && !returnType.equals(void.class)) {
-				type = 1;
-				name = name.substring(3);
+				isReadMethod = true;
+				start = 3;
 			} else if (name.startsWith("is") 
-					&& name.length() > 2 && !Character.isLowerCase(name.charAt(2))
 					&& paramTypes.length == 0 && !returnType.equals(void.class)) {
-				type = 1;
-				name = name.substring(2);				
-			} else if (name.startsWith("set") 
-					&& name.length() > 3 && !Character.isLowerCase(name.charAt(3))
+				isReadMethod = true;
+				start = 2;
+			} else if (name.startsWith("set")
 					&& paramTypes.length == 1 && !paramTypes[0].equals(void.class)) {
-				type = 2;
-				name = name.substring(3);
+				isReadMethod = false;
+				start = 3;
 			} else {
 				continue;
 			}
 			
-			if (name.length() < 2 || !Character.isUpperCase(name.charAt(1))){
-				char[] chars = name.toCharArray();
-				chars[0] = Character.toLowerCase(chars[0]);
-				name = String.valueOf(chars);
+			if ((name.length() > start && !Character.isLowerCase(name.charAt(start))) 
+					|| (name.length() > start + 1 && !Character.isLowerCase(name.charAt(start + 1)))) {
+				name = name.substring(start);
+				if (name.length() < 2 || !Character.isUpperCase(name.charAt(1))){
+					char[] chars = name.toCharArray();
+					chars[0] = Character.toLowerCase(chars[0]);
+					name = String.valueOf(chars);
+				}
+			} else {
+				continue;
 			}
 			
 			PropertyInfo prop;
@@ -183,7 +187,7 @@ public final class BeanInfo {
 				}
 			}
 			
-			if (type == 1) {
+			if (isReadMethod) {
 				prop.readMethod = m;
 			} else {
 				prop.writeMethod = m;
