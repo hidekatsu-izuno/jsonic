@@ -1094,13 +1094,18 @@ public class JSON {
 		if (hint != null && hint.type() != Object.class) c = hint.type().asSubclass(c);
 		
 		if (Collection.class.equals(c) || List.class.equals(c) || ArrayList.class.equals(c)) {
-			if (context.createSizeHint != -1) {
+			if (context.createSizeHint >= 0) {
 				instance = new ArrayList<Object>(context.createSizeHint);
 			} else {
 				instance = new ArrayList<Object>();
 			}
 		} else if (Map.class.equals(c)) {
-			instance = new LinkedHashMap<Object, Object>();
+			if (context.createSizeHint >= 0) {
+				int capacity = 	Math.max((int) (context.createSizeHint / 0.75F) + 1, 16);
+				instance = new LinkedHashMap<Object, Object>(capacity);
+			} else {
+				instance = new LinkedHashMap<Object, Object>();
+			}
 		} else if (c.isInterface()) {
 			if (SortedMap.class.equals(c)) {
 				instance = new TreeMap<Object, Object>();

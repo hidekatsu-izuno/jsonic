@@ -1167,19 +1167,24 @@ final class MapConverter implements Converter {
 	
 	@SuppressWarnings("unchecked")
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
-		Map<Object, Object> map = (Map<Object, Object>)context.createInternal(c);
-		
 		Type pt0 = context.getParameterType(t, Map.class, 0);
 		Type pt1 = context.getParameterType(t, Map.class, 1);
 		Class<?> pc0 = ClassUtil.getRawType(pt0);
 		Class<?> pc1 = ClassUtil.getRawType(pt1);
 		
-		if (value instanceof Map<?, ?>) {	
+		Map<Object, Object> map;
+		
+		if (value instanceof Map<?, ?>) {
+			Map<?, ?> src = (Map<?,?>)value;
+			context.createSizeHint = src.size();
+			map = (Map<Object, Object>)context.createInternal(c);
+			context.createSizeHint = -1;
+			
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
-				map.putAll((Map<?,?>)value);
+				map.putAll(src);
 			} else {
 				JSONHint hint = context.getHint();
-				for (Map.Entry<?, ?> entry : ((Map<?,?>)value).entrySet()) {
+				for (Map.Entry<?, ?> entry : src.entrySet()) {
 					context.enter('.', hint);
 					Object key = context.postparseInternal(entry.getKey(), pc0, pt0);
 					context.exit();
@@ -1190,13 +1195,16 @@ final class MapConverter implements Converter {
 				}
 			}
 		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			context.createSizeHint = src.size();
+			map = (Map<Object, Object>)context.createInternal(c);
+			context.createSizeHint = -1;
+			
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
-				List<?> src = (List<?>)value;
 				for (int i = 0; i < src.size(); i++) {
 					map.put(i, src.get(i));
 				}
 			} else {
-				List<?> src = (List<?>)value;
 				JSONHint hint = context.getHint();
 				for (int i = 0; i < src.size(); i++) {
 					context.enter('.', hint);
@@ -1209,8 +1217,11 @@ final class MapConverter implements Converter {
 				}
 			}
 		} else {
-			JSONHint hint = context.getHint();
+			context.createSizeHint = 1;
+			map = (Map<Object, Object>)context.createInternal(c);
+			context.createSizeHint = -1;
 			
+			JSONHint hint = context.getHint();
 			Object key = (hint != null && hint.anonym().length() > 0) ? hint.anonym() : null;
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
 				map.put(value, null);
