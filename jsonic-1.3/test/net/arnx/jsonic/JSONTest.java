@@ -802,6 +802,10 @@ public class JSONTest {
 		json = new JSON();
 		
 		json.setPropertyStyle(NamingStyle.NOOP);
+		json.setEnumStyle(null);
+		assertEquals("{\"AAA_BBB_CCC\":1,\"aaaAaaAaa\":0,\"aaaあああ\":2}", json.format(named));
+		
+		json.setPropertyStyle(NamingStyle.NOOP);
 		json.setEnumStyle(NamingStyle.NOOP);
 		assertEquals("{\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"aaaAaaAaa\":\"aaaAaaAaa\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
 		
