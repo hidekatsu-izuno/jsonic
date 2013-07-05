@@ -27,14 +27,14 @@ public class TraditionalParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_ROOT;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -66,14 +66,14 @@ public class TraditionalParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_ROOT;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -104,14 +104,14 @@ public class TraditionalParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_NAME;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -119,7 +119,7 @@ public class TraditionalParser extends JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			set(JSONEventType.NAME, parseString(in, true), false);
+			set(JSONEventType.NAME, parseString(true), false);
 			return AFTER_NAME;
 		case '-':
 		case '0':
@@ -133,7 +133,7 @@ public class TraditionalParser extends JSONParser {
 		case '8':
 		case '9':
 			in.back();
-			Object num = parseNumber(in);
+			Object num = parseNumber();
 			set(JSONEventType.NAME, (num != null) ? num.toString() : null, false);
 			return AFTER_NAME;
 		case '}':
@@ -161,7 +161,7 @@ public class TraditionalParser extends JSONParser {
 			}
 		default:
 			in.back();
-			Object literal = parseLiteral(in, true);
+			Object literal = parseLiteral(true);
 			set(JSONEventType.NAME, (literal != null) ? literal.toString() : null, false);
 			return AFTER_NAME;
 		}
@@ -176,14 +176,14 @@ public class TraditionalParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_NAME;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -210,14 +210,14 @@ public class TraditionalParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_VALUE;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -231,7 +231,7 @@ public class TraditionalParser extends JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			set(JSONEventType.STRING, parseString(in, true), true);
+			set(JSONEventType.STRING, parseString(true), true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		case '-':
@@ -246,7 +246,7 @@ public class TraditionalParser extends JSONParser {
 		case '8':
 		case '9':
 			in.back();
-			set(JSONEventType.NUMBER, parseNumber(in), true);
+			set(JSONEventType.NUMBER, parseNumber(), true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		case ',':
@@ -297,7 +297,7 @@ public class TraditionalParser extends JSONParser {
 			}
 		default:
 			in.back();
-			Object literal = parseLiteral(in, true);
+			Object literal = parseLiteral(true);
 			set(getType(), literal, true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
@@ -313,14 +313,14 @@ public class TraditionalParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_VALUE;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}

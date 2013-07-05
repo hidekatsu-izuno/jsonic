@@ -120,7 +120,7 @@ public class JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
@@ -149,7 +149,7 @@ public class JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
@@ -175,14 +175,14 @@ public class JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_NAME;
 		case '"':
 			in.back();
-			set(JSONEventType.NAME, parseString(in, false), false);
+			set(JSONEventType.NAME, parseString(false), false);
 			return AFTER_NAME;
 		case '}':
 			if (isFirst() && getBeginType() == JSONEventType.START_OBJECT) {
@@ -210,7 +210,7 @@ public class JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
@@ -232,7 +232,7 @@ public class JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
@@ -245,7 +245,7 @@ public class JSONParser {
 			return BEFORE_VALUE;
 		case '"':
 			in.back();
-			set(JSONEventType.STRING, parseString(in, false), true);
+			set(JSONEventType.STRING, parseString(false), true);
 			return AFTER_VALUE;
 		case '-':
 		case '0':
@@ -259,19 +259,19 @@ public class JSONParser {
 		case '8':
 		case '9':
 			in.back();
-			set(JSONEventType.NUMBER, parseNumber(in), true);
+			set(JSONEventType.NUMBER, parseNumber(), true);
 			return AFTER_VALUE;	
 		case 't':
 			in.back();
-			set(JSONEventType.BOOLEAN, parseLiteral(in, "true", Boolean.TRUE), true);
+			set(JSONEventType.BOOLEAN, parseLiteral("true", Boolean.TRUE), true);
 			return AFTER_VALUE;
 		case 'f':
 			in.back();
-			set(JSONEventType.BOOLEAN, parseLiteral(in, "false", Boolean.FALSE), true);
+			set(JSONEventType.BOOLEAN, parseLiteral("false", Boolean.FALSE), true);
 			return AFTER_VALUE;
 		case 'n':
 			in.back();
-			set(JSONEventType.NULL, parseLiteral(in, "null", null), true);
+			set(JSONEventType.NULL, parseLiteral("null", null), true);
 			return AFTER_VALUE;
 		case ']':
 			if (isFirst() && getBeginType() == JSONEventType.START_ARRAY) {
@@ -305,7 +305,7 @@ public class JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
@@ -391,7 +391,7 @@ public class JSONParser {
 		return first;
 	}
 	
-	Object parseString(InputSource in, boolean any) throws IOException {
+	Object parseString(boolean any) throws IOException {
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
 		int start = in.next();
@@ -420,7 +420,7 @@ public class JSONParser {
 					rest = 0;
 					
 					in.back();
-					char c = parseEscape(in);
+					char c = parseEscape();
 					if (sb != null) sb.append(c);
 				} else { // control chars
 					if (any) {
@@ -445,7 +445,7 @@ public class JSONParser {
 		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
-	char parseEscape(InputSource in) throws IOException {
+	char parseEscape() throws IOException {
 		int point = 1; // 0 '\' 1 'u' 2 'x' 3 'x' 4 'x' 5 'x' E
 		char escape = '\0';
 		
@@ -497,7 +497,7 @@ public class JSONParser {
 		return escape;
 	}
 	
-	Object parseNumber(InputSource in) throws IOException {
+	Object parseNumber() throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
@@ -591,7 +591,7 @@ public class JSONParser {
 		return (sb != null) ? cache.getBigDecimal(sb) : null;
 	}
 	
-	Object parseLiteral(InputSource in, String expected, Object result) throws IOException {
+	Object parseLiteral(String expected, Object result) throws IOException {
 		int pos = 0;
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -608,7 +608,7 @@ public class JSONParser {
 		throw createParseException(in, "json.parse.UnrecognizedLiteral", expected.substring(0, pos));
 	}
 
-	Object parseLiteral(InputSource in, boolean asValue) throws IOException {
+	Object parseLiteral(boolean asValue) throws IOException {
 		int point = 0; // 0 'IdStart' 1 'IdPart' ... !'IdPart' E
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
@@ -616,7 +616,7 @@ public class JSONParser {
 		while ((n = in.next()) != -1) {
 			if (n == '\\') {
 				in.back();
-				n = parseEscape(in);
+				n = parseEscape();
 			}
 			
 			if (point == 0) {
@@ -659,7 +659,7 @@ public class JSONParser {
 		return (active) ? str : null;
 	}
 	
-	String parseComment(InputSource in) throws IOException {
+	String parseComment() throws IOException {
 		int point = 0; // 0 '/' 1 '*' 2  '*' 3 '/' E or  0 '/' 1 '/' 4  '\r|\n|\r\n' E
 		StringBuilder sb = !isIgnoreWhitespace() ? cache.getCachedBuffer() : null;
 		
@@ -741,7 +741,7 @@ public class JSONParser {
 		return (sb != null) ? cache.getString(sb) : null;
 	}
 	
-	String parseWhitespace(InputSource in) throws IOException {
+	String parseWhitespace() throws IOException {
 		StringBuilder sb = !isIgnoreWhitespace() ? cache.getCachedBuffer() : null;
 		
 		int n = -1;

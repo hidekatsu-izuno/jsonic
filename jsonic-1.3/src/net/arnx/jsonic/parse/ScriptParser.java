@@ -24,14 +24,14 @@ public class ScriptParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_ROOT;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -45,7 +45,7 @@ public class ScriptParser extends JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			set(JSONEventType.STRING, parseString(in, true), true);
+			set(JSONEventType.STRING, parseString(true), true);
 			return AFTER_ROOT;
 		case '-':
 		case '0':
@@ -59,19 +59,19 @@ public class ScriptParser extends JSONParser {
 		case '8':
 		case '9':
 			in.back();
-			set(JSONEventType.NUMBER, parseNumber(in), true);
+			set(JSONEventType.NUMBER, parseNumber(), true);
 			return AFTER_ROOT;	
 		case 't':
 			in.back();
-			set(JSONEventType.BOOLEAN, parseLiteral(in, "true", Boolean.TRUE), true);
+			set(JSONEventType.BOOLEAN, parseLiteral("true", Boolean.TRUE), true);
 			return AFTER_ROOT;
 		case 'f':
 			in.back();
-			set(JSONEventType.BOOLEAN, parseLiteral(in, "false", Boolean.FALSE), true);
+			set(JSONEventType.BOOLEAN, parseLiteral("false", Boolean.FALSE), true);
 			return AFTER_ROOT;
 		case 'n':
 			in.back();
-			set(JSONEventType.NULL, parseLiteral(in, "null", null), true);
+			set(JSONEventType.NULL, parseLiteral("null", null), true);
 			return AFTER_ROOT;
 		case -1:
 			if (isInterpretterMode()) {
@@ -92,14 +92,14 @@ public class ScriptParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_ROOT;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -142,14 +142,14 @@ public class ScriptParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_NAME;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -157,7 +157,7 @@ public class ScriptParser extends JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			set(JSONEventType.NAME, parseString(in, true), false);
+			set(JSONEventType.NAME, parseString(true), false);
 			return AFTER_NAME;
 		case '0':
 		case '1':
@@ -170,7 +170,7 @@ public class ScriptParser extends JSONParser {
 		case '8':
 		case '9':
 			in.back();
-			Object num = parseNumber(in);
+			Object num = parseNumber();
 			set(JSONEventType.NAME, (num != null) ? num.toString() : null, false);
 			return AFTER_NAME;
 		case '}':
@@ -188,7 +188,7 @@ public class ScriptParser extends JSONParser {
 			throw createParseException(in, "json.parse.ObjectNotClosedError");
 		default:
 			in.back();
-			set(JSONEventType.NAME, parseLiteral(in, false), false);
+			set(JSONEventType.NAME, parseLiteral(false), false);
 			return AFTER_NAME;
 		}
 	}
@@ -202,14 +202,14 @@ public class ScriptParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_NAME;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -232,14 +232,14 @@ public class ScriptParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return BEFORE_VALUE;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}
@@ -253,7 +253,7 @@ public class ScriptParser extends JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			set(JSONEventType.STRING, parseString(in, true), true);
+			set(JSONEventType.STRING, parseString(true), true);
 			return AFTER_VALUE;
 		case '-':
 		case '0':
@@ -267,19 +267,19 @@ public class ScriptParser extends JSONParser {
 		case '8':
 		case '9':
 			in.back();
-			set(JSONEventType.NUMBER, parseNumber(in), true);
+			set(JSONEventType.NUMBER, parseNumber(), true);
 			return AFTER_VALUE;	
 		case 't':
 			in.back();
-			set(JSONEventType.BOOLEAN, parseLiteral(in, "true", Boolean.TRUE), true);
+			set(JSONEventType.BOOLEAN, parseLiteral("true", Boolean.TRUE), true);
 			return AFTER_VALUE;
 		case 'f':
 			in.back();
-			set(JSONEventType.BOOLEAN, parseLiteral(in, "false", Boolean.FALSE), true);
+			set(JSONEventType.BOOLEAN, parseLiteral("false", Boolean.FALSE), true);
 			return AFTER_VALUE;
 		case 'n':
 			in.back();
-			set(JSONEventType.NULL, parseLiteral(in, "null", null), true);
+			set(JSONEventType.NULL, parseLiteral("null", null), true);
 			return AFTER_VALUE;
 		case ']':
 			if (isFirst() && getBeginType() == JSONEventType.START_ARRAY) {
@@ -314,14 +314,14 @@ public class ScriptParser extends JSONParser {
 		case '\r':
 		case '\n':
 			in.back();
-			String ws = parseWhitespace(in);
+			String ws = parseWhitespace();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.WHITESPACE, ws, false);
 			}
 			return AFTER_VALUE;
 		case '/':
 			in.back();
-			String comment = parseComment(in);
+			String comment = parseComment();
 			if (!isIgnoreWhitespace()) {
 				set(JSONEventType.COMMENT, comment, false);
 			}

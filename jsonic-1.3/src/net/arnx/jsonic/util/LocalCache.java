@@ -42,29 +42,29 @@ public class LocalCache {
 		return builderCache;
 	}
 	
-	public String getString(StringBuilder sb) {
-		if (sb.length() == 0) return "";
+	public String getString(CharSequence cs) {
+		if (cs.length() == 0) return "";
 		
-		if (sb.length() < 32) {
-			int index = getCacheIndex(sb);
+		if (cs.length() < 32) {
+			int index = getCacheIndex(cs);
 			if (index < 0) {
-				return sb.toString();
+				return cs.toString();
 			}
 			
 			if (stringCache == null) stringCache = new String[CACHE_SIZE];
 			if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
 			
 			String str = stringCache[index];
-			if (str == null || str.length() != sb.length()) {
-				str = sb.toString();
+			if (str == null || str.length() != cs.length()) {
+				str = cs.toString();
 				stringCache[index] = str;
 				numberCache[index] = null;
 				return str;
 			}
 			
-			for (int i = 0; i < sb.length(); i++) {
-				if (str.charAt(i) != sb.charAt(i)) {
-					str = sb.toString();
+			for (int i = 0; i < cs.length(); i++) {
+				if (str.charAt(i) != cs.charAt(i)) {
+					str = cs.toString();
 					stringCache[index] = str;
 					numberCache[index] = null;
 					return str;
@@ -73,22 +73,22 @@ public class LocalCache {
 			return str;
 		}
 		
-		return sb.toString();
+		return cs.toString();
 	}
 	
-	public BigDecimal getBigDecimal(StringBuilder sb) {
-		if (sb.length() == 1) {
-			if (sb.charAt(0) == '0') {
+	public BigDecimal getBigDecimal(CharSequence cs) {
+		if (cs.length() == 1) {
+			if (cs.charAt(0) == '0') {
 				return BigDecimal.ZERO;
-			} else if (sb.charAt(0) == '1') {
+			} else if (cs.charAt(0) == '1') {
 				return BigDecimal.ONE;
 			}
 		}
 		
-		if (sb.length() < 32) {
-			int index = getCacheIndex(sb);
+		if (cs.length() < 32) {
+			int index = getCacheIndex(cs);
 			if (index < 0) {
-				return new BigDecimal(sb.toString());
+				return new BigDecimal(cs.toString());
 			}
 						
 			if (stringCache == null) stringCache = new String[CACHE_SIZE];
@@ -96,17 +96,17 @@ public class LocalCache {
 			
 			String str = stringCache[index];
 			BigDecimal num = numberCache[index];
-			if (str == null || str.length() != sb.length()) {
-				str = sb.toString();
+			if (str == null || str.length() != cs.length()) {
+				str = cs.toString();
 				num = new BigDecimal(str);
 				stringCache[index] = str;
 				numberCache[index] = num;
 				return num;
 			}
 			
-			for (int i = 0; i < sb.length(); i++) {
-				if (str.charAt(i) != sb.charAt(i)) {
-					str = sb.toString();
+			for (int i = 0; i < cs.length(); i++) {
+				if (str.charAt(i) != cs.charAt(i)) {
+					str = cs.toString();
 					num = new BigDecimal(str);
 					stringCache[index] = str;
 					numberCache[index] = num;
@@ -121,14 +121,14 @@ public class LocalCache {
 			return num;
 		}
 		
-		return new BigDecimal(sb.toString());
+		return new BigDecimal(cs.toString());
 	}
 	
-	private int getCacheIndex(StringBuilder sb) {
+	private int getCacheIndex(CharSequence cs) {
 		int h = 0;
-		int max = Math.min(16, sb.length());
+		int max = Math.min(16, cs.length());
 		for (int i = 0; i < max; i++) {
-			h = h * 31 + sb.charAt(i);
+			h = h * 31 + cs.charAt(i);
 		}
 		return h & (CACHE_SIZE-1);
 	}
