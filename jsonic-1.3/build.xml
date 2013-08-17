@@ -69,7 +69,7 @@
 	<target name="dist" depends="build-sample">
 		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true"
 			additionalparam="-J-Duser.language=en_US">
-			<link href="http://download.oracle.com/javase/7/docs/api/" />
+			<link href="http://docs.oracle.com/javase/7/docs/api/" />
 			<excludepackage name="net.arnx.jsonic.io.*" />
 			<excludepackage name="net.arnx.jsonic.parse.*" />
 			<excludepackage name="net.arnx.jsonic.util.*" />
