@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="jsonic-1.3-deploy" default="stage" basedir="." 
+<project name="jsonic-1.3-deploy" default="deploy" basedir="." 
 	xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
 	<xmlproperty file="pom.xml" />
@@ -48,7 +48,7 @@
 			encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" locale="en_US"
 			additionalparam="-J-Duser.language=en_US"
 			author="true">
-			<link href="http://download.oracle.com/javase/7/docs/api/" />
+			<link href="http://docs.oracle.com/javase/7/docs/api/" />
 			<excludepackage name="net.arnx.jsonic.util.*" />
 			<excludepackage name="net.arnx.jsonic.io.*" />
 			<classpath refid="dependencies.path"/>
@@ -63,17 +63,7 @@
 		</jar>
 	</target>
 	
-	<target name="deploy" depends="dist" description="deploy snapshot version to Maven snapshot repository">
-		<artifact:mvn>
-			<arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file" />
-			<arg value="-Durl=${maven-snapshots-repository-url}" />
-			<arg value="-DrepositoryId=${maven-snapshots-repository-id}" />
-			<arg value="-DpomFile=pom.xml" />
-			<arg value="-Dfile=${binaries-jar}" />
-		</artifact:mvn>
-	</target>
-	
-	<target name="stage" depends="dist" description="deploy release version to Maven staging repository">
+	<target name="deploy" depends="dist" description="deploy release version to Maven staging repository">
 		<!-- sign and deploy the main artifact -->
 		<artifact:mvn>
 			<arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
