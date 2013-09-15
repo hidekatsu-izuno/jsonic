@@ -297,6 +297,7 @@ public class JSON {
 		CONVERT_MAP.put(Collection.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(Set.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(List.class, CollectionConverter.INSTANCE);
+		CONVERT_MAP.put(ArrayList.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(SortedSet.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(LinkedList.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(HashSet.class, CollectionConverter.INSTANCE);

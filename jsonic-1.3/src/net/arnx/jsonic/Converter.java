@@ -1077,22 +1077,50 @@ final class CollectionConverter implements Converter {
 	
 	@SuppressWarnings("unchecked")
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
-		if (value instanceof Map) {
-			Map<?, ?> src = (Map<?, ?>)value;
-			if (!(src instanceof SortedMap<?, ?>)) {
-				src = new TreeMap<Object, Object>(src);
-			}
-			value = src.values();
-		}
-		
 		Type pt = context.getParameterType(t, Collection.class, 0);
 		Class<?> pc = ClassUtil.getRawType(pt);
 		JSONHint hint = context.getHint();
 		
 		Collection<Object> collection = null;
-		if (value instanceof Collection) {
-			Collection<?> src = (Collection<?>)value;
+		if (value instanceof List) {
+			List<?> src = (List<?>)value;
 			
+			context.createSizeHint = src.size();
+			collection = (Collection<Object>)context.createInternal(c);
+			context.createSizeHint = -1;
+			
+			if (Object.class.equals(pc)) {
+				collection.addAll(src);
+			} else {
+				for (int i = 0; i < src.size(); i++) {
+					context.enter(i, hint);
+					collection.add(context.postparseInternal(src.get(i), pc, pt));
+					context.exit();
+				}
+			}
+		} else if (value instanceof Map) {
+			Map<?, ?> map = (Map<?, ?>)value;
+			if (!(map instanceof SortedMap<?, ?>)) {
+				map = new TreeMap<Object, Object>(map);
+			}
+			
+			Collection<?> src = map.values();
+			context.createSizeHint = src.size();
+			collection = (Collection<Object>)context.createInternal(c);
+			context.createSizeHint = -1;
+			
+			if (Object.class.equals(pc)) {
+				collection.addAll(src);
+			} else {
+				Iterator<?> it = src.iterator();
+				for (int i = 0; it.hasNext(); i++) {
+					context.enter(i, hint);
+					collection.add(context.postparseInternal(it.next(), pc, pt));
+					context.exit();
+				}
+			}
+		} else if (value instanceof Collection) {
+			Collection<?> src = (Collection<?>)value;
 			context.createSizeHint = src.size();
 			collection = (Collection<Object>)context.createInternal(c);
 			context.createSizeHint = -1;
