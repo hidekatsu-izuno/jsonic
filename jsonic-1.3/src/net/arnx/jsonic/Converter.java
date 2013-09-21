@@ -2,6 +2,7 @@ package net.arnx.jsonic;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -13,9 +14,11 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -43,11 +46,30 @@ import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
 
 interface Converter {
-	Object convert(Context context, Object value, Class<?> c, Type t) throws Exception;
+	public boolean accept(Class<?> cls);
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception;
 }
 
 final class NullConverter implements Converter {
 	public static final NullConverter INSTANCE = new NullConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return true;
+	}
+	
+	public Object convert(Context context, Object value, Class<?> c, Type t) {
+		return null;
+	}
+}
+
+final class NullableConverter implements Converter {
+	public static final NullableConverter INSTANCE = new NullableConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return java.sql.Array.class.isAssignableFrom(cls) || Struct.class.isAssignableFrom(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) {
 		return null;
@@ -70,6 +92,11 @@ final class PlainConverter implements Converter {
 		PRIMITIVE_MAP.put(char.class, '\0');
 	}
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return PRIMITIVE_MAP.containsKey(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) {
 		return value;
 	}
@@ -81,6 +108,11 @@ final class PlainConverter implements Converter {
 
 final class FormatConverter implements Converter {
 	public static final FormatConverter INSTANCE = new FormatConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return true;
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Context context2 = context.copy();
@@ -105,6 +137,11 @@ final class FormatConverter implements Converter {
 final class StringSerializableConverter implements Converter {
 	public static final StringSerializableConverter INSTANCE = new StringSerializableConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return true;
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
 			try {
@@ -124,6 +161,11 @@ final class StringSerializableConverter implements Converter {
 final class SerializableConverter implements Converter {
 	public static final SerializableConverter INSTANCE = new SerializableConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Serializable.class.isAssignableFrom(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
 			return ClassUtil.deserialize(Base64.decode((String)value));
@@ -136,6 +178,11 @@ final class SerializableConverter implements Converter {
 
 final class BooleanConverter implements Converter {
 	public static final BooleanConverter INSTANCE = new BooleanConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Boolean.class.equals(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -174,6 +221,11 @@ final class BooleanConverter implements Converter {
 final class CharacterConverter implements Converter {
 	public static final CharacterConverter INSTANCE = new CharacterConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return char.class.equals(cls) || Character.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -202,6 +254,11 @@ final class CharacterConverter implements Converter {
 
 final class ByteConverter implements Converter {
 	public static final ByteConverter INSTANCE = new ByteConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return byte.class.equals(cls) || Byte.class.equals(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -251,6 +308,11 @@ final class ByteConverter implements Converter {
 final class ShortConverter implements Converter {
 	public static final ShortConverter INSTANCE = new ShortConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return short.class.equals(cls) || Short.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -295,6 +357,11 @@ final class ShortConverter implements Converter {
 
 final class IntegerConverter  implements Converter {
 	public static final IntegerConverter INSTANCE = new IntegerConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return int.class.equals(cls) || Integer.class.equals(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -341,6 +408,11 @@ final class IntegerConverter  implements Converter {
 final class LongConverter implements Converter {
 	public static final LongConverter INSTANCE = new LongConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return long.class.equals(cls) || Long.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -386,6 +458,11 @@ final class LongConverter implements Converter {
 final class FloatConverter  implements Converter {
 	public static final FloatConverter INSTANCE = new FloatConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return float.class.equals(cls) || Float.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -420,6 +497,11 @@ final class FloatConverter  implements Converter {
 final class DoubleConverter  implements Converter {
 	public static final DoubleConverter INSTANCE = new DoubleConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return double.class.equals(cls) || Double.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -453,6 +535,11 @@ final class DoubleConverter  implements Converter {
 
 final class BigIntegerConverter  implements Converter {
 	public static final BigIntegerConverter INSTANCE = new BigIntegerConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return BigInteger.class.equals(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -500,6 +587,11 @@ final class BigIntegerConverter  implements Converter {
 final class BigDecimalConverter  implements Converter {
 	public static final BigDecimalConverter INSTANCE = new BigDecimalConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return BigDecimal.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -533,6 +625,11 @@ final class BigDecimalConverter  implements Converter {
 final class PatternConverter implements Converter {
 	public static final PatternConverter INSTANCE = new PatternConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Pattern.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -553,6 +650,11 @@ final class PatternConverter implements Converter {
 final class TimeZoneConverter implements Converter {
 	public static final TimeZoneConverter INSTANCE = new TimeZoneConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return TimeZone.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -572,6 +674,11 @@ final class TimeZoneConverter implements Converter {
 
 final class LocaleConverter implements Converter {
 	public static final LocaleConverter INSTANCE = new LocaleConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Locale.class.equals(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof List<?>) {
@@ -613,6 +720,11 @@ final class LocaleConverter implements Converter {
 final class FileConverter implements Converter {
 	public static final FileConverter INSTANCE = new FileConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return File.class.equals(cls);
+	}
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -631,6 +743,11 @@ final class FileConverter implements Converter {
 
 final class URLConverter implements Converter {
 	public static final URLConverter INSTANCE = new URLConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return URL.class.equals(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -657,6 +774,11 @@ final class URLConverter implements Converter {
 final class URIConverter implements Converter {
 	public static final URIConverter INSTANCE = new URIConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return URI.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -682,6 +804,11 @@ final class URIConverter implements Converter {
 final class UUIDConverter implements Converter {
 	public static final UUIDConverter INSTANCE = new UUIDConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return UUID.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -701,6 +828,11 @@ final class UUIDConverter implements Converter {
 final class CharsetConverter implements Converter {
 	public static final CharsetConverter INSTANCE = new CharsetConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Charset.class.equals(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -719,6 +851,11 @@ final class CharsetConverter implements Converter {
 
 final class ClassConverter implements Converter {
 	public static final ClassConverter INSTANCE = new ClassConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Class.class.equals(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -761,6 +898,11 @@ final class ClassConverter implements Converter {
 final class CharSequenceConverter implements Converter {
 	public static final CharSequenceConverter INSTANCE = new CharSequenceConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return CharSequence.class.isAssignableFrom(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -777,6 +919,11 @@ final class CharSequenceConverter implements Converter {
 
 final class AppendableConverter implements Converter {
 	public static final AppendableConverter INSTANCE = new AppendableConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Appendable.class.isAssignableFrom(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -796,6 +943,11 @@ final class AppendableConverter implements Converter {
 
 final class EnumConverter implements Converter {
 	public static final EnumConverter INSTANCE = new EnumConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return cls.isEnum();
+	}
 	
 	@SuppressWarnings({ "rawtypes" })
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -836,6 +988,11 @@ final class EnumConverter implements Converter {
 final class DateConverter implements Converter {
 	public static final DateConverter INSTANCE = new DateConverter();
 	private static final Pattern TIMEZONE_PATTERN = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})");
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Date.class.isAssignableFrom(cls);
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -975,6 +1132,11 @@ final class DateConverter implements Converter {
 final class CalendarConverter implements Converter {
 	public static final CalendarConverter INSTANCE = new CalendarConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Calendar.class.isAssignableFrom(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1008,6 +1170,11 @@ final class CalendarConverter implements Converter {
 final class InetAddressConverter implements Converter {
 	public static final InetAddressConverter INSTANCE = new InetAddressConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return InetAddress.class.isAssignableFrom(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1017,8 +1184,7 @@ final class InetAddressConverter implements Converter {
 		}
 		
 		if (value != null) {
-			Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
-			return inetAddressClass.getMethod("getByName", String.class).invoke(null, value.toString().trim());
+			return InetAddress.getByName(value.toString().trim());
 		}
 		return null;
 	}
@@ -1026,6 +1192,11 @@ final class InetAddressConverter implements Converter {
 
 final class ArrayConverter implements Converter {
 	public static final ArrayConverter INSTANCE = new ArrayConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return cls.isArray();
+	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -1074,6 +1245,11 @@ final class ArrayConverter implements Converter {
 
 final class CollectionConverter implements Converter {
 	public static final CollectionConverter INSTANCE = new CollectionConverter();
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Collection.class.isAssignableFrom(cls);
+	}
 	
 	@SuppressWarnings("unchecked")
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -1156,6 +1332,11 @@ final class CollectionConverter implements Converter {
 final class PropertiesConverter implements Converter {
 	public static final PropertiesConverter INSTANCE = new PropertiesConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Properties.class.isAssignableFrom(cls);
+	}
+	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Properties prop = (Properties)context.createInternal(c);
 		if (value instanceof Map<?, ?> || value instanceof List<?>) {
@@ -1193,6 +1374,11 @@ final class PropertiesConverter implements Converter {
 final class MapConverter implements Converter {
 	public static final MapConverter INSTANCE = new MapConverter();
 	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Map.class.isAssignableFrom(cls);
+	}
+		
 	@SuppressWarnings("unchecked")
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Type pt0 = context.getParameterType(t, Map.class, 0);
@@ -1273,6 +1459,11 @@ final class ObjectConverter implements Converter {
 	
 	public ObjectConverter(Class<?> cls) {
 		this.cls = cls;
+	}
+	
+	@Override
+	public boolean accept(Class<?> cls) {
+		return !cls.isPrimitive();
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {

@@ -33,7 +33,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
@@ -41,11 +40,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -53,7 +50,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.RandomAccess;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.SortedMap;
@@ -74,14 +70,10 @@ import net.arnx.jsonic.io.StringBuilderInputSource;
 import net.arnx.jsonic.io.StringBuilderOutputSource;
 import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
+import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.LocalCache;
-
-import org.w3c.dom.CharacterData;
-import org.w3c.dom.Comment;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import net.arnx.jsonic.util.PropertyInfo;
 
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as 
@@ -158,7 +150,7 @@ import org.w3c.dom.Node;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.3.0
+ * @version 1.3.1
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -189,9 +181,19 @@ public class JSON {
 	public static volatile Class<? extends JSON> prototype = JSON.class;
 	
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
+	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(20);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
+	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>();
 	
 	static {
+		Object instance = null;
+		ClassLoader cl = null;
+		try {
+			cl = Thread.currentThread().getContextClassLoader();
+		} catch (SecurityException e) {
+			// no handle
+		}
+		
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
 		FORMAT_MAP.put(char.class, StringFormatter.INSTANCE);
 		FORMAT_MAP.put(byte.class, ByteFormatter.INSTANCE);
@@ -245,6 +247,38 @@ public class JSON {
 		FORMAT_MAP.put(Properties.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(TreeMap.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(LinkedHashMap.class, MapFormatter.INSTANCE);
+		
+		FORMAT_LIST.add(EnumFormatter.INSTANCE);
+		FORMAT_LIST.add(MapFormatter.INSTANCE);
+		FORMAT_LIST.add(ListFormatter.INSTANCE);
+		FORMAT_LIST.add(IterableFormatter.INSTANCE);
+		FORMAT_LIST.add(ObjectArrayFormatter.INSTANCE);
+		FORMAT_LIST.add(StringableFormmatter.INSTANCE);
+		FORMAT_LIST.add(DateFormatter.INSTANCE);
+		FORMAT_LIST.add(CalendarFormatter.INSTANCE);
+		FORMAT_LIST.add(NumberFormatter.INSTANCE);
+		FORMAT_LIST.add(IteratorFormatter.INSTANCE);
+		FORMAT_LIST.add(EnumerationFormatter.INSTANCE);
+		FORMAT_LIST.add(TimeZoneFormatter.INSTANCE);
+		FORMAT_LIST.add(CharsetFormatter.INSTANCE);
+		
+		instance = getInstance("net.arnx.jsonic.SQLArrayFormatter", cl);
+		if (instance != null) FORMAT_LIST.add((Formatter)instance);
+
+		instance = getInstance("net.arnx.jsonic.StructFormmatter", cl);
+		if (instance != null) FORMAT_LIST.add((Formatter)instance);
+
+		instance = getInstance("net.arnx.jsonic.RowIdFormatter", cl);
+		if (instance != null) FORMAT_LIST.add((Formatter)instance);
+		
+		instance = getInstance("net.arnx.jsonic.DOMNodeFormatter", cl);
+		if (instance != null) FORMAT_LIST.add((Formatter)instance);
+		
+		instance = getInstance("net.arnx.jsonic.InetAddressFormatter", cl);
+		if (instance != null) FORMAT_LIST.add((Formatter)instance);
+		
+		instance = getInstance("net.arnx.jsonic.DynaBeanFormatter", cl);
+		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
 		CONVERT_MAP.put(boolean.class, BooleanConverter.INSTANCE);
 		CONVERT_MAP.put(char.class, CharacterConverter.INSTANCE);
@@ -311,6 +345,46 @@ public class JSON {
 		CONVERT_MAP.put(TreeMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(LinkedHashMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(Properties.class, PropertiesConverter.INSTANCE);
+		
+		CONVERT_LIST.add(PropertiesConverter.INSTANCE);
+		CONVERT_LIST.add(MapConverter.INSTANCE);
+		CONVERT_LIST.add(CollectionConverter.INSTANCE);
+		CONVERT_LIST.add(ArrayConverter.INSTANCE);
+		CONVERT_LIST.add(EnumConverter.INSTANCE);
+		CONVERT_LIST.add(DateConverter.INSTANCE);
+		CONVERT_LIST.add(CalendarConverter.INSTANCE);
+		CONVERT_LIST.add(CalendarConverter.INSTANCE);
+		CONVERT_LIST.add(CharSequenceConverter.INSTANCE);
+		CONVERT_LIST.add(AppendableConverter.INSTANCE);
+		
+		instance = getInstance("net.arnx.jsonic.InetAddressConverter", cl);
+		if (instance != null) CONVERT_LIST.add((Converter)instance);
+		
+		instance = getInstance("net.arnx.jsonic.NullableConverter", cl);
+		if (instance != null) CONVERT_LIST.add((Converter)instance);
+	}
+	
+	static Object getInstance(String name, ClassLoader cl) {
+		BeanInfo bi;
+		try {
+			if (cl != null) {
+				bi = BeanInfo.get(Class.forName(name, true, cl));
+			} else {
+				bi = BeanInfo.get(Class.forName(name));
+			}
+			PropertyInfo pi = bi.getStaticProperty("INSTANCE");
+			if (pi != null) {
+				return pi.get(null);
+			} else {
+				return bi.newInstance();				
+			}
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
+		} catch (NoClassDefFoundError e) {
+			// no handle
+		}
+		
+		return null;
 	}
 	
 	static JSON newInstance() {
@@ -386,7 +460,7 @@ public class JSON {
 	public static void encode(Object source, Appendable appendable) throws IOException, JSONException {
 		newInstance().format(source, appendable);
 	}
-
+	
 	/**
 	 * Encodes a object into a json string.
 	 * 
@@ -1027,30 +1101,14 @@ public class JSON {
 		}
 		
 		if (c == null) {
-			if (Properties.class.isAssignableFrom(cls)) {
-				c = PropertiesConverter.INSTANCE;
-			} else if (Map.class.isAssignableFrom(cls)) {
-				c = MapConverter.INSTANCE;
-			} else if (Collection.class.isAssignableFrom(cls)) {
-				c = CollectionConverter.INSTANCE;
-			} else if (cls.isArray()) {
-				c = ArrayConverter.INSTANCE;
-			} else if (cls.isEnum()) {
-				c = EnumConverter.INSTANCE;
-			} else if (Date.class.isAssignableFrom(cls)) {
-				c = DateConverter.INSTANCE;
-			} else if (Calendar.class.isAssignableFrom(cls)) {
-				c = CalendarConverter.INSTANCE;
-			} else if (CharSequence.class.isAssignableFrom(cls)) {
-				c = CharSequenceConverter.INSTANCE;
-			} else if (Appendable.class.isAssignableFrom(cls)) {
-				c = AppendableConverter.INSTANCE;
-			} else if (cls.equals(ClassUtil.findClass("java.net.InetAddress"))) {
-				c = InetAddressConverter.INSTANCE;
-			} else if (java.sql.Array.class.isAssignableFrom(cls)
-					|| Struct.class.isAssignableFrom(cls)) {
-				c = NullConverter.INSTANCE;
-			} else {
+			for (Converter converter : CONVERT_LIST) {
+				if (converter.accept(cls)) {
+					c = converter;
+					break;
+				}
+			}
+				
+			if (c == null) {
 				c = new ObjectConverter(cls);
 			}
 			
@@ -1060,13 +1118,9 @@ public class JSON {
 			context.memberCache.put(cls, c);
 		}
 		
-		if (c != null) {
-			@SuppressWarnings("unchecked")
-			T ret = (T)c.convert(context, value, cls, type);
-			return ret;
-		} else {
-			throw new UnsupportedOperationException();
-		}
+		@SuppressWarnings("unchecked")
+		T ret = (T)c.convert(context, value, cls, type);
+		return ret;
 	}
 	
 	protected String normalize(String name) {
@@ -1149,10 +1203,6 @@ public class JSON {
 		}
 		
 		return c.cast(instance);
-	}
-	
-	private static boolean isAssignableFrom(Class<?> target, Class<?> cls) {
-		return (target != null) && target.isAssignableFrom(cls);
 	}
 	
 	public final class Context {
@@ -1454,55 +1504,14 @@ public class JSON {
 			}
 			
 			if (f == null) {
-				if (o.getClass().isEnum()) {
-					f = EnumFormatter.INSTANCE;
-				} else if (o instanceof Map<?, ?>) {
-					f = MapFormatter.INSTANCE;
-				} else if (o instanceof Iterable<?>) {
-					if (o instanceof RandomAccess && o instanceof List<?>) {
-						f = ListFormatter.INSTANCE;
-					} else {
-						f = IterableFormatter.INSTANCE;
+				for (Formatter formatter : FORMAT_LIST) {
+					if (formatter.accept(o)) {
+						f = formatter;
+						break;
 					}
-				} else if (o.getClass().isArray()) {
-					f = ObjectArrayFormatter.INSTANCE;
-				} else if (o instanceof CharSequence) {
-					f = StringFormatter.INSTANCE;
-				} else if (o instanceof Date) {
-					f = DateFormatter.INSTANCE;
-				} else if (o instanceof Calendar) {
-					f = CalendarFormatter.INSTANCE;
-				} else if (o instanceof Number) {
-					f = NumberFormatter.INSTANCE;
-				} else if (o instanceof Iterator<?>) {
-					f = IteratorFormatter.INSTANCE;
-				} else if (o instanceof Enumeration) {
-					f = EnumerationFormatter.INSTANCE;
-				} else if (o instanceof Type || o instanceof Member || o instanceof File) {
-					f = StringFormatter.INSTANCE;
-				} else if (o instanceof TimeZone) {
-					f = TimeZoneFormatter.INSTANCE;
-				} else if (o instanceof Charset) {
-					f = CharsetFormatter.INSTANCE;
-				} else if (o instanceof java.sql.Array) {
-					f = SQLArrayFormatter.INSTANCE;
-				} else if (o instanceof Struct) {
-					f = StructFormmatter.INSTANCE;
-				} else if (o instanceof Node) {
-					if (o instanceof CharacterData && !(o instanceof Comment)) {
-						f = CharacterDataFormatter.INSTANCE;
-					} else if (o instanceof Document) {
-						f = DOMDocumentFormatter.INSTANCE;
-					} else if (o instanceof Element) {
-						f = DOMElementFormatter.INSTANCE;
-					}
-				} else if (isAssignableFrom(ClassUtil.findClass("java.sql.RowId"), o.getClass())) {
-					f = SerializableFormatter.INSTANCE;
-				} else if (isAssignableFrom(ClassUtil.findClass("java.net.InetAddress"), o.getClass())) {
-					f = InetAddressFormatter.INSTANCE;
-				} else if (isAssignableFrom(ClassUtil.findClass("org.apache.commons.beanutils.DynaBean"), o.getClass())) {
-					f = DynaBeanFormatter.INSTANCE;
-				} else {
+				}
+				
+				if (f == null) {
 					f = new ObjectFormatter(o.getClass());
 				}
 				

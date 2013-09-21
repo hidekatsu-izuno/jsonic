@@ -1,10 +1,16 @@
 package net.arnx.jsonic;
 
+import java.io.File;
 import java.io.Flushable;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
@@ -19,8 +25,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.RandomAccess;
 import java.util.TimeZone;
 
+import org.apache.commons.beanutils.DynaBean;
+import org.apache.commons.beanutils.DynaProperty;
 import org.w3c.dom.Attr;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Comment;
@@ -39,12 +48,18 @@ import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
 
 interface Formatter {
+	boolean accept(Object o);
 	boolean format(Context context, Object src, Object o, OutputSource out) throws Exception;
 }
 
 final class NullFormatter implements Formatter {
 	public static final NullFormatter INSTANCE = new NullFormatter();
-
+	
+	@Override
+	public boolean accept(Object o) {
+		return o == null;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append("null");
 		return false;
@@ -53,7 +68,12 @@ final class NullFormatter implements Formatter {
 
 final class PlainFormatter implements Formatter {
 	public static final PlainFormatter INSTANCE = new PlainFormatter();
-
+	
+	@Override
+	public boolean accept(Object o) {
+		return o != null;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append(o.toString());
 		return false;
@@ -81,6 +101,10 @@ final class StringFormatter implements Formatter {
 		ESCAPE_CHARS[0x7F] = -1;
 	}
 
+	@Override
+	public boolean accept(Object o) {
+		return o != null;
+	}
 
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		serialize(context, o.toString(), out);
@@ -124,9 +148,27 @@ final class StringFormatter implements Formatter {
 	}
 }
 
+final class StringableFormmatter implements Formatter {
+	public static final StringableFormmatter INSTANCE = new StringableFormmatter();
+
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof CharSequence || o instanceof Type || o instanceof Member || o instanceof File;
+	}
+	
+	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return StringFormatter.INSTANCE.format(context, src, o, out);
+	}	
+}
+
 final class TimeZoneFormatter implements Formatter {
 	public static final TimeZoneFormatter INSTANCE = new TimeZoneFormatter();
 
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof TimeZone;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return StringFormatter.INSTANCE.format(context, src, ((TimeZone)o).getID(), out);
 	}
@@ -135,6 +177,11 @@ final class TimeZoneFormatter implements Formatter {
 final class CharsetFormatter implements Formatter {
 	public static final CharsetFormatter INSTANCE = new CharsetFormatter();
 
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof Charset;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return StringFormatter.INSTANCE.format(context, src, ((Charset)o).name(), out);
 	}
@@ -142,29 +189,24 @@ final class CharsetFormatter implements Formatter {
 
 final class InetAddressFormatter implements Formatter {
 	public static final InetAddressFormatter INSTANCE = new InetAddressFormatter();
-
-	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		Class<?> inetAddressClass = ClassUtil.findClass("java.net.InetAddress");
-		try {
-			String text = (String)inetAddressClass.getMethod("getHostAddress").invoke(o);
-			return StringFormatter.INSTANCE.format(context, src, text, out);
-		} catch (Exception e) {
-			return NullFormatter.INSTANCE.format(context, src, null, out);
-		}
+	
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof InetAddress;
 	}
-}
-
-final class CharacterDataFormatter implements Formatter {
-	public static final CharacterDataFormatter INSTANCE = new CharacterDataFormatter();
-
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		return StringFormatter.INSTANCE.format(context, src, ((CharacterData)o).getData(), out);
+		return StringFormatter.INSTANCE.format(context, src, ((InetAddress)o).getHostAddress(), out);
 	}
 }
 
 final class NumberFormatter implements Formatter {
 	public static final NumberFormatter INSTANCE = new NumberFormatter();
 
+	public boolean accept(Object o) {
+		return o instanceof Number;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
 		if (f != null) {
@@ -179,6 +221,10 @@ final class NumberFormatter implements Formatter {
 final class EnumFormatter implements Formatter {
 	public static final EnumFormatter INSTANCE = new EnumFormatter();
 	
+	public boolean accept(Object o) {
+		return o != null && o.getClass().isEnum();
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		if (context.getEnumStyle() != null) {
 			return StringFormatter.INSTANCE.format(context, src, context.getEnumStyle().to(((Enum<?>)o).name()), out);
@@ -190,7 +236,11 @@ final class EnumFormatter implements Formatter {
 
 final class FloatFormatter implements Formatter {
 	public static final FloatFormatter INSTANCE = new FloatFormatter();
-
+	
+	public boolean accept(Object o) {
+		return o instanceof Float || o instanceof Double;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
 		if (f != null) {
@@ -219,6 +269,10 @@ final class FloatFormatter implements Formatter {
 
 final class DateFormatter implements Formatter {
 	public static final DateFormatter INSTANCE = new DateFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof Date;
+	}
 
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Date date = (Date) o;
@@ -239,6 +293,10 @@ final class DateFormatter implements Formatter {
 final class CalendarFormatter implements Formatter {
 	public static final CalendarFormatter INSTANCE = new CalendarFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof Calendar;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return DateFormatter.INSTANCE.format(context, src, ((Calendar)o).getTime(), out);
 	}	
@@ -246,7 +304,11 @@ final class CalendarFormatter implements Formatter {
 
 final class BooleanArrayFormatter implements Formatter {
 	public static final BooleanArrayFormatter INSTANCE = new BooleanArrayFormatter();
-
+	
+	public boolean accept(Object o) {
+		return o instanceof boolean[];
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append('[');
 		boolean[] array = (boolean[]) o;
@@ -266,7 +328,11 @@ final class BooleanArrayFormatter implements Formatter {
 
 final class ByteArrayFormatter implements Formatter {
 	public static final ByteArrayFormatter INSTANCE = new ByteArrayFormatter();
-
+	
+	public boolean accept(Object o) {
+		return o instanceof byte[];
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, Base64.encode((byte[]) o), out);
 		return false;
@@ -276,13 +342,33 @@ final class ByteArrayFormatter implements Formatter {
 final class SerializableFormatter implements Formatter {
 	public static final SerializableFormatter INSTANCE = new SerializableFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof Serializable;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return StringFormatter.INSTANCE.format(context, src, Base64.encode(ClassUtil.serialize(o)), out);
 	}
 }
 
+final class RowIdFormatter implements Formatter {
+	public static final RowIdFormatter INSTANCE = new RowIdFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof RowId;
+	}
+	
+	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		return SerializableFormatter.INSTANCE.format(context, src, o, out);
+	}
+}
+
 final class ShortArrayFormatter implements Formatter {
 	public static final ShortArrayFormatter INSTANCE = new ShortArrayFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof short[];
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -308,7 +394,11 @@ final class ShortArrayFormatter implements Formatter {
 
 final class IntArrayFormatter implements Formatter {
 	public static final IntArrayFormatter INSTANCE = new IntArrayFormatter();
-
+	
+	public boolean accept(Object o) {
+		return o instanceof int[];
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
 		int[] array = (int[]) o;
@@ -334,6 +424,10 @@ final class IntArrayFormatter implements Formatter {
 final class LongArrayFormatter implements Formatter {
 	public static final LongArrayFormatter INSTANCE = new LongArrayFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof long[];
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
 		long[] array = (long[]) o;
@@ -358,6 +452,10 @@ final class LongArrayFormatter implements Formatter {
 
 final class FloatArrayFormatter implements Formatter {
 	public static final FloatArrayFormatter INSTANCE = new FloatArrayFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof float[];
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -396,6 +494,10 @@ final class FloatArrayFormatter implements Formatter {
 final class DoubleArrayFormatter implements Formatter {
 	public static final DoubleArrayFormatter INSTANCE = new DoubleArrayFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof double[];
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
 		double[] array = (double[]) o;
@@ -432,6 +534,10 @@ final class DoubleArrayFormatter implements Formatter {
 
 final class ObjectArrayFormatter implements Formatter {
 	public static final ObjectArrayFormatter INSTANCE = new ObjectArrayFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof Object[];
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Object[] array = (Object[]) o;
@@ -487,6 +593,10 @@ final class ObjectArrayFormatter implements Formatter {
 final class SQLArrayFormatter implements Formatter {
 	public static final SQLArrayFormatter INSTANCE = new SQLArrayFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof java.sql.Array;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Object array;
 		try {
@@ -501,6 +611,10 @@ final class SQLArrayFormatter implements Formatter {
 
 final class StructFormmatter implements Formatter {
 	public static final StructFormmatter INSTANCE = new StructFormmatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof Struct;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Object value;
@@ -517,6 +631,10 @@ final class StructFormmatter implements Formatter {
 final class ByteFormatter implements Formatter {
 	public static final ByteFormatter INSTANCE = new ByteFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof Byte;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
 		return false;
@@ -526,6 +644,10 @@ final class ByteFormatter implements Formatter {
 final class ClassFormatter implements Formatter {
 	public static final ClassFormatter INSTANCE = new ClassFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof Class;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return StringFormatter.INSTANCE.format(context, src, ((Class<?>)o).getName(), out);
 	}
@@ -533,6 +655,10 @@ final class ClassFormatter implements Formatter {
 
 final class LocaleFormatter implements Formatter {
 	public static final LocaleFormatter INSTANCE = new LocaleFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof Locale;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return StringFormatter.INSTANCE.format(context, src, ((Locale)o).toString().replace('_', '-'), out);
@@ -542,6 +668,10 @@ final class LocaleFormatter implements Formatter {
 final class CharArrayFormatter implements Formatter {
 	public static final CharArrayFormatter INSTANCE = new CharArrayFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof char[];
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return StringFormatter.INSTANCE.format(context, src, String.valueOf((char[])o), out);
 	}
@@ -549,6 +679,10 @@ final class CharArrayFormatter implements Formatter {
 
 final class ListFormatter implements Formatter {
 	public static final ListFormatter INSTANCE = new ListFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof List && o instanceof RandomAccess;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final List<?> list = (List<?>)o;
@@ -604,6 +738,10 @@ final class ListFormatter implements Formatter {
 final class IteratorFormatter implements Formatter {
 	public static final IteratorFormatter INSTANCE = new IteratorFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof Iterator;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Iterator<?> t = (Iterator<?>)o;
 		final JSONHint hint = context.getHint();
@@ -658,6 +796,10 @@ final class IteratorFormatter implements Formatter {
 final class IterableFormatter implements Formatter {
 	public static final IterableFormatter INSTANCE = new IterableFormatter();
 	
+	public boolean accept(Object o) {
+		return o instanceof Iterable;
+	}
+	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		return IteratorFormatter.INSTANCE.format(context, src, ((Iterable<?>) o).iterator(), out);
 	}
@@ -665,6 +807,10 @@ final class IterableFormatter implements Formatter {
 
 final class EnumerationFormatter implements Formatter {
 	public static final EnumerationFormatter INSTANCE = new EnumerationFormatter();
+	
+	public boolean accept(Object o) {
+		return o instanceof Enumeration;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Enumeration<?> e = (Enumeration<?>)o;
@@ -718,6 +864,10 @@ final class EnumerationFormatter implements Formatter {
 
 final class MapFormatter implements Formatter {
 	public static final MapFormatter INSTANCE = new MapFormatter();
+
+	public boolean accept(Object o) {
+		return o instanceof Map;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Map<?, ?> map = (Map<?, ?>)o;
@@ -781,6 +931,10 @@ final class ObjectFormatter implements Formatter {
 	
 	public  ObjectFormatter(Class<?> cls) {
 		this.cls = cls;
+	}
+
+	public boolean accept(Object o) {
+		return o != null && !o.getClass().isPrimitive();
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
@@ -903,38 +1057,29 @@ final class ObjectFormatter implements Formatter {
 
 final class DynaBeanFormatter implements Formatter {
 	public static final DynaBeanFormatter INSTANCE = new DynaBeanFormatter();
+
+	public boolean accept(Object o) {
+		return o instanceof DynaBean;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append('{');
 		int count = 0;
 		try {
-			Class<?> dynaBeanClass = ClassUtil.findClass("org.apache.commons.beanutils.DynaBean");
+			DynaBean bean = (DynaBean)o;
+			DynaProperty[] props = bean.getDynaClass().getDynaProperties();
 
-			Object dynaClass = dynaBeanClass.getMethod("getDynaClass")
-					.invoke(o);
-			Object[] dynaProperties = (Object[]) dynaClass.getClass()
-					.getMethod("getDynaProperties").invoke(dynaClass);
-
-			if (dynaProperties != null && dynaProperties.length > 0) {
-				Method getName = dynaProperties[0].getClass().getMethod("getName");
-				Method get = dynaBeanClass.getMethod("get", String.class);
+			if (props != null && props.length > 0) {
 				JSONHint hint = context.getHint();
 				
-				for (Object dp : dynaProperties) {
-					Object name = null;
-					try {
-						name = getName.invoke(dp);
-					} catch (InvocationTargetException e) {
-						throw e;
-					} catch (Exception e) {
-					}
+				for (DynaProperty dp : props) {
+					String name = dp.getName();
 					if (name == null) continue;
 
 					Object value = null;
 					Exception cause = null;
-
 					try {
-						value = get.invoke(o, name);
+						value = bean.get(name);
 					} catch (Exception e) {
 						cause = e;
 					}
@@ -985,10 +1130,30 @@ final class DynaBeanFormatter implements Formatter {
 	}
 }
 
-final class DOMElementFormatter implements Formatter {
-	public static final DOMElementFormatter INSTANCE = new DOMElementFormatter();
+final class DOMNodeFormatter implements Formatter {
+	public static final DOMNodeFormatter INSTANCE = new DOMNodeFormatter();
+	
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof Node;
+	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		Node node = (Node)o;
+		switch (node.getNodeType()) {
+		case Node.DOCUMENT_NODE:
+			return formatElement(context, src, ((Document)node).getDocumentElement(), out);
+		case Node.ELEMENT_NODE:
+			return formatElement(context, src, node, out);
+		case Node.CDATA_SECTION_NODE:
+		case Node.TEXT_NODE:
+			return StringFormatter.INSTANCE.format(context, src, ((CharacterData)o).getData(), out);
+		default:
+			return false;
+		}
+	}
+	
+	public boolean formatElement(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Element elem = (Element)o;
 		out.append('[');
 		StringFormatter.serialize(context, elem.getTagName(), out);
@@ -1064,13 +1229,5 @@ final class DOMElementFormatter implements Formatter {
 		}
 		out.append(']');
 		return true;
-	}
-}
-
-final class DOMDocumentFormatter implements Formatter {
-	public static final DOMDocumentFormatter INSTANCE = new DOMDocumentFormatter();
-	
-	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		return DOMElementFormatter.INSTANCE.format(context, src, ((Document)o).getDocumentElement(), out);
 	}
 }
