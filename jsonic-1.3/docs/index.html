@@ -180,7 +180,8 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※4)</sup></td></tr>
 <tr><td>Number</td></tr>
 <tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
-<tr><td>Enum</td><td>number, string (デフォルトは string。ただし、setEnumStyle で変更可能)</td></tr>
+<tr><td>Enum</td><td>string (デフォルトは名前で文字列化。<code>setEnumStyle</code> にて動作の変更が可能)<br />
+number (<code>setEnumStyle</code> に null を指定すると Enum.ordinal により変換)</td></tr>
 <tr><td>boolean, Boolean</td><td>true/false</td></tr>
 <tr><td>null</td><td>null</td></tr>
 </table>
