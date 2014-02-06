@@ -18,6 +18,7 @@ package net.arnx.jsonic;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -1493,7 +1494,8 @@ final class ObjectConverter implements Converter {
 				if (target == null) target = props.get(toLowerCamel(context, name));
 				if (target == null) continue;
 				
-				context.enter(name, target.getWriteAnnotation(JSONHint.class));
+				JSONHint hint = context.getLocalCache().getHint((AnnotatedElement)target.getWriteMember());
+				context.enter(name, hint);
 				Class<?> cls = target.getWriteType();
 				Type gtype = target.getWriteGenericType();
 				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
@@ -1513,7 +1515,9 @@ final class ObjectConverter implements Converter {
 				if (target == null) return null;
 				Object o = context.createInternal(c);
 				if (o == null) return null;
-				context.enter(hint.anonym(), target.getWriteAnnotation(JSONHint.class));
+				
+				JSONHint hint2 = context.getLocalCache().getHint((AnnotatedElement)target.getWriteMember());
+				context.enter(hint.anonym(), hint2);
 				Class<?> cls = target.getWriteType();
 				Type gtype = target.getWriteGenericType();
 				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {

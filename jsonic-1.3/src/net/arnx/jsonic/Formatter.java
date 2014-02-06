@@ -18,6 +18,7 @@ package net.arnx.jsonic;
 import java.io.File;
 import java.io.Flushable;
 import java.io.Serializable;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -984,7 +985,8 @@ final class ObjectFormatter implements Formatter {
 			StringFormatter.serialize(context, prop.getName(), out);
 			out.append(':');
 			if (context.isPrettyPrint()) out.append(' ');
-			context.enter(prop.getName(), prop.getReadAnnotation(JSONHint.class));
+			JSONHint hint = context.getLocalCache().getHint((AnnotatedElement)prop.getReadMember());
+			context.enter(prop.getName(), hint);
 			if (cause != null) throw cause;
 			
 			value = context.preformatInternal(value);
