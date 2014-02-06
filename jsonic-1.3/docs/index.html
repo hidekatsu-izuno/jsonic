@@ -180,7 +180,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>byte, short, int, long, float, double</td><td rowspan="2">number<sup>(※4)</sup></td></tr>
 <tr><td>Number</td></tr>
 <tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
-<tr><td>Enum</td><td>number (ordinalにより変換)</td></tr>
+<tr><td>Enum</td><td>number, string (デフォルトは string。ただし、setEnumStyle で変更可能)</td></tr>
 <tr><td>boolean, Boolean</td><td>true/false</td></tr>
 <tr><td>null</td><td>null</td></tr>
 </table>
@@ -249,7 +249,7 @@ Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
 <tr><td>Date派生型,<br />Calendar派生型</td><td>指定された型（数値を1970年からのミリ秒とみなし変換）</td></tr>
 <tr><td>boolean, Boolean</td><td>指定された型（0以外の時true、0の時false）</td></tr>
-<tr><td>Enum派生型</td><td>指定された型（int値をEnum.ordinal()に従い変換）</td></tr>
+<tr><td>Enum派生型</td><td>指定された型（名前あるいは int値をEnum.ordinal()に従い変換）</td></tr>
 <tr><td rowspan="6">true/false</td><td>なし, Object, Boolean</td><td>Boolean</td></tr>
 <tr><td>char, Character</td><td>指定された型（trueの時'1'、falseの時'0'）</td></tr>
 <tr><td>float, double, Float, Double</td><td>指定された型（trueの時1.0、falseの時NaN）</td></tr>
@@ -369,7 +369,7 @@ JSON.prototype = MyJSON.class;
 <pre class="source">
 class Config() {
     <span class="comment">// TypeReference を使う</span>
-    public static List<RowData> load(Reader reader) throws IOException {
+    public static List&lt;RowData&gt; load(Reader reader) throws IOException {
         return JSON.decode(reader, new <span class="em">TypeReference</span>&lt;List&lt;RowData&gt;&gt;<span class="em">()</span> {});
     }
 
@@ -567,7 +567,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
     <span class="comment">// オブジェクトの配列を処理する</span>
     JSONReader reader = new JSON().getReader("[{...}, {...}, {...}, {...}, {...}]");
     
-    List<FooBean> list = new ArrayList<FooBean>();
+    List&lt;FooBean&gt; list = new ArrayList&lt;FooBean&gt;();
     
     JSONEventType type;
     while ((type = reader.next()) != null) {
