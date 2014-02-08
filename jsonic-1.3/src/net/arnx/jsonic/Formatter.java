@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -32,9 +31,9 @@ import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -913,7 +912,7 @@ final class MapFormatter implements Formatter {
 
 final class ObjectFormatter implements Formatter {
 	private Class<?> cls;
-	private transient List<PropertyInfo> props;
+	private transient PropertyInfo[] props;
 	
 	public  ObjectFormatter(Class<?> cls) {
 		this.cls = cls;
@@ -928,14 +927,13 @@ final class ObjectFormatter implements Formatter {
 		
 		out.append('{');
 		int count = 0;
-		final int length = props.size();
-		for (int p = 0; p < length; p++) {
-			PropertyInfo prop = props.get(p);
-			Object value = null;
-			Exception cause = null;
-			
-			try {
-				value = prop.get(o);
+		
+		String key = null;
+		try {
+			for (PropertyInfo prop : props) {
+				key = prop.getName();
+				
+				Object value = prop.get(o);
 				if (value == src || (context.isSuppressNull() && value == null)) {
 					continue;
 				}
@@ -945,21 +943,24 @@ final class ObjectFormatter implements Formatter {
 					out.append('\n');
 					context.appendIndent(out, context.getDepth() + 1);
 				}
-			} catch (Exception e) {
-				cause = e;
+			
+				StringFormatter.serialize(context, prop.getName(), out);
+				out.append(':');
+				if (context.isPrettyPrint()) out.append(' ');
+				JSONHint hint = context.getLocalCache().getHint((AnnotatedElement)prop.getReadMember());
+				context.enter(key, hint);
+				key = null;
+				
+				value = context.preformatInternal(value);
+				context.formatInternal(value, out);
+				context.exit();
+				count++;
 			}
-			
-			StringFormatter.serialize(context, prop.getName(), out);
-			out.append(':');
-			if (context.isPrettyPrint()) out.append(' ');
-			JSONHint hint = context.getLocalCache().getHint((AnnotatedElement)prop.getReadMember());
-			context.enter(prop.getName(), hint);
-			if (cause != null) throw cause;
-			
-			value = context.preformatInternal(value);
-			context.formatInternal(value, out);
-			context.exit();
-			count++;
+		} catch (Exception e) {
+			if (key != null) {
+				context.enter(key, null);
+			}
+			throw e;
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
@@ -969,7 +970,7 @@ final class ObjectFormatter implements Formatter {
 		return true;
 	}
 	
-	static List<PropertyInfo> getGetProperties(Context context, Class<?> c) {
+	static PropertyInfo[] getGetProperties(Context context, Class<?> c) {
 		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
 		
 		// Field
@@ -1030,8 +1031,13 @@ final class ObjectFormatter implements Formatter {
 			}
 		}
 		
-		List<PropertyInfo> list = new ArrayList<PropertyInfo>(props.values());
-		Collections.sort(list);
+		Collection<PropertyInfo> values = props.values();
+		PropertyInfo[] list = new PropertyInfo[values.size()];
+		int i = 0;
+		for (PropertyInfo pi : values) {
+			list[i++] = pi;
+		}
+		Arrays.sort(list);
 		return list;
 	}
 }
@@ -1046,55 +1052,44 @@ final class DynaBeanFormatter implements Formatter {
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append('{');
 		int count = 0;
+
+		String key = null;
 		try {
 			DynaBean bean = (DynaBean)o;
 			DynaProperty[] props = bean.getDynaClass().getDynaProperties();
+			if (props == null) props = new DynaProperty[0];
+			
+			JSONHint hint = context.getHint();
 
-			if (props != null && props.length > 0) {
-				JSONHint hint = context.getHint();
-				
-				for (DynaProperty dp : props) {
-					String name = dp.getName();
-					if (name == null) continue;
+			for (DynaProperty dp : props) {
+				key = dp.getName();
+				if (key == null) continue;
 
-					Object value = null;
-					Exception cause = null;
-					try {
-						value = bean.get(name);
-					} catch (Exception e) {
-						cause = e;
-					}
-
-					if (value == src || (cause == null && context.isSuppressNull() && value == null)) {
-						continue;
-					}
-
-					if (count != 0) out.append(',');
-					if (context.isPrettyPrint()) {
-						out.append('\n');
-						context.appendIndent(out, context.getDepth() + 1);
-					}
-					StringFormatter.serialize(context, name.toString(), out);
-					out.append(':');
-					if (context.isPrettyPrint()) out.append(' ');
-					context.enter(name, hint);
-					if (cause != null) throw cause;
-					value = context.preformatInternal(value);
-					context.formatInternal(value, out);
-					context.exit();
-					count++;
+				Object value = bean.get(key);	
+				if (value == src || (context.isSuppressNull() && value == null)) {
+					continue;
 				}
-			}
-		} catch (InvocationTargetException e) {
-			if (e.getCause() instanceof Error) {
-				throw (Error)e.getCause();
-			} else if (e.getCause() instanceof RuntimeException) {
-				throw (RuntimeException)e.getCause();
-			} else {
-				throw (Exception)e.getCause();
+
+				if (count != 0) out.append(',');
+				if (context.isPrettyPrint()) {
+					out.append('\n');
+					context.appendIndent(out, context.getDepth() + 1);
+				}
+				StringFormatter.serialize(context, key, out);
+				out.append(':');
+				if (context.isPrettyPrint()) out.append(' ');
+				context.enter(key, hint);
+				key = null;
+				value = context.preformatInternal(value);
+				context.formatInternal(value, out);
+				context.exit();
+				count++;
 			}
 		} catch (Exception e) {
-			// no handle
+			if (key != null) {
+				context.enter(key, null);
+			}
+			throw e;
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
