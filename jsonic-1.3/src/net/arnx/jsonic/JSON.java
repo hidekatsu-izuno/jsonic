@@ -905,7 +905,7 @@ public class JSON {
 			context.appendIndent(out, 0);
 		}
 		
-		context.enter('$', null);
+		context.enter('$');
 		source = context.preformatInternal(source);
 		context.formatInternal(source, out);
 		context.exit();
@@ -1574,7 +1574,7 @@ public class JSON {
 			
 			T result = null;
 			try {
-				enter('$', null);
+				enter('$');
 				result = (T)postparse(this, value, cls, type);
 				exit();
 			} catch (Exception e) {
