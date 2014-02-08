@@ -934,6 +934,9 @@ final class ObjectFormatter implements Formatter {
 		
 		String key = null;
 		try {
+			Class<?> lastClass = null;
+			Formatter lastFormatter = null;
+			
 			for (PropertyInfo prop : props) {
 				key = prop.getName();
 				
@@ -947,8 +950,7 @@ final class ObjectFormatter implements Formatter {
 					out.append('\n');
 					context.appendIndent(out, context.getDepth() + 1);
 				}
-			
-				StringFormatter.serialize(context, key, out);
+				StringFormatter.serialize(context, key.toString(), out);
 				out.append(':');
 				if (context.isPrettyPrint()) out.append(' ');
 				JSONHint hint = context.getLocalCache().getHint((AnnotatedElement)prop.getReadMember());
@@ -956,7 +958,18 @@ final class ObjectFormatter implements Formatter {
 				key = null;
 				
 				value = context.preformatInternal(value);
-				context.formatInternal(value, out);
+				if (value == null) {
+					NullFormatter.INSTANCE.format(context, src, value, out);
+				} else if (hint == null) {
+					if (value.getClass() == lastClass) {
+						lastFormatter.format(context, src, value, out);
+					} else {
+						lastFormatter = context.formatInternal(value, out);
+						lastClass = value.getClass();
+					}
+				} else {
+					context.formatInternal(value, out);
+				}
 				context.exit();
 				count++;
 			}
