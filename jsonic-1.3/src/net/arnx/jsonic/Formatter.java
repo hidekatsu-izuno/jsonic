@@ -205,10 +205,11 @@ final class CharsetFormatter implements Formatter {
 
 final class InetAddressFormatter implements Formatter {
 	public static final InetAddressFormatter INSTANCE = new InetAddressFormatter();
-	
+	private static final Class<?> target = InetAddress.class;
+
 	@Override
 	public boolean accept(Object o) {
-		return o instanceof InetAddress;
+		return o != null && target.isAssignableFrom(o.getClass());
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
@@ -369,9 +370,10 @@ final class SerializableFormatter implements Formatter {
 
 final class RowIdFormatter implements Formatter {
 	public static final RowIdFormatter INSTANCE = new RowIdFormatter();
+	private static final Class<?> target = RowId.class;
 	
 	public boolean accept(Object o) {
-		return o instanceof RowId;
+		return o != null && target.isAssignableFrom(o.getClass());
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
@@ -601,9 +603,10 @@ final class ObjectArrayFormatter implements Formatter {
 
 final class SQLArrayFormatter implements Formatter {
 	public static final SQLArrayFormatter INSTANCE = new SQLArrayFormatter();
+	private static final Class<?> target = java.sql.Array.class;
 	
 	public boolean accept(Object o) {
-		return o instanceof java.sql.Array;
+		return o != null && target.isAssignableFrom(o.getClass());
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
@@ -620,9 +623,10 @@ final class SQLArrayFormatter implements Formatter {
 
 final class StructFormmatter implements Formatter {
 	public static final StructFormmatter INSTANCE = new StructFormmatter();
+	private static final Class<?> target = Struct.class;
 	
 	public boolean accept(Object o) {
-		return o instanceof Struct;
+		return o != null && target.isAssignableFrom(o.getClass());
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
@@ -1044,9 +1048,10 @@ final class ObjectFormatter implements Formatter {
 
 final class DynaBeanFormatter implements Formatter {
 	public static final DynaBeanFormatter INSTANCE = new DynaBeanFormatter();
+	private static final Class<?> target = DynaBean.class;
 
 	public boolean accept(Object o) {
-		return o instanceof DynaBean;
+		return o != null && target.isAssignableFrom(o.getClass());
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
@@ -1102,10 +1107,11 @@ final class DynaBeanFormatter implements Formatter {
 
 final class DOMNodeFormatter implements Formatter {
 	public static final DOMNodeFormatter INSTANCE = new DOMNodeFormatter();
-	
+	private static final Class<?> target = Node.class;
+
 	@Override
 	public boolean accept(Object o) {
-		return o instanceof Node;
+		return o != null && target.isAssignableFrom(o.getClass());
 	}
 	
 	public boolean format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {

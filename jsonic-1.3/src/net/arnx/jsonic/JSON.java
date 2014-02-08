@@ -378,7 +378,7 @@ public class JSON {
 			if (pi != null) {
 				return pi.get(null);
 			} else {
-				return bi.newInstance();				
+				return bi.newInstance();			
 			}
 		} catch (ClassNotFoundException e) {
 			throw new IllegalStateException(e);

@@ -82,9 +82,19 @@ final class NullConverter implements Converter {
 final class NullableConverter implements Converter {
 	public static final NullableConverter INSTANCE = new NullableConverter();
 	
+	private static final Class<?>[] targets = new Class<?>[] {
+		java.sql.Array.class,
+		Struct.class
+	};
+
 	@Override
 	public boolean accept(Class<?> cls) {
-		return java.sql.Array.class.isAssignableFrom(cls) || Struct.class.isAssignableFrom(cls);
+		for (Class<?> target : targets) {
+			if (target.isAssignableFrom(cls)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) {
@@ -1191,10 +1201,11 @@ final class CalendarConverter implements Converter {
 
 final class InetAddressConverter implements Converter {
 	public static final InetAddressConverter INSTANCE = new InetAddressConverter();
-	
+	private static final Class<?> target = InetAddress.class;
+
 	@Override
 	public boolean accept(Class<?> cls) {
-		return InetAddress.class.isAssignableFrom(cls);
+		return target.isAssignableFrom(cls);
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
