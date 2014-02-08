@@ -570,14 +570,10 @@ final class ObjectArrayFormatter implements Formatter {
 			if (item == src)
 				item = null;
 
-			if (i != 0)
-				out.append(',');
+			if (i != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				int indent = context.getInitialIndent() + context.getDepth() + 1;
-				for (int j = 0; j < indent; j++) {
-					out.append(context.getIndentText());
-				}
+				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(i, hint);
 			item = context.preformatInternal(item);
@@ -597,10 +593,7 @@ final class ObjectArrayFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && i > 0) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append(']');
 		return true;
@@ -718,10 +711,7 @@ final class ListFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				int indent = context.getInitialIndent() + context.getDepth() + 1;
-				for (int j = 0; j < indent; j++) {
-					out.append(context.getIndentText());
-				}
+				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(count, hint);
 			item = context.preformatInternal(item);
@@ -742,10 +732,7 @@ final class ListFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append(']');
 		return true;
@@ -776,10 +763,7 @@ final class IteratorFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				int indent = context.getInitialIndent() + context.getDepth() + 1;
-				for (int j = 0; j < indent; j++) {
-					out.append(context.getIndentText());
-				}
+				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(count, hint);
 			item = context.preformatInternal(item);
@@ -800,10 +784,7 @@ final class IteratorFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append(']');
 		return true;
@@ -845,10 +826,7 @@ final class EnumerationFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				int indent = context.getInitialIndent() + context.getDepth() + 1;
-				for (int j = 0; j < indent; j++) {
-					out.append(context.getIndentText());
-				}
+				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(count, hint);
 			item = context.preformatInternal(item);
@@ -869,10 +847,7 @@ final class EnumerationFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append(']');
 		return true;
@@ -905,10 +880,7 @@ final class MapFormatter implements Formatter {
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
-				int indent = context.getInitialIndent() + context.getDepth() + 1;
-				for (int j = 0; j < indent; j++) {
-					out.append(context.getIndentText());
-				}
+				context.appendIndent(out, context.getDepth() + 1);
 			}
 			StringFormatter.serialize(context, key.toString(), out);
 			out.append(':');
@@ -932,10 +904,7 @@ final class MapFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append('}');
 		return true;
@@ -974,10 +943,7 @@ final class ObjectFormatter implements Formatter {
 				if (count != 0) out.append(',');
 				if (context.isPrettyPrint()) {
 					out.append('\n');
-					int indent = context.getInitialIndent() + context.getDepth() + 1;
-					for (int j = 0; j < indent; j++) {
-						out.append(context.getIndentText());
-					}
+					context.appendIndent(out, context.getDepth() + 1);
 				}
 			} catch (Exception e) {
 				cause = e;
@@ -997,10 +963,7 @@ final class ObjectFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth() + 1);
 		}
 		out.append('}');
 		return true;
@@ -1109,10 +1072,7 @@ final class DynaBeanFormatter implements Formatter {
 					if (count != 0) out.append(',');
 					if (context.isPrettyPrint()) {
 						out.append('\n');
-						int indent = context.getInitialIndent() + context.getDepth() + 1;
-						for (int j = 0; j < indent; j++) {
-							out.append(context.getIndentText());
-						}
+						context.appendIndent(out, context.getDepth() + 1);
 					}
 					StringFormatter.serialize(context, name.toString(), out);
 					out.append(':');
@@ -1138,10 +1098,7 @@ final class DynaBeanFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append('}');
 		return true;
@@ -1179,10 +1136,7 @@ final class DOMNodeFormatter implements Formatter {
 		out.append(',');
 		if (context.isPrettyPrint()) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth() + 1;
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth() + 1);
 		}
 		out.append('{');
 		if (elem.hasAttributes()) {
@@ -1207,10 +1161,7 @@ final class DOMNodeFormatter implements Formatter {
 			}
 			if (context.isPrettyPrint() && names.getLength() > 1) {
 				out.append('\n');
-				int indent = context.getInitialIndent() + context.getDepth() + 1;
-				for (int j = 0; j < indent; j++) {
-					out.append(context.getIndentText());
-				}
+				context.appendIndent(out, context.getDepth() + 1);
 			}
 		}
 		out.append('}');
@@ -1224,10 +1175,7 @@ final class DOMNodeFormatter implements Formatter {
 					out.append(',');
 					if (context.isPrettyPrint()) {
 						out.append('\n');
-						int indent = context.getInitialIndent() + context.getDepth() + 1;
-						for (int j = 0; j < indent; j++) {
-							out.append(context.getIndentText());
-						}
+						context.appendIndent(out, context.getDepth() + 1);
 					}
 					context.enter(i + 2, hint);
 					value = context.preformatInternal(value);
@@ -1240,10 +1188,7 @@ final class DOMNodeFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint()) {
 			out.append('\n');
-			int indent = context.getInitialIndent() + context.getDepth();
-			for (int j = 0; j < indent; j++) {
-				out.append(context.getIndentText());
-			}
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append(']');
 		return true;

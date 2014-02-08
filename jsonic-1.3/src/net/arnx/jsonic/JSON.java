@@ -890,31 +890,44 @@ public class JSON {
 	 * @return a json string
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
+		OutputSource out;
+		if (ap instanceof Writer) {
+			out = new WriterOutputSource((Writer)ap);
+		} else if (ap instanceof StringBuilder) {
+			out = new StringBuilderOutputSource((StringBuilder)ap);
+		} else {
+			out = new AppendableOutputSource(ap);
+		}
+		
 		Context context = new Context();
 		
-		OutputSource fs;
-		if (ap instanceof Writer) {
-			fs = new WriterOutputSource((Writer)ap);
-		} else if (ap instanceof StringBuilder) {
-			fs = new StringBuilderOutputSource((StringBuilder)ap);
-		} else {
-			fs = new AppendableOutputSource(ap);
+		if (context.isPrettyPrint()) {
+			context.appendIndent(out, 0);
 		}
 		
 		context.enter('$', null);
 		source = context.preformatInternal(source);
-		
-		if (context.isPrettyPrint() && context.getInitialIndent() > 0) {
-			int indent = context.getInitialIndent();
-			for (int j = 0; j < indent; j++) {
-				ap.append(context.getIndentText());
-			}
-		}
-		
-		context.formatInternal(source, fs);
+		context.formatInternal(source, out);
 		context.exit();
-		fs.flush();
+		out.flush();
 		return ap;
+	}
+	
+	public JSONWriter getWriter(OutputStream out) throws IOException {
+		return getWriter(new OutputStreamWriter(out, "UTF-8"));
+	}
+	
+	public JSONWriter getWriter(Appendable ap) throws IOException {
+		OutputSource out;
+		if (ap instanceof Writer) {
+			out = new WriterOutputSource((Writer)ap);
+		} else if (ap instanceof StringBuilder) {
+			out = new StringBuilderOutputSource((StringBuilder)ap);
+		} else {
+			out = new AppendableOutputSource(ap);
+		}
+
+		return new JSONWriter(new Context(), out);
 	}
 	
 	/**
@@ -1400,6 +1413,13 @@ public class JSON {
 		
 		void exit() {
 			depth--;
+		}
+		
+		void appendIndent(OutputSource out, int depth) throws IOException {
+			int indent = getInitialIndent() + depth;
+			for (int j = 0; j < indent; j++) {
+				out.append(getIndentText());
+			}
 		}
 		
 		NumberFormat getNumberFormat() {
