@@ -17,6 +17,7 @@ package net.arnx.jsonic;
 
 import java.io.File;
 import java.io.Flushable;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -127,7 +128,7 @@ final class StringFormatter implements Formatter {
 		return false;
 	}
 
-	static void serialize(final Context context, final String s, final OutputSource out) throws Exception {
+	static void serialize(final Context context, final String s, final OutputSource out) throws IOException {
 		out.append('"');
 		int start = 0;
 		final int length = s.length();
