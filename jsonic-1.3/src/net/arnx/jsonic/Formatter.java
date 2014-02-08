@@ -948,7 +948,7 @@ final class ObjectFormatter implements Formatter {
 					context.appendIndent(out, context.getDepth() + 1);
 				}
 			
-				StringFormatter.serialize(context, prop.getName(), out);
+				StringFormatter.serialize(context, key, out);
 				out.append(':');
 				if (context.isPrettyPrint()) out.append(' ');
 				JSONHint hint = context.getLocalCache().getHint((AnnotatedElement)prop.getReadMember());

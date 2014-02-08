@@ -117,21 +117,19 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 	public Object get(Object target) {
 		try {
 			if (readMethod != null) {
-				try {
-					return readMethod.invoke(target);
-				} catch (InvocationTargetException e) {
-					if (e.getCause() instanceof Error) {
-						throw (Error)e.getCause();
-					} else if (e.getCause() instanceof RuntimeException) {
-						throw (RuntimeException)e.getCause();
-					} else {
-						throw new IllegalStateException(e.getCause());
-					}
-				}
+				return readMethod.invoke(target);
 			} else if (field != null) {
 				return field.get(target);
 			} else {
 				throw new IllegalStateException(name + " property is not readable.");
+			}
+		} catch (InvocationTargetException e) {
+			if (e.getCause() instanceof Error) {
+				throw (Error)e.getCause();
+			} else if (e.getCause() instanceof RuntimeException) {
+				throw (RuntimeException)e.getCause();
+			} else {
+				throw new IllegalStateException(e.getCause());
 			}
 		} catch (RuntimeException e) {
 			throw e;
@@ -187,21 +185,19 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 	public void set(Object target, Object value) {
 		try {
 			if (writeMethod != null) {
-				try {
-					writeMethod.invoke(target, value);
-				} catch (InvocationTargetException e) {
-					if (e.getCause() instanceof Error) {
-						throw (Error)e.getCause();
-					} else if (e.getCause() instanceof RuntimeException) {
-						throw (RuntimeException)e.getCause();
-					} else {
-						throw new IllegalStateException(e.getCause());
-					}
-				}
+				writeMethod.invoke(target, value);
 			} else if (field != null && !Modifier.isFinal(field.getModifiers())) {
 				field.set(target, value);
 			} else {
 				throw new IllegalStateException(name + " property is not writable.");
+			}
+		} catch (InvocationTargetException e) {
+			if (e.getCause() instanceof Error) {
+				throw (Error)e.getCause();
+			} else if (e.getCause() instanceof RuntimeException) {
+				throw (RuntimeException)e.getCause();
+			} else {
+				throw new IllegalStateException(e.getCause());
 			}
 		} catch (RuntimeException e) {
 			throw e;
