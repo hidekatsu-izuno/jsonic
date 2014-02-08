@@ -295,8 +295,11 @@ public class JSONTest {
 		obj = new Object() {
 			@JSONHint(type=String.class)
 			public int strnum = 1;
+			
+			@JSONHint(type=String.class)
+			public Thread.State state = Thread.State.BLOCKED;
 		};
-		assertEquals("{\"strnum\":\"1\"}", JSON.encode(obj));
+		assertEquals("{\"state\":\"BLOCKED\",\"strnum\":\"1\"}", JSON.encode(obj));
 		
 		assertEquals("{\"list\":[\"test\"]}", JSON.encode(new ImplClass()));
 		
@@ -417,8 +420,10 @@ public class JSONTest {
 		
 		StringBeanWrapper sbw = new StringBeanWrapper();
 		sbw.sbean = new StringBean("string");
+		sbw.state = Thread.State.BLOCKED;
+		sbw.text = "string";
 		
-		assertEquals(sbw, JSON.decode("{\"sbean\":\"string\"}", StringBeanWrapper.class));
+		assertEquals(sbw, JSON.decode("{\"state\":\"BLOCKED\",\"sbean\":\"string\",\"text\":\"string\"}", StringBeanWrapper.class));
 		
 		GenericPropertyTestWrapper gptw = new GenericPropertyTestWrapper();
 		gptw.test.property = "test";
@@ -2721,12 +2726,20 @@ class Point2DJSON extends JSON {
 class StringBeanWrapper {
 	@JSONHint(type=String.class)
 	public StringBean sbean;
+	
+	@JSONHint(type=String.class)
+	public Thread.State state;
+	
+	@JSONHint(type=String.class)
+	public String text;
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((sbean == null) ? 0 : sbean.hashCode());
+		result = prime * result + ((state == null) ? 0 : state.hashCode());
+		result = prime * result + ((text == null) ? 0 : text.hashCode());
 		return result;
 	}
 
@@ -2743,6 +2756,16 @@ class StringBeanWrapper {
 			if (other.sbean != null)
 				return false;
 		} else if (!sbean.equals(other.sbean))
+			return false;
+		if (state == null) {
+			if (other.state != null)
+				return false;
+		} else if (!state.equals(other.state))
+			return false;
+		if (text == null) {
+			if (other.text != null)
+				return false;
+		} else if (!text.equals(other.text))
 			return false;
 		return true;
 	}

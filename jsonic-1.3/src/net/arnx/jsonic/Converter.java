@@ -159,7 +159,9 @@ final class StringSerializableConverter implements Converter {
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
-		if (value instanceof String) {
+		if (c.isEnum()) {
+			return EnumConverter.INSTANCE.convert(context, value, c, t);
+		} else if (value instanceof String) {
 			try {
 				Constructor<?> con = c.getConstructor(String.class);
 				con.setAccessible(true);
