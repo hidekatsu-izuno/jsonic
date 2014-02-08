@@ -32,7 +32,7 @@ public class JSONWriter {
 	}
 	
 	public JSONWriter beginObject() throws IOException {
-		if(stack.length() == 0) context.enter('$');
+		if(stack.length() == 0) context.enter('$', null);
 		stack.append('{');
 		
 		out.append('{');
@@ -48,7 +48,7 @@ public class JSONWriter {
 	}
 
 	public JSONWriter beginArray() throws IOException {
-		if(stack.length() == 0) context.enter('$');
+		if(stack.length() == 0) context.enter('$', null);
 		stack.append('[');
 		
 		out.append('[');

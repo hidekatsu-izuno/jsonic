@@ -72,6 +72,7 @@ import net.arnx.jsonic.io.StringInputSource;
 import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.IntWrapper;
 import net.arnx.jsonic.util.LocalCache;
 import net.arnx.jsonic.util.PropertyInfo;
 
@@ -905,7 +906,7 @@ public class JSON {
 			context.appendIndent(out, 0);
 		}
 		
-		context.enter('$');
+		context.enter('$', null);
 		source = context.preformatInternal(source);
 		context.formatInternal(source, out);
 		context.exit();
@@ -1407,6 +1408,19 @@ public class JSON {
 			path[depth*2+1] = hint;
 		}
 		
+		void enter(int key, JSONHint hint) {
+			Object okey = null;
+			if (path != null && (depth+1)*2 < path.length) {
+				Object prev = path[(depth+1)*2];
+				if (prev != null && prev.getClass() == IntWrapper.class) {
+					((IntWrapper)prev).value = key;
+					okey = prev;
+				}
+			}
+			if (okey == null) okey = new IntWrapper(key);
+			enter(okey, hint);
+		}
+		
 		void enter(Object key) {
 			enter(key, getHint());
 		}
@@ -1574,7 +1588,7 @@ public class JSON {
 			
 			T result = null;
 			try {
-				enter('$');
+				enter('$', null);
 				result = (T)postparse(this, value, cls, type);
 				exit();
 			} catch (Exception e) {
