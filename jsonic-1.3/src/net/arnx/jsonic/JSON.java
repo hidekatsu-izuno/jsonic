@@ -181,7 +181,6 @@ public class JSON {
 	public static volatile Class<? extends JSON> prototype = JSON.class;
 	
 	static final Character ROOT = '$';
-	static final Character SEPARATOR = '.';
 	
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(20);
