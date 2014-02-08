@@ -1417,7 +1417,7 @@ final class MapConverter implements Converter {
 			} else {
 				JSONHint hint = context.getHint();
 				for (Map.Entry<?, ?> entry : src.entrySet()) {
-					context.enter('.', hint);
+					context.enter(JSON.SEPARATOR, hint);
 					Object key = context.postparseInternal(entry.getKey(), pc0, pt0);
 					context.exit();
 					
@@ -1439,7 +1439,7 @@ final class MapConverter implements Converter {
 			} else {
 				JSONHint hint = context.getHint();
 				for (int i = 0; i < src.size(); i++) {
-					context.enter('.', hint);
+					context.enter(JSON.SEPARATOR, hint);
 					Object key = context.postparseInternal(i, pc0, pt0);
 					context.exit();
 					
@@ -1458,7 +1458,7 @@ final class MapConverter implements Converter {
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
 				map.put(value, null);
 			} else {
-				context.enter('.', hint);
+				context.enter(JSON.SEPARATOR, hint);
 				key = context.postparseInternal(key, pc0, pt0);
 				context.exit();
 				

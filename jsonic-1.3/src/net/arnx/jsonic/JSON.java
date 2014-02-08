@@ -181,6 +181,9 @@ public class JSON {
 	 */
 	public static volatile Class<? extends JSON> prototype = JSON.class;
 	
+	static final Character ROOT = '$';
+	static final Character SEPARATOR = '.';
+	
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(20);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
@@ -906,7 +909,7 @@ public class JSON {
 			context.appendIndent(out, 0);
 		}
 		
-		context.enter('$', null);
+		context.enter(ROOT, null);
 		source = context.preformatInternal(source);
 		context.formatInternal(source, out);
 		context.exit();
@@ -1396,18 +1399,6 @@ public class JSON {
 			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
 		
-		void enter(Object key, JSONHint hint) {
-			depth++;
-			if (path == null) path = new Object[8];
-			if (path.length < depth*2+2) {
-				Object[] newPath = new Object[Math.max(path.length*2, depth*2+2)];
-				System.arraycopy(path, 0, newPath, 0, path.length);
-				path = newPath;
-			}
-			path[depth*2] = key;
-			path[depth*2+1] = hint;
-		}
-		
 		void enter(int key, JSONHint hint) {
 			Object okey = null;
 			if (path != null && (depth+1)*2 < path.length) {
@@ -1419,6 +1410,17 @@ public class JSON {
 			}
 			if (okey == null) okey = new IntWrapper(key);
 			enter(okey, hint);
+		}
+		void enter(Object key, JSONHint hint) {
+			depth++;
+			if (path == null) path = new Object[8];
+			if (path.length < depth*2+2) {
+				Object[] newPath = new Object[Math.max(path.length*2, depth*2+2)];
+				System.arraycopy(path, 0, newPath, 0, path.length);
+				path = newPath;
+			}
+			path[depth*2] = key;
+			path[depth*2+1] = hint;
 		}
 		
 		void enter(Object key) {
@@ -1588,7 +1590,7 @@ public class JSON {
 			
 			T result = null;
 			try {
-				enter('$', null);
+				enter(ROOT, null);
 				result = (T)postparse(this, value, cls, type);
 				exit();
 			} catch (Exception e) {
