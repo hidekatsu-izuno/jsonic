@@ -1397,19 +1397,6 @@ public class JSON {
 			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
 		
-		void enter(int key, JSONHint hint) {
-			Object okey = null;
-			if (path != null && (depth+1)*2 < path.length) {
-				Object prev = path[(depth+1)*2];
-				if (prev != null && prev.getClass() == IntWrapper.class) {
-					((IntWrapper)prev).value = key;
-					okey = prev;
-				}
-			}
-			if (okey == null) okey = new IntWrapper(key);
-			enter(okey, hint);
-		}
-		
 		void enter(Object key, JSONHint hint) {
 			depth++;
 			if (path == null) path = new Object[8];
@@ -1619,58 +1606,6 @@ public class JSON {
 		
 		String normalizeInternal(String name) {
 			return normalize(name);
-		}
-	}
-
-	static class IntWrapper extends Number {
-		public int value;
-		
-		public IntWrapper(int value) {
-			this.value = value;
-		}
-
-		@Override
-		public int intValue() {
-			return value;
-		}
-
-		@Override
-		public long longValue() {
-			return value;
-		}
-
-		@Override
-		public float floatValue() {
-			return value;
-		}
-
-		@Override
-		public double doubleValue() {
-			return value;
-		}
-		
-		@Override
-		public int hashCode() {
-			return value;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			IntWrapper other = (IntWrapper)obj;
-			if (value != other.value)
-				return false;
-			return true;
-		}
-		
-		@Override
-		public String toString() {
-			return Integer.toString(value);
 		}
 	}
 }
