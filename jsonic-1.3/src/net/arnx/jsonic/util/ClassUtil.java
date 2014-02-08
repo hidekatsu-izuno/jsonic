@@ -279,21 +279,21 @@ public final class ClassUtil {
 				if (self == null) {
 					result = prime * result + 0;
 				} else if (self.getClass().isArray()) {
-					if (self.getClass().equals(boolean[].class)) {
+					if (self.getClass() == boolean[].class) {
 						result = prime * result + Arrays.hashCode((boolean[])self);
-					} else if (self.getClass().equals(char[].class)) {
+					} else if (self.getClass() == char[].class) {
 						result = prime * result + Arrays.hashCode((char[])self);
-					} else if (self.getClass().equals(byte[].class)) {
+					} else if (self.getClass() == byte[].class) {
 						result = prime * result + Arrays.hashCode((byte[])self);
-					} else if (self.getClass().equals(short[].class)) {
+					} else if (self.getClass() == short[].class) {
 						result = prime * result + Arrays.hashCode((short[])self);
-					} else if (self.getClass().equals(int[].class)) {
+					} else if (self.getClass() == int[].class) {
 						result = prime * result + Arrays.hashCode((int[])self);
-					} else if (self.getClass().equals(long[].class)) {
+					} else if (self.getClass() == long[].class) {
 						result = prime * result + Arrays.hashCode((long[])self);
-					} else if (self.getClass().equals(float[].class)) {
+					} else if (self.getClass() == float[].class) {
 						result = prime * result + Arrays.hashCode((float[])self);
-					} else if (self.getClass().equals(double[].class)) {
+					} else if (self.getClass() == double[].class) {
 						result = prime * result + Arrays.hashCode((double[])self);
 					} else {
 						result = prime * result + Arrays.hashCode((Object[])self);
@@ -305,7 +305,7 @@ public final class ClassUtil {
 				System.out.println(f.getName() + ": " + result);
 			}
 			current = current.getSuperclass();
-		} while (!Object.class.equals(current));
+		} while (current != Object.class);
 		
 		return result;
 	}
@@ -313,7 +313,7 @@ public final class ClassUtil {
 	public static boolean equals(Object target, Object o) {
 		if (target == o) return true;
 		if (target == null || o == null) return false;
-		if (!target.getClass().equals(o.getClass())) return false;
+		if (target.getClass() != o.getClass()) return false;
 		
 		Class<?> current = target.getClass();
 		do {
@@ -336,21 +336,21 @@ public final class ClassUtil {
 				if (self == null) {
 					if (other != null) return false;
 				} else if (self.getClass().isArray()) {
-					if (self.getClass().equals(boolean[].class)) {
+					if (self.getClass() == boolean[].class) {
 						if (!Arrays.equals((boolean[])self, (boolean[])other)) return false;
-					} else if (self.getClass().equals(char[].class)) {
+					} else if (self.getClass() == char[].class) {
 						if (!Arrays.equals((char[])self, (char[])other)) return false;
-					} else if (self.getClass().equals(byte[].class)) {
+					} else if (self.getClass() == byte[].class) {
 						if (!Arrays.equals((byte[])self, (byte[])other)) return false;
-					} else if (self.getClass().equals(short[].class)) {
+					} else if (self.getClass() == short[].class) {
 						if (!Arrays.equals((short[])self, (short[])other)) return false;
-					} else if (self.getClass().equals(int[].class)) {
+					} else if (self.getClass() == int[].class) {
 						if (!Arrays.equals((int[])self, (int[])other)) return false;
-					} else if (self.getClass().equals(long[].class)) {
+					} else if (self.getClass() == long[].class) {
 						if (!Arrays.equals((long[])self, (long[])other)) return false;
-					} else if (self.getClass().equals(float[].class)) {
+					} else if (self.getClass() == float[].class) {
 						if (!Arrays.equals((float[])self, (float[])other)) return false;
-					} else if (self.getClass().equals(double[].class)) {
+					} else if (self.getClass() == double[].class) {
 						if (!Arrays.equals((double[])self, (double[])other)) return false;
 					} else {
 						if (!Arrays.equals((Object[])self, (Object[])other)) return false;
@@ -360,7 +360,7 @@ public final class ClassUtil {
 				}
 			}
 			current = current.getSuperclass();
-		} while (!Object.class.equals(current));
+		} while (current != Object.class);
 		
 		return true;
 	}

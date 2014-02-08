@@ -203,7 +203,7 @@ final class BooleanConverter implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return Boolean.class.equals(cls);
+		return Boolean.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -245,7 +245,7 @@ final class CharacterConverter implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return char.class.equals(cls) || Character.class.equals(cls);
+		return char.class == cls || Character.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -279,7 +279,7 @@ final class ByteConverter implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return byte.class.equals(cls) || Byte.class.equals(cls);
+		return byte.class == cls || Byte.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -332,7 +332,7 @@ final class ShortConverter implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return short.class.equals(cls) || Short.class.equals(cls);
+		return short.class == cls || Short.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -382,7 +382,7 @@ final class IntegerConverter  implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return int.class.equals(cls) || Integer.class.equals(cls);
+		return int.class == cls || Integer.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -432,7 +432,7 @@ final class LongConverter implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return long.class.equals(cls) || Long.class.equals(cls);
+		return long.class == cls || Long.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -482,7 +482,7 @@ final class FloatConverter  implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return float.class.equals(cls) || Float.class.equals(cls);
+		return float.class == cls || Float.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -521,7 +521,7 @@ final class DoubleConverter  implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return double.class.equals(cls) || Double.class.equals(cls);
+		return double.class == cls || Double.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -560,7 +560,7 @@ final class BigIntegerConverter  implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return BigInteger.class.equals(cls);
+		return BigInteger.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
@@ -611,7 +611,7 @@ final class BigDecimalConverter  implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return BigDecimal.class.equals(cls);
+		return BigDecimal.class == cls;
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {

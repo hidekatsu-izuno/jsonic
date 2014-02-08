@@ -580,7 +580,7 @@ final class ObjectArrayFormatter implements Formatter {
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
-				if (item.getClass().equals(lastClass)) {
+				if (item.getClass() == lastClass) {
 					lastFormatter.format(context, src, item, out);
 				} else {
 					lastFormatter = context.formatInternal(item, out);
@@ -718,7 +718,7 @@ final class ListFormatter implements Formatter {
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
-				if (item.getClass().equals(lastClass)) {
+				if (item.getClass() == lastClass) {
 					lastFormatter.format(context, src, item, out);
 				} else {
 					lastFormatter = context.formatInternal(item, out);
@@ -770,7 +770,7 @@ final class IteratorFormatter implements Formatter {
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
-				if (item.getClass().equals(lastClass)) {
+				if (item.getClass() == lastClass) {
 					lastFormatter.format(context, src, item, out);
 				} else {
 					lastFormatter = context.formatInternal(item, out);
@@ -833,7 +833,7 @@ final class EnumerationFormatter implements Formatter {
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
-				if (item.getClass().equals(lastClass)) {
+				if (item.getClass() == lastClass) {
 					lastFormatter.format(context, src, item, out);
 				} else {
 					lastFormatter = context.formatInternal(item, out);
@@ -890,7 +890,7 @@ final class MapFormatter implements Formatter {
 			if (value == null) {
 				NullFormatter.INSTANCE.format(context, src, value, out);
 			} else if (hint == null) {
-				if (value.getClass().equals(lastClass)) {
+				if (value.getClass() == lastClass) {
 					lastFormatter.format(context, src, value, out);
 				} else {
 					lastFormatter = context.formatInternal(value, out);

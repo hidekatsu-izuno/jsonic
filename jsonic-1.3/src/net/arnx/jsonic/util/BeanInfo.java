@@ -289,52 +289,52 @@ public final class BeanInfo {
 				point += 10;
 			} else if (params[i].isAssignableFrom(args[i].getClass())) {
 				point += 8;
-			} else if (boolean.class.equals(args[i].getClass()) || Boolean.class.equals(args[i].getClass())) {
-				if (boolean.class.equals(params[i]) || Boolean.class.equals(params[i].getClass())) {
+			} else if (boolean.class == args[i].getClass() || Boolean.class == args[i].getClass()) {
+				if (boolean.class == params[i] || Boolean.class == params[i]) {
 					point += 10;
 				}
-			} else if (byte.class.equals(args[i].getClass()) || Byte.class.equals(args[i].getClass())) {
-				if (byte.class.equals(params[i])
-						|| short.class.equals(params[i]) || char.class.equals(params[i])
-						|| int.class.equals(params[i]) || long.class.equals(params[i])
-						|| float.class.equals(params[i]) || double.class.equals(params[i])
-						|| Byte.class.equals(params[i])
-						|| Short.class.equals(params[i]) || Character.class.equals(params[i])
-						|| Integer.class.equals(params[i]) || Long.class.equals(params[i])
-						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+			} else if (byte.class == args[i].getClass() || Byte.class == args[i].getClass()) {
+				if (byte.class == params[i]
+						|| short.class == params[i] || char.class == params[i]
+						|| int.class == params[i] || long.class == params[i]
+						|| float.class == params[i] || double.class == params[i]
+						|| Byte.class == params[i]
+						|| Short.class == params[i] || Character.class == params[i]
+						|| Integer.class == params[i] || Long.class == params[i]
+						|| Float.class == params[i] || Double.class == params[i]) {
 					point += 10;
 				}
-			} else if (short.class.equals(args[i].getClass()) || Short.class.equals(args[i].getClass())
-					|| char.class.equals(args[i].getClass()) || Character.class.equals(args[i].getClass())) {
-				if (short.class.equals(params[i]) || char.class.equals(params[i])
-						|| int.class.equals(params[i]) || long.class.equals(params[i])
-						|| float.class.equals(params[i]) || double.class.equals(params[i])
-						|| Short.class.equals(params[i]) || Character.class.equals(params[i])
-						|| Integer.class.equals(params[i]) || Long.class.equals(params[i])
-						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+			} else if (short.class == args[i].getClass() || Short.class == args[i].getClass()
+					|| char.class == args[i].getClass() || Character.class == args[i].getClass()) {
+				if (short.class == params[i] || char.class == params[i]
+						|| int.class == params[i] || long.class == params[i]
+						|| float.class == params[i] || double.class == params[i]
+						|| Short.class == params[i] || Character.class == params[i]
+						|| Integer.class == params[i] || Long.class == params[i]
+						|| Float.class == params[i] || Double.class == params[i]) {
 					point += 10;
 				}
-			} else if (int.class.equals(args[i].getClass()) || Integer.class.equals(args[i].getClass())) {
-				if (int.class.equals(params[i]) || long.class.equals(params[i])
-						|| float.class.equals(params[i]) || double.class.equals(params[i])
-						|| Integer.class.equals(params[i]) || Long.class.equals(params[i])
-						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+			} else if (int.class == args[i].getClass() || Integer.class == args[i].getClass()) {
+				if (int.class == params[i] || long.class == params[i]
+						|| float.class == params[i] || double.class == params[i]
+						|| Integer.class == params[i] || Long.class == params[i]
+						|| Float.class == params[i] || Double.class == params[i]) {
 					point += 10;
 				}
-			} else if (long.class.equals(args[i].getClass()) || Long.class.equals(args[i].getClass())) {
-				if (long.class.equals(params[i])
-						|| float.class.equals(params[i]) || double.class.equals(params[i])
-						|| Long.class.equals(params[i])
-						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+			} else if (long.class == args[i].getClass() || Long.class == args[i].getClass()) {
+				if (long.class == params[i]
+						|| float.class == params[i] || double.class == params[i]
+						|| Long.class == params[i]
+						|| Float.class == params[i] || Double.class == params[i]) {
 					point += 10;
 				}
-			} else if (float.class.equals(args[i].getClass()) || Float.class.equals(args[i].getClass())) {
-				if (float.class.equals(params[i]) || double.class.equals(params[i])
-						|| Float.class.equals(params[i]) || Double.class.equals(params[i])) {
+			} else if (float.class == args[i].getClass() || Float.class == args[i].getClass()) {
+				if (float.class == params[i] || double.class == params[i]
+						|| Float.class == params[i] || Double.class == params[i]) {
 					point += 10;
 				}
-			} else if (double.class.equals(args[i].getClass()) || Double.class.equals(args[i].getClass())) {
-				if (double.class.equals(params[i]) || Double.class.equals(params[i])) {
+			} else if (double.class == args[i].getClass() || Double.class == args[i].getClass()) {
+				if (double.class == params[i] || Double.class == params[i]) {
 					point += 10;
 				}
 			}
