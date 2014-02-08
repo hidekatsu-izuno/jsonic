@@ -162,12 +162,16 @@ final class StringSerializableConverter implements Converter {
 		if (c.isEnum()) {
 			return EnumConverter.INSTANCE.convert(context, value, c, t);
 		} else if (value instanceof String) {
-			try {
-				Constructor<?> con = c.getConstructor(String.class);
-				con.setAccessible(true);
-				return con.newInstance(value.toString());
-			} catch (NoSuchMethodException e) {
-				return null;
+			if (c == String.class) {
+				return value.toString();
+			} else {
+				try {
+					Constructor<?> con = c.getConstructor(String.class);
+					con.setAccessible(true);
+					return con.newInstance(value.toString());
+				} catch (NoSuchMethodException e) {
+					return null;
+				}
 			}
 		} else if (value != null) {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
