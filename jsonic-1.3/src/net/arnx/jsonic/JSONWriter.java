@@ -34,6 +34,9 @@ public class JSONWriter {
 	
 	public JSONWriter beginObject() throws IOException {
 		if(stack.size() == 0) {
+			if (context.isPrettyPrint()) {
+				context.appendIndent(out, 0);
+			}
 			context.enter(JSON.ROOT, null);
 		}
 		stack.push(JSONDataType.OBJECT);
@@ -47,7 +50,12 @@ public class JSONWriter {
 			throw new IllegalStateException();
 		}
 		State state = stack.pop();
-		if (state.type != JSONDataType.OBJECT) {
+		if (state.type == JSONDataType.OBJECT) {
+			if (context.isPrettyPrint() && state.index > 0) {
+				out.append('\n');
+				context.appendIndent(out, context.getDepth());
+			}
+		} else {
 			throw new IllegalStateException();
 		}
 		
@@ -73,7 +81,12 @@ public class JSONWriter {
 			throw new IllegalStateException();
 		}
 		State state = stack.pop();
-		if (state.type != JSONDataType.ARRAY) {
+		if (state.type == JSONDataType.ARRAY) {
+			if (context.isPrettyPrint() && state.index > 0) {
+				out.append('\n');
+				context.appendIndent(out, context.getDepth());
+			}
+		} else {
 			throw new IllegalStateException();
 		}
 		
@@ -91,12 +104,21 @@ public class JSONWriter {
 		State state = stack.peek();
 		if (state.type == JSONDataType.OBJECT) {
 			state.name = name;
+			
+			if (state.index > 0) out.append(',');
+			if (context.isPrettyPrint()) {
+				out.append('\n');
+				context.appendIndent(out, context.getDepth() + 1);
+			}
 		} else {
 			throw new IllegalStateException();
 		}
 		
 		StringFormatter.serialize(context, name, out);
 		out.append(':');
+		if (context.isPrettyPrint()) {
+			out.append(' ');
+		}
 		
 		return this;
 	}
@@ -113,7 +135,12 @@ public class JSONWriter {
 				throw new IllegalStateException();
 			}
 		} else if (state.type == JSONDataType.ARRAY) {
-			context.enter(state.index++);
+			if (state.index > 0) out.append(',');
+			if (context.isPrettyPrint()) {
+				out.append('\n');
+				context.appendIndent(out, context.getDepth() + 1);
+			}
+			context.enter(state.index);
 		} else {
 			throw new IllegalStateException();
 		}
@@ -121,6 +148,8 @@ public class JSONWriter {
 		value = context.preformatInternal(value);
 		context.formatInternal(value, out);
 		context.exit();
+		
+		state.index++;
 		return this;
 	}
 	
