@@ -62,6 +62,20 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endObject();
 		assertEquals("{\n\t\"hoge\": \"hoge\",\n\t\"hoge2\": \"hoge\",\n\t\"hoge3\": \"hoge\"\n}", out.toString());
+		
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.beginObject();
+		w.name("hoge");
+		w.value("hoge");
+		w.name("hoge2");
+		w.beginArray();
+		w.value("hoge");
+		w.endArray();
+		w.name("hoge3");
+		w.value("hoge");
+		w.endObject();
+		assertEquals("{\n\t\"hoge\": \"hoge\",\n\t\"hoge2\": [\n\t\t\"hoge\"\n\t],\n\t\"hoge3\": \"hoge\"\n}", out.toString());
 	}
 	
 	@Test
