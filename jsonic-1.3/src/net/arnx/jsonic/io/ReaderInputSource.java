@@ -15,10 +15,10 @@
  */
 package net.arnx.jsonic.io;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PushbackInputStream;
 import java.io.Reader;
 
 public class ReaderInputSource implements InputSource {
@@ -74,7 +74,7 @@ public class ReaderInputSource implements InputSource {
 				back = BACK - len;
 			}
 			if (in != null) {
-				if (!in.markSupported()) in = new BufferedInputStream(in);
+				if (!in.markSupported()) in = new PushbackInputStream(in);
 				this.reader = new InputStreamReader(in, determineEncoding(in));
 				this.in = null;
 			}
@@ -152,7 +152,9 @@ public class ReaderInputSource implements InputSource {
 	private static String determineEncoding(InputStream in) throws IOException {
 		String encoding = "UTF-8";
 
-		in.mark(4);
+		if (in.markSupported()) {
+			in.mark(4);
+		}
 		byte[] check = new byte[4];
 		int size = in.read(check);
 		if (size == 2) {
@@ -176,8 +178,11 @@ public class ReaderInputSource implements InputSource {
 				encoding = "UTF-16LE";
 			}
 		}
-		in.reset();
-		
+		if (in.markSupported()) {
+			in.reset();
+		} else {
+			((PushbackInputStream)in).unread(check, 0, size);
+		}
 		return encoding;
 	}
 	
