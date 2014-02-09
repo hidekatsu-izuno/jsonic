@@ -602,7 +602,7 @@ public class JSONTest {
 	public void testFormat() throws Exception {
 		JSON json = new JSON();
 		ArrayList<Object> list = new ArrayList<Object>();
-		assertEquals("[]", json.format(list, new StringBuilder()).toString());
+		assertEquals("[]", json.format(list, new StringWriter()).toString());
 		
 		list.add(1);
 		list.add(1.0);
@@ -631,7 +631,7 @@ public class JSONTest {
 		json.setPrettyPrint(true);
 		assertEquals("[\n\t1,\n\t1.0,\n\t\"c\",\n\t\"char[]\",\n\t\"string\",\n\ttrue,\n\tfalse,\n\tnull," 
 				+ "\n\t{\n\t\t\"a\": \"a\",\n\t\t\"b\": [1, 2, 3, 4, 5],\n\t\t\"c\": {\n\t\t\t\"a\": \"a\"\n\t\t}\n\t},\n\t[1, 2, 3, 4, 5]\n]",
-				json.format(list, new StringBuilder()).toString());
+				json.format(list, new StringWriter()).toString());
 		
 		json.setIndentText(" ");
 		assertEquals("[\n 1,\n 1.0,\n \"c\",\n \"char[]\",\n \"string\",\n true,\n false,\n null," 
@@ -641,7 +641,7 @@ public class JSONTest {
 		json.setInitialIndent(3);
 		assertEquals("   [\n    1,\n    1.0,\n    \"c\",\n    \"char[]\",\n    \"string\",\n    true,\n    false,\n    null," 
 				+ "\n    {\n     \"a\": \"a\",\n     \"b\": [1, 2, 3, 4, 5],\n     \"c\": {\n      \"a\": \"a\"\n     }\n    },\n    [1, 2, 3, 4, 5]\n   ]",
-				json.format(list, new StringBuilder()).toString());
+				json.format(list, new StringWriter()).toString());
 		
 		json.setPrettyPrint(false);
 		try {
@@ -669,13 +669,13 @@ public class JSONTest {
 		}
 
 		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.format(
-				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
+				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringWriter()).toString());
 		
 		Date d = new Date();
 		assertEquals("[" + Long.toString(d.getTime()) + "]", json.format(new Date[] {d}, new StringBuilder()).toString());
 		
 		
-		assertEquals("[\"AQID\"]", json.format(new byte[][] {{1,2,3}}, new StringBuilder()).toString());
+		assertEquals("[\"AQID\"]", json.format(new byte[][] {{1,2,3}}, new StringWriter()).toString());
 
 		Object obj = new Object() {
 			public Object a = 100;
