@@ -19,7 +19,6 @@ public class JSONWriterTest {
 		assertEquals("{}", out.toString());
 		
 		out.getBuffer().setLength(0);
-		
 		w = json.getWriter(out);
 		w.beginObject();
 		w.name("hoge");
@@ -30,10 +29,15 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endObject();
 		assertEquals("{\"hoge\":\"hoge\",\"hoge2\":\"hoge\",\"hoge3\":\"hoge\"}", out.toString());
-		
-		out.getBuffer().setLength(0);
-		
+
 		json.setPrettyPrint(true);
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.beginObject();
+		w.endObject();
+		assertEquals("{}", out.toString());
+
+		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginObject();
 		w.name("hoge");
@@ -58,7 +62,6 @@ public class JSONWriterTest {
 		assertEquals("[]", out.toString());
 		
 		out.getBuffer().setLength(0);
-		
 		w = json.getWriter(out);
 		w.beginArray();
 		w.value("hoge");
@@ -66,10 +69,16 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endArray();
 		assertEquals("[\"hoge\",\"hoge\",\"hoge\"]", out.toString());
+				
+		json.setPrettyPrint(true);
 		
 		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.beginArray();
+		w.endArray();
+		assertEquals("[]", out.toString());
 		
-		json.setPrettyPrint(true);
+		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginArray();
 		w.value("hoge");
