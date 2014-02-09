@@ -33,24 +33,39 @@ public class JSONWriter {
 	}
 	
 	public JSONWriter beginObject() throws IOException {
-		if(stack.size() == 0) {
+		State state = stack.peek();
+		if(state == null) {
 			if (context.isPrettyPrint()) {
 				context.appendIndent(out, 0);
 			}
 			context.enter(JSON.ROOT, null);
+		} else if (state.type == JSONDataType.OBJECT) {
+			if (state.name != null) {
+				context.enter(state.name);
+			} else {
+				throw new IllegalStateException();
+			}
+		} else if (state.type == JSONDataType.ARRAY) {
+			if (state.index > 0) out.append(',');
+			if (context.isPrettyPrint()) {
+				out.append('\n');
+				context.appendIndent(out, context.getDepth() + 1);
+			}
+			context.enter(state.index);
+		} else {
+			throw new IllegalStateException();
 		}
-		stack.push(JSONDataType.OBJECT);
 		
+		stack.push(JSONDataType.OBJECT);
 		out.append('{');
 		return this;
 	}
 	
 	public JSONWriter endObject() throws IOException {
-		if(stack.size() == 0) {
-			throw new IllegalStateException();
-		}
 		State state = stack.pop();
-		if (state.type == JSONDataType.OBJECT) {
+		if(state == null) {
+			throw new IllegalStateException();
+		} else if (state.type == JSONDataType.OBJECT) {
 			if (context.isPrettyPrint() && state.index > 0) {
 				out.append('\n');
 				context.appendIndent(out, context.getDepth());
@@ -62,26 +77,44 @@ public class JSONWriter {
 		out.append('}');
 		out.flush();
 		
-		if (stack.size() == 0) context.exit();
+		context.exit();
 		return this;
 	}
 
 	public JSONWriter beginArray() throws IOException {
-		if(stack.size() == 0) {
+		State state = stack.peek();
+		if(state == null) {
+			if (context.isPrettyPrint()) {
+				context.appendIndent(out, 0);
+			}
 			context.enter(JSON.ROOT, null);
+		} else if (state.type == JSONDataType.OBJECT) {
+			if (state.name != null) {
+				context.enter(state.name);
+			} else {
+				throw new IllegalStateException();
+			}
+		} else if (state.type == JSONDataType.ARRAY) {
+			if (state.index > 0) out.append(',');
+			if (context.isPrettyPrint()) {
+				out.append('\n');
+				context.appendIndent(out, context.getDepth() + 1);
+			}
+			context.enter(state.index);
+		} else {
+			throw new IllegalStateException();
 		}
-		stack.push(JSONDataType.ARRAY);
 		
+		stack.push(JSONDataType.ARRAY);
 		out.append('[');
 		return this;
 	}
 	
 	public JSONWriter endArray() throws IOException {
-		if(stack.size() == 0) {
-			throw new IllegalStateException();
-		}
 		State state = stack.pop();
-		if (state.type == JSONDataType.ARRAY) {
+		if(state == null) {
+			throw new IllegalStateException();
+		} else if (state.type == JSONDataType.ARRAY) {
 			if (context.isPrettyPrint() && state.index > 0) {
 				out.append('\n');
 				context.appendIndent(out, context.getDepth());
@@ -93,16 +126,16 @@ public class JSONWriter {
 		out.append(']');
 		out.flush();
 		
-		if (stack.size() == 0) context.exit();
+		state = stack.peek();
+		context.exit();
 		return this;
 	}
 	
 	public JSONWriter name(String name) throws IOException {
-		if(stack.size() == 0) {
-			throw new IllegalStateException();
-		}
 		State state = stack.peek();
-		if (state.type == JSONDataType.OBJECT) {
+		if (state == null) {
+			throw new IllegalStateException();
+		} else if (state.type == JSONDataType.OBJECT) {
 			state.name = name;
 			
 			if (state.index > 0) out.append(',');
@@ -124,11 +157,10 @@ public class JSONWriter {
 	}
 	
 	public JSONWriter value(Object value) throws IOException {
-		if(stack.size() == 0) {
-			throw new IllegalStateException();
-		}
 		State state = stack.peek();
-		if (state.type == JSONDataType.OBJECT) {
+		if(state == null) {
+			throw new IllegalStateException();
+		} else if (state.type == JSONDataType.OBJECT) {
 			if (state.name != null) {
 				context.enter(state.name);
 			} else {
@@ -181,11 +213,19 @@ public class JSONWriter {
 		}
 		
 		public State peek() {
-			return list[size];
+			if (size < list.length) {
+				return list[size];
+			} else {
+				return null;
+			}
 		}
 		
 		public State pop() {
-			return list[size--];
+			if (size >= 0 && size < list.length) {
+				return list[size--];
+			} else {
+				return null;
+			}
 		}
 		
 		public int size() {

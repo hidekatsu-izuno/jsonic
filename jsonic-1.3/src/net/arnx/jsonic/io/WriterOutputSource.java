@@ -21,26 +21,54 @@ import java.io.Writer;
 public class WriterOutputSource implements OutputSource {
 	private final Writer writer;
 	
+	private final char[] buf = new char[1024];
+	private int pos = 0;
+	
 	public WriterOutputSource(Writer writer) {
 		this.writer = writer;
 	}
 	
 	@Override
 	public void append(String text) throws IOException {
-		writer.append(text);
+		append(text, 0, text.length());
 	}
 	
 	@Override
 	public void append(String text, int start, int end) throws IOException {
-		writer.append(text, start, end);
+		int length = end-start;
+		if (pos + length < buf.length) {
+			text.getChars(start, end, buf, pos);
+			pos += length;
+			return;
+		}
+	
+		if (pos > 0) {
+			writer.write(buf, 0, pos);
+			pos = 0;
+		}
+			
+		if (length < buf.length) {
+			text.getChars(start, end, buf, 0);
+			pos = length;
+		} else {
+			writer.write(text, start, length);
+		}
 	}
 	
 	@Override
 	public void append(char c) throws IOException {
-		writer.append(c);
+		if (pos + 1 >= buf.length) {
+			writer.write(buf, 0, pos);
+			pos = 0;
+		}
+		buf[pos++] = c;
 	}
 	
 	public void flush() throws IOException {
+		if (pos > 0) {
+			writer.write(buf, 0, pos);
+			pos = 0;
+		}
 		writer.flush();
 	}
 }
