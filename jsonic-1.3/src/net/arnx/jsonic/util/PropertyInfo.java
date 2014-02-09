@@ -117,7 +117,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 	public Object get(Object target) {
 		try {
 			if (readMethod != null) {
-				return readMethod.invoke(target);
+				return readMethod.invoke(target, (Object[])null);
 			} else if (field != null) {
 				return field.get(target);
 			} else {
