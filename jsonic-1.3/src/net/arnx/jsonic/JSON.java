@@ -1611,5 +1611,10 @@ public class JSON {
 		String normalizeInternal(String name) {
 			return normalize(name);
 		}
+		
+		String getMessage(String id, Object... args) {
+			ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
+			return MessageFormat.format(bundle.getString(id), args);
+		}
 	}
 }
