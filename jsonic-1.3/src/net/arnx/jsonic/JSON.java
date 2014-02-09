@@ -893,7 +893,9 @@ public class JSON {
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
 		OutputSource out;
-		if (ap instanceof Writer) {
+		if (ap instanceof BufferedWriter) {
+			out = new AppendableOutputSource(ap);
+		} else if (ap instanceof Writer) {
 			out = new WriterOutputSource((Writer)ap);
 		} else if (ap instanceof StringBuilder) {
 			out = new StringBuilderOutputSource((StringBuilder)ap);
@@ -921,7 +923,9 @@ public class JSON {
 	
 	public JSONWriter getWriter(Appendable ap) throws IOException {
 		OutputSource out;
-		if (ap instanceof Writer) {
+		if (ap instanceof BufferedWriter) {
+			out = new AppendableOutputSource(ap);
+		} else if (ap instanceof Writer) {
 			out = new WriterOutputSource((Writer)ap);
 		} else if (ap instanceof StringBuilder) {
 			out = new StringBuilderOutputSource((StringBuilder)ap);
