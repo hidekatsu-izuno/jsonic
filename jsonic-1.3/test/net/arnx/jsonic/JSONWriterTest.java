@@ -132,4 +132,65 @@ public class JSONWriterTest {
 		w.endArray();
 		assertEquals("[\n\t\"hoge\",\n\t{\n\t\t\"name\": \"hoge\"\n\t},\n\t\"hoge\"\n]", out.toString());
 	}
+	
+	@Test
+	public void testWriterError() throws Exception {
+		StringWriter out = new StringWriter();
+		
+		JSON json = new JSON();
+		
+		JSONWriter w = json.getWriter(out);
+		try {
+			w.name("error");
+			fail();
+		} catch (JSONException e) {
+			System.err.println(e.getMessage());
+			assertNotNull(e);
+		}
+		
+		try {
+			w.value("error");
+			fail();
+		} catch (JSONException e) {
+			System.err.println(e.getMessage());
+			assertNotNull(e);
+		}
+		
+		w.beginObject();
+		try {
+			w.value("error");
+			fail();
+		} catch (JSONException e) {
+			System.err.println(e.getMessage());
+			assertNotNull(e);
+		}
+		
+		try {
+			w.endArray();
+			fail();
+		} catch (JSONException e) {
+			System.err.println(e.getMessage());
+			assertNotNull(e);
+		}
+		w.endObject();
+		
+		w.beginArray();
+		try {
+			w.name("error");
+			fail();
+		} catch (JSONException e) {
+			System.err.println(e.getMessage());
+			assertNotNull(e);
+		}		
+		try {
+			w.endObject();
+			fail();
+		} catch (JSONException e) {
+			System.err.println(e.getMessage());
+			assertNotNull(e);
+		}
+		w.endArray();
+		
+		assertEquals("{}[]", out.toString());
+	}
 }
