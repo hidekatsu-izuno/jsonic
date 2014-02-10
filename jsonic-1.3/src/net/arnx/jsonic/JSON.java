@@ -276,6 +276,9 @@ public class JSON {
 		instance = getInstance("net.arnx.jsonic.DOMNodeFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
+		instance = getInstance("net.arnx.jsonic.TextNodeFormatter", cl);
+		if (instance != null) FORMAT_LIST.add((Formatter)instance);
+		
 		instance = getInstance("net.arnx.jsonic.InetAddressFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
@@ -1547,20 +1550,19 @@ public class JSON {
 				memberCache.put(o.getClass(), f);
 			}
 			
-			boolean isStruct;
+			if (!f.isStruct() && getDepth() == 0 && getMode() != Mode.SCRIPT) {
+				throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
+						JSONException.FORMAT_ERROR);
+			}
+			
 			try {
-				isStruct = f.format(this, src, o, ap);
+				f.format(this, src, o, ap);
 			} catch (IOException e) {
 				throw e;
 			} catch (Exception e) {
 				throw new JSONException(getMessage("json.format.ConversionError",
 					(src instanceof CharSequence) ? "\"" + src + "\"" : src, this),
 						JSONException.FORMAT_ERROR, e);
-			}
-			
-			if (!isStruct && getDepth() == 0 && getMode() != Mode.SCRIPT) {
-				throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
-						JSONException.FORMAT_ERROR);
 			}
 			
 			return f;

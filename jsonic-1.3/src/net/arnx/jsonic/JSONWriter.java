@@ -177,9 +177,10 @@ public class JSONWriter {
 	public JSONWriter value(Object value) throws IOException {
 		State state = stack.peek();
 		if(state == null) {
-			throw new JSONException(
-					context.getMessage("json.format.IllegalMethodCallError", "value"), 
-					JSONException.FORMAT_ERROR);
+			if (context.isPrettyPrint()) {
+				context.appendIndent(out, 0);
+			}
+			context.enter(JSON.ROOT, null);
 		} else if (state.type == JSONDataType.OBJECT) {
 			if (state.name != null) {
 				context.enter(state.name);
@@ -203,7 +204,9 @@ public class JSONWriter {
 		context.formatInternal(value, out);
 		context.exit();
 		
-		state.index++;
+		if (state != null) {
+			state.index++;
+		}
 		return this;
 	}
 	
