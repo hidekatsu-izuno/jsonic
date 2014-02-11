@@ -206,6 +206,8 @@ public class JSONWriter {
 		
 		if (state != null) {
 			state.index++;
+		} else {
+			out.flush();
 		}
 		return this;
 	}

@@ -273,7 +273,7 @@ public class JSON {
 		instance = getInstance("net.arnx.jsonic.RowIdFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.DOMNodeFormatter", cl);
+		instance = getInstance("net.arnx.jsonic.ElementNodeFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
 		instance = getInstance("net.arnx.jsonic.TextNodeFormatter", cl);

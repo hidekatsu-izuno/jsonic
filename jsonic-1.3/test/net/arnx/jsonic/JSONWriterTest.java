@@ -3,6 +3,8 @@ package net.arnx.jsonic;
 import static org.junit.Assert.*;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.junit.Test;
 
@@ -16,6 +18,11 @@ public class JSONWriterTest {
 		JSONWriter w = json.getWriter(out);
 		w.beginObject();
 		w.endObject();
+		assertEquals("{}", out.toString());
+
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.value(new HashMap<String, String>());
 		assertEquals("{}", out.toString());
 		
 		out.getBuffer().setLength(0);
@@ -93,6 +100,11 @@ public class JSONWriterTest {
 		JSONWriter w = json.getWriter(out);
 		w.beginArray();
 		w.endArray();
+		assertEquals("[]", out.toString());
+
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.value(new ArrayList<String>());
 		assertEquals("[]", out.toString());
 		
 		out.getBuffer().setLength(0);
