@@ -1594,11 +1594,17 @@ final class ObjectConverter implements Converter {
 			}
 			
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
-				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-					null, null, prop.getWriteMethod(), prop.isStatic(), ordinal));
-			} else {
-				props.put(name, prop);
+				prop = new PropertyInfo(prop.getBeanClass(), name, 
+					null, null, prop.getWriteMethod(), prop.isStatic(), ordinal);
 			}
+			
+			if (prop.getWriteMethod() != null) {
+				prop.getWriteMethod().setAccessible(true);
+			} else if (prop.getField() != null) {
+				prop.getField().setAccessible(true);
+			}
+			
+			props.put(name, prop);
 		}
 		return props;
 	}

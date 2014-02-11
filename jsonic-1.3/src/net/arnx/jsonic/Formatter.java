@@ -1206,11 +1206,17 @@ final class ObjectFormatter implements Formatter {
 			}
 			
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getReadMember()) {
-				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
-					prop.getField(), null, null, prop.isStatic(), ordinal));
-			} else {
-				props.put(name, prop);
+				prop = new PropertyInfo(prop.getBeanClass(), name, 
+					prop.getField(), null, null, prop.isStatic(), ordinal);
 			}
+			
+			if (prop.getReadMethod() != null) {
+				prop.getReadMethod().setAccessible(true);
+			} else if (prop.getField() != null) {
+				prop.getField().setAccessible(true);
+			}
+			
+			props.put(name, prop);
 		}
 		
 		// Method
