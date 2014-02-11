@@ -16,7 +16,6 @@
 package net.arnx.jsonic;
 
 import java.io.File;
-import java.io.Flushable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.AnnotatedElement;
@@ -1403,8 +1402,6 @@ final class ElementNodeFormatter implements Formatter {
 					value = context.preformatInternal(value);
 					context.formatInternal(value, out);
 					context.exit();
-					if (out instanceof Flushable)
-						((Flushable) out).flush();
 				}
 			}
 		}
