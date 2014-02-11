@@ -21,7 +21,7 @@ import java.io.Writer;
 public class WriterOutputSource implements OutputSource {
 	private final Writer writer;
 	
-	private final char[] buf = new char[1024];
+	private final char[] buf = new char[2048];
 	private int pos = 0;
 	
 	public WriterOutputSource(Writer writer) {

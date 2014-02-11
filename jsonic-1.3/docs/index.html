@@ -538,11 +538,12 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 	writer.value(3);
 	writer.endArray();
 	
-    <span class="comment">// クローズの前に flush が必要です。</span>	
 	writer.endObject();
+	
+    <span class="comment">// JSONの完成前に途中で出力する場合は、flushを呼ぶ必要があります（通常は不要です）。</span>	
 	writer.flush();
 	
-    <span class="comment">// クローズは自動では行われません。明示的にクローズ処理が必要です。</span>	
+    <span class="comment">// クローズは自動では行われません。明示的にクローズ処理を行ってください。</span>	
 	out.close();
 </pre>
 

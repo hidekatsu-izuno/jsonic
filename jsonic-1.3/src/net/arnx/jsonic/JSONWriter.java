@@ -83,6 +83,10 @@ public class JSONWriter {
 		
 		out.append('}');
 		context.exit();
+		
+		if (stack.size == 0) {
+			out.flush();
+		}
 		return this;
 	}
 
@@ -137,6 +141,10 @@ public class JSONWriter {
 		
 		out.append(']');
 		context.exit();
+		
+		if (stack.size == 0) {
+			out.flush();
+		}
 		return this;
 	}
 	
@@ -201,6 +209,10 @@ public class JSONWriter {
 		
 		if (state != null) {
 			state.index++;
+		}
+		
+		if (stack.size == 0) {
+			out.flush();
 		}
 		return this;
 	}
