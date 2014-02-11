@@ -1319,8 +1319,8 @@ final class DynaBeanFormatter implements Formatter {
 	}
 }
 
-final class DOMNodeFormatter implements Formatter {
-	public static final DOMNodeFormatter INSTANCE = new DOMNodeFormatter();
+final class ElementNodeFormatter implements Formatter {
+	public static final ElementNodeFormatter INSTANCE = new ElementNodeFormatter();
 	private static final Class<?>[] targets = new Class<?>[] {
 		Document.class,
 		Element.class
