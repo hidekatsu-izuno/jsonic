@@ -82,8 +82,6 @@ public class JSONWriter {
 		stack.pop();
 		
 		out.append('}');
-		out.flush();
-		
 		context.exit();
 		return this;
 	}
@@ -138,9 +136,6 @@ public class JSONWriter {
 		stack.pop();
 		
 		out.append(']');
-		out.flush();
-		
-		state = stack.peek();
 		context.exit();
 		return this;
 	}
@@ -206,8 +201,6 @@ public class JSONWriter {
 		
 		if (state != null) {
 			state.index++;
-		} else {
-			out.flush();
 		}
 		return this;
 	}

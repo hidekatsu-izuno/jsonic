@@ -277,6 +277,7 @@ staticやtransientのメソッド/フィールドは対象となりません。
 <li><a href="index.html#liberalparsing">柔軟な読み込み</a></li>
 <li><a href="index.html#validation">JSONの検証</a></li>
 <li><a href="index.html#jsfriendly">JavaScriptに親和的な出力</a></li>
+<li><a href="index.html#writer">JSONストリームの順次出力</a></li>
 <li><a href="index.html#reader">JSONストリームの順次読み込み</a></li>
 <li><a href="index.html#format">日時/数値書式の指定</a></li>
 <li><a href="index.html#namingstyle">プロパティ名/列挙型出力書式の指定</a></li>
@@ -505,6 +506,44 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 	}).getClass();
 	
 	JSON.<span class="em">escapeScript(</span>...<span class="em">)</span>;
+</pre>
+
+<h3 id="reader">■ JSONストリームの順次出力 <span class="subtitle">- JSONWriter</span></h3>
+<p>JSONICのencode/format は、Javaオブジェクトを構築後、JSONに出力するため、大規模な JSON を出力する場合、
+メモリを大量に消費してしまう問題がありました。 version 1.3.1 では、この問題に対応するため、JSONの encode とStringBuffer
+的な順次出力を組み合わせた JSONWriter クラスを提供します。</p>
+<pre class="source">
+    <span class="comment">// JSONWriter を取得</span>
+    Writer out = new OutputStreamWriter(new FileOutputStream(...));
+    JSONWriter writer = new JSON().<span class="em">getWriter(</span>out<span class="em">)</span>;
+    <span class="comment">// JSON object の出力</span>
+	writer.beginObject();
+
+    <span class="comment">// 名前と値の出力</span>
+	writer.name("string").value("value");
+
+    <span class="comment">// 値の出力は、decode と同様に任意のオブジェクトを指定可能です。</span>
+    Object o = new Object() {
+        public DataType type = DataType.ANY;
+        public String text = "あああ";
+        public int index = 100;
+    };
+    writer.name("object").value(o);
+
+    <span class="comment">// JSON array の出力</span>
+	writer.name("array");
+	writer.beginArray();
+	writer.value(1);
+	writer.value(2);
+	writer.value(3);
+	writer.endArray();
+	
+    <span class="comment">// クローズの前に flush が必要です。</span>	
+	writer.endObject();
+	writer.flush();
+	
+    <span class="comment">// クローズは自動では行われません。明示的にクローズ処理が必要です。</span>	
+	out.close();
 </pre>
 
 <h3 id="reader">■ JSONストリームの順次読み込み <span class="subtitle">- JSONReader</span></h3>
@@ -831,6 +870,7 @@ public class TestBean {
 <li>[仕様変更] setaName、isaName、getaName など1文字目が小文字となるようなプロパティに対応しました。JavaBeans規約では、set/is/getで始まるメソッドはプロパティとしてみなすことになっているため、本来はそのように修正すべきですが、影響範囲が広くなる恐れがあるため部分的な対応に留めることにしました。</li>
 <li>[機能追加] 総称型の解決を改善しました。これにより、複雑な関係にある型変数にも対応できるようになりました。</li>
 <li>[機能追加] type=String.class を指定した場合、 Enum の decode に失敗する問題を改善しました。</li>
+<li>[機能追加] ストリーム的に JSON を出力する JSONWriter を追加しました。</li>
 <li>Object の encode など一部の処理が高速化されました。</li>
 </ul>
 
