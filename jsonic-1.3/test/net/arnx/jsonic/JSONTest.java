@@ -364,6 +364,22 @@ public class JSONTest {
 		assertEquals(list, JSON.decode("\r[\t{\r}\n, [\t]\r,\n1 ,\t \r\"str'ing\"\n, \"\", true\t,\rfalse\n,\tnull\r]\n"));
 		
 		list.clear();
+		list.add(new BigDecimal("0"));
+		list.add(new BigDecimal("-0"));
+		list.add(new BigDecimal("1"));
+		list.add(new BigDecimal("-1"));
+		list.add(new BigDecimal("999999999999999999"));
+		list.add(new BigDecimal("-999999999999999999"));
+		list.add(new BigDecimal("1000000000000000000"));
+		list.add(new BigDecimal("-1000000000000000000"));
+		list.add(new BigDecimal("9223372036854775807"));
+		list.add(new BigDecimal("-9223372036854775807"));
+		list.add(new BigDecimal("9223372036854775808"));
+		list.add(new BigDecimal("-9223372036854775808"));
+
+		assertEquals(list, JSON.decode("[0,-0,1,-1,999999999999999999,-999999999999999999,1000000000000000000,-1000000000000000000,9223372036854775807,-9223372036854775807,9223372036854775808,-9223372036854775808]"));
+		
+		list.clear();
 		list.add(new BigDecimal("-1.1"));
 		list.add(new BigDecimal("11.1"));
 		list.add(new BigDecimal("11.1"));
