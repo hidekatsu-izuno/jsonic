@@ -16,7 +16,6 @@
 package net.arnx.jsonic.util;
 
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -37,7 +36,6 @@ public class LocalCache {
 	
 	private StringBuilder builderCache;
 	private String[] stringCache;
-	private BigDecimal[] numberCache;
 	private Map<String, DateFormat> dateFormatCache;
 	private Map<String, NumberFormat> numberFormatCache;
 	private Map<ParameterTypeKey, Type> parameterTypeCache;
@@ -67,13 +65,11 @@ public class LocalCache {
 			}
 			
 			if (stringCache == null) stringCache = new String[CACHE_SIZE];
-			if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
 			
 			String str = stringCache[index];
 			if (str == null || str.length() != cs.length()) {
 				str = cs.toString();
 				stringCache[index] = str;
-				numberCache[index] = null;
 				return str;
 			}
 			
@@ -81,7 +77,6 @@ public class LocalCache {
 				if (str.charAt(i) != cs.charAt(i)) {
 					str = cs.toString();
 					stringCache[index] = str;
-					numberCache[index] = null;
 					return str;
 				}
 			}
@@ -89,54 +84,6 @@ public class LocalCache {
 		}
 		
 		return cs.toString();
-	}
-	
-	public BigDecimal getBigDecimal(CharSequence cs) {
-		if (cs.length() == 1) {
-			if (cs.charAt(0) == '0') {
-				return BigDecimal.ZERO;
-			} else if (cs.charAt(0) == '1') {
-				return BigDecimal.ONE;
-			}
-		}
-		
-		if (cs.length() < 32) {
-			int index = getCacheIndex(cs);
-			if (index < 0) {
-				return new BigDecimal(cs.toString());
-			}
-						
-			if (stringCache == null) stringCache = new String[CACHE_SIZE];
-			if (numberCache == null) numberCache = new BigDecimal[CACHE_SIZE];
-			
-			String str = stringCache[index];
-			BigDecimal num = numberCache[index];
-			if (str == null || str.length() != cs.length()) {
-				str = cs.toString();
-				num = new BigDecimal(str);
-				stringCache[index] = str;
-				numberCache[index] = num;
-				return num;
-			}
-			
-			for (int i = 0; i < cs.length(); i++) {
-				if (str.charAt(i) != cs.charAt(i)) {
-					str = cs.toString();
-					num = new BigDecimal(str);
-					stringCache[index] = str;
-					numberCache[index] = num;
-					return num;
-				}
-			}
-			
-			if (num == null) {
-				num = new BigDecimal(str);
-				numberCache[index] = num;
-			}
-			return num;
-		}
-		
-		return new BigDecimal(cs.toString());
 	}
 	
 	private int getCacheIndex(CharSequence cs) {

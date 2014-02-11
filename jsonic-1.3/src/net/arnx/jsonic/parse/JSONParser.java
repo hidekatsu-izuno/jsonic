@@ -16,6 +16,7 @@
 package net.arnx.jsonic.parse;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -516,6 +517,7 @@ public class JSONParser {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
+		boolean isInteger = true;
 		int n = -1;
 		
 		int rest = in.mark();
@@ -549,6 +551,7 @@ public class JSONParser {
 				if (point == 2 || point == 3) {
 					if (rest == 0 && sb != null) in.copy(sb, len);
 					point = 4;
+					isInteger = false;
 				} else {
 					throw createParseException(in, "json.parse.UnexpectedChar", c);
 				}
@@ -558,6 +561,7 @@ public class JSONParser {
 				if (point == 2 || point == 3 || point == 5 || point == 6) {
 					if (rest == 0 && sb != null) in.copy(sb, len);
 					point = 7;
+					isInteger = false;
 				} else {
 					throw createParseException(in, "json.parse.UnexpectedChar", c);
 				}
@@ -603,7 +607,23 @@ public class JSONParser {
 			}
 		}
 		
-		return (sb != null) ? cache.getBigDecimal(sb) : null;
+		if (sb != null) {
+			if (isInteger) {
+				int s = (sb.charAt(0) == '-') ? 1 : 0;
+				if (sb.length() == s + 1) {
+					return BigDecimal.valueOf((s == 0 ? 1 : -1) * (long)(sb.charAt(s) - 48));
+				} else if (sb.length() < s + 19) {
+					long num = 0;
+					for (int i = s; i < sb.length(); i++) {
+						num = num * 10 + (sb.charAt(i) - 48);
+					}
+					return BigDecimal.valueOf((s == 0 ? 1 : -1) * num);
+				}
+			}
+			return new BigDecimal(sb.toString());
+		} else {
+			return null;
+		}
 	}
 	
 	Object parseLiteral(String expected, Object result) throws IOException {
