@@ -517,14 +517,17 @@ public class JSONParser {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 		
-		boolean isInteger = true;
+		int sp = -1;
+		int ep = -1;
 		int n = -1;
 		
 		int rest = in.mark();
 		int len = 0;
+		int count = 0;
 		loop:while ((n = in.next()) != -1) {
 			rest--;
 			len++;
+			count++;
 			
 			char c = (char)n;
 			switch(c) {
@@ -551,7 +554,7 @@ public class JSONParser {
 				if (point == 2 || point == 3) {
 					if (rest == 0 && sb != null) in.copy(sb, len);
 					point = 4;
-					isInteger = false;
+					sp = count-1;
 				} else {
 					throw createParseException(in, "json.parse.UnexpectedChar", c);
 				}
@@ -561,7 +564,7 @@ public class JSONParser {
 				if (point == 2 || point == 3 || point == 5 || point == 6) {
 					if (rest == 0 && sb != null) in.copy(sb, len);
 					point = 7;
-					isInteger = false;
+					ep = count-1;
 				} else {
 					throw createParseException(in, "json.parse.UnexpectedChar", c);
 				}
@@ -608,16 +611,42 @@ public class JSONParser {
 		}
 		
 		if (sb != null) {
-			if (isInteger) {
+			if (sp == -1 && ep == -1) {
 				int s = (sb.charAt(0) == '-') ? 1 : 0;
 				if (sb.length() == s + 1) {
-					return BigDecimal.valueOf((s == 0 ? 1 : -1) * (long)(sb.charAt(s) - 48));
+					long num = sb.charAt(s) - 48;
+					if (sb.charAt(0) == '-') num *= -1;
+					return BigDecimal.valueOf(num);
 				} else if (sb.length() < s + 19) {
 					long num = 0;
 					for (int i = s; i < sb.length(); i++) {
 						num = num * 10 + (sb.charAt(i) - 48);
 					}
-					return BigDecimal.valueOf((s == 0 ? 1 : -1) * num);
+					if (sb.charAt(0) == '-') num *= -1;
+					return BigDecimal.valueOf(num);
+				}
+			} else {
+				int s = (sb.charAt(0) == '-') ? 1 : 0;
+				int e = (ep >= 0) ? ep : sb.length();
+				if (e < s + 19) {
+					long num = 0;
+					for (int i = s; i < e; i++) {
+						if (i != sp) {
+							num = num * 10 + (sb.charAt(i) - 48);
+						}
+					}
+					if (sb.charAt(0) == '-') num *= -1;
+					
+					int scale = 0;
+					if (ep >= 0) {
+						int es = (sb.charAt(ep+1) == '+' || sb.charAt(ep+1) == '-') ? ep+2 : ep+1;
+						for (int i = es; i < sb.length(); i++) {
+							scale = scale * 10 + (sb.charAt(i) - 48);
+						}
+						if (sb.charAt(ep+1) == '-') scale *= -1;
+					}
+					if (sp >= 0) scale -= e-(sp+1);
+					return BigDecimal.valueOf(num, -scale);
 				}
 			}
 			return new BigDecimal(sb.toString());

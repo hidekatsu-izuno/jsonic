@@ -383,9 +383,22 @@ public class JSONTest {
 		list.add(new BigDecimal("-1.1"));
 		list.add(new BigDecimal("11.1"));
 		list.add(new BigDecimal("11.1"));
+		list.add(new BigDecimal("11.1"));
 		list.add(new BigDecimal("1.11"));
+		list.add(new BigDecimal("9999999999999.99999e+2"));
+		list.add(new BigDecimal("-9999999999999.99999e+2"));
+		list.add(new BigDecimal("100000000000000.0000e-2"));
+		list.add(new BigDecimal("-100000000000000.0000e-2"));
+		list.add(new BigDecimal("922337203685.4775807e2"));
+		list.add(new BigDecimal("-922337203685.4775807e2"));
+		list.add(new BigDecimal("92233720.36854775808e-2"));
+		list.add(new BigDecimal("-92233720.36854775808e-2"));
 
-		assertEquals(list, JSON.decode("[-1.1, 1.11e1, 1.11E+1, 11.1e-1]"));
+		assertEquals(list, JSON.decode("[-1.1, 11.1e0, 1.11e1, 1.11E+1, 11.1e-1," 
+				+ " 9999999999999.99999e+2, -9999999999999.99999e+2," 
+				+ " 100000000000000.0000e-2, -100000000000000.0000e-2," 
+				+ " 922337203685.4775807e2, -922337203685.4775807e2,"
+				+ " 92233720.36854775808e-2, -92233720.36854775808e-2]"));
 		
 		list.clear();
 		list.add(new BigDecimal("-1.1000000000"));
