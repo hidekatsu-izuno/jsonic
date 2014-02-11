@@ -15,7 +15,6 @@
  */
 package net.arnx.jsonic.util;
 
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -28,8 +27,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TimeZone;
-
-import net.arnx.jsonic.JSONHint;
 
 public class LocalCache {
 	private static final int CACHE_SIZE = 256;
@@ -44,7 +41,6 @@ public class LocalCache {
 	private Map<String, DateFormat> dateFormatCache;
 	private Map<String, NumberFormat> numberFormatCache;
 	private Map<ParameterTypeKey, Type> parameterTypeCache;
-	private Map<AnnotatedElement, JSONHint> hintCache;
 	
 	public LocalCache(String bundle, Locale locale, TimeZone timeZone) {
 		this.resources = ResourceBundle.getBundle(bundle, locale);
@@ -194,20 +190,6 @@ public class LocalCache {
 			parameterTypeCache.put(key, result);
 		}
 		return result;
-	}
-	
-	public JSONHint getHint(AnnotatedElement ae) {
-		JSONHint hint = null;
-		if (hintCache == null) {
-			hintCache = new HashMap<AnnotatedElement, JSONHint>();
-		} else {
-			hint = hintCache.get(ae);
-		}
-		if (hint == null) {
-			hint = ae.getAnnotation(JSONHint.class);
-			hintCache.put(ae, hint);
-		}
-		return hint;
 	}
 	
 	public String getMessage(String id) {
