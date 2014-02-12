@@ -1111,7 +1111,7 @@ public class JSON {
 		}
 		
 		if (c == null) {
-			if (value != null && cls.equals(type) && cls.isAssignableFrom(value.getClass())) {
+			if (value != null && cls == type && cls.isAssignableFrom(value.getClass())) {
 				c = PlainConverter.INSTANCE;
 			} else {
 				c = CONVERT_MAP.get(cls);
