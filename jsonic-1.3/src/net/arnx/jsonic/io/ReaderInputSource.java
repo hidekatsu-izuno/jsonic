@@ -30,7 +30,7 @@ public class ReaderInputSource implements InputSource {
 	
 	private InputStream in;
 	private Reader reader;
-	private final char[] buf = new char[2028 + BACK];
+	private final char[] buf = new char[1024];
 	private int back = BACK;
 	private int start = BACK;
 	private int end = BACK - 1;

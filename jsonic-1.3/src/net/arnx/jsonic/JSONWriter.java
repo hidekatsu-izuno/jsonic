@@ -16,7 +16,6 @@
 package net.arnx.jsonic;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.io.OutputSource;
@@ -229,7 +228,9 @@ public class JSONWriter {
 		public State push(JSONDataType type) {
 			size++;
 			if (size >= list.length) {
-				list = Arrays.copyOf(list, Math.max(size, list.length) * 2);
+				State[] newList = new State[Math.max(size, list.length) * 2];
+				System.arraycopy(list, 0, newList, 0, list.length);
+				list = newList;
 			}
 			State state;
 			if (list[size] != null) {
