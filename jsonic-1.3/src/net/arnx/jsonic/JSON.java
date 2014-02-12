@@ -1242,7 +1242,7 @@ public class JSON {
 		private final NamingStyle propertyStyle;
 		private final NamingStyle enumStyle;
 
-		private Object[] path;
+		private State[] path;
 		private int depth = -1;
 		
 		private Map<Class<?>, Object> memberCache;
@@ -1287,7 +1287,14 @@ public class JSON {
 				propertyStyle = context.propertyStyle;
 				enumStyle = context.enumStyle;
 				depth = context.depth;
-				path = context.path.clone();
+				
+				path = new State[context.path.length];
+				int max = Math.min(path.length, context.depth + 1);
+				for (int i = 0; i < max; i++) {
+					path[i] = new State();
+					path[i].key = context.path[i].key;
+					path[i].hint = context.path[i].hint;
+				}
 				
 				cache = context.cache;
 			}
@@ -1366,7 +1373,7 @@ public class JSON {
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
 		 */
 		public Object getKey() {
-			return path[depth*2];
+			return path[depth].key;
 		}
 		
 		/**
@@ -1376,7 +1383,11 @@ public class JSON {
 		 */
 		public Object getKey(int depth) {
 			if (depth < 0) depth = getDepth()+depth;
-			return path[depth*2];
+			if (depth <= this.depth) {
+				return path[depth].key;
+			} else {
+				return null;
+			}
 		}
 		
 		/**
@@ -1385,7 +1396,7 @@ public class JSON {
 		 * @return the current annotation if present on this context, else null.
 		 */
 		public JSONHint getHint() {
-			return (JSONHint)path[depth*2+1];
+			return path[depth].hint;
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -1406,14 +1417,19 @@ public class JSON {
 		
 		void enter(Object key, JSONHint hint) {
 			depth++;
-			if (path == null) path = new Object[8];
-			if (path.length < depth*2+2) {
-				Object[] newPath = new Object[Math.max(path.length*2, depth*2+2)];
+			if (path == null) path = new State[4];
+			if (depth >= path.length) {
+				State[] newPath = new State[depth * 2];
 				System.arraycopy(path, 0, newPath, 0, path.length);
 				path = newPath;
 			}
-			path[depth*2] = key;
-			path[depth*2+1] = hint;
+			State state = path[depth];
+			if (state == null) {
+				state = new State();
+				path[depth] = state;
+			}
+			state.key = key;
+			state.hint = hint;
 		}
 		
 		void enter(Object key) {
@@ -1447,20 +1463,22 @@ public class JSON {
 			return getLocalCache().getParameterType(t, cls, pos);
 		}
 		
+		@Override
 		public String toString() {
 			StringBuilderOutputSource sb = new StringBuilderOutputSource(new StringBuilder());
-			for (int i = 0; i < path.length; i+=2) {
-				Object key = path[i];
-				if (key == null) {
+			int length = Math.min(depth + 1, path.length);
+			for (int i = 0; i < length; i++) {
+				State state = path[i];
+				if (state.key == null) {
 					sb.append("[null]");
-				} else if (key instanceof Number) {
+				} else if (state.key instanceof Number) {
 					sb.append('[');
-					sb.append(key.toString());
+					sb.append(state.key.toString());
 					sb.append(']');
-				} else if (key instanceof Character) {
-					sb.append(key.toString());
+				} else if (state.key instanceof Character) {
+					sb.append(state.key.toString());
 				} else {
-					String str = key.toString();
+					String str = state.key.toString();
 					boolean escape = false;
 					for (int j = 0; j < str.length(); j++) {
 						if (j == 0) {
@@ -1618,5 +1636,10 @@ public class JSON {
 			ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 			return MessageFormat.format(bundle.getString(id), args);
 		}
+	}
+	
+	private static class State {
+		Object key;
+		JSONHint hint;
 	}
 }
