@@ -126,11 +126,12 @@ public class JSONTest {
 		list.add(Pattern.compile("\\.*"));
 		list.add(boolean.class);
 		list.add(ExampleEnum.Example0);
+		list.add(ExampleExtendEnum.Example0);
 		
-		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\"]", JSON.encode(list));
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\",\"Example0\"]", JSON.encode(list));
 		
 		list.add(list);
-		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\",null]", JSON.encode(list));
+		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\",\"Example0\",null]", JSON.encode(list));
 		
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
@@ -1660,6 +1661,12 @@ public class JSONTest {
 		assertEquals(ExampleEnum.Example1, json.convert("1", ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convert(true, ExampleEnum.class));
 		assertEquals(ExampleEnum.Example0, json.convert(false, ExampleEnum.class));
+		
+		assertEquals(ExampleExtendEnum.Example1, json.convert("Example1", ExampleExtendEnum.class));
+		assertEquals(ExampleExtendEnum.Example1, json.convert(1, ExampleExtendEnum.class));
+		assertEquals(ExampleExtendEnum.Example1, json.convert("1", ExampleExtendEnum.class));
+		assertEquals(ExampleExtendEnum.Example1, json.convert(true, ExampleExtendEnum.class));
+		assertEquals(ExampleExtendEnum.Example0, json.convert(false, ExampleExtendEnum.class));
 
 		try {
 			json.convert("20100431", Date.class);
@@ -2710,9 +2717,14 @@ class SuppressNullBean {
 	}
 };
 
-
 enum ExampleEnum {
 	Example0, Example1, Example2
+}
+
+enum ExampleExtendEnum {
+	Example0 {},
+	Example1 {},
+	Example2 {}
 }
 
 class Point2DJSON extends JSON {
