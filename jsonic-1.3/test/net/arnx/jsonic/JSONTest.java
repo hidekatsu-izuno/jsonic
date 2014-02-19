@@ -2996,7 +2996,7 @@ class DateNumberTestClass {
 enum NamedTestEnum {
 	aaaAaaAaa,
 	AAA_BBB_CCC,
-	aaaあああ
+	aaaあああ {}
 }
 
 class NamedTestClass {
