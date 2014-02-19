@@ -168,7 +168,7 @@ final class StringSerializableConverter implements Converter {
 	}
 	
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
-		if (c.isEnum()) {
+		if (c.isEnum() || Enum.class.isAssignableFrom(c)) {
 			return EnumConverter.INSTANCE.convert(context, value, c, t);
 		} else if (value instanceof String) {
 			if (c == String.class) {
@@ -977,7 +977,7 @@ final class EnumConverter implements Converter {
 	
 	@Override
 	public boolean accept(Class<?> cls) {
-		return cls.isEnum();
+		return cls.isEnum() || Enum.class.isAssignableFrom(cls);
 	}
 	
 	@SuppressWarnings({ "rawtypes" })

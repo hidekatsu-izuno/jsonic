@@ -284,7 +284,7 @@ final class EnumFormatter implements Formatter {
 	public static final EnumFormatter INSTANCE = new EnumFormatter();
 	
 	public boolean accept(Object o) {
-		return o != null && o.getClass().isEnum();
+		return o != null && (o.getClass().isEnum() || o instanceof Enum);
 	}
 	
 	@Override
