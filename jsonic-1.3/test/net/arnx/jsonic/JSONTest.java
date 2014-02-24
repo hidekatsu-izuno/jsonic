@@ -867,6 +867,10 @@ public class JSONTest {
 		json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
 		json.setEnumStyle(NamingStyle.LOWER_UNDERSCORE);
 		assertEquals("{\"AAA_AAA_AAA\":\"aaa_aaa_aaa\",\"AAA_BBB_CCC\":\"aaa_bbb_ccc\",\"AAAあああ\":\"aaaあああ\"}", json.format(named));
+
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		json.format(Arrays.asList(1, "abc", true, 2.0), bout);
+        assertEquals("[1,\"abc\",true,2.0]", bout.toString("UTF-8"));
 	}
 	
 	@Test
@@ -1408,6 +1412,25 @@ public class JSONTest {
 		json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
 		json.setEnumStyle(NamingStyle.UPPER_UNDERSCORE);
 		assertEquals(named, json.parse("{\"AAA_AAA_AAA\":\"AAA_AAA_AAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", NamedTestClass.class));
+
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		result.put("a", new BigDecimal("12"));
+		
+		List<BigDecimal> list4 = new ArrayList<BigDecimal>();
+		list4.add(new BigDecimal("1"));
+		list4.add(new BigDecimal("2"));
+		list4.add(new BigDecimal("3"));
+		list4.add(new BigDecimal("4"));
+		list4.add(new BigDecimal("5"));
+		result.put("b", list4);
+		
+        InputStream in = new ByteArrayInputStream("{\"a\": 12, \"b\": [1,2,3,4,5]}".getBytes()) {
+        	@Override
+        	public boolean markSupported() {
+        		return false;
+        	}
+        };
+        assertEquals(result, json.parse(in));
 	}
 
 	@Test

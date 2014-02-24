@@ -15,6 +15,7 @@
  */
 package net.arnx.jsonic.io;
 
+import java.io.Flushable;
 import java.io.IOException;
 
 public class AppendableOutputSource implements OutputSource {
@@ -41,6 +42,9 @@ public class AppendableOutputSource implements OutputSource {
 	
 	@Override
 	public void flush() throws IOException {
+		if (ap instanceof Flushable) {
+			((Flushable)ap).flush();
+		}
 	}
 	
 	@Override

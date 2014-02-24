@@ -74,7 +74,7 @@ public class ReaderInputSource implements InputSource {
 				back = BACK - len;
 			}
 			if (in != null) {
-				if (!in.markSupported()) in = new PushbackInputStream(in);
+				if (!in.markSupported()) in = new PushbackInputStream(in, 4);
 				this.reader = new InputStreamReader(in, determineEncoding(in));
 				this.in = null;
 			}
