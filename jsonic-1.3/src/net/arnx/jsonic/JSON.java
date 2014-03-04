@@ -189,12 +189,6 @@ public class JSON {
 	
 	static {
 		Object instance = null;
-		ClassLoader cl = null;
-		try {
-			cl = Thread.currentThread().getContextClassLoader();
-		} catch (SecurityException e) {
-			// no handle
-		}
 		
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
 		FORMAT_MAP.put(char.class, StringFormatter.INSTANCE);
@@ -264,25 +258,25 @@ public class JSON {
 		FORMAT_LIST.add(TimeZoneFormatter.INSTANCE);
 		FORMAT_LIST.add(CharsetFormatter.INSTANCE);
 		
-		instance = getInstance("net.arnx.jsonic.SQLArrayFormatter", cl);
+		instance = getInstance("net.arnx.jsonic.SQLArrayFormatter");
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 
-		instance = getInstance("net.arnx.jsonic.StructFormmatter", cl);
+		instance = getInstance("net.arnx.jsonic.StructFormmatter");
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 
-		instance = getInstance("net.arnx.jsonic.RowIdFormatter", cl);
+		instance = getInstance("net.arnx.jsonic.RowIdFormatter");
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.ElementNodeFormatter", cl);
+		instance = getInstance("net.arnx.jsonic.ElementNodeFormatter");
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.TextNodeFormatter", cl);
+		instance = getInstance("net.arnx.jsonic.TextNodeFormatter");
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.InetAddressFormatter", cl);
+		instance = getInstance("net.arnx.jsonic.InetAddressFormatter");
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.DynaBeanFormatter", cl);
+		instance = getInstance("net.arnx.jsonic.DynaBeanFormatter");
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
 		CONVERT_MAP.put(boolean.class, BooleanConverter.INSTANCE);
@@ -362,21 +356,19 @@ public class JSON {
 		CONVERT_LIST.add(CharSequenceConverter.INSTANCE);
 		CONVERT_LIST.add(AppendableConverter.INSTANCE);
 		
-		instance = getInstance("net.arnx.jsonic.InetAddressConverter", cl);
+		instance = getInstance("net.arnx.jsonic.InetAddressConverter");
 		if (instance != null) CONVERT_LIST.add((Converter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.NullableConverter", cl);
+		instance = getInstance("net.arnx.jsonic.NullableConverter");
 		if (instance != null) CONVERT_LIST.add((Converter)instance);
 	}
 	
-	static Object getInstance(String name, ClassLoader cl) {
-		BeanInfo bi;
+	static Object getInstance(String name) {
+		Class<?> cls;
 		try {
-			if (cl != null) {
-				bi = BeanInfo.get(Class.forName(name, true, cl));
-			} else {
-				bi = BeanInfo.get(Class.forName(name));
-			}
+			cls = Class.forName(name, true, JSON.class.getClassLoader());
+			
+			BeanInfo bi = BeanInfo.get(cls);
 			PropertyInfo pi = bi.getStaticProperty("INSTANCE");
 			if (pi != null) {
 				return pi.get(null);
@@ -384,11 +376,10 @@ public class JSON {
 				return bi.newInstance();			
 			}
 		} catch (ClassNotFoundException e) {
-			throw new IllegalStateException(e);
+			throw new IllegalStateException(e);			
 		} catch (NoClassDefFoundError e) {
 			// no handle
-		}
-		
+		}		
 		return null;
 	}
 	
