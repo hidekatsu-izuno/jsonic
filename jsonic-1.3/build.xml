@@ -124,4 +124,11 @@
 			<fileset refid="samples"/>
 		</copy>
 	</target>
+	
+	<target name="test">
+		<taskdef name="test" classname="net.arnx.jsonic.JSONMultiClassLoaderTestTask"
+			classpath="bin"/>
+		
+		<test />
+	</target>
 </project>
