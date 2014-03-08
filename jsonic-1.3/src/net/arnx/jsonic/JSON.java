@@ -366,7 +366,12 @@ public class JSON {
 	static Object getInstance(String name) {
 		Class<?> cls;
 		try {
-			cls = Class.forName(name, true, JSON.class.getClassLoader());
+			try {
+				cls = Class.forName(name, true, 
+						Thread.currentThread().getContextClassLoader());
+			} catch (ClassNotFoundException e) {
+				cls = Class.forName(name, true, JSON.class.getClassLoader());
+			}			
 			
 			BeanInfo bi = BeanInfo.get(cls);
 			PropertyInfo pi = bi.getStaticProperty("INSTANCE");
