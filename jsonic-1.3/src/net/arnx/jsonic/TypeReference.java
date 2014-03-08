@@ -18,6 +18,13 @@ package net.arnx.jsonic;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+/**
+ * The TypeReference is used to embed a generic type.
+ * 
+ * ex: JSON.decode("{}", new TypeReference<Map<String, String>>() {});
+ * 
+ * @param <T> a generic type
+ */
 public abstract class TypeReference<T> implements Type {
 	public Type getType() {
 		Type type = this.getClass().getGenericSuperclass();
