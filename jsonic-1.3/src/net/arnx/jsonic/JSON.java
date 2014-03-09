@@ -188,8 +188,22 @@ public class JSON {
 	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>();
 	
 	static {
-		Object instance = null;
+		ClassLoader cl = JSON.class.getClassLoader();
 		
+		try {
+			ClassLoader contextCL = Thread.currentThread().getContextClassLoader();
+			ClassLoader current = contextCL;
+			do {
+				if (current == cl) {
+					cl = contextCL;
+					break;
+				}
+			} while ((current = current.getParent()) != null);
+		} catch (SecurityException e) {
+			// no handle
+		}
+		
+		Object instance = null;
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
 		FORMAT_MAP.put(char.class, StringFormatter.INSTANCE);
 		FORMAT_MAP.put(byte.class, ByteFormatter.INSTANCE);
@@ -258,25 +272,25 @@ public class JSON {
 		FORMAT_LIST.add(TimeZoneFormatter.INSTANCE);
 		FORMAT_LIST.add(CharsetFormatter.INSTANCE);
 		
-		instance = getInstance("net.arnx.jsonic.SQLArrayFormatter");
+		instance = getInstance("net.arnx.jsonic.SQLArrayFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 
-		instance = getInstance("net.arnx.jsonic.StructFormmatter");
+		instance = getInstance("net.arnx.jsonic.StructFormmatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 
-		instance = getInstance("net.arnx.jsonic.RowIdFormatter");
+		instance = getInstance("net.arnx.jsonic.RowIdFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.ElementNodeFormatter");
+		instance = getInstance("net.arnx.jsonic.ElementNodeFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.TextNodeFormatter");
+		instance = getInstance("net.arnx.jsonic.TextNodeFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.InetAddressFormatter");
+		instance = getInstance("net.arnx.jsonic.InetAddressFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.DynaBeanFormatter");
+		instance = getInstance("net.arnx.jsonic.DynaBeanFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 		
 		CONVERT_MAP.put(boolean.class, BooleanConverter.INSTANCE);
@@ -356,23 +370,16 @@ public class JSON {
 		CONVERT_LIST.add(CharSequenceConverter.INSTANCE);
 		CONVERT_LIST.add(AppendableConverter.INSTANCE);
 		
-		instance = getInstance("net.arnx.jsonic.InetAddressConverter");
+		instance = getInstance("net.arnx.jsonic.InetAddressConverter", cl);
 		if (instance != null) CONVERT_LIST.add((Converter)instance);
 		
-		instance = getInstance("net.arnx.jsonic.NullableConverter");
+		instance = getInstance("net.arnx.jsonic.NullableConverter", cl);
 		if (instance != null) CONVERT_LIST.add((Converter)instance);
 	}
 	
-	static Object getInstance(String name) {
-		Class<?> cls;
+	static Object getInstance(String name, ClassLoader cl) {
 		try {
-			try {
-				cls = Class.forName(name, true, 
-						Thread.currentThread().getContextClassLoader());
-			} catch (ClassNotFoundException e) {
-				cls = Class.forName(name, true, JSON.class.getClassLoader());
-			}			
-			
+			Class<?> cls = Class.forName(name, true, cl);
 			BeanInfo bi = BeanInfo.get(cls);
 			PropertyInfo pi = bi.getStaticProperty("INSTANCE");
 			if (pi != null) {

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE project>
+<project name="jsonic-1.3 test" default="test">
+	<target name="test">
+		<taskdef name="test" classname="net.arnx.jsonic.JSONMultiClassLoaderTestTask"
+			classpath="../bin;../lib/commons-beanutils-1.8.0.jar;../lib/commons-logging.jar"/>
+		<test />
+	</target>
+</project>
