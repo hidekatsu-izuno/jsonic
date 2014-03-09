@@ -12,40 +12,29 @@ public class JSONMultiClassLoaderTest {
     
     @Before
     public void setUp() throws Exception {
-      SecurityManager securityManager = new SecurityManager() {
-        public void checkPermission(Permission permission) {
-          if ("exitVM".equals(permission.getName())) {
-            System.out.println("System.exit[exitVM]が呼ばれた");
+      System.setSecurityManager(new SecurityManager() {
+    	  @Override
+    	  public void checkPermission(Permission perm) {
+    	  }
+    	  
+          public void checkExit(int status) {
+              throw new SecurityException();
           }
-        }
- 
-        public void checkExit(int status) {
-          throw new ExitException(status);
-        }
-      };
-      System.setSecurityManager(securityManager);
+      });
     }
  
     @After
     public void tearDown() throws Exception {
       System.setSecurityManager(sm);
     }
- 
-    protected class ExitException extends SecurityException {
-      public int state = 0;
- 
-      public ExitException(int state) {
-        this.state = state;
-      }
-    }
-	
+    
 	@Test
 	public void test() throws Exception {
 		try {
 			Launcher.main(new String[] {
 				"-f", "test/build.xml"	
 			});
-		} catch (ExitException e) {
+		} catch (SecurityException e) {
 			// no handle
 		}
 	}
