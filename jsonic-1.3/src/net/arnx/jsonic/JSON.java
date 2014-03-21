@@ -150,7 +150,6 @@ import net.arnx.jsonic.util.PropertyInfo;
  * </table>
  * 
  * @author Hidekatsu Izuno
- * @version 1.3.1
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
  */
@@ -185,7 +184,7 @@ public class JSON {
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(20);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
-	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>();
+	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>(20);
 	
 	static {
 		ClassLoader cl = JSON.class.getClassLoader();
@@ -1089,7 +1088,7 @@ public class JSON {
 	 * @param context current context.
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
 	 * @param cls class for converting
-	 * @param type generics type for converting. type equals to c if not generics.
+	 * @param type generic type for converting. type equals to c if not generic.
 	 * @return a converted object
 	 * @throws Exception if conversion failed.
 	 */
