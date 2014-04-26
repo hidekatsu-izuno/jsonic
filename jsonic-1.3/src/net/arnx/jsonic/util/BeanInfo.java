@@ -68,15 +68,6 @@ public final class BeanInfo {
 	private BeanInfo(Class<?> cls) {
 		type = cls;
 
-		if (cls == Class.class
-				|| ClassLoader.class.isAssignableFrom(cls)) {
-			sprops = Collections.emptyMap();
-			smethods = Collections.emptyMap();
-			props = Collections.emptyMap();
-			methods = Collections.emptyMap();
-			return;
-		}
-
 		for (Constructor<?> con : cls.getConstructors()) {
 			if (con.isSynthetic()) {
 				continue;
@@ -90,7 +81,7 @@ public final class BeanInfo {
 		}
 
 		for (Field f : cls.getFields()) {
-			if (f.isSynthetic() || Object.class.equals(f.getDeclaringClass())) {
+			if (f.isSynthetic()) {
 				continue;
 			}
 
@@ -112,7 +103,7 @@ public final class BeanInfo {
 		}
 
 		for (Method m : cls.getMethods()) {
-			if (m.isSynthetic() || m.isBridge() || Object.class.equals(m.getDeclaringClass())) {
+			if (m.isSynthetic() || m.isBridge()) {
 				continue;
 			}
 
@@ -144,6 +135,12 @@ public final class BeanInfo {
 			}
 			m.setAccessible(true);
 			mi.methods.add(m);
+
+			if (m.getDeclaringClass() == Object.class
+					|| cls == Class.class
+					|| ClassLoader.class.isAssignableFrom(cls)) {
+				continue;
+			}
 
 			boolean isReadMethod;
 			int start = 0;
