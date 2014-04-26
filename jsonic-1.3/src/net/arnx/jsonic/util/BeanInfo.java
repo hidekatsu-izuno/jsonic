@@ -81,7 +81,9 @@ public final class BeanInfo {
 		}
 
 		for (Field f : cls.getFields()) {
-			if (f.isSynthetic() || ClassLoader.class.isAssignableFrom(f.getType())) {
+			if (f.isSynthetic()
+					|| Object.class.equals(f.getDeclaringClass())
+					|| ClassLoader.class.isAssignableFrom(f.getType())) {
 				continue;
 			}
 
@@ -103,7 +105,8 @@ public final class BeanInfo {
 		}
 
 		for (Method m : cls.getMethods()) {
-			if (m.isSynthetic() || m.isBridge()) {
+			if (m.isSynthetic() || m.isBridge()
+					|| Object.class.equals(m.getDeclaringClass())) {
 				continue;
 			}
 
