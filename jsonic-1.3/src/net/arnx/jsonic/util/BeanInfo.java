@@ -68,6 +68,15 @@ public final class BeanInfo {
 	private BeanInfo(Class<?> cls) {
 		type = cls;
 
+		if (cls == Class.class
+				|| ClassLoader.class.isAssignableFrom(cls)) {
+			sprops = Collections.emptyMap();
+			smethods = Collections.emptyMap();
+			props = Collections.emptyMap();
+			methods = Collections.emptyMap();
+			return;
+		}
+
 		for (Constructor<?> con : cls.getConstructors()) {
 			if (con.isSynthetic()) {
 				continue;
@@ -81,9 +90,7 @@ public final class BeanInfo {
 		}
 
 		for (Field f : cls.getFields()) {
-			if (f.isSynthetic()
-					|| Object.class.equals(f.getDeclaringClass())
-					|| ClassLoader.class.isAssignableFrom(f.getType())) {
+			if (f.isSynthetic() || Object.class.equals(f.getDeclaringClass())) {
 				continue;
 			}
 
@@ -105,8 +112,7 @@ public final class BeanInfo {
 		}
 
 		for (Method m : cls.getMethods()) {
-			if (m.isSynthetic() || m.isBridge()
-					|| Object.class.equals(m.getDeclaringClass())) {
+			if (m.isSynthetic() || m.isBridge() || Object.class.equals(m.getDeclaringClass())) {
 				continue;
 			}
 
@@ -156,14 +162,12 @@ public final class BeanInfo {
 
 			if (isReadMethod) {
 				if (paramTypes.length != 0
-						|| returnType.equals(void.class)
-						|| ClassLoader.class.isAssignableFrom(returnType)) {
+						|| returnType.equals(void.class)) {
 					continue;
 				}
 			} else {
 				if (paramTypes.length != 1
-						|| paramTypes[0].equals(void.class)
-						|| ClassLoader.class.isAssignableFrom(paramTypes[0])) {
+						|| paramTypes[0].equals(void.class)) {
 					continue;
 				}
 			}
