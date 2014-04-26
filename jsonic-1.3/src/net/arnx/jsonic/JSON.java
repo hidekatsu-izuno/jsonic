@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,33 +76,33 @@ import net.arnx.jsonic.util.LocalCache;
 import net.arnx.jsonic.util.PropertyInfo;
 
 /**
- * <p>The JSONIC JSON class provides JSON encoding and decoding as 
+ * <p>The JSONIC JSON class provides JSON encoding and decoding as
  * defined by RFC 4627.</p>
- * 
+ *
  * <p>The following example illustrates how to encode and decode. The code:</p>
  * <pre>
  * // encodes a object into a json string.
  * String s = JSON.encode(o);
- * 
+ *
  * // decodes a json string into a object.
  * Object o = JSON.decode(s);
- * 
+ *
  * // decodes a json string into a typed object.
  * Foo foo = JSON.decode(s, Foo.class);
  * </pre>
- * 
+ *
  * <p>Advanced topic:</p>
  * <pre>
  * // formats a object into a json string with indents for debug.
  * JSON json = new JSON();
  * json.setPrettyPrint(true);
  * String pretty = json.format(o);
- * 
+ *
  * //uses Reader/InputStream
  * Bar bar = JSON.decode(new FileInputStream("bar.json"), Bar.class);
  * Bar bar = JSON.decode(new FileReader("bar.json"), Bar.class);
  * </pre>
- * 
+ *
  * <h4>Summary of encoding rules for java type into json type</h4>
  * <table border="1" cellpadding="1" cellspacing="0">
  * <tr>
@@ -134,7 +134,7 @@ import net.arnx.jsonic.util.PropertyInfo;
  * <tr><td>boolean</td></tr>
  * <tr><td>null</td><td>null</td></tr>
  * </table>
- * 
+ *
  * <h4>Summary of decoding rules for json type into java type</h4>
  * <table border="1" cellpadding="1" cellspacing="0">
  * <tr>
@@ -148,7 +148,7 @@ import net.arnx.jsonic.util.PropertyInfo;
  * <tr><td>true/false</td><td>java.lang.Boolean</td></tr>
  * <tr><td>null</td><td>null</td></tr>
  * </table>
- * 
+ *
  * @author Hidekatsu Izuno
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4627.txt">RFC 4627</a>
  * @see <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache License, Version 2.0</a>
@@ -162,33 +162,33 @@ public class JSON {
 		 * Traditional Mode
 		 */
 		TRADITIONAL,
-		
+
 		/**
 		 * Strict Mode
 		 */
 		STRICT,
-		
+
 		/**
 		 * Script(=JavaScript) Mode
 		 */
 		SCRIPT
 	}
-	
+
 	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
 	public static volatile Class<? extends JSON> prototype = JSON.class;
-	
+
 	static final Character ROOT = '$';
-	
+
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(20);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
 	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>(20);
-	
+
 	static {
 		ClassLoader cl = JSON.class.getClassLoader();
-		
+
 		try {
 			ClassLoader contextCL = Thread.currentThread().getContextClassLoader();
 			ClassLoader current = contextCL;
@@ -201,7 +201,7 @@ public class JSON {
 		} catch (SecurityException e) {
 			// no handle
 		}
-		
+
 		Object instance = null;
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
 		FORMAT_MAP.put(char.class, StringFormatter.INSTANCE);
@@ -211,7 +211,7 @@ public class JSON {
 		FORMAT_MAP.put(long.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(float.class, FloatFormatter.INSTANCE);
 		FORMAT_MAP.put(double.class, FloatFormatter.INSTANCE);
-		
+
 		FORMAT_MAP.put(boolean[].class, BooleanArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(char[].class, CharArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(byte[].class, ByteArrayFormatter.INSTANCE);
@@ -221,7 +221,7 @@ public class JSON {
 		FORMAT_MAP.put(float[].class, FloatArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(double[].class, DoubleArrayFormatter.INSTANCE);
 		FORMAT_MAP.put(Object[].class, ObjectArrayFormatter.INSTANCE);
-		
+
 		FORMAT_MAP.put(Boolean.class, PlainFormatter.INSTANCE);
 		FORMAT_MAP.put(Character.class, StringFormatter.INSTANCE);
 		FORMAT_MAP.put(Byte.class, ByteFormatter.INSTANCE);
@@ -230,7 +230,7 @@ public class JSON {
 		FORMAT_MAP.put(Long.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(Float.class, FloatFormatter.INSTANCE);
 		FORMAT_MAP.put(Double.class, FloatFormatter.INSTANCE);
-		
+
 		FORMAT_MAP.put(BigInteger.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(BigDecimal.class, NumberFormatter.INSTANCE);
 		FORMAT_MAP.put(String.class, StringFormatter.INSTANCE);
@@ -244,19 +244,19 @@ public class JSON {
 		FORMAT_MAP.put(Pattern.class, StringFormatter.INSTANCE);
 		FORMAT_MAP.put(Class.class, ClassFormatter.INSTANCE);
 		FORMAT_MAP.put(Locale.class, LocaleFormatter.INSTANCE);
-		
+
 		FORMAT_MAP.put(ArrayList.class, ListFormatter.INSTANCE);
 		FORMAT_MAP.put(LinkedList.class, IterableFormatter.INSTANCE);
 		FORMAT_MAP.put(HashSet.class, IterableFormatter.INSTANCE);
 		FORMAT_MAP.put(TreeSet.class, IterableFormatter.INSTANCE);
 		FORMAT_MAP.put(LinkedHashSet.class, IterableFormatter.INSTANCE);
-		
+
 		FORMAT_MAP.put(HashMap.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(IdentityHashMap.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(Properties.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(TreeMap.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(LinkedHashMap.class, MapFormatter.INSTANCE);
-		
+
 		FORMAT_LIST.add(EnumFormatter.INSTANCE);
 		FORMAT_LIST.add(MapFormatter.INSTANCE);
 		FORMAT_LIST.add(ListFormatter.INSTANCE);
@@ -270,7 +270,7 @@ public class JSON {
 		FORMAT_LIST.add(EnumerationFormatter.INSTANCE);
 		FORMAT_LIST.add(TimeZoneFormatter.INSTANCE);
 		FORMAT_LIST.add(CharsetFormatter.INSTANCE);
-		
+
 		instance = getInstance("net.arnx.jsonic.SQLArrayFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
 
@@ -279,19 +279,19 @@ public class JSON {
 
 		instance = getInstance("net.arnx.jsonic.RowIdFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
-		
+
 		instance = getInstance("net.arnx.jsonic.ElementNodeFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
-		
+
 		instance = getInstance("net.arnx.jsonic.TextNodeFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
-		
+
 		instance = getInstance("net.arnx.jsonic.InetAddressFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
-		
+
 		instance = getInstance("net.arnx.jsonic.DynaBeanFormatter", cl);
 		if (instance != null) FORMAT_LIST.add((Formatter)instance);
-		
+
 		CONVERT_MAP.put(boolean.class, BooleanConverter.INSTANCE);
 		CONVERT_MAP.put(char.class, CharacterConverter.INSTANCE);
 		CONVERT_MAP.put(byte.class, ByteConverter.INSTANCE);
@@ -300,7 +300,7 @@ public class JSON {
 		CONVERT_MAP.put(long.class, LongConverter.INSTANCE);
 		CONVERT_MAP.put(float.class, FloatConverter.INSTANCE);
 		CONVERT_MAP.put(double.class, DoubleConverter.INSTANCE);
-		
+
 		CONVERT_MAP.put(boolean[].class, ArrayConverter.INSTANCE);
 		CONVERT_MAP.put(char[].class, ArrayConverter.INSTANCE);
 		CONVERT_MAP.put(byte[].class, ArrayConverter.INSTANCE);
@@ -310,7 +310,7 @@ public class JSON {
 		CONVERT_MAP.put(float[].class, ArrayConverter.INSTANCE);
 		CONVERT_MAP.put(double[].class, ArrayConverter.INSTANCE);
 		CONVERT_MAP.put(Object[].class, ArrayConverter.INSTANCE);
-		
+
 		CONVERT_MAP.put(Boolean.class, BooleanConverter.INSTANCE);
 		CONVERT_MAP.put(Character.class, CharacterConverter.INSTANCE);
 		CONVERT_MAP.put(Byte.class, ByteConverter.INSTANCE);
@@ -319,11 +319,11 @@ public class JSON {
 		CONVERT_MAP.put(Long.class, LongConverter.INSTANCE);
 		CONVERT_MAP.put(Float.class, FloatConverter.INSTANCE);
 		CONVERT_MAP.put(Double.class, DoubleConverter.INSTANCE);
-		
+
 		CONVERT_MAP.put(BigInteger.class, BigIntegerConverter.INSTANCE);
 		CONVERT_MAP.put(BigDecimal.class, BigDecimalConverter.INSTANCE);
 		CONVERT_MAP.put(Number.class, BigDecimalConverter.INSTANCE);
-		
+
 		CONVERT_MAP.put(Pattern.class, PatternConverter.INSTANCE);
 		CONVERT_MAP.put(TimeZone.class, TimeZoneConverter.INSTANCE);
 		CONVERT_MAP.put(Locale.class, LocaleConverter.INSTANCE);
@@ -339,7 +339,7 @@ public class JSON {
 		CONVERT_MAP.put(java.sql.Time.class, DateConverter.INSTANCE);
 		CONVERT_MAP.put(java.sql.Timestamp.class, DateConverter.INSTANCE);
 		CONVERT_MAP.put(Calendar.class, CalendarConverter.INSTANCE);
-		
+
 		CONVERT_MAP.put(Collection.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(Set.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(List.class, CollectionConverter.INSTANCE);
@@ -349,7 +349,7 @@ public class JSON {
 		CONVERT_MAP.put(HashSet.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(TreeSet.class, CollectionConverter.INSTANCE);
 		CONVERT_MAP.put(LinkedHashSet.class, CollectionConverter.INSTANCE);
-		
+
 		CONVERT_MAP.put(Map.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(SortedMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(HashMap.class, MapConverter.INSTANCE);
@@ -357,7 +357,7 @@ public class JSON {
 		CONVERT_MAP.put(TreeMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(LinkedHashMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(Properties.class, PropertiesConverter.INSTANCE);
-		
+
 		CONVERT_LIST.add(PropertiesConverter.INSTANCE);
 		CONVERT_LIST.add(MapConverter.INSTANCE);
 		CONVERT_LIST.add(CollectionConverter.INSTANCE);
@@ -368,14 +368,14 @@ public class JSON {
 		CONVERT_LIST.add(CalendarConverter.INSTANCE);
 		CONVERT_LIST.add(CharSequenceConverter.INSTANCE);
 		CONVERT_LIST.add(AppendableConverter.INSTANCE);
-		
+
 		instance = getInstance("net.arnx.jsonic.InetAddressConverter", cl);
 		if (instance != null) CONVERT_LIST.add((Converter)instance);
-		
+
 		instance = getInstance("net.arnx.jsonic.NullableConverter", cl);
 		if (instance != null) CONVERT_LIST.add((Converter)instance);
 	}
-	
+
 	static Object getInstance(String name, ClassLoader cl) {
 		try {
 			Class<?> cls = Class.forName(name, true, cl);
@@ -384,16 +384,16 @@ public class JSON {
 			if (pi != null) {
 				return pi.get(null);
 			} else {
-				return bi.newInstance();			
+				return bi.newInstance();
 			}
 		} catch (ClassNotFoundException e) {
-			throw new IllegalStateException(e);			
+			throw new IllegalStateException(e);
 		} catch (NoClassDefFoundError e) {
 			// no handle
-		}		
+		}
 		return null;
 	}
-	
+
 	static JSON newInstance() {
 		JSON instance = null;
 		try {
@@ -406,7 +406,7 @@ public class JSON {
 
 	/**
 	 * Encodes a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @return a json string
 	 * @throws JSONException if error occurred when formating.
@@ -414,24 +414,24 @@ public class JSON {
 	public static String encode(Object source) throws JSONException {
 		return encode(source, false);
 	}
-	
+
 	/**
 	 * Encodes a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param prettyPrint output a json string with indent, space or break.
 	 * @return a json string
 	 * @throws JSONException if error occurred when formating.
 	 */
-	public static String encode(Object source, boolean prettyPrint) throws JSONException {		
+	public static String encode(Object source, boolean prettyPrint) throws JSONException {
 		JSON json = newInstance();
-		json.setPrettyPrint(prettyPrint);		
+		json.setPrettyPrint(prettyPrint);
 		return json.format(source);
 	}
 
 	/**
 	 * Encodes a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @throws IOException if I/O Error occurred.
@@ -443,7 +443,7 @@ public class JSON {
 
 	/**
 	 * Encodes a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
@@ -452,13 +452,13 @@ public class JSON {
 	 */
 	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException, JSONException {
 		JSON json = newInstance();
-		json.setPrettyPrint(prettyPrint);		
+		json.setPrettyPrint(prettyPrint);
 		json.format(source, new OutputStreamWriter(out, "UTF-8"));
 	}
 
 	/**
 	 * Encodes a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
 	 * @throws IOException if I/O Error occurred.
@@ -467,10 +467,10 @@ public class JSON {
 	public static void encode(Object source, Appendable appendable) throws IOException, JSONException {
 		newInstance().format(source, appendable);
 	}
-	
+
 	/**
 	 * Encodes a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
 	 * @param prettyPrint output a json string with indent, space or break.
@@ -479,13 +479,13 @@ public class JSON {
 	 */
 	public static void encode(Object source, Appendable appendable, boolean prettyPrint) throws IOException, JSONException {
 		JSON json = newInstance();
-		json.setPrettyPrint(prettyPrint);		
+		json.setPrettyPrint(prettyPrint);
 		json.format(source, appendable);
 	}
-	
+
 	/**
 	 * Escapes a object into JavaScript format.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @return a escaped object
 	 * @throws JSONException if error occurred when formating.
@@ -495,10 +495,10 @@ public class JSON {
 		json.setMode(Mode.SCRIPT);
 		return json.format(source);
 	}
-	
+
 	/**
 	 * Escapes a object into JavaScript format.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @throws IOException if I/O Error occurred.
@@ -509,10 +509,10 @@ public class JSON {
 		json.setMode(Mode.SCRIPT);
 		json.format(source, out);
 	}
-	
+
 	/**
 	 * Escapes a object into JavaScript format.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param appendable a destination to output a json string.
 	 * @throws IOException if I/O Error occurred.
@@ -523,10 +523,10 @@ public class JSON {
 		json.setMode(Mode.SCRIPT);
 		json.format(source, appendable);
 	}
-	
+
 	/**
 	 * Decodes a json string into a object.
-	 * 
+	 *
 	 * @param source a json string to decode
 	 * @return a decoded object
 	 * @throws JSONException if error occurred when parsing.
@@ -535,10 +535,10 @@ public class JSON {
 	public static <T> T decode(String source) throws JSONException {
 		return (T)newInstance().parse(source);
 	}
-	
+
 	/**
 	 * Decodes a json string into a typed object.
-	 * 
+	 *
 	 * @param source a json string to decode
 	 * @param cls class for converting
 	 * @return a decoded object
@@ -547,10 +547,10 @@ public class JSON {
 	public static <T> T decode(String source, Class<? extends T> cls) throws JSONException {
 		return newInstance().parse(source, cls);
 	}
-	
+
 	/**
 	 * Decodes a json string into a typed object.
-	 * 
+	 *
 	 * @param source a json string to decode
 	 * @param type type for converting
 	 * @return a decoded object
@@ -563,7 +563,7 @@ public class JSON {
 
 	/**
 	 * Decodes a json stream into a object. (character encoding should be Unicode)
-	 * 
+	 *
 	 * @param in a json stream to decode
 	 * @return a decoded object
 	 * @throws IOException if I/O error occurred.
@@ -576,7 +576,7 @@ public class JSON {
 
 	/**
 	 * Decodes a json stream into a object. (character encoding should be Unicode)
-	 * 
+	 *
 	 * @param in a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
@@ -589,7 +589,7 @@ public class JSON {
 
 	/**
 	 * Decodes a json stream into a object. (character encoding should be Unicode)
-	 * 
+	 *
 	 * @param in a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
@@ -600,10 +600,10 @@ public class JSON {
 	public static <T> T decode(InputStream in, Type type) throws IOException, JSONException {
 		return (T)newInstance().parse(in, type);
 	}
-	
+
 	/**
 	 * Decodes a json stream into a object.
-	 * 
+	 *
 	 * @param reader a json stream to decode
 	 * @return a decoded object
 	 * @throws IOException if I/O error occurred.
@@ -616,7 +616,7 @@ public class JSON {
 
 	/**
 	 * Decodes a json stream into a object.
-	 * 
+	 *
 	 * @param reader a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
@@ -629,7 +629,7 @@ public class JSON {
 
 	/**
 	 * Decodes a json stream into a object.
-	 * 
+	 *
 	 * @param reader a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
@@ -640,10 +640,10 @@ public class JSON {
 	public static <T> T decode(Reader reader, Type type) throws IOException, JSONException {
 		return (T)newInstance().parse(reader, type);
 	}
-	
+
 	/**
 	 * Validates a json text
-	 * 
+	 *
 	 * @param cs source a json string to decode
 	 * @throws JSONException if error occurred when parsing.
 	 */
@@ -653,10 +653,10 @@ public class JSON {
 		json.setMaxDepth(0);
 		json.parse(cs);
 	}
-	
+
 	/**
 	 * Validates a json stream
-	 * 
+	 *
 	 * @param in source a json string to decode
 	 * @throws IOException if I/O error occurred.
 	 * @throws JSONException if error occurred when parsing.
@@ -667,10 +667,10 @@ public class JSON {
 		json.setMaxDepth(0);
 		json.parse(in);
 	}
-	
+
 	/**
 	 * Validates a json stream
-	 * 
+	 *
 	 * @param reader source a json string to decode
 	 * @throws IOException if I/O error occurred.
 	 * @throws JSONException if error occurred when parsing.
@@ -681,7 +681,7 @@ public class JSON {
 		json.setMaxDepth(0);
 		json.parse(reader);
 	}
-	
+
 	Object contextObject;
 	Locale locale = Locale.getDefault();
 	TimeZone timeZone = TimeZone.getDefault();
@@ -695,30 +695,30 @@ public class JSON {
 	String numberFormat;
 	NamingStyle propertyStyle = NamingStyle.NOOP;
 	NamingStyle enumStyle = NamingStyle.NOOP;
-	
+
 	public JSON() {
 	}
-	
+
 	public JSON(int maxDepth) {
 		setMaxDepth(maxDepth);
 	}
-	
+
 	public JSON(Mode mode) {
 		setMode(mode);
 	}
-	
+
 	/**
 	 * Sets context for inner class.
-	 * 
+	 *
 	 * @param value context object
 	 */
 	public void setContext(Object value) {
 		this.contextObject = value;
 	}
-	
+
 	/**
 	 * Sets locale for formatting, converting and selecting message.
-	 * 
+	 *
 	 * @param locale locale for formatting, converting and selecting message
 	 */
 	public void setLocale(Locale locale) {
@@ -727,10 +727,10 @@ public class JSON {
 		}
 		this.locale = locale;
 	}
-	
+
 	/**
 	 * Sets timeZone for formatting and converting.
-	 * 
+	 *
 	 * @param timeZone timeZone for formatting and converting.
 	 */
 	public void setTimeZone(TimeZone timeZone) {
@@ -739,19 +739,19 @@ public class JSON {
 		}
 		this.timeZone = timeZone;
 	}
-	
+
 	/**
 	 * Output json string is to human-readable format.
-	 * 
+	 *
 	 * @param value true to format human-readable, false to shorten.
 	 */
 	public void setPrettyPrint(boolean value) {
 		this.prettyPrint = value;
 	}
-	
+
 	/**
 	 * Set initial indent for pretty printing.
-	 * 
+	 *
 	 * @param indent initial indent
 	 */
 	public void setInitialIndent(int indent) {
@@ -760,20 +760,20 @@ public class JSON {
 		}
 		this.initialIndent = indent;
 	}
-	
+
 	/**
 	 * Set indent text for pretty printing.
-	 * 
+	 *
 	 * @param text indent text
 	 */
 	public void setIndentText(String text) {
 		this.indentText = text;
 	}
-	
+
 	/**
 	 * Sets maximum depth for the nest depth.
 	 * default value is 32.
-	 * 
+	 *
 	 * @param value maximum depth for the nest depth.
 	 */
 	public void setMaxDepth(int value) {
@@ -782,29 +782,29 @@ public class JSON {
 		}
 		this.maxDepth = value;
 	}
-	
+
 	/**
 	 * Gets maximum depth for the nest depth.
-	 * 
+	 *
 	 * @return a maximum depth
 	 */
 	public int getMaxDepth() {
 		return this.maxDepth;
 	}
-	
+
 	/**
 	 * If this property is true, the null value's items of Bean or DynaBean is ignored.
 	 * default value is false.
-	 * 
+	 *
 	 * @param value true to ignore the null value's items of Bean or DynaBean.
 	 */
 	public void setSuppressNull(boolean value) {
 		this.suppressNull = value;
 	}
-	
+
 	/**
 	 * Sets JSON interpreter mode.
-	 * 
+	 *
 	 * @param mode JSON interpreter mode
 	 */
 	public void setMode(Mode mode) {
@@ -813,57 +813,57 @@ public class JSON {
 		}
 		this.mode = mode;
 	}
-	
+
 	/**
 	 * Gets JSON interpreter mode.
-	 * 
+	 *
 	 * @return JSON interpreter mode
 	 */
 	public Mode getMode() {
 		return mode;
 	}
-	
+
 	/**
-	 * Sets default Date format. 
-	 * When format is null, Date is formated to JSON number.  
-	 * 
+	 * Sets default Date format.
+	 * When format is null, Date is formated to JSON number.
+	 *
 	 * @param format default Date format
 	 */
 	public void setDateFormat(String format) {
 		this.dateFormat = format;
 	}
-	
+
 	/**
-	 * Sets default Number format. 
-	 * When format is null, Number is formated to JSON number.  
-	 * 
+	 * Sets default Number format.
+	 * When format is null, Number is formated to JSON number.
+	 *
 	 * @param format default Number format
 	 */
 	public void setNumberFormat(String format) {
 		this.numberFormat = format;
 	}
-	
+
 	/**
-	 * Sets default Case style for the property name of JSON object. 
-	 * 
-	 * @param style default Case style for keys of JSON object. 
+	 * Sets default Case style for the property name of JSON object.
+	 *
+	 * @param style default Case style for keys of JSON object.
 	 */
 	public void setPropertyStyle(NamingStyle style) {
 		this.propertyStyle = style;
 	}
-	
+
 	/**
-	 * Sets default Case style for Enum. 
-	 * 
+	 * Sets default Case style for Enum.
+	 *
 	 * @param style default Case style for Enum.
 	 */
 	public void setEnumStyle(NamingStyle style) {
 		this.enumStyle = style;
 	}
-	
+
 	/**
 	 * Format a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @return a json string
 	 */
@@ -876,10 +876,10 @@ public class JSON {
 		}
 		return text;
 	}
-	
+
 	/**
 	 * Format a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @return a reference to 'out' object in parameters
@@ -888,10 +888,10 @@ public class JSON {
 		format(source, new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
 		return out;
 	}
-	
+
 	/**
 	 * Format a object into a json string.
-	 * 
+	 *
 	 * @param source a object to encode.
 	 * @param ap a destination. example: StringBuilder, Writer, ...
 	 * @return a json string
@@ -907,13 +907,13 @@ public class JSON {
 		} else {
 			out = new AppendableOutputSource(ap);
 		}
-		
+
 		Context context = new Context();
-		
+
 		if (context.isPrettyPrint()) {
 			context.appendIndent(out, 0);
 		}
-		
+
 		context.enter(ROOT, null);
 		source = context.preformatInternal(source);
 		context.formatInternal(source, out);
@@ -921,11 +921,11 @@ public class JSON {
 		out.flush();
 		return ap;
 	}
-	
+
 	public JSONWriter getWriter(OutputStream out) throws IOException {
 		return getWriter(new OutputStreamWriter(out, "UTF-8"));
 	}
-	
+
 	public JSONWriter getWriter(Appendable ap) throws IOException {
 		OutputSource out;
 		if (ap instanceof BufferedWriter) {
@@ -940,10 +940,10 @@ public class JSON {
 
 		return new JSONWriter(new Context(), out);
 	}
-	
+
 	/**
 	 * Converts Any Java Object to JSON recognizable Java object before format.
-	 * 
+	 *
 	 * @param context current context.
 	 * @param value source a object to format.
 	 * @return null or the instance of Map, Iterator(or Array, Enumerator), Number, CharSequence or Boolean.
@@ -952,7 +952,7 @@ public class JSON {
 	protected Object preformat(Context context, Object value) throws Exception {
 		return value;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence cs) throws JSONException {
 		InputSource is;
@@ -965,7 +965,7 @@ public class JSON {
 		} else {
 			is = new CharSequenceInputSource(cs);
 		}
-		
+
 		Object value = null;
 		try {
 			JSONReader jreader = new JSONReader(new Context(), is, false, true);
@@ -973,14 +973,14 @@ public class JSON {
 		} catch (IOException e) {
 			// never occur
 		}
-		return (T)value; 
+		return (T)value;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence s, Class<? extends T> cls) throws JSONException {
 		return (T)parse(s, (Type)cls);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(CharSequence cs, Type type) throws JSONException {
 		InputSource is;
@@ -993,7 +993,7 @@ public class JSON {
 		} else {
 			is = new CharSequenceInputSource(cs);
 		}
-		
+
 		T value = null;
 		try {
 			Context context = new Context();
@@ -1005,18 +1005,18 @@ public class JSON {
 		}
 		return value;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in) throws IOException, JSONException {
 		JSONReader jreader = new JSONReader(new Context(), new ReaderInputSource(in), false, true);
 		return (jreader.next() != null) ? (T)jreader.getValue() : null;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Class<? extends T> cls) throws IOException, JSONException {
 		return (T)parse(in, (Type)cls);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
 		Context context = new Context();
@@ -1024,18 +1024,18 @@ public class JSON {
 		Object result = (jreader.next() != null) ? jreader.getValue() : null;
 		return (T)context.convertInternal(result, type);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader) throws IOException, JSONException {
 		JSONReader jreader = new JSONReader(new Context(), new ReaderInputSource(reader), false, true);
 		return (jreader.next() != null) ? (T)jreader.getValue() : null;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Class<? extends T> cls) throws IOException, JSONException {
 		return (T)parse(reader, (Type)cls);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
 		Context context = new Context();
@@ -1047,11 +1047,11 @@ public class JSON {
 	public JSONReader getReader(CharSequence cs) {
 		return getReader(cs, true);
 	}
-	
+
 	public JSONReader getReader(InputStream in) {
 		return getReader(in, true);
 	}
-	
+
 	public JSONReader getReader(Reader reader) {
 		return getReader(reader, true);
 	}
@@ -1061,30 +1061,30 @@ public class JSON {
 			: (cs instanceof StringBuilder) ? new StringBuilderInputSource((StringBuilder)cs)
 			: (cs instanceof StringBuffer) ? new StringBufferInputSource((StringBuffer)cs)
 			: new CharSequenceInputSource(cs);
-		
+
 		return new JSONReader(new Context(), in, true, ignoreWhitespace);
 	}
-	
+
 	public JSONReader getReader(InputStream in, boolean ignoreWhitespace) {
 		return new JSONReader(new Context(), new ReaderInputSource(in), true, ignoreWhitespace);
 	}
-	
+
 	public JSONReader getReader(Reader reader, boolean ignoreWhitespace) {
 		return new JSONReader(new Context(), new ReaderInputSource(reader), true, ignoreWhitespace);
 	}
-	
+
 	String getMessage(String id, Object... args) {
 		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);
 	}
-	
+
 	public Object convert(Object value, Type type)  throws JSONException {
 		return (new Context()).convertInternal(value, type);
 	}
-	
+
 	/**
-	 * Converts Map, List, Number, String, Boolean or null to other Java Objects after parsing. 
-	 * 
+	 * Converts Map, List, Number, String, Boolean or null to other Java Objects after parsing.
+	 *
 	 * @param context current context.
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
 	 * @param cls class for converting
@@ -1094,7 +1094,7 @@ public class JSON {
 	 */
 	protected <T> T postparse(Context context, Object value, Class<? extends T> cls, Type type) throws Exception {
 		Converter c = null;
-		
+
 		if (value == null) {
 			if (!cls.isPrimitive()) {
 				c = NullConverter.INSTANCE;
@@ -1111,7 +1111,7 @@ public class JSON {
 				c = StringSerializableConverter.INSTANCE;
 			}
 		}
-		
+
 		if (c == null) {
 			if (value != null && cls == type && cls.isAssignableFrom(value.getClass())) {
 				c = PlainConverter.INSTANCE;
@@ -1119,11 +1119,11 @@ public class JSON {
 				c = CONVERT_MAP.get(cls);
 			}
 		}
-		
+
 		if (c == null && context.memberCache != null) {
 			c = (Converter)context.memberCache.get(cls);
 		}
-		
+
 		if (c == null) {
 			for (Converter converter : CONVERT_LIST) {
 				if (converter.accept(cls)) {
@@ -1131,30 +1131,30 @@ public class JSON {
 					break;
 				}
 			}
-				
+
 			if (c == null) {
 				c = new ObjectConverter(cls);
 			}
-			
+
 			if (context.memberCache == null) {
 				context.memberCache = new HashMap<Class<?>, Object>();
 			}
 			context.memberCache.put(cls, c);
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		T ret = (T)c.convert(context, value, cls, type);
 		return ret;
 	}
-	
+
 	protected String normalize(String name) {
 		return name;
 	}
-	
+
 	/**
 	 * Ignore this property. A default behavior is to ignore transient or declaring method in java.lang.Object.
 	 * You can override this method if you have to change default behavior.
-	 * 
+	 *
 	 * @param context current context
 	 * @param target target class
 	 * @param member target member
@@ -1162,16 +1162,15 @@ public class JSON {
 	 */
 	protected boolean ignore(Context context, Class<?> target, Member member) {
 		if (Modifier.isTransient(member.getModifiers())) return true;
-		if (member.getDeclaringClass().equals(Object.class)) return true;
 		return false;
 	}
-	
+
 	protected <T> T create(Context context, Class<? extends T> c) throws Exception {
 		Object instance = null;
-		
+
 		JSONHint hint = context.getHint();
 		if (hint != null && hint.type() != Object.class) c = hint.type().asSubclass(c);
-		
+
 		if (Collection.class.equals(c) || List.class.equals(c) || ArrayList.class.equals(c)) {
 			if (context.createSizeHint >= 0) {
 				instance = new ArrayList<Object>(context.createSizeHint);
@@ -1218,17 +1217,17 @@ public class JSON {
 					// no handle
 				}
 			}
-			
+
 			if (instance == null) {
 				Constructor<?> con = c.getDeclaredConstructor();
 				con.setAccessible(true);
 				instance = con.newInstance();
 			}
 		}
-		
+
 		return c.cast(instance);
 	}
-	
+
 	public final class Context {
 		private final Locale locale;
 		private final TimeZone timeZone;
@@ -1246,13 +1245,13 @@ public class JSON {
 
 		private State[] path;
 		private int depth = -1;
-		
+
 		private Map<Class<?>, Object> memberCache;
 		private final LocalCache cache;
-		
+
 		JSONHint skipHint;
 		int createSizeHint = -1;
-		
+
 		public Context() {
 			synchronized (JSON.this) {
 				locale = JSON.this.locale;
@@ -1268,11 +1267,11 @@ public class JSON {
 				dateFormat = JSON.this.dateFormat;
 				propertyStyle = JSON.this.propertyStyle;
 				enumStyle = JSON.this.enumStyle;
-				
+
 				cache = new LocalCache("net.arnx.jsonic.Messages", locale, timeZone);
 			}
 		}
-		
+
 		private Context(Context context) {
 			synchronized (context) {
 				locale = context.locale;
@@ -1289,7 +1288,7 @@ public class JSON {
 				propertyStyle = context.propertyStyle;
 				enumStyle = context.enumStyle;
 				depth = context.depth;
-				
+
 				path = new State[context.path.length];
 				int max = Math.min(path.length, context.depth + 1);
 				for (int i = 0; i < max; i++) {
@@ -1297,91 +1296,91 @@ public class JSON {
 					path[i].key = context.path[i].key;
 					path[i].hint = context.path[i].hint;
 				}
-				
+
 				cache = context.cache;
 			}
 		}
-		
+
 		Context copy() {
 			return new Context(this);
 		}
-		
+
 		public Locale getLocale() {
 			return locale;
 		}
-		
+
 		public TimeZone getTimeZone() {
 			return timeZone;
 		}
-		
+
 		public int getMaxDepth() {
 			return maxDepth;
 		}
-		
+
 		public boolean isPrettyPrint() {
 			return prettyPrint;
 		}
-		
+
 		public int getInitialIndent() {
 			return initialIndent;
 		}
-		
+
 		public String getIndentText() {
 			return indentText;
 		}
-		
+
 		public boolean isSuppressNull() {
 			return suppressNull;
 		}
-		
+
 		public Mode getMode() {
 			return mode;
 		}
-		
+
 		public NamingStyle getPropertyStyle() {
 			return propertyStyle;
 		}
-		
+
 		public NamingStyle getEnumStyle() {
 			return enumStyle;
 		}
-		
+
 		public LocalCache getLocalCache() {
 			return cache;
 		}
-		
+
 		/**
 		 * Returns the current level. This method renames to getDepth
-		 * 
+		 *
 		 * @return depth number. 0 is root node.
 		 */
 		@Deprecated
 		public int getLevel() {
 			return getDepth();
 		}
-		
+
 		/**
 		 * Returns the current depth.
-		 * 
+		 *
 		 * @return depth number. 0 is root node.
 		 */
 		public int getDepth() {
 			return depth;
 		}
-		
+
 		/**
 		 * Returns the current key object.
-		 * 
-		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
+		 *
+		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String.
 		 */
 		public Object getKey() {
 			return path[depth].key;
 		}
-		
+
 		/**
 		 * Returns the key object in any depth. the negative value means relative to current depth.
-		 * 
-		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String. 
+		 *
+		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String.
 		 */
 		public Object getKey(int depth) {
 			if (depth < 0) depth = getDepth()+depth;
@@ -1391,16 +1390,16 @@ public class JSON {
 				return null;
 			}
 		}
-		
+
 		/**
 		 * Returns the current hint annotation.
-		 * 
+		 *
 		 * @return the current annotation if present on this context, else null.
 		 */
 		public JSONHint getHint() {
 			return path[depth].hint;
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		public <T> T convert(Object key, Object value, Class<? extends T> c) throws Exception {
 			enter(key, getHint());
@@ -1408,7 +1407,7 @@ public class JSON {
 			exit();
 			return (T)((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
-		
+
 		public Object convert(Object key, Object value, Type t) throws Exception {
 			Class<?> c = ClassUtil.getRawType(t);
 			enter(key, getHint());
@@ -1416,7 +1415,7 @@ public class JSON {
 			exit();
 			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
 		}
-		
+
 		void enter(Object key, JSONHint hint) {
 			depth++;
 			if (path == null) path = new State[4];
@@ -1433,38 +1432,38 @@ public class JSON {
 			state.key = key;
 			state.hint = hint;
 		}
-		
+
 		void enter(Object key) {
 			enter(key, getHint());
 		}
-		
+
 		void exit() {
 			depth--;
 		}
-		
+
 		void appendIndent(OutputSource out, int depth) throws IOException {
 			int indent = getInitialIndent() + depth;
 			for (int j = 0; j < indent; j++) {
 				out.append(getIndentText());
 			}
 		}
-		
+
 		NumberFormat getNumberFormat() {
 			JSONHint hint = getHint();
-			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;			
+			String format = (hint != null && hint.format().length() > 0) ? hint.format() : numberFormat;
 			return (format != null) ? getLocalCache().getNumberFormat(format) : null;
 		}
-		
+
 		DateFormat getDateFormat() {
 			JSONHint hint = getHint();
-			String format = (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;			
+			String format = (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;
 			return (format != null) ? getLocalCache().getDateFormat(format) : null;
 		}
-		
+
 		Type getParameterType(Type t, Class<?> cls, int pos) {
 			return getLocalCache().getParameterType(t, cls, pos);
 		}
-		
+
 		@Override
 		public String toString() {
 			StringBuilderOutputSource sb = new StringBuilderOutputSource(new StringBuilder());
@@ -1490,7 +1489,7 @@ public class JSON {
 						}
 						if (escape) break;
 					}
-					
+
 					if (escape) {
 						sb.append('[');
 						try {
@@ -1507,7 +1506,7 @@ public class JSON {
 			}
 			return sb.toString();
 		}
-		
+
 		final Object preformatInternal(Object value) {
 			if (value == null) {
 				return null;
@@ -1523,12 +1522,12 @@ public class JSON {
 			}
 			return value;
 		}
-		
+
 		final Formatter formatInternal(final Object src, final OutputSource ap) throws IOException {
 			Object o = src;
-			
+
 			Formatter f = null;
-			
+
 			if (o == null) {
 				f = NullFormatter.INSTANCE;
 			} else {
@@ -1543,15 +1542,15 @@ public class JSON {
 					f = SerializableFormatter.INSTANCE;
 				}
 			}
-			
+
 			if (f == null) {
 				f = FORMAT_MAP.get(o.getClass());
 			}
-			
+
 			if (f == null && memberCache != null) {
 				f = (Formatter)memberCache.get(o.getClass());
 			}
-			
+
 			if (f == null) {
 				for (Formatter formatter : FORMAT_LIST) {
 					if (formatter.accept(o)) {
@@ -1559,22 +1558,22 @@ public class JSON {
 						break;
 					}
 				}
-				
+
 				if (f == null) {
 					f = new ObjectFormatter(o.getClass());
 				}
-				
+
 				if (memberCache == null) {
 					memberCache = new HashMap<Class<?>, Object>();
 				}
 				memberCache.put(o.getClass(), f);
 			}
-			
+
 			if (!f.isStruct() && getDepth() == 0 && getMode() != Mode.SCRIPT) {
-				throw new JSONException(getMessage("json.format.IllegalRootTypeError"), 
+				throw new JSONException(getMessage("json.format.IllegalRootTypeError"),
 						JSONException.FORMAT_ERROR);
 			}
-			
+
 			try {
 				f.format(this, src, o, ap);
 			} catch (IOException e) {
@@ -1584,22 +1583,22 @@ public class JSON {
 					(src instanceof CharSequence) ? "\"" + src + "\"" : src, this),
 						JSONException.FORMAT_ERROR, e);
 			}
-			
+
 			return f;
 		}
-		
+
 		<T> T postparseInternal(Object value, Class<? extends T> cls, Type type) throws Exception {
 			return postparse(this, value, cls, type);
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		<T> T convertInternal(Object value, Type type) throws JSONException {
 			if (type instanceof TypeReference<?>) {
 				type = ((TypeReference<?>)type).getType();
 			}
-			
+
 			Class<?> cls = ClassUtil.getRawType(type);
-			
+
 			T result = null;
 			try {
 				enter(ROOT, null);
@@ -1616,30 +1615,30 @@ public class JSON {
 						text = value.getClass().toString();
 					}
 				}
-				throw new JSONException(getMessage("json.parse.ConversionError", text, type, this), 
+				throw new JSONException(getMessage("json.parse.ConversionError", text, type, this),
 						JSONException.POSTPARSE_ERROR, e);
 			}
 			return result;
 		}
-		
+
 		<T> T createInternal(Class<? extends T> c) throws Exception {
 			return create(this, c);
 		}
-		
+
 		boolean ignoreInternal(Class<?> target, Member member) {
 			return ignore(this, target, member);
 		}
-		
+
 		String normalizeInternal(String name) {
 			return normalize(name);
 		}
-		
+
 		String getMessage(String id, Object... args) {
 			ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
 			return MessageFormat.format(bundle.getString(id), args);
 		}
 	}
-	
+
 	private static class State {
 		Object key;
 		JSONHint hint;
