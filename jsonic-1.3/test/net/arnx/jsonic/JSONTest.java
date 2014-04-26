@@ -9,7 +9,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
@@ -90,27 +90,27 @@ public class JSONTest {
 			return null;
 		}
 	}
-	
+
 	@Test
 	public void testEncode() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		assertEquals("[]", JSON.encode(list));
-		
+
 		list.clear();
 		list.add("\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009\n\u000B\u000C\r\u000E\u000F");
-		
+
 		assertEquals("[\"\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000B\\f\\r\\u000E\\u000F\"]", JSON.encode(list));
-		
+
 		list.clear();
 		list.add("\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001A\u001B\u001C\u001D\u001E\u001F\u0020");
 		assertEquals("[\"\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F \"]", JSON.encode(list));
-		
+
 		list.clear();
 		list.add("abc\u007F");
 		list.add("abc\u2028");
 		list.add("abc\u2029");
 		assertEquals("[\"abc\\u007F\",\"abc\\u2028\",\"abc\\u2029\"]", JSON.encode(list));
-		
+
 		list.clear();
 		list.add("");
 		list.add(1);
@@ -127,12 +127,12 @@ public class JSONTest {
 		list.add(boolean.class);
 		list.add(ExampleEnum.Example0);
 		list.add(ExampleExtendEnum.Example0);
-		
+
 		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\",\"Example0\"]", JSON.encode(list));
-		
+
 		list.add(list);
 		assertEquals("[\"\",1,1.0,\"c\",\"char[]\",\"string\",true,false,null,{},[],\"\\\\.*\",\"boolean\",\"Example0\",\"Example0\",null]", JSON.encode(list));
-		
+
 		assertEquals("[1,2,3]", JSON.encode(new short[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new int[] {1,2,3}));
 		assertEquals("[1,2,3]", JSON.encode(new long[] {1l,2l,3l}));
@@ -141,14 +141,14 @@ public class JSONTest {
 				new float[] {1.0f,2.0f,3.0f,Float.NaN,Float.POSITIVE_INFINITY,Float.NEGATIVE_INFINITY}));
 		assertEquals("[1.0,2.0,3.0,\"NaN\",\"Infinity\",\"-Infinity\"]", JSON.encode(
 				new double[] {1.0,2.0,3.0,Double.NaN,Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY}));
-		
+
 		assertEquals("[\"ja\"]", JSON.encode(new Object[] {Locale.JAPANESE}));
 		assertEquals("[\"ja-JP\"]", JSON.encode(new Object[] {Locale.JAPAN}));
 		assertEquals("[\"ja-JP-osaka\"]", JSON.encode(new Object[] {new Locale("ja", "JP", "osaka")}));
-		
+
 		Date date = new Date();
 		assertEquals("[" + date.getTime() + "]", JSON.encode(new Object[] {date}));
-		
+
 		Calendar cal = Calendar.getInstance();
 		assertEquals("[" + cal.getTimeInMillis() + "]", JSON.encode(new Object[] {cal}));
 		assertEquals("[" + cal.getTimeInMillis() + "," + cal.getTimeInMillis() + "," + cal.getTimeInMillis() + "]", JSON.encode(new Object[] {cal, cal, cal}));
@@ -160,21 +160,21 @@ public class JSONTest {
 
 		Charset charset = Charset.defaultCharset();
 		assertEquals("[\"" + charset.name() + "\",\"" + charset.name() + "\"]", JSON.encode(new Object[] {charset, charset}));
-		
+
 		Map<String, Object> map = new HashMap<String, Object>();
 		assertEquals("{}", JSON.encode(map));
-		
+
 		map.put("value", 1);
 		assertEquals("{\"value\":1}", JSON.encode(map));
-		
+
 		Object obj = new Object();
 		assertEquals("{}", JSON.encode(obj));
-		
+
 		obj = new Object() {
 			public int getPublicValue() {
 				return 1;
 			}
-			
+
 			protected int getProtectedValue() {
 				return 1;
 			}
@@ -186,62 +186,62 @@ public class JSONTest {
 			}
 		};
 		assertEquals("{\"publicValue\":1}", JSON.encode(obj));
-		
+
 		obj = new Object() {
 			public int publicValue = 1;
-			
+
 			public transient int transientValue = 1;
-			
+
 			protected int protectedValue = 1;
-			
+
 			int friendlyValue = 1;
-			
+
 			private int privateValue = 1;
 		};
 		assertEquals("{\"publicValue\":1}", JSON.encode(obj));
 
 		obj = new Object() {
 			public int publicValue = 0;
-			
+
 			public int getPublicValue() {
 				return 1;
 			}
-			
+
 			public Object getMine() {
 				return this;
 			}
 		};
 		assertEquals("{\"publicValue\":1}", JSON.encode(obj));
-		
+
 		JavaBean bean = new JavaBean();
 		bean.setaname("aname");
 		bean.setbName("bName");
 		bean.setCName("CName");
 		assertEquals("{\"CName\":\"CName\",\"bName\":\"bName\"}", JSON.encode(bean));
-		
+
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.e = Locale.ENGLISH;
 		assertEquals("{\"_w\":100000000000000000000000,\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(test));
-		
+
 		TestBeanWrapper tbw = new TestBeanWrapper();
 		tbw.test = test;
 		String result = JSON.encode(tbw);
 		assertEquals("{\"_w\":100000000000000000000000,\"a\":100,\"b\":null,\"c\":false,\"class\":null,\"d\":null,\"e\":\"en\",\"f\":null,\"g\":null,\"h\":null,\"if\":null,\"漢字\":null}", JSON.encode(JSON.decode(result, TestBeanWrapper.class).test));
-		
+
 		Document doc = DocumentBuilderFactory
 			.newInstance()
 			.newDocumentBuilder()
 			.parse(this.getClass().getResourceAsStream("Sample.xml"));
 		String sample1 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample1.json"), "UTF-8"));
 		assertEquals(sample1, JSON.encode(doc));
-		
+
 		String sample2 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample2.json"), "UTF-8")).replaceAll("\r\n", "\n");
 		result = JSON.encode(doc, true);
 		assertEquals(sample2, JSON.encode(doc, true));
-		
+
 		UUID uuid = UUID.randomUUID();
-		
+
 		list = new ArrayList<Object>();
 		list.add(new URI("http://www.google.co.jp/"));
 		list.add(new URL("http://www.google.co.jp/"));
@@ -250,7 +250,7 @@ public class JSONTest {
 		list.add(uuid);
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\",\"" + uuid + "\"]", JSON.encode(list));
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\",\"" + uuid + "\"]", JSON.encode(list.iterator()));
-		
+
 		Vector v = new Vector(list);
 		assertEquals("[\"http://www.google.co.jp/\",\"http://www.google.co.jp/\",\"127.0.0.1\",\"UTF-8\",\"" + uuid + "\"]", JSON.encode(v.elements()));
 
@@ -258,7 +258,7 @@ public class JSONTest {
 		list.add(new File("./sample.txt"));
 		String sep = (File.separatorChar == '\\') ? File.separator + File.separator : File.separator;
 		assertEquals("[\"." + sep + "sample.txt\"]", JSON.encode(list));
-		
+
 		DynaClass dynaClass = new BasicDynaClass("TestDynaBean", null, new DynaProperty[] {
 				new DynaProperty("a", int.class),
 				new DynaProperty("b", String.class),
@@ -270,7 +270,7 @@ public class JSONTest {
 		dynaBean.set("b", "string");
 		dynaBean.set("c", true);
 		assertEquals("{\"a\":100,\"b\":\"string\",\"c\":true,\"d\":null}", JSON.encode(dynaBean));
-		
+
 		AnnotationBean aBean = new AnnotationBean();
 		aBean.field = 1;
 		aBean.method = 2;
@@ -281,7 +281,7 @@ public class JSONTest {
 		aBean.json_data = "{\"a\": 100 /* ほげほげ */}";
 		aBean.simple_json_data = "\"aaaa\"";
 		aBean.number_json_data = 0.0;
-		
+
 		List<Integer> array3 = new ArrayList<Integer>();
 		array3.add(1);
 		array3.add(2);
@@ -292,22 +292,22 @@ public class JSONTest {
 				+ "\"a\":1,\"anonymMap\":null,\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"array3\":[\"1.0\",\"2.0\",\"3.0\"],\"b\":\"002.0\",\"date\":\"2009/01/01\",\"method\":2,"
 				+ "\"name_a\":\"aaa\",\"name_b\":\"aaa\",\"namex\":\"aaa\",\"namez\":\"aaa\"}", JSON.encode(aBean));
-		
+
 		obj = new Object() {
 			@JSONHint(type=String.class)
 			public int strnum = 1;
-			
+
 			@JSONHint(type=String.class)
 			public Thread.State state = Thread.State.BLOCKED;
 		};
 		assertEquals("{\"state\":\"BLOCKED\",\"strnum\":\"1\"}", JSON.encode(obj));
-		
+
 		assertEquals("{\"list\":[\"test\"]}", JSON.encode(new ImplClass()));
-		
+
 		try {
 			obj = new Object() {
 				public int noException = 0;
-				
+
 				public Object getException() {
 					throw new RuntimeException("エラー");
 				}
@@ -317,7 +317,7 @@ public class JSONTest {
 		} catch (JSONException e) {
 			assertNotNull(e);
 		}
-		
+
 		assertEquals("[0,\"1\",2,\"3\",4,5,6,\"7\",\"8\"]", (new JSON() {
 			@Override
 			protected Object preformat(Context context, Object value) throws Exception {
@@ -330,7 +330,7 @@ public class JSONTest {
 			}
 		}).format(Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8")));
 	}
-	
+
 	@Test
 	public void testEscapeScript() throws Exception {
 		assertEquals("null", JSON.escapeScript(null));
@@ -344,7 +344,7 @@ public class JSONTest {
 				new float[] {1.0f,2.0f,3.0f,Float.NaN,Float.POSITIVE_INFINITY,Float.NEGATIVE_INFINITY}));
 		assertEquals("[1.0,2.0,3.0,Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", JSON.escapeScript(
 				new double[] {1.0,2.0,3.0,Double.NaN,Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY}));
-		
+
 		Date date = new Date();
 		assertEquals("new Date(" + date.getTime() + ")", JSON.escapeScript(date));
 	}
@@ -360,10 +360,10 @@ public class JSONTest {
 		list.add(true);
 		list.add(false);
 		list.add(null);
-		
+
 		assertEquals(list, JSON.decode("[{}, [], 1, \"str'ing\", \"\", true, false, null]"));
 		assertEquals(list, JSON.decode("\r[\t{\r}\n, [\t]\r,\n1 ,\t \r\"str'ing\"\n, \"\", true\t,\rfalse\n,\tnull\r]\n"));
-		
+
 		list.clear();
 		list.add(new BigDecimal("0"));
 		list.add(new BigDecimal("-0"));
@@ -379,7 +379,7 @@ public class JSONTest {
 		list.add(new BigDecimal("-9223372036854775808"));
 
 		assertEquals(list, JSON.decode("[0,-0,1,-1,999999999999999999,-999999999999999999,1000000000000000000,-1000000000000000000,9223372036854775807,-9223372036854775807,9223372036854775808,-9223372036854775808]"));
-		
+
 		list.clear();
 		list.add(new BigDecimal("-1.1"));
 		list.add(new BigDecimal("11.1"));
@@ -395,20 +395,20 @@ public class JSONTest {
 		list.add(new BigDecimal("92233720.36854775808e-2"));
 		list.add(new BigDecimal("-92233720.36854775808e-2"));
 
-		assertEquals(list, JSON.decode("[-1.1, 11.1e0, 1.11e1, 1.11E+1, 11.1e-1," 
-				+ " 9999999999999.99999e+2, -9999999999999.99999e+2," 
-				+ " 100000000000000.0000e-2, -100000000000000.0000e-2," 
+		assertEquals(list, JSON.decode("[-1.1, 11.1e0, 1.11e1, 1.11E+1, 11.1e-1,"
+				+ " 9999999999999.99999e+2, -9999999999999.99999e+2,"
+				+ " 100000000000000.0000e-2, -100000000000000.0000e-2,"
 				+ " 922337203685.4775807e2, -922337203685.4775807e2,"
 				+ " 92233720.36854775808e-2, -92233720.36854775808e-2]"));
-		
+
 		list.clear();
 		list.add(new BigDecimal("-1.1000000000"));
 		list.add(new BigDecimal("11.1"));
 		list.add(new BigDecimal("11.1"));
 		list.add(new BigDecimal("1.11"));
-		
+
 		assertEquals(list, JSON.decode("[-11000000000e-10, 0.0000000000111E12, 11.1E+000, 11.1e-01]"));
-		
+
 		Map<String, Object> map1 = new LinkedHashMap<String, Object>();
 		Map<String, Object> map2 = new LinkedHashMap<String, Object>();
 		Map<String, Object> map3 = new LinkedHashMap<String, Object>();
@@ -417,19 +417,19 @@ public class JSONTest {
 		map2.put("'2'", new BigDecimal("2"));
 		map2.put("map3", map3);
 		map3.put("'3", new BigDecimal("3"));
-		
+
 		assertEquals(map1, JSON.decode("{\"map2\": {\"'2'\": 2, \"map3\": {\"'3\": 3}}, \"1\": 1}"));
-		
+
 		Object[] input = new Object[2];
 		input[0] = new Date();
 		input[1] = Calendar.getInstance();
-		
+
 		List output = new ArrayList();
 		output.add(new BigDecimal(((Date)input[0]).getTime()));
 		output.add(new BigDecimal(((Calendar)input[1]).getTimeInMillis()));
-		
+
 		assertEquals(output, JSON.decode(JSON.encode(input)));
-		
+
 		try {
 			JSON.decode("aaa: 1, bbb");
 			fail();
@@ -437,36 +437,36 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		Map<String, Object> map4 = new LinkedHashMap<String, Object>();
 		map4.put("aaa", new BigDecimal("1"));
 		map4.put("bbb", null);
-		
-		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));		
+
+		assertEquals(map4, JSON.decode("aaa: 1, bbb: "));
 		assertEquals(map4, JSON.decode("aaa: 1, bbb:\n "));
-		
+
 		assertEquals(JSON.decode("{\"sample1\":\"テスト1\",\"sample2\":\"テスト2\"}"),
 				JSON.decode("{\"sample1\":\"\\u30c6\\u30b9\\u30c81\",\"sample2\":\"\\u30c6\\u30b9\\u30c82\"}"));
-		
+
 		StringBeanWrapper sbw = new StringBeanWrapper();
 		sbw.sbean = new StringBean("string");
 		sbw.state = Thread.State.BLOCKED;
 		sbw.text = "string";
-		
+
 		assertEquals(sbw, JSON.decode("{\"state\":\"BLOCKED\",\"sbean\":\"string\",\"text\":\"string\"}", StringBeanWrapper.class));
-		
+
 		GenericPropertyTestWrapper gptw = new GenericPropertyTestWrapper();
 		gptw.test.property = "test";
-		
+
 		assertEquals(gptw, JSON.decode("{\"test\":{\"property\":\"test\"}}", GenericPropertyTestWrapper.class));
-		
+
 		InputStream in = this.getClass().getResourceAsStream("LongString.json");
 		ArrayList list2 = new ArrayList();
 		list2.add(repeat("a", 1000));
 		assertEquals(list2, JSON.decode(in));
 		in.close();
 	}
-	
+
 	private static String repeat(String text, int count) {
 		StringBuilder sb = new StringBuilder(text.length() * count);
 		for (int i = 0; i < count; i++) {
@@ -474,11 +474,11 @@ public class JSONTest {
 		}
 		return sb.toString();
 	}
-	
+
 	public static class HogeList extends ArrayList<MyData> {
-		
+
 	}
-	
+
 	public static class MyData {
 		public String data1;
 		public String data2;
@@ -498,25 +498,25 @@ public class JSONTest {
 		list.add(true);
 		list.add(false);
 		list.add(null);
-		
+
 		assertEquals(list, JSON.decode(JSON.encode(list), List.class));
-		
+
 		TreeMap<String, String> map = new TreeMap<String, String>();
 		map.put("test", "result");
-		
+
 		assertEquals(map, JSON.decode(JSON.encode(map), TreeMap.class));
 
 		JavaBean bean = new JavaBean();
 		bean.setaname("aname");
 		bean.setbName("bName");
 		bean.setCName("CName");
-		
+
 		JavaBean beanResult = new JavaBean();
 		beanResult.setbName("bName");
 		beanResult.setCName("CName");
-		
+
 		assertEquals(beanResult, JSON.decode(JSON.encode(bean), bean.getClass()));
-		
+
 		TestBean test = new TestBean();
 		test.setA(100);
 		test.b = "hoge-hoge";
@@ -526,12 +526,12 @@ public class JSONTest {
 		test.setG(Pattern.compile("\\.*"));
 		test.setH(TimeZone.getTimeZone("JST"));
 		test.class_ = boolean.class;
-		
+
 		String json = JSON.encode(test);
 		TestBean result = JSON.decode(json, TestBean.class);
-		
+
 		assertEquals(test, result);
-		
+
 		test = new TestBean();
 		test.setA(0);
 		test.b = "hoge-hoge";
@@ -541,50 +541,50 @@ public class JSONTest {
 		test.setG(Pattern.compile("\\.*"));
 		test.setH(TimeZone.getTimeZone("Asia/Tokyo"));
 		test.class_ = Object.class;
-		
+
 		assertEquals(test, JSON.decode("{\"a\":null,\"b\":\"hoge-hoge\",\"c\":false,\"class\":\"java.lang.Object\",\"d\":null,\"e\":[\"ja\", \"JP\"],\"g\":\"\\\\.*\",\"h\":\"Asia/Tokyo\"}", TestBean.class));
-		
+
 		GenericsBean gb = new GenericsBean();
 		List<String> list2 = new ArrayList<String>();
 		list2.add("1");
 		list2.add("false");
 		gb.setList(list2);
-		
+
 		InheritList ilist = new InheritList();
 		ilist.add("1");
 		ilist.add("false");
 		gb.ilist = ilist;
-		
+
 		InheritList2 ilist2 = new InheritList2();
 		ilist2.add("1");
 		ilist2.add("false");
 		gb.ilist2 = ilist2;
-		
+
 		InheritMap imap = new InheritMap();
 		imap.put(1, "1");
 		imap.put(2, "false");
 		gb.imap = imap;
-		
+
 		InheritMap2 imap2 = new InheritMap2();
 		imap2.put(1, "1");
 		imap2.put(2, "false");
 		gb.imap2 = imap2;
-		
+
 		Map<String, String> gmap = new HashMap<String, String>();
 		gmap.put("1", "1");
 		gmap.put("true", "true");
 		gb.setMap(gmap);
-		
+
 		Map<String, Integer> map2 = new HashMap<String, Integer>();
 		map2.put("0", 0);
 		map2.put("1", 1);
 		gb.map2 = map2;
-		
+
 		Map<Integer, String> map3 = new HashMap<Integer, String>();
 		map3.put(0, "false");
 		map3.put(1, "true");
 		gb.map3 = map3;
-		
+
 		List<List<String>> glist2 = new ArrayList<List<String>>();
 		glist2.add(new ArrayList<String>() {
 			{
@@ -593,10 +593,10 @@ public class JSONTest {
 			}
 		});
 		gb.setGenericsList(glist2);
-		
+
 		GenericsBean out = JSON.decode("{\"ilist\": [1, false],\"ilist2\": [1, false],\"imap\": {'1':1, '2':false},\"imap2\": {'1':1, '2':false},\"list\": [1, false], \"map\": {\"1\": 1, \"true\": true}, \"genericsList\": [[1, false]], \"map2\": [false, true], \"map3\": {\"0\": false, \"1\": true}}", GenericsBean.class);
 		assertEquals(gb, out);
-		
+
 		AnnotationBean aBean = new AnnotationBean();
 		aBean.field = 1;
 		aBean.method = 2;
@@ -607,25 +607,30 @@ public class JSONTest {
 		aBean.json_data = "{\"a\":[100,null,\"aaa\",{\"key\":\"value\"}]}";
 		aBean.simple_json_data = "\"aaaa\"";
 		aBean.number_json_data = 0.0;
-		
+
 		List<Integer> array3 = new Vector<Integer>();
 		array3.add(1);
 		array3.add(2);
 		array3.add(3);
 		aBean.array3 = array3;
-		
+
 		AnonymTest anonymMap = new AnonymTest();
 		anonymMap.anonym = "test";
 		aBean.anonymMap = anonymMap;
-		
-		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"anonymMap\":\"test\"," 
-				+ "\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"]," 
+
+		AnnotationBean aBeanResult = JSON.decode("{\"a\":1,\"anonymMap\":\"test\","
+				+ "\"array1\":[\"1.0\",\"2.0\",\"3.0\"],\"array2\":[\"1.0\",\"2.0\",\"3.0\"],\"array3\":[\"1.0\",\"2.0\",\"3.0\"],"
 				+ "\"b\":\"2.01\",\"date\":\"2009/01/01\","
 				+ "json_data: {\"a\": [100 /* ほげほげ */, \nnull,'aaa',{key : \"value\"}]  }, \"simple_json_data\": 'aaaa', \"number_json_data\": 0,"
 				+ "\"method\":2}", AnnotationBean.class);
 		aBean.hashCode();
 		aBeanResult.hashCode();
 		assertEquals(aBean, aBeanResult);
+
+		TestClassLoader cl = new TestClassLoader(getClass().getClassLoader());
+		Class cls = cl.loadClass("net.arnx.jsonic.TestClassLoader$TestBean");
+
+		assertEquals(cls.newInstance(), JSON.decode("{\"class\": {\"classloader\": {\"vulnerability\": true}}}", cls));
 	}
 
 	@Test
@@ -633,7 +638,7 @@ public class JSONTest {
 		JSON json = new JSON();
 		ArrayList<Object> list = new ArrayList<Object>();
 		assertEquals("[]", json.format(list, new StringWriter()).toString());
-		
+
 		list.add(1);
 		list.add(1.0);
 		list.add('c');
@@ -659,20 +664,20 @@ public class JSONTest {
 		list.add(new int[] {1,2,3,4,5});
 
 		json.setPrettyPrint(true);
-		assertEquals("[\n\t1,\n\t1.0,\n\t\"c\",\n\t\"char[]\",\n\t\"string\",\n\ttrue,\n\tfalse,\n\tnull," 
+		assertEquals("[\n\t1,\n\t1.0,\n\t\"c\",\n\t\"char[]\",\n\t\"string\",\n\ttrue,\n\tfalse,\n\tnull,"
 				+ "\n\t{\n\t\t\"a\": \"a\",\n\t\t\"b\": [1, 2, 3, 4, 5],\n\t\t\"c\": {\n\t\t\t\"a\": \"a\"\n\t\t}\n\t},\n\t[1, 2, 3, 4, 5]\n]",
 				json.format(list, new StringWriter()).toString());
-		
+
 		json.setIndentText(" ");
-		assertEquals("[\n 1,\n 1.0,\n \"c\",\n \"char[]\",\n \"string\",\n true,\n false,\n null," 
+		assertEquals("[\n 1,\n 1.0,\n \"c\",\n \"char[]\",\n \"string\",\n true,\n false,\n null,"
 				+ "\n {\n  \"a\": \"a\",\n  \"b\": [1, 2, 3, 4, 5],\n  \"c\": {\n   \"a\": \"a\"\n  }\n },\n [1, 2, 3, 4, 5]\n]",
 				json.format(list, new StringBuilder()).toString());
-		
+
 		json.setInitialIndent(3);
-		assertEquals("   [\n    1,\n    1.0,\n    \"c\",\n    \"char[]\",\n    \"string\",\n    true,\n    false,\n    null," 
+		assertEquals("   [\n    1,\n    1.0,\n    \"c\",\n    \"char[]\",\n    \"string\",\n    true,\n    false,\n    null,"
 				+ "\n    {\n     \"a\": \"a\",\n     \"b\": [1, 2, 3, 4, 5],\n     \"c\": {\n      \"a\": \"a\"\n     }\n    },\n    [1, 2, 3, 4, 5]\n   ]",
 				json.format(list, new StringWriter()).toString());
-		
+
 		json.setPrettyPrint(false);
 		try {
 			json.format(true, new StringBuilder());
@@ -681,7 +686,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.format(JSON.class, new StringBuilder());
 			fail();
@@ -689,7 +694,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.format(Locale.JAPAN, new StringBuilder());
 			fail();
@@ -700,18 +705,18 @@ public class JSONTest {
 
 		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.format(
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringWriter()).toString());
-		
+
 		Date d = new Date();
 		assertEquals("[" + Long.toString(d.getTime()) + "]", json.format(new Date[] {d}, new StringBuilder()).toString());
-		
-		
+
+
 		assertEquals("[\"AQID\"]", json.format(new byte[][] {{1,2,3}}, new StringWriter()).toString());
 
 		Object obj = new Object() {
 			public Object a = 100;
 			public Object b = null;
 			public List list = new ArrayList() {
-				{ 
+				{
 					add(100);
 					add(null);
 				}
@@ -719,21 +724,21 @@ public class JSONTest {
 		};
 		json.setSuppressNull(true);
 		assertEquals("{\"a\":100,\"list\":[100,null]}", json.format(obj));
-		
+
 		json = new Point2DJSON();
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Double(10.5, 10.5)));
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Float(10.5f, 10.5f)));
 		assertEquals("[10.0,10.0]", json.format(new Point(10, 10)));
-		
+
 		assertEquals("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
-		
+
 		json = new JSON();
-		
+
 		NamedBean2 nb2 = new NamedBean2();
 		nb2.aaaBbb = 2;
 		nb2.bbbAaa = 0;
 		assertEquals("{\"aaaBbb\":2,\"bbbAaa\":2}", json.format(nb2));
-		
+
 		Object obj2 = new Object() {
 			public int abcDef = 100;
 			public int GhiJkl = 100;
@@ -747,27 +752,27 @@ public class JSONTest {
 		assertEquals("{\"abcDef\":100,\"ghiJkl\":100,\"mnoPqr\":100,\"stuVwx\":100}", json.format(obj2));
 		json.setPropertyStyle(NamingStyle.LOWER_UNDERSCORE);
 		assertEquals("{\"abc_def\":100,\"ghi_jkl\":100,\"mno_pqr\":100,\"stu_vwx\":100}", json.format(obj2));
-		
+
 		//SCRIPT
 		json = new JSON();
 		json.setMode(JSON.Mode.SCRIPT);
-		
+
 		assertEquals("null", json.format(null, new StringBuilder()).toString());
 		assertEquals("1000", json.format(1000, new StringBuilder()).toString());
 		assertEquals("\"test\"", json.format("test", new StringBuilder()).toString());
 		assertEquals("[Number.NaN,Number.POSITIVE_INFINITY,Number.NEGATIVE_INFINITY]", json.format(
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringBuilder()).toString());
-		
+
 		assertEquals("new Date(" + Long.toString(d.getTime()) + ")", json.format(d, new StringBuilder()).toString());
 		assertEquals("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 		assertArrayEquals(new String[] { "!\"#$%&'()=~|<>?_" }, json.parse("[\"!\\\"#$%&'()=~|\\u003C\\u003E?_\"]", String[].class));
-		
+
 		//STRICT
 		json = new JSON();
 		json.setMode(Mode.STRICT);
-		
+
 		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
-		
+
 		try {
 			json.format(null, new StringBuilder());
 			fail();
@@ -775,7 +780,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.format(1000, new StringBuilder());
 			fail();
@@ -783,7 +788,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.format("test", new StringBuilder());
 			fail();
@@ -791,35 +796,35 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		DateNumberTestClass dates = new DateNumberTestClass();
 		dates.a = toDate(2000, 1, 1, 12, 5, 6, 0);
 		dates.b = toDate(2001, 1, 1, 12, 5, 6, 1);
 		dates.c = 1000;
 		dates.d = 1001;
-		
+
 		json = new JSON();
 		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 		json.setNumberFormat("000,000.00");
 		assertEquals("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", json.format(dates));
-		
+
 		json = new JSON();
 		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 		assertEquals("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":1000,\"d\":\"1001.000\"}", json.format(dates));
-		
+
 		json = new JSON();
 		json.setNumberFormat("000,000.00");
 		assertEquals("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", json.format(dates));
-		
+
 		json.setDateFormat(null);
 		json.setNumberFormat(null);
 		assertEquals("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":1000,\"d\":\"1001.000\"}", json.format(dates));
-		
+
 		NamedTestClass named = new NamedTestClass();
 		named.aaaAaaAaa = NamedTestEnum.aaaAaaAaa;
 		named.AAA_BBB_CCC = NamedTestEnum.AAA_BBB_CCC;
 		named.aaaあああ = NamedTestEnum.aaaあああ;
-		
+
 		json = new JSON() {
 			@Override
 			protected String normalize(String name) {
@@ -830,28 +835,28 @@ public class JSONTest {
 			}
 		};
 		assertEquals("{\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"ABC_DEF\":\"aaaAaaAaa\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
-		
+
 		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
 		assertEquals("{\"aaaBbbCcc\":\"AAA_BBB_CCC\",\"aaaあああ\":\"aaaあああ\",\"abcDef\":\"aaaAaaAaa\"}", json.format(named));
-		
+
 		json = new JSON();
-		
+
 		json.setPropertyStyle(NamingStyle.NOOP);
 		json.setEnumStyle(null);
 		assertEquals("{\"AAA_BBB_CCC\":1,\"aaaAaaAaa\":0,\"aaaあああ\":2}", json.format(named));
-		
+
 		json.setPropertyStyle(NamingStyle.NOOP);
 		json.setEnumStyle(NamingStyle.NOOP);
 		assertEquals("{\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"aaaAaaAaa\":\"aaaAaaAaa\",\"aaaあああ\":\"aaaあああ\"}", json.format(named));
-		
+
 		json.setPropertyStyle(NamingStyle.LOWER_CASE);
 		json.setEnumStyle(NamingStyle.UPPER_CASE);
 		assertEquals("{\"aaa_bbb_ccc\":\"AAA_BBB_CCC\",\"aaaaaaaaa\":\"AAAAAAAAA\",\"aaaあああ\":\"AAAあああ\"}", json.format(named));
-		
+
 		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
 		json.setEnumStyle(NamingStyle.UPPER_CAMEL);
 		assertEquals("{\"aaaAaaAaa\":\"AaaAaaAaa\",\"aaaBbbCcc\":\"AaaBbbCcc\",\"aaaあああ\":\"Aaaあああ\"}", json.format(named));
-		
+
 		json.setPropertyStyle(NamingStyle.LOWER_UNDERSCORE);
 		json.setEnumStyle(NamingStyle.UPPER_UNDERSCORE);
 		assertEquals("{\"aaa_aaa_aaa\":\"AAA_AAA_AAA\",\"aaa_bbb_ccc\":\"AAA_BBB_CCC\",\"aaaあああ\":\"AAAあああ\"}", json.format(named));
@@ -859,11 +864,11 @@ public class JSONTest {
 		json.setPropertyStyle(NamingStyle.UPPER_CASE);
 		json.setEnumStyle(NamingStyle.LOWER_CASE);
 		assertEquals("{\"AAAAAAAAA\":\"aaaaaaaaa\",\"AAA_BBB_CCC\":\"aaa_bbb_ccc\",\"AAAあああ\":\"aaaあああ\"}", json.format(named));
-		
+
 		json.setPropertyStyle(NamingStyle.UPPER_CAMEL);
 		json.setEnumStyle(NamingStyle.LOWER_CAMEL);
 		assertEquals("{\"AaaAaaAaa\":\"aaaAaaAaa\",\"AaaBbbCcc\":\"aaaBbbCcc\",\"Aaaあああ\":\"aaaあああ\"}", json.format(named));
-		
+
 		json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
 		json.setEnumStyle(NamingStyle.LOWER_UNDERSCORE);
 		assertEquals("{\"AAA_AAA_AAA\":\"aaa_aaa_aaa\",\"AAA_BBB_CCC\":\"aaa_bbb_ccc\",\"AAAあああ\":\"aaaあああ\"}", json.format(named));
@@ -872,12 +877,12 @@ public class JSONTest {
 		json.format(Arrays.asList(1, "abc", true, 2.0), bout);
         assertEquals("[1,\"abc\",true,2.0]", bout.toString("UTF-8"));
 	}
-	
+
 	@Test
 	public void testParse() throws Exception {
 		Locale.setDefault(Locale.JAPANESE);
 		JSON json = new JSON();
-		
+
 		try {
 			CharSequence cs = null;
 			assertEquals(null, json.parse(cs));
@@ -886,18 +891,18 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			Reader reader = null;
 			assertEquals(null, json.parse(reader));
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
-			assertNotNull(e);			
+			assertNotNull(e);
 		}
-		
+
 		assertEquals(new LinkedHashMap(), json.parse(""));
-		
+
 		ArrayList<Object> list = new ArrayList<Object>();
 		list.add(new HashMap() {
 			{
@@ -910,7 +915,7 @@ public class JSONTest {
 		list.add(true);
 		list.add(false);
 		list.add(null);
-		
+
 		try {
 			assertEquals(list, json.parse("[{\"maa\": \"bbb\"}, [], 1, \"str\\'ing\", true, false, null"));
 			fail();
@@ -918,21 +923,21 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		json.parse("[{'maa': 'bbb'}, [], 1, 'str\\'ing', true, false, null]");
-		
+
 		assertEquals(list, json.parse("[{\\u006daa: \"bbb\"}, [], 1, \"str'ing\", true, false, null]"));
-		
+
 		assertEquals(list, json.parse("[{\"\\u006daa\": \"bbb\"}, [/**/], 1, \"str'ing\", true, false, null]"));
-		
+
 		try {
 			assertEquals(list, json.parse("[{'\\u006daa\": 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertNotNull(e);			
+			assertNotNull(e);
 		}
-		
+
 		try {
 			assertEquals(list, json.parse("[{\"maa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 			fail();
@@ -942,7 +947,7 @@ public class JSONTest {
 		}
 
 		assertEquals(list, json.parse("[{   \t\\u006da\\u0061   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
-		
+
 		list.set(0, new HashMap() {
 			{
 				put("float", "bbb");
@@ -950,7 +955,7 @@ public class JSONTest {
 		});
 
 		assertEquals(list, json.parse("[{float   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
-		
+
 		list.set(0, new HashMap() {
 			{
 				put("0float", "bbb");
@@ -962,7 +967,7 @@ public class JSONTest {
 			fail();
 		} catch (Exception e) {
 			System.out.println(e);
-			assertNotNull(e);			
+			assertNotNull(e);
 		}
 
 		list.set(0, new HashMap() {
@@ -976,7 +981,7 @@ public class JSONTest {
 			{
 				put("\\u006Daa", "bbb");
 			}
-		});		
+		});
 		assertEquals(list, json.parse("[{'\\\\u006Daa': 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
 
 		list.set(0, new HashMap() {
@@ -985,13 +990,13 @@ public class JSONTest {
 			}
 		});
 		assertEquals(list, json.parse("[{float0   : 'bbb'}, [], 1, \"str'ing\", true, false, null]"));
-		
+
 		assertEquals(new HashMap() {{put("true", true);}}, json.parse("  true: true  "));
 		assertEquals(new HashMap() {{put("false", false);}}, json.parse("  false: false  "));
 		assertEquals(new HashMap() {{put("100", new BigDecimal("100"));}}, json.parse("  100: 100  "));
 		assertEquals(new HashMap() {{put(null, null);}}, json.parse("  null: null  "));
 		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse(" number: -100  "));
-		
+
 		try {
 			json.parse("  {true: true  ");
 			fail();
@@ -1007,7 +1012,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		assertEquals(new HashMap() {
 			{
 				put("numbers", new HashMap() {
@@ -1017,7 +1022,7 @@ public class JSONTest {
 				});
 			}
 		}, json.parse(" numbers: { number: -100 } "));
-		
+
 		try {
 			assertEquals(new HashMap() {
 				{
@@ -1033,22 +1038,22 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		assertEquals(list, json.parse("/*\n x\r */[/* x */{float0 //b\n  :/***/ 'bbb'}//d\r\r\r\r,//d\r\r\r\r"
 				+ " [/*#\n x\r */], 1, \"str\\'in\\g\",/*\n x\r */ true/*\n x\r */, false, null/*\n x\r */] /*\n x\r */ //  aaaa"));
-		
+
 		NamedBean nb = new NamedBean();
 		nb.namedPropertyAaa = 100;
 		assertEquals(nb, json.parse("{\"namedPropertyAaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"named property aaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"named_property_aaa\":100}", NamedBean.class));
 		assertEquals(nb, json.parse("{\"Named Property Aaa\":100}", NamedBean.class));
-		
+
 		NamedBean2 nb2 = new NamedBean2();
 		nb2.aaaBbb = 2;
 		nb2.bbbAaa = 0;
 		assertEquals(nb2, json.parse("{\"bbbAaa\":2}", NamedBean2.class));
-		
+
 		Map map1 = new LinkedHashMap() {
 			{
 				put("map", new LinkedHashMap() {
@@ -1089,24 +1094,24 @@ public class JSONTest {
 				});
 			}
 		};
-		
+
 		Map map4 = new LinkedHashMap();
-		
+
 		json.setMaxDepth(1);
 		assertEquals(map4, json.parse("{'1': '1'}"));
 
 		json.setMaxDepth(2);
 		map4.put("1", "1");
 		assertEquals(map4, json.parse("{'1': '1'}"));
-		
+
 		List map4_2 = new ArrayList();
 		map4.put("2", map4_2);
 		assertEquals(map4, json.parse("{'1': '1', '2': ['2']}"));
-		
+
 		json.setMaxDepth(3);
 		map4_2.add("2");
 		assertEquals(map4, json.parse("{'1': '1', '2': ['2']}"));
-		
+
 		Map map4_3 = new LinkedHashMap();
 		List map4_3_1 = new ArrayList();
 		map4_3.put("3_1", map4_3_1);
@@ -1116,10 +1121,10 @@ public class JSONTest {
 		json.setMaxDepth(4);
 		map4_3_1.add("3");
 		assertEquals(map4, json.parse("{'1': '1', '2': ['2'], '3': {'3_1': ['3']}}"));
-		
+
 		json.setMaxDepth(32);
 		assertEquals(map2, json.parse("emap:{}, map: {string: , int:}, elist:[],list: [,string, ]"));
-		
+
 		Map map3 = new LinkedHashMap() {
 			{
 				put("database", new LinkedHashMap() {
@@ -1148,16 +1153,16 @@ public class JSONTest {
 		ibean.list2 = new SuperArrayList();
 		ibean.list2.add(new BigDecimal("15"));
 		assertEquals(ibean, json.parse("{map0:{'10':10},map1:{'11':11},map2:{'12':12},list0:[13],list1:[14],list2:[15]}", InheritedBean.class));
-		
+
 		List list2 = new ArrayList();
 		list2.add("あいうえお");
-		
+
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE.json")));
-		
+
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8_BOM.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE_BOM.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE_BOM.json")));
@@ -1174,12 +1179,12 @@ public class JSONTest {
 		json.setSuppressNull(false);
 		assertEquals(snb, json.parse("{\"a\":null,\"b\":null,\"list\":null}", SuppressNullBean.class));
 		assertEquals(snb, json.parse("{\"a\":null,\"b\":,\"list\":}", SuppressNullBean.class));
-		
+
 		json = new Point2DJSON();
 		assertEquals(new Point2D.Double(10.5, 10.5), json.parse("[10.5,10.5]", Point2D.class));
-		
+
 		json = new JSON();
-		
+
 		Map<Object, Object> ssMap = new LinkedHashMap<Object, Object>();
 		ssMap.put("aaa", new BigDecimal("1"));
 		ssMap.put("bbb", new BigDecimal("2"));
@@ -1192,45 +1197,45 @@ public class JSONTest {
 		ssMap.put("fff.0.hhh", "y");
 		ssMap.put("fff.1.ggg", "z");
 		ssMap.put("fff.1.hhh", "0");
-		
+
 		Properties props = new Properties();
 		for (Map.Entry<Object, Object> entry : ssMap.entrySet()) {
 			props.setProperty(entry.getKey().toString(), entry.getValue().toString());
 		}
-		
+
 		assertEquals(props, json.parse("{aaa:1,bbb:2,ccc:{bbb:3,ddd:[4,5,6]},eee:false,"
-				+"fff:[{ggg:\"x\", hhh:\"y\"}, {ggg:\"z\", hhh:\"0\"}]}", 
-				Properties.class));	
-		
+				+"fff:[{ggg:\"x\", hhh:\"y\"}, {ggg:\"z\", hhh:\"0\"}]}",
+				Properties.class));
+
 		props.clear();
 		props.setProperty("0", "aaa");
 		props.setProperty("1.bbb", "1");
 		props.setProperty("1.ccc", "2");
 		props.setProperty("2", "false");
-		
+
 		assertEquals(props, json.parse("[\"aaa\",{bbb:1,ccc:2},false]", Properties.class));
-		
+
 		List<TestBean> list5 = JSON.decode("[ {} ]",  (new ArrayList<TestBean>() {}).getClass().getGenericSuperclass());
 		assertEquals(TestBean.class, list5.get(0).getClass());
-		
+
 		List<TestBean> list6 = JSON.decode("[ {} ]",  new TypeReference<List<TestBean>>() {});
 		assertEquals(TestBean.class, list5.get(0).getClass());
-		
+
 		//SCRIPT
 		json.setMode(JSON.Mode.SCRIPT);
-		
+
 		assertEquals("aaa", json.parse("\"aaa\""));
 		assertEquals(new BigDecimal("100"), json.parse("100"));
 		assertEquals(true, json.parse("true"));
 		assertEquals(false, json.parse("false"));
 		assertNull(json.parse("null"));
-		
+
 		assertEquals(new HashMap() {{put("true", true);}}, json.parse("{  true: true  }"));
 		assertEquals(new HashMap() {{put("false", false);}}, json.parse("{  false: false  }"));
 		assertEquals(new HashMap() {{put("100", new BigDecimal("100"));}}, json.parse("{  100: 100  }"));
 		assertEquals(new HashMap() {{put("null", null);}}, json.parse("{  null: null  }"));
 		assertEquals(new HashMap() {{put("number", new BigDecimal(-100));}}, json.parse("{ number: -100  }"));
-		
+
 		try {
 			json.parse("{-100: 100}");
 			fail();
@@ -1238,7 +1243,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.parse("");
 			fail();
@@ -1246,9 +1251,9 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		assertEquals(JSON.decode("[]"), json.parse("[\n]"));
-		
+
 		try {
 			json.parse("[100\n200]");
 			fail();
@@ -1256,15 +1261,15 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.parse("[100,]");
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
-		}		
-		
+		}
+
 		try {
 			json.parse("{\"aaa\":}");
 			fail();
@@ -1272,7 +1277,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.parse("{\"aaa\":,\"bbb\":\"ccc\"}");
 			fail();
@@ -1280,9 +1285,9 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		json.parse("{} /**/");
-		
+
 		try {
 			json.parse("{} #aaa");
 			fail();
@@ -1290,45 +1295,45 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		//STRICT
 		json.setMode(JSON.Mode.STRICT);
-		
+
 		try {
 			json.parse("");
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
-		}		
-		
+		}
+
 		assertEquals(JSON.decode("[]"), json.parse("[\n]"));
 		assertEquals(JSON.decode("[\" '\"]"), json.parse("[\n\" '\"]"));
-		
+
 		try {
 			json.parse("[100\n200]");
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
-		}		
-		
+		}
+
 		try {
 			json.parse("[100,]");
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
-		}		
-		
+		}
+
 		try {
 			json.parse("[\"\0\"]");
 			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
-		}		
-		
+		}
+
 		try {
 			json.parse("{\"aaa\":}");
 			fail();
@@ -1336,7 +1341,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.parse("{\"aaa\":,\"bbb\":\"ccc\"}");
 			fail();
@@ -1344,7 +1349,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.parse("{} /**/");
 			fail();
@@ -1352,7 +1357,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.parse("{} #aaa");
 			fail();
@@ -1360,43 +1365,43 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		DateNumberTestClass dates = new DateNumberTestClass();
 		dates.a = toDate(2000, 1, 1, 12, 5, 6, 0);
 		dates.b = toDate(2001, 1, 1, 0, 0, 0, 0);
 		dates.c = 1000;
 		dates.d = 1001;
-		
+
 		json = new JSON();
 		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 		json.setNumberFormat("000,000.00");
 		assertEquals(dates, json.parse("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", DateNumberTestClass.class));
-		
+
 		json = new JSON();
 		json.setDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 		assertEquals(dates, json.parse("{\"a\":\"2000/01/01 12:05:06.000\",\"b\":\"2001-01\",\"c\":\"1000\",\"d\":\"1001.000\"}", DateNumberTestClass.class));
-		
+
 		json = new JSON();
 		json.setNumberFormat("000,000.00");
 		assertEquals(dates, json.parse("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":\"001,000.00\",\"d\":\"1001.000\"}", DateNumberTestClass.class));
-		
+
 		json.setDateFormat(null);
 		assertEquals(dates, json.parse("{\"a\":" + dates.a.getTime() + ",\"b\":\"2001-01\",\"c\":1000,\"d\":\"1001.000\"}", DateNumberTestClass.class));
-		
+
 		NamedTestClass named = new NamedTestClass();
 		named.aaaAaaAaa = NamedTestEnum.aaaAaaAaa;
 		named.AAA_BBB_CCC = NamedTestEnum.AAA_BBB_CCC;
 		named.aaaあああ = NamedTestEnum.aaaあああ;
-		
+
 		json = new JSON();
 		json.setPropertyStyle(NamingStyle.LOWER_CASE);
 		json.setEnumStyle(NamingStyle.LOWER_CASE);
 		assertEquals(named, json.parse("{\"aaaaaaaaa\":\"aaaaaaaaa\",\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaあああ\":\"aaaあああ\"}", NamedTestClass.class));
-		
+
 		json.setPropertyStyle(NamingStyle.LOWER_CAMEL);
 		json.setEnumStyle(NamingStyle.LOWER_CAMEL);
 		assertEquals(named, json.parse("{\"aaaAaaAaa\":\"aaaAaaAaa\",\"aaaBbbCcc\":\"aaaBbbCcc\",\"aaaあああ\":\"aaaあああ\"}", NamedTestClass.class));
-		
+
 		json.setPropertyStyle(NamingStyle.LOWER_UNDERSCORE);
 		json.setEnumStyle(NamingStyle.LOWER_UNDERSCORE);
 		assertEquals(named, json.parse("{\"aaa_aaa_aaa\":\"aaa_aaa_aaa\",\"aaa_bbb_ccc\":\"aaa_bbb_ccc\",\"aaaあああ\":\"aaaあああ\"}", NamedTestClass.class));
@@ -1404,18 +1409,18 @@ public class JSONTest {
 		json.setPropertyStyle(NamingStyle.UPPER_CASE);
 		json.setEnumStyle(NamingStyle.UPPER_CASE);
 		assertEquals(named, json.parse("{\"AAAAAAAAA\":\"AAAAAAAAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", NamedTestClass.class));
-		
+
 		json.setPropertyStyle(NamingStyle.UPPER_CAMEL);
 		json.setEnumStyle(NamingStyle.UPPER_CAMEL);
 		assertEquals(named, json.parse("{\"AaaAaaAaa\":\"AaaAaaAaa\",\"AaaBbbCcc\":\"AaaBbbCcc\",\"Aaaあああ\":\"Aaaあああ\"}", NamedTestClass.class));
-		
+
 		json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
 		json.setEnumStyle(NamingStyle.UPPER_UNDERSCORE);
 		assertEquals(named, json.parse("{\"AAA_AAA_AAA\":\"AAA_AAA_AAA\",\"AAA_BBB_CCC\":\"AAA_BBB_CCC\",\"AAAあああ\":\"AAAあああ\"}", NamedTestClass.class));
 
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
 		result.put("a", new BigDecimal("12"));
-		
+
 		List<BigDecimal> list4 = new ArrayList<BigDecimal>();
 		list4.add(new BigDecimal("1"));
 		list4.add(new BigDecimal("2"));
@@ -1423,7 +1428,7 @@ public class JSONTest {
 		list4.add(new BigDecimal("4"));
 		list4.add(new BigDecimal("5"));
 		result.put("b", list4);
-		
+
         InputStream in = new ByteArrayInputStream("{\"a\": 12, \"b\": [1,2,3,4,5]}".getBytes()) {
         	@Override
         	public boolean markSupported() {
@@ -1436,7 +1441,7 @@ public class JSONTest {
 	@Test
 	public void testConvert() throws Exception {
 		JSON json = new JSON();
-		
+
 		// boolean
 		assertEquals(Boolean.TRUE, json.convert(100, boolean.class));
 		assertEquals(Boolean.FALSE, json.convert(0, boolean.class));
@@ -1452,7 +1457,7 @@ public class JSONTest {
 		assertEquals(Boolean.FALSE, json.convert("false", boolean.class));
 		assertEquals(Boolean.FALSE, json.convert("", boolean.class));
 		assertEquals(Boolean.FALSE, json.convert(null, boolean.class));
-		
+
 		// Boolean
 		assertEquals(Boolean.TRUE, json.convert(100, Boolean.class));
 		assertEquals(Boolean.FALSE, json.convert(0, Boolean.class));
@@ -1462,7 +1467,7 @@ public class JSONTest {
 		assertEquals(Boolean.FALSE, json.convert("false", Boolean.class));
 		assertEquals(Boolean.FALSE, json.convert("", Boolean.class));
 		assertNull(json.convert(null, Boolean.class));
-		
+
 		// byte
 		assertEquals((byte)0, json.convert(null, byte.class));
 		assertEquals((byte)0, json.convert("0", byte.class));
@@ -1479,7 +1484,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// Byte
 		assertEquals(null, json.convert(null, Byte.class));
 		assertEquals((byte)0, json.convert("0", Byte.class));
@@ -1496,7 +1501,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// short
 		assertEquals((short)0, json.convert(null, short.class));
 		assertEquals((short)0, json.convert("0", short.class));
@@ -1515,7 +1520,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// Short
 		assertEquals(null, json.convert(null, Short.class));
 		assertEquals((short)0, json.convert("0", Short.class));
@@ -1534,7 +1539,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// int
 		assertEquals(0, json.convert(null, int.class));
 		assertEquals(0, json.convert("0", int.class));
@@ -1553,7 +1558,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// Integer
 		assertEquals(null, json.convert(null, Integer.class));
 		assertEquals(0, json.convert("0", Integer.class));
@@ -1572,7 +1577,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// long
 		assertEquals(0l, json.convert(null, long.class));
 		assertEquals(0l, json.convert("0", long.class));
@@ -1591,7 +1596,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// Long
 		assertEquals(null, json.convert(null, Long.class));
 		assertEquals(0l, json.convert("0", Long.class));
@@ -1610,7 +1615,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// BigInteger
 		assertEquals(null, json.convert(null, BigInteger.class));
 		assertEquals(new BigInteger("100"), json.convert(new BigDecimal("100"), BigInteger.class));
@@ -1626,7 +1631,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// BigDecimal
 		assertEquals(null, json.convert(null, BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert(new BigDecimal("100"), BigDecimal.class));
@@ -1634,7 +1639,7 @@ public class JSONTest {
 		assertEquals(new BigDecimal("100"), json.convert("100", BigDecimal.class));
 		assertEquals(new BigDecimal("100"), json.convert("+100", BigDecimal.class));
 		assertEquals(new BigDecimal("100.01"), json.convert("100.01", BigDecimal.class));
-		
+
 		// Date
 		assertEquals(toDate(1, 1, 1, 0, 0, 0, 0), json.convert("1", Date.class));
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("00", Date.class));
@@ -1642,17 +1647,17 @@ public class JSONTest {
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000", Date.class));
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("200001", Date.class));
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("20000101", Date.class));
-		
+
 		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("2000010112", Date.class));
 		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("200001011205", Date.class));
 		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101120506", Date.class));
 		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101120506+0900", Date.class));
-		
+
 		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("20000101T12", Date.class));
 		assertEquals(toDate(2000, 1, 1, 12, 5, 0, 0), json.convert("20000101T1205", Date.class));
 		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101T120506", Date.class));
 		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 0), json.convert("20000101T120506+0900", Date.class));
-		
+
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000-01", Date.class));
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000-01-01", Date.class));
 		assertEquals(toDate(2000, 1, 1, 12, 0, 0, 0), json.convert("2000-01-01T12", Date.class));
@@ -1664,7 +1669,7 @@ public class JSONTest {
 		assertEquals(toDate(2000, 1, 1, 12, 5, 6, 100), json.convert("2000-01-01T12:05:06.100+09:00", Date.class));
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000年1月1日", Date.class));
 		assertEquals(toDate(2000, 1, 1, 0, 0, 0, 0), json.convert("2000年1月1日(月)", Date.class));
-		
+
 		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon Dec 24 2007 20:13:15", Date.class));
 		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon Dec 24 2007 20:13:15 GMT+0900", Date.class));
 		assertEquals(toDate(2007, 12, 24, 20, 13, 15, 0), json.convert("Mon, 24 Dec 2007 11:13:15 GMT", Date.class));
@@ -1678,13 +1683,13 @@ public class JSONTest {
 		t = toDate(1970, 1, 1, 20, 13, 15, 0).getTime();
 		assertEquals(new Time(t), json.convert("20:13:15", Time.class));
 		assertEquals(TimeZone.getTimeZone("JST"), json.convert("JST", TimeZone.class));
-		
+
 		assertEquals(ExampleEnum.Example1, json.convert("Example1", ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convert(1, ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convert("1", ExampleEnum.class));
 		assertEquals(ExampleEnum.Example1, json.convert(true, ExampleEnum.class));
 		assertEquals(ExampleEnum.Example0, json.convert(false, ExampleEnum.class));
-		
+
 		assertEquals(ExampleExtendEnum.Example1, json.convert("Example1", ExampleExtendEnum.class));
 		assertEquals(ExampleExtendEnum.Example1, json.convert(1, ExampleExtendEnum.class));
 		assertEquals(ExampleExtendEnum.Example1, json.convert("1", ExampleExtendEnum.class));
@@ -1693,20 +1698,20 @@ public class JSONTest {
 
 		try {
 			json.convert("20100431", Date.class);
-			fail();		
+			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.convert(5, ExampleEnum.class);
-			fail();		
+			fail();
 		} catch (JSONException e) {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			json.convert("aaa", int.class);
 			fail();
@@ -1714,12 +1719,12 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		try {
 			Object test = new Object() {
 				public int aaa;
 			};
-			
+
 			Map map = new LinkedHashMap();
 			map.put("aaa", "aaa");
 			json.convert(map, test.getClass());
@@ -1728,7 +1733,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// URI
 		assertEquals(new URI("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URI.class));
 		assertEquals(new URI("/aaa/bbb.json"), json.convert("/aaa/bbb.json", URI.class));
@@ -1736,36 +1741,36 @@ public class JSONTest {
 		uris.add("http://www.google.co.jp");
 		uris.add("/aaa/bbb.json");
 		assertEquals(new URI("http://www.google.co.jp"), json.convert(uris, URI.class));
-		
+
 		// URL
 		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));
-		
+
 		// File
 		assertEquals(new File("./hoge.txt"), json.convert("./hoge.txt", File.class));
 		assertEquals(new File("C:\\hoge.txt"), json.convert("C:\\hoge.txt", File.class));
-		
+
 		// InetAddress
 		assertEquals(InetAddress.getByName("localhost"), json.convert("localhost", InetAddress.class));
 		assertEquals(InetAddress.getByName("127.0.0.1"), json.convert("127.0.0.1", InetAddress.class));
-		
+
 		// Charset
 		assertEquals(Charset.forName("UTF-8"), json.convert("UTF-8", Charset.class));
-		
+
 		// UUID
 		UUID uuid = UUID.randomUUID();
 		assertEquals(uuid, json.convert(uuid.toString(), UUID.class));
-		
+
 		// Map
 		LinkedHashMap lhmap = new LinkedHashMap();
 		lhmap.put("aaa", null);
 		assertEquals(lhmap, json.convert("aaa", Map.class));
-		
+
 		// object
 		try {
 			Object test = new Object() {
 				public int[] aaa;
 			};
-			
+
 			Map map = new LinkedHashMap();
 			ArrayList list = new ArrayList();
 			list.add("aaa");
@@ -1776,7 +1781,7 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
-		
+
 		// etc
 		try {
 			json.convert("aaa", Iterator.class);
@@ -1786,22 +1791,22 @@ public class JSONTest {
 			assertNotNull(e);
 		}
 	}
-	
+
 	@Test
 	public void testBase64() throws Exception {
 		JSON json = new JSON();
-		
+
 		Random rand = new Random();
-		
+
 		for (int i = 0; i < 100; i++) {
 			byte[][] input = new byte[1][i];
 			rand.nextBytes(input[0]);
-			
+
 			byte[][] output = (byte[][])json.parse(json.format(input), byte[][].class);
 			assertEquals(toHexString(input[0]), toHexString(output[0]));
 		}
 	}
-	
+
 	private Date toDate(int year, int month, int date, int hour, int minute, int second, int msec) {
 		Calendar c = Calendar.getInstance();
 		c.clear();
@@ -1809,10 +1814,10 @@ public class JSONTest {
 		c.set(Calendar.MILLISECOND, msec);
 		return c.getTime();
 	}
-	
+
 	private String toHexString(byte[] data) {
 		if (data == null) return "null";
-		
+
 		StringBuilder sb = new StringBuilder();
 		for (byte d : data) {
 			sb.append(Integer.toHexString((int)d & 0xFF));
@@ -1820,35 +1825,35 @@ public class JSONTest {
 		}
 		return sb.toString();
 	}
-	
+
 	public List<Integer> tx;
-	
+
 	@Test
 	public void testGetRawType() throws Exception {
-		
+
 		List<BigDecimal> listA = new ArrayList<BigDecimal>();
 		listA.add(new BigDecimal("1"));
 		listA.add(new BigDecimal("2"));
 		listA.add(new BigDecimal("3"));
 		listA.add(new BigDecimal("4"));
 		listA.add(new BigDecimal("5"));
-		
+
 		List<Integer> listB = new ArrayList<Integer>();
 		listB.add(1);
 		listB.add(2);
 		listB.add(3);
 		listB.add(4);
 		listB.add(5);
-		
+
 		assertEquals(listA, JSON.decode("[1,2,3,4,5]", this.getClass().getField("tx").getType()));
 		assertEquals(listB, JSON.decode("[1,2,3,4,5]", this.getClass().getField("tx").getGenericType()));
-		
+
 		assertEquals(listA, JSON.decode(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getType()));
 		assertEquals(listB, JSON.decode(new ByteArrayInputStream("[1,2,3,4,5]".getBytes("UTF-8")), this.getClass().getField("tx").getGenericType()));
 
 		assertEquals(listA, JSON.decode(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
 		assertEquals(listB, JSON.decode(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
-		
+
 		JSON json = new JSON();
 		assertEquals(listA, json.parse("[1,2,3,4,5]", this.getClass().getField("tx").getType()));
 		assertEquals(listB, json.parse("[1,2,3,4,5]", this.getClass().getField("tx").getGenericType()));
@@ -1859,7 +1864,7 @@ public class JSONTest {
 		assertEquals(listA, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getType()));
 		assertEquals(listB, json.parse(new StringReader("[1,2,3,4,5]"), this.getClass().getField("tx").getGenericType()));
 	}
-	
+
 	@Test
 	public void testValidate() throws Exception {
 		JSON.validate(this.getClass().getResourceAsStream("Sample1.json"));
@@ -1877,14 +1882,14 @@ class TestBean implements Serializable {
 	private int a;
 	public void setA(int a) { this.a = a; }
 	public int getA() { return a; }
-	
+
 	public String b;
 	public String getB() { return b; }
-	
+
 	private boolean c;
 	public boolean isC() { return c; }
 	public void setC(boolean c) { this.c = c; }
-	
+
 	public Date d;
 
 	public Locale e;
@@ -1896,31 +1901,31 @@ class TestBean implements Serializable {
 	private Pattern g;
 	public Pattern getG() { return g; }
 	public void setG(Pattern g) { this.g = g; }
-	
+
 	private TimeZone h;
 	public TimeZone getH() { return h; }
 	public void setH(TimeZone h) { this.h = h; }
-	
+
 	private String 漢字;
 	public String get漢字() { return 漢字; }
 	public void set漢字(String 漢字) { this.漢字 = 漢字; }
-	
+
 	@JSONHint(name="class")
 	public Class class_;
-	
+
 	private String if_;
 	public String getIf() { return if_; }
 	public void setIf(String if_) { this.if_ = if_; }
-	
+
 	public BigDecimal _w = new  BigDecimal("100000000000000000000000");
-	
+
 	private int x = 10;
 	int y = 100;
 	protected int z = 1000;
-	
+
 	public void getignore(String test) {
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -1941,7 +1946,7 @@ class TestBean implements Serializable {
 		result = prime * result + z;
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -2008,7 +2013,7 @@ class TestBean implements Serializable {
 			return false;
 		return true;
 	}
-	
+
 	public String toString() {
 		return JSON.encode(this);
 	}
@@ -2018,27 +2023,27 @@ class JavaBean {
 	private String aname;
 	private String bName;
 	private String CName;
-	
+
 	public void setaname(String aname) {
 		this.aname = aname;
 	}
-	
+
 	public String getaname() {
 		return aname;
 	}
-	
+
 	public void setbName(String bName) {
 		this.bName = bName;
 	}
-	
+
 	public String getbName() {
 		return bName;
 	}
-	
+
 	public void setCName(String CName) {
 		this.CName = CName;
 	}
-	
+
 	public String getCName() {
 		return CName;
 	}
@@ -2082,9 +2087,9 @@ class JavaBean {
 
 	@Override
 	public String toString() {
-		return "JavaBean [aname=" + aname 
-				+ ", bName=" + bName 
-				+ ", CName=" + CName 
+		return "JavaBean [aname=" + aname
+				+ ", bName=" + bName
+				+ ", CName=" + CName
 				+ "]";
 	}
 }
@@ -2113,7 +2118,7 @@ class NamedBean {
 			return false;
 		return true;
 	}
-	
+
 	public String toString() {
 		return JSON.encode(this);
 	}
@@ -2121,14 +2126,14 @@ class NamedBean {
 
 class NamedBean2 {
 	public int aaaBbb;
-	
+
 	public int bbbAaa;
-	
+
 	@JSONHint(name = "bbbAaa")
 	public void setAaaBbb(int value) {
 		aaaBbb = value;
 	}
-	
+
 	@JSONHint(name = "bbbAaa")
 	public int getAaaBbb() {
 		return aaaBbb;
@@ -2175,11 +2180,11 @@ class GenericsBean {
 	private List<List<String>> glist = null;
 	public Map<String, Integer> map2 = null;
 	public Map<Integer, String> map3 = null;
-	
+
 	public List<String> getList() {
 		return list;
 	}
-	
+
 	public void setList(List<String> list) {
 		this.list = list;
 	}
@@ -2187,15 +2192,15 @@ class GenericsBean {
 	public Map<String, String> getMap() {
 		return map;
 	}
-	
+
 	public void setMap(Map<String, String> map) {
 		this.map = map;
 	}
-	
+
 	public List<List<String>> getGenericsList() {
 		return glist;
 	}
-	
+
 	public void setGenericsList(List<List<String>> glist) {
 		this.glist = glist;
 	}
@@ -2272,7 +2277,7 @@ class GenericsBean {
 			return false;
 		return true;
 	}
-	
+
 	public String toString() {
 		return JSON.encode(this);
 	}
@@ -2286,7 +2291,7 @@ class InheritedBean {
 	public List<Object> list0;
 	public ArrayList list1;
 	public SuperArrayList list2;
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -2344,11 +2349,11 @@ class InheritedBean {
 
 
 class InheritList extends ArrayList<String> {
-	
+
 };
 
 class InheritMap extends LinkedHashMap<Integer, String> {
-	
+
 };
 
 class InheritList2 implements List<String> {
@@ -2467,12 +2472,12 @@ class InheritList2 implements List<String> {
 	public <T> T[] toArray(T[] array) {
 		return list.toArray(array);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return list.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof InheritList2) {
@@ -2545,12 +2550,12 @@ class InheritMap2 implements Map<Integer, String> {
 	public Collection<String> values() {
 		return map.values();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return map.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof InheritMap2) {
@@ -2574,67 +2579,67 @@ class SuperArrayList extends ArrayList {
 class AnnotationBean {
 	@JSONHint(name="a")
 	public int field;
-	
+
 	public int method;
-	
+
 	@JSONHint(name="b", format="###,###,000.0")
 	public int getMethod() {
 		return method;
 	}
-	
+
 	@JSONHint(ignore=true)
 	public int dummy;
-	
+
 	@JSONHint(format="yyyy/MM/dd")
 	public Date date;
-	
+
 	@JSONHint(format="###,###,0.0")
 	public int[] array1;
-	
+
 	@JSONHint(format="###,###,0.0")
 	public Integer[] array2;
-	
+
 	@JSONHint(format="###,###,0.0", type=Vector.class)
 	public List<Integer> array3;
-	
+
 	@JSONHint(serialized=true, ordinal=0)
 	public String json_data;
-	
+
 	@JSONHint(serialized=true, ordinal=1)
 	public String simple_json_data;
-	
+
 	@JSONHint(serialized=true, ordinal=2)
 	public double number_json_data;
-	
+
 	@JSONHint(anonym="anonym")
 	public AnonymTest anonymMap;
-	
+
 	@JSONHint(name = "name_a")
 	public String namex = "aaa";
-	
+
 	public String getNamex() {
 		return namex;
 	}
-	
+
 	public void setNamex(String namex) {
 		this.namex = namex;
 	}
-	
+
 	@JSONHint(name = "name_b")
 	public String namey = "aaa";
-	
+
 	@JSONHint(ignore = true)
 	public String getNamey() {
 		return namey;
 	}
-	
+
 	@JSONHint(name = "name_c", ignore = true)
 	public String namez = "aaa";
-	
+
 	public String getNamez() {
 		return namey;
 	}
-	
+
 	public void setNamez(String namey) {
 		this.namey = namez;
 	}
@@ -2694,7 +2699,7 @@ class SuppressNullBean {
 	public Object a = 100;
 	public Object b = null;
 	public List list = new ArrayList() {
-		{ 
+		{
 			add(100);
 			add(null);
 		}
@@ -2734,7 +2739,7 @@ class SuppressNullBean {
 			return false;
 		return true;
 	}
-	
+
 	public String toString() {
 		return JSON.encode(this);
 	}
@@ -2781,7 +2786,7 @@ class Point2DJSON extends JSON {
 	    }
 		return super.create(context, c);
 	}
-	
+
 	protected boolean ignore(Context context, Class<?> c, Member m) {
 		  return super.ignore(context, c, m);
 	}
@@ -2790,10 +2795,10 @@ class Point2DJSON extends JSON {
 class StringBeanWrapper {
 	@JSONHint(type=String.class)
 	public StringBean sbean;
-	
+
 	@JSONHint(type=String.class)
 	public Thread.State state;
-	
+
 	@JSONHint(type=String.class)
 	public String text;
 
@@ -2837,11 +2842,11 @@ class StringBeanWrapper {
 
 class StringBean {
 	private String str;
-	
+
 	public StringBean(String str) {
 		this.str = str;
 	}
-	
+
 	public String toString() {
 		return str;
 	}
@@ -2877,7 +2882,7 @@ interface BaseInterface {
 }
 
 class ImplClass implements BaseInterface {
-	
+
 	public List<?> getList() {
 		return Arrays.asList("test");
 	}
@@ -2966,7 +2971,7 @@ class DateNumberTestClass {
 
 	@JSONHint(format="yyyy-MM")
 	public Date b;
-	
+
 	public int c;
 
 	@JSONHint(format="##0.000")
@@ -3026,7 +3031,7 @@ class NamedTestClass {
 	public NamedTestEnum aaaAaaAaa;
 	public NamedTestEnum AAA_BBB_CCC;
 	public NamedTestEnum aaaあああ;
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -3038,7 +3043,7 @@ class NamedTestClass {
 		result = prime * result + ((aaaあああ == null) ? 0 : aaaあああ.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -3065,7 +3070,7 @@ class NamedTestClass {
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "NamedTestClass [aaaAaaAaa=" + aaaAaaAaa + ", AAA_BBB_CCC="
