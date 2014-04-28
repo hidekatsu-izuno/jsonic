@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,39 +60,39 @@ public class Container {
 	public String encoding;
 	public Boolean expire;
 	public boolean namingConversion = true;
-	
+
 	@JSONHint(anonym = "class")
 	public ProcessorConfig processor;
-	
+
 	protected ServletConfig config;
 	protected ServletContext context;
 	protected HttpServlet servlet;
-		
+
 	public void init(HttpServlet servlet) throws ServletException {
 		this.servlet = servlet;
 		this.config = servlet.getServletConfig();
 		this.context = servlet.getServletContext();
 	}
-	
+
 	public void start(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String encoding = this.encoding;
 		Boolean expire = this.expire;
-				
+
 		GatewayFilter.Config gconfig = (GatewayFilter.Config)request.getAttribute(GatewayFilter.GATEWAY_KEY);
 		if (gconfig != null) {
 			if (encoding == null) encoding = gconfig.encoding;
 			if (expire == null) expire = gconfig.expire;
 		}
-		
+
 		if (encoding == null) encoding = "UTF-8";
 		if (expire == null) expire = true;
-		
+
 		// set encoding
 		if (encoding != null) {
 			request.setCharacterEncoding(encoding);
 			response.setCharacterEncoding(encoding);
 		}
-		
+
 		// set expiration
 		if (expire != null && expire) {
 			response.setHeader("Cache-Control", "no-cache");
@@ -100,10 +100,10 @@ public class Container {
 			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
 		}
 	}
-	
+
 	public Object getComponent(String className) throws Exception {
 		Object o = findClass(className).newInstance();
-		
+
 		for (Field field : o.getClass().getFields()) {
 			Class<?> cls = field.getType();
 			if ("config".equals(field.getName()) && ServletConfig.class.equals(cls)) {
@@ -118,28 +118,28 @@ public class Container {
 				field.set(o, ExternalContext.getSession());
 			}
 		}
-		
+
 		return o;
 	}
-	
+
 	public Method getMethod(Object component, String methodName, List<?> params) throws NoSuchMethodException {
 		if (params == null) params = Collections.emptyList();
-		
+
 		if (namingConversion) methodName = ClassUtil.toLowerCamel(methodName);
-		
+
 		if (methodName.equals(init) || methodName.equals(destroy)) {
 			debug("Method name is same init or destroy method name.");
 			return null;
 		}
-		
+
 		Class<?> c = component.getClass();
-		
+
 		Method method = null;
 		Class<?>[] types = null;
-		
+
 		Method vmethod = null;
 		Class<?>[] vtypes = null;
-		
+
 		for (Method cmethod : c.getMethods()) {
 			if (Modifier.isStatic(cmethod.getModifiers())
 					|| cmethod.isSynthetic()
@@ -147,14 +147,14 @@ public class Container {
 					|| !cmethod.getName().equals(methodName)) {
 				continue;
 			}
-			
+
 			Class<?>[] ctypes = cmethod.getParameterTypes();
-			
+
 			if (cmethod.isVarArgs()) {
 				if (ctypes.length-1 > params.size()) {
 					continue;
 				}
-				
+
 				Class<?> vtype = ctypes[ctypes.length-1].getComponentType();
 				Class<?>[] tmp = new Class<?>[params.size()];
 				System.arraycopy(tmp, 0, ctypes, 0, ctypes.length-1);
@@ -162,7 +162,7 @@ public class Container {
 					tmp[i] = vtype;
 				}
 				ctypes = tmp;
-				
+
 				if (vmethod == null || ctypes.length > vtypes.length) {
 					vmethod = cmethod;
 					vtypes = ctypes;
@@ -181,7 +181,7 @@ public class Container {
 						|| (types != null && ctypes.length < types.length)) {
 					continue;
 				}
-				
+
 				if (method == null || ctypes.length > types.length) {
 					method = cmethod;
 					types = ctypes;
@@ -197,7 +197,7 @@ public class Container {
 				}
 			}
 		}
-		
+
 		if (vmethod != null) {
 			if (method == null) {
 				method = vmethod;
@@ -209,18 +209,18 @@ public class Container {
 				}
 			}
 		}
-		
+
 		if (method == null || limit(c, method)) {
 			debug("method missing: " + toPrintString(c, methodName, params));
 			return null;
 		}
-		
+
 		return method;
 	}
-	
+
 	/**
 	 * Called before invoking the target method.
-	 * 
+	 *
 	 * @param component The target instance.
 	 * @param method The invoking method.
 	 * @param params The parameters before processing of the target method.
@@ -229,24 +229,24 @@ public class Container {
 	public Object[] preinvoke(Object component, Method method, Object... params) throws Exception {
 		return params;
 	}
-	
+
 	public Object execute(JSON json, Object component, Method method, List<?> params) throws Exception {
 		Object result = null;
-		
+
 		Method init = null;
 		Method destroy = null;
-		
+
 		if (this.init != null || this.destroy != null) {
 			boolean illegalInit = false;
 			boolean illegalDestroy = false;
-			
+
 			for (Method m : component.getClass().getMethods()) {
 				if (Modifier.isStatic(m.getModifiers())
 						|| m.isSynthetic()
 						|| m.isBridge()) {
 					continue;
 				}
-				
+
 				if (m.getName().equals(this.init)) {
 					if (m.getReturnType().equals(void.class) && m.getParameterTypes().length == 0) {
 						init = m;
@@ -264,11 +264,11 @@ public class Container {
 					continue;
 				}
 			}
-	
-			if (illegalInit) this.debug("Notice: init method must have no arguments.");		
+
+			if (illegalInit) this.debug("Notice: init method must have no arguments.");
 			if (illegalDestroy) this.debug("Notice: destroy method must have no arguments.");
 		}
-		
+
 		Type[] argTypes = method.getGenericParameterTypes();
 		Object[] args = new Object[argTypes.length];
 		for (int i = 0; i < args.length; i++) {
@@ -281,7 +281,7 @@ public class Container {
 		if (this.isDebugMode()) {
 			this.debug("Execute: " + toPrintString(component.getClass(), method.getName(), Arrays.asList(args)));
 		}
-		
+
 		if (init != null) {
 			if (this.isDebugMode()) {
 				this.debug("Execute: " + toPrintString(component.getClass(), init.getName(), null));
@@ -289,14 +289,14 @@ public class Container {
 			if (!init.isAccessible()) init.setAccessible(true);
 			init.invoke(component);
 		}
-		
+
 		args = this.preinvoke(component, method, args);
-		
+
 		if (!method.isAccessible()) method.setAccessible(true);
 		result = method.invoke(component, args);
-		
+
 		result = this.postinvoke(component, method, result);
-		
+
 		if (destroy != null) {
 			if (this.isDebugMode()) {
 				this.debug("Execute: " + toPrintString(component.getClass(), destroy.getName(), null));
@@ -304,13 +304,13 @@ public class Container {
 			if (!destroy.isAccessible()) destroy.setAccessible(true);
 			destroy.invoke(component);
 		}
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Called after invoked the target method.
-	 * 
+	 *
 	 * @param component The target instance.
 	 * @param method The invoked method.
 	 * @param result The returned value of the target method call.
@@ -319,16 +319,16 @@ public class Container {
 	public Object postinvoke(Object component, Method method, Object result) throws Exception {
 		return result;
 	}
-	
+
 	public void exception(Exception e, HttpServletRequest request, HttpServletResponse response) throws ServletException {
 	}
-	
+
 	public void end(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	}
 
 	public void destory() {
 	}
-	
+
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
 		Class<?> c = null;
 		try {
@@ -337,13 +337,13 @@ public class Container {
 			try {
 				c = Class.forName(name, true, this.getClass().getClassLoader());
 			} catch (ClassNotFoundException e2) {
-				c = Class.forName(name);				
+				c = Class.forName(name);
 			}
 		}
-		
+
 		return c;
 	}
-	
+
 	protected boolean limit(Class<?> c, Method method) {
 		return method.getDeclaringClass().equals(Object.class);
 	}
@@ -351,35 +351,35 @@ public class Container {
 	public boolean isDebugMode() {
 		return (debug != null) ? debug : false;
 	}
-	
+
 	public void debug(String message) {
 		debug(message, null);
 	}
-	
+
 	public void debug(String message, Throwable e) {
 		if (!isDebugMode()) return;
-		
+
 		if (e != null) {
 			context.log("[DEBUG] " + message, e);
 		} else {
 			context.log("[DEBUG] " + message);
 		}
 	}
-	
+
 	public void warn(String message) {
 		warn(message, null);
 	}
-	
+
 	public void warn(String message, Throwable e) {
 		if (!isDebugMode()) return;
-		
+
 		if (e != null) {
 			context.log("[WARNING] " + message, e);
 		} else {
 			context.log("[WARNING] " + message);
 		}
 	}
-	
+
 	public void error(String message, Throwable e) {
 		if (e != null) {
 			context.log("[ERROR] " + message, e);
@@ -387,26 +387,25 @@ public class Container {
 			context.log("[ERROR] " + message);
 		}
 	}
-	
+
 	public Object getErrorData(Throwable cause) {
 		Map<String, Object> data = null;
 		for (PropertyInfo pi : BeanInfo.get(cause.getClass()).getProperties()) {
-			if (pi.getReadMember().getDeclaringClass().equals(Throwable.class)
-					|| pi.getReadMember().getDeclaringClass().equals(Object.class)) {
+			if (pi.getReadMember().getDeclaringClass().equals(Throwable.class)) {
 				continue;
 			}
-			
+
 			Object value = pi.get(cause);
 			if (value == cause) {
 				continue;
 			}
-			
+
 			if (data == null) data = new LinkedHashMap<String, Object>();
 			data.put(pi.getName(), value);
 		}
 		return (data != null) ? data : Collections.emptyMap();
 	}
-	
+
 	JSON createJSON(Locale locale) throws ServletException  {
 		JSON json;
 		if (processor != null) {
@@ -437,7 +436,7 @@ public class Container {
 		}
 		return json;
 	}
-	
+
 	static boolean isJSONType(String contentType) {
 		if (contentType != null) {
 			contentType = contentType.toLowerCase();
@@ -445,7 +444,7 @@ public class Container {
 		}
 		return false;
 	}
-	
+
 	static int calcurateDistance(Class<?>[] types, List<?> params) {
 		int point = 0;
 		for (int i = 0; i < types.length; i++) {
@@ -551,7 +550,7 @@ public class Container {
 		}
 		return point;
 	}
-	
+
 	static String toPrintString(Class<?> c, String methodName, List<?> args) {
 		StringBuilder sb = new StringBuilder(c.getName());
 		sb.append('#').append(methodName).append('(');
@@ -562,17 +561,17 @@ public class Container {
 		sb.append(')');
 		return sb.toString();
 	}
-	
-	
+
+
 	@SuppressWarnings("unchecked")
 	static <T> T cast(Object o) {
 		return (T)o;
 	}
-	
+
 	static class ProcessorConfig {
 		@JSONHint(name = "class")
 		public Class<? extends JSON> type = JSON.class;
-		
+
 		public JSON.Mode mode;
 		public Locale locale;
 		public TimeZone timeZone;
