@@ -1162,6 +1162,7 @@ public class JSON {
 	 */
 	protected boolean ignore(Context context, Class<?> target, Member member) {
 		if (Modifier.isTransient(member.getModifiers())) return true;
+		if (member.getDeclaringClass().equals(Object.class)) return true;
 		return false;
 	}
 

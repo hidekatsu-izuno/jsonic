@@ -391,7 +391,8 @@ public class Container {
 	public Object getErrorData(Throwable cause) {
 		Map<String, Object> data = null;
 		for (PropertyInfo pi : BeanInfo.get(cause.getClass()).getProperties()) {
-			if (pi.getReadMember().getDeclaringClass().equals(Throwable.class)) {
+			if (pi.getReadMember().getDeclaringClass().equals(Throwable.class)
+					|| pi.getReadMember().getDeclaringClass().equals(Object.class)) {
 				continue;
 			}
 

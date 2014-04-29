@@ -68,6 +68,18 @@ public final class BeanInfo {
 	private BeanInfo(Class<?> cls) {
 		type = cls;
 
+		if (cls == Class.class
+				|| ClassLoader.class.isAssignableFrom(cls)
+				|| SecurityManager.class.isAssignableFrom(cls)) {
+
+			if (sprops == null) sprops = Collections.emptyMap();
+			if (smethods == null) smethods = Collections.emptyMap();
+			if (props == null) props = Collections.emptyMap();
+			if (methods == null) methods = Collections.emptyMap();
+
+			return;
+		}
+
 		for (Constructor<?> con : cls.getConstructors()) {
 			if (con.isSynthetic()) {
 				continue;
@@ -136,9 +148,7 @@ public final class BeanInfo {
 			m.setAccessible(true);
 			mi.methods.add(m);
 
-			if (m.getDeclaringClass() == Object.class
-					|| cls == Class.class
-					|| ClassLoader.class.isAssignableFrom(cls)) {
+			if (m.getDeclaringClass() == Object.class) {
 				continue;
 			}
 

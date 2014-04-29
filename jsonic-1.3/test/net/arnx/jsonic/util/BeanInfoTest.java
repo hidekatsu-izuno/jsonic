@@ -18,10 +18,17 @@ public class BeanInfoTest {
 		bi = BeanInfo.get(ClassLoader.class);
 		assertNull(bi.getProperty("class"));
 		assertTrue(bi.getProperties().isEmpty());
+		assertTrue(bi.getMethods().isEmpty());
 
 		bi = BeanInfo.get(URLClassLoader.class);
 		assertNull(bi.getProperty("class"));
 		assertTrue(bi.getProperties().isEmpty());
+		assertTrue(bi.getMethods().isEmpty());
+
+		bi = BeanInfo.get(SecurityManager.class);
+		assertNull(bi.getProperty("class"));
+		assertTrue(bi.getProperties().isEmpty());
+		assertTrue(bi.getMethods().isEmpty());
 
 		bi = BeanInfo.get(BeanTest.class);
 		assertNull(bi.getProperty("class"));
