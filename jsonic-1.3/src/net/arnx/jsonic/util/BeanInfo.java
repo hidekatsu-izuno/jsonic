@@ -69,8 +69,7 @@ public final class BeanInfo {
 		type = cls;
 
 		if (cls == Class.class
-				|| ClassLoader.class.isAssignableFrom(cls)
-				|| SecurityManager.class.isAssignableFrom(cls)) {
+				|| ClassLoader.class.isAssignableFrom(cls)) {
 
 			if (sprops == null) sprops = Collections.emptyMap();
 			if (smethods == null) smethods = Collections.emptyMap();

@@ -18,7 +18,7 @@
 	.sf a { position: absolute; top: 8px; right: 20px; }
 	.main { margin: 0px 0px 0px 160px; padding: 0px; }
 	.bar { margin: 0px; padding: 0px 10px; }
-	
+
 	.main { line-height: 1.5; border-left: 1px solid silver; padding: 15px 20px 15px 20px; }
 	.title { font: bold 20pt sans-serif; color: #6699FF; }
 	.title a { color: #6699FF; text-decoration: none; }
@@ -29,7 +29,7 @@
 	.menu li { line-height: 1.5; }
 	.menu li a { text-decoration: none; }
 	.main ul { list-style-image: url(images/marker.jpg); }
-	h2 { font: bold 12pt sans-serif; margin: 30px 0px 10px 0px; border-width: 2px ; border-style: solid; 
+	h2 { font: bold 12pt sans-serif; margin: 30px 0px 10px 0px; border-width: 2px ; border-style: solid;
 		border-color: silver gray gray silver; padding: 3px;
 		background-image: url(images/header.jpg); background-position: center center; line-height: 1.0; }
 	h3 { font: bold 11pt sans-serif; border-bottom: 1px solid gray; margin: 30px 0px 12px 0px;
@@ -43,7 +43,7 @@
 	.comment { color: #0066FF; font-family: monospace; }
 	.em { font-weight: bold; color: #000099; font-family: monospace; }
 	.elem { font-weight: bold; color: #000099; }
-	.table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse; 
+	.table { border: 1px solid black; font: 9pt sans-serif; width: 100%; border-collapse: collapse;
 		margin: 0px 0px 1em 0px; }
 	.table th { background-color: silver; border: 1px solid gray; white-space: nowrap; }
 	.table td { border: 1px solid gray; padding: 2px 2px;}
@@ -56,7 +56,7 @@
 <style type="text/css">
 	.sidebar { position: absolute; }
 </style>
-<![endif]--> 
+<![endif]-->
 </head>
 <body>
 <div class="sidebar">
@@ -93,7 +93,7 @@
 		<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
 		</ul>
 	</li>
-	<li><a href="index.html#maven">Mavenリポジトリ</a></li> 
+	<li><a href="index.html#maven">Mavenリポジトリ</a></li>
 	<li><a href="index.html#license">ライセンス</a></li>
 	<li><a href="index.html#report">バグ・要望の報告先</a></li>
 	<li><a href="index.html#releasenote">リリースノート</a></li>
@@ -152,7 +152,7 @@ String text = <span class="em">JSON.encode(</span>hoge<span class="em">)</span>;
 //     "string": "aaa",
 //     "array": [1, 2, 3]
 // }</span>
-String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>; 
+String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</span>;
 
 <span class="comment">// Appendable(StringBuffer, Writerなど)やOutputStreamを出力先にすることもできます<sup>(※1)</sup></span>
 <span class="em">JSON.encode(</span>hoge<span class="em">,</span> new FileWriter("hoge.txt")<span class="em">)</span>;
@@ -310,7 +310,7 @@ Hoge hoge = json<span class="em">.parse(</span>text, Hoge.class<span class="em">
 <p>DIコンテナなどを使いインスタンスを生成したり、独自の変換を追加するために次のようなオーバーライド可能なメソッドが用意されています。</p>
 <pre class="source">
 JSON json = new JSON() {
-  
+
   <span class="comment">// フォーマット可能なクラスに変換します（formatでのみ有効です）。
   // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。</span>
   protected <span class="em">Object preformat(Context context, Object value)</span> throws Exception {
@@ -324,13 +324,13 @@ JSON json = new JSON() {
     }
     return super.preformat(context, value);
   }
-  
+
   <span class="comment">// 解析されたデータを指定したクラスに変換します（parseでのみ有効です）。
   // 例外が発生した場合、JSONExceptionでラップされ呼び出し元に通知されます。
   // さら下の階層を変換したい場合は、context.convert(キー, 値, 型)を呼び出してください。</span>
   protected <span class="em">&lt;T&gt; T postparse(Context context, Object value,
     Class&lt;? extends T&gt; c, Type t)</span> throws Exception {
-    
+
     <span class="comment">// JSON arrayをjava.awt.geom.Point2Dに変換する例です。</span>
     if (Point2D.class.isAssignableFrom(c) &amp;&amp; value instanceof List) {
       List list = (List)value;
@@ -343,7 +343,7 @@ JSON json = new JSON() {
     }
     return super.postparse(context, value, c, t);
   }
-  
+
   <span class="comment">// 型cに対するインスタンスを生成します（parseでのみ有効です）。</span>
   protected <span class="em">&lt;T&gt; T create(Context context, Class&lt;? extends T&gt; c)</span> throws Exception {
     if (Point2D.class.isAssignableFrom(c)) {
@@ -351,13 +351,13 @@ JSON json = new JSON() {
     }
     return super.create(context, c);
   }
-      
+
   <span class="comment">// Class cにおいて、Member mを無視します（parse/formatの両方で有効です）。</span>
   protected <span class="em">boolean ignore(Context context, Class c, Member m)</span> {
     <span class="comment">// デフォルトでは、static/transparentのメンバおよびObjectクラスで宣言された
     // メンバの場合、trueを返します。</span>
     return super.ignore(context, c, m);
-  }    
+  }
 };
 </pre>
 
@@ -379,12 +379,12 @@ class Config() {
     public static Config load(Reader reader) throws IOException {
         return JSON.decode(reader, Config.class);
     }
-    
+
     public static class RowData {
         public String id;
         public String name;
     }
-    
+
     public List&lt;RowData&gt; rows;
 }
 </pre>
@@ -392,16 +392,16 @@ class Config() {
 <p>多少トリッキーですが、FieldやMethodや無名クラスからリフレクションで総称型を取得することで間接的に指定する方法もあります。</p>
 <pre class="source">
     private Map&lt;String, Hoge&gt; config;
-    
+
     <span class="comment">// Filedを使って総称型を指定</span>
     public Map&lt;String, Hoge&gt; load(Reader reader) throws IOException {
-        return JSON.<span class="em">decode(</span>reader, 
+        return JSON.<span class="em">decode(</span>reader,
             this.getClass().getField("config").getGenericType()<span class="em">)</span>;
     }
-    
+
     <span class="comment">// 総称型を継承した無名クラスを使って総称型を指定</span>
     public List&lt;RowData&gt; load(Reader reader) throws IOException {
-	    return JSON.<span class="em">decode(</span>"[ { ... }, { ... } ]", 
+	    return JSON.<span class="em">decode(</span>"[ { ... }, { ... } ]",
 	        (new ArrayList&lt;RowData&gt;() {}).getClass().getGenericSuperclass());
     }
 </pre>
@@ -411,7 +411,7 @@ class Config() {
 <pre class="source">
     <span class="comment">// encode の第二引数に true を設定</span>
     JSON.encode(obj, true);
-    
+
     <span class="comment">// setPrettyPrint に true を設定</span>
     JSON json = new JSON();
     json.<span class="em">setPrettyPrint(</span>true<span class="em">)</span>;
@@ -450,7 +450,7 @@ database {
   password: xxxx // you need to replace your password.
 }
 
-/* 
+/*
   equals to {"database": {
      "description": "ms sql server\n\tconnecter settings",
      "user": "sa", "password": "xxxx"}}
@@ -465,9 +465,9 @@ JSONIC 1.2.1からはSTRICTモードが用意され、厳密な検証動作が�
 <p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。</p>
 <pre class="source">
 	JSON json = new JSON(JSON.Mode.STRICT);
-	
+
 	json.setMode(JSON.Mode.STRICT);
-	
+
 	JSON.prototype = (new JSON() {
 		{
 			setMode(JSON.Mode.STRICT);
@@ -496,15 +496,15 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 <p>モードを変更する場合は、JSONインスタンスのコンストラクタに設定するか、setModeメソッドを呼ぶか、JSON.prototypeにModeを変更したクラスを設定します。また、1.2.6からは、JSON.escapeScript を通じて簡単に使うことが可能です。</p>
 <pre class="source">
 	JSON json = new JSON(JSON.Mode.SCRIPT);
-	
+
 	json.setMode(JSON.Mode.SCRIPT);
-	
+
 	JSON.prototype = (new JSON() {
 		{
 			setMode(JSON.Mode.SCRIPT);
 		}
 	}).getClass();
-	
+
 	JSON.<span class="em">escapeScript(</span>...<span class="em">)</span>;
 </pre>
 
@@ -537,24 +537,24 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 	writer.value(2);
 	writer.value(3);
 	writer.endArray();
-	
+
 	writer.endObject();
-	
-    <span class="comment">// JSONの完成前に途中で出力する場合は、flushを呼ぶ必要があります（通常は不要です）。</span>	
+
+    <span class="comment">// JSONの完成前に途中で出力する場合は、flushを呼ぶ必要があります（通常は不要です）。</span>
 	writer.flush();
-	
-    <span class="comment">// クローズは自動では行われません。明示的にクローズ処理を行ってください。</span>	
+
+    <span class="comment">// クローズは自動では行われません。明示的にクローズ処理を行ってください。</span>
 	out.close();
 </pre>
 
 <h3 id="reader">■ JSONストリームの順次読み込み <span class="subtitle">- JSONReader</span></h3>
-<p>JSONICのdecode/parse は、通常 XMLでの DOM(Document Object Model)に当たる API となっており、JSON 
+<p>JSONICのdecode/parse は、通常 XMLでの DOM(Document Object Model)に当たる API となっており、JSON
 を読み取りJavaオブジェクトモデルを構築しますが、この方式で大規模なJSONファイルを扱うと、メモリを大量に消費してしまい OutOfMemoryError が発生してしまいます。</p>
 <p>version 1.3 では、この問題に対応するために、StAX(Streaming API for XML) に相当する JSONReader クラスを提供しています。JSONReader は、readerメソッドを介して取得します（reader メソッドの ignoreWhitespace を false にすることで、コメントや空白も取得できます）。</p>
 <pre class="source">
     <span class="comment">// JSONReader を取得</span>
     JSONReader reader = new JSON().<span class="em">getReader(</span>"[1, 2, 3, 4, 5]"<span class="em">)</span>;
-    
+
     JSONEventType type;
     <span class="comment">// next で次のトークンを読み取り</span>
     while ((type = reader.<span class="em">next()</span>) != null) {
@@ -607,9 +607,9 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 <pre class="source">
     <span class="comment">// オブジェクトの配列を処理する</span>
     JSONReader reader = new JSON().getReader("[{...}, {...}, {...}, {...}, {...}]");
-    
+
     List&lt;FooBean&gt; list = new ArrayList&lt;FooBean&gt;();
-    
+
     JSONEventType type;
     while ((type = reader.next()) != null) {
         if (type == JSONEventType.START_OBJECT) {
@@ -623,7 +623,7 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 <pre class="source">
     <span class="comment">// オブジェクトの配列を処理する</span>
     JSONReader reader = new JSON().getReader("{...}\n{...}\n{...}\n{...}\n{...}");
-    
+
     JSONEventType type;
     while ((type = reader.next()) != null) {
         if (type == JSONEventType.START_OBJECT) {
@@ -643,10 +643,10 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 	JSON json = new JSON();
 	<span class="comment">// デフォルトの日時書式を指定</span>
 	json.setDateFormat("yyyy/MM/dd");
-	
+
 	<span class="comment">// デフォルトの数値書式を指定</span>
 	json.setNumberFormat("###,##0.00");
-	
+
 	<span class="comment">// 戻り値は { "date": "2011/01/01", "number": "1,000.00" ] となります</span>
 	json.format(new Object() {
 		public Date date = new Date(2011, 0, 1);
@@ -663,10 +663,10 @@ JSONICでは、このような場合に使いやすいようSCRIPTモードを�
 	JSON json = new JSON();
 	<span class="comment">// プロパティ名を、アッパーキャメル記法に変換して出力</span>
 	json.setPropertyStyle(NamingStyle.UPPER_UNDERSCORE);
-	
+
 	<span class="comment">// 列挙値を、小文字アンダースコア区切りに変換して出力</span>
 	json.setEnumStyle(NamingStyle.LOWER_CAMEL);
-	
+
 	<span class="comment">// 戻り値は { "JSON_MODE": "halfEven" } となります</span>
 	json.format(new Object() {
 		public RoundingMode jsonMode = RoundingMode.HALF_EVEN;
@@ -680,24 +680,24 @@ JSONICでは、encode/decode/parse/formatの引数に指定されたクラスと
 <pre class="source">
 public class EnclosingClass {
   public void decode() {
-    JSON json = <span class="em">new JSON()</span>; 
+    JSON json = <span class="em">new JSON()</span>;
     InnerClass ic = json.parse("{\"a\": 100}", InnerClass.class); <span class="comment">// このクラスのコンテキストで動作</span>
-    
+
     System.out.println("ic.a = " + ic.a); <span class="comment">// ic.a = 100</span>
-    
+
     ic.accessEnclosingClass(); <span class="comment">// 実行時にNullPointerExceptionが発生</span>
-    
+
     json.<span class="em">setContext(</span>this<span class="em">)</span>;  <span class="comment">// コンテキストを設定</span>
     ic = json.parse("{\"a\": 100}", InnerClass.class);
-    
+
     ic.accessEnclosingClass(); <span class="comment">// 正常に動作</span>
   }
-  
+
   class InnerClass {
     public int a = 0;
-    
+
     public void accessEnclosingClass() {
-      decode(); 
+      decode();
     }
   }
 }
@@ -740,7 +740,7 @@ String xmljson = JSON.<span class="em">encode(</span>doc<span class="em">)</span
 </pre>
 <p>次のようなJSONが生成されます（実際にはタグ間の空白文字もTextNodeとして出力されます。不要な場合は、DOM作成時に取り除く必要があります）。</p>
 <pre class="source">
-["feed", {"xmlns": "http://www.w3.org/2005/Atom"}, 
+["feed", {"xmlns": "http://www.w3.org/2005/Atom"},
 	["title", "Feed Title"],
 	["entry",
 		["title", "Entry Title"],
@@ -777,33 +777,33 @@ public class WithHintBean {
   <span class="comment">// format/parse時のキー値を変更</span>
   <span class="em">@JSONHint(</span>name="名前"<span class="em">)</span>
   public int keyValue = 100;
-  
+
   <span class="comment">// format/parse時のフォーマットを指定</span>
   <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
   public Date dateValue = new Date();
-    
+
   <span class="comment">// 数値の時は、DecimalForamtとして認識される</span>
   <span class="em">@JSONHint(</span>format="##0.00"<span class="em">)</span>
   public int numberValue = 100;
-    
+
   <span class="comment">// 配列やリストでもOK</span>
   <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
   public List&lt;Date&gt; dateArray;
-  
+
   <span class="comment">// メソッドにも付与可能（getter/setterで別のヒントを与えることも可）</span>
   <span class="em">@JSONHint(</span>format="yyyy/MM/dd"<span class="em">)</span>
   public int getMethodValue() {
     return 100;
   }
-  
+
   <span class="comment">// ArrayListの代わりにLinkedListのインスタンスを生成</span>
   <span class="em">@JSONHint(</span>type=LinkedList.class<span class="em">)</span>
   public List&lt;String&gt; stringList;
-    
+
   <span class="comment">// format/parse時に無視</span>
   <span class="em">@JSONHint(</span>ignore=true<span class="em">)</span>
   public int ignoreValue = 100;
-    
+
   <span class="comment">// 値はJSON</span>
   <span class="em">@JSONHint(</span>serialized=true<span class="em">)</span>
   public String json = "{\"num\": 100, \"func\": sum(100, 200) /*illegal JSON*/}";
@@ -823,7 +823,7 @@ public class StringBean {
   public StringBean(String str) {
     ...
   }
-  
+
   <span class="comment">// encode時は、toStringが呼ばれます</span>
   public String toString() {
     ...
@@ -846,15 +846,15 @@ public class TestBean {
 <dt>Q. RESTServletでHTTP GETを使うと日本語が文字化けします</dt><dd>A. 入力文字エンコーディングの問題です。特にApache Tomcat5以降は仕様を厳密に解釈した結果、GETがsetCharacterEncodingを無視するという問題がありますので<a href="http://www.atmarkit.co.jp/fjava/rensai3/mojibake03/mojibake03.html">useBodyEncodingForURIを設定し回避する</a>必要があります（JSONIC 1.1 ではGETパラメータを独自に解析していたため、この問題は発生していませんでした）。</dd>
 <dt>Q. 大量データを読み込むとOutOfMemoryErrorで落ちます。</dt><dd>A. JSON.decode() や JSON.parse() は、JSON文字列をオブジェクトツリーとして生成するため、大量のデータを取り扱うとメモリを大量に消費してしまいます。そのような場合には、JSON.getReader() メソッドを使うことでデータをひとつずつ読み込み処理することができます。</dd>
 <dt>Q. Resin サーバで RESTServletやRPCServletが動作しません。</dt><dd>A. Resin サーバでは、web.xml中にある ${...} を変数として扱うため、\${...} と書かないといけないようです。</dd>
-</dl> 
+</dl>
 
-<h2 id="maven">Mavenリポジトリ</h2> 
+<h2 id="maven">Mavenリポジトリ</h2>
 <p>JSONICは、1.2.7以降 Maven Central Repository に登録されるようになりました。groupId、artifactIdは次の通りです。</p>
 <pre class="source">
 &lt;groupId&gt;net.arnx&lt;/groupId&gt;
 &lt;artifactId&gt;jsonic&lt;/artifactId&gt;
 </pre>
-<p>それ以前のバージョンに関しては、 <a href="http://maven.seasar.org/maven2/">Seasar.orgのMavenリポジトリ</a> などをご利用ください。</p> 
+<p>それ以前のバージョンに関しては、 <a href="http://maven.seasar.org/maven2/">Seasar.orgのMavenリポジトリ</a> などをご利用ください。</p>
 
 <h2 id="license">ライセンス</h2>
 <p>JSONICは、<a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>下で配布します。</p>
@@ -864,6 +864,25 @@ public class TestBean {
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2014/4/29 version 1.3.4</h3>
+<ul>
+<li>[仕様変更] JSONIC でも BeanUtils 同様の仕組みを持っているため、
+<a href="http://www.nca.gr.jp/2014/struts_s20/index.html">Struts1 の ClassLoader 脆弱性</a>
+が発生する懸念があり調査いたしましたが、次の理由から JSONIC には影響いたしません（この仕様は JSONIC 全バージョンで同一です）。
+<ul>
+<li>JSON#ignore や Container#limit メソッド内で java.lang.Object クラスで定義されたフィールド／メソッドは無視されるようになっている。</li>
+<li>convert時の動作では、setterしか利用しないため、getClass() が呼びだされることがない。</li>
+</ul>
+しかしながら、今後同様の問題が発生する可能性を少なくし安全性を高めるため、BeanInfo クラスの時点で以下の制限を行なうよう修正を実施いたしました。
+<dl>
+<dt>java.lang.Object クラスで定義された getter/setter はプロパティとして認識しない（メソッドとしては認識する）。</dt>
+<dd>この制限により Object#getClass() がプロパティとして呼び出されることはなくなります。</dd>
+<dt>java.lang.Class および java.lang.ClassLodaer の子クラスのプロパティ、メソッドを不可視にする。</dt>
+<dd>この制限により、開発者が明示的にこれらのクラスを返すプロパティを定義した場合でも、それ以上のアクセスができなくなります。</dd>
+</dl>
+</li>
+</ul>
 
 <h3>2014/3/16 version 1.3.3</h3>
 <ul>
