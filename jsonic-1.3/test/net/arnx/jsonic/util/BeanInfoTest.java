@@ -2,8 +2,6 @@ package net.arnx.jsonic.util;
 
 import static org.junit.Assert.*;
 
-import java.net.URLClassLoader;
-
 import org.junit.Test;
 
 public class BeanInfoTest {
@@ -15,20 +13,10 @@ public class BeanInfoTest {
 		assertNull(bi.getProperty("classloader"));
 		assertTrue(bi.getProperties().isEmpty());
 
-		bi = BeanInfo.get(ClassLoader.class);
-		assertNull(bi.getProperty("class"));
-		assertTrue(bi.getProperties().isEmpty());
-		assertTrue(bi.getMethods().isEmpty());
-
-		bi = BeanInfo.get(URLClassLoader.class);
-		assertNull(bi.getProperty("class"));
-		assertTrue(bi.getProperties().isEmpty());
-		assertTrue(bi.getMethods().isEmpty());
-
-		bi = BeanInfo.get(BeanTest.class);
+		bi = BeanInfo.get(BeanTest1.class);
 		assertNull(bi.getProperty("class"));
 	}
 
-	static class BeanTest {
+	static class BeanTest1 {
 	}
 }
