@@ -869,17 +869,17 @@ public class TestBean {
 <ul>
 <li>[仕様変更] JSONIC でも BeanUtils 同様の仕組みを持っているため、
 <a href="http://www.nca.gr.jp/2014/struts_s20/index.html">Struts1 の ClassLoader 脆弱性</a>
-が発生する懸念があり調査いたしましたが、次の理由から JSONIC には影響いたしません（この仕様は JSONIC 全バージョンで同一です）。
+が発生する懸念があり調査いたしましたが、次の理由から JSONIC には影響いないことが確認できました（この仕様は JSONIC 全バージョンで同一です）。
 <ul>
 <li>JSON#ignore や Container#limit メソッド内で java.lang.Object クラスで定義されたフィールド／メソッドは無視されるようになっている。</li>
 <li>convert時の動作では、setterしか利用しないため、getClass() が呼びだされることがない。</li>
 </ul>
-しかしながら、今後同様の問題が発生する可能性を少なくし安全性を高めるため、BeanInfo クラスの時点で以下の制限を行なうよう修正を実施しました。
+しかしながら、今後同様の問題が発生する可能性を少なくし安全性を高めるため、Bean 情報取得の時点で以下の制限を行なうよう修正を実施しました。
 <dl>
 <dt>java.lang.Object クラスで定義された getter/setter はプロパティとして認識しない（メソッドとしては認識する）。</dt>
 <dd>この制限により Object#getClass() がプロパティとして呼び出されること自体がなくなります。</dd>
 <dt>java.lang.Class のプロパティを不可視にする。</dt>
-<dd>この制限により、開発者が明示的にjava.lang.Classを返すプロパティを定義した場合でも、Class#getClassLoader() にアクセスされることはありません。</dd>
+<dd>この制限により、開発者が明示的にjava.lang.Classを返すプロパティを定義した場合でも、Class#getClassLoader() などシステムの内部情報にアクセスされることはありません。</dd>
 </dl>
 </li>
 </ul>
