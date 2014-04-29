@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,11 +31,11 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 	Method readMethod;
 	Method writeMethod;
 	int ordinal;
-	
+
 	public PropertyInfo(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod, boolean isStatic) {
 		this(beanClass, name, field, readMethod, writeMethod, isStatic, -1);
 	}
-	
+
 	public PropertyInfo(Class<?> beanClass, String name, Field field, Method readMethod, Method writeMethod, boolean isStatic, int ordinal) {
 		this.beanClass = beanClass;
 		this.name = name;
@@ -45,35 +45,35 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 		this.writeMethod = writeMethod;
 		this.ordinal = ordinal;
 	}
-	
+
 	public Class<?> getBeanClass() {
 		return beanClass;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
-	
+
 	public boolean isStatic() {
 		return isStatic;
 	}
-	
+
 	public Field getField() {
 		return field;
 	}
-	
+
 	public Method getReadMethod() {
 		return readMethod;
 	}
-	
+
 	public Method getWriteMethod() {
 		return writeMethod;
 	}
-	
+
 	public boolean isReadable() {
 		return (readMethod != null || field != null);
 	}
-	
+
 	public Member getReadMember() {
 		if (readMethod != null) {
 			return readMethod;
@@ -83,7 +83,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not readable.");
 		}
 	}
-	
+
 	public Class<?> getReadType() {
 		if (readMethod != null) {
 			return readMethod.getReturnType();
@@ -93,7 +93,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not readable.");
 		}
 	}
-	
+
 	public Type getReadGenericType() {
 		if (readMethod != null) {
 			return readMethod.getGenericReturnType();
@@ -103,7 +103,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not readable.");
 		}
 	}
-	
+
 	public <T extends Annotation> T getReadAnnotation(Class<T> annotationClass) {
 		if (readMethod != null) {
 			return readMethod.getAnnotation(annotationClass);
@@ -113,7 +113,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not readable.");
 		}
 	}
-	
+
 	public Object get(Object target) {
 		try {
 			if (readMethod != null) {
@@ -137,11 +137,11 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	public boolean isWritable() {
 		return (writeMethod != null || (field != null && !Modifier.isFinal(field.getModifiers())));
 	}
-	
+
 	public Member getWriteMember() {
 		if (writeMethod != null) {
 			return writeMethod;
@@ -151,7 +151,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not writable.");
 		}
 	}
-	
+
 	public Class<?> getWriteType() {
 		if (writeMethod != null) {
 			return writeMethod.getParameterTypes()[0];
@@ -161,7 +161,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not writable.");
 		}
 	}
-	
+
 	public Type getWriteGenericType() {
 		if (writeMethod != null) {
 			return writeMethod.getGenericParameterTypes()[0];
@@ -171,7 +171,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not writable.");
 		}
 	}
-	
+
 	public <T extends Annotation> T getWriteAnnotation(Class<T> annotationClass) {
 		if (writeMethod != null) {
 			return writeMethod.getAnnotation(annotationClass);
@@ -181,7 +181,7 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(name + " property is not writable.");
 		}
 	}
-	
+
 	public void set(Object target, Object value) {
 		try {
 			if (writeMethod != null) {
@@ -205,15 +205,15 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	public int getOrdinal() {
 		return ordinal;
 	}
-	
+
 	@Override
 	public int compareTo(PropertyInfo property) {
 		if (!beanClass.equals(property.beanClass)) {
-			return beanClass.getName().compareTo(property.beanClass.getName());			
+			return beanClass.getName().compareTo(property.beanClass.getName());
 		} else {
 			if (ordinal >= 0) {
 				if (property.ordinal >= 0) {
@@ -228,15 +228,18 @@ public class PropertyInfo implements Comparable<PropertyInfo> {
 			} else if (property.ordinal >= 0) {
 				return 1;
 			}
-			
+
 			return name.compareTo(property.name);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return "Property [beanClass=" + beanClass + ", name=" + name
-				+ ", field=" + field + ", readMethod=" + readMethod
-				+ ", writeMethod=" + writeMethod + "]";
+		return "Property [class=" + beanClass
+				+ ", name=" + name
+				+ ", field=" + field
+				+ ", readMethod=" + readMethod
+				+ ", writeMethod=" + writeMethod
+				+ "]";
 	}
 }

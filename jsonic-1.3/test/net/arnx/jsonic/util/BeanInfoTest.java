@@ -12,9 +12,14 @@ public class BeanInfoTest {
 		assertNull(bi.getProperty("class"));
 		assertNull(bi.getProperty("classloader"));
 		assertTrue(bi.getProperties().isEmpty());
+		assertFalse(bi.getMethods().isEmpty());
 
 		bi = BeanInfo.get(BeanTest1.class);
 		assertNull(bi.getProperty("class"));
+		assertTrue(bi.getProperties().isEmpty());
+		assertFalse(bi.getMethods().isEmpty());
+
+		System.out.println(bi.getMethods());
 	}
 
 	static class BeanTest1 {
