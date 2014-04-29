@@ -25,11 +25,6 @@ public class BeanInfoTest {
 		assertTrue(bi.getProperties().isEmpty());
 		assertTrue(bi.getMethods().isEmpty());
 
-		bi = BeanInfo.get(SecurityManager.class);
-		assertNull(bi.getProperty("class"));
-		assertTrue(bi.getProperties().isEmpty());
-		assertTrue(bi.getMethods().isEmpty());
-
 		bi = BeanInfo.get(BeanTest.class);
 		assertNull(bi.getProperty("class"));
 	}
