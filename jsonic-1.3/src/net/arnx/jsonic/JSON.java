@@ -388,7 +388,7 @@ public class JSON {
 			}
 		} catch (ClassNotFoundException e) {
 			throw new IllegalStateException(e);
-		} catch (NoClassDefFoundError e) {
+		} catch (LinkageError e) {
 			// no handle
 		}
 		return null;
