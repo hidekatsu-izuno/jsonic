@@ -387,7 +387,7 @@ public class JSON {
 				return bi.newInstance();
 			}
 		} catch (ClassNotFoundException e) {
-			throw new IllegalStateException(e);
+			// no handle
 		} catch (LinkageError e) {
 			// no handle
 		}
