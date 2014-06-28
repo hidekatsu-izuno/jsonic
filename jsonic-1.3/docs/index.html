@@ -172,7 +172,7 @@ String text = <span class="em">JSON.encode(</span>hoge, true<span class="em">)</
 <tr><td>java.sql.Array, java.sql.Struct</td></tr>
 <tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
 <tr><td>char, Character</td></tr>
-<tr><td>TimeZone, Pattern, File, URL, URI, Type, Member, Charset, UUID</td></tr>
+<tr><td>TimeZone, Pattern, File, URL, URI, Type, Member, Charset, UUID, java.timeの各クラス</td></tr>
 <tr><td>byte[]</td><td>string (BASE64エンコード)</td></tr>
 <tr><td>java.sql.RowId</td><td>string (シリアル化後、BASE64エンコード)</td></tr>
 <tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
@@ -229,13 +229,14 @@ Hoge hoge = <span class="em">JSON.decode(</span>new FileInputStream("hoge.txt")<
 <tr><td>Map</td><td>インデックスの値をキーとするLinkedHashMap</td></tr>
 <tr><td>SortedMap</td><td>インデックスの値をキーとするTreeMap</td></tr>
 <tr><td>その他のMap派生型</td><td>インデックスの値をキーとする指定された型のMap</td></tr>
-<tr><td rowspan="17">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
+<tr><td rowspan="18">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
 <tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
 <tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
 <tr><td>Appendable</td><td>StringBuilder</td></tr>
 <tr><td>その他のAppendable派生型</td><td>指定された型（値をappend）</td></tr>
 <tr><td>Enum派生型</td><td>指定された型（値をEnum.valueOfあるいはint型に変換後Enum.ordinal()で変換）</td></tr>
 <tr><td>Date派生型,<br />Calendar派生型</td><td>指定された型（文字列をDateFormatで変換）</td></tr>
+<tr><td>java.time の各クラス</td><td>指定された型</td></tr>
 <tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger, BigDecimal</td><td>指定された型（文字列を数値とみなし変換）</td></tr>
 <tr><td>byte[]</td><td>byte[]（文字列をBASE64とみなし変換）</td></tr>
 <tr><td>Locale</td><td>Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換）</td></tr>
@@ -864,6 +865,11 @@ public class TestBean {
 <p>バグや要望などは<a href="http://sourceforge.jp/projects/jsonic">JSONICプロジェクトサイト</a>の<a href="http://sourceforge.jp/projects/jsonic/ticket/">チケット</a>に報告ください。</p>
 
 <h2 id="releasenote">リリースノート</h2>
+
+<h3>2014/6/28 version 1.3.6 ベータ１</h3>
+<ul>
+<li>[機能追加] Java8 Date/Time API(JSR 310) に対応しました。</li>
+</ul>
 
 <h3>2014/5/25 version 1.3.5</h3>
 <ul>

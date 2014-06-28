@@ -51,6 +51,7 @@ import java.time.OffsetTime;
 import java.time.Period;
 import java.time.Year;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -99,7 +100,7 @@ final class NullableConverter implements Converter {
 		java.sql.Array.class,
 		Struct.class
 	};
-	
+
 	public NullableConverter() {
 	}
 
@@ -1666,7 +1667,7 @@ final class ObjectConverter implements Converter {
 final class DurationConverter implements Converter {
 	public DurationConverter() {
 	}
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Duration.class == cls;
@@ -1723,7 +1724,7 @@ final class InstantConverter implements Converter {
 final class LocalDateConverter implements Converter {
 	public LocalDateConverter() {
 	}
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return LocalDate.class == cls;
@@ -1757,7 +1758,7 @@ final class LocalDateConverter implements Converter {
 final class LocalDateTimeConverter implements Converter {
 	public LocalDateTimeConverter() {
 	}
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return LocalDateTime.class == cls;
@@ -1791,7 +1792,7 @@ final class LocalDateTimeConverter implements Converter {
 final class LocalTimeConverter implements Converter {
 	public LocalTimeConverter() {
 	}
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return LocalTime.class == cls;
@@ -2050,6 +2051,34 @@ final class ZonedDateTimeConverter implements Converter {
 			} else {
 				return ZonedDateTime.parse(((String)value));
 			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class ZoneIdConverter implements Converter {
+	public ZoneIdConverter() {
+	}
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return ZoneId.class == cls;
+	}
+
+	@Override
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			return ZoneId.of(((String)value));
 		} else {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}

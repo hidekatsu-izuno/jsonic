@@ -420,6 +420,9 @@ public class JSON {
 		converter = getConverterInstance("net.arnx.jsonic.ZonedDateTimeConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
+		converter = getConverterInstance("net.arnx.jsonic.ZoneIdConverter", cl);
+		if (converter != null) CONVERT_LIST.add(converter);
+
 		converter = getConverterInstance("net.arnx.jsonic.ZoneOffsetConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 	}

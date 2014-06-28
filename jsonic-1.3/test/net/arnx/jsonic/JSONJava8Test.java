@@ -14,6 +14,7 @@ import java.time.OffsetTime;
 import java.time.Period;
 import java.time.Year;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -37,6 +38,7 @@ public class JSONJava8Test {
 		bean.month = Month.of(3);
 		bean.yearMonth = YearMonth.of(2010, 3);
 		bean.zonedDateTime = ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		bean.zoneId = ZoneId.of("UTC");
 		bean.zonedOffset = ZoneOffset.of("Z");
 
 		assertEquals("{"
@@ -52,6 +54,7 @@ public class JSONJava8Test {
 				+ "\"period\":\"P1Y1M3D\","
 				+ "\"year\":\"2010\","
 				+ "\"yearMonth\":\"2010-03\","
+				+ "\"zoneId\":\"UTC\","
 				+ "\"zonedDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"zonedOffset\":\"Z\""
 				+ "}", JSON.encode(bean));
@@ -73,6 +76,7 @@ public class JSONJava8Test {
 		bean.month = Month.of(3);
 		bean.yearMonth = YearMonth.of(2010, 3);
 		bean.zonedDateTime = ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		bean.zoneId = ZoneId.of("UTC");
 		bean.zonedOffset = ZoneOffset.of("Z");
 
 		assertEquals(bean, JSON.decode("{"
@@ -88,6 +92,7 @@ public class JSONJava8Test {
 				+ "\"period\":\"P1Y1M3D\","
 				+ "\"year\":\"2010\","
 				+ "\"yearMonth\":\"2010-03\","
+				+ "\"zoneId\":\"UTC\","
 				+ "\"zonedDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"zonedOffset\":\"Z\""
 				+ "}", Java8Bean.class));
@@ -107,6 +112,7 @@ public class JSONJava8Test {
 		public Month month;
 		public YearMonth yearMonth;
 		public ZonedDateTime zonedDateTime;
+		public ZoneId zoneId;
 		public ZoneOffset zonedOffset;
 		@Override
 		public int hashCode() {
@@ -138,6 +144,8 @@ public class JSONJava8Test {
 					+ ((yearMonth == null) ? 0 : yearMonth.hashCode());
 			result = prime * result
 					+ ((zonedDateTime == null) ? 0 : zonedDateTime.hashCode());
+			result = prime * result
+					+ ((zoneId == null) ? 0 : zoneId.hashCode());
 			result = prime * result
 					+ ((zonedOffset == null) ? 0 : zonedOffset.hashCode());
 			return result;
@@ -213,6 +221,11 @@ public class JSONJava8Test {
 					return false;
 			} else if (!zonedDateTime.equals(other.zonedDateTime))
 				return false;
+			if (zoneId == null) {
+				if (other.zoneId != null)
+					return false;
+			} else if (!zoneId.equals(other.zoneId))
+				return false;
 			if (zonedOffset == null) {
 				if (other.zonedOffset != null)
 					return false;
@@ -229,7 +242,8 @@ public class JSONJava8Test {
 					+ offsetDateTimey + ", offsetTime=" + offsetTime
 					+ ", period=" + period + ", year=" + year + ", month="
 					+ month + ", yearMonth=" + yearMonth + ", zonedDateTime="
-					+ zonedDateTime + ", zonedOffset=" + zonedOffset + "]";
+					+ zonedDateTime + ", zoneId=" + zoneId
+					+ ", zonedOffset=" + zonedOffset + "]";
 		}
 
 
