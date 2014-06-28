@@ -1160,14 +1160,23 @@ public class JSONTest {
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE.json")));
-		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE.json")));
-		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE.json")));
+
+		try {
+			assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE.json")));
+			assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE.json")));
+		} catch (UnsupportedEncodingException e) {
+			// skip
+		}
 
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-8_BOM.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16BE_BOM.json")));
 		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-16LE_BOM.json")));
-		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE_BOM.json")));
-		assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE_BOM.json")));
+		try {
+			assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32BE_BOM.json")));
+			assertEquals(list2, json.parse(this.getClass().getResourceAsStream("UTF-32LE_BOM.json")));
+		} catch (UnsupportedEncodingException e) {
+			// skip
+		}
 
 		SuppressNullBean snb = new SuppressNullBean();
 		snb.a = null;

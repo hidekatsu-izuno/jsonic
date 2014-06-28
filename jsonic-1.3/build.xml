@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <!DOCTYPE project>
-<project name="jsonic-1.3" basedir="." default="dist-all">	
+<project name="jsonic-1.3" basedir="." default="dist-all">
 	<xmlproperty file="pom.xml" />
-	
+
 	<property name="javac.bootclasspath" location="C:/Program Files (x86)/Java/jdk1.5.0_22/jre/lib/rt.jar" />
 	<property name="version" value="${project.version}" />
 	<property name="debug" value="true" />
-		
+
 	<property name="webapps" location="sample"/>
 	<property name="tmp" location="${java.io.tmpdir}/${ant.project.name}" />
 	<property name="dist" location="." />
@@ -27,11 +27,9 @@
 				<fileset dir="${webapps}/spring/WEB-INF/lib" includes="*.jar" />
 				<fileset dir="${webapps}/guice/WEB-INF/lib" includes="*.jar" />
 			</classpath>
-			<!-- 
-				<bootclasspath location="${javac.bootclasspath}" />
-			 -->
+			<bootclasspath location="${javac.bootclasspath}" />
 		</javac>
-		
+
 		<condition property="jar.excludes" value="**/*.java">
 			<isfalse value="${debug}"/>
 		</condition>
@@ -57,7 +55,7 @@
 		<copy file="${webapps}/guice/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_guice.xml" />
 		<copy file="${tmp}/${project.name}-${project.version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
-		<javac source="1.5" target="1.5" 
+		<javac source="1.5" target="1.5"
 			srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
 			includeantruntime="false">
 			<classpath>
@@ -83,7 +81,7 @@
 			</classpath>
 		</javadoc>
 	</target>
-	
+
 	<target name="dist-all">
 		<antcall target="dist">
 			<param name="tmp" location="${tmp}/java" />
@@ -92,23 +90,23 @@
 			<zipfileset dir="src" prefix="${project.name}-${project.version}/src/java" />
 			<zipfileset dir="${tmp}/java/docs" prefix="${project.name}-${project.version}/docs/java" />
 			<zipfileset file="${tmp}/java/${project.name}-${project.version}*.jar" prefix="${project.name}-${project.version}" />
-						
+
 			<zipfileset dir="${tmp}/java/sample/basic" prefix="${project.name}-${project.version}/sample" />
 			<zipfileset dir="docs" prefix="${project.name}-${project.version}/docs" />
 			<zipfileset dir="lib" includes="build.xml" prefix="${project.name}-${project.version}" />
 			<zipfileset dir="." prefix="${project.name}-${project.version}" >
 				<include name="LICENSE.txt" />
 				<include name="pom.xml" />
-			</zipfileset>			
+			</zipfileset>
 		</zip>
 		<delete dir="${tmp}" />
 	</target>
-	
+
 	<target name="clean">
 		<delete dir="${tmp}" failonerror="off" />
 		<delete file="${dist}/${project.name}-${project.version}.zip" failonerror="off" />
 	</target>
-	
+
 	<target name="copy-samples">
 		<fileset id="samples" dir="sample/basic">
 			<include name="**/*" />

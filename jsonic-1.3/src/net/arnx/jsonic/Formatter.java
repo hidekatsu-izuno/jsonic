@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,9 @@ import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalAmount;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -71,17 +74,17 @@ interface Formatter {
 
 final class NullFormatter implements Formatter {
 	public static final NullFormatter INSTANCE = new NullFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o == null;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append("null");
@@ -90,17 +93,17 @@ final class NullFormatter implements Formatter {
 
 final class PlainFormatter implements Formatter {
 	public static final PlainFormatter INSTANCE = new PlainFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o != null;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append(o.toString());
@@ -137,7 +140,7 @@ final class StringFormatter implements Formatter {
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		serialize(context, o.toString(), out);
@@ -187,16 +190,16 @@ final class StringableFormmatter implements Formatter {
 	public boolean accept(Object o) {
 		return o instanceof CharSequence || o instanceof Type || o instanceof Member || o instanceof File;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, o.toString(), out);
-	}	
+	}
 }
 
 final class TimeZoneFormatter implements Formatter {
@@ -206,12 +209,12 @@ final class TimeZoneFormatter implements Formatter {
 	public boolean accept(Object o) {
 		return o instanceof TimeZone;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, ((TimeZone)o).getID(), out);
@@ -225,12 +228,12 @@ final class CharsetFormatter implements Formatter {
 	public boolean accept(Object o) {
 		return o instanceof Charset;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, ((Charset)o).name(), out);
@@ -245,12 +248,12 @@ final class InetAddressFormatter implements Formatter {
 	public boolean accept(Object o) {
 		return o != null && target.isAssignableFrom(o.getClass());
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, ((InetAddress)o).getHostAddress(), out);
@@ -263,12 +266,12 @@ final class NumberFormatter implements Formatter {
 	public boolean accept(Object o) {
 		return o instanceof Number;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -282,16 +285,16 @@ final class NumberFormatter implements Formatter {
 
 final class EnumFormatter implements Formatter {
 	public static final EnumFormatter INSTANCE = new EnumFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o != null && (o.getClass().isEnum() || o instanceof Enum);
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		if (context.getEnumStyle() != null) {
@@ -304,16 +307,16 @@ final class EnumFormatter implements Formatter {
 
 final class FloatFormatter implements Formatter {
 	public static final FloatFormatter INSTANCE = new FloatFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Float || o instanceof Double;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -342,7 +345,7 @@ final class FloatFormatter implements Formatter {
 
 final class DateFormatter implements Formatter {
 	public static final DateFormatter INSTANCE = new DateFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Date;
 	}
@@ -351,7 +354,7 @@ final class DateFormatter implements Formatter {
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Date date = (Date) o;
@@ -370,35 +373,35 @@ final class DateFormatter implements Formatter {
 
 final class CalendarFormatter implements Formatter {
 	public static final CalendarFormatter INSTANCE = new CalendarFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Calendar;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		DateFormatter.INSTANCE.format(context, src, ((Calendar)o).getTime(), out);
-	}	
+	}
 }
 
 final class BooleanArrayFormatter implements Formatter {
 	public static final BooleanArrayFormatter INSTANCE = new BooleanArrayFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof boolean[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append('[');
@@ -418,17 +421,17 @@ final class BooleanArrayFormatter implements Formatter {
 
 final class ByteArrayFormatter implements Formatter {
 	public static final ByteArrayFormatter INSTANCE = new ByteArrayFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof byte[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, Base64.encode((byte[]) o), out);
@@ -437,17 +440,17 @@ final class ByteArrayFormatter implements Formatter {
 
 final class SerializableFormatter implements Formatter {
 	public static final SerializableFormatter INSTANCE = new SerializableFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof Serializable;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, Base64.encode(ClassUtil.serialize(o)), out);
@@ -457,17 +460,17 @@ final class SerializableFormatter implements Formatter {
 final class RowIdFormatter implements Formatter {
 	public static final RowIdFormatter INSTANCE = new RowIdFormatter();
 	private static final Class<?> target = RowId.class;
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o != null && target.isAssignableFrom(o.getClass());
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		SerializableFormatter.INSTANCE.format(context, src, o, out);
@@ -476,16 +479,16 @@ final class RowIdFormatter implements Formatter {
 
 final class ShortArrayFormatter implements Formatter {
 	public static final ShortArrayFormatter INSTANCE = new ShortArrayFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof short[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -510,17 +513,17 @@ final class ShortArrayFormatter implements Formatter {
 
 final class IntArrayFormatter implements Formatter {
 	public static final IntArrayFormatter INSTANCE = new IntArrayFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof int[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -545,17 +548,17 @@ final class IntArrayFormatter implements Formatter {
 
 final class LongArrayFormatter implements Formatter {
 	public static final LongArrayFormatter INSTANCE = new LongArrayFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof long[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -580,16 +583,16 @@ final class LongArrayFormatter implements Formatter {
 
 final class FloatArrayFormatter implements Formatter {
 	public static final FloatArrayFormatter INSTANCE = new FloatArrayFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof float[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -626,16 +629,16 @@ final class FloatArrayFormatter implements Formatter {
 
 final class DoubleArrayFormatter implements Formatter {
 	public static final DoubleArrayFormatter INSTANCE = new DoubleArrayFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof double[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
@@ -672,21 +675,21 @@ final class DoubleArrayFormatter implements Formatter {
 
 final class ObjectArrayFormatter implements Formatter {
 	public static final ObjectArrayFormatter INSTANCE = new ObjectArrayFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Object[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Object[] array = (Object[]) o;
 		final JSONHint hint = context.getHint();
-		
+
 		Class<?> lastClass = null;
 		Formatter lastFormatter = null;
 
@@ -729,16 +732,16 @@ final class ObjectArrayFormatter implements Formatter {
 final class SQLArrayFormatter implements Formatter {
 	public static final SQLArrayFormatter INSTANCE = new SQLArrayFormatter();
 	private static final Class<?> target = java.sql.Array.class;
-	
+
 	public boolean accept(Object o) {
 		return o != null && target.isAssignableFrom(o.getClass());
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Object array;
@@ -755,16 +758,16 @@ final class SQLArrayFormatter implements Formatter {
 final class StructFormmatter implements Formatter {
 	public static final StructFormmatter INSTANCE = new StructFormmatter();
 	private static final Class<?> target = Struct.class;
-	
+
 	public boolean accept(Object o) {
 		return o != null && target.isAssignableFrom(o.getClass());
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Object value;
@@ -780,16 +783,16 @@ final class StructFormmatter implements Formatter {
 
 final class ByteFormatter implements Formatter {
 	public static final ByteFormatter INSTANCE = new ByteFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Byte;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
@@ -798,17 +801,17 @@ final class ByteFormatter implements Formatter {
 
 final class ClassFormatter implements Formatter {
 	public static final ClassFormatter INSTANCE = new ClassFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof Class;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, ((Class<?>)o).getName(), out);
@@ -817,17 +820,17 @@ final class ClassFormatter implements Formatter {
 
 final class LocaleFormatter implements Formatter {
 	public static final LocaleFormatter INSTANCE = new LocaleFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof Locale;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, ((Locale)o).toString().replace('_', '-'), out);
@@ -836,17 +839,17 @@ final class LocaleFormatter implements Formatter {
 
 final class CharArrayFormatter implements Formatter {
 	public static final CharArrayFormatter INSTANCE = new CharArrayFormatter();
-	
+
 	@Override
 	public boolean accept(Object o) {
 		return o instanceof char[];
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		StringFormatter.serialize(context, String.valueOf((char[])o), out);
@@ -855,31 +858,31 @@ final class CharArrayFormatter implements Formatter {
 
 final class ListFormatter implements Formatter {
 	public static final ListFormatter INSTANCE = new ListFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof List && o instanceof RandomAccess;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final List<?> list = (List<?>)o;
 		final JSONHint hint = context.getHint();
 		final int length = list.size();
-		
+
 		Class<?> lastClass = null;
 		Formatter lastFormatter = null;
-		
+
 		out.append('[');
 		int count = 0;
 		while (count < length) {
 			Object item = list.get(count);
 			if (item == src) item = null;
-			
+
 			if (count != 0) out.append(',');
 			if (context.isPrettyPrint()) {
 				out.append('\n');
@@ -912,24 +915,24 @@ final class ListFormatter implements Formatter {
 
 final class IteratorFormatter implements Formatter {
 	public static final IteratorFormatter INSTANCE = new IteratorFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Iterator;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Iterator<?> t = (Iterator<?>)o;
 		final JSONHint hint = context.getHint();
-		
+
 		Class<?> lastClass = null;
 		Formatter lastFormatter = null;
-		
+
 		out.append('[');
 		int count = 0;
 		while(t.hasNext()) {
@@ -969,16 +972,16 @@ final class IteratorFormatter implements Formatter {
 
 final class IterableFormatter implements Formatter {
 	public static final IterableFormatter INSTANCE = new IterableFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Iterable;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		IteratorFormatter.INSTANCE.format(context, src, ((Iterable<?>) o).iterator(), out);
@@ -987,24 +990,24 @@ final class IterableFormatter implements Formatter {
 
 final class EnumerationFormatter implements Formatter {
 	public static final EnumerationFormatter INSTANCE = new EnumerationFormatter();
-	
+
 	public boolean accept(Object o) {
 		return o instanceof Enumeration;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Enumeration<?> e = (Enumeration<?>)o;
 		final JSONHint hint = context.getHint();
-		
+
 		out.append('[');
 		int count = 0;
-		
+
 		Class<?> lastClass = null;
 		Formatter lastFormatter = null;
 		while (e.hasMoreElements()) {
@@ -1047,12 +1050,12 @@ final class MapFormatter implements Formatter {
 	public boolean accept(Object o) {
 		return o instanceof Map;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Map<?, ?> map = (Map<?, ?>)o;
@@ -1106,7 +1109,7 @@ final class MapFormatter implements Formatter {
 final class ObjectFormatter implements Formatter {
 	private Class<?> cls;
 	private transient PropertyInfo[] props;
-	
+
 	public  ObjectFormatter(Class<?> cls) {
 		this.cls = cls;
 	}
@@ -1114,27 +1117,27 @@ final class ObjectFormatter implements Formatter {
 	public boolean accept(Object o) {
 		return o != null && !o.getClass().isPrimitive();
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		if (props == null) props = getGetProperties(context, cls);
-		
+
 		out.append('{');
 		int count = 0;
-		
+
 		String key = null;
 		try {
 			Class<?> lastClass = null;
 			Formatter lastFormatter = null;
-			
+
 			for (PropertyInfo prop : props) {
 				key = prop.getName();
-				
+
 				Object value = prop.get(o);
 				if (value == src || (context.isSuppressNull() && value == null)) {
 					continue;
@@ -1151,7 +1154,7 @@ final class ObjectFormatter implements Formatter {
 				JSONHint hint = prop.getReadAnnotation(JSONHint.class);
 				context.enter(key, hint);
 				key = null;
-				
+
 				value = context.preformatInternal(value);
 				if (value == null) {
 					NullFormatter.INSTANCE.format(context, src, value, out);
@@ -1180,15 +1183,15 @@ final class ObjectFormatter implements Formatter {
 		}
 		out.append('}');
 	}
-	
+
 	static PropertyInfo[] getGetProperties(Context context, Class<?> c) {
 		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
-		
+
 		// Field
 		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
 			Field f = prop.getField();
 			if (f == null || context.ignoreInternal(c, f)) continue;
-			
+
 			JSONHint hint = f.getAnnotation(JSONHint.class);
 			String name = null;
 			int ordinal = prop.getOrdinal();
@@ -1197,33 +1200,33 @@ final class ObjectFormatter implements Formatter {
 				ordinal = hint.ordinal();
 				if (hint.name().length() != 0) name = hint.name();
 			}
-			
+
 			if (name == null) {
 				name = context.normalizeInternal(prop.getName());
 				if (context.getPropertyStyle() != null) {
 					name = context.getPropertyStyle().to(name);
 				}
 			}
-			
+
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getReadMember()) {
-				prop = new PropertyInfo(prop.getBeanClass(), name, 
+				prop = new PropertyInfo(prop.getBeanClass(), name,
 					prop.getField(), null, null, prop.isStatic(), ordinal);
 			}
-			
+
 			if (prop.getReadMethod() != null) {
 				prop.getReadMethod().setAccessible(true);
 			} else if (prop.getField() != null) {
 				prop.getField().setAccessible(true);
 			}
-			
+
 			props.put(name, prop);
 		}
-		
+
 		// Method
 		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
 			Method m = prop.getReadMethod();
 			if (m == null || context.ignoreInternal(c, m)) continue;
-			
+
 			JSONHint hint = m.getAnnotation(JSONHint.class);
 			String name = null;
 			int ordinal = prop.getOrdinal();
@@ -1232,22 +1235,22 @@ final class ObjectFormatter implements Formatter {
 				ordinal = hint.ordinal();
 				if (hint.name().length() != 0) name = hint.name();
 			}
-			
+
 			if (name == null) {
 				name = context.normalizeInternal(prop.getName());
 				if (context.getPropertyStyle() != null) {
 					name = context.getPropertyStyle().to(name);
 				}
 			}
-			
+
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
-				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+				props.put(name, new PropertyInfo(prop.getBeanClass(), name,
 					null, prop.getReadMethod(), null, prop.isStatic(), ordinal));
 			} else {
 				props.put(name, prop);
 			}
 		}
-		
+
 		Collection<PropertyInfo> values = props.values();
 		PropertyInfo[] list = new PropertyInfo[values.size()];
 		int i = 0;
@@ -1266,12 +1269,12 @@ final class DynaBeanFormatter implements Formatter {
 	public boolean accept(Object o) {
 		return o != null && target.isAssignableFrom(o.getClass());
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		out.append('{');
@@ -1282,14 +1285,14 @@ final class DynaBeanFormatter implements Formatter {
 			DynaBean bean = (DynaBean)o;
 			DynaProperty[] props = bean.getDynaClass().getDynaProperties();
 			if (props == null) props = new DynaProperty[0];
-			
+
 			JSONHint hint = context.getHint();
 
 			for (DynaProperty dp : props) {
 				key = dp.getName();
 				if (key == null) continue;
 
-				Object value = bean.get(key);	
+				Object value = bean.get(key);
 				if (value == src || (context.isSuppressNull() && value == null)) {
 					continue;
 				}
@@ -1339,12 +1342,12 @@ final class ElementNodeFormatter implements Formatter {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return true;
 	}
-	
+
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		if (o instanceof Document) {
@@ -1353,7 +1356,7 @@ final class ElementNodeFormatter implements Formatter {
 			formatElement(context, src, (Element)o, out);
 		}
 	}
-	
+
 	public boolean formatElement(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		Element elem = (Element)o;
 		out.append('[');
@@ -1425,7 +1428,7 @@ final class TextNodeFormatter implements Formatter {
 		CDATASection.class,
 		Text.class
 	};
-	
+
 	@Override
 	public boolean accept(Object o) {
 		for (Class<?> target : targets) {
@@ -1435,12 +1438,42 @@ final class TextNodeFormatter implements Formatter {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean isStruct() {
 		return false;
 	}
-	
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		StringFormatter.serialize(context, ((CharacterData)o).getData(), out);
+	}
+}
+
+final class TemporalFromatter implements Formatter {
+	public static final TemporalFromatter INSTANCE = new TemporalFromatter();
+
+	private static final Class<?>[] targets = {
+		TemporalAccessor.class,
+		TemporalAmount.class,
+		ZoneId.class
+	};
+
+	@Override
+	public boolean accept(Object o) {
+		for (Class<?> target : targets) {
+			if (o != null && target.isAssignableFrom(o.getClass())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
 	@Override
 	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
 		StringFormatter.serialize(context, ((CharacterData)o).getData(), out);

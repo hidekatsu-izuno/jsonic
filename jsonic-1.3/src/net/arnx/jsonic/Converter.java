@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,22 @@ import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.Month;
+import java.time.MonthDay;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -67,12 +83,12 @@ interface Converter {
 
 final class NullConverter implements Converter {
 	public static final NullConverter INSTANCE = new NullConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return true;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) {
 		return null;
 	}
@@ -80,7 +96,7 @@ final class NullConverter implements Converter {
 
 final class NullableConverter implements Converter {
 	public static final NullableConverter INSTANCE = new NullableConverter();
-	
+
 	private static final Class<?>[] targets = new Class<?>[] {
 		java.sql.Array.class,
 		Struct.class
@@ -95,7 +111,7 @@ final class NullableConverter implements Converter {
 		}
 		return false;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) {
 		return null;
 	}
@@ -103,9 +119,9 @@ final class NullableConverter implements Converter {
 
 final class PlainConverter implements Converter {
 	public static final PlainConverter INSTANCE = new PlainConverter();
-	
+
 	private static final Map<Class<?>, Object> PRIMITIVE_MAP = new HashMap<Class<?>, Object>(8);
-	
+
 	static {
 		PRIMITIVE_MAP.put(boolean.class, false);
 		PRIMITIVE_MAP.put(byte.class, (byte)0);
@@ -116,16 +132,16 @@ final class PlainConverter implements Converter {
 		PRIMITIVE_MAP.put(double.class, 0.0);
 		PRIMITIVE_MAP.put(char.class, '\0');
 	}
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return PRIMITIVE_MAP.containsKey(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) {
 		return value;
 	}
-	
+
 	public static Object getDefaultValue(Class<?> cls) {
 		return PRIMITIVE_MAP.get(cls);
 	}
@@ -133,12 +149,12 @@ final class PlainConverter implements Converter {
 
 final class FormatConverter implements Converter {
 	public static final FormatConverter INSTANCE = new FormatConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return true;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Context context2 = context.copy();
 		context2.skipHint = context.getHint();
@@ -150,23 +166,23 @@ final class FormatConverter implements Converter {
 			// no handle
 		}
 		out.flush();
-		
+
 		context.skipHint = context2.skipHint;
 		Object ret =  context.postparseInternal(out.toString(), c, t);
 		context.skipHint = null;
-		
+
 		return ret;
 	}
 }
 
 final class StringSerializableConverter implements Converter {
 	public static final StringSerializableConverter INSTANCE = new StringSerializableConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return true;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (c.isEnum() || Enum.class.isAssignableFrom(c)) {
 			return EnumConverter.INSTANCE.convert(context, value, c, t);
@@ -186,17 +202,17 @@ final class StringSerializableConverter implements Converter {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
-	}	
+	}
 }
 
 final class SerializableConverter implements Converter {
 	public static final SerializableConverter INSTANCE = new SerializableConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Serializable.class.isAssignableFrom(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof String) {
 			return ClassUtil.deserialize(Base64.decode((String)value));
@@ -209,12 +225,12 @@ final class SerializableConverter implements Converter {
 
 final class BooleanConverter implements Converter {
 	public static final BooleanConverter INSTANCE = new BooleanConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Boolean.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -222,7 +238,7 @@ final class BooleanConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof Boolean) {
 			return value;
 		} else if (value instanceof BigDecimal) {
@@ -251,12 +267,12 @@ final class BooleanConverter implements Converter {
 
 final class CharacterConverter implements Converter {
 	public static final CharacterConverter INSTANCE = new CharacterConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return char.class == cls || Character.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -264,7 +280,7 @@ final class CharacterConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? '1' : '0';
 		} else if (value instanceof BigDecimal) {
@@ -285,12 +301,12 @@ final class CharacterConverter implements Converter {
 
 final class ByteConverter implements Converter {
 	public static final ByteConverter INSTANCE = new ByteConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return byte.class == cls || Byte.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -298,12 +314,12 @@ final class ByteConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? 1 : 0;
 		} else if (value instanceof BigDecimal) {
@@ -317,14 +333,14 @@ final class ByteConverter implements Converter {
 				if (str.charAt(0) == '+') {
 					start++;
 				}
-				
+
 				int num = 0;
 				if (str.startsWith("0x", start)) {
 					num = Integer.parseInt(str.substring(start+2), 16);
 				} else {
 					num = Integer.parseInt(str.substring(start));
 				}
-				
+
 				return (byte)((num > 127) ? num-256 : num);
 			} else {
 				return PlainConverter.getDefaultValue(c);
@@ -338,12 +354,12 @@ final class ByteConverter implements Converter {
 
 final class ShortConverter implements Converter {
 	public static final ShortConverter INSTANCE = new ShortConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return short.class == cls || Short.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -351,12 +367,12 @@ final class ShortConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? 1 : 0;
 		} else if (value instanceof BigDecimal) {
@@ -370,7 +386,7 @@ final class ShortConverter implements Converter {
 				if (str.charAt(0) == '+') {
 					start++;
 				}
-				
+
 				if (str.startsWith("0x", start)) {
 					return (short)Integer.parseInt(str.substring(start+2), 16);
 				} else {
@@ -383,17 +399,17 @@ final class ShortConverter implements Converter {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
-	}	
+	}
 }
 
 final class IntegerConverter  implements Converter {
 	public static final IntegerConverter INSTANCE = new IntegerConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return int.class == cls || Integer.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -401,12 +417,12 @@ final class IntegerConverter  implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? 1 : 0;
 		} else if (value instanceof BigDecimal) {
@@ -420,7 +436,7 @@ final class IntegerConverter  implements Converter {
 				if (str.charAt(0) == '+') {
 					start++;
 				}
-				
+
 				if (str.startsWith("0x", start)) {
 					return Integer.parseInt(str.substring(start+2), 16);
 				} else {
@@ -433,17 +449,17 @@ final class IntegerConverter  implements Converter {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
-	}	
+	}
 }
 
 final class LongConverter implements Converter {
 	public static final LongConverter INSTANCE = new LongConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return long.class == cls || Long.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -451,12 +467,12 @@ final class LongConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? 1l : 0l;
 		} else if (value instanceof BigDecimal) {
@@ -470,7 +486,7 @@ final class LongConverter implements Converter {
 				if (str.charAt(0) == '+') {
 					start++;
 				}
-				
+
 				if (str.startsWith("0x", start)) {
 					return Long.parseLong(str.substring(start+2), 16);
 				} else {
@@ -478,22 +494,22 @@ final class LongConverter implements Converter {
 				}
 			} else {
 				return PlainConverter.getDefaultValue(c);
-			}					
+			}
 		} else if (value != null) {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
-	}	
+	}
 }
 
 final class FloatConverter  implements Converter {
 	public static final FloatConverter INSTANCE = new FloatConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return float.class == cls || Float.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -501,12 +517,12 @@ final class FloatConverter  implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? 1.0f : Float.NaN;
 		} else if (value instanceof Number) {
@@ -517,22 +533,22 @@ final class FloatConverter  implements Converter {
 				return Float.valueOf(str);
 			} else {
 				return PlainConverter.getDefaultValue(c);
-			}					
+			}
 		} else if (value != null) {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
-	}	
+	}
 }
 
 final class DoubleConverter  implements Converter {
 	public static final DoubleConverter INSTANCE = new DoubleConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return double.class == cls || Double.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -540,12 +556,12 @@ final class DoubleConverter  implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? 1.0 : Double.NaN;
 		} else if (value instanceof Number) {
@@ -556,22 +572,22 @@ final class DoubleConverter  implements Converter {
 				return Double.valueOf(str);
 			} else {
 				return PlainConverter.getDefaultValue(c);
-			}					
+			}
 		} else if (value != null) {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return PlainConverter.getDefaultValue(c);
-	}	
+	}
 }
 
 final class BigIntegerConverter  implements Converter {
 	public static final BigIntegerConverter INSTANCE = new BigIntegerConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return BigInteger.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -579,12 +595,12 @@ final class BigIntegerConverter  implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
 		}
-		
+
 		if (value instanceof Boolean) {
 			return (((Boolean)value).booleanValue()) ? BigInteger.ONE : BigInteger.ZERO;
 		} else if (value instanceof BigDecimal) {
@@ -600,7 +616,7 @@ final class BigIntegerConverter  implements Converter {
 				if (str.charAt(0) == '+') {
 					start++;
 				}
-				
+
 				if (str.startsWith("0x", start)) {
 					return new BigInteger(str.substring(start+2), 16);
 				} else {
@@ -612,17 +628,17 @@ final class BigIntegerConverter  implements Converter {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
-	}	
+	}
 }
 
 final class BigDecimalConverter  implements Converter {
 	public static final BigDecimalConverter INSTANCE = new BigDecimalConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return BigDecimal.class == cls;
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -630,13 +646,13 @@ final class BigDecimalConverter  implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof BigDecimal) {
 			return value;
 		} else if (value instanceof String) {
 			NumberFormat f = context.getNumberFormat();
 			if (f != null) value = f.parse((String)value);
-			
+
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				if (str.charAt(0) == '+') {
@@ -650,17 +666,17 @@ final class BigDecimalConverter  implements Converter {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
-	}	
+	}
 }
 
 final class PatternConverter implements Converter {
 	public static final PatternConverter INSTANCE = new PatternConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Pattern.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -668,7 +684,7 @@ final class PatternConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			return Pattern.compile(value.toString());
 		} else if (value != null) {
@@ -680,12 +696,12 @@ final class PatternConverter implements Converter {
 
 final class TimeZoneConverter implements Converter {
 	public static final TimeZoneConverter INSTANCE = new TimeZoneConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return TimeZone.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -693,24 +709,24 @@ final class TimeZoneConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof String) {
 			return TimeZone.getTimeZone(value.toString().trim());
 		} else if (value != null) {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
 		return null;
-	}	
+	}
 }
 
 final class LocaleConverter implements Converter {
 	public static final LocaleConverter INSTANCE = new LocaleConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Locale.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof List<?>) {
 			List<?> src = (List<?>)value;
@@ -727,10 +743,10 @@ final class LocaleConverter implements Converter {
 			if (value instanceof Map<?, ?>) {
 				value = ((Map<?,?>)value).get(null);
 			}
-			
+
 			if (value instanceof String) {
 				String[] array = value.toString().split("\\p{Punct}");
-				
+
 				if (array.length == 1) {
 					return new Locale(array[0]);
 				} else if (array.length == 2) {
@@ -750,7 +766,7 @@ final class LocaleConverter implements Converter {
 
 final class FileConverter implements Converter {
 	public static final FileConverter INSTANCE = new FileConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return File.class.equals(cls);
@@ -774,12 +790,12 @@ final class FileConverter implements Converter {
 
 final class URLConverter implements Converter {
 	public static final URLConverter INSTANCE = new URLConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return URL.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -804,12 +820,12 @@ final class URLConverter implements Converter {
 
 final class URIConverter implements Converter {
 	public static final URIConverter INSTANCE = new URIConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return URI.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -834,12 +850,12 @@ final class URIConverter implements Converter {
 
 final class UUIDConverter implements Converter {
 	public static final UUIDConverter INSTANCE = new UUIDConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return UUID.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -858,12 +874,12 @@ final class UUIDConverter implements Converter {
 
 final class CharsetConverter implements Converter {
 	public static final CharsetConverter INSTANCE = new CharsetConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Charset.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -882,12 +898,12 @@ final class CharsetConverter implements Converter {
 
 final class ClassConverter implements Converter {
 	public static final ClassConverter INSTANCE = new ClassConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Class.class.equals(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -928,12 +944,12 @@ final class ClassConverter implements Converter {
 
 final class CharSequenceConverter implements Converter {
 	public static final CharSequenceConverter INSTANCE = new CharSequenceConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return CharSequence.class.isAssignableFrom(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -950,12 +966,12 @@ final class CharSequenceConverter implements Converter {
 
 final class AppendableConverter implements Converter {
 	public static final AppendableConverter INSTANCE = new AppendableConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Appendable.class.isAssignableFrom(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -963,7 +979,7 @@ final class AppendableConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value != null) {
 			Appendable a = (Appendable)context.createInternal(c);
 			return a.append(value.toString());
@@ -974,12 +990,12 @@ final class AppendableConverter implements Converter {
 
 final class EnumConverter implements Converter {
 	public static final EnumConverter INSTANCE = new EnumConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return cls.isEnum() || Enum.class.isAssignableFrom(cls);
 	}
-	
+
 	@SuppressWarnings({ "rawtypes" })
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
@@ -988,7 +1004,7 @@ final class EnumConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		Enum[] enums = (Enum[])c.getEnumConstants();
 		if (value instanceof Number) {
 			return enums[((Number)value).intValue()];
@@ -1019,12 +1035,12 @@ final class EnumConverter implements Converter {
 final class DateConverter implements Converter {
 	public static final DateConverter INSTANCE = new DateConverter();
 	private static final Pattern TIMEZONE_PATTERN = Pattern.compile("(?:GMT|UTC)([+-][0-9]{2})([0-9]{2})");
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Date.class.isAssignableFrom(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1032,7 +1048,7 @@ final class DateConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		Date date = null;
 		if (value instanceof Number) {
 			date = (Date)context.createInternal(c);
@@ -1046,7 +1062,7 @@ final class DateConverter implements Converter {
 				} else {
 					date = convertDate(context, str);
 				}
-				
+
 				if (date != null && !c.isAssignableFrom(date.getClass())) {
 					long time = date.getTime();
 					date = (Date)context.createInternal(c);
@@ -1054,7 +1070,7 @@ final class DateConverter implements Converter {
 				}
 			}
 		}
-		
+
 		if (date instanceof java.sql.Date) {
 			Calendar cal = Calendar.getInstance(context.getTimeZone(), context.getLocale());
 			cal.setTimeInMillis(date.getTime());
@@ -1071,17 +1087,17 @@ final class DateConverter implements Converter {
 			cal.set(Calendar.DATE, 1);
 			date.setTime(cal.getTimeInMillis());
 		}
-		
+
 		return date;
 	}
-	
+
 	static Date convertDate(Context context, String value) throws ParseException {
 		value = value.trim();
 		if (value.length() == 0) {
 			return null;
 		}
 		value = TIMEZONE_PATTERN.matcher(value).replaceFirst("GMT$1:$2");
-		
+
 		DateFormat format = null;
 		if (Character.isDigit(value.charAt(0))) {
 			StringBuilder sb = context.getLocalCache().getCachedBuffer();
@@ -1093,11 +1109,11 @@ final class DateConverter implements Converter {
 			int count = 0;
 			for (int i = 0; i < value.length(); i++) {
 				char c = value.charAt(i);
-				if ((pos == 4 || pos == 5 || pos == 6) 
+				if ((pos == 4 || pos == 5 || pos == 6)
 						&& (c == '+' || c == '-')
 						&& (i + 1 < value.length())
 						&& (Character.isDigit(value.charAt(i+1)))) {
-					
+
 					if (!before) sb.append('\'');
 					pos = 7;
 					count = 0;
@@ -1109,7 +1125,7 @@ final class DateConverter implements Converter {
 					value = value.substring(0, i) + value.substring(i+1);
 					continue;
 				}
-				
+
 				boolean digit = (Character.isDigit(c) && pos < 8);
 				if (before != digit) {
 					sb.append('\'');
@@ -1118,7 +1134,7 @@ final class DateConverter implements Converter {
 						pos++;
 					}
 				}
-				
+
 				if (digit) {
 					char type = types.charAt(pos);
 					if (count == ((type == 'y' || type == 'Z') ? 4 : (type == 'S') ? 3 : 2)) {
@@ -1134,7 +1150,7 @@ final class DateConverter implements Converter {
 				before = digit;
 			}
 			if (!before) sb.append('\'');
-			
+
 			format = new SimpleDateFormat(sb.toString(), Locale.ENGLISH);
 		} else if (value.length() > 18) {
 			if (value.charAt(3) == ',') {
@@ -1155,19 +1171,19 @@ final class DateConverter implements Converter {
 		}
 		format.setLenient(false);
 		format.setTimeZone(context.getTimeZone());
-		
+
 		return format.parse(value);
 	}
 }
 
 final class CalendarConverter implements Converter {
 	public static final CalendarConverter INSTANCE = new CalendarConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Calendar.class.isAssignableFrom(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1175,7 +1191,7 @@ final class CalendarConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value instanceof Number) {
 			Calendar cal = (Calendar)context.createInternal(c);
 			cal.setTimeInMillis(((Number)value).longValue());
@@ -1184,7 +1200,7 @@ final class CalendarConverter implements Converter {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				Calendar cal = (Calendar)context.createInternal(c);
-				
+
 				DateFormat format = context.getDateFormat();
 				if (format != null) {
 					cal.setTime(format.parse(str));
@@ -1206,7 +1222,7 @@ final class InetAddressConverter implements Converter {
 	public boolean accept(Class<?> cls) {
 		return target.isAssignableFrom(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1214,7 +1230,7 @@ final class InetAddressConverter implements Converter {
 			List<?> src = (List<?>)value;
 			value = (!src.isEmpty()) ? src.get(0) : null;
 		}
-		
+
 		if (value != null) {
 			return InetAddress.getByName(value.toString().trim());
 		}
@@ -1224,12 +1240,12 @@ final class InetAddressConverter implements Converter {
 
 final class ArrayConverter implements Converter {
 	public static final ArrayConverter INSTANCE = new ArrayConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return cls.isArray();
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			Map<?, ?> src = (Map<?, ?>)value;
@@ -1238,14 +1254,14 @@ final class ArrayConverter implements Converter {
 			}
 			value = src.values();
 		}
-		
+
 		if (value instanceof Collection) {
 			Collection<?> src = (Collection<?>)value;
 			Object array = Array.newInstance(c.getComponentType(), src.size());
 			Class<?> pc = c.getComponentType();
-			Type pt = (t instanceof GenericArrayType) ? 
+			Type pt = (t instanceof GenericArrayType) ?
 					((GenericArrayType)t).getGenericComponentType() : pc;
-			
+
 			Iterator<?> it = src.iterator();
 			JSONHint hint = context.getHint();
 			for (int i = 0; it.hasNext(); i++) {
@@ -1265,7 +1281,7 @@ final class ArrayConverter implements Converter {
 			}
 			Object array = Array.newInstance(ctype, 1);
 			Class<?> pc = ctype;
-			Type pt = (t instanceof GenericArrayType) ? 
+			Type pt = (t instanceof GenericArrayType) ?
 					((GenericArrayType)t).getGenericComponentType() : pc;
 			context.enter(0, context.getHint());
 			Array.set(array, 0, context.postparseInternal(value, pc, pt));
@@ -1277,26 +1293,26 @@ final class ArrayConverter implements Converter {
 
 final class CollectionConverter implements Converter {
 	public static final CollectionConverter INSTANCE = new CollectionConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Collection.class.isAssignableFrom(cls);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Type pt = context.getParameterType(t, Collection.class, 0);
 		Class<?> pc = ClassUtil.getRawType(pt);
 		JSONHint hint = context.getHint();
-		
+
 		Collection<Object> collection = null;
 		if (value instanceof List) {
 			List<?> src = (List<?>)value;
-			
+
 			context.createSizeHint = src.size();
 			collection = (Collection<Object>)context.createInternal(c);
 			context.createSizeHint = -1;
-			
+
 			if (Object.class.equals(pc)) {
 				collection.addAll(src);
 			} else {
@@ -1311,12 +1327,12 @@ final class CollectionConverter implements Converter {
 			if (!(map instanceof SortedMap<?, ?>)) {
 				map = new TreeMap<Object, Object>(map);
 			}
-			
+
 			Collection<?> src = map.values();
 			context.createSizeHint = src.size();
 			collection = (Collection<Object>)context.createInternal(c);
 			context.createSizeHint = -1;
-			
+
 			if (Object.class.equals(pc)) {
 				collection.addAll(src);
 			} else {
@@ -1332,7 +1348,7 @@ final class CollectionConverter implements Converter {
 			context.createSizeHint = src.size();
 			collection = (Collection<Object>)context.createInternal(c);
 			context.createSizeHint = -1;
-			
+
 			if (Object.class.equals(pc)) {
 				collection.addAll(src);
 			} else {
@@ -1347,7 +1363,7 @@ final class CollectionConverter implements Converter {
 			context.createSizeHint = 1;
 			collection = (Collection<Object>)context.createInternal(c);
 			context.createSizeHint = -1;
-			
+
 			if (Object.class.equals(pc)) {
 				collection.add(value);
 			} else {
@@ -1356,19 +1372,19 @@ final class CollectionConverter implements Converter {
 				context.exit();
 			}
 		}
-		
+
 		return collection;
-	}	
+	}
 }
 
 final class PropertiesConverter implements Converter {
 	public static final PropertiesConverter INSTANCE = new PropertiesConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Properties.class.isAssignableFrom(cls);
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Properties prop = (Properties)context.createInternal(c);
 		if (value instanceof Map<?, ?> || value instanceof List<?>) {
@@ -1378,7 +1394,7 @@ final class PropertiesConverter implements Converter {
 		}
 		return prop;
 	}
-	
+
 	private static void flattenProperties(StringBuilder key, Object value, Properties props) {
 		if (value instanceof Map<?,?>) {
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
@@ -1405,27 +1421,27 @@ final class PropertiesConverter implements Converter {
 
 final class MapConverter implements Converter {
 	public static final MapConverter INSTANCE = new MapConverter();
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Map.class.isAssignableFrom(cls);
 	}
-		
+
 	@SuppressWarnings("unchecked")
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		Type pt0 = context.getParameterType(t, Map.class, 0);
 		Type pt1 = context.getParameterType(t, Map.class, 1);
 		Class<?> pc0 = ClassUtil.getRawType(pt0);
 		Class<?> pc1 = ClassUtil.getRawType(pt1);
-		
+
 		Map<Object, Object> map;
-		
+
 		if (value instanceof Map<?, ?>) {
 			Map<?, ?> src = (Map<?,?>)value;
 			context.createSizeHint = src.size();
 			map = (Map<Object, Object>)context.createInternal(c);
 			context.createSizeHint = -1;
-			
+
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
 				map.putAll(src);
 			} else {
@@ -1442,7 +1458,7 @@ final class MapConverter implements Converter {
 			context.createSizeHint = src.size();
 			map = (Map<Object, Object>)context.createInternal(c);
 			context.createSizeHint = -1;
-			
+
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
 				for (int i = 0; i < src.size(); i++) {
 					map.put(i, src.get(i));
@@ -1450,7 +1466,7 @@ final class MapConverter implements Converter {
 			} else {
 				JSONHint hint = context.getHint();
 				for (int i = 0; i < src.size(); i++) {
-					Object key = context.postparseInternal(i, pc0, pt0);					
+					Object key = context.postparseInternal(i, pc0, pt0);
 					context.enter(i, hint);
 					map.put(key, context.postparseInternal(src.get(i), pc1, pt1));
 					context.exit();
@@ -1460,7 +1476,7 @@ final class MapConverter implements Converter {
 			context.createSizeHint = 1;
 			map = (Map<Object, Object>)context.createInternal(c);
 			context.createSizeHint = -1;
-			
+
 			JSONHint hint = context.getHint();
 			Object key = (hint != null && hint.anonym().length() > 0) ? hint.anonym() : null;
 			if (Object.class.equals(pc0) && Object.class.equals(pc1)) {
@@ -1479,19 +1495,19 @@ final class MapConverter implements Converter {
 final class ObjectConverter implements Converter {
 	private Class<?> cls;
 	private transient Map<String, PropertyInfo> props;
-	
+
 	public ObjectConverter(Class<?> cls) {
 		this.cls = cls;
 	}
-	
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return !cls.isPrimitive();
 	}
-	
+
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (props == null) props = getSetProperties(context, cls);
-		
+
 		if (value instanceof Map<?, ?>) {
 			Object o = context.createInternal(c);
 			if (o == null) return null;
@@ -1500,7 +1516,7 @@ final class ObjectConverter implements Converter {
 				PropertyInfo target = props.get(name);
 				if (target == null) target = props.get(toLowerCamel(context, name));
 				if (target == null) continue;
-				
+
 				JSONHint hint = target.getWriteAnnotation(JSONHint.class);
 				context.enter(name, hint);
 				Class<?> cls = target.getWriteType();
@@ -1522,7 +1538,7 @@ final class ObjectConverter implements Converter {
 				if (target == null) return null;
 				Object o = context.createInternal(c);
 				if (o == null) return null;
-				
+
 				JSONHint hint2 = target.getWriteAnnotation(JSONHint.class);
 				context.enter(hint.anonym(), hint2);
 				Class<?> cls = target.getWriteType();
@@ -1539,15 +1555,15 @@ final class ObjectConverter implements Converter {
 			}
 		}
 	}
-	
+
 	private static Map<String, PropertyInfo> getSetProperties(Context context, Class<?> c) {
 		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
-		
+
 		// Field
 		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
 			Field f = prop.getField();
 			if (f == null || Modifier.isFinal(f.getModifiers()) || context.ignoreInternal(c, f)) continue;
-			
+
 			JSONHint hint = f.getAnnotation(JSONHint.class);
 			String name = null;
 			int ordinal = prop.getOrdinal();
@@ -1556,27 +1572,27 @@ final class ObjectConverter implements Converter {
 				ordinal = hint.ordinal();
 				if (hint.name().length() != 0) name = hint.name();
 			}
-			
+
 			if (name == null) {
 				name = context.normalizeInternal(prop.getName());
 				if (context.getPropertyStyle() != null) {
 					name = context.getPropertyStyle().to(name);
 				}
 			}
-			
+
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal() || f != prop.getWriteMember()) {
-				props.put(name, new PropertyInfo(prop.getBeanClass(), name, 
+				props.put(name, new PropertyInfo(prop.getBeanClass(), name,
 					prop.getField(), null, null, prop.isStatic(), ordinal));
 			} else {
 				props.put(name, prop);
 			}
 		}
-		
+
 		// Method
 		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {
 			Method m = prop.getWriteMethod();
 			if (m == null || context.ignoreInternal(c, m)) continue;
-			
+
 			JSONHint hint = m.getAnnotation(JSONHint.class);
 			String name = null;
 			int ordinal = prop.getOrdinal();
@@ -1585,30 +1601,30 @@ final class ObjectConverter implements Converter {
 				ordinal = hint.ordinal();
 				if (hint.name().length() != 0) name = hint.name();
 			}
-			
+
 			if (name == null) {
 				name = context.normalizeInternal(prop.getName());
 				if (context.getPropertyStyle() != null) {
 					name = context.getPropertyStyle().to(name);
 				}
 			}
-			
+
 			if (!name.equals(prop.getName()) || ordinal != prop.getOrdinal()) {
-				prop = new PropertyInfo(prop.getBeanClass(), name, 
+				prop = new PropertyInfo(prop.getBeanClass(), name,
 					null, null, prop.getWriteMethod(), prop.isStatic(), ordinal);
 			}
-			
+
 			if (prop.getWriteMethod() != null) {
 				prop.getWriteMethod().setAccessible(true);
 			} else if (prop.getField() != null) {
 				prop.getField().setAccessible(true);
 			}
-			
+
 			props.put(name, prop);
 		}
 		return props;
 	}
-	
+
 	private static String toLowerCamel(Context context, String name) {
 		StringBuilder sb = context.getLocalCache().getCachedBuffer();
 		boolean toUpperCase = false;
@@ -1628,19 +1644,471 @@ final class ObjectConverter implements Converter {
 		}
 		return context.getLocalCache().getString(sb);
 	}
-	
+
 	private static Type resolveTypeVariable(TypeVariable<?> type, ParameterizedType parent) {
 		Class<?> rawType = ClassUtil.getRawType(parent);
 		if (rawType.equals(type.getGenericDeclaration())) {
 			String tvName = type.getName();
 			TypeVariable<?>[] rtypes = ((Class<?>)rawType).getTypeParameters();
 			Type[] atypes = parent.getActualTypeArguments();
-			
+
 			for (int i = 0; i < rtypes.length; i++) {
 				if (tvName.equals(rtypes[i].getName())) return atypes[i];
 			}
 		}
-		
+
 		return type.getBounds()[0];
+	}
+}
+
+final class DurationConverter  implements Converter {
+	public static final DurationConverter INSTANCE = new DurationConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Duration.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			return Duration.parse(((String)value));
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class InstantConverter implements Converter {
+	public static final InstantConverter INSTANCE = new InstantConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Instant.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof Number) {
+			return Instant.ofEpochMilli(((Number)value).longValue());
+		} else if (value instanceof String) {
+			return Instant.parse(((String)value));
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class LocalDateConverter implements Converter {
+	public static final LocalDateConverter INSTANCE = new LocalDateConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return LocalDate.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return LocalDate.parse(((String)value), f);
+			} else {
+				return LocalDate.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class LocalDateTimeConverter implements Converter {
+	public static final LocalDateTimeConverter INSTANCE = new LocalDateTimeConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return LocalDateTime.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return LocalDateTime.parse(((String)value), f);
+			} else {
+				return LocalDateTime.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class LocalTimeConverter implements Converter {
+	public static final LocalTimeConverter INSTANCE = new LocalTimeConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return LocalTime.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return LocalTime.parse(((String)value), f);
+			} else {
+				return LocalTime.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class MonthDayConverter implements Converter {
+	public static final MonthDayConverter INSTANCE = new MonthDayConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return MonthDay.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return MonthDay.parse(((String)value), f);
+			} else {
+				return MonthDay.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class OffsetDateTimeConverter implements Converter {
+	public static final OffsetDateTimeConverter INSTANCE = new OffsetDateTimeConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return OffsetDateTime.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return OffsetDateTime.parse(((String)value), f);
+			} else {
+				return OffsetDateTime.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class OffsetTimeConverter implements Converter {
+	public static final OffsetTimeConverter INSTANCE = new OffsetTimeConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return OffsetTime.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return OffsetTime.parse(((String)value), f);
+			} else {
+				return OffsetTime.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class PeriodConverter implements Converter {
+	public static final PeriodConverter INSTANCE = new PeriodConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Period.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			return Period.parse(((String)value));
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class YearConverter implements Converter {
+	public static final YearConverter INSTANCE = new YearConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Year.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof Number) {
+			return Year.of(((Number)value).intValue());
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return Year.parse(((String)value), f);
+			} else {
+				return Year.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class YearMonthConverter implements Converter {
+	public static final YearMonthConverter INSTANCE = new YearMonthConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return YearMonth.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return YearMonth.parse(((String)value), f);
+			} else {
+				return YearMonth.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class ZonedDateTimeConverter implements Converter {
+	public static final ZonedDateTimeConverter INSTANCE = new ZonedDateTimeConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return ZonedDateTime.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			String format = context.getDateFormatText();
+			if (format != null) {
+				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
+				return ZonedDateTime.parse(((String)value), f);
+			} else {
+				return ZonedDateTime.parse(((String)value));
+			}
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class ZoneOffsetConverter implements Converter {
+	public static final ZoneOffsetConverter INSTANCE = new ZoneOffsetConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return ZoneOffset.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof String) {
+			return ZoneOffset.of(((String)value));
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class DayOfWeekConverter implements Converter {
+	public static final DayOfWeekConverter INSTANCE = new DayOfWeekConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return DayOfWeek.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof Number) {
+			return DayOfWeek.of(((Number)value).intValue());
+		} else if (value instanceof String) {
+			return DayOfWeek.valueOf(((String)value));
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
+	}
+}
+
+final class MonthConverter implements Converter {
+	public static final MonthConverter INSTANCE = new MonthConverter();
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Month.class == cls;
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else if (value instanceof Number) {
+			return Month.of(((Number)value).intValue());
+		} else if (value instanceof String) {
+			return Month.valueOf(((String)value));
+		} else {
+			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
+		}
 	}
 }
