@@ -27,7 +27,6 @@
 				<fileset dir="${webapps}/spring/WEB-INF/lib" includes="*.jar" />
 				<fileset dir="${webapps}/guice/WEB-INF/lib" includes="*.jar" />
 			</classpath>
-			<bootclasspath location="${javac.bootclasspath}" />
 		</javac>
 
 		<condition property="jar.excludes" value="**/*.java">
