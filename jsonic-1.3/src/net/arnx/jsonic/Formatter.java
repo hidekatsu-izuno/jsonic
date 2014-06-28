@@ -1484,6 +1484,6 @@ final class TemporalFromatter implements Formatter {
 
 	@Override
 	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
-		StringFormatter.serialize(context, ((CharacterData)o).getData(), out);
+		StringFormatter.serialize(context, o.toString(), out);
 	}
 }
