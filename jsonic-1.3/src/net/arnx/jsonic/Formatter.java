@@ -241,12 +241,12 @@ final class CharsetFormatter implements Formatter {
 }
 
 final class InetAddressFormatter implements Formatter {
-	public static final InetAddressFormatter INSTANCE = new InetAddressFormatter();
-	private static final Class<?> target = InetAddress.class;
+	public InetAddressFormatter() {
+	}
 
 	@Override
 	public boolean accept(Object o) {
-		return o != null && target.isAssignableFrom(o.getClass());
+		return o != null && InetAddress.class.isAssignableFrom(o.getClass());
 	}
 
 	@Override
@@ -458,12 +458,12 @@ final class SerializableFormatter implements Formatter {
 }
 
 final class RowIdFormatter implements Formatter {
-	public static final RowIdFormatter INSTANCE = new RowIdFormatter();
-	private static final Class<?> target = RowId.class;
+	public RowIdFormatter() {
+	}
 
 	@Override
 	public boolean accept(Object o) {
-		return o != null && target.isAssignableFrom(o.getClass());
+		return o != null && RowId.class.isAssignableFrom(o.getClass());
 	}
 
 	@Override
@@ -730,11 +730,12 @@ final class ObjectArrayFormatter implements Formatter {
 }
 
 final class SQLArrayFormatter implements Formatter {
-	public static final SQLArrayFormatter INSTANCE = new SQLArrayFormatter();
-	private static final Class<?> target = java.sql.Array.class;
+	public SQLArrayFormatter() {
+	}
 
+	@Override
 	public boolean accept(Object o) {
-		return o != null && target.isAssignableFrom(o.getClass());
+		return o != null && java.sql.Array.class.isAssignableFrom(o.getClass());
 	}
 
 	@Override
@@ -756,11 +757,12 @@ final class SQLArrayFormatter implements Formatter {
 }
 
 final class StructFormmatter implements Formatter {
-	public static final StructFormmatter INSTANCE = new StructFormmatter();
-	private static final Class<?> target = Struct.class;
+	public StructFormmatter() {
+	}
 
+	@Override
 	public boolean accept(Object o) {
-		return o != null && target.isAssignableFrom(o.getClass());
+		return o != null && Struct.class.isAssignableFrom(o.getClass());
 	}
 
 	@Override
@@ -1263,11 +1265,12 @@ final class ObjectFormatter implements Formatter {
 }
 
 final class DynaBeanFormatter implements Formatter {
-	public static final DynaBeanFormatter INSTANCE = new DynaBeanFormatter();
-	private static final Class<?> target = DynaBean.class;
+	public DynaBeanFormatter() {
+	}
 
+	@Override
 	public boolean accept(Object o) {
-		return o != null && target.isAssignableFrom(o.getClass());
+		return o != null && DynaBean.class.isAssignableFrom(o.getClass());
 	}
 
 	@Override
@@ -1327,11 +1330,13 @@ final class DynaBeanFormatter implements Formatter {
 }
 
 final class ElementNodeFormatter implements Formatter {
-	public static final ElementNodeFormatter INSTANCE = new ElementNodeFormatter();
 	private static final Class<?>[] targets = new Class<?>[] {
 		Document.class,
 		Element.class
 	};
+
+	public ElementNodeFormatter() {
+	}
 
 	@Override
 	public boolean accept(Object o) {
@@ -1423,11 +1428,13 @@ final class ElementNodeFormatter implements Formatter {
 }
 
 final class TextNodeFormatter implements Formatter {
-	public static final TextNodeFormatter INSTANCE = new TextNodeFormatter();
 	private static final Class<?>[] targets = {
 		CDATASection.class,
 		Text.class
 	};
+
+	public TextNodeFormatter() {
+	}
 
 	@Override
 	public boolean accept(Object o) {
@@ -1451,13 +1458,14 @@ final class TextNodeFormatter implements Formatter {
 }
 
 final class TemporalFromatter implements Formatter {
-	public static final TemporalFromatter INSTANCE = new TemporalFromatter();
-
 	private static final Class<?>[] targets = {
 		TemporalAccessor.class,
 		TemporalAmount.class,
 		ZoneId.class
 	};
+
+	public TemporalFromatter() {
+	}
 
 	@Override
 	public boolean accept(Object o) {

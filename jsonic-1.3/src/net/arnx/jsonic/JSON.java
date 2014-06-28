@@ -73,7 +73,6 @@ import net.arnx.jsonic.io.WriterOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.LocalCache;
-import net.arnx.jsonic.util.PropertyInfo;
 
 /**
  * <p>The JSONIC JSON class provides JSON encoding and decoding as
@@ -428,13 +427,9 @@ public class JSON {
 	static Formatter getFormatterInstance(String name, ClassLoader cl) {
 		try {
 			Class<?> cls = Class.forName(name, true, cl);
-			BeanInfo bi = BeanInfo.get(cls);
-			PropertyInfo pi = bi.getStaticProperty("INSTANCE");
-			if (pi != null) {
-				Formatter formatter = (Formatter)pi.get(null);
-				formatter.accept(null);
-				return formatter;
-			}
+			Formatter formatter = (Formatter)BeanInfo.get(cls).newInstance();
+			formatter.accept(Object.class);
+			return formatter;
 		} catch (ClassNotFoundException e) {
 			// no handle
 		} catch (LinkageError e) {
@@ -446,13 +441,9 @@ public class JSON {
 	static Converter getConverterInstance(String name, ClassLoader cl) {
 		try {
 			Class<?> cls = Class.forName(name, true, cl);
-			BeanInfo bi = BeanInfo.get(cls);
-			PropertyInfo pi = bi.getStaticProperty("INSTANCE");
-			if (pi != null) {
-				Converter converter = (Converter)pi.get(null);
-				converter.accept(Object.class);
-				return converter;
-			}
+			Converter converter = (Converter)BeanInfo.get(cls).newInstance();
+			converter.accept(Object.class);
+			return converter;
 		} catch (ClassNotFoundException e) {
 			// no handle
 		} catch (LinkageError e) {

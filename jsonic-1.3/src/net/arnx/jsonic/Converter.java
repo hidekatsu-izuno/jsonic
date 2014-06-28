@@ -95,12 +95,13 @@ final class NullConverter implements Converter {
 }
 
 final class NullableConverter implements Converter {
-	public static final NullableConverter INSTANCE = new NullableConverter();
-
 	private static final Class<?>[] targets = new Class<?>[] {
 		java.sql.Array.class,
 		Struct.class
 	};
+	
+	public NullableConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
@@ -1215,14 +1216,15 @@ final class CalendarConverter implements Converter {
 }
 
 final class InetAddressConverter implements Converter {
-	public static final InetAddressConverter INSTANCE = new InetAddressConverter();
-	private static final Class<?> target = InetAddress.class;
+	public InetAddressConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
-		return target.isAssignableFrom(cls);
+		return InetAddress.class.isAssignableFrom(cls);
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1661,9 +1663,10 @@ final class ObjectConverter implements Converter {
 	}
 }
 
-final class DurationConverter  implements Converter {
-	public static final DurationConverter INSTANCE = new DurationConverter();
-
+final class DurationConverter implements Converter {
+	public DurationConverter() {
+	}
+	
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Duration.class == cls;
@@ -1688,13 +1691,15 @@ final class DurationConverter  implements Converter {
 }
 
 final class InstantConverter implements Converter {
-	public static final InstantConverter INSTANCE = new InstantConverter();
+	public InstantConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Instant.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1716,13 +1721,15 @@ final class InstantConverter implements Converter {
 }
 
 final class LocalDateConverter implements Converter {
-	public static final LocalDateConverter INSTANCE = new LocalDateConverter();
-
+	public LocalDateConverter() {
+	}
+	
 	@Override
 	public boolean accept(Class<?> cls) {
 		return LocalDate.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1748,13 +1755,15 @@ final class LocalDateConverter implements Converter {
 }
 
 final class LocalDateTimeConverter implements Converter {
-	public static final LocalDateTimeConverter INSTANCE = new LocalDateTimeConverter();
-
+	public LocalDateTimeConverter() {
+	}
+	
 	@Override
 	public boolean accept(Class<?> cls) {
 		return LocalDateTime.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1780,13 +1789,15 @@ final class LocalDateTimeConverter implements Converter {
 }
 
 final class LocalTimeConverter implements Converter {
-	public static final LocalTimeConverter INSTANCE = new LocalTimeConverter();
-
+	public LocalTimeConverter() {
+	}
+	
 	@Override
 	public boolean accept(Class<?> cls) {
 		return LocalTime.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1812,13 +1823,15 @@ final class LocalTimeConverter implements Converter {
 }
 
 final class MonthDayConverter implements Converter {
-	public static final MonthDayConverter INSTANCE = new MonthDayConverter();
+	public MonthDayConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return MonthDay.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1844,13 +1857,15 @@ final class MonthDayConverter implements Converter {
 }
 
 final class OffsetDateTimeConverter implements Converter {
-	public static final OffsetDateTimeConverter INSTANCE = new OffsetDateTimeConverter();
+	public OffsetDateTimeConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return OffsetDateTime.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1876,13 +1891,15 @@ final class OffsetDateTimeConverter implements Converter {
 }
 
 final class OffsetTimeConverter implements Converter {
-	public static final OffsetTimeConverter INSTANCE = new OffsetTimeConverter();
+	public OffsetTimeConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return OffsetTime.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1908,13 +1925,15 @@ final class OffsetTimeConverter implements Converter {
 }
 
 final class PeriodConverter implements Converter {
-	public static final PeriodConverter INSTANCE = new PeriodConverter();
+	public PeriodConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Period.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1934,13 +1953,15 @@ final class PeriodConverter implements Converter {
 }
 
 final class YearConverter implements Converter {
-	public static final YearConverter INSTANCE = new YearConverter();
+	public YearConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Year.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -1968,13 +1989,15 @@ final class YearConverter implements Converter {
 }
 
 final class YearMonthConverter implements Converter {
-	public static final YearMonthConverter INSTANCE = new YearMonthConverter();
+	public YearMonthConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return YearMonth.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -2000,13 +2023,15 @@ final class YearMonthConverter implements Converter {
 }
 
 final class ZonedDateTimeConverter implements Converter {
-	public static final ZonedDateTimeConverter INSTANCE = new ZonedDateTimeConverter();
+	public ZonedDateTimeConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return ZonedDateTime.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -2032,13 +2057,15 @@ final class ZonedDateTimeConverter implements Converter {
 }
 
 final class ZoneOffsetConverter implements Converter {
-	public static final ZoneOffsetConverter INSTANCE = new ZoneOffsetConverter();
+	public ZoneOffsetConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return ZoneOffset.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -2058,13 +2085,15 @@ final class ZoneOffsetConverter implements Converter {
 }
 
 final class DayOfWeekConverter implements Converter {
-	public static final DayOfWeekConverter INSTANCE = new DayOfWeekConverter();
+	public DayOfWeekConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return DayOfWeek.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
@@ -2086,13 +2115,15 @@ final class DayOfWeekConverter implements Converter {
 }
 
 final class MonthConverter implements Converter {
-	public static final MonthConverter INSTANCE = new MonthConverter();
+	public MonthConverter() {
+	}
 
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Month.class == cls;
 	}
 
+	@Override
 	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
 		if (value instanceof Map<?, ?>) {
 			value = ((Map<?,?>)value).get(null);
