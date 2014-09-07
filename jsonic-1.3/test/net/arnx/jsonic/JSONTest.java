@@ -847,6 +847,15 @@ public class JSONTest {
 		Locale.setDefault(Locale.JAPANESE);
 		JSON json = new JSON();
 
+		assertNull(json.parse("null"));
+		assertEquals(Boolean.TRUE, json.parse("true"));
+		assertEquals(Boolean.FALSE, json.parse("false"));
+		assertEquals("", json.parse("\"\""));
+		assertEquals("test", json.parse("\"test\""));
+		assertEquals(new BigDecimal(10), json.parse("10"));
+		assertEquals(new BigDecimal(-10), json.parse("-10"));
+		assertEquals(new BigDecimal("10.1"), json.parse("10.1"));
+
 		try {
 			CharSequence cs = null;
 			assertEquals(null, json.parse(cs));
@@ -1197,11 +1206,15 @@ public class JSONTest {
 		//SCRIPT
 		json.setMode(JSON.Mode.SCRIPT);
 
-		assertEquals("aaa", json.parse("\"aaa\""));
-		assertEquals(new BigDecimal("100"), json.parse("100"));
-		assertEquals(true, json.parse("true"));
-		assertEquals(false, json.parse("false"));
 		assertNull(json.parse("null"));
+		assertEquals(Boolean.TRUE, json.parse("true"));
+		assertEquals(Boolean.FALSE, json.parse("false"));
+		assertEquals("", json.parse("\"\""));
+		assertEquals("test", json.parse("\"test\""));
+		assertEquals(new BigDecimal(10), json.parse("10"));
+		assertEquals(new BigDecimal(-10), json.parse("-10"));
+		assertEquals(new BigDecimal("10.1"), json.parse("10.1"));
+
 
 		assertEquals(new HashMap() {{put("true", true);}}, json.parse("{  true: true  }"));
 		assertEquals(new HashMap() {{put("false", false);}}, json.parse("{  false: false  }"));
@@ -1286,6 +1299,7 @@ public class JSONTest {
 		assertEquals("", json.parse("\"\""));
 		assertEquals("test", json.parse("\"test\""));
 		assertEquals(new BigDecimal(10), json.parse("10"));
+		assertEquals(new BigDecimal(-10), json.parse("-10"));
 		assertEquals(new BigDecimal("10.1"), json.parse("10.1"));
 
 		assertEquals(JSON.decode("[]"), json.parse("[\n]"));

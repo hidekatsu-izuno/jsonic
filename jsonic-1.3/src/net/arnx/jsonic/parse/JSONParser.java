@@ -32,6 +32,7 @@ public class JSONParser {
 	static final int AFTER_NAME = 3;
 	static final int BEFORE_VALUE = 4;
 	static final int AFTER_VALUE = 5;
+	static final int OTHER_STATE = 6;
 
 	private static final int[] ESCAPE_CHARS = new int[128];
 
@@ -59,6 +60,8 @@ public class JSONParser {
 	private Object value;
 	private boolean first;
 	private boolean active;
+
+	private JSONEventType parsedType;
 
 	public JSONParser(InputSource in, int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
 		this.in = in;
@@ -116,6 +119,9 @@ public class JSONParser {
 				break;
 			case AFTER_VALUE:
 				state = afterValue();
+				break;
+			case OTHER_STATE:
+				state = otherState();
 				break;
 			}
 
@@ -399,6 +405,10 @@ public class JSONParser {
 		}
 	}
 
+	int otherState() throws IOException {
+		throw new IllegalStateException();
+	}
+
 	void push(JSONEventType type) {
 		this.type = type;
 		stack.add(type);
@@ -431,6 +441,10 @@ public class JSONParser {
 
 	JSONEventType getType() {
 		return type;
+	}
+
+	JSONEventType getParsedType() {
+		return parsedType;
 	}
 
 	boolean isFirst() {
@@ -739,17 +753,17 @@ public class JSONParser {
 		String str = (sb != null) ? cache.getString(sb) : null;
 		if (asValue && str != null) {
 			if ("null".equals(str)) {
-				type = JSONEventType.NULL;
+				parsedType = JSONEventType.NULL;
 				return null;
 			} else if ("true".equals(str)) {
-				type = JSONEventType.BOOLEAN;
+				parsedType = JSONEventType.BOOLEAN;
 				return (active) ? Boolean.TRUE : null;
 			} else if ("false".equals(str)) {
-				type = JSONEventType.BOOLEAN;
+				parsedType = JSONEventType.BOOLEAN;
 				return (active) ? Boolean.FALSE : null;
 			}
 		}
-		type = JSONEventType.STRING;
+		parsedType = JSONEventType.STRING;
 		return (active) ? str : null;
 	}
 

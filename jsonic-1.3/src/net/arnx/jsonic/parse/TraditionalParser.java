@@ -16,6 +16,7 @@
 package net.arnx.jsonic.parse;
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.io.InputSource;
@@ -26,6 +27,21 @@ public class TraditionalParser extends JSONParser {
 
 	private boolean emptyRoot = false;
 	private long nameLineNumber = Long.MAX_VALUE;
+
+	private int backupState = -1;
+	private LinkedList<Token> backupTokens;
+
+	private class Token {
+		public JSONEventType type;
+		public Object value;
+		public boolean isValue;
+
+		public Token(JSONEventType type, Object value, boolean isValue) {
+			this.type = type;
+			this.value = value;
+			this.isValue = isValue;
+		}
+	}
 
 	public TraditionalParser(InputSource in, int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
 		super(in, maxDepth, interpretterMode, ignoreWhirespace, cache);
@@ -63,12 +79,35 @@ public class TraditionalParser extends JSONParser {
 		case -1:
 			if (isInterpretterMode()) {
 				return -1;
+			} else {
+				emptyRoot = true;
+				push(JSONEventType.START_OBJECT);
+				return BEFORE_NAME;
 			}
+		case '"':
+		case '\'':
+			in.back();
+			collectTokens(JSONEventType.NUMBER, parseString(true));
+			return OTHER_STATE;
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			in.back();
+			collectTokens(JSONEventType.NUMBER, parseNumber());
+			return OTHER_STATE;
 		default:
-			if (n != -1) in.back();
-			emptyRoot = true;
-			push(JSONEventType.START_OBJECT);
-			return BEFORE_NAME;
+			in.back();
+			Object literal = parseLiteral(true);
+			collectTokens(getParsedType(), literal);
+			return OTHER_STATE;
 		}
 	}
 
@@ -203,11 +242,10 @@ public class TraditionalParser extends JSONParser {
 				set(JSONEventType.COMMENT, comment, false);
 			}
 			return AFTER_NAME;
-		case ':':
-			return BEFORE_VALUE;
 		case '{':
 		case '[':
 			in.back();
+		case ':':
 			return BEFORE_VALUE;
 		case -1:
 			throw createParseException(in, "json.parse.ObjectNotClosedError");
@@ -313,7 +351,7 @@ public class TraditionalParser extends JSONParser {
 		default:
 			in.back();
 			Object literal = parseLiteral(true);
-			set(getType(), literal, true);
+			set(getParsedType(), literal, true);
 			nameLineNumber = in.getLineNumber();
 			return AFTER_VALUE;
 		}
@@ -401,6 +439,70 @@ public class TraditionalParser extends JSONParser {
 			} else {
 				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
+		}
+	}
+
+	void collectTokens(JSONEventType type, Object value) throws IOException {
+		backupTokens = new LinkedList<Token>();
+
+		loop:while (true) {
+			int n = in.next();
+			switch (n) {
+			case ' ':
+			case '\t':
+			case '\r':
+			case '\n':
+				in.back();
+				String ws = parseWhitespace();
+				if (!isIgnoreWhitespace()) {
+					backupTokens.add(new Token(JSONEventType.WHITESPACE, ws, false));
+				}
+				break;
+			case '/':
+				in.back();
+				String comment = parseComment();
+				if (!isIgnoreWhitespace()) {
+					backupTokens.add(new Token(JSONEventType.COMMENT, comment, false));
+				}
+				break;
+			case '{':
+			case '[':
+				in.back();
+			case ':':
+				emptyRoot = true;
+				push(JSONEventType.START_OBJECT);
+				backupState = BEFORE_VALUE;
+				break loop;
+			case -1:
+				backupState = -1;
+				break loop;
+			case ',':
+				if (isInterpretterMode()) {
+					backupState = BEFORE_ROOT;
+					break loop;
+				}
+			default:
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
+		}
+
+		if (emptyRoot) {
+			if (value != null) value = value.toString();
+			backupTokens.addFirst(new Token(JSONEventType.NAME, value, false));
+		} else {
+			backupTokens.addFirst(new Token(type, value, true));
+		}
+	}
+
+	@Override
+	int otherState() throws IOException {
+		Token token = backupTokens.removeFirst();
+		set(token.type, token.value, token.isValue);
+		if (backupTokens.isEmpty()) {
+			backupTokens = null;
+			return backupState;
+		} else {
+			return OTHER_STATE;
 		}
 	}
 }
