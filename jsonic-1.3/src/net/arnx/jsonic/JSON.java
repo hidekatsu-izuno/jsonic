@@ -1635,11 +1635,6 @@ public class JSON {
 				memberCache.put(o.getClass(), f);
 			}
 
-			if (!f.isStruct() && getDepth() == 0 && getMode() != Mode.SCRIPT) {
-				throw new JSONException(getMessage("json.format.IllegalRootTypeError"),
-						JSONException.FORMAT_ERROR);
-			}
-
 			try {
 				f.format(this, src, o, ap);
 			} catch (IOException e) {

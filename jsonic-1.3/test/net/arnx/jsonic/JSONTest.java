@@ -679,29 +679,11 @@ public class JSONTest {
 				json.format(list, new StringWriter()).toString());
 
 		json.setPrettyPrint(false);
-		try {
-			json.format(true, new StringBuilder());
-			fail();
-		} catch (JSONException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals("true", json.format(true, new StringBuilder()).toString());
 
-		try {
-			json.format(JSON.class, new StringBuilder());
-			fail();
-		} catch (JSONException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals("\"net.arnx.jsonic.JSON\"", json.format(JSON.class, new StringBuilder()).toString());
 
-		try {
-			json.format(Locale.JAPAN, new StringBuilder());
-			fail();
-		} catch (JSONException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals("\"ja-JP\"", json.format(Locale.JAPAN, new StringBuilder()).toString());
 
 		assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\"]", json.format(
 				new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}, new StringWriter()).toString());
@@ -773,29 +755,11 @@ public class JSONTest {
 
 		assertEquals("[\"!\\\"#$%&'()=~|<>?_\"]", json.format(new String[] { "!\"#$%&'()=~|<>?_" }));
 
-		try {
-			json.format(null, new StringBuilder());
-			fail();
-		} catch (JSONException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals("null", json.format(null, new StringBuilder()).toString());
 
-		try {
-			json.format(1000, new StringBuilder());
-			fail();
-		} catch (JSONException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals("1000", json.format(1000, new StringBuilder()).toString());
 
-		try {
-			json.format("test", new StringBuilder());
-			fail();
-		} catch (JSONException e) {
-			System.out.println(e);
-			assertNotNull(e);
-		}
+		assertEquals("\"test\"", json.format("test", new StringBuilder()).toString());
 
 		DateNumberTestClass dates = new DateNumberTestClass();
 		dates.a = toDate(2000, 1, 1, 12, 5, 6, 0);
@@ -1315,6 +1279,14 @@ public class JSONTest {
 			System.out.println(e);
 			assertNotNull(e);
 		}
+
+		assertNull(json.parse("null"));
+		assertEquals(Boolean.TRUE, json.parse("true"));
+		assertEquals(Boolean.FALSE, json.parse("false"));
+		assertEquals("", json.parse("\"\""));
+		assertEquals("test", json.parse("\"test\""));
+		assertEquals(new BigDecimal(10), json.parse("10"));
+		assertEquals(new BigDecimal("10.1"), json.parse("10.1"));
 
 		assertEquals(JSON.decode("[]"), json.parse("[\n]"));
 		assertEquals(JSON.decode("[\" '\"]"), json.parse("[\n\" '\"]"));
