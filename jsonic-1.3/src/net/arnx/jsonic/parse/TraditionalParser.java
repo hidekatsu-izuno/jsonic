@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,15 +23,15 @@ import net.arnx.jsonic.util.LocalCache;
 
 public class TraditionalParser extends JSONParser {
 	private InputSource in;
-	
+
 	private boolean emptyRoot = false;
 	private long nameLineNumber = Long.MAX_VALUE;
-	
+
 	public TraditionalParser(InputSource in, int maxDepth, boolean interpretterMode, boolean ignoreWhirespace, LocalCache cache) {
 		super(in, maxDepth, interpretterMode, ignoreWhirespace, cache);
 		this.in = in;
 	}
-	
+
 	@Override
 	int beforeRoot() throws IOException {
 		int n = in.next();
@@ -71,7 +71,7 @@ public class TraditionalParser extends JSONParser {
 			return BEFORE_NAME;
 		}
 	}
-	
+
 	@Override
 	int afterRoot() throws IOException {
 		int n = in.next();
@@ -109,7 +109,7 @@ public class TraditionalParser extends JSONParser {
 			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
-	
+
 	@Override
 	int beforeName() throws IOException {
 		int n = in.next();
@@ -152,7 +152,7 @@ public class TraditionalParser extends JSONParser {
 			set(JSONEventType.NAME, (num != null) ? num.toString() : null, false);
 			return AFTER_NAME;
 		case '}':
-			if (isFirst()) {
+			if (isFirst() && getBeginType() == JSONEventType.START_OBJECT) {
 				pop();
 				if (getBeginType() == null) {
 					if (emptyRoot) {
@@ -162,7 +162,7 @@ public class TraditionalParser extends JSONParser {
 					}
 				} else {
 					nameLineNumber = in.getLineNumber();
-					return AFTER_VALUE;							
+					return AFTER_VALUE;
 				}
 			} else {
 				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
@@ -215,7 +215,7 @@ public class TraditionalParser extends JSONParser {
 			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
 	}
-	
+
 	@Override
 	int beforeValue() throws IOException {
 		int n = in.next();
@@ -318,7 +318,7 @@ public class TraditionalParser extends JSONParser {
 			return AFTER_VALUE;
 		}
 	}
-	
+
 	@Override
 	int afterValue() throws IOException {
 		int n = in.next();
@@ -346,7 +346,7 @@ public class TraditionalParser extends JSONParser {
 			} else if (getBeginType() == JSONEventType.START_ARRAY) {
 				return BEFORE_VALUE;
 			} else {
-				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case '}':
 			if (getBeginType() == JSONEventType.START_OBJECT) {
@@ -358,10 +358,10 @@ public class TraditionalParser extends JSONParser {
 						return AFTER_ROOT;
 					}
 				} else {
-					return AFTER_VALUE;							
+					return AFTER_VALUE;
 				}
 			} else {
-				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case ']':
 			if (getBeginType() == JSONEventType.START_ARRAY) {
@@ -369,10 +369,10 @@ public class TraditionalParser extends JSONParser {
 				if (getBeginType() == null) {
 					return AFTER_ROOT;
 				} else {
-					return AFTER_VALUE;							
+					return AFTER_VALUE;
 				}
 			} else {
-				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);						
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		case -1:
 			if (getBeginType() == JSONEventType.START_OBJECT) {
