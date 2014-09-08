@@ -14,32 +14,32 @@ public class JSONReaderTest {
 	public void testGetReaderTraditional() throws Exception {
 		testGetReader(JSON.Mode.TRADITIONAL);
 	}
-	
+
 	@Test
 	public void testGetReaderScript() throws Exception {
 		testGetReader(JSON.Mode.SCRIPT);
 	}
-	
+
 	@Test
 	public void testGetReaderStrict() throws Exception {
 		testGetReader(JSON.Mode.STRICT);
 	}
-	
+
 	private void testGetReader(JSON.Mode mode) throws Exception {
 		List<Object> list = new ArrayList<Object>();
 		JSONEventType type;
 		JSONReader reader;
 
 		JSON json = new JSON(mode);
-		
+
 		reader = json.getReader("");
 		while ((type = reader.next()) != null) {
 			fail();
 		}
-		
+
 		list.clear();
-		
-		reader = json.getReader("[]{}[]");
+
+		reader = json.getReader("[]{}[]100 true false \"aaa\"");
 		while ((type = reader.next()) != null) {
 			switch (type) {
 			case START_OBJECT:
@@ -48,15 +48,28 @@ public class JSONReaderTest {
 			case START_ARRAY:
 				list.add(reader.getList());
 				break;
+			case NUMBER:
+				list.add(reader.getNumber());
+				break;
+			case BOOLEAN:
+				list.add(reader.getBoolean());
+				break;
+			case STRING:
+				list.add(reader.getString());
+				break;
 			}
 		}
-		assertEquals(3, list.size());
+		assertEquals(7, list.size());
 		assertEquals(new ArrayList<Object>(), list.get(0));
 		assertEquals(new LinkedHashMap<Object, Object>(), list.get(1));
 		assertEquals(new ArrayList<Object>(), list.get(2));
-		
+		assertEquals(new BigDecimal(100), list.get(3));
+		assertEquals(Boolean.TRUE, list.get(4));
+		assertEquals(Boolean.FALSE, list.get(5));
+		assertEquals("aaa", list.get(6));
+
 		list.clear();
-		
+
 		reader = json.getReader("[{\"value\": \"a\"}, {\"value\": \"b\", \"child\": {\"value\": \"b1\"} }, {\"value\": \"c\"}]");
 		while ((type = reader.next()) != null) {
 			switch (type) {
@@ -69,9 +82,9 @@ public class JSONReaderTest {
 		assertEquals(new ReaderBean("a", null), list.get(0));
 		assertEquals(new ReaderBean("b", new ReaderBean("b1", null)), list.get(1));
 		assertEquals(new ReaderBean("c", null), list.get(2));
-		
+
 		list.clear();
-		
+
 		reader = json.getReader("{\"value\": \"a\"}\n{\"value\": \"b\", \"child\": {\"value\": \"b1\"} }\n{\"value\": \"c\"}");
 		while ((type = reader.next()) != null) {
 			switch (type) {
@@ -84,7 +97,7 @@ public class JSONReaderTest {
 		assertEquals(new ReaderBean("a", null), list.get(0));
 		assertEquals(new ReaderBean("b", new ReaderBean("b1", null)), list.get(1));
 		assertEquals(new ReaderBean("c", null), list.get(2));
-		
+
 		list.clear();
 		if (mode == JSON.Mode.TRADITIONAL) {
 			reader = json.getReader("{\"value\": \"a\"},\n{\"value\": \"b\", \"child\": {\"value\": \"b1\"} },\n{\"value\": \"c\"}");
@@ -108,9 +121,9 @@ public class JSONReaderTest {
 				assertNotNull(e);
 			}
 		}
-		
+
 		list.clear();
-		
+
 		reader = json.getReader("[1, 2, 3]\n{ \"name\" : \"value\" }\n[true, false, null]");
 		while ((type = reader.next()) != null) {
 			switch (type) {
@@ -138,10 +151,10 @@ public class JSONReaderTest {
 		assertEquals(Boolean.TRUE, list.get(5));
 		assertEquals(Boolean.FALSE, list.get(6));
 		assertNull(list.get(7));
-		
+
 		list.clear();
-		
-		if (mode != JSON.Mode.STRICT) { 
+
+		if (mode != JSON.Mode.STRICT) {
 			reader = json.getReader("   [1, /* aaa */ 2, 3]//\n\n // { \"name\" : \"value\" }\r\n\t[true, false, null] \n\n ", false);
 			while ((type = reader.next()) != null) {
 				switch (type) {
@@ -188,14 +201,14 @@ public class JSONReaderTest {
 class ReaderBean {
 	public ReaderBean() {
 	}
-	
+
 	public ReaderBean(String value, ReaderBean child) {
 		this.value = value;
 		this.child = child;
 	}
-	
+
 	public String value;
-	
+
 	public ReaderBean child;
 
 	@Override

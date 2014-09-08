@@ -87,7 +87,7 @@ public class TraditionalParser extends JSONParser {
 		case '"':
 		case '\'':
 			in.back();
-			collectTokens(JSONEventType.NUMBER, parseString(true));
+			parseTokens(JSONEventType.STRING, parseString(true));
 			return OTHER_STATE;
 		case '-':
 		case '0':
@@ -101,12 +101,12 @@ public class TraditionalParser extends JSONParser {
 		case '8':
 		case '9':
 			in.back();
-			collectTokens(JSONEventType.NUMBER, parseNumber());
+			parseTokens(JSONEventType.NUMBER, parseNumber());
 			return OTHER_STATE;
 		default:
 			in.back();
 			Object literal = parseLiteral(true);
-			collectTokens(getParsedType(), literal);
+			parseTokens(getParsedType(), literal);
 			return OTHER_STATE;
 		}
 	}
@@ -140,6 +140,22 @@ public class TraditionalParser extends JSONParser {
 			}
 		case '{':
 		case '[':
+		case '"':
+		case '\'':
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case 't':
+		case 'f':
+		case 'n':
 			if (isInterpretterMode()) {
 				in.back();
 				return BEFORE_ROOT;
@@ -442,7 +458,7 @@ public class TraditionalParser extends JSONParser {
 		}
 	}
 
-	void collectTokens(JSONEventType type, Object value) throws IOException {
+	void parseTokens(JSONEventType type, Object value) throws IOException {
 		backupTokens = new LinkedList<Token>();
 
 		loop:while (true) {
@@ -467,6 +483,11 @@ public class TraditionalParser extends JSONParser {
 				break;
 			case '{':
 			case '[':
+				if (isInterpretterMode()) {
+					in.back();
+					backupState = BEFORE_ROOT;
+					break loop;
+				}
 				in.back();
 			case ':':
 				emptyRoot = true;
@@ -481,7 +502,13 @@ public class TraditionalParser extends JSONParser {
 					backupState = BEFORE_ROOT;
 					break loop;
 				}
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			default:
+				if (isInterpretterMode()) {
+					in.back();
+					backupState = BEFORE_ROOT;
+					break loop;
+				}
 				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 			}
 		}

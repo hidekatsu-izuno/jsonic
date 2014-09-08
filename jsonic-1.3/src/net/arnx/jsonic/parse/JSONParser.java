@@ -210,6 +210,21 @@ public class JSONParser {
 			return -1;
 		case '{':
 		case '[':
+		case '"':
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case 't':
+		case 'f':
+		case 'n':
 			if (isInterpretterMode()) {
 				in.back();
 				return BEFORE_ROOT;
