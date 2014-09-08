@@ -102,11 +102,11 @@ import net.arnx.jsonic.util.LocalCache;
  * Bar bar = JSON.decode(new FileReader("bar.json"), Bar.class);
  * </pre>
  *
- * <h4>Summary of encoding rules for java type into json type</h4>
  * <table border="1" cellpadding="1" cellspacing="0">
+ * <caption>Summary of encoding rules for java type into json type</caption>
  * <tr>
- * 	<th bgcolor="#CCCCFF" align="left">java type</th>
- * 	<th bgcolor="#CCCCFF" align="left">json type</th>
+ * 	<th style="background-color: #CCCCFF; text-align: left;">java type</th>
+ * 	<th style="background-color: #CCCCFF; text-align: left;">json type</th>
  * </tr>
  * <tr><td>java.util.Map</td><td rowspan="2">object</td></tr>
  * <tr><td>java.lang.Object (public property or field)</td></tr>
@@ -134,11 +134,11 @@ import net.arnx.jsonic.util.LocalCache;
  * <tr><td>null</td><td>null</td></tr>
  * </table>
  *
- * <h4>Summary of decoding rules for json type into java type</h4>
  * <table border="1" cellpadding="1" cellspacing="0">
+ * <caption>Summary of decoding rules for json type into java type</caption>
  * <tr>
- * 	<th bgcolor="#CCCCFF" align="left">json type</th>
- * 	<th bgcolor="#CCCCFF" align="left">java type</th>
+ * 	<th style="background-color: #CCCCFF; text-align: left;">json type</th>
+ * 	<th style="background-color: #CCCCFF; text-align: left;">java type</th>
  * </tr>
  * <tr><td>object</td><td>java.util.LinkedHashMap</td></tr>
  * <tr><td>array</td><td>java.util.ArrayList</td></tr>
