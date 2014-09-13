@@ -161,7 +161,7 @@ final class FormatConverter implements Converter {
 		Context context2 = context.copy();
 		context2.skipHint = context.getHint();
 		value = context2.preformatInternal(value);
-		StringBuilderOutputSource out = new StringBuilderOutputSource(new StringBuilder(200));
+		StringBuilderOutputSource out = new StringBuilderOutputSource(200);
 		try {
 			context2.formatInternal(value, out);
 		} catch (IOException e) {

@@ -942,7 +942,9 @@ public class JSON {
 				len = 1000;
 			}
 
-			text = format(source, new StringBuilder(len)).toString();
+			OutputSource out = new StringBuilderOutputSource(len);
+			format(source, out);
+			text = out.toString();
 		} catch (IOException e) {
 			// no handle;
 		}
@@ -980,6 +982,11 @@ public class JSON {
 			out = new AppendableOutputSource(ap);
 		}
 
+		format(source, out);
+		return ap;
+	}
+
+	private void format(Object source, OutputSource out) throws IOException {
 		Context context = new Context();
 
 		if (context.isPrettyPrint()) {
@@ -991,7 +998,6 @@ public class JSON {
 		context.formatInternal(source, out);
 		context.exit();
 		out.flush();
-		return ap;
 	}
 
 	public JSONWriter getWriter(OutputStream out) throws IOException {
