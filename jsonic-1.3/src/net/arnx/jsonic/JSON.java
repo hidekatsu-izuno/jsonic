@@ -932,7 +932,9 @@ public class JSON {
 		String text = null;
 		try {
 			int len;
-			if (source instanceof CharSequence) {
+			if (source == null) {
+				return "null";
+			} else if (source instanceof CharSequence) {
 				len = ((CharSequence)source).length() + 16;
 			} else if (source instanceof Boolean) {
 				len = 5;
