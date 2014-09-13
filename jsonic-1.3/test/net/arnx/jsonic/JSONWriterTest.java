@@ -12,9 +12,9 @@ public class JSONWriterTest {
 	@Test
 	public void testWriterObject() throws Exception {
 		StringWriter out = new StringWriter();
-		
+
 		JSON json = new JSON();
-		
+
 		JSONWriter w = json.getWriter(out);
 		w.beginObject();
 		w.endObject();
@@ -24,7 +24,7 @@ public class JSONWriterTest {
 		w = json.getWriter(out);
 		w.value(new HashMap<String, String>());
 		assertEquals("{}", out.toString());
-		
+
 		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginObject();
@@ -36,7 +36,7 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endObject();
 		assertEquals("{\"hoge\":\"hoge\",\"hoge2\":\"hoge\",\"hoge3\":\"hoge\"}", out.toString());
-		
+
 		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginObject();
@@ -72,7 +72,7 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endObject();
 		assertEquals("{\n\t\"hoge\": \"hoge\",\n\t\"hoge2\": \"hoge\",\n\t\"hoge3\": \"hoge\"\n}", out.toString());
-		
+
 		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginObject();
@@ -90,14 +90,29 @@ public class JSONWriterTest {
 		w.endObject();
 		assertEquals("{\n\t\"hoge\": \"hoge\",\n\t\"hoge2\": [\n\t\t\"hoge\",\n\t\t[\n\t\t\t\"hoge\"\n\t\t]\n\t],\n\t\"hoge3\": \"hoge\"\n}", out.toString());
 	}
-	
+
 	@Test
 	public void testWriterArray() throws Exception {
 		StringWriter out = new StringWriter();
-		
+
 		JSON json = new JSON();
-		
+
 		JSONWriter w = json.getWriter(out);
+		w = json.getWriter(out);
+		w.value("test");
+		assertEquals("\"test\"", out.toString());
+
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.value(100);
+		assertEquals("100", out.toString());
+
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.value(true);
+		assertEquals("true", out.toString());
+
+		out.getBuffer().setLength(0);
 		w.beginArray();
 		w.endArray();
 		w.flush();
@@ -107,7 +122,7 @@ public class JSONWriterTest {
 		w = json.getWriter(out);
 		w.value(new ArrayList<String>());
 		assertEquals("[]", out.toString());
-		
+
 		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginArray();
@@ -116,16 +131,16 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endArray();
 		assertEquals("[\"hoge\",\"hoge\",\"hoge\"]", out.toString());
-				
+
 		json.setPrettyPrint(true);
-		
+
 		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginArray();
 		w.endArray();
 		w.flush();
 		assertEquals("[]", out.toString());
-		
+
 		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginArray();
@@ -134,7 +149,7 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endArray();
 		assertEquals("[\n\t\"hoge\",\n\t\"hoge\",\n\t\"hoge\"\n]", out.toString());
-		
+
 		out.getBuffer().setLength(0);
 		w = json.getWriter(out);
 		w.beginArray();
@@ -146,13 +161,13 @@ public class JSONWriterTest {
 		w.endArray();
 		assertEquals("[\n\t\"hoge\",\n\t{\n\t\t\"name\": \"hoge\"\n\t},\n\t\"hoge\"\n]", out.toString());
 	}
-	
+
 	@Test
 	public void testWriterError() throws Exception {
 		StringWriter out = new StringWriter();
-		
+
 		JSON json = new JSON();
-		
+
 		JSONWriter w = json.getWriter(out);
 		try {
 			w.name("error");
@@ -161,15 +176,7 @@ public class JSONWriterTest {
 			System.err.println(e.getMessage());
 			assertNotNull(e);
 		}
-		
-		try {
-			w.value("error");
-			fail();
-		} catch (JSONException e) {
-			System.err.println(e.getMessage());
-			assertNotNull(e);
-		}
-		
+
 		w.beginObject();
 		try {
 			w.value("error");
@@ -178,7 +185,7 @@ public class JSONWriterTest {
 			System.err.println(e.getMessage());
 			assertNotNull(e);
 		}
-		
+
 		try {
 			w.endArray();
 			fail();
@@ -187,7 +194,7 @@ public class JSONWriterTest {
 			assertNotNull(e);
 		}
 		w.endObject();
-		
+
 		w.beginArray();
 		try {
 			w.name("error");
@@ -195,7 +202,7 @@ public class JSONWriterTest {
 		} catch (JSONException e) {
 			System.err.println(e.getMessage());
 			assertNotNull(e);
-		}		
+		}
 		try {
 			w.endObject();
 			fail();
@@ -204,7 +211,7 @@ public class JSONWriterTest {
 			assertNotNull(e);
 		}
 		w.endArray();
-		
+
 		assertEquals("{}[]", out.toString());
 	}
 }

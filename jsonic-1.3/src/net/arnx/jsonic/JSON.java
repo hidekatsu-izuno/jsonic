@@ -931,7 +931,18 @@ public class JSON {
 	public String format(Object source) {
 		String text = null;
 		try {
-			text = format(source, new StringBuilder(1000)).toString();
+			int len;
+			if (source instanceof CharSequence) {
+				len = ((CharSequence)source).length() + 16;
+			} else if (source instanceof Boolean) {
+				len = 5;
+			} else if (source instanceof Number) {
+				len = 20;
+			} else {
+				len = 1000;
+			}
+
+			text = format(source, new StringBuilder(len)).toString();
 		} catch (IOException e) {
 			// no handle;
 		}
