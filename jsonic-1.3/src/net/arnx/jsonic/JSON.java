@@ -180,6 +180,7 @@ public class JSON {
 
 	static final Character ROOT = '$';
 
+	private static final String PACKAGE_NAME = JSON.class.getName().substring(0, JSON.class.getName().lastIndexOf('.'));
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
 	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(20);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
@@ -270,28 +271,28 @@ public class JSON {
 		FORMAT_LIST.add(TimeZoneFormatter.INSTANCE);
 		FORMAT_LIST.add(CharsetFormatter.INSTANCE);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.SQLArrayFormatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".SQLArrayFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.StructFormmatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".StructFormmatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.RowIdFormatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".RowIdFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.ElementNodeFormatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".ElementNodeFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.TextNodeFormatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".TextNodeFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.InetAddressFormatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".InetAddressFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.DynaBeanFormatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".DynaBeanFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance("net.arnx.jsonic.TemporalFromatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".TemporalFromatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
 		Converter converter = null;
@@ -361,10 +362,10 @@ public class JSON {
 		CONVERT_MAP.put(LinkedHashMap.class, MapConverter.INSTANCE);
 		CONVERT_MAP.put(Properties.class, PropertiesConverter.INSTANCE);
 
-		converter = getConverterInstance("net.arnx.jsonic.DayOfWeekConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".DayOfWeekConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.MonthConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".MonthConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
 		CONVERT_LIST.add(EnumConverter.INSTANCE);
@@ -378,52 +379,52 @@ public class JSON {
 		CONVERT_LIST.add(CharSequenceConverter.INSTANCE);
 		CONVERT_LIST.add(AppendableConverter.INSTANCE);
 
-		converter = getConverterInstance("net.arnx.jsonic.InetAddressConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".InetAddressConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.NullableConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".NullableConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.DurationConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".DurationConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.InstantConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".InstantConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.LocalDateConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".LocalDateConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.LocalDateTimeConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".LocalDateTimeConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.LocalTimeConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".LocalTimeConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.MonthDayConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".MonthDayConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.OffsetDateTimeConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".OffsetDateTimeConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.OffsetTimeConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".OffsetTimeConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.PeriodConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".PeriodConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.YearConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".YearConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.YearMonthConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".YearMonthConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.ZonedDateTimeConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".ZonedDateTimeConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.ZoneIdConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".ZoneIdConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
-		converter = getConverterInstance("net.arnx.jsonic.ZoneOffsetConverter", cl);
+		converter = getConverterInstance(PACKAGE_NAME + ".ZoneOffsetConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 	}
 
@@ -1154,7 +1155,7 @@ public class JSON {
 	}
 
 	String getMessage(String id, Object... args) {
-		ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
+		ResourceBundle bundle = ResourceBundle.getBundle(PACKAGE_NAME + ".Messages", locale);
 		return MessageFormat.format(bundle.getString(id), args);
 	}
 
@@ -1349,7 +1350,7 @@ public class JSON {
 				propertyStyle = JSON.this.propertyStyle;
 				enumStyle = JSON.this.enumStyle;
 
-				cache = new LocalCache("net.arnx.jsonic.Messages", locale, timeZone);
+				cache = new LocalCache(PACKAGE_NAME + ".Messages", locale, timeZone);
 			}
 		}
 
@@ -1714,8 +1715,7 @@ public class JSON {
 		}
 
 		String getMessage(String id, Object... args) {
-			ResourceBundle bundle = ResourceBundle.getBundle("net.arnx.jsonic.Messages", locale);
-			return MessageFormat.format(bundle.getString(id), args);
+			return cache.getMessage(id, args);
 		}
 	}
 
