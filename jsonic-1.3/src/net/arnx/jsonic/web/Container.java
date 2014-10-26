@@ -225,6 +225,7 @@ public class Container {
 	 * @param method The invoking method.
 	 * @param params The parameters before processing of the target method.
 	 * @return The parameters before processing.
+	 * @throws Exception When any error occurred.
 	 */
 	public Object[] preinvoke(Object component, Method method, Object... params) throws Exception {
 		return params;
@@ -315,6 +316,7 @@ public class Container {
 	 * @param method The invoked method.
 	 * @param result The returned value of the target method call.
 	 * @return The returned value after processed.
+	 * @throws Exception When any error occurred.
 	 */
 	public Object postinvoke(Object component, Method method, Object result) throws Exception {
 		return result;

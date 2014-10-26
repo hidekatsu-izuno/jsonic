@@ -21,9 +21,9 @@ package net.arnx.jsonic;
  * <table border="1" cellpadding="1" cellspacing="0">
  * <caption>Summary of error codes</caption>
  * <tr>
- * 	<th style="background-color: #CCCCFF; text-align: left;">code(range)</th>
- * 	<th style="background-color: #CCCCFF; text-align: left;">error code</th>
- * 	<th style="background-color: #CCCCFF; text-align: left;">description</th>
+ * <th style="background-color: #CCCCFF; text-align: left;">code(range)</th>
+ * <th style="background-color: #CCCCFF; text-align: left;">error code</th>
+ * <th style="background-color: #CCCCFF; text-align: left;">description</th>
  * </tr>
  * <tr><td>000-099</td><td>(all)</td><td>reserved.</td></tr>
  * <tr><td rowspan="2">100-199</td><td>100</td><td>fails to format.</td></tr>
@@ -75,6 +75,8 @@ public class JSONException extends RuntimeException {
 
 	/**
 	 * Returns the line number where the error was found.
+	 *
+	 * @return line number.
 	 */
 	public long getLineNumber() {
 		return lineNumber;
@@ -82,6 +84,8 @@ public class JSONException extends RuntimeException {
 
 	/**
 	 * Returns the column number where the error was found.
+	 *
+	 * @return column number.
 	 */
 	public long getColumnNumber() {
 		return columnNumber;
@@ -89,6 +93,8 @@ public class JSONException extends RuntimeException {
 
 	/**
 	 * Returns the offset in line where the error was found.
+	 *
+	 * @return error offset position number.
 	 */
 	public long getErrorOffset() {
 		return offset;

@@ -589,6 +589,7 @@ public class JSON {
 	/**
 	 * Decodes a json string into a object.
 	 *
+	 * @param <T> return type
 	 * @param source a json string to decode
 	 * @return a decoded object
 	 * @throws JSONException if error occurred when parsing.
@@ -601,6 +602,7 @@ public class JSON {
 	/**
 	 * Decodes a json string into a typed object.
 	 *
+	 * @param <T> return type
 	 * @param source a json string to decode
 	 * @param cls class for converting
 	 * @return a decoded object
@@ -613,6 +615,7 @@ public class JSON {
 	/**
 	 * Decodes a json string into a typed object.
 	 *
+	 * @param <T> return type
 	 * @param source a json string to decode
 	 * @param type type for converting
 	 * @return a decoded object
@@ -626,6 +629,7 @@ public class JSON {
 	/**
 	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 *
+	 * @param <T> return type
 	 * @param in a json stream to decode
 	 * @return a decoded object
 	 * @throws IOException if I/O error occurred.
@@ -639,6 +643,7 @@ public class JSON {
 	/**
 	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 *
+	 * @param <T> return type
 	 * @param in a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
@@ -652,6 +657,7 @@ public class JSON {
 	/**
 	 * Decodes a json stream into a object. (character encoding should be Unicode)
 	 *
+	 * @param <T> return type
 	 * @param in a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
@@ -666,6 +672,7 @@ public class JSON {
 	/**
 	 * Decodes a json stream into a object.
 	 *
+	 * @param <T> return type
 	 * @param reader a json stream to decode
 	 * @return a decoded object
 	 * @throws IOException if I/O error occurred.
@@ -679,6 +686,7 @@ public class JSON {
 	/**
 	 * Decodes a json stream into a object.
 	 *
+	 * @param <T> return type
 	 * @param reader a json stream to decode
 	 * @param cls class for converting
 	 * @return a decoded object
@@ -692,6 +700,7 @@ public class JSON {
 	/**
 	 * Decodes a json stream into a object.
 	 *
+	 * @param <T> return type
 	 * @param reader a json stream to decode
 	 * @param type type for converting
 	 * @return a decoded object
@@ -960,6 +969,7 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param out a destination to output a json string.
 	 * @return a reference to 'out' object in parameters
+	 * @throws IOException when I/O error occurred.
 	 */
 	public OutputStream format(Object source, OutputStream out) throws IOException {
 		format(source, new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
@@ -972,6 +982,7 @@ public class JSON {
 	 * @param source a object to encode.
 	 * @param ap a destination. example: StringBuilder, Writer, ...
 	 * @return a json string
+	 * @throws IOException when I/O error occurred.
 	 */
 	public Appendable format(Object source, Appendable ap) throws IOException {
 		OutputSource out;
@@ -1166,6 +1177,7 @@ public class JSON {
 	/**
 	 * Converts Map, List, Number, String, Boolean or null to other Java Objects after parsing.
 	 *
+	 * @param <T> return type.
 	 * @param context current context.
 	 * @param value null or the instance of Map, List, Number, String or Boolean.
 	 * @param cls class for converting
@@ -1462,6 +1474,7 @@ public class JSON {
 		/**
 		 * Returns the key object in any depth. the negative value means relative to current depth.
 		 *
+		 * @param depth depth number.
 		 * @return Root node is '$'. When the parent is a array, the key is Integer, otherwise String.
 		 */
 		public Object getKey(int depth) {
