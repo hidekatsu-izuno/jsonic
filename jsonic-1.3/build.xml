@@ -29,10 +29,6 @@
 			</classpath>
 		</javac>
 
-		<condition property="jar.excludes" value="**/*.java">
-			<isfalse value="${debug}"/>
-		</condition>
-
 		<jar destfile="${tmp}/${project.name}-${project.version}.jar">
 			<fileset dir="${tmp}/build" includes="**/*.class" />
 			<fileset dir="src" excludes="**/*.java" />
@@ -66,9 +62,9 @@
 	</target>
 
 	<target name="dist" depends="build-sample">
-		<javadoc sourcepath="src" destdir="${tmp}/docs/api" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true"
+		<javadoc sourcepath="src" destdir="${tmp}/javadoc" encoding="UTF-8" charset="UTF-8" docencoding="UTF-8" author="true"
 			additionalparam="-J-Duser.language=en_US">
-			<link href="http://docs.oracle.com/javase/7/docs/api/" />
+			<link href="http://docs.oracle.com/javase/8/docs/api/" />
 			<excludepackage name="net.arnx.jsonic.io.*" />
 			<excludepackage name="net.arnx.jsonic.parse.*" />
 			<excludepackage name="net.arnx.jsonic.util.*" />
@@ -79,6 +75,10 @@
 				<fileset dir="${webapps}/guice/WEB-INF/lib" includes="*.jar" />
 			</classpath>
 		</javadoc>
+		<jar destfile="${tmp}/${project.name}-${project.version}-javadoc.jar">
+			<fileset dir="${tmp}/javadoc" />
+		</jar>
+		<delete dir="javadoc" />
 	</target>
 
 	<target name="dist-all">
@@ -86,8 +86,6 @@
 			<param name="tmp" location="${tmp}/java" />
 		</antcall>
 		<zip destfile="${dist}/${project.name}-${project.version}.zip">
-			<zipfileset dir="src" prefix="${project.name}-${project.version}/src/java" />
-			<zipfileset dir="${tmp}/java/docs" prefix="${project.name}-${project.version}/docs/java" />
 			<zipfileset file="${tmp}/java/${project.name}-${project.version}*.jar" prefix="${project.name}-${project.version}" />
 
 			<zipfileset dir="${tmp}/java/sample/basic" prefix="${project.name}-${project.version}/sample" />
