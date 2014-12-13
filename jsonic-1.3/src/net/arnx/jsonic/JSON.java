@@ -943,7 +943,7 @@ public class JSON {
 		try {
 			int len;
 			if (source == null) {
-				return "null";
+				len = 4;
 			} else if (source instanceof CharSequence) {
 				len = ((CharSequence)source).length() + 16;
 			} else if (source instanceof Boolean) {
@@ -1202,7 +1202,10 @@ public class JSON {
 				c = SerializableConverter.INSTANCE;
 			} else if (String.class.equals(hint.type())) {
 				c = StringSerializableConverter.INSTANCE;
+			} else if (hint.type() != Object.class && cls.isAssignableFrom(hint.type())) {
+				cls = hint.type().asSubclass(cls);
 			}
+
 		}
 
 		if (c == null) {
