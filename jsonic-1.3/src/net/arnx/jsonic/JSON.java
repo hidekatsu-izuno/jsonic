@@ -1202,10 +1202,7 @@ public class JSON {
 				c = SerializableConverter.INSTANCE;
 			} else if (String.class.equals(hint.type())) {
 				c = StringSerializableConverter.INSTANCE;
-			} else if (hint.type() != Object.class && cls.isAssignableFrom(hint.type())) {
-				cls = hint.type().asSubclass(cls);
 			}
-
 		}
 
 		if (c == null) {
