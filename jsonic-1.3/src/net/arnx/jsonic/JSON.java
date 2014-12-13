@@ -943,7 +943,7 @@ public class JSON {
 		try {
 			int len;
 			if (source == null) {
-				len = 4;
+				return "null";
 			} else if (source instanceof CharSequence) {
 				len = ((CharSequence)source).length() + 16;
 			} else if (source instanceof Boolean) {
@@ -1202,6 +1202,8 @@ public class JSON {
 				c = SerializableConverter.INSTANCE;
 			} else if (String.class.equals(hint.type())) {
 				c = StringSerializableConverter.INSTANCE;
+			} else if (hint.type() != Object.class && cls.isAssignableFrom(hint.type())) {
+				cls = hint.type().asSubclass(cls);
 			}
 		}
 
@@ -1261,9 +1263,6 @@ public class JSON {
 
 	protected <T> T create(Context context, Class<? extends T> c) throws Exception {
 		Object instance = null;
-
-		JSONHint hint = context.getHint();
-		if (hint != null && hint.type() != Object.class) c = hint.type().asSubclass(c);
 
 		if (Collection.class.equals(c) || List.class.equals(c) || ArrayList.class.equals(c)) {
 			if (context.createSizeHint >= 0) {

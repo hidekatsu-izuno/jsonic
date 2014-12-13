@@ -29,9 +29,8 @@ public class JSONBugTest {
 	public void testSuperClass() {
 		TestClass test = new TestClass();
 		assertEquals("{\"test\":{\"hoge\":\"hoge\"}}", JSON.encode(test));
-
-		System.out.println(JSON.decode("{\"test\":{\"hoge\":\"hoge\"}}", TestClass.class).test.getClass());
-		assertEquals(test, JSON.decode("{\"test\":{\"hoge\":\"hoge\"}}", TestClass.class));
+		((SubClass)test.test).hoge = "bar";
+		assertEquals(test, JSON.decode("{\"test\":{\"hoge\":\"bar\"}}", TestClass.class));
 	}
 
 	public static class TestClass {
@@ -61,6 +60,11 @@ public class JSONBugTest {
 			} else if (!test.equals(other.test))
 				return false;
 			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "TestClass [test=" + test + "]";
 		}
 	}
 
@@ -114,6 +118,11 @@ public class JSONBugTest {
 			} else if (!hoge.equals(other.hoge))
 				return false;
 			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "SubClass [hoge=" + hoge + "]";
 		}
 	}
 }
