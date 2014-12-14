@@ -2,6 +2,8 @@ package net.arnx.jsonic;
 
 import static org.junit.Assert.assertEquals;
 
+import java.lang.reflect.Type;
+
 import org.junit.Test;
 
 import com.google.inject.internal.Objects;
@@ -31,6 +33,22 @@ public class JSONBugTest {
 		assertEquals("{\"test\":{\"hoge\":\"hoge\"}}", JSON.encode(test));
 		((SubClass)test.test).hoge = "bar";
 		assertEquals(test, JSON.decode("{\"test\":{\"hoge\":\"bar\"}}", TestClass.class));
+	}
+
+	public void testPreformatNull() {
+		JSON json = new JSON() {
+			@Override
+			protected Object preformatNull(Context context, Type type) throws Exception {
+				if (type == String.class) {
+					return "";
+				}
+
+				return super.preformatNull(context, type);
+			}
+		};
+
+		assertEquals("null", json.format(null));
+		assertEquals("{\"str\":\"\",\"num\":null,\"bool\":null}", json.format(new PreformatNullBean()));
 	}
 
 	public static class TestClass {
@@ -124,5 +142,16 @@ public class JSONBugTest {
 		public String toString() {
 			return "SubClass [hoge=" + hoge + "]";
 		}
+	}
+
+	public static class PreformatNullBean {
+		public PreformatNullBean() {
+		}
+
+		public String str;
+
+		public Integer num;
+
+		public Boolean bool;
 	}
 }

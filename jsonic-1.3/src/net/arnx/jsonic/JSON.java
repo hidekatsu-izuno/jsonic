@@ -1008,7 +1008,7 @@ public class JSON {
 		}
 
 		context.enter(ROOT, null);
-		source = context.preformatInternal(source);
+		source = context.preformatInternal((source != null) ? source.getClass() : Object.class, source);
 		context.formatInternal(source, out);
 		context.exit();
 		out.flush();
@@ -1031,6 +1031,10 @@ public class JSON {
 		}
 
 		return new JSONWriter(new Context(), out);
+	}
+
+	protected Object preformatNull(Context context, Type type) throws Exception {
+		return null;
 	}
 
 	/**
@@ -1605,20 +1609,21 @@ public class JSON {
 			return sb.toString();
 		}
 
-		final Object preformatInternal(Object value) {
-			if (value == null) {
-				return null;
-			} else if (getDepth() > getMaxDepth()) {
-				return null;
-			} else if (JSON.this.getClass() != JSON.class) {
-				try {
+		final Object preformatInternal(Type type, Object value) {
+			try {
+				if (value == null) {
+					return preformatNull(this, type);
+				} else if (getDepth() > getMaxDepth()) {
+					return null;
+				} else if (JSON.this.getClass() != JSON.class) {
 					return preformat(this, value);
-				} catch (Exception e) {
-					throw new JSONException(getMessage("json.format.ConversionError", value, this),
-						JSONException.PREFORMAT_ERROR, e);
+				} else {
+					return value;
 				}
+			} catch (Exception e) {
+				throw new JSONException(getMessage("json.format.ConversionError", value, this),
+					JSONException.PREFORMAT_ERROR, e);
 			}
-			return value;
 		}
 
 		final Formatter formatInternal(final Object src, final OutputSource ap) throws IOException {

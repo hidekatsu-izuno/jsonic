@@ -692,6 +692,7 @@ final class ObjectArrayFormatter implements Formatter {
 
 		Class<?> lastClass = null;
 		Formatter lastFormatter = null;
+		Class<?> cType = array.getClass().getComponentType();
 
 		out.append('[');
 		int i = 0;
@@ -706,7 +707,7 @@ final class ObjectArrayFormatter implements Formatter {
 				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(i, hint);
-			item = context.preformatInternal(item);
+			item = context.preformatInternal(cType, item);
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
@@ -891,7 +892,7 @@ final class ListFormatter implements Formatter {
 				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(count, hint);
-			item = context.preformatInternal(item);
+			item = context.preformatInternal((item != null) ? item.getClass() : Object.class, item);
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
@@ -948,7 +949,7 @@ final class IteratorFormatter implements Formatter {
 				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(count, hint);
-			item = context.preformatInternal(item);
+			item = context.preformatInternal((item != null) ? item.getClass() : Object.class, item);
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
@@ -1022,7 +1023,7 @@ final class EnumerationFormatter implements Formatter {
 				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(count, hint);
-			item = context.preformatInternal(item);
+			item = context.preformatInternal((item != null) ? item.getClass() : Object.class, item);
 			if (item == null) {
 				NullFormatter.INSTANCE.format(context, src, item, out);
 			} else if (hint == null) {
@@ -1084,7 +1085,7 @@ final class MapFormatter implements Formatter {
 			out.append(':');
 			if (context.isPrettyPrint()) out.append(' ');
 			context.enter(key, hint);
-			value = context.preformatInternal(value);
+			value = context.preformatInternal((value != null) ? value.getClass() : Object.class, value);
 			if (value == null) {
 				NullFormatter.INSTANCE.format(context, src, value, out);
 			} else if (hint == null) {
@@ -1157,7 +1158,7 @@ final class ObjectFormatter implements Formatter {
 				context.enter(key, hint);
 				key = null;
 
-				value = context.preformatInternal(value);
+				value = context.preformatInternal(prop.getReadGenericType(), value);
 				if (value == null) {
 					NullFormatter.INSTANCE.format(context, src, value, out);
 				} else if (hint == null) {
@@ -1310,7 +1311,7 @@ final class DynaBeanFormatter implements Formatter {
 				if (context.isPrettyPrint()) out.append(' ');
 				context.enter(key, hint);
 				key = null;
-				value = context.preformatInternal(value);
+				value = context.preformatInternal(dp.getType(), value);
 				context.formatInternal(value, out);
 				context.exit();
 				count++;
@@ -1412,7 +1413,7 @@ final class ElementNodeFormatter implements Formatter {
 						context.appendIndent(out, context.getDepth() + 1);
 					}
 					context.enter(i + 2, hint);
-					value = context.preformatInternal(value);
+					value = context.preformatInternal(value.getClass(), value);
 					context.formatInternal(value, out);
 					context.exit();
 				}
