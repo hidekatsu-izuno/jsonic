@@ -707,6 +707,11 @@ public class JSONTest {
 		json.setSuppressNull(true);
 		assertEquals("{\"a\":100,\"list\":[100,null]}", json.format(obj));
 
+		json.setPrettyPrint(true);
+		json.setIndentText("\t");
+		json.setInitialIndent(0);
+		assertEquals("{\n\t\"a\": 100,\n\t\"list\": [\n\t\t100,\n\t\tnull\n\t]\n}", json.format(obj));
+
 		json = new Point2DJSON();
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Double(10.5, 10.5)));
 		assertEquals("[10.5,10.5]", json.format(new Point2D.Float(10.5f, 10.5f)));

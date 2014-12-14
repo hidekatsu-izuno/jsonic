@@ -1181,7 +1181,7 @@ final class ObjectFormatter implements Formatter {
 		}
 		if (context.isPrettyPrint() && count > 0) {
 			out.append('\n');
-			context.appendIndent(out, context.getDepth() + 1);
+			context.appendIndent(out, context.getDepth());
 		}
 		out.append('}');
 	}
