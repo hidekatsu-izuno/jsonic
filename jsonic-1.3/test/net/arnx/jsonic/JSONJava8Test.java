@@ -2,6 +2,7 @@ package net.arnx.jsonic;
 
 import static org.junit.Assert.*;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -17,6 +18,10 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 import org.junit.Test;
 
@@ -24,7 +29,7 @@ public class JSONJava8Test {
 
 	@Test
 	public void testEncode() {
-		Java8Bean bean = new Java8Bean();
+		Java8DataTimeAPIBean bean = new Java8DataTimeAPIBean();
 		bean.duration = Duration.ofDays(3L);
 		bean.instant = Instant.from(ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z")));
 		bean.localDate = LocalDate.of(2010, 3, 3);
@@ -58,11 +63,39 @@ public class JSONJava8Test {
 				+ "\"zonedDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"zonedOffset\":\"Z\""
 				+ "}", JSON.encode(bean));
+
+		Java8OptionalBean obean = new Java8OptionalBean();
+		obean.optionalInt = OptionalInt.of(2);
+		obean.optionalLong = OptionalLong.of(10000L);
+		obean.optionalDouble = OptionalDouble.of(100.123D);
+		obean.optionalBigDecimal = Optional.of(new BigDecimal("3.14"));
+		obean.optionalBean = Optional.of(new OptionalBeanBean());
+		assertEquals("{"
+				+ "\"optionalBean\":{\"text\":\"text\"},"
+				+ "\"optionalBigDecimal\":3.14,"
+				+ "\"optionalDouble\":100.123,"
+				+ "\"optionalInt\":2,"
+				+ "\"optionalLong\":10000"
+				+ "}", JSON.encode(obean));
+
+		obean = new Java8OptionalBean();
+		obean.optionalInt = OptionalInt.empty();
+		obean.optionalLong = OptionalLong.empty();
+		obean.optionalDouble = OptionalDouble.empty();
+		obean.optionalBigDecimal = Optional.empty();
+		obean.optionalBean = Optional.empty();
+		assertEquals("{"
+				+ "\"optionalBean\":null,"
+				+ "\"optionalBigDecimal\":null,"
+				+ "\"optionalDouble\":null,"
+				+ "\"optionalInt\":null,"
+				+ "\"optionalLong\":null"
+				+ "}", JSON.encode(obean));
 	}
 
 	@Test
 	public void testDecode() {
-		Java8Bean bean = new Java8Bean();
+		Java8DataTimeAPIBean bean = new Java8DataTimeAPIBean();
 		bean.duration = Duration.ofDays(3L);
 		bean.instant = Instant.from(ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z")));
 		bean.localDate = LocalDate.of(2010, 3, 3);
@@ -95,10 +128,38 @@ public class JSONJava8Test {
 				+ "\"zoneId\":\"UTC\","
 				+ "\"zonedDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"zonedOffset\":\"Z\""
-				+ "}", Java8Bean.class));
+				+ "}", Java8DataTimeAPIBean.class));
+
+		Java8OptionalBean obean = new Java8OptionalBean();
+		obean.optionalInt = OptionalInt.of(2);
+		obean.optionalLong = OptionalLong.of(10000L);
+		obean.optionalDouble = OptionalDouble.of(100.123D);
+		obean.optionalBigDecimal = Optional.of(new BigDecimal("3.14"));
+		obean.optionalBean = Optional.of(new OptionalBeanBean());
+		assertEquals(obean, JSON.decode("{"
+				+ "\"optionalBean\":{\"text\":\"text\"},"
+				+ "\"optionalBigDecimal\":3.14,"
+				+ "\"optionalDouble\":100.123,"
+				+ "\"optionalInt\":2,"
+				+ "\"optionalLong\":10000"
+				+ "}",  Java8OptionalBean.class));
+
+		obean = new Java8OptionalBean();
+		obean.optionalInt = OptionalInt.empty();
+		obean.optionalLong = OptionalLong.empty();
+		obean.optionalDouble = OptionalDouble.empty();
+		obean.optionalBigDecimal = Optional.empty();
+		obean.optionalBean = Optional.empty();
+		assertEquals(obean, JSON.decode("{"
+				+ "\"optionalBean\":null,"
+				+ "\"optionalBigDecimal\":null,"
+				+ "\"optionalDouble\":null,"
+				+ "\"optionalInt\":null,"
+				+ "\"optionalLong\":null"
+				+ "}", Java8OptionalBean.class));
 	}
 
-	public static class Java8Bean {
+	public static class Java8DataTimeAPIBean {
 		public Duration duration;
 		public Instant instant;
 		public LocalDate localDate;
@@ -158,7 +219,7 @@ public class JSONJava8Test {
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			Java8Bean other = (Java8Bean) obj;
+			Java8DataTimeAPIBean other = (Java8DataTimeAPIBean) obj;
 			if (duration == null) {
 				if (other.duration != null)
 					return false;
@@ -233,9 +294,10 @@ public class JSONJava8Test {
 				return false;
 			return true;
 		}
+
 		@Override
 		public String toString() {
-			return "Java8Bean [duration=" + duration + ", instant=" + instant
+			return "Java8DataTimeAPIBean [duration=" + duration + ", instant=" + instant
 					+ ", localDate=" + localDate + ", localDateTime="
 					+ localDateTime + ", localTime=" + localTime
 					+ ", monthDay=" + monthDay + ", offsetDateTimey="
@@ -245,7 +307,110 @@ public class JSONJava8Test {
 					+ zonedDateTime + ", zoneId=" + zoneId
 					+ ", zonedOffset=" + zonedOffset + "]";
 		}
+	}
 
+	public static class Java8OptionalBean {
+		public OptionalInt optionalInt;
+		public OptionalLong optionalLong;
+		public OptionalDouble optionalDouble;
+		public Optional<BigDecimal> optionalBigDecimal;
+		public Optional<OptionalBeanBean> optionalBean;
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((optionalBean == null) ? 0 : optionalBean.hashCode());
+			result = prime
+					* result
+					+ ((optionalBigDecimal == null) ? 0 : optionalBigDecimal
+							.hashCode());
+			result = prime
+					* result
+					+ ((optionalDouble == null) ? 0 : optionalDouble.hashCode());
+			result = prime * result
+					+ ((optionalInt == null) ? 0 : optionalInt.hashCode());
+			result = prime * result
+					+ ((optionalLong == null) ? 0 : optionalLong.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Java8OptionalBean other = (Java8OptionalBean) obj;
+			if (optionalBean == null) {
+				if (other.optionalBean != null)
+					return false;
+			} else if (!optionalBean.equals(other.optionalBean))
+				return false;
+			if (optionalBigDecimal == null) {
+				if (other.optionalBigDecimal != null)
+					return false;
+			} else if (!optionalBigDecimal.equals(other.optionalBigDecimal))
+				return false;
+			if (optionalDouble == null) {
+				if (other.optionalDouble != null)
+					return false;
+			} else if (!optionalDouble.equals(other.optionalDouble))
+				return false;
+			if (optionalInt == null) {
+				if (other.optionalInt != null)
+					return false;
+			} else if (!optionalInt.equals(other.optionalInt))
+				return false;
+			if (optionalLong == null) {
+				if (other.optionalLong != null)
+					return false;
+			} else if (!optionalLong.equals(other.optionalLong))
+				return false;
+			return true;
+		}
+		@Override
+		public String toString() {
+			return "Java8OptionalBean [optionalInt=" + optionalInt
+					+ ", optionalLong=" + optionalLong + ", optionalDouble="
+					+ optionalDouble + ", optionalBigDecimal="
+					+ optionalBigDecimal + ", optionalBean=" + optionalBean
+					+ "]";
+		}
+	}
 
+	public static class OptionalBeanBean {
+		public String text = "text";
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((text == null) ? 0 : text.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			OptionalBeanBean other = (OptionalBeanBean) obj;
+			if (text == null) {
+				if (other.text != null)
+					return false;
+			} else if (!text.equals(other.text))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "OptionalBeanBean [text=" + text + "]";
+		}
 	}
 }

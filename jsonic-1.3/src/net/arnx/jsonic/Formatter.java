@@ -42,8 +42,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.RandomAccess;
 import java.util.TimeZone;
+
+import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.JSON.Mode;
+import net.arnx.jsonic.io.OutputSource;
+import net.arnx.jsonic.util.Base64;
+import net.arnx.jsonic.util.BeanInfo;
+import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.PropertyInfo;
 
 import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaProperty;
@@ -57,14 +69,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
-
-import net.arnx.jsonic.JSON.Context;
-import net.arnx.jsonic.JSON.Mode;
-import net.arnx.jsonic.io.OutputSource;
-import net.arnx.jsonic.util.Base64;
-import net.arnx.jsonic.util.BeanInfo;
-import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.PropertyInfo;
 
 interface Formatter {
 	boolean accept(Object o);
@@ -281,6 +285,24 @@ final class NumberFormatter implements Formatter {
 			out.append(o.toString());
 		}
 	}
+
+	public void format(final Context context, final int num, final OutputSource out) throws Exception {
+		NumberFormat f = context.getNumberFormat();
+		if (f != null) {
+			StringFormatter.serialize(context, f.format(num), out);
+		} else {
+			out.append(Integer.toString(num));
+		}
+	}
+
+	public void format(final Context context, final long num, final OutputSource out) throws Exception {
+		NumberFormat f = context.getNumberFormat();
+		if (f != null) {
+			StringFormatter.serialize(context, f.format(num), out);
+		} else {
+			out.append(Long.toString(num));
+		}
+	}
 }
 
 final class EnumFormatter implements Formatter {
@@ -319,15 +341,18 @@ final class FloatFormatter implements Formatter {
 
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		format(context, ((Number)o).doubleValue(), out);
+	}
+
+	public void format(final Context context, final double d, final OutputSource out) throws Exception {
 		NumberFormat f = context.getNumberFormat();
 		if (f != null) {
-			StringFormatter.serialize(context, f.format(o), out);
+			StringFormatter.serialize(context, f.format(d), out);
 		} else {
-			double d = ((Number) o).doubleValue();
 			if (Double.isNaN(d) || Double.isInfinite(d)) {
 				if (context.getMode() != Mode.SCRIPT) {
 					out.append('"');
-					out.append(o.toString());
+					out.append(Double.toString(d));
 					out.append('"');
 				} else if (Double.isNaN(d)) {
 					out.append("Number.NaN");
@@ -337,7 +362,7 @@ final class FloatFormatter implements Formatter {
 					out.append("_INFINITY");
 				}
 			} else {
-				out.append(o.toString());
+				out.append(Double.toString(d));
 			}
 		}
 	}
@@ -1458,14 +1483,14 @@ final class TextNodeFormatter implements Formatter {
 	}
 }
 
-final class TemporalFromatter implements Formatter {
+final class TemporalFormatter implements Formatter {
 	private static final Class<?>[] targets = {
 		TemporalAccessor.class,
 		TemporalAmount.class,
 		ZoneId.class
 	};
 
-	public TemporalFromatter() {
+	public TemporalFormatter() {
 	}
 
 	@Override
@@ -1486,5 +1511,114 @@ final class TemporalFromatter implements Formatter {
 	@Override
 	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
 		StringFormatter.serialize(context, o.toString(), out);
+	}
+}
+
+
+final class OptionalIntFormatter implements Formatter {
+	public static final OptionalIntFormatter INSTNACE = new OptionalIntFormatter();
+
+	public OptionalIntFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o != null && OptionalInt.class.equals(o.getClass());
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		OptionalInt optional = (OptionalInt)o;
+		if (optional.isPresent()) {
+			NumberFormatter.INSTANCE.format(context, optional.getAsInt(), out);
+		} else {
+			NullFormatter.INSTANCE.format(context, src, o, out);
+		}
+	}
+}
+
+final class OptionalLongFormatter implements Formatter {
+	public static final OptionalLongFormatter INSTNACE = new OptionalLongFormatter();
+
+	public OptionalLongFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o != null && OptionalLong.class.equals(o.getClass());
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		OptionalLong optional = (OptionalLong)o;
+		if (optional.isPresent()) {
+			NumberFormatter.INSTANCE.format(context, optional.getAsLong(), out);
+		} else {
+			NullFormatter.INSTANCE.format(context, src, o, out);
+		}
+	}
+}
+
+final class OptionalDoubleFormatter implements Formatter {
+	public static final OptionalDoubleFormatter INSTNACE = new OptionalDoubleFormatter();
+
+	public OptionalDoubleFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o != null && OptionalDouble.class.equals(o.getClass());
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		OptionalDouble optional = (OptionalDouble)o;
+		if (optional.isPresent()) {
+			FloatFormatter.INSTANCE.format(context, optional.getAsDouble(), out);
+		} else {
+			NullFormatter.INSTANCE.format(context, src, o, out);
+		}
+	}
+}
+
+final class OptionalFormatter implements Formatter {
+	public static final OptionalFormatter INSTNACE = new OptionalFormatter();
+
+	public OptionalFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o != null && Optional.class.isAssignableFrom(o.getClass());
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		Optional<?> optional = (Optional<?>)o;
+		if (optional.isPresent()) {
+			context.formatInternal(optional.get(), out);
+		} else {
+			NullFormatter.INSTANCE.format(context, src, o, out);
+		}
 	}
 }

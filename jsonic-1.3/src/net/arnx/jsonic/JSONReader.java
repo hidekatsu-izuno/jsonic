@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,75 +28,80 @@ import net.arnx.jsonic.io.InputSource;
 import net.arnx.jsonic.parse.JSONParser;
 import net.arnx.jsonic.parse.ScriptParser;
 import net.arnx.jsonic.parse.TraditionalParser;
+import net.arnx.jsonic.util.ClassUtil;
 
 public class JSONReader {
 	private Context context;
 	private JSONParser parser;
 	private JSONEventType type;
-	
+
 	JSONReader(Context context, InputSource in, boolean multilineMode, boolean ignoreWhitespace) {
 		this.context = context;
-		
+
 		switch (context.getMode()) {
 		case STRICT:
-			parser = new JSONParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace, 
+			parser = new JSONParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace,
 					context.getLocalCache());
 			break;
 		case SCRIPT:
-			parser = new ScriptParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace, 
+			parser = new ScriptParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace,
 					context.getLocalCache());
 			break;
 		default:
-			parser = new TraditionalParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace, 
+			parser = new TraditionalParser(in, context.getMaxDepth(), multilineMode, ignoreWhitespace,
 					context.getLocalCache());
 		}
 	}
-	
+
 	public JSONEventType next() throws IOException {
 		type = parser.next();
 		return type;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T getValue(Class<T> cls) throws IOException {
-		return (T)context.convertInternal(getValue(), cls);
+		return (T)context.convertInternal(getValue(), cls, cls);
 	}
-	
-	public Object getValue(Type t) throws IOException {
-		return context.convertInternal(getValue(), t);
+
+	public Object getValue(Type type) throws IOException {
+		if (type instanceof TypeReference<?>) {
+			type = ((TypeReference<?>)type).getType();
+		}
+
+		return context.convertInternal(getValue(), ClassUtil.getRawType(type), type);
 	}
-	
+
 	public Map<?, ?> getMap() throws IOException {
 		return (Map<?, ?>)getValue();
 	}
-	
+
 	public List<?> getList() throws IOException {
 		return (List<?>)getValue();
 	}
-	
+
 	public String getString() throws IOException {
 		return (String)parser.getValue();
 	}
-	
+
 	public BigDecimal getNumber() throws IOException {
 		return (BigDecimal)parser.getValue();
 	}
-	
+
 	public Boolean getBoolean() throws IOException {
 		return (Boolean)parser.getValue();
 	}
-	
+
 	Object getValue() throws IOException {
 		if (type == null) {
 			throw new IllegalStateException("you should call next.");
 		}
-		
+
 		int ilen = 0;
 		int[] istack = new int[8];
-		
+
 		int olen = 0;
 		Object[] ostack = new Object[16];
-		
+
 		do {
 			switch (type) {
 			case START_OBJECT:
@@ -129,9 +134,9 @@ public class JSONReader {
 				int start = istack[--ilen];
 				int len = olen - start;
 				Map<Object, Object> object = new LinkedHashMap<Object, Object>(
-						(len < 2) ? 4 : 
-						(len < 4) ? 8 : 
-						(len < 12) ? 16 : 
+						(len < 2) ? 4 :
+						(len < 4) ? 8 :
+						(len < 12) ? 16 :
 						(int)(len / 0.75f) + 1);
 				for (int i = start; i < olen; i+=2) {
 					object.put(ostack[i], ostack[i+1]);
@@ -141,19 +146,19 @@ public class JSONReader {
 				ostack[olen++] = object;
 				break;
 			}
-			
+
 			if (parser.isInterpretterMode() && ilen == 0) {
 				break;
 			}
 		} while ((type = parser.next()) != null);
-		
+
 		return ostack[0];
 	}
-	
+
 	public int getDepth() {
 		return parser.getDepth();
 	}
-	
+
 	private int[] iexpand(int[] array, int min) {
 		if (min > array.length) {
 			int[] narray = new int[array.length * 3 / 2 + 1];
@@ -162,7 +167,7 @@ public class JSONReader {
 		}
 		return array;
 	}
-	
+
 	private Object[] oexpand(Object[] array, int min) {
 		if (min > array.length) {
 			Object[] narray = new Object[array.length * 3 / 2 + 1];

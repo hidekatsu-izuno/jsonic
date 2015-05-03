@@ -181,10 +181,11 @@ public class JSON {
 	static final Character ROOT = '$';
 
 	private static final String PACKAGE_NAME = JSON.class.getName().substring(0, JSON.class.getName().lastIndexOf('.'));
+	private static final Map<Class<?>, Class<?>> PRIMITIVE_MAP = new HashMap<Class<?>, Class<?>>(10);
 	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
-	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(20);
+	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(24);
 	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
-	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>(20);
+	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>(24);
 
 	static {
 		ClassLoader cl = JSON.class.getClassLoader();
@@ -201,6 +202,15 @@ public class JSON {
 		} catch (SecurityException e) {
 			// no handle
 		}
+
+		PRIMITIVE_MAP.put(boolean.class, Boolean.class);
+		PRIMITIVE_MAP.put(byte.class, Byte.class);
+		PRIMITIVE_MAP.put(short.class, Short.class);
+		PRIMITIVE_MAP.put(int.class, Integer.class);
+		PRIMITIVE_MAP.put(long.class, Long.class);
+		PRIMITIVE_MAP.put(float.class, Float.class);
+		PRIMITIVE_MAP.put(double.class, Double.class);
+		PRIMITIVE_MAP.put(char.class, Character.class);
 
 		Formatter formatter = null;
 		FORMAT_MAP.put(boolean.class, PlainFormatter.INSTANCE);
@@ -292,7 +302,19 @@ public class JSON {
 		formatter = getFormatterInstance(PACKAGE_NAME + ".DynaBeanFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance(PACKAGE_NAME + ".TemporalFromatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".OptionalIntFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
+		formatter = getFormatterInstance(PACKAGE_NAME + ".OptionalLongFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
+		formatter = getFormatterInstance(PACKAGE_NAME + ".OptionalDoubleFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
+		formatter = getFormatterInstance(PACKAGE_NAME + ".OptionalFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
+		formatter = getFormatterInstance(PACKAGE_NAME + ".TemporalFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
 		Converter converter = null;
@@ -383,6 +405,18 @@ public class JSON {
 		if (converter != null) CONVERT_LIST.add(converter);
 
 		converter = getConverterInstance(PACKAGE_NAME + ".NullableConverter", cl);
+		if (converter != null) CONVERT_LIST.add(converter);
+
+		converter = getConverterInstance(PACKAGE_NAME + ".OptionalIntConverter", cl);
+		if (converter != null) CONVERT_LIST.add(converter);
+
+		converter = getConverterInstance(PACKAGE_NAME + ".OptionalLongConverter", cl);
+		if (converter != null) CONVERT_LIST.add(converter);
+
+		converter = getConverterInstance(PACKAGE_NAME + ".OptionalDoubleConverter", cl);
+		if (converter != null) CONVERT_LIST.add(converter);
+
+		converter = getConverterInstance(PACKAGE_NAME + ".OptionalConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
 		converter = getConverterInstance(PACKAGE_NAME + ".DurationConverter", cl);
@@ -1090,12 +1124,16 @@ public class JSON {
 			is = new CharSequenceInputSource(cs);
 		}
 
+		if (type instanceof TypeReference<?>) {
+			type = ((TypeReference<?>)type).getType();
+		}
+
 		T value = null;
 		try {
 			Context context = new Context();
 			JSONReader jreader = new JSONReader(context, is, false, true);
 			Object result = (jreader.next() != null) ? jreader.getValue() : null;
-			value = (T)context.convertInternal(result, type);
+			value = (T)context.convertInternal(result, ClassUtil.getRawType(type), type);
 		} catch (IOException e) {
 			// never occur
 		}
@@ -1115,10 +1153,14 @@ public class JSON {
 
 	@SuppressWarnings("unchecked")
 	public <T> T parse(InputStream in, Type type) throws IOException, JSONException {
+		if (type instanceof TypeReference<?>) {
+			type = ((TypeReference<?>)type).getType();
+		}
+
 		Context context = new Context();
 		JSONReader jreader = new JSONReader(context, new ReaderInputSource(in), false, true);
 		Object result = (jreader.next() != null) ? jreader.getValue() : null;
-		return (T)context.convertInternal(result, type);
+		return (T)context.convertInternal(result, ClassUtil.getRawType(type), type);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1134,10 +1176,14 @@ public class JSON {
 
 	@SuppressWarnings("unchecked")
 	public <T> T parse(Reader reader, Type type) throws IOException, JSONException {
+		if (type instanceof TypeReference<?>) {
+			type = ((TypeReference<?>)type).getType();
+		}
+
 		Context context = new Context();
 		JSONReader jreader = new JSONReader(context, new ReaderInputSource(reader), false, true);
 		Object result = (jreader.next() != null) ? jreader.getValue() : null;
-		return (T)context.convertInternal(result, type);
+		return (T)context.convertInternal(result, ClassUtil.getRawType(type), type);
 	}
 
 	public JSONReader getReader(CharSequence cs) {
@@ -1175,7 +1221,11 @@ public class JSON {
 	}
 
 	public Object convert(Object value, Type type)  throws JSONException {
-		return (new Context()).convertInternal(value, type);
+		if (type instanceof TypeReference<?>) {
+			type = ((TypeReference<?>)type).getType();
+		}
+
+		return (new Context()).convertInternal(value, ClassUtil.getRawType(type), type);
 	}
 
 	/**
@@ -1192,11 +1242,7 @@ public class JSON {
 	protected <T> T postparse(Context context, Object value, Class<? extends T> cls, Type type) throws Exception {
 		Converter c = null;
 
-		if (value == null) {
-			if (!cls.isPrimitive()) {
-				c = NullConverter.INSTANCE;
-			}
-		} else {
+		if (value != null) {
 			JSONHint hint = context.getHint();
 			if (hint == null) {
 				// no handle
@@ -1503,7 +1549,7 @@ public class JSON {
 			enter(key, getHint());
 			T o = JSON.this.postparse(this, value, c, c);
 			exit();
-			return (T)((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
+			return (T)((c.isPrimitive()) ? PRIMITIVE_MAP.get(c) : c).cast(o);
 		}
 
 		public Object convert(Object key, Object value, Type t) throws Exception {
@@ -1511,7 +1557,7 @@ public class JSON {
 			enter(key, getHint());
 			Object o = JSON.this.postparse(this, value, c, t);
 			exit();
-			return ((c.isPrimitive()) ? PlainConverter.getDefaultValue(c).getClass() : c).cast(o);
+			return ((c.isPrimitive()) ? PRIMITIVE_MAP.get(c) : c).cast(o);
 		}
 
 		void enter(Object key, JSONHint hint) {
@@ -1690,13 +1736,7 @@ public class JSON {
 		}
 
 		@SuppressWarnings("unchecked")
-		<T> T convertInternal(Object value, Type type) throws JSONException {
-			if (type instanceof TypeReference<?>) {
-				type = ((TypeReference<?>)type).getType();
-			}
-
-			Class<?> cls = ClassUtil.getRawType(type);
-
+		<T> T convertInternal(Object value, Class<?> cls, Type type) throws JSONException {
 			T result = null;
 			try {
 				enter(ROOT, null);
