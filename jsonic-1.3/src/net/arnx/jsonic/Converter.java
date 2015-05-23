@@ -1352,6 +1352,13 @@ final class ArrayConverter implements Converter {
 final class CollectionConverter implements Converter {
 	public static final CollectionConverter INSTANCE = new CollectionConverter();
 
+	private static final TypeVariable<?> TYPE_VARIABLE;
+
+	static {
+		TypeVariable<?>[] params = Collection.class.getTypeParameters();
+		TYPE_VARIABLE = params[0];
+	}
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Collection.class.isAssignableFrom(cls);
@@ -1363,7 +1370,7 @@ final class CollectionConverter implements Converter {
 			return null;
 		}
 
-		Type pt = context.getParameterType(t, Collection.class, 0);
+		Type pt = context.getResolvedType(t, c, TYPE_VARIABLE);
 		Class<?> pc = ClassUtil.getRawType(pt);
 		JSONHint hint = context.getHint();
 
@@ -1489,6 +1496,15 @@ final class PropertiesConverter implements Converter {
 final class MapConverter implements Converter {
 	public static final MapConverter INSTANCE = new MapConverter();
 
+	private static final TypeVariable<?> TYPE_VARIABLE_KEY;
+	private static final TypeVariable<?> TYPE_VARIABLE_VALUE;
+
+	static {
+		TypeVariable<?>[] params = Map.class.getTypeParameters();
+		TYPE_VARIABLE_KEY = params[0];
+		TYPE_VARIABLE_VALUE = params[1];
+	}
+
 	@Override
 	public boolean accept(Class<?> cls) {
 		return Map.class.isAssignableFrom(cls);
@@ -1500,8 +1516,8 @@ final class MapConverter implements Converter {
 			return null;
 		}
 
-		Type pt0 = context.getParameterType(t, Map.class, 0);
-		Type pt1 = context.getParameterType(t, Map.class, 1);
+		Type pt0 = context.getResolvedType(t, c, TYPE_VARIABLE_KEY);
+		Type pt1 = context.getResolvedType(t, c, TYPE_VARIABLE_VALUE);
 		Class<?> pc0 = ClassUtil.getRawType(pt0);
 		Class<?> pc1 = ClassUtil.getRawType(pt1);
 
@@ -1594,13 +1610,13 @@ final class ObjectConverter implements Converter {
 
 				JSONHint hint = target.getWriteAnnotation(JSONHint.class);
 				context.enter(name, hint);
-				Class<?> cls = target.getWriteType();
-				Type gtype = target.getWriteGenericType();
-				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
-					gtype = resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
-					cls = ClassUtil.getRawType(gtype);
+				Type ttype = target.getWriteGenericType();
+				Class<?> tcls = target.getWriteType();
+				if (ttype != tcls && t instanceof ParameterizedType) {
+					ttype = context.getResolvedType(t, c, ttype);
+					tcls = ClassUtil.getRawType(ttype);
 				}
-				target.set(o, context.postparseInternal(entry.getValue(), cls, gtype));
+				target.set(o, context.postparseInternal(entry.getValue(), tcls, ttype));
 				context.exit();
 			}
 			return o;
@@ -2347,6 +2363,8 @@ final class OptionalDoubleConverter implements Converter {
 }
 
 final class OptionalConverter implements Converter {
+	private static final TypeVariable<?> GENERICS_TYPE = Optional.class.getTypeParameters()[0];
+
 	public OptionalConverter() {
 	}
 
@@ -2360,7 +2378,7 @@ final class OptionalConverter implements Converter {
 			return Optional.empty();
 		}
 
-		t = ClassUtil.getParameterType(t, c, 0);
+		t = ClassUtil.getResolvedType(t, c, GENERICS_TYPE);
 		value = context.convertInternal(value, ClassUtil.getRawType(t), t);
 		if (value != null) {
 			return Optional.of(value);

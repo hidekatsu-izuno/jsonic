@@ -39,7 +39,7 @@ public class LocalCache {
 	private String[] stringCache;
 	private Map<String, DateFormat> dateFormatCache;
 	private Map<String, NumberFormat> numberFormatCache;
-	private Map<ParameterTypeKey, Type> parameterTypeCache;
+	private Map<ParameterTypeKey, Type> paramTypeCache;
 
 	public LocalCache(String bundle, Locale locale, TimeZone timeZone) {
 		this.resources = ResourceBundle.getBundle(bundle, locale);
@@ -125,17 +125,17 @@ public class LocalCache {
 		return dformat;
 	}
 
-	public Type getParameterType(Type t, Class<?> cls, int pos) {
-		ParameterTypeKey key = new ParameterTypeKey(t, cls, pos);
+	public Type getResolvedType(Type ptype, Class<?> pcls, Type type) {
+		ParameterTypeKey key = new ParameterTypeKey(ptype, pcls, type);
 		Type result = null;
-		if (parameterTypeCache == null) {
-			parameterTypeCache = new HashMap<ParameterTypeKey, Type>();
+		if (paramTypeCache == null) {
+			paramTypeCache = new HashMap<ParameterTypeKey, Type>();
 		} else {
-			result = parameterTypeCache.get(key);
+			result = paramTypeCache.get(key);
 		}
 		if (result == null) {
-			result = ClassUtil.getParameterType(t, cls, pos);
-			parameterTypeCache.put(key, result);
+			result = ClassUtil.getResolvedType(ptype, pcls, type);
+			paramTypeCache.put(key, result);
 		}
 		return result;
 	}
@@ -153,23 +153,23 @@ public class LocalCache {
 	}
 
 	private static class ParameterTypeKey {
-		private Type t;
-		private Class<?> cls;
-		private int pos;
+		private Type ptype;
+		private Class<?> pcls;
+		private Type type;
 
-		public ParameterTypeKey(Type t, Class<?> cls, int pos) {
-			this.t = t;
-			this.cls = cls;
-			this.pos = pos;
+		public ParameterTypeKey(Type ptype, Class<?> pcls, Type type) {
+			this.ptype = ptype;
+			this.pcls = pcls;
+			this.type = type;
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((cls == null) ? 0 : cls.hashCode());
-			result = prime * result + pos;
-			result = prime * result + ((t == null) ? 0 : t.hashCode());
+			result = prime * result + ((ptype == null) ? 0 : ptype.hashCode());
+			result = prime * result + ((pcls == null) ? 0 : pcls.hashCode());
+			result = prime * result + ((type == null) ? 0 : type.hashCode());
 			return result;
 		}
 
@@ -182,17 +182,20 @@ public class LocalCache {
 			if (getClass() != obj.getClass())
 				return false;
 			ParameterTypeKey other = (ParameterTypeKey) obj;
-			if (cls == null) {
-				if (other.cls != null)
+			if (ptype == null) {
+				if (other.ptype != null)
 					return false;
-			} else if (!cls.equals(other.cls))
+			} else if (!ptype.equals(other.ptype))
 				return false;
-			if (pos != other.pos)
-				return false;
-			if (t == null) {
-				if (other.t != null)
+			if (pcls == null) {
+				if (other.pcls != null)
 					return false;
-			} else if (!t.equals(other.t))
+			} else if (!pcls.equals(other.pcls))
+				return false;
+			if (type == null) {
+				if (other.type != null)
+					return false;
+			} else if (!type.equals(other.type))
 				return false;
 			return true;
 		}

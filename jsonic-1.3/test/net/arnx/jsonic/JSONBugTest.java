@@ -3,6 +3,7 @@ package net.arnx.jsonic;
 import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -49,6 +50,12 @@ public class JSONBugTest {
 
 		assertEquals("null", json.format(null));
 		assertEquals("{\"str\":\"\",\"num\":null,\"bool\":null}", json.format(new PreformatNullBean()));
+	}
+
+	@Test
+	public void testGenerics() {
+		Sample<Address> aList = JSON.decode("{items: [{name: 'a'}]}", new TypeReference<Sample<Address>>(){});
+        Address address = aList.getItems().get(0);
 	}
 
 	public static class TestClass {
@@ -153,5 +160,26 @@ public class JSONBugTest {
 		public Integer num;
 
 		public Boolean bool;
+	}
+
+	class Address {
+		private String name;
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	class Sample<T> {
+		private List<T> items;
+
+		public List<T> getItems() {
+			return items;
+		}
+		public void setItems(List<T> items) {
+			this.items = items;
+		}
 	}
 }

@@ -1,12 +1,12 @@
-/* 
+/*
  * Copyright 2014 Hidekatsu Izuno
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,13 +35,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
-
 import java.io.ObjectStreamClass;
 
 public final class ClassUtil {
-	private static final Map<ClassLoader, Map<String, Class<?>>> cache = 
+	private static final Map<ClassLoader, Map<String, Class<?>>> cache =
 		new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
-	
+
 	public static Class<?> findClass(String name) {
 		ClassLoader cl;
 		try {
@@ -49,11 +48,11 @@ public final class ClassUtil {
 		} catch (SecurityException e) {
 			cl = null;
 		}
-		
+
 		Map<String, Class<?>> map;
 		synchronized (cache) {
 			map = cache.get(cl);
-			
+
 			if (map == null) {
 				map = new LinkedHashMap<String, Class<?>>(16, 0.75f, true) {
 					protected boolean removeEldestEntry(Map.Entry<String, Class<?>> eldest) {
@@ -80,13 +79,13 @@ public final class ClassUtil {
 			return map.get(name);
 		}
 	}
-	
+
 	public static void clear() {
 		synchronized (cache) {
 			cache.clear();
 		}
 	}
-	
+
 	public static String toUpperCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = true;
@@ -103,7 +102,7 @@ public final class ClassUtil {
 		}
 		return sb.toString();
 	}
-	
+
 	public static String toLowerCamel(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		boolean toUpperCase = false;
@@ -123,7 +122,7 @@ public final class ClassUtil {
 		}
 		return sb.toString();
 	}
-	
+
 	public static Class<?> getRawType(Type t) {
 		if (t instanceof Class<?>) {
 			return (Class<?>)t;
@@ -144,49 +143,43 @@ public final class ClassUtil {
 			return Object.class;
 		}
 	}
-	
-	public static ParameterizedType resolveParameterizedType(Type t, Class<?> baseClass) {
-		Class<?> raw = getRawType(t);
-		
-		if (t instanceof ParameterizedType && baseClass.isAssignableFrom(raw)) {
-			return (ParameterizedType)t;
-		}
-		
-		ParameterizedType pt = null;
-		if (raw.getSuperclass() != null && raw.getSuperclass() != Object.class) {
-			pt = resolveParameterizedType(raw.getGenericSuperclass(), baseClass);
-			if (pt != null) return pt;
-		}
-		if (!raw.isInterface()) {
-			for (Type ifs : raw.getGenericInterfaces()) {
-				pt = resolveParameterizedType(ifs, baseClass);
-				if (pt != null) return pt;
-			}
-		}
-		return null;
-	}
-	
-	public static Type getParameterType(Type t, Class<?> base, int pos) {
-		Class<?> c = ClassUtil.getRawType(t);
-		if (!base.isAssignableFrom(c)) return null;
-		
+
+	public static Type getResolvedType(Type ptype, Class<?> pcls, Type type) {
 		Map<Type, Type> map = new HashMap<Type, Type>();
-		collectTypeVariableMap(t, c, map);
-		
-		TypeVariable<?> current = base.getTypeParameters()[pos];
+		collectTypeVariableMap(ptype, pcls, map);
+
 		Type result;
-		do {
-			result = map.get(current);
-			if (result instanceof TypeVariable<?>) {
-				current = (TypeVariable<?>)result;
-			} else {
-				break;
+		if (type instanceof ParameterizedType) {
+			ParameterizedType paramType = (ParameterizedType)type;
+			Type[] paramTypeArgs = paramType.getActualTypeArguments();
+			for (int i = 0; i < paramTypeArgs.length; i++) {
+				Type iresult = paramTypeArgs[i];
+				while (iresult instanceof TypeVariable<?>) {
+					Type next = map.get(iresult);
+					if (next != null) {
+						iresult = next;
+					} else {
+						break;
+					}
+				}
+				paramTypeArgs[i] = iresult;
 			}
-		} while (current != null);
-		
+			result = new ParameterizedTypeImpl(paramType, paramTypeArgs);
+		} else {
+			result = type;
+			while (result instanceof TypeVariable<?>) {
+				Type next = map.get(result);
+				if (next != null) {
+					result = next;
+				} else {
+					break;
+				}
+			}
+		}
+
 		return result;
 	}
-	
+
 	private static void collectTypeVariableMap(Type t, Class<?> c, Map<Type, Type> map) {
 		if (t instanceof ParameterizedType) {
 			TypeVariable<?>[] vs = c.getTypeParameters();
@@ -196,7 +189,7 @@ public final class ClassUtil {
 					map.put(vs[i], as[i]);
 				}
 			}
-			
+
 			Type ot = ((ParameterizedType)t).getOwnerType();
 			if (ot instanceof ParameterizedType) {
 				vs = ClassUtil.getRawType(ot).getTypeParameters();
@@ -208,15 +201,15 @@ public final class ClassUtil {
 				}
 			}
 		}
-		
+
 		Type[] its = c.getGenericInterfaces();
 		if (its != null) {
 			for (Type it : its) {
-				Class<?> ic = ClassUtil.getRawType(it);				
+				Class<?> ic = ClassUtil.getRawType(it);
 				collectTypeVariableMap(it, ic, map);
 			}
 		}
-		
+
 		Type st = c.getGenericSuperclass();
 		while (st != null && st != Object.class) {
 			Class<?> sc = ClassUtil.getRawType(st);
@@ -224,7 +217,7 @@ public final class ClassUtil {
 			st = sc.getGenericSuperclass();
 		}
 	}
-	
+
 	public static byte[] serialize(Object o) throws ObjectStreamException {
 		ByteArrayOutputStream array = new ByteArrayOutputStream();
 		ObjectOutputStream out = null;
@@ -239,7 +232,7 @@ public final class ClassUtil {
 		}
 		return array.toByteArray();
 	}
-	
+
 	public static Object deserialize(byte[] data) throws ObjectStreamException, ClassNotFoundException {
 		Object ret = null;
 		ObjectInputStream in = null;
@@ -254,21 +247,21 @@ public final class ClassUtil {
 		}
 		return ret;
 	}
-	
+
 	public static int hashCode(Object target) {
 		if (target == null) return 0;
 		final int prime = 31;
 		int result = 1;
-		
+
 		Class<?> current = target.getClass();
 		do {
 			for (Field f : current.getDeclaredFields()) {
-				if (Modifier.isStatic(f.getModifiers()) 
+				if (Modifier.isStatic(f.getModifiers())
 						|| Modifier.isTransient(f.getModifiers())
 						|| f.isSynthetic()) {
 					continue;
 				}
-				
+
 				Object self;
 				try {
 					f.setAccessible(true);
@@ -301,29 +294,29 @@ public final class ClassUtil {
 				} else {
 					result = prime * result + self.hashCode();
 				}
-				
+
 				System.out.println(f.getName() + ": " + result);
 			}
 			current = current.getSuperclass();
 		} while (current != Object.class);
-		
+
 		return result;
 	}
-	
+
 	public static boolean equals(Object target, Object o) {
 		if (target == o) return true;
 		if (target == null || o == null) return false;
 		if (target.getClass() != o.getClass()) return false;
-		
+
 		Class<?> current = target.getClass();
 		do {
 			for (Field f : current.getDeclaredFields()) {
-				if (Modifier.isStatic(f.getModifiers()) 
+				if (Modifier.isStatic(f.getModifiers())
 						|| Modifier.isTransient(f.getModifiers())
 						|| f.isSynthetic()) {
 					continue;
 				}
-				
+
 				Object self;
 				Object other;
 				try {
@@ -361,21 +354,21 @@ public final class ClassUtil {
 			}
 			current = current.getSuperclass();
 		} while (current != Object.class);
-		
+
 		return true;
 	}
-	
+
 	public static String toString(Object target) {
 		if (target == null) return "null";
-		
+
 		BeanInfo info = BeanInfo.get(target.getClass());
-		
+
 		StringBuilder sb = new StringBuilder(10 * info.getProperties().size() + 20);
 		sb.append(target.getClass().getSimpleName()).append(" [");
 		boolean first = true;
 		for (PropertyInfo prop : info.getProperties()) {
 			if (!prop.isReadable() || prop.getName().equals("class")) continue;
-			
+
 			if (!first) {
 				sb.append(", ");
 			} else {
@@ -412,18 +405,18 @@ public final class ClassUtil {
 			}
 		}
 		sb.append("]");
-		
+
 		return sb.toString();
 	}
-	
+
 	private ClassUtil() {
 	}
-	
+
 	private static class ContextObjectInputStream extends ObjectInputStream {
 		public ContextObjectInputStream(InputStream in) throws IOException {
 			super(in);
 		}
-		
+
 		@Override
 		protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
 			ClassLoader cl = Thread.currentThread().getContextClassLoader();
@@ -432,6 +425,60 @@ public final class ClassUtil {
 			} catch (Exception e) {
 				return super.resolveClass(desc);
 			}
+		}
+	}
+
+	private static class ParameterizedTypeImpl implements ParameterizedType {
+		private ParameterizedType parent;
+		private Type[] args;
+
+		public ParameterizedTypeImpl(ParameterizedType parent, Type[] args) {
+			this.parent = parent;
+			this.args = args;
+		}
+
+		@Override
+		public Type[] getActualTypeArguments() {
+			return args;
+		}
+
+		@Override
+		public Type getRawType() {
+			return parent.getRawType();
+		}
+
+		@Override
+		public Type getOwnerType() {
+			return parent.getOwnerType();
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((parent == null) ? 0 : parent.hashCode());
+			result = prime * result + Arrays.hashCode(args);
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ParameterizedTypeImpl other = (ParameterizedTypeImpl) obj;
+			if (parent == null) {
+				if (other.parent != null)
+					return false;
+			} else if (!parent.equals(other.parent))
+				return false;
+			if (!Arrays.equals(args, other.args))
+				return false;
+			return true;
 		}
 	}
 }

@@ -1608,8 +1608,8 @@ public class JSON {
 			return (hint != null && hint.format().length() > 0) ? hint.format() : dateFormat;
 		}
 
-		Type getParameterType(Type t, Class<?> cls, int pos) {
-			return getLocalCache().getParameterType(t, cls, pos);
+		Type getResolvedType(Type ptype, Class<?> pcls, Type type) {
+			return getLocalCache().getResolvedType(ptype, pcls, type);
 		}
 
 		@Override
