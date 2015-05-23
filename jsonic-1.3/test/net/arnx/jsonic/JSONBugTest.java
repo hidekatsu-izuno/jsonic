@@ -3,6 +3,7 @@ package net.arnx.jsonic;
 import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -181,5 +182,29 @@ public class JSONBugTest {
 		public void setItems(List<T> items) {
 			this.items = items;
 		}
+	}
+
+	@Test
+	public void testTicket35184() {
+		List<Hoge> hogeList = new ArrayList<Hoge>();
+		Hoge1 hoge1 = new Hoge1();
+		hoge1.id = 1L;
+		hoge1.name = "xxxxxx";
+		Hoge hoge = new Hoge();
+		hoge.id = 1L;
+		hoge.hoge1 = hoge1;
+		hogeList.add(hoge);
+		System.out.println(JSON.encode(hogeList));
+	}
+
+	public class Hoge {
+		public Long id;
+		@JSONHint(ignore = true)
+		public Hoge1 hoge1;
+	}
+
+	public class Hoge1 {
+		public Long id;
+		public String name;
 	}
 }
