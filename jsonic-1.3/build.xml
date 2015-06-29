@@ -4,7 +4,6 @@
 	xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	<xmlproperty file="pom.xml" />
 
-	<property name="javac.bootclasspath" location="C:/Program Files (x86)/Java/jdk1.5.0_22/jre/lib/rt.jar" />
 	<property name="version" value="${project.version}" />
 	<property name="debug" value="true" />
 
@@ -26,7 +25,7 @@
 
 	<target name="build" depends="init">
 		<mkdir dir="${tmp}/build" />
-		<javac source="1.5" target="1.5" srcdir="src" destdir="${tmp}/build" debug="${debug}" fork="true"
+		<javac source="1.6" target="1.6" srcdir="src" destdir="${tmp}/build" debug="${debug}" fork="true"
 			includeantruntime="false">
 			<compilerarg value="-Xlint:unchecked"/>
 			<classpath>
@@ -58,14 +57,13 @@
 		<copy file="${webapps}/guice/WEB-INF/web.xml" tofile="${tmp}/sample/basic/WEB-INF/web_guice.xml" />
 		<copy file="${tmp}/${project.name}-${project.version}.jar" todir="${tmp}/sample/basic/WEB-INF/lib" />
 
-		<javac source="1.5" target="1.5"
+		<javac source="1.6" target="1.6"
 			srcdir="${tmp}/sample/basic/WEB-INF/src" destdir="${tmp}/sample/basic/WEB-INF/classes" fork="true"
 			includeantruntime="false">
 			<classpath>
 				<fileset dir="lib" includes="*.jar" />
 				<fileset dir="${tmp}/sample/basic/WEB-INF/lib" includes="*.jar" />
 			</classpath>
-			<bootclasspath location="${javac.bootclasspath}" />
 		</javac>
 	</target>
 

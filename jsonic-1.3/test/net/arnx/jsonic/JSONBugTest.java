@@ -1,14 +1,12 @@
 package net.arnx.jsonic;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-
-import com.google.inject.internal.Objects;
 
 public class JSONBugTest {
 	@Test
