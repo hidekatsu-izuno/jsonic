@@ -146,15 +146,15 @@ public final class BeanInfo {
 			boolean isReadMethod;
 			int start = 0;
 			if (name.startsWith("get")
-					&& paramTypes.length == 0 && !returnType.equals(void.class)) {
+					&& paramTypes.length == 0 && returnType != void.class) {
 				isReadMethod = true;
 				start = 3;
-			} else if (name.startsWith("is") 
-					&& paramTypes.length == 0 && !returnType.equals(void.class)) {
+			} else if (name.startsWith("is")
+					&& paramTypes.length == 0 && returnType != void.class) {
 				isReadMethod = true;
 				start = 2;
 			} else if (name.startsWith("set")
-					&& paramTypes.length == 1 && !paramTypes[0].equals(void.class)) {
+					&& paramTypes.length == 1 && paramTypes[0] != void.class) {
 				isReadMethod = false;
 				start = 3;
 			} else {
