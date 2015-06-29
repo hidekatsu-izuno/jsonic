@@ -28,7 +28,7 @@
 		<get src="http://repo1.maven.org/maven2/com/google/inject/extensions/guice-servlet/3.0/guice-servlet-3.0.jar" dest="${tmp}/lib/guice-servlet-3.0.jar" />
 
 		<mkdir dir="${tmp}/build" />
-		<javac srcdir="src" destdir="${tmp}/build" debug="${debug}" source="1.5" target="1.5" fork="true">
+		<javac srcdir="src" destdir="${tmp}/build" debug="${debug}" source="1.6" target="1.6" fork="true">
 			<classpath>
 				<fileset dir="${tmp}/lib" includes="*.jar" />
 			</classpath>
