@@ -33,6 +33,8 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -1018,6 +1020,33 @@ final class AppendableConverter implements Converter {
 		} else {
 			Appendable a = (Appendable)context.createInternal(c);
 			return a.append(value.toString());
+		}
+	}
+}
+
+final class PathConverter implements Converter {
+	public PathConverter() {
+	}
+
+	@Override
+	public boolean accept(Class<?> cls) {
+		return Path.class.isAssignableFrom(cls);
+	}
+
+	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
+		if (value == null) {
+			return null;
+		} else if (value instanceof Map<?, ?>) {
+			value = ((Map<?,?>)value).get(null);
+		} else if (value instanceof List<?>) {
+			List<?> src = (List<?>)value;
+			value = (!src.isEmpty()) ? src.get(0) : null;
+		}
+
+		if (value == null) {
+			return null;
+		} else {
+			return Paths.get(value.toString());
 		}
 	}
 }

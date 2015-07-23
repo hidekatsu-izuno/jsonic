@@ -267,6 +267,9 @@ public class JSON {
 		FORMAT_MAP.put(TreeMap.class, MapFormatter.INSTANCE);
 		FORMAT_MAP.put(LinkedHashMap.class, MapFormatter.INSTANCE);
 
+		formatter = getFormatterInstance(PACKAGE_NAME + ".PathFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
 		FORMAT_LIST.add(EnumFormatter.INSTANCE);
 		FORMAT_LIST.add(MapFormatter.INSTANCE);
 		FORMAT_LIST.add(ListFormatter.INSTANCE);
@@ -388,6 +391,9 @@ public class JSON {
 		if (converter != null) CONVERT_LIST.add(converter);
 
 		converter = getConverterInstance(PACKAGE_NAME + ".MonthConverter", cl);
+		if (converter != null) CONVERT_LIST.add(converter);
+
+		converter = getConverterInstance(PACKAGE_NAME + ".PathConverter", cl);
 		if (converter != null) CONVERT_LIST.add(converter);
 
 		CONVERT_LIST.add(EnumConverter.INSTANCE);

@@ -3,6 +3,8 @@ package net.arnx.jsonic;
 import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -91,6 +93,12 @@ public class JSONJava8Test {
 				+ "\"optionalInt\":null,"
 				+ "\"optionalLong\":null"
 				+ "}", JSON.encode(obean));
+
+		PathBean pbean = new PathBean();
+		pbean.path = Paths.get("./test.txt");
+		assertEquals("{"
+				+ "\"path\":\".\\\\test.txt\""
+				+ "}", JSON.encode(pbean));
 	}
 
 	@Test
@@ -157,6 +165,13 @@ public class JSONJava8Test {
 				+ "\"optionalInt\":null,"
 				+ "\"optionalLong\":null"
 				+ "}", Java8OptionalBean.class));
+
+		PathBean pbean = new PathBean();
+		pbean.path = Paths.get("./test.txt");
+		assertEquals(pbean, JSON.decode("{"
+				+ "\"path\":\".\\\\test.txt\""
+				+ "}", PathBean.class));
+
 	}
 
 	public static class Java8DataTimeAPIBean {
@@ -411,6 +426,40 @@ public class JSONJava8Test {
 		@Override
 		public String toString() {
 			return "OptionalBeanBean [text=" + text + "]";
+		}
+	}
+
+	public static class PathBean {
+		public Path path;
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((path == null) ? 0 : path.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			PathBean other = (PathBean) obj;
+			if (path == null) {
+				if (other.path != null)
+					return false;
+			} else if (!path.equals(other.path))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "PathBean [path=" + path + "]";
 		}
 	}
 }

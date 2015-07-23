@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.Struct;
@@ -49,14 +50,6 @@ import java.util.OptionalLong;
 import java.util.RandomAccess;
 import java.util.TimeZone;
 
-import net.arnx.jsonic.JSON.Context;
-import net.arnx.jsonic.JSON.Mode;
-import net.arnx.jsonic.io.OutputSource;
-import net.arnx.jsonic.util.Base64;
-import net.arnx.jsonic.util.BeanInfo;
-import net.arnx.jsonic.util.ClassUtil;
-import net.arnx.jsonic.util.PropertyInfo;
-
 import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaProperty;
 import org.w3c.dom.Attr;
@@ -69,6 +62,14 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
+
+import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.JSON.Mode;
+import net.arnx.jsonic.io.OutputSource;
+import net.arnx.jsonic.util.Base64;
+import net.arnx.jsonic.util.BeanInfo;
+import net.arnx.jsonic.util.ClassUtil;
+import net.arnx.jsonic.util.PropertyInfo;
 
 interface Formatter {
 	boolean accept(Object o);
@@ -482,13 +483,34 @@ final class SerializableFormatter implements Formatter {
 	}
 }
 
+final class PathFormatter implements Formatter {
+	public PathFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof Path;
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
+		StringFormatter.INSTANCE.format(context, src, o, out);
+	}
+}
+
+
 final class RowIdFormatter implements Formatter {
 	public RowIdFormatter() {
 	}
 
 	@Override
 	public boolean accept(Object o) {
-		return o != null && RowId.class.isAssignableFrom(o.getClass());
+		return o instanceof RowId;
 	}
 
 	@Override
