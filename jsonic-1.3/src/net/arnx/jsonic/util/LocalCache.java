@@ -37,9 +37,7 @@ public class LocalCache {
 	private StringBuilder builderCache;
 	private int stringCacheCount = 0;
 	private String[] stringCache;
-	private Map<String, DateFormat> dateFormatCache;
-	private Map<String, NumberFormat> numberFormatCache;
-	private Map<ParameterTypeKey, Type> paramTypeCache;
+	private Map<Class<?>, Map<Object, Object>> formatCache;
 
 	public LocalCache(String bundle, Locale locale, TimeZone timeZone) {
 		this.resources = ResourceBundle.getBundle(bundle, locale);
@@ -96,48 +94,36 @@ public class LocalCache {
 		return h & (CACHE_SIZE-1);
 	}
 
-	public NumberFormat getNumberFormat(String format) {
-		NumberFormat nformat = null;
-		if (numberFormatCache == null) {
-			numberFormatCache = new HashMap<String, NumberFormat>();
+	@SuppressWarnings("unchecked")
+	public <T> T get(Class<T> cls, Object key, Provider<T> provider) {
+		Map<Object, Object> map = null;
+		if (formatCache == null) {
+			formatCache = new HashMap<Class<?>, Map<Object, Object>>();
 		} else {
-			nformat = numberFormatCache.get(format);
+			map = formatCache.get(cls);
 		}
-		if (nformat == null) {
-			nformat = new DecimalFormat(format, new DecimalFormatSymbols(locale));
-			numberFormatCache.put(format, nformat);
+		if (map == null) {
+			map = new HashMap<Object, Object>();
+			formatCache.put(cls, map);
 		}
-		return nformat;
+		Object f = map.get(key);
+		if (f == null) {
+			f = provider.get(key, locale, timeZone);
+			map.put(key, f);
+		}
+		return (T)f;
+	}
+
+	public NumberFormat getNumberFormat(String format) {
+		return get(NumberFormat.class, format, NumberFormatProvider.INSTANCE);
 	}
 
 	public DateFormat getDateFormat(String format) {
-		DateFormat dformat = null;
-		if (dateFormatCache == null) {
-			dateFormatCache = new HashMap<String, DateFormat>();
-		} else {
-			dformat = dateFormatCache.get(format);
-		}
-		if (dformat == null) {
-			dformat = new ExtendedDateFormat(format, locale);
-			dformat.setTimeZone(timeZone);
-			dateFormatCache.put(format, dformat);
-		}
-		return dformat;
+		return get(DateFormat.class, format, DateFormatProvider.INSTANCE);
 	}
 
 	public Type getResolvedType(Type ptype, Class<?> pcls, Type type) {
-		ParameterTypeKey key = new ParameterTypeKey(ptype, pcls, type);
-		Type result = null;
-		if (paramTypeCache == null) {
-			paramTypeCache = new HashMap<ParameterTypeKey, Type>();
-		} else {
-			result = paramTypeCache.get(key);
-		}
-		if (result == null) {
-			result = ClassUtil.getResolvedType(ptype, pcls, type);
-			paramTypeCache.put(key, result);
-		}
-		return result;
+		return get(Type.class, new ParameterTypeKey(ptype, pcls, type), ResolvedTypeProvider.INSTANCE);
 	}
 
 	public String getMessage(String id) {
@@ -198,6 +184,40 @@ public class LocalCache {
 			} else if (!type.equals(other.type))
 				return false;
 			return true;
+		}
+	}
+
+	public static interface Provider<T> {
+		public T get(Object key, Locale locale, TimeZone timeZone);
+	}
+
+	private static class NumberFormatProvider implements Provider<NumberFormat> {
+		public static final NumberFormatProvider INSTANCE = new NumberFormatProvider();
+
+		@Override
+		public NumberFormat get(Object format, Locale locale, TimeZone timeZone) {
+			return new DecimalFormat((String)format, new DecimalFormatSymbols(locale));
+		}
+	}
+
+	private static class DateFormatProvider implements Provider<DateFormat> {
+		public static final DateFormatProvider INSTANCE = new DateFormatProvider();
+
+		@Override
+		public DateFormat get(Object format, Locale locale, TimeZone timeZone) {
+			ExtendedDateFormat dformat = new ExtendedDateFormat((String)format, locale);
+			dformat.setTimeZone(timeZone);
+			return dformat;
+		}
+	}
+
+	private static class ResolvedTypeProvider implements Provider<Type> {
+		public static final ResolvedTypeProvider INSTANCE = new ResolvedTypeProvider();
+
+		@Override
+		public Type get(Object o, Locale locale, TimeZone timeZone) {
+			ParameterTypeKey key = (ParameterTypeKey)o;
+			return ClassUtil.getResolvedType(key.ptype, key.pcls, key.type);
 		}
 	}
 }

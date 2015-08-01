@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -32,13 +33,14 @@ public class JSONJava8Test {
 	@Test
 	public void testEncode() {
 		Java8DataTimeAPIBean bean = new Java8DataTimeAPIBean();
+		bean.dayOfWeek = DayOfWeek.of(3);
 		bean.duration = Duration.ofDays(3L);
 		bean.instant = Instant.from(ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z")));
 		bean.localDate = LocalDate.of(2010, 3, 3);
 		bean.localDateTime = LocalDateTime.of(2010, 3, 3, 2, 2, 2, 2);
-		bean.localTime = LocalTime.of(2, 2, 2);
+		bean.localTime = LocalTime.of(2, 2, 2, 2);
 		bean.monthDay = MonthDay.of(2, 2);
-		bean.offsetDateTimey = OffsetDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		bean.offsetDateTime = OffsetDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
 		bean.offsetTime = OffsetTime.of(2, 2, 2, 2, ZoneOffset.of("Z"));
 		bean.period = Period.of(1, 1, 3);
 		bean.year = Year.of(2010);
@@ -47,16 +49,16 @@ public class JSONJava8Test {
 		bean.zonedDateTime = ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
 		bean.zoneId = ZoneId.of("UTC");
 		bean.zonedOffset = ZoneOffset.of("Z");
-
 		assertEquals("{"
+				+ "\"dayOfWeek\":\"WEDNESDAY\","
 				+ "\"duration\":\"PT72H\","
 				+ "\"instant\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"localDate\":\"2010-03-03\","
 				+ "\"localDateTime\":\"2010-03-03T02:02:02.000000002\","
-				+ "\"localTime\":\"02:02:02\","
+				+ "\"localTime\":\"02:02:02.000000002\","
 				+ "\"month\":\"MARCH\","
 				+ "\"monthDay\":\"--02-02\","
-				+ "\"offsetDateTimey\":\"2010-03-03T02:02:02.000000002Z\","
+				+ "\"offsetDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"offsetTime\":\"02:02:02.000000002Z\","
 				+ "\"period\":\"P1Y1M3D\","
 				+ "\"year\":\"2010\","
@@ -65,6 +67,34 @@ public class JSONJava8Test {
 				+ "\"zonedDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"zonedOffset\":\"Z\""
 				+ "}", JSON.encode(bean));
+
+		Java8DataTimeAPIFormatterBean fbean = new Java8DataTimeAPIFormatterBean();
+		fbean.instant = Instant.from(ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z")));
+		fbean.localDate = LocalDate.of(2010, 3, 3);
+		fbean.localDateTime = LocalDateTime.of(2010, 3, 3, 2, 2, 2, 2);
+		fbean.localTime = LocalTime.of(2, 2, 2, 2);
+		fbean.monthDay = MonthDay.of(2, 2);
+		fbean.offsetDateTime = OffsetDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		fbean.offsetTime = OffsetTime.of(2, 2, 2, 2, ZoneOffset.of("Z"));
+		fbean.year = Year.of(2010);
+		fbean.month = Month.of(3);
+		fbean.dayOfWeek = DayOfWeek.of(3);
+		fbean.yearMonth = YearMonth.of(2010, 3);
+		fbean.zonedDateTime = ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		assertEquals("{"
+				+ "\"dayOfWeek\":\"水\","
+				+ "\"instant\":\"2010/3/3 11:2:2.000000002\","
+				+ "\"localDate\":\"2010/3/3\","
+				+ "\"localDateTime\":\"2010/3/3 2:2:2.000000002\","
+				+ "\"localTime\":\"2:2:2.000000002\","
+				+ "\"month\":\"3月\","
+				+ "\"monthDay\":\"2/2\","
+				+ "\"offsetDateTime\":\"2010/3/3 2:2:2.000000002+0000\","
+				+ "\"offsetTime\":\"2:2:2.000000002+0000\","
+				+ "\"year\":\"2010\","
+				+ "\"yearMonth\":\"2010/3\","
+				+ "\"zonedDateTime\":\"2010/3/3 2:2:2.000000002Z\""
+				+ "}", JSON.encode(fbean));
 
 		Java8OptionalBean obean = new Java8OptionalBean();
 		obean.optionalInt = OptionalInt.of(2);
@@ -104,31 +134,33 @@ public class JSONJava8Test {
 	@Test
 	public void testDecode() {
 		Java8DataTimeAPIBean bean = new Java8DataTimeAPIBean();
+		bean.dayOfWeek = DayOfWeek.of(3);
 		bean.duration = Duration.ofDays(3L);
 		bean.instant = Instant.from(ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z")));
 		bean.localDate = LocalDate.of(2010, 3, 3);
 		bean.localDateTime = LocalDateTime.of(2010, 3, 3, 2, 2, 2, 2);
-		bean.localTime = LocalTime.of(2, 2, 2);
+		bean.localTime = LocalTime.of(2, 2, 2, 2);
 		bean.monthDay = MonthDay.of(2, 2);
-		bean.offsetDateTimey = OffsetDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		bean.offsetDateTime = OffsetDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
 		bean.offsetTime = OffsetTime.of(2, 2, 2, 2, ZoneOffset.of("Z"));
 		bean.period = Period.of(1, 1, 3);
 		bean.year = Year.of(2010);
 		bean.month = Month.of(3);
 		bean.yearMonth = YearMonth.of(2010, 3);
+		bean.dayOfWeek = DayOfWeek.WEDNESDAY;
 		bean.zonedDateTime = ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
 		bean.zoneId = ZoneId.of("UTC");
 		bean.zonedOffset = ZoneOffset.of("Z");
-
 		assertEquals(bean, JSON.decode("{"
+				+ "\"dayOfWeek\":\"WEDNESDAY\","
 				+ "\"duration\":\"PT72H\","
 				+ "\"instant\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"localDate\":\"2010-03-03\","
 				+ "\"localDateTime\":\"2010-03-03T02:02:02.000000002\","
-				+ "\"localTime\":\"02:02:02\","
+				+ "\"localTime\":\"02:02:02.000000002\","
 				+ "\"month\":\"MARCH\","
 				+ "\"monthDay\":\"--02-02\","
-				+ "\"offsetDateTimey\":\"2010-03-03T02:02:02.000000002Z\","
+				+ "\"offsetDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"offsetTime\":\"02:02:02.000000002Z\","
 				+ "\"period\":\"P1Y1M3D\","
 				+ "\"year\":\"2010\","
@@ -137,6 +169,34 @@ public class JSONJava8Test {
 				+ "\"zonedDateTime\":\"2010-03-03T02:02:02.000000002Z\","
 				+ "\"zonedOffset\":\"Z\""
 				+ "}", Java8DataTimeAPIBean.class));
+
+		Java8DataTimeAPIFormatterBean fbean = new Java8DataTimeAPIFormatterBean();
+		fbean.instant = Instant.from(ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z")));
+		fbean.localDate = LocalDate.of(2010, 3, 3);
+		fbean.localDateTime = LocalDateTime.of(2010, 3, 3, 2, 2, 2, 2);
+		fbean.localTime = LocalTime.of(2, 2, 2, 2);
+		fbean.monthDay = MonthDay.of(2, 2);
+		fbean.offsetDateTime = OffsetDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		fbean.offsetTime = OffsetTime.of(2, 2, 2, 2, ZoneOffset.of("Z"));
+		fbean.year = Year.of(2010);
+		fbean.month = Month.of(3);
+		fbean.dayOfWeek = DayOfWeek.of(3);
+		fbean.yearMonth = YearMonth.of(2010, 3);
+		fbean.zonedDateTime = ZonedDateTime.of(2010, 3, 3, 2, 2, 2, 2, ZoneOffset.of("Z"));
+		assertEquals(fbean, JSON.decode("{"
+				+ "\"dayOfWeek\":\"水\","
+				+ "\"instant\":\"2010/3/3 11:2:2.000000002\","
+				+ "\"localDate\":\"2010/3/3\","
+				+ "\"localDateTime\":\"2010/3/3 2:2:2.000000002\","
+				+ "\"localTime\":\"2:2:2.000000002\","
+				+ "\"month\":\"3月\","
+				+ "\"monthDay\":\"2/2\","
+				+ "\"offsetDateTime\":\"2010/3/3 2:2:2.000000002+0000\","
+				+ "\"offsetTime\":\"2:2:2.000000002+0000\","
+				+ "\"year\":\"2010\","
+				+ "\"yearMonth\":\"2010/3\","
+				+ "\"zonedDateTime\":\"2010/3/3 2:2:2.000000002Z\""
+				+ "}", Java8DataTimeAPIFormatterBean.class));
 
 		Java8OptionalBean obean = new Java8OptionalBean();
 		obean.optionalInt = OptionalInt.of(2);
@@ -171,7 +231,6 @@ public class JSONJava8Test {
 		assertEquals(pbean, JSON.decode("{"
 				+ "\"path\":\".\\\\test.txt\""
 				+ "}", PathBean.class));
-
 	}
 
 	public static class Java8DataTimeAPIBean {
@@ -181,12 +240,13 @@ public class JSONJava8Test {
 		public LocalDateTime localDateTime;
 		public LocalTime localTime;
 		public MonthDay monthDay;
-		public OffsetDateTime offsetDateTimey;
+		public OffsetDateTime offsetDateTime;
 		public OffsetTime offsetTime;
 		public Period period;
 		public Year year;
 		public Month month;
 		public YearMonth yearMonth;
+		public DayOfWeek dayOfWeek;
 		public ZonedDateTime zonedDateTime;
 		public ZoneId zoneId;
 		public ZoneOffset zonedOffset;
@@ -209,7 +269,7 @@ public class JSONJava8Test {
 					+ ((monthDay == null) ? 0 : monthDay.hashCode());
 			result = prime
 					* result
-					+ ((offsetDateTimey == null) ? 0 : offsetDateTimey
+					+ ((offsetDateTime == null) ? 0 : offsetDateTime
 							.hashCode());
 			result = prime * result
 					+ ((offsetTime == null) ? 0 : offsetTime.hashCode());
@@ -218,6 +278,8 @@ public class JSONJava8Test {
 			result = prime * result + ((year == null) ? 0 : year.hashCode());
 			result = prime * result
 					+ ((yearMonth == null) ? 0 : yearMonth.hashCode());
+			result = prime * result
+					+ ((dayOfWeek == null) ? 0 : dayOfWeek.hashCode());
 			result = prime * result
 					+ ((zonedDateTime == null) ? 0 : zonedDateTime.hashCode());
 			result = prime * result
@@ -267,10 +329,10 @@ public class JSONJava8Test {
 					return false;
 			} else if (!monthDay.equals(other.monthDay))
 				return false;
-			if (offsetDateTimey == null) {
-				if (other.offsetDateTimey != null)
+			if (offsetDateTime == null) {
+				if (other.offsetDateTime != null)
 					return false;
-			} else if (!offsetDateTimey.equals(other.offsetDateTimey))
+			} else if (!offsetDateTime.equals(other.offsetDateTime))
 				return false;
 			if (offsetTime == null) {
 				if (other.offsetTime != null)
@@ -292,6 +354,11 @@ public class JSONJava8Test {
 					return false;
 			} else if (!yearMonth.equals(other.yearMonth))
 				return false;
+			if (dayOfWeek == null) {
+				if (other.dayOfWeek != null)
+					return false;
+			} else if (!dayOfWeek.equals(other.dayOfWeek))
+				return false;
 			if (zonedDateTime == null) {
 				if (other.zonedDateTime != null)
 					return false;
@@ -312,15 +379,159 @@ public class JSONJava8Test {
 
 		@Override
 		public String toString() {
-			return "Java8DataTimeAPIBean [duration=" + duration + ", instant=" + instant
-					+ ", localDate=" + localDate + ", localDateTime="
-					+ localDateTime + ", localTime=" + localTime
-					+ ", monthDay=" + monthDay + ", offsetDateTimey="
-					+ offsetDateTimey + ", offsetTime=" + offsetTime
-					+ ", period=" + period + ", year=" + year + ", month="
-					+ month + ", yearMonth=" + yearMonth + ", zonedDateTime="
-					+ zonedDateTime + ", zoneId=" + zoneId
+			return "Java8DataTimeAPIBean [duration=" + duration
+					+ ", instant=" + instant
+					+ ", localDate=" + localDate
+					+ ", localDateTime=" + localDateTime
+					+ ", localTime=" + localTime
+					+ ", monthDay=" + monthDay
+					+ ", offsetDateTimey=" + offsetDateTime
+					+ ", offsetTime=" + offsetTime
+					+ ", period=" + period
+					+ ", year=" + year
+					+ ", month=" + month
+					+ ", yearMonth=" + yearMonth
+					+ ", dayOfWeek=" + dayOfWeek
+					+ ", zonedDateTime=" + zonedDateTime
+					+ ", zoneId=" + zoneId
 					+ ", zonedOffset=" + zonedOffset + "]";
+		}
+	}
+
+	public static class Java8DataTimeAPIFormatterBean {
+		@JSONHint(format = "yyyy/M/d H:m:s.nnnnnnnnn")
+		public Instant instant;
+		@JSONHint(format = "yyyy/M/d")
+		public LocalDate localDate;
+		@JSONHint(format = "yyyy/M/d H:m:s.nnnnnnnnn")
+		public LocalDateTime localDateTime;
+		@JSONHint(format = "H:m:s.nnnnnnnnn")
+		public LocalTime localTime;
+		@JSONHint(format = "M/d")
+		public MonthDay monthDay;
+		@JSONHint(format = "yyyy/M/d H:m:s.nnnnnnnnnZ")
+		public OffsetDateTime offsetDateTime;
+		@JSONHint(format = "H:m:s.nnnnnnnnnZ")
+		public OffsetTime offsetTime;
+		@JSONHint(format = "yyyy")
+		public Year year;
+		@JSONHint(format = "MMMM")
+		public Month month;
+		@JSONHint(format = "E")
+		public DayOfWeek dayOfWeek;
+		@JSONHint(format = "yyyy/M")
+		public YearMonth yearMonth;
+		@JSONHint(format = "yyyy/M/d H:m:s.nnnnnnnnnz")
+		public ZonedDateTime zonedDateTime;
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((instant == null) ? 0 : instant.hashCode());
+			result = prime * result
+					+ ((localDate == null) ? 0 : localDate.hashCode());
+			result = prime * result
+					+ ((localDateTime == null) ? 0 : localDateTime.hashCode());
+			result = prime * result
+					+ ((localTime == null) ? 0 : localTime.hashCode());
+			result = prime * result
+					+ ((monthDay == null) ? 0 : monthDay.hashCode());
+			result = prime
+					* result
+					+ ((offsetDateTime == null) ? 0 : offsetDateTime
+							.hashCode());
+			result = prime * result
+					+ ((offsetTime == null) ? 0 : offsetTime.hashCode());
+			result = prime * result + ((year == null) ? 0 : year.hashCode());
+			result = prime * result + ((month == null) ? 0 : month.hashCode());
+			result = prime * result + ((dayOfWeek == null) ? 0 : dayOfWeek.hashCode());
+			result = prime * result
+					+ ((yearMonth == null) ? 0 : yearMonth.hashCode());
+			result = prime * result
+					+ ((zonedDateTime == null) ? 0 : zonedDateTime.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Java8DataTimeAPIFormatterBean other = (Java8DataTimeAPIFormatterBean) obj;
+			if (instant == null) {
+				if (other.instant != null)
+					return false;
+			} else if (!instant.equals(other.instant))
+				return false;
+			if (localDate == null) {
+				if (other.localDate != null)
+					return false;
+			} else if (!localDate.equals(other.localDate))
+				return false;
+			if (localDateTime == null) {
+				if (other.localDateTime != null)
+					return false;
+			} else if (!localDateTime.equals(other.localDateTime))
+				return false;
+			if (localTime == null) {
+				if (other.localTime != null)
+					return false;
+			} else if (!localTime.equals(other.localTime))
+				return false;
+			if (monthDay == null) {
+				if (other.monthDay != null)
+					return false;
+			} else if (!monthDay.equals(other.monthDay))
+				return false;
+			if (offsetDateTime == null) {
+				if (other.offsetDateTime != null)
+					return false;
+			} else if (!offsetDateTime.equals(other.offsetDateTime))
+				return false;
+			if (offsetTime == null) {
+				if (other.offsetTime != null)
+					return false;
+			} else if (!offsetTime.equals(other.offsetTime))
+				return false;
+			if (year == null) {
+				if (other.year != null)
+					return false;
+			} else if (!year.equals(other.year))
+				return false;
+			if (month != other.month)
+				return false;
+			if (dayOfWeek != other.dayOfWeek)
+				return false;
+			if (yearMonth == null) {
+				if (other.yearMonth != null)
+					return false;
+			} else if (!yearMonth.equals(other.yearMonth))
+				return false;
+			if (zonedDateTime == null) {
+				if (other.zonedDateTime != null)
+					return false;
+			} else if (!zonedDateTime.equals(other.zonedDateTime))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "Java8DataTimeAPIFormatterBean [instant=" + instant
+					+ ", localDate=" + localDate
+					+ ", localDateTime=" + localDateTime
+					+ ", localTime=" + localTime
+					+ ", monthDay=" + monthDay
+					+ ", offsetDateTimey=" + offsetDateTime
+					+ ", offsetTime=" + offsetTime
+					+ ", year=" + year
+					+ ", month=" + month
+					+ ", yearMonth=" + yearMonth
+					+ ", zonedDateTime=" + zonedDateTime
+					+ "]";
 		}
 	}
 

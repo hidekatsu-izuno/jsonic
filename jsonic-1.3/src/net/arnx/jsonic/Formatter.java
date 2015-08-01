@@ -30,7 +30,9 @@ import java.sql.SQLException;
 import java.sql.Struct;
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalAmount;
 import java.util.Arrays;
@@ -1505,24 +1507,97 @@ final class TextNodeFormatter implements Formatter {
 	}
 }
 
-final class TemporalFormatter implements Formatter {
-	private static final Class<?>[] targets = {
-		TemporalAccessor.class,
-		TemporalAmount.class,
-		ZoneId.class
-	};
-
-	public TemporalFormatter() {
+final class TemporalEnumFormatter implements Formatter {
+	public TemporalEnumFormatter() {
 	}
 
 	@Override
 	public boolean accept(Object o) {
-		for (Class<?> target : targets) {
-			if (o != null && target.isAssignableFrom(o.getClass())) {
-				return true;
-			}
-		}
+		return o instanceof TemporalAccessor && o instanceof Enum<?>;
+	}
+
+	@Override
+	public boolean isStruct() {
 		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		String format = context.getDateFormatText();
+		if (format != null) {
+			StringFormatter.serialize(context, context.getLocalCache()
+					.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE)
+					.format((TemporalAccessor)o), out);
+		} else if (context.getEnumStyle() != null) {
+			StringFormatter.serialize(context, context.getEnumStyle().to(((Enum<?>)o).name()), out);
+		} else {
+			out.append(Integer.toString(((Enum<?>)o).ordinal()));
+		}
+	}
+}
+
+final class InstantFormatter implements Formatter {
+	public InstantFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof Instant;
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		String format = context.getDateFormatText();
+		if (format != null) {
+			StringFormatter.serialize(context, context.getLocalCache()
+					.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE)
+					.withZone(context.getTimeZone().toZoneId())
+					.format((TemporalAccessor)o), out);
+		} else {
+			StringFormatter.serialize(context, o.toString(), out);
+		}
+	}
+}
+
+final class TemporalAccessorFormatter implements Formatter {
+	public TemporalAccessorFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof TemporalAccessor;
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		String format = context.getDateFormatText();
+		if (format != null) {
+			StringFormatter.serialize(context, context.getLocalCache()
+					.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE)
+					.format((TemporalAccessor)o), out);
+		} else {
+			StringFormatter.serialize(context, o.toString(), out);
+		}
+	}
+}
+
+final class TemporalAmountFormatter implements Formatter {
+	public TemporalAmountFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof TemporalAmount;
 	}
 
 	@Override
@@ -1536,6 +1611,25 @@ final class TemporalFormatter implements Formatter {
 	}
 }
 
+final class ZoneIdFormatter implements Formatter {
+	public ZoneIdFormatter() {
+	}
+
+	@Override
+	public boolean accept(Object o) {
+		return o instanceof ZoneId;
+	}
+
+	@Override
+	public boolean isStruct() {
+		return false;
+	}
+
+	@Override
+	public void format(Context context, Object src, Object o, OutputSource out) throws Exception {
+		StringFormatter.serialize(context, o.toString(), out);
+	}
+}
 
 final class OptionalIntFormatter implements Formatter {
 	public static final OptionalIntFormatter INSTNACE = new OptionalIntFormatter();

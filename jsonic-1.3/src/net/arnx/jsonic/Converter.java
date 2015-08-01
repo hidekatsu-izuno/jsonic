@@ -57,6 +57,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQuery;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -1835,7 +1837,50 @@ final class InstantConverter implements Converter {
 		} else if (value instanceof Number) {
 			return Instant.ofEpochMilli(((Number)value).longValue());
 		} else if (value instanceof String) {
-			return Instant.parse(((String)value));
+			String format = context.getDateFormatText();
+			if (format != null) {
+				TemporalAccessor temp = context.getLocalCache()
+					.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE)
+					.parseBest((String)value,
+							new TemporalQuery<ZonedDateTime>() {
+								@Override
+								public ZonedDateTime queryFrom(TemporalAccessor temporal) {
+									return ZonedDateTime.from(temporal);
+								}
+							},
+							new TemporalQuery<OffsetDateTime>() {
+								@Override
+								public OffsetDateTime queryFrom(TemporalAccessor temporal) {
+									return OffsetDateTime.from(temporal);
+								}
+							},
+							new TemporalQuery<LocalDateTime>() {
+								@Override
+								public LocalDateTime queryFrom(TemporalAccessor temporal) {
+									return LocalDateTime.from(temporal);
+								}
+							},
+							new TemporalQuery<LocalDate>() {
+								@Override
+								public LocalDate queryFrom(TemporalAccessor temporal) {
+									return LocalDate.from(temporal);
+								}
+							});
+
+				if (temp instanceof ZonedDateTime) {
+					return ((ZonedDateTime)temp).toInstant();
+				} else if (temp instanceof OffsetDateTime) {
+					return ((OffsetDateTime)temp).toInstant();
+				} else if (temp instanceof LocalDateTime) {
+					return ((LocalDateTime)temp).atZone(context.getTimeZone().toZoneId()).toInstant();
+				} else if (temp instanceof LocalDate) {
+					return ((LocalDate)temp).atStartOfDay(context.getTimeZone().toZoneId()).toInstant();
+				} else {
+					return (Instant)temp;
+				}
+			} else {
+				return Instant.parse(((String)value));
+			}
 		} else {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
@@ -1867,8 +1912,8 @@ final class LocalDateConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return LocalDate.parse(((String)value), f);
+				return LocalDate.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return LocalDate.parse(((String)value));
 			}
@@ -1903,8 +1948,8 @@ final class LocalDateTimeConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return LocalDateTime.parse(((String)value), f);
+				return LocalDateTime.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return LocalDateTime.parse(((String)value));
 			}
@@ -1939,8 +1984,8 @@ final class LocalTimeConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return LocalTime.parse(((String)value), f);
+				return LocalTime.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return LocalTime.parse(((String)value));
 			}
@@ -1975,8 +2020,8 @@ final class MonthDayConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return MonthDay.parse(((String)value), f);
+				return MonthDay.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return MonthDay.parse(((String)value));
 			}
@@ -2011,8 +2056,8 @@ final class OffsetDateTimeConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return OffsetDateTime.parse(((String)value), f);
+				return OffsetDateTime.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return OffsetDateTime.parse(((String)value));
 			}
@@ -2047,8 +2092,8 @@ final class OffsetTimeConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return OffsetTime.parse(((String)value), f);
+				return OffsetTime.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return OffsetTime.parse(((String)value));
 			}
@@ -2115,8 +2160,8 @@ final class YearConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return Year.parse(((String)value), f);
+				return Year.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return Year.parse(((String)value));
 			}
@@ -2151,8 +2196,8 @@ final class YearMonthConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return YearMonth.parse(((String)value), f);
+				return YearMonth.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return YearMonth.parse(((String)value));
 			}
@@ -2187,8 +2232,8 @@ final class ZonedDateTimeConverter implements Converter {
 		} else if (value instanceof String) {
 			String format = context.getDateFormatText();
 			if (format != null) {
-				DateTimeFormatter f = DateTimeFormatter.ofPattern(format, context.getLocale());
-				return ZonedDateTime.parse(((String)value), f);
+				return ZonedDateTime.parse(((String)value), context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE));
 			} else {
 				return ZonedDateTime.parse(((String)value));
 			}
@@ -2283,7 +2328,22 @@ final class DayOfWeekConverter implements Converter {
 		} else if (value instanceof Number) {
 			return DayOfWeek.of(((Number)value).intValue());
 		} else if (value instanceof String) {
-			return DayOfWeek.valueOf(((String)value));
+			String text = (String)value;
+			String format = context.getDateFormatText();
+			if (format != null) {
+				return context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE)
+						.parse(text, new TemporalQuery<DayOfWeek>() {
+								@Override
+								public DayOfWeek queryFrom(TemporalAccessor temporal) {
+									return DayOfWeek.from(temporal);
+								}
+							});
+			} else if (text.length() > 0 && text.charAt(0) >= '0' && text.charAt(0) <= '9') {
+				return DayOfWeek.of(Integer.parseInt(text));
+			} else {
+				return DayOfWeek.valueOf(text);
+			}
 		} else {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
@@ -2315,7 +2375,22 @@ final class MonthConverter implements Converter {
 		} else if (value instanceof Number) {
 			return Month.of(((Number)value).intValue());
 		} else if (value instanceof String) {
-			return Month.valueOf(((String)value));
+			String text = (String)value;
+			String format = context.getDateFormatText();
+			if (format != null) {
+				return context.getLocalCache()
+						.get(DateTimeFormatter.class, format, DateTimeFormatterProvider.INSTANCE)
+						.parse(text, new TemporalQuery<Month>() {
+								@Override
+								public Month queryFrom(TemporalAccessor temporal) {
+									return Month.from(temporal);
+								}
+							});
+			} else if (text.length() > 0 && text.charAt(0) >= '0' && text.charAt(0) <= '9') {
+				return Month.of(Integer.parseInt(text));
+			} else {
+				return Month.valueOf(text);
+			}
 		} else {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}

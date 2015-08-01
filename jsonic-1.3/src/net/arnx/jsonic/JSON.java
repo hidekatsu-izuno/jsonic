@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -270,6 +271,9 @@ public class JSON {
 		formatter = getFormatterInstance(PACKAGE_NAME + ".PathFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
+		formatter = getFormatterInstance(PACKAGE_NAME + ".TemporalEnumFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
 		FORMAT_LIST.add(EnumFormatter.INSTANCE);
 		FORMAT_LIST.add(MapFormatter.INSTANCE);
 		FORMAT_LIST.add(ListFormatter.INSTANCE);
@@ -317,7 +321,16 @@ public class JSON {
 		formatter = getFormatterInstance(PACKAGE_NAME + ".OptionalFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
-		formatter = getFormatterInstance(PACKAGE_NAME + ".TemporalFormatter", cl);
+		formatter = getFormatterInstance(PACKAGE_NAME + ".InstantFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
+		formatter = getFormatterInstance(PACKAGE_NAME + ".TemporalAccessorFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
+		formatter = getFormatterInstance(PACKAGE_NAME + ".TemporalAmountFormatter", cl);
+		if (formatter != null) FORMAT_LIST.add(formatter);
+
+		formatter = getFormatterInstance(PACKAGE_NAME + ".ZoneIdFormatter", cl);
 		if (formatter != null) FORMAT_LIST.add(formatter);
 
 		Converter converter = null;
@@ -1785,5 +1798,14 @@ public class JSON {
 	private static class State {
 		Object key;
 		JSONHint hint;
+	}
+}
+
+class DateTimeFormatterProvider implements LocalCache.Provider<DateTimeFormatter> {
+	public static final DateTimeFormatterProvider INSTANCE = new DateTimeFormatterProvider();
+
+	@Override
+	public DateTimeFormatter get(Object key, Locale locale, TimeZone timeZone) {
+		return DateTimeFormatter.ofPattern(((String)key), locale);
 	}
 }
