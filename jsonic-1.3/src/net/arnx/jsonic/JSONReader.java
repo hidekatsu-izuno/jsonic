@@ -91,6 +91,31 @@ public class JSONReader {
 		return (Boolean)parser.getValue();
 	}
 
+	void skipValue() throws IOException {
+		if (type == null) {
+			throw new IllegalStateException("you should call next.");
+		}
+
+		int ilen = 0;
+
+		do {
+			switch (type) {
+			case START_OBJECT:
+			case START_ARRAY:
+				ilen++;
+				break;
+			case END_ARRAY:
+			case END_OBJECT:
+				ilen--;
+				break;
+			}
+
+			if (parser.isInterpretterMode() && ilen == 0) {
+				break;
+			}
+		} while ((type = parser.next()) != null);
+	}
+
 	Object getValue() throws IOException {
 		if (type == null) {
 			throw new IllegalStateException("you should call next.");
@@ -105,19 +130,11 @@ public class JSONReader {
 		do {
 			switch (type) {
 			case START_OBJECT:
-			case START_ARRAY:
+			case START_ARRAY: {
 				istack = iexpand(istack, ilen + 1);
 				istack[ilen++] = olen;
 				break;
-			case NAME:
-			case STRING:
-			case NUMBER:
-			case BOOLEAN:
-			case NULL:
-				Object value = parser.getValue();
-				ostack = oexpand(ostack, olen + 1);
-				ostack[olen++] = value;
-				break;
+			}
 			case END_ARRAY: {
 				int start = istack[--ilen];
 				int len = olen - start;
@@ -130,7 +147,7 @@ public class JSONReader {
 				ostack[olen++] = array;
 				break;
 			}
-			case END_OBJECT:
+			case END_OBJECT: {
 				int start = istack[--ilen];
 				int len = olen - start;
 				Map<Object, Object> object = new LinkedHashMap<Object, Object>(
@@ -145,6 +162,17 @@ public class JSONReader {
 				ostack = oexpand(ostack, olen + 1);
 				ostack[olen++] = object;
 				break;
+			}
+			case NAME:
+			case STRING:
+			case NUMBER:
+			case BOOLEAN:
+			case NULL: {
+				Object value = parser.getValue();
+				ostack = oexpand(ostack, olen + 1);
+				ostack[olen++] = value;
+				break;
+			}
 			}
 
 			if (parser.isInterpretterMode() && ilen == 0) {

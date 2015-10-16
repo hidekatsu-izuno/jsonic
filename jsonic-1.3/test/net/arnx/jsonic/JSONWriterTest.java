@@ -89,6 +89,63 @@ public class JSONWriterTest {
 		w.value("hoge");
 		w.endObject();
 		assertEquals("{\n\t\"hoge\": \"hoge\",\n\t\"hoge2\": [\n\t\t\"hoge\",\n\t\t[\n\t\t\t\"hoge\"\n\t\t]\n\t],\n\t\"hoge3\": \"hoge\"\n}", out.toString());
+
+
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.beginArray();
+		{
+			w.beginObject();
+			{
+				w.name("hoge");
+				w.value("hoge");
+				w.name("object");
+				w.beginObject();
+				w.endObject();
+			}
+			w.endObject();
+			w.beginObject();
+			{
+				w.name("hoge");
+				w.value("hoge");
+				w.name("array");
+				w.beginArray();
+				w.endArray();
+			}
+			w.endObject();
+			w.beginArray();
+			{
+				w.beginObject();
+				w.endObject();
+				w.value("hoge");
+				w.beginArray();
+				w.endArray();
+			}
+			w.endArray();
+		}
+		w.endArray();
+		assertEquals("[\n\t{\n\t\t\"hoge\": \"hoge\",\n\t\t\"object\": {}\n\t},\n\t{\n\t\t\"hoge\": \"hoge\",\n\t\t\"array\": []\n\t},\n\t[\n\t\t{},\n\t\t\"hoge\",\n\t\t[]\n\t]\n]", out.toString());
+
+
+		out.getBuffer().setLength(0);
+		w = json.getWriter(out);
+		w.beginArray();
+		{
+			w.beginObject();
+			{
+				w.name("hoge");
+				w.append("{\"hoge\":\"hoge\",\"object\":{}}");
+			}
+			w.endObject();
+			w.beginArray();
+			{
+				w.append("{\"hoge\":\"hoge\",\"array\":[]}");
+			}
+			w.endArray();
+		}
+		w.endArray();
+		assertEquals("[\n\t{\n\t\t\"hoge\": {\"hoge\":\"hoge\",\"object\":{}}\n\t},\n\t[\n\t\t{\"hoge\":\"hoge\",\"array\":[]}\n\t]\n]", out.toString());
+
 	}
 
 	@Test

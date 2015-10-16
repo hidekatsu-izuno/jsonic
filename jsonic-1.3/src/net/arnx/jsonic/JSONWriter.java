@@ -41,6 +41,7 @@ public class JSONWriter {
 		} else if (state.type == JSONDataType.OBJECT) {
 			if (state.name != null) {
 				context.enter(state.name);
+				state.index++;
 			} else {
 				throw new JSONException(
 						context.getMessage("json.format.IllegalMethodCallError", "beginObject"),
@@ -53,6 +54,7 @@ public class JSONWriter {
 				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(state.index);
+			state.index++;
 		} else {
 			throw new IllegalStateException();
 		}
@@ -99,6 +101,7 @@ public class JSONWriter {
 		} else if (state.type == JSONDataType.OBJECT) {
 			if (state.name != null) {
 				context.enter(state.name);
+				state.index++;
 			} else {
 				throw new JSONException(
 						context.getMessage("json.format.IllegalMethodCallError", "beginArray"),
@@ -111,6 +114,7 @@ public class JSONWriter {
 				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(state.index);
+			state.index++;
 		} else {
 			throw new IllegalStateException();
 		}
@@ -186,6 +190,7 @@ public class JSONWriter {
 		} else if (state.type == JSONDataType.OBJECT) {
 			if (state.name != null) {
 				context.enter(state.name);
+				state.index++;
 			} else {
 				throw new JSONException(
 						context.getMessage("json.format.IllegalMethodCallError", "value"),
@@ -198,6 +203,7 @@ public class JSONWriter {
 				context.appendIndent(out, context.getDepth() + 1);
 			}
 			context.enter(state.index);
+			state.index++;
 		} else {
 			throw new IllegalStateException();
 		}
@@ -206,9 +212,42 @@ public class JSONWriter {
 		context.formatInternal(value, out);
 		context.exit();
 
-		if (state != null) {
-			state.index++;
+		if (stack.size == 0) {
+			out.flush();
 		}
+		return this;
+	}
+
+	public JSONWriter append(String text) throws IOException {
+		State state = stack.peek();
+		if(state == null) {
+			if (context.isPrettyPrint()) {
+				context.appendIndent(out, 0);
+			}
+			context.enter(JSON.ROOT, null);
+		} else if (state.type == JSONDataType.OBJECT) {
+			if (state.name != null) {
+				context.enter(state.name);
+				state.index++;
+			} else {
+				throw new JSONException(
+						context.getMessage("json.format.IllegalMethodCallError", "value"),
+						JSONException.FORMAT_ERROR);
+			}
+		} else if (state.type == JSONDataType.ARRAY) {
+			if (state.index > 0) out.append(',');
+			if (context.isPrettyPrint()) {
+				out.append('\n');
+				context.appendIndent(out, context.getDepth() + 1);
+			}
+			context.enter(state.index);
+			state.index++;
+		} else {
+			throw new IllegalStateException();
+		}
+
+		out.append(text);
+		context.exit();
 
 		if (stack.size == 0) {
 			out.flush();
