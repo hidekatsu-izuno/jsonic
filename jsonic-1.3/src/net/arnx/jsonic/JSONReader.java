@@ -91,7 +91,7 @@ public class JSONReader {
 		return (Boolean)parser.getValue();
 	}
 
-	void skipValue() throws IOException {
+	public void skipValue() throws IOException {
 		if (type == null) {
 			throw new IllegalStateException("you should call next.");
 		}
