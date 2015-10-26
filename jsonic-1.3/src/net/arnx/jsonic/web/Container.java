@@ -398,13 +398,20 @@ public class Container {
 				continue;
 			}
 
+			JSONHint hint = pi.getReadAnnotation(JSONHint.class);
+			String name = pi.getName();
+			if (hint != null) {
+				if (hint.ignore()) continue;
+				if (hint.name().length() != 0) name = hint.name();
+			}
+
 			Object value = pi.get(cause);
 			if (value == cause) {
 				continue;
 			}
 
 			if (data == null) data = new LinkedHashMap<String, Object>();
-			data.put(pi.getName(), value);
+			data.put(name, value);
 		}
 		return (data != null) ? data : Collections.emptyMap();
 	}

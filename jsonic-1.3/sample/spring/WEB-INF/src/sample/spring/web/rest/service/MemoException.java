@@ -1,5 +1,7 @@
 package sample.spring.web.rest.service;
 
+import net.arnx.jsonic.JSONHint;
+
 public class MemoException extends RuntimeException {
 
 	public MemoException() {
@@ -17,9 +19,18 @@ public class MemoException extends RuntimeException {
 	public MemoException(String message, Throwable t) {
 		super(message, t);
 	}
-	
+
 	public String getExtensionProperty() {
 		return "extension property";
 	}
 
+	@JSONHint(ignore=true)
+	public String getIgnoreProperty() {
+		return "ignore property";
+	}
+
+	@JSONHint(name="rename")
+	public String getRenameProperty() {
+		return "rename property";
+	}
 }
