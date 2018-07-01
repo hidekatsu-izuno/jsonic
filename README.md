@@ -5,7 +5,7 @@
 
 Simple JSON encoder/decoder written in java
 
-2018/7/1 JSONIC は、リポジトリを GitHub に移動するとともに今後機能強化が行われることがないメンテナンスモードに移行します。移行パスとしては、機能、パフォーマンス共に優れた [jackson](https://github.com/FasterXML/jackson) をおすすめいたします。
+2018/7/1 JSONIC は、リポジトリを GitHub に移動するとともに今後機能強化が行われることがないメンテナンスモードに移行します。機能、パフォーマンス共に優れた [jackson](https://github.com/FasterXML/jackson) への移行をおすすめいたします。
 
 ## JSONICとは
 
