@@ -1,0 +1,101 @@
+<!doctype html>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>JSON-RPC sample</title>
+<script type="text/javascript" src="jquery-4.0.0.min.js"></script>
+<script type="text/javascript">
+	var ds = {};
+
+	function setup(value) {
+		var name = $('#name').empty();
+		for (var i = 0; i < value.length; i++) {
+			name.append(new Option(value[i].name, value[i].name));
+			ds[value[i].name] = value[i].methods;
+		}
+		changeName(name.val());
+	}
+
+	function submit() {
+		var name = $('#name').val();
+		var params;
+		try {
+			params = JSON.parse($('#params').val());
+		} catch (error) {
+			$('#result').text(error.message);
+			return;
+		}
+		$.ajax({
+			url: 'rpc/rpc/rpc.json',
+			method: 'POST',
+			contentType: 'application/json',
+			dataType: 'text',
+			data: JSON.stringify({
+				method: name + '.' + ds[name][$('#method').val()].name,
+				params: params,
+				id: Date.now()
+			}),
+			success: function(response) {
+				$('#result').text(response);
+			},
+			error: function() {
+				$('#result').text('error!');
+			}
+		});
+	}
+
+	function changeName(value) {
+		var method = $('#method').empty();
+		var methods = ds[value];
+		for (var i = 0; i < methods.length; i++) {
+			method.append(new Option(methods[i].name, i));
+		}
+		changeMethod(0);
+	}
+
+	function changeMethod(value) {
+		var method = ds[$('#name').val()][value];
+		$('#params').val(method.example);
+		$('#code').text(method.code);
+	}
+
+	function init() {
+		$.ajax({
+			url: 'rpc/rpc_info.json',
+			method: 'POST',
+			contentType: 'application/json',
+			dataType: 'json',
+			data: JSON.stringify({
+				method: 'find',
+				params: [],
+				id: Date.now()
+			}),
+			success: function(response) {
+				setup(response.result);
+			},
+			error: function() {
+				$('#result').text('error!');
+			}
+		});
+	}
+</script>
+</head>
+<body onload="init()">
+<h1>JSON-RPC sample</h1>
+
+<h2>request</h2>
+<div style="font: 9pt monospace;">
+name: <select id="name" onchange="changeName(this.value)"></select>
+method: <select id="method" onchange="changeMethod(this.value)"></select>
+params: <input id="params" type="text" size="50" value=""/>
+<input type="button" value="send" onclick="submit()" />
+</div>
+
+<pre id="code" style="font: 9pt monospace; border: 1px solid black; padding: 5px;">
+</pre>
+
+<h2>result</h2>
+<pre id="result" style="font: 9pt monospace; border: 1px solid black; padding: 5px;"></pre>
+</body>
+</html>

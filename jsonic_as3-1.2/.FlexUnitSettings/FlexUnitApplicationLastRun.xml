@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testrun name="" >
-<testsuite  name="Default Test Suite" project="jsonic_as3-1.2">
-<testsuite name="net.arnx.jsonic:JSONTest" type="testsuiteclass"/>
-</testsuite>
-</testrun>

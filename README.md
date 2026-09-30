@@ -7,6 +7,27 @@ Simple JSON encoder/decoder written in java
 
 2018/7/1 JSONIC は、リポジトリを GitHub に移動するとともに今後機能強化が行われることがないメンテナンスモードに移行します。機能、パフォーマンス共に優れた [jackson](https://github.com/FasterXML/jackson) への移行をおすすめいたします。
 
+## ビルド
+
+JDK 21 と Maven 3.9 以降を使用し、プロジェクトルートで実行します。
+`mise` を使用する場合は `mise install` の後、`mise exec -- mvn clean verify` を実行してください。
+
+```sh
+mvn clean verify
+```
+
+成果物は `target/jsonic-1.3.10.jar` に生成されます（Java 8 向けにコンパイル）。
+ソースは `src/main/java`、リソースは `src/main/resources`、
+テストとテストデータは `src/test/java`・`src/test/resources` に配置しています。
+
+`sample/basic` と `sample/spring` はテスト時に `target/test-work/sample` へコピーして
+コンパイルされ、REST・RPC のテストで使用されます（ローカルポート 16001 を使用）。
+既存テストの日付表現に合わせて、テスト JVM のロケールは日本語、タイムゾーンは
+`Asia/Tokyo` に固定しています。依存ライブラリは Maven が取得するため、
+初回ビルドには Maven Central と Seasar の Maven リポジトリへの接続が必要です。
+旧 Ant 専用のクラスローダーテストも Maven の `test` フェーズで実行します。
+ルートの `build.xml`・`lib/` や Ant コマンドのインストールは不要です。
+
 ## JSONICとは
 
 JSONICは、Java用のシンプルかつ高機能なJSONエンコーダー/デコーダーライブラリです。
