@@ -30,18 +30,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 
 import net.arnx.jsonic.JSON;
 
@@ -107,14 +108,10 @@ public class GatewayFilter implements Filter {
 	protected void doFilter(HttpServletRequest request, HttpServletResponse response, 
 			FilterChain chain) throws IOException, ServletException {
 		
-		if (request.getAttribute(GATEWAY_KEY) != null) {
-			chain.doFilter(request, response);
-			return;
-		}
-		
-		String path = (request.getContextPath().equals("/")) ?
-				request.getRequestURI() : 
-				request.getRequestURI().substring(request.getContextPath().length());
+		// Use the container's decoded mapping path, without path parameters.
+		// Raw request URIs can spell the same protected resource differently.
+		String path = request.getServletPath();
+		if (request.getPathInfo() != null) path += request.getPathInfo();
 		
 		Matcher matcher = null;
 		Config config = null;
@@ -145,6 +142,13 @@ public class GatewayFilter implements Filter {
 			}
 		}
 		
+		// Authorization applies to every dispatch, including forwards. Only the
+		// response transformations and configured rewrite run once per request.
+		if (request.getAttribute(GATEWAY_KEY) != null) {
+			chain.doFilter(request, response);
+			return;
+		}
+
 		// set character encoding
 		if (config.encoding != null) {
 			request.setCharacterEncoding(config.encoding);
@@ -219,6 +223,16 @@ public class GatewayFilter implements Filter {
 					GZIPOutputStream cout = new GZIPOutputStream(GZIPResponse.super.getOutputStream());
 					
 					@Override
+					public boolean isReady() {
+						return true;
+					}
+
+					@Override
+					public void setWriteListener(WriteListener listener) {
+						throw new UnsupportedOperationException("GZIP output supports blocking I/O only");
+					}
+
+					@Override
 					public void write(byte[] b, int off, int len) throws IOException {
 						cout.write(b, off, len);
 					}
@@ -240,6 +254,8 @@ public class GatewayFilter implements Filter {
 					
 					@Override
 					public void close() throws IOException {
+						// A forward may close the stream before the outer filter returns.
+						if (writer != null) writer.flush();
 						cout.close();
 					}
 				};

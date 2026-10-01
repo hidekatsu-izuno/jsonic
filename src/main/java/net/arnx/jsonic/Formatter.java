@@ -17,7 +17,6 @@ package net.arnx.jsonic;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -36,6 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalAmount;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -67,7 +67,6 @@ import org.w3c.dom.Text;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.io.OutputSource;
-import net.arnx.jsonic.util.Base64;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
@@ -449,26 +448,7 @@ final class ByteArrayFormatter implements Formatter {
 
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		StringFormatter.serialize(context, Base64.encode((byte[]) o), out);
-	}
-}
-
-final class SerializableFormatter implements Formatter {
-	public static final SerializableFormatter INSTANCE = new SerializableFormatter();
-
-	@Override
-	public boolean accept(Object o) {
-		return o instanceof Serializable;
-	}
-
-	@Override
-	public boolean isStruct() {
-		return false;
-	}
-
-	@Override
-	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		StringFormatter.serialize(context, Base64.encode(ClassUtil.serialize(o)), out);
+		StringFormatter.serialize(context, Base64.getEncoder().encodeToString((byte[]) o), out);
 	}
 }
 
@@ -509,7 +489,7 @@ final class RowIdFormatter implements Formatter {
 
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		SerializableFormatter.INSTANCE.format(context, src, o, out);
+		StringFormatter.serialize(context, Base64.getEncoder().encodeToString(ClassUtil.serialize(o)), out);
 	}
 }
 
@@ -1131,7 +1111,7 @@ final class MapFormatter implements Formatter {
 
 final class ObjectFormatter implements Formatter {
 	private Class<?> cls;
-	private transient PropertyInfo[] props;
+	private transient BeanProperties.ReadProperty[] props;
 
 	public  ObjectFormatter(Class<?> cls) {
 		this.cls = cls;
@@ -1148,7 +1128,7 @@ final class ObjectFormatter implements Formatter {
 
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		if (props == null) props = getGetProperties(context, cls);
+		if (props == null) props = BeanProperties.readable(context, cls);
 
 		out.append('{');
 		int count = 0;
@@ -1158,10 +1138,10 @@ final class ObjectFormatter implements Formatter {
 			Class<?> lastClass = null;
 			Formatter lastFormatter = null;
 
-			for (PropertyInfo prop : props) {
-				key = prop.getName();
+			for (BeanProperties.ReadProperty prop : props) {
+				key = prop.name;
 
-				Object value = prop.get(o);
+				Object value = prop.property.get(o);
 				if (value == src || (context.isSuppressNull() && value == null)) {
 					continue;
 				}
@@ -1171,14 +1151,14 @@ final class ObjectFormatter implements Formatter {
 					out.append('\n');
 					context.appendIndent(out, context.getDepth() + 1);
 				}
-				StringFormatter.serialize(context, key.toString(), out);
+				out.append(prop.quotedName);
 				out.append(':');
 				if (context.isPrettyPrint()) out.append(' ');
-				JSONHint hint = prop.getReadAnnotation(JSONHint.class);
+				JSONHint hint = prop.hint;
 				context.enter(key, hint);
 				key = null;
 
-				value = context.preformatInternal(prop.getReadGenericType(), value);
+				value = context.preformatInternal(prop.genericType, value);
 				if (value == null) {
 					NullFormatter.INSTANCE.format(context, src, value, out);
 				} else if (hint == null) {

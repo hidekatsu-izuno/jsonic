@@ -17,7 +17,6 @@ package net.arnx.jsonic;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -59,6 +58,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQuery;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -80,7 +80,6 @@ import java.util.regex.Pattern;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.io.StringBuilderOutputSource;
-import net.arnx.jsonic.util.Base64;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
@@ -180,25 +179,6 @@ final class StringSerializableConverter implements Converter {
 					return null;
 				}
 			}
-		} else {
-			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
-		}
-	}
-}
-
-final class SerializableConverter implements Converter {
-	public static final SerializableConverter INSTANCE = new SerializableConverter();
-
-	@Override
-	public boolean accept(Class<?> cls) {
-		return Serializable.class.isAssignableFrom(cls);
-	}
-
-	public Object convert(Context context, Object value, Class<?> c, Type t) throws Exception {
-		if (value == null) {
-			return null;
-		} else if (value instanceof String) {
-			return ClassUtil.deserialize(Base64.decode((String)value));
 		} else {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
@@ -1355,7 +1335,7 @@ final class ArrayConverter implements Converter {
 			JSONHint hint = context.getHint();
 			for (int i = 0; it.hasNext(); i++) {
 				context.enter(i, hint);
-				Array.set(array, i, context.postparseInternal(it.next(), pc, pt));
+				set(array, i, context.postparseInternal(it.next(), pc, pt));
 				context.exit();
 			}
 			return array;
@@ -1363,7 +1343,7 @@ final class ArrayConverter implements Converter {
 			Class<?> ctype = c.getComponentType();
 			if (value instanceof String) {
 				if (byte.class.equals(ctype)) {
-					return Base64.decode((String)value);
+					return Base64.getMimeDecoder().decode((String)value);
 				} else if (char.class.equals(ctype)) {
 					return ((String)value).toCharArray();
 				}
@@ -1373,11 +1353,24 @@ final class ArrayConverter implements Converter {
 			Type pt = (t instanceof GenericArrayType) ?
 					((GenericArrayType)t).getGenericComponentType() : pc;
 			context.enter(0, context.getHint());
-			Array.set(array, 0, context.postparseInternal(value, pc, pt));
+			set(array, 0, context.postparseInternal(value, pc, pt));
 			context.exit();
 			return array;
 		}
 	}
+
+	private static void set(Object array, int index, Object value) {
+		if (array instanceof Object[]) {
+			try {
+				((Object[])array)[index] = value;
+				return;
+			} catch (ArrayStoreException e) {
+				// Preserve Array.set's exception for incompatible custom conversions.
+			}
+		}
+		Array.set(array, index, value);
+	}
+
 }
 
 final class CollectionConverter implements Converter {
@@ -1612,7 +1605,7 @@ final class MapConverter implements Converter {
 
 final class ObjectConverter implements Converter {
 	private Class<?> cls;
-	private transient Map<String, PropertyInfo> props;
+	private transient Map<String, BeanProperties.WriteProperty> props;
 
 	public ObjectConverter(Class<?> cls) {
 		this.cls = cls;
@@ -1628,26 +1621,26 @@ final class ObjectConverter implements Converter {
 			return null;
 		}
 
-		if (props == null) props = getSetProperties(context, cls);
+		if (props == null) props = BeanProperties.writable(context, cls);
 
 		if (value instanceof Map<?, ?>) {
 			Object o = context.createInternal(c);
 			if (o == null) return null;
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
 				String name = entry.getKey().toString();
-				PropertyInfo target = props.get(name);
+				BeanProperties.WriteProperty target = props.get(name);
 				if (target == null) target = props.get(toLowerCamel(context, name));
 				if (target == null) continue;
 
-				JSONHint hint = target.getWriteAnnotation(JSONHint.class);
+				JSONHint hint = target.hint;
 				context.enter(name, hint);
-				Type ttype = target.getWriteGenericType();
-				Class<?> tcls = target.getWriteType();
+				Type ttype = target.genericType;
+				Class<?> tcls = target.type;
 				if (ttype != tcls && t instanceof ParameterizedType) {
 					ttype = context.getResolvedType(t, c, ttype);
 					tcls = ClassUtil.getRawType(ttype);
 				}
-				target.set(o, context.postparseInternal(entry.getValue(), tcls, ttype));
+				target.property.set(o, context.postparseInternal(entry.getValue(), tcls, ttype));
 				context.exit();
 			}
 			return o;
@@ -1656,20 +1649,20 @@ final class ObjectConverter implements Converter {
 		} else {
 			JSONHint hint = context.getHint();
 			if (hint != null && hint.anonym().length() > 0) {
-				PropertyInfo target = props.get(hint.anonym());
+				BeanProperties.WriteProperty target = props.get(hint.anonym());
 				if (target == null) return null;
 				Object o = context.createInternal(c);
 				if (o == null) return null;
 
-				JSONHint hint2 = target.getWriteAnnotation(JSONHint.class);
+				JSONHint hint2 = target.hint;
 				context.enter(hint.anonym(), hint2);
-				Class<?> cls = target.getWriteType();
-				Type gtype = target.getWriteGenericType();
+				Class<?> cls = target.type;
+				Type gtype = target.genericType;
 				if (gtype instanceof TypeVariable<?> && t instanceof ParameterizedType) {
 					gtype = resolveTypeVariable((TypeVariable<?>)gtype, (ParameterizedType)t);
 					cls = ClassUtil.getRawType(gtype);
 				}
-				target.set(o, context.postparseInternal(value, cls, gtype));
+				target.property.set(o, context.postparseInternal(value, cls, gtype));
 				context.exit();
 				return o;
 			} else {
@@ -1678,7 +1671,7 @@ final class ObjectConverter implements Converter {
 		}
 	}
 
-	private static Map<String, PropertyInfo> getSetProperties(Context context, Class<?> c) {
+	static Map<String, PropertyInfo> getSetProperties(Context context, Class<?> c) {
 		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
 
 		// Field
@@ -1747,7 +1740,7 @@ final class ObjectConverter implements Converter {
 		return props;
 	}
 
-	private static String toLowerCamel(Context context, String name) {
+	static String toLowerCamel(Context context, String name) {
 		StringBuilder sb = context.getLocalCache().getCachedBuffer();
 		boolean toUpperCase = false;
 		for (int i = 0; i < name.length(); i++) {

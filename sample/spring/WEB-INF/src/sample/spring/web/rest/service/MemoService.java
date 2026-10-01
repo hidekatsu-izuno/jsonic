@@ -27,9 +27,9 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.web.context.ServletContextAware;
 
@@ -66,7 +66,7 @@ public class MemoService implements ServletContextAware {
 		ObjectInputStream oin = null;
 		synchronized(MemoService.class) {
 			try {
-				File file = new File(context.getRealPath("/WEB-INF/database.dat"));
+				File file = new File(context.getRealPath("/WEB-INF"), "database.dat");
 				if (file.exists()) {
 					oin = new ObjectInputStream(new FileInputStream(file));
 					count = oin.readInt();
@@ -153,7 +153,7 @@ public class MemoService implements ServletContextAware {
 		ObjectOutputStream oout = null;
 		synchronized(MemoService.class) {
 			try {
-				oout = new ObjectOutputStream(new FileOutputStream(context.getRealPath("/WEB-INF/database.dat")));
+				oout = new ObjectOutputStream(new FileOutputStream(new File(context.getRealPath("/WEB-INF"), "database.dat")));
 				oout.writeInt(count);
 				oout.writeObject(list);
 				oout.flush();

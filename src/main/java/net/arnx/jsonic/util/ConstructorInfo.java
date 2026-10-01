@@ -17,6 +17,7 @@ package net.arnx.jsonic.util;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -71,11 +72,8 @@ public class ConstructorInfo implements Comparable<ConstructorInfo> {
 				
 				if (vconstructor == null) {
 					Class<?> vtype = cparams[cparams.length-1].getComponentType();
-					Class<?>[] tmp = new Class<?>[args.length];
-					System.arraycopy(cparams, 0, tmp, 0, cparams.length-1);
-					for (int i = cparams.length-1; i < tmp.length; i++) {
-						tmp[i] = vtype;
-					}
+					Class<?>[] tmp = Arrays.copyOf(cparams, args.length);
+					Arrays.fill(tmp, cparams.length-1, tmp.length, vtype);
 					vconstructor = cconstructor;
 					vtypes = tmp;
 				} else {

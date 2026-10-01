@@ -16,17 +16,248 @@ JDK 21 と Maven 3.9 以降を使用し、プロジェクトルートで実行�
 mvn clean verify
 ```
 
-成果物は `target/jsonic-1.3.10.jar` に生成されます（Java 8 向けにコンパイル）。
+成果物は `target/jsonic-1.4.0.jar` に生成されます（Java 21 向けにコンパイル）。
 ソースは `src/main/java`、リソースは `src/main/resources`、
 テストとテストデータは `src/test/java`・`src/test/resources` に配置しています。
 
-`sample/basic` と `sample/spring` はテスト時に `target/test-work/sample` へコピーして
-コンパイルされ、REST・RPC のテストで使用されます（ローカルポート 16001 を使用）。
+テストは JUnit 6.1.3（Jupiter）で実行します。REST・RPCテストでは、
+`sample/basic` と `sample/spring` を `target/web-test` に準備し、
+ローカルの空きポートで Jetty を起動します。サンプルの準備はテスト内で行います。
 既存テストの日付表現に合わせて、テスト JVM のロケールは日本語、タイムゾーンは
-`Asia/Tokyo` に固定しています。依存ライブラリは Maven が取得するため、
-初回ビルドには Maven Central と Seasar の Maven リポジトリへの接続が必要です。
-旧 Ant 専用のクラスローダーテストも Maven の `test` フェーズで実行します。
-ルートの `build.xml`・`lib/` や Ant コマンドのインストールは不要です。
+`Asia/Tokyo` に固定しています。初回ビルドには Maven Central への接続が必要です。
+
+## Webサンプルの実行
+
+Java 21 と Jakarta Servlet 6.1 対応サーバーを使用します。Web API は
+`javax.servlet` から `jakarta.servlet` へ移行しています。
+
+RESTのJSONP対応は廃止しました。`callback`を指定しても通常のJSONを返します。
+`_method`によるHTTPメソッド上書きはPOSTのみ有効です。
+RESTのPOST・PUT・DELETEは、`Origin`があればスキーム・ホスト・ポートの一致を検証し、
+異なるOriginや`null`、不正な値を403で拒否します。`Origin`がない場合は
+`Content-Type: application/json`または`X-Requested-With: XMLHttpRequest`が必要です。
+`Sec-Fetch-Site: cross-site`も拒否します。フォーム形式を送るAPIクライアントは
+`X-Requested-With: XMLHttpRequest`を付けてください。同一Originのブラウザフォームと
+同梱のjQueryサンプルは引き続き利用できます。
+リバースプロキシ経由では、Servletコンテナが公開URLのスキーム・ホスト・ポートを
+認識するよう、信頼するプロキシをコンテナ側で設定してください。
+
+GatewayFilterはServletコンテナが解釈したパスで、forward先でも認可を確認します。
+転送先でもフィルタが実行されるよう、`/*`に対して`REQUEST`と`FORWARD`を登録してください。
+圧縮・文字コード設定・設定によるforwardは1リクエストにつき1回だけ適用します。
+DynaBean対応のオプション依存であるCommons BeanUtilsは1.11.0を使用します。
+
+### Web APIの設定上の注意
+
+GatewayFilterを使用する場合は、`web.xml`の`filter-mapping`を次のように設定してください。
+`filter-name`は、使用している`filter`定義の名前に合わせます。
+`FORWARD`を省略すると転送先でフィルタが実行されず、転送先の認可チェックが働きません。
+
+```xml
+<filter-mapping>
+  <filter-name>Gateway Filter</filter-name>
+  <url-pattern>/*</url-pattern>
+  <dispatcher>REQUEST</dispatcher>
+  <dispatcher>FORWARD</dispatcher>
+</filter-mapping>
+```
+
+`Origin`を送らないクライアントでフォーム形式のPOSTを行う場合は、次のようにヘッダーを追加します。
+`_method=PUT`や`_method=DELETE`を使うPOSTも同じ条件です。
+
+```sh
+curl -X POST 'http://localhost:8080/basic/rest/memo.json' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-urlencode 'title=sample' \
+  --data-urlencode 'text=sample memo'
+```
+
+このヘッダーを付けても、異なる`Origin`を送るリクエストは許可されません。
+リバースプロキシを利用する場合の要件も含め、
+[RESTのCSRF対策とクライアント設定](docs/webservice.html#csrf)を参照してください。
+
+### 同梱ライブラリ
+
+
+`sample/spring/WEB-INF/lib` には次のバージョン付きjarを同梱しています。
+
+| ライブラリ | バージョン |
+|---|---|
+| Spring Framework（aop / beans / context / core / expression / web） | 7.0.9 |
+| Apache Commons Logging | 1.4.0 |
+| Micrometer（commons / observation） | 1.17.1 |
+| JSpecify | 1.0.1 |
+
+`mvn clean verify` でREST・RPCテストを実行すると、依存jarと
+コンパイル済みサービスを含むサンプルが `target/web-test/spring` に作られます。
+JSONIC本体のjarを追加すると、Jakarta Servlet 6.1 対応サーバーの
+Webアプリケーションとして配置できます。
+
+```sh
+cp target/jsonic-1.4.0.jar target/web-test/spring/WEB-INF/lib/
+```
+
+Servlet APIのjarはサーバーが提供するため、`WEB-INF/lib` には含めません。
+テストでは Jetty 12.1.13 を起動し、同梱jarを使ってREST・RPCを検証します。
+
+同梱依存jarを `pom.xml` のバージョンから再取得する場合は、次を実行します。
+
+```sh
+mise exec -- mvn org.apache.maven.plugins:maven-dependency-plugin:3.11.0:copy-dependencies \
+  -DincludeScope=runtime \
+  -DincludeGroupIds=org.springframework,commons-logging,org.jspecify,io.micrometer \
+  -DoutputDirectory=sample/spring/WEB-INF/lib
+```
+
+バージョン変更時は、旧バージョンのjarを除いてから取得してください。
+
+## 性能の計測
+
+標準の `JSON` と組み込みの `NamingStyle` では、Bean の読み書きに必要な
+プロパティ一覧・アノテーション・型情報と、エスケープ済みの出力キーを
+クラスと命名規則ごとに再利用します。`JSON.encode/decode` のように毎回
+インスタンスを生成する API にも適用されます。設定や処理中の `Context` は
+共有しません。独自の `JSON` サブクラスや `NamingStyle` は、呼び出しごとに
+プロパティ情報を構築するため、動的な `normalize/ignore` の動作を維持します。
+エラーメッセージの検索は必要時まで遅延し、参照型配列への代入は
+リフレクションを介さず行います。
+
+型付きの `parse/decode` では、標準の Bean と配列を対象に、トークンを配列へ
+保持してから POJO・最終配列へ直接変換します。構文検証が完了するまでは
+コンストラクターや setter を呼ばず、重複キーは最後の値を採用し、最初の
+出現順で代入します。通常の Bean の引数なしコンストラクター情報も再利用します。
+未知のプロパティは、構文検証後に変換せず読み飛ばします。
+
+独自の `JSON` / `NamingStyle`、型指定なしの値、特殊な変換を持つ型は
+従来経路を使います。`JSONHint` がある値や別名のキーなどは必要な部分だけ
+中間ツリーを作って従来の変換規則を適用します。最大深度を 64 より大きく
+設定した場合も従来経路を使い、非常に深い入力を再帰処理へ切り替えません。
+`JSONReader.getValue` のストリーミング API の動作は変更していません。
+
+JMH と Jackson の比較は任意の `benchmark` プロファイルで実行します。
+比較用依存関係はテスト用で、通常のビルドや配布 JAR には含まれません。
+
+```sh
+mise exec -- mvn -Pbenchmark test-compile \
+  org.apache.maven.plugins:maven-dependency-plugin:3.11.0:build-classpath \
+  -Dmdep.outputFile=target/benchmark-classpath.txt -DincludeScope=test
+benchmark_cp="target/test-classes:target/classes:$(cat target/benchmark-classpath.txt)"
+mise exec -- java -cp "$benchmark_cp" org.openjdk.jmh.Main BeanBenchmark \
+  -prof gc -rf json -rff target/benchmark.json
+```
+
+`mise` を使わない場合は JDK 21 を選択して `mise exec --` を省略してください。
+標準設定は 2 forks、各 fork でウォームアップ 3 回・測定 5 回（各 1 秒）、
+ヒープ 256 MiB、1 スレッドです。`-p text=ascii` で ASCII のみに絞れます。
+`-t 8` を追加すると、共有インスタンスを使う 8 スレッドの計測ができます。
+
+対象は 1 件／100 件の POJO 配列、ASCII／日本語とエスケープを含む文字列、
+String 入出力です。JSONIC は静的 API とインスタンス再利用を別々に測り、
+Jackson 3.2.3 は `JsonMapper` を再利用します（Blackbird なし）。
+出力順を揃え、測定前に JSON 文字列とデコード結果の一致を検証します。
+結果の `us/op` は配列全体の処理時間、`gc.alloc.rate.norm` は割り当て量
+`B/op` です。初回のクラス解析、UTF-8 入出力、型指定なしの Map/List 処理は
+このベンチマークの対象外です。
+
+以下の既存計測結果はJackson 2.22.3との比較です。Jackson 3.2.3への更新後の計測結果ではありません。
+
+第一段階（メタデータ再利用）の 2026-10-01 計測例（AMD Ryzen AI 9 465、WSL2、OpenJDK 21.0.2、
+上記の標準設定、`text=ascii`）。改修前は `2e87e6c1` の実装です。
+時間は小さいほど高速です。数値はこのデータと環境での平均であり、一般的な性能保証ではありません。
+
+| API | 件数 | 改修前 µs/op | 改修後 µs/op | 割り当て量 B/op（前 → 後） |
+|---|---:|---:|---:|---:|
+| `format` | 1 | 1.110 | 0.814 | 2408 → 1888 |
+| `format` | 100 | 23.970 | 21.659 | 37704 → 37184 |
+| `parse` | 1 | 1.618 | 1.322 | 2464 → 1952 |
+| `parse` | 100 | 77.649 | 74.576 | 73625 → 68361 |
+| `JSON.encode` | 1 | 1.156 | 0.859 | 2592 → 2072 |
+| `JSON.encode` | 100 | 23.899 | 21.696 | 37888 → 37368 |
+| `JSON.decode` | 1 | 1.636 | 1.369 | 2648 → 2136 |
+| `JSON.decode` | 100 | 76.859 | 72.154 | 73809 → 68544 |
+
+| Jackson（同じ最終計測） | 1 件 µs/op | 100 件 µs/op |
+|---|---:|---:|
+| `writeValueAsString` | 0.204 | 14.398 |
+| `readValue` | 0.455 | 27.638 |
+
+第一段階では小さい POJO の処理時間と割り当て量が改善しましたが、100 件の
+デコードの時間差は小さい結果でした。続いて上記の直接変換を追加しています。
+
+<a id="introduction"></a>
+
+第二段階（トークンからの直接変換）の計測は、同じ JDK・入力・ヒープ・
+2 forks で、ウォームアップを 5 回に増やして行いました。比較基準は一時コピーで
+`TypedDecoder.supports` を `false` にし、第一段階のキャッシュ等を残した
+従来のツリー変換経路です。下表は ASCII の POJO 配列に対する測定結果です。
+
+| API | 件数 | 従来経路 µs/op | 直接変換 µs/op | 割り当て量 B/op（前 → 後） |
+|---|---:|---:|---:|---:|
+| `parse` | 1 | 1.307 | 0.728 | 1952 → 1464 |
+| `parse` | 100 | 72.186 | 58.280 | 68360 → 45512 |
+| `JSON.decode` | 1 | 1.359 | 0.763 | 2136 → 1648 |
+| `JSON.decode` | 100 | 71.427 | 58.298 | 68544 → 45696 |
+
+同じ改善後の計測で Jackson は 1 件 0.455 µs/op、100 件 26.780 µs/op でした。
+JSONIC は改善していますが、Jackson 同等にはまだ達していません。数値の
+`BigDecimal` 化と文字単位のトークン解析は残っており、次の改善対象です。
+測定の JSON と検証ログはローカルの `target/performance-phase2/` に保存しています。
+
+第三段階では、エスケープのない `String` 入力をまとめて走査し、文字列を
+一時バッファへコピーせずにキャッシュへ照合する経路を追加しました。
+エスケープを含む文書と `Reader`・可変 `CharSequence` は従来の文字列解析を使います。
+型付き変換では、ヒントのない文字列・真偽値・整数・倍精度値の変換器検索も省きます。
+整数の桁あふれ検査、重複キー、例外の位置情報は維持しています。
+
+2026-10-01、同じ JDK・ヒープ・2 forks、ウォームアップと測定を各 5 × 1 秒、
+`-prof gc` で第三段階の変更前後を隔離コピーにて順次測定しました。
+変更前は第二段階の直接変換を有効にした実装です。下表は `parse(String, Item[].class)` の平均です。
+
+| 入力 | 件数 | 今回の変更前 µs/op | 変更後 µs/op | 時間短縮 | Jackson µs/op |
+|---|---:|---:|---:|---:|---:|
+| ascii | 1 | 0.741 | 0.573 | 22.7% | 0.434 |
+| ascii | 100 | 59.469 | 44.823 | 24.6% | 27.414 |
+| japanese | 1 | 0.927 | 0.810 | 12.7% | 0.489 |
+| japanese | 100 | 78.976 | 69.065 | 12.5% | 29.607 |
+
+この測定では ASCII 入力の処理時間を約 23～25% 短縮しました。Jackson と同等になるには
+ASCII でさらに約 1.32 倍（1 件）／1.64 倍（100 件）の高速化が必要です。
+エスケープを含む日本語では、さらに約 1.65 倍／2.33 倍が必要で、入力依存の差が残ります。
+割り当て量はほぼ同じで、今回の主な効果は処理時間の短縮です。
+最初の候補は日本語 100 件で退行したため、文書単位の経路選択へ変更してから採用しました。
+
+全 80 テスト中 79 成功。`WebSecurityTest.onlyPostCanOverrideMethod` の
+HTTP 204 を期待して 403 になる失敗は変更前でも再現しており、今回の最適化とは別の既存失敗です。
+追加した文字列テストでは通常文字・制御文字・エスケープ・日本語・長文・キャッシュ衝突を
+Reader 経路と比較しています。測定値と検証ログは `target/performance-phase3/` に保存しています。
+
+第四段階では、型付きデコードに短い数値専用のトークンを追加しました。
+`String` 入力の符号・小数点を除く 18 桁以内の通常の数値をまとめて走査し、
+`int`・`long`・`double` へ変換する際の `BigDecimal` 生成を省きます。
+指数表記、大きな数、特殊な区切り、ストリーム入力は従来の処理に戻します。
+型指定のない値やヒント付き変換では必要に応じて元の `BigDecimal` を復元し、
+小数点以下の桁数も維持します。浮動小数点の直接計算はオペランドを正確に表現できる範囲に限定します。
+
+第三段階を有効にした変更前コピーと比較しました。環境・JMH 設定は第三段階と同じ
+（2 forks、ウォームアップ・測定各 5 × 1 秒、GC profiler）です。
+以下は最終実装の測定値です。± は JMH の 99.9% 信頼区間の半幅です。
+
+| 入力 | 件数 | 変更前 µs/op | 変更後 µs/op | 割り当て量 B/op（前 → 後） |
+|---|---:|---:|---:|---:|
+| ascii | 1 | 0.585 ± 0.018 | 0.544 ± 0.014 | 1472 → 1408 |
+| ascii | 100 | 43.604 ± 2.189 | 43.597 ± 1.106 | 45520 → 42448 |
+| japanese | 1 | 1.041 ± 0.385 | 0.772 ± 0.021 | 1580 → 1584 |
+| japanese | 100 | 70.185 ± 2.558 | 68.201 ± 3.278 | 51616 → 48600 |
+
+ASCII 1 件は約 7% 短縮しましたが、100 件の処理時間は誤差を含めるとほぼ横ばいです。
+日本語 1 件の変更前測定はばらつきが大きく、大きな高速化率として扱えません。
+今回の確実な効果は、100 件での割り当て量を ASCII 約 7%・日本語約 6% 減らしたことです。
+同じ条件で別途測定した Jackson の ASCII 100 件は 26.579 ± 1.868 µs/op で、
+JSONIC が並ぶには依然として約 1.64 倍の高速化が必要です。
+
+境界値、3,000 種類の乱数による小数、浮動小数点のビット一致、整数の範囲外、
+不正構文と例外、型なし値・ヒント・公開 Reader の互換性を検証し、全 89 テストと
+`mvn verify` が成功しました。結果とログは `target/performance-phase4/` に保存しています。
 
 ## JSONICとは
 
@@ -46,14 +277,16 @@ String text = JSON.encode(new Hoge());
 Hoge hoge = JSON.decode(text, Hoge.class);
 ```
 
-Version 1.2.6 からは、JavaScript内での直接出力用に escapeScript が追加されました。JSONでは許されていない string, number など値の出力やXSS脆弱性を防ぐ<>のエスケープも行われます
+JSONICには、JSON操作APIだけでなく、JSONを使ったWebサービスが簡単に構築できるサーブレットも用意されています。詳しくは[WebサービスAPI](docs/webservice.html)のドキュメントを御覧ください。
 
-```jsp
-// POJOをJavaScriptに変換します（）
-var value = <%= JSON.escapeScript(value) %>;
-```
+<a id="download"></a>
 
-JSONICには、JSON操作APIだけでなく、JSONを使ったWebサービスが簡単に構築できるサーブレットも用意されています。詳しくはWebサービスAPIのドキュメントを御覧ください。
+## ダウンロード
+
+公開済みのJSONICは [Maven Central](https://central.sonatype.com/artifact/net.arnx/jsonic)
+から取得できます。この作業ツリーのJava 21・Jakarta対応版は、上記の手順でビルドしてください。
+
+<a id="maven"></a>
 
 ## リポジトリ
 
@@ -67,7 +300,9 @@ Maven Central Repository から取得できます。
 </dependency>
 ```
 
-# JSONエンコーダー
+<a id="encoder"></a>
+
+## JSONエンコーダー
 
 POJOからJSONに変換する場合は、encodeを使います。デフォルトでは、空白などを含まない可読性の低いJSONが出力されますが、二番目の引数をtrueにすることで可読性の高いJSONが出力されるようになります（Pretty Printモード）。
 
@@ -100,30 +335,28 @@ JSON.encode(hoge, new FileOutputStream("hoge.txt"));
 
 POJOからJSONへの変換ルールは次の通りです。
 
-<table class="table" summary="POJOからJSONへの変換ルール">
-<tr><th style="width: 50%">変換元（Java）</th><th style="width: 50%">変換先（JSON）</th></tr>
-<tr><td>Map, DynaBean[^2]</td><td rowspan="2">object</td></tr>
-<tr><td>Object[^3]</td></tr>
-<tr><td>boolean[], short[], int[], long[], float[], double[], Object[]</td><td rowspan="4">array</td></tr>
-<tr><td>Iterable (Collection, Listなど)</td></tr>
-<tr><td>Iterator, Enumeration</td></tr>
-<tr><td>java.sql.Array, java.sql.Struct</td></tr>
-<tr><td>char[], CharSequence</td><td rowspan="3">string</td></tr>
-<tr><td>char, Character</td></tr>
-<tr><td>TimeZone, Pattern, File, URL, URI, Path, Type, Member, Charset, UUID, java.timeの各クラス</td></tr>
-<tr><td>byte[]</td><td>string (BASE64エンコード)</td></tr>
-<tr><td>java.sql.RowId</td><td>string (シリアル化後、BASE64エンコード)</td></tr>
-<tr><td>Locale</td><td>string (言語コード-国コードあるいは言語コード-国コード-バリアントコード)</td></tr>
-<tr><td>InetAddress</td><td>string (IPアドレス)</td></tr>
-<tr><td>byte, short, int, long, float, double</td><td rowspan="2">number[^4]</td></tr>
-<tr><td>Number</td></tr>
-<tr><td>Date, Calendar</td><td>number (1970年からのミリ秒)</td></tr>
-<tr><td>Enum</td><td>string (デフォルトは名前で文字列化。<code>setEnumStyle</code> にて動作の変更が可能)<br />
-number (<code>setEnumStyle</code> に null を指定すると Enum.ordinal により変換)</td></tr>
-<tr><td>Optional型</td><td>isPresent() が false を返す時 null、その他の時、保持値</td></tr>
-<tr><td>boolean, Boolean</td><td>true/false</td></tr>
-<tr><td>null</td><td>null</td></tr>
-</table>
+| 変換元（Java） | 変換先（JSON） |
+| --- | --- |
+| Map, DynaBean[^2] | object |
+| Object[^3] |
+| boolean[], short[], int[], long[], float[], double[], Object[] | array |
+| Iterable (Collection, Listなど) |
+| Iterator, Enumeration |
+| java.sql.Array, java.sql.Struct |
+| char[], CharSequence | string |
+| char, Character |
+| TimeZone, Pattern, File, URL, URI, Path, Type, Member, Charset, UUID, java.timeの各クラス |
+| byte[] | string (BASE64エンコード) |
+| java.sql.RowId | string (シリアル化後、BASE64エンコード) |
+| Locale | string (言語コード-国コードあるいは言語コード-国コード-バリアントコード) |
+| InetAddress | string (IPアドレス) |
+| byte, short, int, long, float, double | number[^4] |
+| Number |
+| Date, Calendar | number (1970年からのミリ秒) |
+| Enum | string (デフォルトは名前で文字列化。setEnumStyle にて動作の変更が可能)<br> number (setEnumStyle に null を指定すると Enum.ordinal により変換) |
+| Optional型 | isPresent() が false を返す時 null、その他の時、保持値 |
+| boolean, Boolean | true/false |
+| null | null |
 
 [^2]: DynaBeanを利用する場合、Commons BeanUtilsのjarファイルをクラスパスに追加する必要があります。リフレクションを利用して処理を行っているため、利用しない場合は特に含める必要はありません。
 [^3]: 対象となるインスタンスをパブリック・getterメソッド、パブリック・フィールドの優先順で探索します。staticが付加されたメソッドやフィールド、transientが付加されたフィールドは対象となりません。
@@ -131,6 +364,8 @@ number (<code>setEnumStyle</code> に null を指定すると Enum.ordinal に�
 また、org.w3c.dom.Document/ElementからJSONへの変換もサポートしています。詳しくは「高度な使い方 - XMLからJSONへの変換」の項をご覧ください。
 
 なお、JSONはobjectかarrayで始まる必要があるため、直接、intやStringのインスタンスをencodeメソッドの引数に指定した場合エラーとなります。
+
+<a id="decoder"></a>
 
 ## JSONデコーダー
 
@@ -157,62 +392,65 @@ Hoge hoge = JSON.decode(new FileInputStream("hoge.txt"), Hoge.class);
 
 JSONからPOJOへの変換ルールは次の通りです。
 
-<table class="table" summary="JSONからPOJOへの変換ルール">
-<tr><th style="width: 20%">変換元（JSON）</th><th style="width: 40%">指定された型</th><th style="width: 40%">変換先（Java）</th></tr>
-<tr><td rowspan="4">object</td><td>なし, Object, Map</td><td>LinkedHashMap</td></tr>
-<tr><td>SortedMap</td><td>TreeMap</td></tr>
-<tr><td>その他のMap派生型</td><td>指定された型</td></tr>
-<tr><td>その他の型</td><td>指定された型（パブリック・フィールド／プロパティに値をセット)[^6]</td></tr>
-<tr><td rowspan="9">array</td><td>なし, Object, Collection, List</td><td>ArrayList</td></tr>
-<tr><td>Set</td><td>LinkedHashSet</td></tr>
-<tr><td>SortedSet</td><td>TreeSet</td></tr>
-<tr><td>その他のCollection派生型</td><td>指定された型</td></tr>
-<tr><td>short[], byte[], int[], long[], float[], double[]<br />Object[]派生型</td><td>指定された型</td></tr>
-<tr><td>Locale</td><td>Locale（「言語コード」「国コード」「バリアントコード」からなる配列とみなし変換）</td></tr>
-<tr><td>Map</td><td>インデックスの値をキーとするLinkedHashMap</td></tr>
-<tr><td>SortedMap</td><td>インデックスの値をキーとするTreeMap</td></tr>
-<tr><td>その他のMap派生型</td><td>インデックスの値をキーとする指定された型のMap</td></tr>
-<tr><td rowspan="18">string</td><td>なし, Object, CharSequence, String</td><td>String</td></tr>
-<tr><td>char</td><td>char（幅0の時は'\u0000', 2文字以上の時は1文字目）</td></tr>
-<tr><td>Character</td><td>Character（幅0の時はnull, 2文字以上の時は1文字目）</td></tr>
-<tr><td>Appendable</td><td>StringBuilder</td></tr>
-<tr><td>その他のAppendable派生型</td><td>指定された型（値をappend）</td></tr>
-<tr><td>Enum派生型</td><td>指定された型（値をEnum.valueOfあるいはint型に変換後Enum.ordinal()で変換）</td></tr>
-<tr><td>Date派生型,<br />Calendar派生型</td><td>指定された型（文字列をDateFormatで変換）</td></tr>
-<tr><td>java.time の各クラス</td><td>指定された型</td></tr>
-<tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger, BigDecimal</td><td>指定された型（文字列を数値とみなし変換）</td></tr>
-<tr><td>byte[]</td><td>byte[]（文字列をBASE64とみなし変換）</td></tr>
-<tr><td>Locale</td><td>Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換）</td></tr>
-<tr><td>Pattern</td><td>Pattern（文字列をcompileにより変換）</td></tr>
-<tr><td>Class, Charset</td><td>指定された型（文字列をforNameにより変換）</td></tr>
-<tr><td>TimeZone</td><td>TimeZone（文字列をTimeZone.getTimeZoneを使い変換）</td></tr>
-<tr><td>UUID</td><td>UUID（文字列をUUID.fromStringで変換）</td></tr>
-<tr><td>File, URI, URL, Path</td><td>指定された型（文字列をコンストラクタの引数に指定し変換）</td></tr>
-<tr><td>InetAddress</td><td>InetAddress（文字列をInetAddress.getByNameで変換）</td></tr>
-<tr><td>boolean, Boolean</td><td>指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true）</td></tr>
-<tr><td rowspan="5">number</td><td>なし, Object, Number, BigDecimal</td><td>BigDecimal</td></tr>
-<tr><td>byte, short, int, long, float, double,<br />Byte, Short, Integer, Long, Float, Double,<br />BigInteger</td><td>指定された型</td></tr>
-<tr><td>Date派生型,<br />Calendar派生型</td><td>指定された型（数値を1970年からのミリ秒とみなし変換）</td></tr>
-<tr><td>boolean, Boolean</td><td>指定された型（0以外の時true、0の時false）</td></tr>
-<tr><td>Enum派生型</td><td>指定された型（名前あるいは int値をEnum.ordinal()に従い変換）</td></tr>
-<tr><td rowspan="6">true/false</td><td>なし, Object, Boolean</td><td>Boolean</td></tr>
-<tr><td>char, Character</td><td>指定された型（trueの時'1'、falseの時'0'）</td></tr>
-<tr><td>float, double, Float, Double</td><td>指定された型（trueの時1.0、falseの時NaN）</td></tr>
-<tr><td>byte, short, int, long,<br />Byte, Short, Integer, Long,<br />BigInteger</td><td>指定された型（trueの時1、falseの時0）</td></tr>
-<tr><td>boolean</td><td>boolean</td></tr>
-<tr><td>Enum派生型</td><td>指定された型（trueを1、falseを0とみなしEnum.ordinal()に従い変換）</td></tr>
-<tr><td>Optional型</td><td>保持値（nullの場合 empty()の値が設定されます）</td></tr>
-<tr><td rowspan="4">null</td><td>なし, Object</td><td>null</td></tr>
-<tr><td>byte, short, int, long, float, double</td><td>0</td></tr>
-<tr><td>boolean</td><td>false</td></tr>
-<tr><td>char</td><td>'\u0000'</td></tr>
-</table>
+| 変換元（JSON） | 指定された型 | 変換先（Java） |
+| --- | --- | --- |
+| object | なし, Object, Map | LinkedHashMap |
+| SortedMap | TreeMap |
+| その他のMap派生型 | 指定された型 |
+| その他の型 | 指定された型（パブリック・フィールド／プロパティに値をセット)[^6] |
+| array | なし, Object, Collection, List | ArrayList |
+| Set | LinkedHashSet |
+| SortedSet | TreeSet |
+| その他のCollection派生型 | 指定された型 |
+| short[], byte[], int[], long[], float[], double[]<br>Object[]派生型 | 指定された型 |
+| Locale | Locale（「言語コード」「国コード」「バリアントコード」からなる配列とみなし変換） |
+| Map | インデックスの値をキーとするLinkedHashMap |
+| SortedMap | インデックスの値をキーとするTreeMap |
+| その他のMap派生型 | インデックスの値をキーとする指定された型のMap |
+| string | なし, Object, CharSequence, String | String |
+| char | char（幅0の時は'\u0000', 2文字以上の時は1文字目） |
+| Character | Character（幅0の時はnull, 2文字以上の時は1文字目） |
+| Appendable | StringBuilder |
+| その他のAppendable派生型 | 指定された型（値をappend） |
+| Enum派生型 | 指定された型（値をEnum.valueOfあるいはint型に変換後Enum.ordinal()で変換） |
+| Date派生型,<br>Calendar派生型 | 指定された型（文字列をDateFormatで変換） |
+| java.time の各クラス | 指定された型 |
+| byte, short, int, long, float, double,<br>Byte, Short, Integer, Long, Float, Double,<br>BigInteger, BigDecimal | 指定された型（文字列を数値とみなし変換） |
+| byte[] | byte[]（文字列をBASE64とみなし変換） |
+| Locale | Locale（文字列を「言語コード」「国コード」「バリアントコード」が何らかの句読文字で区切られているとみなし変換） |
+| Pattern | Pattern（文字列をcompileにより変換） |
+| Class, Charset | 指定された型（文字列をforNameにより変換） |
+| TimeZone | TimeZone（文字列をTimeZone.getTimeZoneを使い変換） |
+| UUID | UUID（文字列をUUID.fromStringで変換） |
+| File, URI, URL, Path | 指定された型（文字列をコンストラクタの引数に指定し変換） |
+| InetAddress | InetAddress（文字列をInetAddress.getByNameで変換） |
+| boolean, Boolean | 指定された型（"", "false", "no", "off", "NaN"の時false、その他の時true） |
+| number | なし, Object, Number, BigDecimal | BigDecimal |
+| byte, short, int, long, float, double,<br>Byte, Short, Integer, Long, Float, Double,<br>BigInteger | 指定された型 |
+| Date派生型,<br>Calendar派生型 | 指定された型（数値を1970年からのミリ秒とみなし変換） |
+| boolean, Boolean | 指定された型（0以外の時true、0の時false） |
+| Enum派生型 | 指定された型（名前あるいは int値をEnum.ordinal()に従い変換） |
+| true/false | なし, Object, Boolean | Boolean |
+| char, Character | 指定された型（trueの時'1'、falseの時'0'） |
+| float, double, Float, Double | 指定された型（trueの時1.0、falseの時NaN） |
+| byte, short, int, long,<br>Byte, Short, Integer, Long,<br>BigInteger | 指定された型（trueの時1、falseの時0） |
+| boolean | boolean |
+| Enum派生型 | 指定された型（trueを1、falseを0とみなしEnum.ordinal()に従い変換） |
+| Optional型 | 保持値（nullの場合 empty()の値が設定されます） |
+| null | なし, Object | null |
+| byte, short, int, long, float, double | 0 |
+| boolean | false |
+| char | '\u0000' |
 
 [^6]: 対象となるインスタンスに対しパブリックなsetterメソッド、パブリックなフィールドの優先順で探索します。staticやtransientのメソッド/フィールドは対象となりません。なお、プロパティ名は、単純比較が失敗した場合、LowerCamel記法に変換したものと比較します。
+
+<a id="usage_advanced"></a>
 
 ## 高度な使い方
 
 JSONICでは、フレームワークなどでの利用を想定していくつかの便利な機能を用意しています。
+
+<a id="extends"></a>
 
 ### 継承による機能拡張
 
@@ -293,6 +531,8 @@ JSON json = new JSON() {
 JSON.prototype = MyJSON.class;
 ```
 
+<a id="generics"></a>
+
 ### 総称型を指定してのdecode/parse
 
 decodeやparseの引数にはJava 5.0で追加された総称型も指定できます。しかし、総称型はコンパイル時に削除されてしまうため、decode/parseメソッドの引数として直接的に指定することができません。総称型を使う場合は TypeReference を使って型を埋めこむか、ルート要素をJSON objectにして対応するクラス定義の中で総称型を使います。
@@ -336,6 +576,8 @@ class Config() {
     }
 ```
 
+<a id="prettyprinting"></a>
+
 ### 可読性の高い出力 - Pretty Print モード
 
 JSONICでは、encode の第二引数に true を渡すか、setPrettyPrint() メソッドを使うことでインデントや改行などが付いた可動性の高いJSONを出力することができます。
@@ -360,6 +602,8 @@ JSONICでは、encode の第二引数に true を渡すか、setPrettyPrint() �
     json.setIndentText("    ");
     json.format(obj);
 ```
+
+<a id="liberalparsing"></a>
 
 ### 柔軟な読み込み - TRADITIONALモード
 
@@ -394,6 +638,8 @@ database {
 
 この動作はsetMode(Mode.STRICT)を指定することで、RFCに準じた妥当性チェックを行なうよう変更することができます。
 
+<a id="validation"></a>
+
 ### JSONの検証 - STRICTモード
 
 JSONICでは、従来柔軟な読み込みができる反面、RFC 4627に厳密に沿ったJSONであるか判定することができませんでした。 JSONIC 1.2.1からはSTRICTモードが用意され、厳密な検証動作が可能となりました。
@@ -417,6 +663,8 @@ JSONICでは、従来柔軟な読み込みができる反面、RFC 4627に厳密
 ```java
   JSON.validate(new FileInputStream("test.json"));
 ```
+
+<a id="jsfriendly"></a>
 
 ### JavaScriptに親和的な出力 - SCRIPTモード
 
@@ -446,6 +694,8 @@ RFC 4627に規定された内容との相違点は以下の通りです。
   
   JSON.escapeScript(...);
 ```
+
+<a id="reader"></a>
 
 ### JSONストリームの順次出力 - JSONWriter
 
@@ -578,6 +828,8 @@ JSONReader の JSON 解釈は、設定された JSON.Mode に準じます[^7]が
     }
 ```
 
+<a id="format"></a>
+
 ### 日時/数値書式の指定 - setDateFormat/setNumberFormat
 
 日付型や数値型は、デフォルトではJSON numberとして出力されますが、JSONIC 1.2.8以降ではsetDateFormat/setNumberFormat を指定することでデフォルトの日時/数値書式を設定できます。フォーマットの書式は Number型の場合 java.text.DecimalFormat、Date型の場合 java.text.SimpleDateFormat[^8]、 Java8 Date/Time API の場合 java.time.format.DateTimeFormatter に従ってフォーマットされます。書式は JSONHint を使うことで上書きすることができます。
@@ -599,6 +851,8 @@ JSONReader の JSON 解釈は、設定された JSON.Mode に準じます[^7]が
 	});
 ```
 
+<a id="namingstyle"></a>
+
 ### プロパティ名/列挙型出力書式の指定 - setPropertyStyle/setEnumStyle
 
 プロパティ名は、デフォルトではプロパティ名をJSON stringとして、列挙型は序数をJSON numberとして出力しますが、JSONIC 1.2.8以降ではsetPropertyStyle/setEnumStyleを使用することで出力書式を設定できます。
@@ -616,6 +870,8 @@ JSONReader の JSON 解釈は、設定された JSON.Mode に準じます[^7]が
         public RoundingMode jsonMode = RoundingMode.HALF_EVEN;
     });
 ```
+
+<a id="innerclass"></a>
 
 ### 内部クラスを利用したエンコード/デコード
 
@@ -651,6 +907,8 @@ public class EnclosingClass {
 }
 ```
 
+<a id="maxdepth"></a>
+
 ### setMaxDepth - 最大深度の設定
 
 JSONICは、encode/format時に自分自身を戻すようなフィールドやプロパティ、配列を無視することで再帰による無限ループが発生することを防ぎます。 しかし、そのインスタンスにとって孫に当たるクラスが自分のインスタンスを返す場合にも再帰が発生してしまいます。JSONICでは、このような場合へ対処するため 単純に入れ子の深さに制限を設けています。
@@ -664,6 +922,8 @@ JSONICは、encode/format時に自分自身を戻すようなフィールドや�
 json.setMaxDepth(5);
 ```
 
+<a id="suppressnull"></a>
+
 ### setSuppressNull - null値の抑制
 
 JSONICでは、format時に値がnullになっているJSON objectのメンバの出力を抑制できます。初期値はfalseです。余計なメンバが大量に出力されてしまう、プロパティの初期値を優先したいなどの場合に有効です。
@@ -674,6 +934,8 @@ json.setSuppressNull(true);
 ```
 
 なお、Version 1.2 系では、parse 時や Map の format に対しても null 値が抑制されていましたが、不適切な場合が多いため1.3系では抑制しないよう変更されました。
+
+<a id="xmltojson"></a>
 
 ### XMLからJSONへの変換
 
@@ -706,24 +968,23 @@ String xmljson = JSON.encode(doc);
 ]
 ```
 
+<a id="jsonhint"></a>
+
 ### JSONHintアノテーション - 変換時ヒントの付加
 
 場合によってデフォルトの変換方式では不十分な場合があります。JSONICでは、メソッドやフィールドにJSONHintアノテーションを付加することで、 動作を部分的に制御することが可能です。
 
 設定できる属性は次の通りです。
 
-<table class="table" summary="JSONHintアノテーションの属性">
-<tr><th>属性名</th><th>値型</th><th>説明</th></tr>
-<tr><td>name</td><td>String</td><td>出力/代入するキー名を変更します</td></tr>
-<tr><td>format</td><td>String</td><td>対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。<br />
-フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください[^9]。</td></tr>
-<tr><td>type</td><td>Class</td><td>parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。</td></tr>
-<tr><td>ignore</td><td>boolean</td><td>出力/代入対象から除外します</td></tr>
-<tr><td>serialized</td><td>boolean</td><td>値がJSONであるものとして扱います。デフォルトはfalseです。
-Format時はtoString()の値をそのまま出力[^10] 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。</td></tr>
-<tr><td>anonym</td><td>String</td><td>単純値型からMapや複合型に変換するときに単純値型を設定するプロパティ名を指定します。anonymを指定しない場合、Mapの場合はnullキーの値として設定されますが、複合型を指定した場合はエラーとなります。</td></tr>
-<tr><td>ordinal</td><td>int</td><td>JSON objectへの変換する際のキーの出力順を昇順で指定します。デフォルトはキー値の自然順序順（＝負値指定）です。</td></tr>
-</table>
+| 属性名 | 値型 | 説明 |
+| --- | --- | --- |
+| name | String | 出力/代入するキー名を変更します |
+| format | String | 対象の型がNumberあるいはDate型の場合は、指定したフォーマットに従って変換します。<br> フォーマットの書式はそれぞれjava.text.DecimalFormat、java.text.SimpleDateFormatを参照してください[^9]。 |
+| type | Class | parse時に指定した型のインスタンスを生成します（対象の型のサブクラスを指定する必要があります）。 |
+| ignore | boolean | 出力/代入対象から除外します |
+| serialized | boolean | 値がJSONであるものとして扱います。デフォルトはfalseです。 Format時はtoString()の値をそのまま出力[^10] 、Parse時は入力されたJSONをJava Objectに変換し再度formatした文字列が設定されます。 |
+| anonym | String | 単純値型からMapや複合型に変換するときに単純値型を設定するプロパティ名を指定します。anonymを指定しない場合、Mapの場合はnullキーの値として設定されますが、複合型を指定した場合はエラーとなります。 |
+| ordinal | int | JSON objectへの変換する際のキーの出力順を昇順で指定します。デフォルトはキー値の自然順序順（＝負値指定）です。 |
 
 [^9]: 書式フォーマットは原則SimpleDateFormatと同じですが、ISO8601形式のタイムゾーンを出力するZZもサポートしています。
 [^10]: 出力される文字列は検証されないため妥当でないJSONが出力されてしまう可能性があることに注意してください。逆に言えば、この機能を使うことでコメントやfunction呼び出しを出力することも可能です。
@@ -766,6 +1027,8 @@ public class WithHintBean {
 }
 ```
 
+<a id="tostring"></a>
+
 ### JSONHintによるString指定 - データの文字列化
 
 JSONHintアノテーションのtype属性にStringを指定することで、データをtoString()およびString型を引数にとるコンストラクタを取る文字列相当型として扱うことができるようになります。
@@ -789,18 +1052,16 @@ public class StringBean {
 }
 ```
 
-### JSONHintによるSerializable指定 - データの部分シリアル化
+<a id="serializable"></a>
 
-JSONHintアノテーションのtype属性にjava.io.Serializableを指定することで、データをObjectInputStream/ObjectOutputStreamによりシリアル化されたバイト列データとして取り扱うことができます（バイト列はBase64でエンコードされJSON stringとして出力されます）。
+### JSONHintによるSerializable指定の廃止
 
-```java
-public class TestBean {
-  @JSONHint(type=Serializable.class)
-  public SerializableBean sb;
-}
-```
+`@JSONHint(type=Serializable.class)` によるJavaオブジェクトのシリアル化・復元は廃止しました。
+この指定があるプロパティを処理するとエラーになります。アノテーションを削除し、
+JSONで表現できるBeanなどへ移行してください。既存のBase64形式のJavaシリアル化データは復元できません。
+`byte[]`のBase64変換と、JSON文字列を扱う`@JSONHint(serialized=true)`は引き続き利用できます。
 
-この機能を使うことで、JSON化が困難なオブジェクトもJSON-RPCなどでやり取りすることが可能となります。
+<a id="faq"></a>
 
 ## FAQ
 
@@ -813,9 +1074,148 @@ public class TestBean {
 - Q. Resin サーバで RESTServletやRPCServletが動作しません。
 - A. Resin サーバでは、web.xml中にある ${...} を変数として扱うため、\${...} と書かないといけないようです。
 
+<a id="license"></a>
+
 ## ライセンス
 
 JSONICは、Apache License, Version 2.0下で配布します。
 
 自分のライブラリへの組み込んでいただいたり、その際にパッケージ名の変更や処理の変更など行っていただいて構いません。保障はありませんが、ライセンスの範囲内でご自由にお使いください。
 
+<a id="report"></a>
+
+## バグ・要望の報告先
+
+バグや要望などは[JSONICプロジェクトサイト](http://osdn.jp/projects/jsonic)の[チケット](http://osdn.jp/projects/jsonic/ticket/)に報告ください。
+
+<a id="releasenote"></a>
+
+## リリースノート
+
+### 2015/11/2 version 1.3.10
+
+- [不具合修正] JSONWriter にて配列中のオブジェクトや配列の後ろのカンマが出力されない問題を修正しました。
+
+- [不具合修正] JSON WebService にて例外発生時に Exception のプロパティに JSONHint が適用されない問題を ignore と name についてのみ適用されるよう修正しました。
+
+- [機能追加] JSONReader にて値の読み取りをスキップしてメモリを節約できる skipValue() メソッドを追加しました。
+
+- [機能追加] JSONWriter にて値をそのまま出力できる append(String text) メソッドを追加しました。
+
+### 2015/8/20 version 1.3.9
+
+- [不具合修正] Java8 Date/Time API に JSONHint の format が正しく反映されない問題を修正しました[チケット:#35349]
+
+- [機能追加] Java7 の java.nio.Path 型に対応しました。
+
+### 2015/6/29 version 1.3.8
+
+- [仕様変更] コンパイル可能な環境の構築が難しくなってきたため、Java 5 のサポートを廃止しました。Java 6 以降をご利用ください。
+
+- [不具合修正] パラメータを持つ総称型のプロパティの decode/parse に対応しました[チケット:#35153]
+
+- [機能追加] Java8 の Optional 型（OptionalInt、OptionalLong、OptionalDouble、Optional）に対応しました。
+
+### 2014/12/23 version 1.3.7
+
+- [不具合修正] JSONHint に type を指定しても、type のプロパティに値が設定されない問題を修正しました。
+
+- [不具合修正] JSON object に PrittyPrint モードで encode/format する際、閉じ括弧のインデントがずれる問題を修正しました。
+
+- [機能追加] null に対して preformat は動作しない問題に対応するため preformatNull メソッドを追加しました。
+
+### 2014/10/26 version 1.3.6
+
+- [仕様変更] RFC 7159 の発行に伴い、文字列、数値、true/false/null をルート要素として許容するよう変更しました。
+
+- [機能追加] Java8 Date/Time API(JSR 310) に対応しました。
+
+- [改善] JSONICをリパッケージした際、メッセージの取得に失敗する問題を修正しました。
+
+### 2014/5/25 version 1.3.5
+
+- [不具合修正] Android で JSONIC を起動するとき Commons BeanUtils がクラスパスにないとエラーが発生して起動できない問題を修正しました（1.3.1以降）
+
+### 2014/4/29 version 1.3.4
+
+- [仕様変更] JSONIC でも BeanUtils 同様の仕組みを持っているため、
+  [Struts1 の ClassLoader 脆弱性](http://www.nca.gr.jp/2014/struts_s20/index.html)
+  が発生する懸念があり調査いたしましたが、次の理由から JSONIC には影響しないことが確認できました（この仕様は JSONIC 全バージョンで同一です）。
+
+  - JSON#ignore や Container#limit メソッド内で java.lang.Object クラスで定義されたフィールド／メソッドは無視されるようになっている。
+
+  - convert時の動作では、setterしか利用しないため、getClass() が呼びだされることがない。
+
+  しかしながら、今後同様の問題が発生する可能性を少なくし安全性を高めるため、Bean 情報取得の時点で以下の制限を行なうよう修正を実施しました。
+
+  **java.lang.Object クラスで定義された getter/setter はプロパティとして認識しない（メソッドとしては認識する）。**
+
+  この制限により Object#getClass() がプロパティとして呼び出されること自体がなくなります。
+
+  **java.lang.Class のプロパティを不可視にする。**
+
+  この制限により、開発者が明示的にjava.lang.Classを返すプロパティを定義した場合でも、Class#getClassLoader() などシステムの内部情報にアクセスされることがなくなります。
+
+### 2014/3/16 version 1.3.3
+
+- [不具合修正] JSONIC をロードしたクラスローダがコンテキストクラスローダの親に存在しない場合、初期化に失敗する問題を修正しました（1.3.1～1.3.2で発生）。
+
+### 2014/2/24 version 1.3.2
+
+- [不具合修正] 列挙型にて定数ごとに継承を行なうと encode/decode に失敗する問題を修正しました。
+
+- [不具合修正] encode/format に OutputStream や BufferedWriter を引き渡すと flush されない問題を修正しました(1.3.1 でのみ発生)
+
+- [不具合修正] parse 時に markSupported が false を返す InputStream を指定すると IOException が発生していた問題を修正しました（1.3.1 でのみ発生）
+
+### 2014/2/13 version 1.3.1
+
+- [仕様変更] setaName、isaName、getaName など1文字目が小文字となるようなプロパティに対応しました。JavaBeans規約では、set/is/getで始まるメソッドはプロパティとしてみなすことになっているため、本来はそのように修正すべきですが、影響範囲が広くなる恐れがあるため部分的な対応に留めることにしました。
+
+- [機能追加] 総称型の解決を改善しました。これにより、複雑な関係にある型変数にも対応できるようになりました。
+
+- [機能追加] type=String.class を指定した場合、 Enum の decode に失敗する問題を改善しました。
+
+- [機能追加] ストリーム的に JSON を出力する JSONWriter を追加しました。
+
+- Object の encode など一部の処理が高速化されました。
+
+### 2012/8/4 version 1.3.0
+
+- [機能追加] JSON のストリーム的に読み取るプルパーサ API である JSONReader を追加しました。JSONReader は、 JSON#getReader() メソッドを使うことで取得できます。
+
+- [機能追加] decode/parseが新たに追加されたJSONReaderベースに書きなおされ、また、速度も大幅に改善しました。
+
+- [機能追加] 総称型を埋め込める TypeReference を追加しました。
+
+- [機能追加] Web Service API にて処理に使用する JSON クラスのプロパティ値をコンフィグから指定できるようになりました。
+
+- [機能追加] NamingStyle に何もしない NOOP を追加しました。また、EnumStyle のデフォルトスタイルが NamingStyle.NOOP に変更されました（1.2まではインデックス値に変換していました）。
+
+- [機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。
+
+- [機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。
+
+- [機能追加] Container クラスに例外処理を受け取れる exception メソッドを追加しました（#28806）
+
+- [仕様変更] Web Service API にて debug: true が指定された場合、PrettyPrint が自動的に有効になっていましたが、1.3では明示的に指定する必要があります。
+
+- [仕様変更] setSuppressNull を指定すると parse 時や Map の format 時も null を無視していましたが不適切な場合が多いため、JavaBean あるいは DynaBean の format 時のみ有効となるよう変更しました。
+
+- [仕様変更] parse/decode 時は formatの指定に関わらず日時文字列からDate型へ書式の自動解析による変換を行なっていましたが、formatが指定された場合は書式に従った解析を行なうよう変更しました。
+
+- [仕様変更] TRADITIONAL モードでも、値が常に文字列型に変換されるよう仕様を変更しました（ただし、SCRIPTモードと異なり、マイナスの値も指定可能です。また、nullは文字列ではなく従来通りnull値に変換されます）。
+
+- [仕様変更] ReaderあるいはInputStreamの先頭以外でBOM（Byte Order Mark）が見つかった場合は、例外を出すように変更しました。
+
+- [仕様変更] TRADITIONAL モードでサポートされていたシェルスクリプトスタイルの行コメント（#) を廃止しました。
+
+- [仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、シェルスクリプトのようにエスケープを無視する仕様にしていましたが、誤解する人が多数いたため廃止しました。
+
+- [仕様変更] TRADITIONAL モードでもSCRIPTモードと同様に<、>を\u003C、\u003Eにエスケープするように変更しました。
+
+- [仕様変更] SCRIPT モードで JSON Object のキー値としてとれる値を JavaScript の仕様に合わせ、マイナスの数値の場合エラーとし、また値が常に文字列型に変換されます。
+
+- [仕様変更] メソッド名が不統一となっていたため JSON.Context#getLevel() を非推奨とし、 JSON.Context#getDepth() に変更しました。
+
+- [仕様変更] メソッド名が不統一となっていたため JSON.Context#getPropertyCaseStyle(), JSON.Context#getEnumCaseStyle() を廃止し、それぞれ JSON.Context#getPropertyStyle(), JSON.Context#getEnumStyle() に変更しました。

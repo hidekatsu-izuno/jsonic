@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import net.arnx.jsonic.JSONTest.JSONTester;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JSONMultiThreadTest {
 	@Test

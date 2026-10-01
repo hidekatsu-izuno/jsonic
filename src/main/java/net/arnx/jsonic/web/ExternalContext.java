@@ -15,11 +15,11 @@
  */
 package net.arnx.jsonic.web;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 public class ExternalContext {
 	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new InheritableThreadLocal<ExternalContext>() {

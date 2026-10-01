@@ -21,6 +21,8 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -34,18 +36,18 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.JSONHint;
 import net.arnx.jsonic.util.ClassUtil;
 
-import static javax.servlet.http.HttpServletResponse.*;
+import static jakarta.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
 
 public class RESTServlet extends HttpServlet {
@@ -161,9 +163,14 @@ public class RESTServlet extends HttpServlet {
 	protected void doREST(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 
+		// Check the actual HTTP method before routing or _method overrides.
+		if (!isCsrfSafeRequest(request)) {
+			response.sendError(SC_FORBIDDEN, "Forbidden");
+			return;
+		}
+
 		int status = SC_OK;
 		JSON json = null;
-		String callback = null;
 		Object result = null;
 
 		try {
@@ -193,9 +200,7 @@ public class RESTServlet extends HttpServlet {
 				return;
 			}
 
-			if ("GET".equals(request.getMethod())) {
-				callback = route.getParameter("callback");
-			} else if ("POST".equals(route.getHttpMethod())) {
+			if ("POST".equals(route.getHttpMethod())) {
 				status = SC_CREATED;
 			}
 
@@ -320,12 +325,41 @@ public class RESTServlet extends HttpServlet {
 			if (status != SC_CREATED) status = SC_NO_CONTENT;
 			response.setStatus(status);
 		} else {
-			response.setContentType((callback != null) ? "text/javascript" : "application/json");
+			response.setContentType("application/json");
 			Writer writer = response.getWriter();
-			if (callback != null) writer.append(callback).append("(");
 			json.format(result, writer);
-			if (callback != null) writer.append(");");
 		}
+	}
+
+	static boolean isCsrfSafeRequest(HttpServletRequest request) {
+		String method = request.getMethod();
+		if ("GET".equals(method) || "HEAD".equals(method) || "OPTIONS".equals(method)) return true;
+		if ("cross-site".equals(request.getHeader("Sec-Fetch-Site"))) return false;
+
+		Enumeration<String> origins = request.getHeaders("Origin");
+		if (origins != null && origins.hasMoreElements()) {
+			String origin = origins.nextElement();
+			if (origins.hasMoreElements()) return false;
+			try {
+				URI uri = new URI(origin);
+				String scheme = uri.getScheme();
+				if (!("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))
+						|| uri.getHost() == null || uri.getRawUserInfo() != null
+						|| uri.getRawQuery() != null || uri.getRawFragment() != null
+						|| !"".equals(uri.getRawPath())) return false;
+				int port = uri.getPort();
+				if (port == -1) port = "https".equalsIgnoreCase(scheme) ? 443 : 80;
+				return scheme.equalsIgnoreCase(request.getScheme())
+						&& uri.getHost().equalsIgnoreCase(request.getServerName())
+						&& port == request.getServerPort();
+			} catch (URISyntaxException e) {
+				return false;
+			}
+		}
+		// Without Origin, require a request a cross-origin HTML form cannot send.
+		// Do not trust client-supplied Forwarded/X-Forwarded-* headers here.
+		return isJSONType(request.getContentType())
+				|| "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
 	}
 
 	@Override
@@ -392,9 +426,9 @@ public class RESTServlet extends HttpServlet {
 					}
 				}
 
-				String httpMethod = request.getParameter("_method");
+				String httpMethod = "POST".equals(request.getMethod()) ? request.getParameter("_method") : null;
 				if (httpMethod == null) httpMethod = request.getMethod();
-				if (httpMethod != null) httpMethod = httpMethod.toUpperCase();
+				if (httpMethod != null) httpMethod = httpMethod.toUpperCase(java.util.Locale.ROOT);
 
 				if (verb != null && !verb.contains(httpMethod)) {
 					httpMethod = null;

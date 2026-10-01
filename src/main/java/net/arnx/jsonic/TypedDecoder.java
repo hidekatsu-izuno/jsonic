@@ -1,0 +1,237 @@
+/*
+ * Copyright 2014 Hidekatsu Izuno
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package net.arnx.jsonic;
+
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import net.arnx.jsonic.JSON.Context;
+import net.arnx.jsonic.parse.CompactNumber;
+import net.arnx.jsonic.util.ClassUtil;
+
+/**
+ * A flat token buffer followed by typed binding. No user constructor or setter
+ * runs until the entire document is validated. Container end offsets let binding
+ * skip subtrees and resolve duplicate keys before converting their final values.
+ */
+final class TypedDecoder {
+    private static final ClassValue<Boolean> BEAN_TYPES = new ClassValue<Boolean>() {
+        @Override protected Boolean computeValue(Class<?> type) {
+            return JSON.isBeanType(type);
+        }
+    };
+
+    private static final ClassValue<BeanConstructor> CONSTRUCTORS = new ClassValue<BeanConstructor>() {
+        @Override protected BeanConstructor computeValue(Class<?> type) {
+            if (type.isInterface() || Modifier.isAbstract(type.getModifiers())
+                    || ((type.isMemberClass() || type.isAnonymousClass())
+                        && !Modifier.isStatic(type.getModifiers()))) {
+                return new BeanConstructor(null);
+            }
+            try {
+                Constructor<?> constructor = type.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                return new BeanConstructor(constructor);
+            } catch (NoSuchMethodException e) {
+                // Let the original create method report the original exception.
+                return new BeanConstructor(null);
+            }
+        }
+    };
+
+    private static final class BeanConstructor {
+        final Constructor<?> constructor;
+        BeanConstructor(Constructor<?> constructor) { this.constructor = constructor; }
+    }
+
+    private Object[] tokens;
+    private int[] ends;
+    private int size;
+    private int open = -1;
+
+    TypedDecoder(int inputLength) {
+        // Estimate only for character input; cap slack for long string values.
+        int capacity = Math.min(4096, Math.max(32, inputLength / 4));
+        tokens = new Object[capacity];
+        ends = new int[capacity];
+    }
+
+    static boolean supports(Context context, Class<?> type) {
+        // The legacy tree builder is iterative; retain it for unbounded depth.
+        if (context.getMaxDepth() > 64 || !BeanProperties.isShared(context)) return false;
+        Class<?> element = type;
+        while (element.isArray()) element = element.getComponentType();
+        // These targets need raw trees, so buffering them would add work.
+        if (element.isAssignableFrom(LinkedHashMap.class) || Collection.class.isAssignableFrom(element)) {
+            return false;
+        }
+        return type.isArray() || BEAN_TYPES.get(type);
+    }
+
+    void add(JSONEventType event, Object value) {
+        switch (event) {
+        case END_OBJECT:
+        case END_ARRAY:
+            int parent = ends[open];
+            ends[open] = size;
+            open = parent;
+            return;
+        case WHITESPACE:
+        case COMMENT:
+            return;
+        default:
+            if (size == tokens.length) {
+                tokens = Arrays.copyOf(tokens, size * 2);
+                ends = Arrays.copyOf(ends, size * 2);
+            }
+            if (event == JSONEventType.START_OBJECT || event == JSONEventType.START_ARRAY) {
+                tokens[size] = event;
+                ends[size] = open;
+                open = size;
+            } else {
+                tokens[size] = value;
+                ends[size] = size + 1;
+            }
+            size++;
+        }
+    }
+
+    Object convert(Context context, Class<?> type, Type genericType) throws Exception {
+        return (size == 0) ? context.postparseInternal(null, type, genericType)
+                : convert(context, 0, type, genericType);
+    }
+
+    private Object convert(Context context, int at, Class<?> type, Type genericType) throws Exception {
+        if (context.getHint() == null) {
+            // Built-in typed binding only: avoid converter lookup for the common
+            // scalar cases while retaining exact integer overflow checks.
+            Object scalar = tokens[at];
+            if (type == String.class && scalar instanceof String) return scalar;
+            if ((type == boolean.class || type == Boolean.class) && scalar instanceof Boolean) return scalar;
+            if (scalar instanceof CompactNumber) {
+                CompactNumber number = (CompactNumber)scalar;
+                if (type == int.class || type == Integer.class) return number.intValueExact();
+                if (type == long.class || type == Long.class) return number.longValueExact();
+                if (type == double.class || type == Double.class) return number.doubleValue();
+            }
+            if (scalar instanceof BigDecimal) {
+                if (type == int.class || type == Integer.class) return ((BigDecimal)scalar).intValueExact();
+                if (type == double.class || type == Double.class) return ((BigDecimal)scalar).doubleValue();
+            }
+            if (tokens[at] == JSONEventType.START_ARRAY && type.isArray()) {
+                return array(context, at, type, genericType);
+            }
+            if (tokens[at] == JSONEventType.START_OBJECT && BEAN_TYPES.get(type)) {
+                return bean(context, at, type, genericType);
+            }
+        }
+        // Includes untyped values, JSONHint, dates, maps and collection conversions.
+        return context.postparseInternal(raw(at), type, genericType);
+    }
+
+    private Object array(Context context, int at, Class<?> type, Type genericType) throws Exception {
+        int count = 0;
+        for (int i = at + 1; i < ends[at]; i = ends[i]) count++;
+        Class<?> component = type.getComponentType();
+        Type elementType = (genericType instanceof GenericArrayType)
+                ? ((GenericArrayType)genericType).getGenericComponentType() : component;
+        Object result = Array.newInstance(component, count);
+        Object[] references = (result instanceof Object[]) ? (Object[])result : null;
+        int index = 0;
+        for (int i = at + 1; i < ends[at]; i = ends[i]) {
+            context.enter(index, null);
+            Object value = convert(context, i, component, elementType);
+            if (references != null) {
+                references[index] = value;
+            } else {
+                Array.set(result, index, value);
+            }
+            context.exit();
+            index++;
+        }
+        return result;
+    }
+
+    private Object bean(Context context, int at, Class<?> type, Type genericType) throws Exception {
+        BeanProperties.WritePlan plan = BeanProperties.writePlan(context, type);
+        int length = plan.indexed.length;
+        // Bound scratch space for very wide beans with sparse input.
+        if (length > 64) return context.postparseInternal(raw(at), type, genericType);
+        int[] slots = new int[length * 2];
+        int count = 0;
+        for (int i = at + 1; i < ends[at]; i = ends[i + 1]) {
+            BeanProperties.WriteProperty property = plan.properties.get(tokens[i]);
+            if (property == null) {
+                // Aliases may assign the same property more than once. Keep their
+                // exact-key duplicate semantics in the original converter.
+                if (!(tokens[i] instanceof String) || plan.properties.containsKey(
+                        ObjectConverter.toLowerCamel(context, (String)tokens[i]))) {
+                    return context.postparseInternal(raw(at), type, genericType);
+                }
+                // Syntax has already been validated, and this name is ignored.
+                continue;
+            }
+            if (slots[property.index] == 0) slots[length + count++] = property.index;
+            slots[property.index] = i + 1;
+        }
+        Constructor<?> constructor = CONSTRUCTORS.get(type).constructor;
+        Object result = (constructor != null) ? constructor.newInstance() : context.createInternal(type);
+        if (result == null) return null;
+        for (int i = 0; i < count; i++) {
+            BeanProperties.WriteProperty property = plan.indexed[slots[length + i]];
+            context.enter(property.property.getName(), property.hint);
+            Type targetType = property.genericType;
+            Class<?> targetClass = property.type;
+            if (targetType != targetClass && genericType instanceof ParameterizedType) {
+                targetType = context.getResolvedType(genericType, type, targetType);
+                targetClass = ClassUtil.getRawType(targetType);
+            }
+            property.property.set(result, convert(context, slots[property.index], targetClass, targetType));
+            context.exit();
+        }
+        return result;
+    }
+
+    Object raw() {
+        return (size == 0) ? null : raw(0);
+    }
+
+    private Object raw(int at) {
+        if (tokens[at] == JSONEventType.START_OBJECT) {
+            Map<Object, Object> result = new LinkedHashMap<Object, Object>();
+            for (int i = at + 1; i < ends[at]; i = ends[i + 1]) {
+                result.put(tokens[i], raw(i + 1));
+            }
+            return result;
+        } else if (tokens[at] == JSONEventType.START_ARRAY) {
+            List<Object> result = new ArrayList<Object>();
+            for (int i = at + 1; i < ends[at]; i = ends[i]) result.add(raw(i));
+            return result;
+        }
+        return tokens[at] instanceof CompactNumber ? ((CompactNumber)tokens[at]).decimalValue() : tokens[at];
+    }
+}

@@ -23,6 +23,7 @@ import java.util.List;
 import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.io.InputSource;
+import net.arnx.jsonic.io.CharSequenceInputSource;
 import net.arnx.jsonic.util.LocalCache;
 
 public class JSONParser {
@@ -52,6 +53,7 @@ public class JSONParser {
 	private boolean interpretterMode;
 	private boolean ignoreWhirespace;
 	private LocalCache cache;
+	private boolean compactNumbers;
 
 	private int state = BEFORE_ROOT;
 	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
@@ -71,6 +73,11 @@ public class JSONParser {
 		this.cache = cache;
 
 		this.active = stack.size() < maxDepth;
+	}
+
+	/** Internal typed-reader mode; ordinary readers continue to expose BigDecimal. */
+	public void setCompactNumbers(boolean enabled) {
+		compactNumbers = enabled;
 	}
 
 	public int getMaxDepth() {
@@ -467,9 +474,16 @@ public class JSONParser {
 	}
 
 	Object parseString(boolean any) throws IOException {
-		StringBuilder sb = active ? cache.getCachedBuffer() : null;
-
 		int start = in.next();
+		if (active && in instanceof CharSequenceInputSource) {
+			String value = ((CharSequenceInputSource)in).readPlainString(start, cache);
+			if (value != null) return value;
+		}
+		return parseStringSlow(any, start);
+	}
+
+	private Object parseStringSlow(boolean any, int start) throws IOException {
+		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 
 		int rest = in.mark();
 		int len = 0;
@@ -573,6 +587,14 @@ public class JSONParser {
 	}
 
 	Object parseNumber() throws IOException {
+		if (active && compactNumbers && in instanceof CharSequenceInputSource) {
+			CompactNumber number = ((CharSequenceInputSource)in).readCompactNumber();
+			if (number != null) return number;
+		}
+		return parseNumberSlow();
+	}
+
+	private Object parseNumberSlow() throws IOException {
 		int point = 0; // 0 '(-)' 1 '0' | ('[1-9]' 2 '[0-9]*') 3 '(.)' 4 '[0-9]' 5 '[0-9]*' 6 'e|E' 7 '[+|-]' 8 '[0-9]' 9 '[0-9]*' E
 		StringBuilder sb = active ? cache.getCachedBuffer() : null;
 
@@ -667,6 +689,10 @@ public class JSONParser {
 				rest = in.mark();
 				len = 0;
 			}
+		}
+
+		if (n == -1 && point != 2 && point != 3 && point != 5 && point != 6 && point != 9) {
+			throw createParseException(in, "json.parse.UnexpectedChar", "EOF");
 		}
 
 		if (sb != null) {

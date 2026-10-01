@@ -5,9 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.arnx</groupId>
     <artifactId>jsonic</artifactId>
-    <packaging>jar</packaging>
     <name>jsonic</name>
-    <version>1.3.10</version>
+    <version>1.4.0</version>
     <description>simple json encoder/decoder for java</description>
     <url>http://jsonic.sourceforge.jp/</url>
     <licenses>
@@ -28,64 +27,88 @@
             <email>hidekatsu.izuno@gmail.com</email>
         </developer>
     </developers>
-    <repositories>
-        <repository>
-            <id>maven.seasar.org</id>
-            <url>https://maven.seasar.org/maven2/</url>
-        </repository>
-    </repositories>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
+        <spring.version>7.0.9</spring.version>
+        <slf4j.version>2.0.20</slf4j.version>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-bom</artifactId>
+                <version>${slf4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.5</version>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.1.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring</artifactId>
-            <version>2.5.6</version>
+            <artifactId>spring-web</artifactId>
+            <version>${spring.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <version>2.0</version>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.seasar.container</groupId>
-            <artifactId>s2-framework</artifactId>
-            <version>2.4.43</version>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.4.0</version>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>1.0.1</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-observation</artifactId>
+            <version>1.17.1</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.8.0</version>
+            <version>1.11.0</version>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>6.1.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-webapp</artifactId>
-            <version>7.0.0.v20091005</version>
+            <groupId>org.eclipse.jetty.ee11</groupId>
+            <artifactId>jetty-ee11-webapp</artifactId>
+            <version>12.1.13</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.ant</groupId>
-            <artifactId>ant</artifactId>
-            <version>1.10.15</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -93,78 +116,105 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.5.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.5.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
+                <version>3.5.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.16.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.6.0</version>
                 <configuration>
-                    <workingDirectory>${project.build.directory}/test-work</workingDirectory>
                     <!-- Existing date/time assertions use the Japanese locale and JST. -->
                     <argLine>-Duser.language=ja -Duser.country=JP -Duser.timezone=Asia/Tokyo -Djava.locale.providers=COMPAT,CLDR</argLine>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>prepare-web-test-samples</id>
-                        <phase>process-test-classes</phase>
-                        <goals><goal>run</goal></goals>
-                        <configuration>
-                            <target>
-                                <copy todir="${project.build.directory}/test-work/sample">
-                                    <fileset dir="sample" excludes="**/classes/**,**/lib/**,**/*.dat"/>
-                                </copy>
-                                <mkdir dir="${project.build.directory}/test-work/sample/basic/WEB-INF/classes"/>
-                                <javac srcdir="${project.build.directory}/test-work/sample/basic/WEB-INF/src" destdir="${project.build.directory}/test-work/sample/basic/WEB-INF/classes"
-                                       release="8" encoding="UTF-8" includeantruntime="false">
-                                    <classpath refid="maven.test.classpath"/>
-                                </javac>
-                                <copy todir="${project.build.directory}/test-work/sample/basic/WEB-INF/classes">
-                                    <fileset dir="${project.build.directory}/test-work/sample/basic/WEB-INF/src" excludes="**/*.java"/>
-                                </copy>
-                                <mkdir dir="${project.build.directory}/test-work/sample/spring/WEB-INF/classes"/>
-                                <javac srcdir="${project.build.directory}/test-work/sample/spring/WEB-INF/src" destdir="${project.build.directory}/test-work/sample/spring/WEB-INF/classes"
-                                       release="8" encoding="UTF-8" includeantruntime="false">
-                                    <classpath refid="maven.test.classpath"/>
-                                </javac>
-                                <copy todir="${project.build.directory}/test-work/sample/spring/WEB-INF/classes">
-                                    <fileset dir="${project.build.directory}/test-work/sample/spring/WEB-INF/src" excludes="**/*.java"/>
-                                </copy>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>test-ant-classloader</id>
-                        <phase>test</phase>
-                        <goals><goal>run</goal></goals>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <target>
-                                <taskdef name="testClassLoader"
-                                         classname="net.arnx.jsonic.JSONMultiClassLoaderTestTask"
-                                         classpathref="maven.test.classpath"/>
-                                <testClassLoader/>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>benchmark</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.openjdk.jmh</groupId>
+                    <artifactId>jmh-core</artifactId>
+                    <version>1.37</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjdk.jmh</groupId>
+                    <artifactId>jmh-generator-annprocess</artifactId>
+                    <version>1.37</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>tools.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                    <version>3.2.3</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>3.6.2</version>
+                        <executions>
+                            <execution>
+                                <id>benchmark-sources</id>
+                                <phase>generate-test-sources</phase>
+                                <goals><goal>add-test-source</goal></goals>
+                                <configuration>
+                                    <sources><source>src/jmh/java</source></sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <testAnnotationProcessorPaths>
+                                <path>
+                                    <groupId>org.openjdk.jmh</groupId>
+                                    <artifactId>jmh-generator-annprocess</artifactId>
+                                    <version>1.37</version>
+                                </path>
+                            </testAnnotationProcessorPaths>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>WebサービスAPI (JSONIC 1.3)</title>
+<title>WebサービスAPI (JSONIC 1.4)</title>
 <style type="text/css">
 	html { overflow-x: hidden; height:100%; }
 	body { width: 100%; height: 100%; margin: 0px; padding: 0px; font: 10pt sans-serif; z-index: 1; }
@@ -59,16 +59,16 @@
 </head>
 <body>
 <div class="sidebar">
-<h1 class="title"><a href="index.html"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
+<h1 class="title"><a href="../README.md"><img src="images/jsonic_logo.jpg" width="136" height="34" alt="jsonic" style="vertical-align: -10px; border-width:0px;" /></a></h1>
 <div class="bar">Version 1.3</div>
 <ul class="menu">
-	<li><a href="index.html">JSONICとは</a></li>
-	<li><a href="index.html#download">ダウンロード</a></li>
+	<li><a href="../README.md">JSONICとは</a></li>
+	<li><a href="../README.md#download">ダウンロード</a></li>
 	<li>JSON API
 		<ul>
-		<li><a href="index.html#encoder">JSONエンコーダー</a></li>
-		<li><a href="index.html#decoder">JSONデコーダー</a></li>
-		<li><a href="index.html#usage_advanced">高度な使い方</a></li>
+		<li><a href="../README.md#encoder">JSONエンコーダー</a></li>
+		<li><a href="../README.md#decoder">JSONデコーダー</a></li>
+		<li><a href="../README.md#usage_advanced">高度な使い方</a></li>
 		</ul>
 	</li>
 	<li>Web サービス API
@@ -83,7 +83,6 @@
 	<li>API リファレンス
 		<ul>
 		<li><a href="java/api/index.html">javadoc</a></li>
-		<li><a href="as3/api/index.html">asdoc</a></li>
 		</ul>
 	</li>
 	<li>旧バージョン
@@ -93,9 +92,9 @@
 		<li><a href="http://jsonic.sourceforge.jp/1.0/index.html">version 1.0</a></li>
 		</ul>
 	</li>
-	<li><a href="index.html#license">ライセンス</a></li>
-	<li><a href="index.html#report">バグ・要望の報告先</a></li>
-	<li><a href="index.html#releasenote">リリースノート</a></li>
+	<li><a href="../README.md#license">ライセンス</a></li>
+	<li><a href="../README.md#report">バグ・要望の報告先</a></li>
+	<li><a href="../README.md#releasenote">リリースノート</a></li>
 </ul>
 </div>
 
@@ -117,7 +116,6 @@
 <tr><td>RESTServlet</td><td>GET/POST/PUT/DELETEなどHTTP Methodをベースに操作を行うRESTfullなWebサービスを構築できます。</td></tr>
 </table>
 
-<div class="warning">WebServiceServletは、JSONIC 1.3以降削除されました。今後はRESTServletおよびRPCServletを利用してください。</div>
 
 <h2 id="rpcservlet">RPCサーブレット</h2>
 <p>RPCサーブレットは、<a href="http://json-rpc.org/wiki/specification">JSON-RPC 1.0</a> および <a href="http://groups.google.com/group/json-rpc/web/json-rpc-2-0">JSON-RPC 2.0</a> の両方をサポートしたWEBサービス構築用サーブレットです。</p>
@@ -307,7 +305,7 @@ Content-Typeが「<code>application/x-www-form-urlencoded</code>」の時はリ�
 <tr><td>DELETE</td><td>delete</td></tr>
 </table>
 <div class="caption">
-(※4) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、クエリ変数に「_method=HTTP Method名」を指定することもできます。<br />
+(※4) ブラウザなどでは、PUT/DELETEが使えない場合があります。そのような場合の代替手段として、POSTリクエストのクエリ変数に「_method=HTTP Method名」を指定することもできます。POST以外のリクエストでは_methodは無視されます。更新リクエストの条件は<a href="#csrf">CSRF対策とクライアント設定</a>を参照してください。<br />
 </div>
 
 <p>例えば、mappingsに <code>"/{package}/{class}.{ext}": "boo.${package}.${class}Service"</code> という指定があった場合、 <code>/foo/woo/resource.json</code>というパスをGETすると、<code>boo.foo.woo.ResourceService</code>クラスの<code>find</code>が呼び出されます。</p>
@@ -460,7 +458,7 @@ Content-Type: application/json
     }
 </pre>
 
-<h3 id="jsonp">■ パス変数によるメソッドの指定</h3>
+<h3 id="path-method">■ パス変数によるメソッドの指定</h3>
 <p>本来RESTでは、HTTP Methodで処理が決定されるためRPC的な任意のメソッド呼び出しは推奨されませんが、それでは不便が多いためパス変数に<code>method</code>を指定することで、任意のメソッド呼び出しを可能にしました。</p>
 <p>例えば、次のように設定を行うと <code>/foo/calc.sum.json</code> を呼び出すと <code>sample.web.foo.service.CalcService</code> の <code>sum</code> メソッドが呼びだされます。</p>
 <pre class="source">
@@ -470,19 +468,25 @@ Content-Type: application/json
 </pre>
 <p>なお、このような使い方をする際は、verbと組み合わせてHTTP Methodを制限して使うことが推奨されます（GETで更新処理などを行うと、検索エンジンのクロールでデータが削除されるなどの問題が発生する可能性があります）。</p>
 
-<h3 id="jsonp">■ JSONP <span class="subtitle">- JSON with padding</span></h3>
-<p>HTTP MethodがGETの場合、リクエストパラメータとしてcallback=Function名を指定することでJSONPによる返答を返すことができるようになります。</p>
-<pre class="source">
-<span class="elem">&lt;script type="text/javascript"&gt;</span>
-    function call(value) {
-        alert(value);
-    }
-<span class="elem">&lt;/script&gt;</span>
+<h3 id="jsonp">■ JSONPの廃止</h3>
+<p>JSONPには対応していません。callbackパラメータによる関数呼び出しの付加は行わず、通常のJSONレスポンス（application/json）を返します。</p>
 
-...
-
-<span class="elem">&lt;script type="text/javascript" src="http://host/hoge.json?callback=call"&gt;&lt;/script&gt;</span>
+<h3 id="csrf">■ CSRF対策とクライアント設定</h3>
+<p>RESTのPOST・PUT・DELETEは、サービスを呼び出す前に次の条件で検証します。POSTの<code>_method</code>による上書きも対象です。</p>
+<ul>
+<li><code>Origin</code>がある場合は、リクエスト先とスキーム・ホスト・ポートが一致する必要があります。異なるOrigin、<code>null</code>、不正な値、複数のOriginは403で拒否します。</li>
+<li><code>Origin</code>がない場合は、<code>Content-Type: application/json</code>または<code>X-Requested-With: XMLHttpRequest</code>が必要です。どちらもない更新リクエストは403で拒否します。</li>
+<li><code>Sec-Fetch-Site: cross-site</code>がある更新リクエストは403で拒否します。</li>
+</ul>
+<p>Originを送らないクライアントでフォーム形式のPOSTを行う場合は、次のようにヘッダーを追加します。<code>_method=PUT</code>や<code>_method=DELETE</code>を使うPOSTも同様です。</p>
+<pre class="console">
+curl -X POST 'http://localhost:8080/basic/rest/memo.json' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-urlencode 'title=sample' \
+  --data-urlencode 'text=sample memo'
 </pre>
+<p>このヘッダーを付けても、異なるOriginを送るリクエストは許可されません。同一Originを送るブラウザフォームと、同梱のjQueryサンプルは引き続き利用できます。</p>
+<p>リバースプロキシを使う場合は、Servletコンテナが公開URLのスキーム・ホスト・ポートを認識するよう、信頼するプロキシをコンテナ側で設定してください。RESTServletはクライアントからの<code>Forwarded</code>・<code>X-Forwarded-*</code>ヘッダーを直接信用しません。コンテナが内部URLの情報を返す設定では、正当なOriginも不一致となり403になります。</p>
 
 <h3 id="response">■ JSON以外のレスポンス</h3>
 <p>CSVやXMLなどJSON以外のレスポンスを返したい場合やリダイレクトしたい場合は、処理の最後でHttpServletResponse#flushBuffer()を実行して出力をコミットしてください。ステータスコードやコンテントタイプの設定、JSONの出力などJSONIC側の後続処理を抑制することができます。</p>
@@ -505,7 +509,7 @@ public class HogeService {
 
 <h2 id="dicontainer">DIコンテナ対応</h2>
 <p>RPCサーブレット、RESTサーブレットは、内部のコンテナを切り替えることで呼び出し対象のインスタンスを任意のDIコンテナにて管理することが可能です。</p>
-<p>JSONICでは、<a href="http://www.seasar.org/">Seasar2</a>、<a href="http://www.springframework.org/">Spring Framework</a>、<a href="http://code.google.com/p/google-guice/">Google Guice</a>に対応したContainerを標準添付しています（※1.2よりパッケージ名が変更されています。ご注意ください）。このContainerを利用すると、DI Container上で管理されているコンポーネントをWebServiceとして利用することができるようになります。</p>
+<p>JSONICでは、<a href="https://spring.io/projects/spring-framework">Spring Framework</a>に対応したSpringContainerを標準添付しています。このコンテナを利用すると、Springで管理されているコンポーネントをWebサービスとして利用できます。</p>
 
 <pre class="source">
 <span class="elem">&lt;servlet&gt;</span>
@@ -514,14 +518,9 @@ public class HogeService {
     <span class="elem">&lt;init-param&gt;</span>
         <span class="elem">&lt;param-name&gt;</span>config<span class="elem">&lt;/param-name&gt;</span>
         <span class="elem">&lt;param-value&gt;</span>
-          <span class="comment">// "container": (net.arnx.jsonic.web.Containerを実装したクラス)</span>
-          <span class="comment">// Seasar2対応Container</span>
-          "container": "net.arnx.jsonic.web.extension.S2Container" 
-          <span class="comment">// Spring Framework対応Container</span>
-          "container": "net.arnx.jsonic.web.extension.SpringContainer"
-          <span class="comment">// Google Guice対応Container</span>
-          "container": "net.arnx.jsonic.web.extension.GuiceContainer"
-          ...
+          {
+            "container": "net.arnx.jsonic.web.extension.SpringContainer"
+          }
         <span class="elem">&lt;/param-value&gt;</span>
     <span class="elem">&lt;/init-param&gt;</span>
 <span class="elem">&lt;/servlet&gt;</span>
@@ -615,9 +614,12 @@ public class TransactionalContainer extends Container {
 <span class="elem">&lt;filter-mapping&gt;</span>
     <span class="elem">&lt;filter-name&gt;</span>Gateway Filter<span class="elem">&lt;/filter-name&gt;</span>
     <span class="elem">&lt;url-pattern&gt;</span>/*<span class="elem">&lt;/url-pattern&gt;</span>
+    <span class="elem">&lt;dispatcher&gt;</span>REQUEST<span class="elem">&lt;/dispatcher&gt;</span>
+    <span class="elem">&lt;dispatcher&gt;</span>FORWARD<span class="elem">&lt;/dispatcher&gt;</span>
 <span class="elem">&lt;/filter-mapping&gt;</span>
 </pre>
-<p>configで設定できる値は次の通りです。なお、これらの設定はフィルタの設定に関わらず一度だけしか適用されません。</p>
+<p><strong>設定上の注意:</strong> <code>FORWARD</code>を省略すると、転送先でGatewayFilterが実行されず、転送先の認可チェックが働きません。<code>/*</code>に対して<code>REQUEST</code>と<code>FORWARD</code>を必ず登録してください。<code>filter-name</code>は使用しているfilter定義の名前に合わせます。</p>
+<p>configで設定できる値は次の通りです。accessはforward先でも毎回検証します。転送先の認可を有効にするため、上記のようにREQUESTとFORWARDの両方へフィルタを登録してください。圧縮・文字コードなどの応答設定と、設定によるforwardは1リクエストにつき1回だけ適用します。</p>
 <table class="table" summary="Config設定">
 <tr><th>キー</th><th>値型</th><th>説明</th></tr>
 <tr><td>encoding</td><td><code>java.lang.String</code></td><td>Request/Responseの文字エンコーディングを設定します。デフォルトはnullです。</td></tr>

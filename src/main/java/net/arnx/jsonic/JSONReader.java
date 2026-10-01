@@ -57,6 +57,27 @@ public class JSONReader {
 		return context.convertInternal(getValue(), ClassUtil.getRawType(type), type);
 	}
 
+	Object readTyped(Type targetType) throws IOException {
+		return readTyped(targetType, 0);
+	}
+
+	Object readTyped(Type targetType, int inputLength) throws IOException {
+		Class<?> targetClass = ClassUtil.getRawType(targetType);
+		JSONEventType event = next();
+		if ((event != JSONEventType.START_OBJECT && event != JSONEventType.START_ARRAY)
+				|| (event == JSONEventType.START_OBJECT && targetClass.isArray())
+				|| (event == JSONEventType.START_ARRAY && !targetClass.isArray())
+				|| !TypedDecoder.supports(context, targetClass)) {
+			Object value = (event != null) ? getValue() : null;
+			return context.convertInternal(value, targetClass, targetType);
+		}
+		parser.setCompactNumbers(true);
+		TypedDecoder buffer = new TypedDecoder(inputLength);
+		buffer.add(event, parser.getValue());
+		while ((event = next()) != null) buffer.add(event, parser.getValue());
+		return context.convertTyped(buffer, targetClass, targetType);
+	}
+
 	public Map<?, ?> getMap() throws IOException {
 		return (Map<?, ?>)getValue();
 	}

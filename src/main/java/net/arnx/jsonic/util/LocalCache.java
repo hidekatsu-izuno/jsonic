@@ -30,6 +30,7 @@ import java.util.TimeZone;
 public class LocalCache {
 	private static final int CACHE_SIZE = 256;
 
+	private final String bundle;
 	private ResourceBundle resources;
 	private Locale locale;
 	private TimeZone timeZone;
@@ -40,7 +41,7 @@ public class LocalCache {
 	private Map<Class<?>, Map<Object, Object>> formatCache;
 
 	public LocalCache(String bundle, Locale locale, TimeZone timeZone) {
-		this.resources = ResourceBundle.getBundle(bundle, locale);
+		this.bundle = bundle;
 		this.locale = locale;
 		this.timeZone = timeZone;
 	}
@@ -83,6 +84,28 @@ public class LocalCache {
 		}
 
 		return cs.toString();
+	}
+
+	/** Interns a slice without copying it through a temporary builder. */
+	public String getString(CharSequence cs, int start, int end) {
+		int length = end - start;
+		if (length == 0) return "";
+		if (length < 32 && stringCacheCount++ > 16) {
+			int hash = 0;
+			for (int i = start, limit = start + Math.min(16, length); i < limit; i++) {
+				hash = hash * 31 + cs.charAt(i);
+			}
+			int index = hash & (CACHE_SIZE - 1);
+			if (stringCache == null) stringCache = new String[CACHE_SIZE];
+			String value = stringCache[index];
+			if (value != null && value.length() == length) {
+				int i = 0;
+				while (i < length && value.charAt(i) == cs.charAt(start + i)) i++;
+				if (i == length) return value;
+			}
+			return stringCache[index] = cs.subSequence(start, end).toString();
+		}
+		return cs.subSequence(start, end).toString();
 	}
 
 	private int getCacheIndex(CharSequence cs) {
@@ -131,6 +154,9 @@ public class LocalCache {
 	}
 
 	public String getMessage(String id, Object... args) {
+		// Successful conversions do not need error messages. ResourceBundle lookup
+		// otherwise allocates lookup keys on every new conversion context.
+		if (resources == null) resources = ResourceBundle.getBundle(bundle, locale);
 		if (args != null && args.length > 0) {
 			return MessageFormat.format(resources.getString(id), args);
 		} else {

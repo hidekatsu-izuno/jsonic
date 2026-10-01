@@ -33,6 +33,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
@@ -533,7 +534,7 @@ public class JSON {
 	 * @throws JSONException if error occurred when formating.
 	 */
 	public static void encode(Object source, OutputStream out) throws IOException, JSONException {
-		newInstance().format(source, new OutputStreamWriter(out, "UTF-8"));
+		newInstance().format(source, new OutputStreamWriter(out, StandardCharsets.UTF_8));
 	}
 
 	/**
@@ -548,7 +549,7 @@ public class JSON {
 	public static void encode(Object source, OutputStream out, boolean prettyPrint) throws IOException, JSONException {
 		JSON json = newInstance();
 		json.setPrettyPrint(prettyPrint);
-		json.format(source, new OutputStreamWriter(out, "UTF-8"));
+		json.format(source, new OutputStreamWriter(out, StandardCharsets.UTF_8));
 	}
 
 	/**
@@ -935,7 +936,7 @@ public class JSON {
 	 * @throws IOException when I/O error occurred.
 	 */
 	public OutputStream format(Object source, OutputStream out) throws IOException {
-		format(source, new BufferedWriter(new OutputStreamWriter(out, "UTF-8")));
+		format(source, new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)));
 		return out;
 	}
 
@@ -978,7 +979,7 @@ public class JSON {
 	}
 
 	public JSONWriter getWriter(OutputStream out) throws IOException {
-		return getWriter(new OutputStreamWriter(out, "UTF-8"));
+		return getWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
 	}
 
 	public JSONWriter getWriter(Appendable ap) throws IOException {
@@ -1061,8 +1062,7 @@ public class JSON {
 		try {
 			Context context = new Context();
 			JSONReader jreader = new JSONReader(context, is, false, true);
-			Object result = (jreader.next() != null) ? jreader.getValue() : null;
-			value = (T)context.convertInternal(result, ClassUtil.getRawType(type), type);
+			value = (T)jreader.readTyped(type, cs.length());
 		} catch (IOException e) {
 			// never occur
 		}
@@ -1088,8 +1088,7 @@ public class JSON {
 
 		Context context = new Context();
 		JSONReader jreader = new JSONReader(context, new ReaderInputSource(in), false, true);
-		Object result = (jreader.next() != null) ? jreader.getValue() : null;
-		return (T)context.convertInternal(result, ClassUtil.getRawType(type), type);
+		return (T)jreader.readTyped(type);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1111,8 +1110,7 @@ public class JSON {
 
 		Context context = new Context();
 		JSONReader jreader = new JSONReader(context, new ReaderInputSource(reader), false, true);
-		Object result = (jreader.next() != null) ? jreader.getValue() : null;
-		return (T)context.convertInternal(result, ClassUtil.getRawType(type), type);
+		return (T)jreader.readTyped(type);
 	}
 
 	public JSONReader getReader(CharSequence cs) {
@@ -1177,8 +1175,6 @@ public class JSON {
 				// no handle
 			} else if (hint.serialized() && hint != context.skipHint) {
 				c = FormatConverter.INSTANCE;
-			} else if (Serializable.class.equals(hint.type())) {
-				c = SerializableConverter.INSTANCE;
 			} else if (String.class.equals(hint.type())) {
 				c = StringSerializableConverter.INSTANCE;
 			} else if (hint.type() != Object.class && cls.isAssignableFrom(hint.type())) {
@@ -1219,6 +1215,15 @@ public class JSON {
 		@SuppressWarnings("unchecked")
 		T ret = (T)c.convert(context, value, cls, type);
 		return ret;
+	}
+
+	static boolean isBeanType(Class<?> type) {
+		// Such supertypes accept the raw map via PlainConverter.
+		if (type.isAssignableFrom(LinkedHashMap.class) || CONVERT_MAP.containsKey(type)) return false;
+		for (Converter converter : CONVERT_LIST) {
+			if (converter.accept(type)) return false;
+		}
+		return !type.isPrimitive();
 	}
 
 	protected String normalize(String name) {
@@ -1374,6 +1379,10 @@ public class JSON {
 			return new Context(this);
 		}
 
+		boolean hasDefaultBeanBehavior() {
+			return JSON.this.getClass() == JSON.class;
+		}
+
 		public Locale getLocale() {
 			return locale;
 		}
@@ -1483,6 +1492,9 @@ public class JSON {
 		}
 
 		void enter(Object key, JSONHint hint) {
+			if (hint != null && Serializable.class.equals(hint.type())) {
+				throw new UnsupportedOperationException("@JSONHint(type=Serializable.class) is no longer supported; use a JSON bean instead.");
+			}
 			depth++;
 			if (path == null) path = new State[4];
 			if (depth >= path.length) {
@@ -1609,8 +1621,6 @@ public class JSON {
 					f = PlainFormatter.INSTANCE;
 				} else if (String.class.equals(hint.type())) {
 					f = StringFormatter.INSTANCE;
-				} else if (Serializable.class.equals(hint.type())) {
-					f = SerializableFormatter.INSTANCE;
 				}
 			}
 
@@ -1665,20 +1675,35 @@ public class JSON {
 				result = (T)postparse(this, value, cls, type);
 				exit();
 			} catch (Exception e) {
-				String text;
-				if (value instanceof CharSequence) {
-					text = "\"" + value + "\"";
-				} else {
-					try {
-						text = value.toString();
-					} catch (Exception e2) {
-						text = value.getClass().toString();
-					}
-				}
-				throw new JSONException(getMessage("json.parse.ConversionError", text, type, this),
-						JSONException.POSTPARSE_ERROR, e);
+				throw conversionException(value, type, e);
 			}
 			return result;
+		}
+
+		Object convertTyped(TypedDecoder buffer, Class<?> cls, Type type) {
+			try {
+				enter(ROOT, null);
+				Object result = buffer.convert(this, cls, type);
+				exit();
+				return result;
+			} catch (Exception e) {
+				throw conversionException(buffer.raw(), type, e);
+			}
+		}
+
+		private JSONException conversionException(Object value, Type type, Exception e) {
+			String text;
+			if (value instanceof CharSequence) {
+				text = "\"" + value + "\"";
+			} else {
+				try {
+					text = value.toString();
+				} catch (Exception e2) {
+					text = value.getClass().toString();
+				}
+			}
+			return new JSONException(getMessage("json.parse.ConversionError", text, type, this),
+					JSONException.POSTPARSE_ERROR, e);
 		}
 
 		<T> T createInternal(Class<? extends T> c) throws Exception {

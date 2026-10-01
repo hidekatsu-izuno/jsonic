@@ -15,7 +15,7 @@
  */
 package net.arnx.jsonic;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -64,9 +64,7 @@ import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.ExtendedDateFormat;
 
-import org.junit.Test;
-import org.seasar.framework.util.ReaderUtil;
-import org.springframework.jdbc.core.CallableStatementCreatorFactory;
+import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 
 import org.apache.commons.beanutils.BasicDynaClass;
@@ -87,6 +85,12 @@ public class JSONTest {
 			test.testFormat();
 			test.testParse();
 			return null;
+		}
+	}
+
+	private String readResource(String name) throws IOException {
+		try (java.io.InputStream in = getClass().getResourceAsStream(name)) {
+			return new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
 		}
 	}
 
@@ -232,10 +236,10 @@ public class JSONTest {
 			.newInstance()
 			.newDocumentBuilder()
 			.parse(this.getClass().getResourceAsStream("Sample.xml"));
-		String sample1 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample1.json"), "UTF-8"));
+		String sample1 = readResource("Sample1.json");
 		assertEquals(sample1, JSON.encode(doc));
 
-		String sample2 = ReaderUtil.readText(new InputStreamReader(this.getClass().getResourceAsStream("Sample2.json"), "UTF-8")).replaceAll("\r\n", "\n");
+		String sample2 = readResource("Sample2.json").replaceAll("\r\n", "\n");
 		result = JSON.encode(doc, true);
 		assertEquals(sample2, JSON.encode(doc, true));
 
@@ -824,7 +828,7 @@ public class JSONTest {
 
 		try {
 			CharSequence cs = null;
-			assertEquals(null, json.parse(cs));
+			assertNull(json.parse(cs));
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -833,7 +837,7 @@ public class JSONTest {
 
 		try {
 			Reader reader = null;
-			assertEquals(null, json.parse(reader));
+			assertNull(json.parse(reader));
 			fail();
 		} catch (NullPointerException e) {
 			System.out.println(e);
@@ -1748,8 +1752,8 @@ public class JSONTest {
 				"[1\n2]", "{\"a\":}", "{} /* comment */", "{} # comment",
 				"new Date(0)", "Number.NaN", "Number.POSITIVE_INFINITY"};
 		for (String input : inputs) {
-			assertThrows(input, JSONException.class, () -> JSON.decode(input));
-			assertThrows(input, JSONException.class, () -> JSON.validate(input));
+			assertThrows(JSONException.class, () -> JSON.decode(input), input);
+			assertThrows(JSONException.class, () -> JSON.validate(input), input);
 		}
 	}
 
@@ -1761,7 +1765,6 @@ public class JSONTest {
 }
 
 class TestBeanWrapper {
-	@JSONHint(type=Serializable.class)
 	public TestBean test;
 }
 

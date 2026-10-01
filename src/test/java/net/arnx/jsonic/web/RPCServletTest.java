@@ -1,14 +1,13 @@
 package net.arnx.jsonic.web;
 
-import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
-import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static org.junit.Assert.assertEquals;
+import static jakarta.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
+import static jakarta.servlet.http.HttpServletResponse.SC_OK;
+import static jakarta.servlet.http.HttpServletResponse.SC_ACCEPTED;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,66 +17,22 @@ import java.net.URL;
 
 import net.arnx.jsonic.JSON;
 
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.webapp.WebAppContext;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class RPCServletTest {
 	
-	private static Server server;
-	
-	@BeforeClass
-	public static void init() throws Exception {
-		new File("sample/basic/WEB-INF/database.dat").delete();
-		new File("sample/spring/WEB-INF/database.dat").delete();
-	
-		server = new Server(16001);
+	private static WebTestServer server;
 
-		ContextHandlerCollection contexts = new ContextHandlerCollection();
-		
-		String[] systemClasses = new String[] {
-				"org.apache.commons.",
-				"org.aopalliance.",
-				"ognl.",
-				"javassist.",
-				"net.arnx.",	
-				"org.seasar.",
-				"org.springframework.",
-				"com.google.inject."
-		};
-		
-		String[] serverClasses = new String[] {
-		};
-		
-		WebAppContext basic = new WebAppContext("sample/basic", "/basic");
-		basic.setSystemClasses(concat(basic.getSystemClasses(), systemClasses));
-		basic.setServerClasses(concat(basic.getServerClasses(), serverClasses));
-		contexts.addHandler(basic);
-		
-		
-		WebAppContext spring = new WebAppContext("sample/spring", "/spring");
-		spring.setSystemClasses(concat(spring.getSystemClasses(), systemClasses));
-		spring.setServerClasses(concat(spring.getServerClasses(), serverClasses));
-		contexts.addHandler(spring);
-		
-		
-		server.setHandler(contexts);
-		server.start();
+	@BeforeAll
+	public static void init() throws Exception {
+		server = new WebTestServer();
 	}
-	
-	private static String[] concat(String[] a, String[] b) {
-		String[] result = new String[a.length + b.length];
-		System.arraycopy(a, 0, result, 0, a.length);
-		System.arraycopy(b, 0, result, a.length, b.length);
-		return result;
-	}
-	
-	@AfterClass
+
+	@AfterAll
 	public static void destroy() throws Exception {
-		server.stop();
+		if (server != null) server.close();
 	}
 	
 	
@@ -96,7 +51,7 @@ public class RPCServletTest {
 	public void testRPC(String app) throws Exception {
 		System.out.println("\n<<START testRPC: " + app + ">>");
 		
-		URL url = new URL("http://localhost:16001/" + app + "/rpc/rpc/rpc.json");
+		URL url = new URL(server.url() + "/" + app + "/rpc/rpc/rpc.json");
 		HttpURLConnection con = null;
 		
 		// GET
@@ -185,7 +140,7 @@ public class RPCServletTest {
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
-		con = (HttpURLConnection)new URL("http://localhost:16001/" + app + "/rpc/rpc/calc.json").openConnection();
+		con = (HttpURLConnection)new URL(server.url() + "/" + app + "/rpc/rpc/calc.json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -196,7 +151,7 @@ public class RPCServletTest {
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 
-		con = (HttpURLConnection)new URL("http://localhost:16001/" + app + "/rpc/rpc/calc.json").openConnection();
+		con = (HttpURLConnection)new URL(server.url() + "/" + app + "/rpc/rpc/calc.json").openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -352,7 +307,7 @@ public class RPCServletTest {
 		con.disconnect();
 		
 		// DUMMY
-		url = new URL("http://localhost:16001/" + app + "/rpc/test.json");
+		url = new URL(server.url() + "/" + app + "/rpc/test.json");
 		con = (HttpURLConnection)url.openConnection();
 		con.setRequestMethod("POST");
 		con.connect();

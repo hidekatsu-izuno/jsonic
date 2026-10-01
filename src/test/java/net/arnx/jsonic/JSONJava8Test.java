@@ -1,6 +1,6 @@
 package net.arnx.jsonic;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -26,7 +26,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JSONJava8Test {
 

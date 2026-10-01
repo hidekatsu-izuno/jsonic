@@ -41,7 +41,7 @@ public @interface JSONHint {
 	String format() default "";
 
 	/**
-	 * The Java type for creation
+	 * The Java type for creation. java.io.Serializable.class is no longer supported.
 	 *
 	 * @return the java type for creation
 	 */
