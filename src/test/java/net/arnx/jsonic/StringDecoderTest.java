@@ -91,4 +91,22 @@ public class StringDecoderTest {
                     JSON.encode(new JSON().parse(input, Bean[].class)));
         }
     }
+
+    @Test public void repeatedQuotedNamesKeepEscapesPrefixesAndDepths() {
+        String escaped = "{\"co\\u0075nt\":1,\"te\\u0078t\":\"one\",\"extra\":{\"x\":1}}";
+        for (String last : new String[] {escaped,
+                "{\"count\":2,\"text\":\"two\",\"extra\":{\"y\":2}}",
+                "{\"countSuffix\":3,\"text\":\"three\"}",
+                "{\"co\\u0075nt\":1,\"te\\u0078t\":\"one\",\"count\":2}",
+                "{\"co\\u0075nt\":1,\"te\\u0078t\"bad:2}",
+                "{\"co\\u0075nt\":1,\"te\\u0078t",
+                "{\"text\":\"first\",\"count\":2}"}) {
+            compare("[" + escaped + "," + escaped + "," + last + "]");
+        }
+        Map<String, Object> wide = new LinkedHashMap<>();
+        for (int i = 0; i < 40; i++) wide.put("key" + i, i);
+        Map<String, Object> bean = new LinkedHashMap<>();
+        bean.put("extra", wide);
+        compare(JSON.encode(new Object[] {bean, bean, bean, bean}));
+    }
 }

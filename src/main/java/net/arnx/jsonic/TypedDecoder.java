@@ -72,6 +72,36 @@ final class TypedDecoder {
     private int[] ends;
     private int size;
     private int open = -1;
+    // Learn at most one layout per document. This retains no input across calls
+    // and bounds extra work for heterogeneous or adversarial object layouts.
+    private BeanLayout layout;
+    private Class<?> repeatingType;
+
+    private static final class BeanLayout {
+        final Class<?> type;
+        final BeanProperties.WritePlan plan;
+        final Constructor<?> constructor;
+        final String[] names;
+        final BeanProperties.WriteProperty[] properties;
+
+        BeanLayout(Class<?> type, BeanProperties.WritePlan plan, Constructor<?> constructor,
+                String[] names, BeanProperties.WriteProperty[] properties) {
+            this.type = type;
+            this.plan = plan;
+            this.constructor = constructor;
+            this.names = names;
+            this.properties = properties;
+        }
+    }
+
+    private boolean matches(int at, BeanLayout layout) {
+        int i = at + 1;
+        for (String name : layout.names) {
+            if (i >= ends[at] || !name.equals(tokens[i])) return false;
+            i = ends[i + 1];
+        }
+        return i == ends[at];
+    }
 
     TypedDecoder(int inputLength) {
         // Estimate only for character input; cap slack for long string values.
@@ -157,8 +187,27 @@ final class TypedDecoder {
         int count = 0;
         for (int i = at + 1; i < ends[at]; i = ends[i]) count++;
         Class<?> component = type.getComponentType();
+        if (repeatingType == null && count > 1 && BEAN_TYPES.get(component)) repeatingType = component;
         Type elementType = (genericType instanceof GenericArrayType)
                 ? ((GenericArrayType)genericType).getGenericComponentType() : component;
+        if (component == String.class && elementType == String.class) {
+            String[] result = new String[count];
+            int index = 0;
+            for (int i = at + 1; i < ends[at]; i = ends[i]) {
+                Object value = tokens[i];
+                if (value == null || value instanceof String) {
+                    // No conversion or user code can fail here, so path tracking
+                    // is unnecessary. Other values retain the full conversion path.
+                    result[index] = (String)value;
+                } else {
+                    context.enter(index, null);
+                    result[index] = (String)convert(context, i, String.class, String.class);
+                    context.exit();
+                }
+                index++;
+            }
+            return result;
+        }
         Object result = Array.newInstance(component, count);
         Object[] references = (result instanceof Object[]) ? (Object[])result : null;
         int index = 0;
@@ -177,15 +226,29 @@ final class TypedDecoder {
     }
 
     private Object bean(Context context, int at, Class<?> type, Type genericType) throws Exception {
-        BeanProperties.WritePlan plan = BeanProperties.writePlan(context, type);
+        BeanLayout known = layout;
+        if (known != null && known.type == type && matches(at, known)) {
+            Object result = known.constructor != null ? known.constructor.newInstance() : context.createInternal(type);
+            if (result == null) return null;
+            int token = at + 1;
+            for (BeanProperties.WriteProperty property : known.properties) {
+                assign(context, result, property, token + 1, type, genericType);
+                token = ends[token + 1];
+            }
+            return result;
+        }
+        BeanProperties.WritePlan plan = known != null && known.type == type
+                ? known.plan : BeanProperties.writePlan(context, type);
         int length = plan.indexed.length;
         // Bound scratch space for very wide beans with sparse input.
         if (length > 64) return context.postparseInternal(raw(at), type, genericType);
         int[] slots = new int[length * 2];
         int count = 0;
+        boolean learn = layout == null && type == repeatingType;
         for (int i = at + 1; i < ends[at]; i = ends[i + 1]) {
             BeanProperties.WriteProperty property = plan.properties.get(tokens[i]);
             if (property == null) {
+                learn = false;
                 // Aliases may assign the same property more than once. Keep their
                 // exact-key duplicate semantics in the original converter.
                 if (!(tokens[i] instanceof String) || plan.properties.containsKey(
@@ -196,24 +259,39 @@ final class TypedDecoder {
                 continue;
             }
             if (slots[property.index] == 0) slots[length + count++] = property.index;
+            else learn = false;
             slots[property.index] = i + 1;
         }
         Constructor<?> constructor = CONSTRUCTORS.get(type).constructor;
+        if (learn && count > 0) {
+            String[] names = new String[count];
+            BeanProperties.WriteProperty[] ordered = new BeanProperties.WriteProperty[count];
+            for (int i = 0; i < count; i++) {
+                ordered[i] = plan.indexed[slots[length + i]];
+                names[i] = (String)tokens[slots[ordered[i].index] - 1];
+            }
+            layout = new BeanLayout(type, plan, constructor, names, ordered);
+        }
         Object result = (constructor != null) ? constructor.newInstance() : context.createInternal(type);
         if (result == null) return null;
         for (int i = 0; i < count; i++) {
             BeanProperties.WriteProperty property = plan.indexed[slots[length + i]];
-            context.enter(property.property.getName(), property.hint);
-            Type targetType = property.genericType;
-            Class<?> targetClass = property.type;
-            if (targetType != targetClass && genericType instanceof ParameterizedType) {
-                targetType = context.getResolvedType(genericType, type, targetType);
-                targetClass = ClassUtil.getRawType(targetType);
-            }
-            property.property.set(result, convert(context, slots[property.index], targetClass, targetType));
-            context.exit();
+            assign(context, result, property, slots[property.index], type, genericType);
         }
         return result;
+    }
+
+    private void assign(Context context, Object result, BeanProperties.WriteProperty property,
+            int at, Class<?> type, Type genericType) throws Exception {
+        context.enter(property.property.getName(), property.hint);
+        Type targetType = property.genericType;
+        Class<?> targetClass = property.type;
+        if (targetType != targetClass && genericType instanceof ParameterizedType) {
+            targetType = context.getResolvedType(genericType, type, targetType);
+            targetClass = ClassUtil.getRawType(targetType);
+        }
+        property.property.set(result, convert(context, at, targetClass, targetType));
+        context.exit();
     }
 
     Object raw() {

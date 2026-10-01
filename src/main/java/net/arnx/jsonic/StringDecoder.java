@@ -17,6 +17,19 @@ final class StringDecoder {
     private final LocalCache cache;
     private final TypedDecoder buffer;
     private int position;
+    private boolean repeatedObjects;
+    private Name[][] names;
+
+    private static final class Name {
+        final String value;
+        final int start;
+        final int length;
+        Name(String value, int start, int end) {
+            this.value = value;
+            this.start = start;
+            this.length = end - start;
+        }
+    }
 
     private StringDecoder(Context context, String input) {
         this.input = input;
@@ -75,10 +88,11 @@ final class StringDecoder {
             buffer.add(JSONEventType.END_OBJECT, null);
             return true;
         }
+        int ordinal = 0;
         do {
             whitespace();
             if (position == length || input.charAt(position) != '"') return false;
-            String name = string();
+            String name = name(depth, ordinal++);
             if (name == null) return false;
             buffer.add(JSONEventType.NAME, name);
             whitespace();
@@ -107,8 +121,34 @@ final class StringDecoder {
                 buffer.add(JSONEventType.END_ARRAY, null);
                 return true;
             }
-        } while (take(','));
-        return false;
+            if (!take(',')) return false;
+            whitespace();
+            // Enable prediction only once an array actually repeats objects.
+            // Single beans and single-element arrays pay no cache allocation.
+            if (position < length && input.charAt(position) == '{') repeatedObjects = true;
+        } while (true);
+    }
+
+    private String name(int depth, int ordinal) {
+        // A fixed number of positions per depth bounds work and retained names.
+        if (!repeatedObjects || ordinal >= 16) return string();
+        if (names == null) names = new Name[maxDepth][];
+        Name[] row = names[depth];
+        if (row == null) names[depth] = row = new Name[16];
+        Name name = row[ordinal];
+        if (name != null) {
+            // Compare the whole previously validated quoted token, including
+            // escapes and its closing quote. Prefix matches cannot skip input.
+            if (input.regionMatches(position, input, name.start, name.length)) {
+                position += name.length;
+                return name.value;
+            }
+            return string();
+        }
+        int start = position;
+        String value = string();
+        if (value != null) row[ordinal] = new Name(value, start, position);
+        return value;
     }
 
     private boolean take(char expected) {
