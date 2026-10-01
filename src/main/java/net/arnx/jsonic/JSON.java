@@ -1061,6 +1061,11 @@ public class JSON {
 		T value = null;
 		try {
 			Context context = new Context();
+			if (cs instanceof String) {
+				Class<?> targetClass = ClassUtil.getRawType(type);
+				TypedDecoder buffer = StringDecoder.scan(context, (String)cs, targetClass);
+				if (buffer != null) return (T)context.convertTyped(buffer, targetClass, type);
+			}
 			JSONReader jreader = new JSONReader(context, is, false, true);
 			value = (T)jreader.readTyped(type, cs.length());
 		} catch (IOException e) {
