@@ -16,6 +16,8 @@
 package net.arnx.jsonic;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,6 +149,7 @@ final class BeanProperties {
         final Type genericType;
 
         final int index;
+        final Field primitiveField;
 
         WriteProperty(PropertyInfo property, int index) {
             this.index = index;
@@ -154,6 +157,11 @@ final class BeanProperties {
             hint = property.getWriteAnnotation(JSONHint.class);
             type = property.getWriteType();
             genericType = property.getWriteGenericType();
+            Field field = property.getField();
+            primitiveField = hint == null && property.getWriteMethod() == null
+                    && field != null && !Modifier.isFinal(field.getModifiers())
+                    && (type == int.class || type == long.class || type == double.class || type == boolean.class)
+                    ? field : null;
         }
     }
 }

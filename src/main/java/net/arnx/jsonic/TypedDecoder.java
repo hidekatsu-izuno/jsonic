@@ -187,7 +187,6 @@ final class TypedDecoder {
         int count = 0;
         for (int i = at + 1; i < ends[at]; i = ends[i]) count++;
         Class<?> component = type.getComponentType();
-        if (repeatingType == null && count > 1 && BEAN_TYPES.get(component)) repeatingType = component;
         Type elementType = (genericType instanceof GenericArrayType)
                 ? ((GenericArrayType)genericType).getGenericComponentType() : component;
         if (component == String.class && elementType == String.class) {
@@ -208,12 +207,15 @@ final class TypedDecoder {
             }
             return result;
         }
+        boolean beanElement = BEAN_TYPES.get(component);
+        if (repeatingType == null && count > 1 && beanElement) repeatingType = component;
         Object result = Array.newInstance(component, count);
         Object[] references = (result instanceof Object[]) ? (Object[])result : null;
         int index = 0;
         for (int i = at + 1; i < ends[at]; i = ends[i]) {
             context.enter(index, null);
-            Object value = convert(context, i, component, elementType);
+            Object value = beanElement && tokens[i] == JSONEventType.START_OBJECT
+                    ? bean(context, i, component, elementType) : convert(context, i, component, elementType);
             if (references != null) {
                 references[index] = value;
             } else {
@@ -284,6 +286,10 @@ final class TypedDecoder {
     private void assign(Context context, Object result, BeanProperties.WriteProperty property,
             int at, Class<?> type, Type genericType) throws Exception {
         context.enter(property.property.getName(), property.hint);
+        if (property.primitiveField != null && assignPrimitive(result, property, tokens[at])) {
+            context.exit();
+            return;
+        }
         Type targetType = property.genericType;
         Class<?> targetClass = property.type;
         if (targetType != targetClass && genericType instanceof ParameterizedType) {
@@ -292,6 +298,33 @@ final class TypedDecoder {
         }
         property.property.set(result, convert(context, at, targetClass, targetType));
         context.exit();
+    }
+
+    // Use primitive reflection only for actual fields, never in place of a
+    // setter or a hinted conversion. Keep the path active if conversion fails.
+    private boolean assignPrimitive(Object result, BeanProperties.WriteProperty property, Object value) {
+        try {
+            if (value instanceof CompactNumber) {
+                CompactNumber number = (CompactNumber)value;
+                if (property.type == int.class) property.primitiveField.setInt(result, number.intValueExact());
+                else if (property.type == long.class) property.primitiveField.setLong(result, number.longValueExact());
+                else if (property.type == double.class) property.primitiveField.setDouble(result, number.doubleValue());
+                else return false;
+            } else if (value instanceof BigDecimal) {
+                BigDecimal number = (BigDecimal)value;
+                if (property.type == int.class) property.primitiveField.setInt(result, number.intValueExact());
+                else if (property.type == double.class) property.primitiveField.setDouble(result, number.doubleValue());
+                else return false;
+            } else if (value instanceof Boolean && property.type == boolean.class) {
+                property.primitiveField.setBoolean(result, (Boolean)value);
+            } else {
+                return false;
+            }
+            return true;
+        } catch (IllegalAccessException e) {
+            // Match PropertyInfo.set's wrapping of reflective access failures.
+            throw new IllegalStateException(e);
+        }
     }
 
     Object raw() {
