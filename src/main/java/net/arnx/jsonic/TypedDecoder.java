@@ -207,6 +207,10 @@ final class TypedDecoder {
             }
             return result;
         }
+        if (component == double.class) return doubles(context, at, count);
+        if (component == int.class) return integers(context, at, count);
+        if (component == long.class) return longs(context, at, count);
+        if (component == boolean.class) return booleans(context, at, count);
         boolean beanElement = BEAN_TYPES.get(component);
         if (repeatingType == null && count > 1 && beanElement) repeatingType = component;
         Object result = Array.newInstance(component, count);
@@ -220,6 +224,80 @@ final class TypedDecoder {
                 references[index] = value;
             } else {
                 Array.set(result, index, value);
+            }
+            context.exit();
+            index++;
+        }
+        return result;
+    }
+
+    // Keep per-element context for overflow and fallback errors, but store
+    // ordinary scalar values directly without boxing or Array.set reflection.
+    private double[] doubles(Context context, int at, int count) throws Exception {
+        double[] result = new double[count];
+        int index = 0;
+        for (int i = at + 1; i < ends[at]; i = ends[i]) {
+            context.enter(index, null);
+            Object value = tokens[i];
+            if (value instanceof CompactNumber) {
+                result[index] = ((CompactNumber)value).doubleValue();
+            } else if (value instanceof BigDecimal) {
+                result[index] = ((BigDecimal)value).doubleValue();
+            } else {
+                result[index] = (Double)convert(context, i, double.class, double.class);
+            }
+            context.exit();
+            index++;
+        }
+        return result;
+    }
+
+    private int[] integers(Context context, int at, int count) throws Exception {
+        int[] result = new int[count];
+        int index = 0;
+        for (int i = at + 1; i < ends[at]; i = ends[i]) {
+            context.enter(index, null);
+            Object value = tokens[i];
+            if (value instanceof CompactNumber) {
+                result[index] = ((CompactNumber)value).intValueExact();
+            } else if (value instanceof BigDecimal) {
+                result[index] = ((BigDecimal)value).intValueExact();
+            } else {
+                result[index] = (Integer)convert(context, i, int.class, int.class);
+            }
+            context.exit();
+            index++;
+        }
+        return result;
+    }
+
+    private long[] longs(Context context, int at, int count) throws Exception {
+        long[] result = new long[count];
+        int index = 0;
+        for (int i = at + 1; i < ends[at]; i = ends[i]) {
+            context.enter(index, null);
+            Object value = tokens[i];
+            if (value instanceof CompactNumber) {
+                result[index] = ((CompactNumber)value).longValueExact();
+            } else {
+                result[index] = (Long)convert(context, i, long.class, long.class);
+            }
+            context.exit();
+            index++;
+        }
+        return result;
+    }
+
+    private boolean[] booleans(Context context, int at, int count) throws Exception {
+        boolean[] result = new boolean[count];
+        int index = 0;
+        for (int i = at + 1; i < ends[at]; i = ends[i]) {
+            context.enter(index, null);
+            Object value = tokens[i];
+            if (value instanceof Boolean) {
+                result[index] = (Boolean)value;
+            } else {
+                result[index] = (Boolean)convert(context, i, boolean.class, boolean.class);
             }
             context.exit();
             index++;

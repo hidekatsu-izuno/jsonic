@@ -1222,6 +1222,12 @@ public class JSON {
 		return ret;
 	}
 
+	static Formatter builtinFormatter(Class<?> type) {
+		Formatter formatter = FORMAT_MAP.get(type);
+		return formatter == null && type.isArray() && !type.getComponentType().isPrimitive()
+				? ObjectArrayFormatter.INSTANCE : formatter;
+	}
+
 	static boolean isBeanType(Class<?> type) {
 		// Such supertypes accept the raw map via PlainConverter.
 		if (type.isAssignableFrom(LinkedHashMap.class) || CONVERT_MAP.containsKey(type)) return false;
@@ -1655,8 +1661,12 @@ public class JSON {
 				memberCache.put(o.getClass(), f);
 			}
 
+			return formatInternal(src, ap, f);
+		}
+
+		final Formatter formatInternal(final Object src, final OutputSource ap, Formatter f) throws IOException {
 			try {
-				f.format(this, src, o, ap);
+				f.format(this, src, src, ap);
 			} catch (IOException e) {
 				throw e;
 			} catch (Exception e) {

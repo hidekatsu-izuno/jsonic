@@ -62,6 +62,26 @@ public class CompactNumberParsingTest {
         }
     }
 
+    @Test public void splitDecimalScanPreservesBoundariesAndFallbacks() {
+        for (String number : new String[] {"0.12345678901234567", "0.123456789012345678",
+                "123456789012345678", "1234567890123456789", "12345678901234567.8",
+                "12345678901234567.89", "00.1", "01.2", "-00.1", ".1", "-.1", "0.",
+                "0..1", "1.2.3", "0e1", "0.0e1", "0x1", "-", "-0.", "0.1x"}) {
+            compare(number);
+        }
+        for (int i = 0; i <= 130; i++) {
+            compare(Integer.toString(i));
+            compare(i + ".00");
+        }
+        for (String number : new String[] {"-123456789012345678", "-0.12345678901234567"}) {
+            for (int end = 0; end <= number.length(); end++) {
+                String input = "[" + number.substring(0, end);
+                assertEquals(outcome(new JSON() {}, input, double[].class),
+                        outcome(new JSON(), input, double[].class), input);
+            }
+        }
+    }
+
     @Test public void untypedHintsAndReaderKeepDecimalValues() throws Exception {
         String input = "{\"raw\":[1.00,-0.0,123.5],\"decimal\":1.00,\"text\":1.00,\"serialized\":1.00}";
         Values actual = new JSON().parse(input, Values.class);

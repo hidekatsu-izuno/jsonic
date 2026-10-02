@@ -209,31 +209,45 @@ final class StringDecoder {
     }
 
     private boolean number() {
-        int start = position;
         boolean negative = take('-');
         int first = position;
-        long value = 0;
-        int digits = 0;
-        int fraction = -1;
-        while (position < length) {
-            char c = input.charAt(position);
-            if (c >= '0' && c <= '9') {
-                if (++digits > 18 || (fraction < 0 && position > first && input.charAt(first) == '0')) return false;
+        if (position == length) return false;
+        char c = input.charAt(position);
+        if (c < '0' || c > '9') return false;
+        long value = c - '0';
+        position++;
+        // Leading zeroes are not accepted by this fast path. Keeping the
+        // integer and fractional loops separate avoids testing decimal state
+        // and the first digit again for every character.
+        if (c != '0') {
+            while (position < length) {
+                c = input.charAt(position);
+                if (c < '0' || c > '9') break;
+                if (position - first >= 18) return false;
                 value = value * 10 + c - '0';
-            } else if (c == '.' && fraction < 0 && position > first) {
-                fraction = position + 1;
-            } else {
-                break;
+                position++;
             }
-            position++;
         }
-        if (digits == 0 || fraction == position || position == start) return false;
+        int digits = position - first;
+        int scale = 0;
+        if (take('.')) {
+            int fraction = position;
+            while (position < length) {
+                c = input.charAt(position);
+                if (c < '0' || c > '9') break;
+                if (++digits > 18) return false;
+                value = value * 10 + c - '0';
+                position++;
+            }
+            scale = position - fraction;
+            if (scale == 0) return false;
+        }
         // Exponents, invalid suffixes and incomplete input use the original parser.
         if (position == length) return false;
         char end = input.charAt(position);
         if (end != ',' && end != ']' && end != '}' && end != ' ' && end != '\t' && end != '\r' && end != '\n') return false;
         buffer.add(JSONEventType.NUMBER, CompactNumber.of(negative ? -value : value,
-                fraction < 0 ? 0 : position - fraction));
+                scale));
         return true;
     }
 }

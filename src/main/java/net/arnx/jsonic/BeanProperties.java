@@ -127,7 +127,9 @@ final class BeanProperties {
     static final class ReadProperty {
         final PropertyInfo property;
         final String name;
-        final String quotedName;
+        final String prefix;
+        final Class<?> type;
+        final Formatter formatter;
         final JSONHint hint;
         final Type genericType;
 
@@ -138,7 +140,10 @@ final class BeanProperties {
             genericType = property.getReadGenericType();
             StringBuilderOutputSource out = new StringBuilderOutputSource(name.length() + 2);
             StringFormatter.serialize(context, name, out);
-            quotedName = out.toString();
+            prefix = out.toString() + ":";
+            type = property.getReadType();
+            formatter = context.hasDefaultBeanBehavior() && hint == null
+                    ? JSON.builtinFormatter(type) : null;
         }
     }
 

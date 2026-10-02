@@ -1151,8 +1151,7 @@ final class ObjectFormatter implements Formatter {
 					out.append('\n');
 					context.appendIndent(out, context.getDepth() + 1);
 				}
-				out.append(prop.quotedName);
-				out.append(':');
+				out.append(prop.prefix);
 				if (context.isPrettyPrint()) out.append(' ');
 				JSONHint hint = prop.hint;
 				context.enter(key, hint);
@@ -1165,7 +1164,10 @@ final class ObjectFormatter implements Formatter {
 					if (value.getClass() == lastClass) {
 						lastFormatter.format(context, src, value, out);
 					} else {
-						lastFormatter = context.formatInternal(value, out);
+						Formatter known = prop.formatter != null
+								&& (prop.type.isPrimitive() || prop.type == value.getClass()) ? prop.formatter : null;
+						lastFormatter = known != null ? context.formatInternal(value, out, known)
+								: context.formatInternal(value, out);
 						lastClass = value.getClass();
 					}
 				} else {
