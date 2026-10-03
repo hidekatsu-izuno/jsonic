@@ -42,6 +42,16 @@ public class StringBufferOutputSource implements OutputSource {
 	}
 
 	@Override
+	public void append(int value) {
+		sb.append(value);
+	}
+
+	@Override
+	public void append(long value) {
+		sb.append(value);
+	}
+
+	@Override
 	public void flush() {
 	}
 

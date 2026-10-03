@@ -24,6 +24,8 @@ import net.arnx.jsonic.JSONEventType;
 import net.arnx.jsonic.JSONException;
 import net.arnx.jsonic.io.InputSource;
 import net.arnx.jsonic.io.CharSequenceInputSource;
+import net.arnx.jsonic.io.StringInputSource;
+import net.arnx.jsonic.io.ReaderInputSource;
 import net.arnx.jsonic.util.LocalCache;
 
 public class JSONParser {
@@ -138,6 +140,33 @@ public class JSONParser {
 		} while (state != -1 && type == null);
 
 		return type;
+	}
+
+	/** Internal typed-array operation; custom parsers and inputs retain their callbacks. */
+	public boolean canReadBufferedBooleans() {
+		return getClass() == JSONParser.class && in.getClass() == ReaderInputSource.class
+				&& ignoreWhirespace && !interpretterMode && maxDepth > 2 && maxDepth <= 64
+				&& stack.size() == 1 && getBeginType() == JSONEventType.START_ARRAY;
+	}
+
+	/** Avoids allocating the primitive buffer when the first values already need fallback. */
+	public boolean hasBufferedBooleanValue() {
+		return canReadBufferedBooleans() && (state == BEFORE_VALUE || state == AFTER_VALUE)
+				&& ((ReaderInputSource)in).hasBooleanValue(state == AFTER_VALUE);
+	}
+
+	/** Advances only over complete buffered values, leaving refills to next(). */
+	public int readBufferedBooleans(boolean[] values, long[] nulls, int count) {
+		if (!canReadBufferedBooleans() || (state != BEFORE_VALUE && state != AFTER_VALUE)) return count;
+		int end = ((ReaderInputSource)in).readBooleanValues(values, nulls, count, state == AFTER_VALUE);
+		if (end > count) {
+			int last = end - 1;
+			boolean isNull = (nulls[last >>> 6] & (1L << (last & 63))) != 0;
+			set(isNull ? JSONEventType.NULL : JSONEventType.BOOLEAN,
+					isNull ? null : Boolean.valueOf(values[last]), true);
+			state = AFTER_VALUE;
+		}
+		return end;
 	}
 
 	int beforeRoot() throws IOException {
@@ -290,6 +319,13 @@ public class JSONParser {
 			}
 			return AFTER_NAME;
 		case ':':
+			// Collapse the separator-only iteration for the standard parser.
+			// InputSource callbacks must still observe the intermediate state.
+			if (getClass() == JSONParser.class && ignoreWhirespace) {
+				state = BEFORE_VALUE;
+				set(null, null, false);
+				return beforeValue();
+			}
 			return BEFORE_VALUE;
 		case -1:
 			throw createParseException(in, "json.parse.ObjectNotClosedError");
@@ -385,6 +421,19 @@ public class JSONParser {
 			}
 			return AFTER_VALUE;
 		case ',':
+			if (getClass() == JSONParser.class && ignoreWhirespace) {
+				JSONEventType begin = getBeginType();
+				if (begin == JSONEventType.START_ARRAY) {
+					state = BEFORE_VALUE;
+					set(null, null, false);
+					return beforeValue();
+				} else if (begin == JSONEventType.START_OBJECT) {
+					state = BEFORE_NAME;
+					set(null, null, false);
+					return beforeName();
+				}
+				throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+			}
 			if (getBeginType() == JSONEventType.START_OBJECT) {
 				return BEFORE_NAME;
 			} else if (getBeginType() == JSONEventType.START_ARRAY) {
@@ -479,6 +528,9 @@ public class JSONParser {
 			String value = ((CharSequenceInputSource)in).readPlainString(start, cache);
 			if (value != null) return value;
 		}
+		if (in.getClass() == ReaderInputSource.class && cache.getClass() == LocalCache.class) {
+			return parseReaderString(any, start);
+		}
 		return parseStringSlow(any, start);
 	}
 
@@ -490,6 +542,74 @@ public class JSONParser {
 
 		int n = -1;
 		while ((n = in.next()) != -1) {
+			rest--;
+			len++;
+
+			if (n < ESCAPE_CHARS.length) {
+				int type = ESCAPE_CHARS[n];
+				if (type == 0) {
+					if (rest == 0 && sb != null) in.copy(sb, len);
+				} else if (type == 1) { // "'
+					if (n == start) {
+						if (len > 1 && sb != null) in.copy(sb, len - 1);
+						break;
+					} else {
+						if (rest == 0 && sb != null) in.copy(sb, len);
+					}
+				} else if (type == 2) { // escape chars
+					if (len > 0 && sb != null) in.copy(sb, len - 1);
+					rest = 0;
+
+					in.back();
+					char c = parseEscape();
+					if (sb != null) sb.append(c);
+				} else { // control chars
+					if (any) {
+						if (rest == 0 && sb != null) in.copy(sb, len);
+					} else {
+						throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
+					}
+				}
+			} else {
+				if (rest == 0 && sb != null) in.copy(sb, len);
+			}
+
+			if (rest == 0) {
+				rest = in.mark();
+				len = 0;
+			}
+		}
+
+		if (n != start) {
+			throw createParseException(in, "json.parse.StringNotClosedError");
+		}
+		return (sb != null) ? cache.getString(sb) : null;
+	}
+
+	// Keep the ordinary scanner unchanged for CharSequence and custom sources.
+	// Only the standard buffered reader batches plain characters between escapes.
+	private Object parseReaderString(boolean any, int start) throws IOException {
+		StringBuilder sb = active ? cache.getCachedBuffer() : null;
+
+		int rest = in.mark();
+		int len = 0;
+
+		ReaderInputSource bulk = (in.getClass() == ReaderInputSource.class
+				&& cache.getClass() == LocalCache.class) ? (ReaderInputSource)in : null;
+		int n = -1;
+		while (true) {
+			if (bulk != null && rest > 0) {
+				int prefix = bulk.readPlainStringPrefix(start);
+				rest -= prefix;
+				len += prefix;
+				if (rest == 0) {
+					if (sb != null) in.copy(sb, len);
+					rest = in.mark();
+					len = 0;
+					continue;
+				}
+			}
+			if ((n = in.next()) == -1) break;
 			rest--;
 			len++;
 
@@ -587,8 +707,18 @@ public class JSONParser {
 	}
 
 	Object parseNumber() throws IOException {
-		if (active && compactNumbers && in instanceof CharSequenceInputSource) {
-			CompactNumber number = ((CharSequenceInputSource)in).readCompactNumber();
+		if (active) {
+			Object number = null;
+			if (in instanceof CharSequenceInputSource) {
+				CharSequenceInputSource source = (CharSequenceInputSource)in;
+				number = compactNumbers ? source.readCompactNumber()
+						: (source.getClass() == CharSequenceInputSource.class || source.getClass() == StringInputSource.class)
+								? source.readDecimalNumber() : null;
+			} else if (in instanceof ReaderInputSource) {
+				ReaderInputSource source = (ReaderInputSource)in;
+				number = compactNumbers ? source.readCompactNumber()
+						: source.getClass() == ReaderInputSource.class ? source.readDecimalNumber() : null;
+			}
 			if (number != null) return number;
 		}
 		return parseNumberSlow();
@@ -701,14 +831,14 @@ public class JSONParser {
 				if (sb.length() == s + 1) {
 					long num = sb.charAt(s) - 48;
 					if (sb.charAt(0) == '-') num *= -1;
-					return BigDecimal.valueOf(num);
+					return compactNumbers ? CompactNumber.of(num, 0) : BigDecimal.valueOf(num);
 				} else if (sb.length() < s + 19) {
 					long num = 0;
 					for (int i = s; i < sb.length(); i++) {
 						num = num * 10 + (sb.charAt(i) - 48);
 					}
 					if (sb.charAt(0) == '-') num *= -1;
-					return BigDecimal.valueOf(num);
+					return compactNumbers ? CompactNumber.of(num, 0) : BigDecimal.valueOf(num);
 				}
 			} else {
 				int s = (sb.charAt(0) == '-') ? 1 : 0;
@@ -731,7 +861,7 @@ public class JSONParser {
 						if (sb.charAt(ep+1) == '-') scale *= -1;
 					}
 					if (sp >= 0) scale -= e-(sp+1);
-					return BigDecimal.valueOf(num, -scale);
+					return compactNumbers ? CompactNumber.of(num, -scale) : BigDecimal.valueOf(num, -scale);
 				}
 			}
 			return new BigDecimal(sb.toString());
@@ -741,6 +871,9 @@ public class JSONParser {
 	}
 
 	Object parseLiteral(String expected, Object result) throws IOException {
+		if (in.getClass() == ReaderInputSource.class && ((ReaderInputSource)in).readLiteral(expected)) {
+			return (stack.size() < maxDepth) ? result : null;
+		}
 		int pos = 0;
 		int n = -1;
 		while ((n = in.next()) != -1) {
@@ -891,6 +1024,9 @@ public class JSONParser {
 	}
 
 	String parseWhitespace() throws IOException {
+		if (getClass() == JSONParser.class && ignoreWhirespace && in.getClass() == ReaderInputSource.class) {
+			return skipReaderWhitespace((ReaderInputSource)in);
+		}
 		StringBuilder sb = !isIgnoreWhitespace() ? cache.getCachedBuffer() : null;
 
 		int n = -1;
@@ -916,6 +1052,28 @@ public class JSONParser {
 		}
 
 		return (sb != null) ? cache.getString(sb) : null;
+	}
+
+
+	private String skipReaderWhitespace(ReaderInputSource source) throws IOException {
+		int rest = in.mark();
+		while (true) {
+			if (rest > 0) {
+				rest -= source.readSpaceTabPrefix();
+				if (rest == 0) {
+					rest = in.mark();
+					continue;
+				}
+			}
+			int n = in.next();
+			if (n == -1) return null;
+			rest--;
+			if (n != ' ' && n != '\t' && n != '\r' && n != '\n') {
+				in.back();
+				return null;
+			}
+			if (rest == 0) rest = in.mark();
+		}
 	}
 
 	JSONException createParseException(InputSource in, String id) {

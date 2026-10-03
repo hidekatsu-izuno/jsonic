@@ -1,23 +1,25 @@
 package net.arnx.jsonic;
 
+import java.math.BigDecimal;
 import net.arnx.jsonic.JSON.Context;
-import net.arnx.jsonic.parse.CompactNumber;
 import net.arnx.jsonic.util.LocalCache;
 
-/**
- * Validates ordinary String documents directly into the deferred binding buffer.
- * Unsupported syntax, numeric forms or depth discard this buffer and let the
- * original parser reproduce its exact behavior and diagnostics. No user code
- * runs in this scanner.
- */
-final class StringDecoder {
-    private final String input;
-    private final int length;
-    private final int maxDepth;
-    private final LocalCache cache;
-    private final TypedDecoder buffer;
-    private int position;
-    private boolean repeatedObjects;
+/** Bounded lexer for fully validated untyped String documents. */
+abstract class StringScanner {
+    /** Estimate only when an array actually grows; bound prediction slack. */
+    static int grownArrayCapacity(int count, int position, int length) {
+        int doubled = count * 2;
+        if (doubled < 0) return doubled;
+        long estimate = (long)length * count / Math.max(1, position) + 8;
+        return (int)Math.max(doubled, Math.min(Math.max(doubled, 4096), estimate));
+    }
+
+    final String input;
+    final int length;
+    final int maxDepth;
+    final LocalCache cache;
+    int position;
+    boolean repeatedObjects;
     private Name[][] names;
 
     private static final class Name {
@@ -31,27 +33,14 @@ final class StringDecoder {
         }
     }
 
-    private StringDecoder(Context context, String input) {
+    StringScanner(Context context, String input) {
         this.input = input;
         length = input.length();
         maxDepth = context.getMaxDepth();
         cache = context.getLocalCache();
-        buffer = new TypedDecoder(length);
     }
 
-    static TypedDecoder scan(Context context, String input, Class<?> type) {
-        if (!TypedDecoder.supports(context, type)) return null;
-        StringDecoder decoder = new StringDecoder(context, input);
-        decoder.whitespace();
-        if (decoder.position == decoder.length) return null;
-        char first = input.charAt(decoder.position);
-        if (type.isArray() ? first != '[' : first != '{') return null;
-        if (!decoder.value(0)) return null;
-        decoder.whitespace();
-        return decoder.position == decoder.length ? decoder.buffer : null;
-    }
-
-    private void whitespace() {
+    final void whitespace() {
         while (position < length) {
             char c = input.charAt(position);
             if (c != ' ' && c != '\t' && c != '\r' && c != '\n') break;
@@ -59,77 +48,7 @@ final class StringDecoder {
         }
     }
 
-    private boolean value(int depth) {
-        // Near the truncation boundary keep the original depth semantics.
-        if (depth + 1 >= maxDepth) return false;
-        whitespace();
-        if (position == length) return false;
-        switch (input.charAt(position)) {
-        case '{': return object(depth);
-        case '[': return array(depth);
-        case '"': {
-            String value = string();
-            if (value == null) return false;
-            buffer.add(JSONEventType.STRING, value);
-            return true;
-        }
-        case 't': return literal("true", JSONEventType.BOOLEAN, Boolean.TRUE);
-        case 'f': return literal("false", JSONEventType.BOOLEAN, Boolean.FALSE);
-        case 'n': return literal("null", JSONEventType.NULL, null);
-        default: return number();
-        }
-    }
-
-    private boolean object(int depth) {
-        position++;
-        buffer.add(JSONEventType.START_OBJECT, null);
-        whitespace();
-        if (take('}')) {
-            buffer.add(JSONEventType.END_OBJECT, null);
-            return true;
-        }
-        int ordinal = 0;
-        do {
-            whitespace();
-            if (position == length || input.charAt(position) != '"') return false;
-            String name = name(depth, ordinal++);
-            if (name == null) return false;
-            buffer.add(JSONEventType.NAME, name);
-            whitespace();
-            if (!take(':') || !value(depth + 1)) return false;
-            whitespace();
-            if (take('}')) {
-                buffer.add(JSONEventType.END_OBJECT, null);
-                return true;
-            }
-        } while (take(','));
-        return false;
-    }
-
-    private boolean array(int depth) {
-        position++;
-        buffer.add(JSONEventType.START_ARRAY, null);
-        whitespace();
-        if (take(']')) {
-            buffer.add(JSONEventType.END_ARRAY, null);
-            return true;
-        }
-        do {
-            if (!value(depth + 1)) return false;
-            whitespace();
-            if (take(']')) {
-                buffer.add(JSONEventType.END_ARRAY, null);
-                return true;
-            }
-            if (!take(',')) return false;
-            whitespace();
-            // Enable prediction only once an array actually repeats objects.
-            // Single beans and single-element arrays pay no cache allocation.
-            if (position < length && input.charAt(position) == '{') repeatedObjects = true;
-        } while (true);
-    }
-
-    private String name(int depth, int ordinal) {
+    final String name(int depth, int ordinal) {
         // A fixed number of positions per depth bounds work and retained names.
         if (!repeatedObjects || ordinal >= 16) return string();
         if (names == null) names = new Name[maxDepth][];
@@ -151,20 +70,13 @@ final class StringDecoder {
         return value;
     }
 
-    private boolean take(char expected) {
+    final boolean take(char expected) {
         if (position == length || input.charAt(position) != expected) return false;
         position++;
         return true;
     }
 
-    private boolean literal(String literal, JSONEventType event, Object value) {
-        if (!input.startsWith(literal, position)) return false;
-        position += literal.length();
-        buffer.add(event, value);
-        return true;
-    }
-
-    private String string() {
+    final String string() {
         int start = ++position;
         StringBuilder escaped = null;
         while (position < length) {
@@ -208,12 +120,12 @@ final class StringDecoder {
         return null;
     }
 
-    private boolean number() {
+    final Object number() {
         boolean negative = take('-');
         int first = position;
-        if (position == length) return false;
+        if (position == length) return null;
         char c = input.charAt(position);
-        if (c < '0' || c > '9') return false;
+        if (c < '0' || c > '9') return null;
         long value = c - '0';
         position++;
         // Leading zeroes are not accepted by this fast path. Keeping the
@@ -229,10 +141,10 @@ final class StringDecoder {
                     // final negation intentionally retains its signed bits.
                     int digit = c - '0';
                     if (value > 922337203685477580L
-                            || (value == 922337203685477580L && digit > (negative ? 8 : 7))) return false;
+                            || (value == 922337203685477580L && digit > (negative ? 8 : 7))) return null;
                     value = value * 10 + digit;
                     position++;
-                    if (position < length && input.charAt(position) >= '0' && input.charAt(position) <= '9') return false;
+                    if (position < length && input.charAt(position) >= '0' && input.charAt(position) <= '9') return null;
                     break;
                 }
                 value = value * 10 + c - '0';
@@ -246,26 +158,25 @@ final class StringDecoder {
             while (position < length) {
                 c = input.charAt(position);
                 if (c < '0' || c > '9') break;
-                if (++digits > 18) return false;
+                if (++digits > 18) return null;
                 value = value * 10 + c - '0';
                 position++;
             }
             scale = position - fraction;
-            if (scale == 0) return false;
+            if (scale == 0) return null;
         }
-        if (position == length) return false;
+        if (position == length) return null;
         char end = input.charAt(position);
         if (end == 'e' || end == 'E') {
             int exponent = exponent();
-            if (exponent == Integer.MIN_VALUE || position == length) return false;
+            if (exponent == Integer.MIN_VALUE || position == length) return null;
             scale -= exponent;
             end = input.charAt(position);
         }
         // Invalid suffixes and incomplete input retain the original diagnostics.
-        if (end != ',' && end != ']' && end != '}' && end != ' ' && end != '\t' && end != '\r' && end != '\n') return false;
-        buffer.add(JSONEventType.NUMBER, CompactNumber.of(negative ? -value : value,
-                scale));
-        return true;
+        if (end != ',' && end != ']' && end != '}' && end != ' ' && end != '\t' && end != '\r' && end != '\n') return null;
+        long signed = negative ? -value : value;
+        return BigDecimal.valueOf(signed, scale);
     }
 
     private int exponent() {

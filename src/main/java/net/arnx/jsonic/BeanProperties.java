@@ -16,7 +16,11 @@
 package net.arnx.jsonic;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -124,6 +128,22 @@ final class BeanProperties {
                 new AtomicReferenceArray<WritePlan>(STYLES.length);
     }
 
+    private static MethodHandle publicHandle(Method method, MethodType signature) {
+        if (method == null || Modifier.isStatic(method.getModifiers())
+                || !Modifier.isPublic(method.getModifiers())) return null;
+        Class<?> owner = method.getDeclaringClass();
+        if (!owner.getModule().isExported(owner.getPackageName())) return null;
+        for (Class<?> enclosing = owner; enclosing != null; enclosing = enclosing.getEnclosingClass()) {
+            if (!Modifier.isPublic(enclosing.getModifiers())) return null;
+        }
+        try {
+            // Public lookup never relies on an accessible flag or private access.
+            return MethodHandles.publicLookup().unreflect(method).asType(signature);
+        } catch (IllegalAccessException | RuntimeException e) {
+            return null;
+        }
+    }
+
     static final class ReadProperty {
         final PropertyInfo property;
         final String name;
@@ -132,6 +152,8 @@ final class BeanProperties {
         final Formatter formatter;
         final JSONHint hint;
         final Type genericType;
+        final MethodHandle getter;
+        final Class<?> receiver;
 
         ReadProperty(Context context, PropertyInfo property) throws IOException {
             this.property = property;
@@ -144,6 +166,20 @@ final class BeanProperties {
             type = property.getReadType();
             formatter = context.hasDefaultBeanBehavior() && hint == null
                     ? JSON.builtinFormatter(type) : null;
+            Method method = property.getReadMethod();
+            getter = isShared(context) ? publicHandle(method, MethodType.methodType(Object.class, Object.class)) : null;
+            receiver = getter != null ? method.getDeclaringClass() : null;
+        }
+
+        Object get(Object target) {
+            if (getter == null || !receiver.isInstance(target)) return property.get(target);
+            try {
+                return (Object)getter.invokeExact(target);
+            } catch (Error | RuntimeException e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new IllegalStateException(e);
+            }
         }
     }
 
@@ -165,7 +201,8 @@ final class BeanProperties {
             Field field = property.getField();
             primitiveField = hint == null && property.getWriteMethod() == null
                     && field != null && !Modifier.isFinal(field.getModifiers())
-                    && (type == int.class || type == long.class || type == double.class || type == boolean.class)
+                    && (type == int.class || type == long.class || type == double.class || type == boolean.class
+                        || type == float.class)
                     ? field : null;
         }
     }

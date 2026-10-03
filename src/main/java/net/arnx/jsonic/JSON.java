@@ -1028,7 +1028,12 @@ public class JSON {
 
 		Object value = null;
 		try {
-			JSONReader jreader = new JSONReader(new Context(), is, false, true);
+			Context context = new Context();
+			if (cs instanceof String && getClass() == JSON.class) {
+				Object tree = StringTreeDecoder.scan(context, (String)cs);
+				if (tree != null) return (T)tree;
+			}
+			JSONReader jreader = new JSONReader(context, is, false, true);
 			value = (jreader.next() != null) ? jreader.getValue() : null;
 		} catch (IOException e) {
 			// never occur
@@ -1061,10 +1066,40 @@ public class JSON {
 		T value = null;
 		try {
 			Context context = new Context();
+			if (cs instanceof String && getClass() == JSON.class) {
+				if (type == double[].class) {
+					double[] numbers = context.numberFormat == null && ((String)cs).indexOf('"') >= 0
+							? DoubleArrayDecoder.scanQuoted(context.getMaxDepth(), (String)cs)
+							: DoubleArrayDecoder.scan(context.getMaxDepth(), (String)cs);
+					if (numbers != null) return (T)numbers;
+				} else if (type == float[].class) {
+					float[] numbers = context.numberFormat == null && ((String)cs).indexOf('"') >= 0
+							? FloatArrayDecoder.scanQuoted(context.getMaxDepth(), (String)cs)
+							: FloatArrayDecoder.scan(context.getMaxDepth(), (String)cs);
+					if (numbers != null) return (T)numbers;
+				} else if (type == boolean[].class) {
+					boolean[] values = BooleanArrayDecoder.scan(context.getMaxDepth(), (String)cs);
+					if (values != null) return (T)values;
+				} else if (type == int[].class || type == long[].class) {
+					Object numbers = IntegralArrayDecoder.scan(context.getMaxDepth(), (String)cs, type == long[].class);
+					if (numbers != null) return (T)numbers;
+				}
+			}
 			if (cs instanceof String) {
 				Class<?> targetClass = ClassUtil.getRawType(type);
 				TypedDecoder buffer = StringDecoder.scan(context, (String)cs, targetClass);
 				if (buffer != null) return (T)context.convertTyped(buffer, targetClass, type);
+				if (getClass() == JSON.class && !TypedDecoder.supports(context, targetClass)) {
+					// Resolve again exactly where the legacy reader did. User-provided
+					// Type implementations may return a different class or throw here.
+					Class<?> readerClass = ClassUtil.getRawType(type);
+					if (readerClass != null && !TypedDecoder.supports(context, readerClass)) {
+						Object tree = StringTreeDecoder.scan(context, (String)cs);
+						if (tree != null) return (T)context.convertInternal(tree, readerClass, type);
+					}
+					JSONReader jreader = new JSONReader(context, is, false, true);
+					return (T)jreader.readTyped(type, cs.length(), readerClass);
+				}
 			}
 			JSONReader jreader = new JSONReader(context, is, false, true);
 			value = (T)jreader.readTyped(type, cs.length());
@@ -1334,6 +1369,8 @@ public class JSON {
 		private int depth = -1;
 
 		private Map<Class<?>, Object> memberCache;
+		private MapFormatter.Plan[] mapFormatPlans;
+		private int formattedMaps;
 		private final LocalCache cache;
 
 		JSONHint skipHint;
@@ -1388,6 +1425,15 @@ public class JSON {
 
 		Context copy() {
 			return new Context(this);
+		}
+
+		MapFormatter.Plan mapFormatPlan() {
+			// Avoid allocating a prediction table for one or two maps.
+			if (++formattedMaps <= 2 || depth < 0 || depth >= 8 || !hasDefaultBeanBehavior()) return null;
+			if (mapFormatPlans == null) mapFormatPlans = new MapFormatter.Plan[8];
+			MapFormatter.Plan plan = mapFormatPlans[depth];
+			if (plan == null) mapFormatPlans[depth] = plan = new MapFormatter.Plan();
+			return plan;
 		}
 
 		boolean hasDefaultBeanBehavior() {

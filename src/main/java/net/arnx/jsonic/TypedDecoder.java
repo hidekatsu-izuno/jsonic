@@ -103,11 +103,31 @@ final class TypedDecoder {
         return i == ends[at];
     }
 
-    TypedDecoder(int inputLength) {
+    TypedDecoder(int inputLength) { this(inputLength, false); }
+
+    TypedDecoder(int inputLength, Class<?> target) {
+        this(inputLength, target == double[].class || target == float[].class
+                || target == int[].class || target == long[].class || target == boolean[].class
+                || target == String[].class);
+    }
+
+    private TypedDecoder(int inputLength, boolean flatScalars) {
         // Estimate only for character input; cap slack for long string values.
         int capacity = Math.min(4096, Math.max(32, inputLength / 4));
         tokens = new Object[capacity];
-        ends = new int[capacity];
+        ends = flatScalars ? null : new int[capacity];
+    }
+
+    // Flat scalar values omit the root slot; restore it before tree binding.
+    private void materializeEnds() {
+        if (ends != null) return;
+        if (size == tokens.length) tokens = Arrays.copyOf(tokens, size * 2);
+        System.arraycopy(tokens, 0, tokens, 1, size);
+        tokens[0] = JSONEventType.START_ARRAY;
+        size++;
+        ends = new int[tokens.length];
+        ends[0] = open < 0 ? size : -1;
+        for (int i = 1; i < size; i++) ends[i] = i + 1;
     }
 
     static boolean supports(Context context, Class<?> type) {
@@ -120,6 +140,36 @@ final class TypedDecoder {
             return false;
         }
         return type.isArray() || BEAN_TYPES.get(type);
+    }
+
+    boolean isFlat() { return ends == null; }
+
+    void addFlat(JSONEventType event, Object value) {
+        if (ends != null) {
+            add(event, value);
+            return;
+        }
+        switch (event) {
+        case END_ARRAY:
+            open = -1;
+            return;
+        case WHITESPACE:
+        case COMMENT:
+            return;
+        case START_OBJECT:
+        case START_ARRAY:
+            if (open >= 0) {
+                materializeEnds();
+                add(event, value);
+                return;
+            }
+            open = 0;
+            return;
+        default:
+            break;
+        }
+        if (size == tokens.length) tokens = Arrays.copyOf(tokens, size * 2);
+        tokens[size++] = value;
     }
 
     void add(JSONEventType event, Object value) {
@@ -151,6 +201,7 @@ final class TypedDecoder {
     }
 
     Object convert(Context context, Class<?> type, Type genericType) throws Exception {
+        if (ends == null) return array(context, -1, type, genericType);
         return (size == 0) ? context.postparseInternal(null, type, genericType)
                 : convert(context, 0, type, genericType);
     }
@@ -167,10 +218,12 @@ final class TypedDecoder {
                 if (type == int.class || type == Integer.class) return number.intValueExact();
                 if (type == long.class || type == Long.class) return number.longValueExact();
                 if (type == double.class || type == Double.class) return number.doubleValue();
+                if (type == float.class || type == Float.class) return number.floatValue();
             }
             if (scalar instanceof BigDecimal) {
                 if (type == int.class || type == Integer.class) return ((BigDecimal)scalar).intValueExact();
                 if (type == double.class || type == Double.class) return ((BigDecimal)scalar).doubleValue();
+                if (type == float.class || type == Float.class) return ((BigDecimal)scalar).floatValue();
             }
             if (tokens[at] == JSONEventType.START_ARRAY && type.isArray()) {
                 return array(context, at, type, genericType);
@@ -185,14 +238,16 @@ final class TypedDecoder {
 
     private Object array(Context context, int at, Class<?> type, Type genericType) throws Exception {
         int count = 0;
-        for (int i = at + 1; i < ends[at]; i = ends[i]) count++;
+        if (ends == null) count = size;
+        else for (int i = at + 1; i < ends[at]; i = ends[i]) count++;
         Class<?> component = type.getComponentType();
         Type elementType = (genericType instanceof GenericArrayType)
                 ? ((GenericArrayType)genericType).getGenericComponentType() : component;
         if (component == String.class && elementType == String.class) {
             String[] result = new String[count];
             int index = 0;
-            for (int i = at + 1; i < ends[at]; i = ends[i]) {
+            int limit = ends == null ? size : ends[at];
+            for (int i = at + 1; i < limit; i = ends == null ? i + 1 : ends[i]) {
                 Object value = tokens[i];
                 if (value == null || value instanceof String) {
                     // No conversion or user code can fail here, so path tracking
@@ -208,6 +263,7 @@ final class TypedDecoder {
             return result;
         }
         if (component == double.class) return doubles(context, at, count);
+        if (component == float.class) return floats(context, at, count);
         if (component == int.class) return integers(context, at, count);
         if (component == long.class) return longs(context, at, count);
         if (component == boolean.class) return booleans(context, at, count);
@@ -216,7 +272,8 @@ final class TypedDecoder {
         Object result = Array.newInstance(component, count);
         Object[] references = (result instanceof Object[]) ? (Object[])result : null;
         int index = 0;
-        for (int i = at + 1; i < ends[at]; i = ends[i]) {
+        int limit = ends == null ? size : ends[at];
+        for (int i = at + 1; i < limit; i = ends == null ? i + 1 : ends[i]) {
             context.enter(index, null);
             Object value = beanElement && tokens[i] == JSONEventType.START_OBJECT
                     ? bean(context, i, component, elementType) : convert(context, i, component, elementType);
@@ -231,22 +288,61 @@ final class TypedDecoder {
         return result;
     }
 
-    // Keep per-element context for overflow and fallback errors, but store
-    // ordinary scalar values directly without boxing or Array.set reflection.
+    // Direct numeric binding runs no user code. Add the index only on failure
+    // or before fallback conversion so diagnostics retain the same path.
     private double[] doubles(Context context, int at, int count) throws Exception {
         double[] result = new double[count];
         int index = 0;
-        for (int i = at + 1; i < ends[at]; i = ends[i]) {
-            context.enter(index, null);
+        int limit = ends == null ? size : ends[at];
+        for (int i = at + 1; i < limit; i = ends == null ? i + 1 : ends[i]) {
             Object value = tokens[i];
-            if (value instanceof CompactNumber) {
-                result[index] = ((CompactNumber)value).doubleValue();
-            } else if (value instanceof BigDecimal) {
-                result[index] = ((BigDecimal)value).doubleValue();
-            } else {
-                result[index] = (Double)convert(context, i, double.class, double.class);
+            if (value instanceof CompactNumber || value instanceof BigDecimal) {
+                try {
+                    result[index] = value instanceof CompactNumber ? ((CompactNumber)value).doubleValue()
+                            : ((BigDecimal)value).doubleValue();
+                } catch (Exception e) {
+                    context.enter(index, null);
+                    throw e;
+                }
+            } else if (value != null) {
+                context.enter(index, null);
+                if (value instanceof String && context.getNumberFormat() == null) {
+                    String text = ((String)value).trim();
+                    result[index] = text.isEmpty() ? 0d : Double.parseDouble(text);
+                } else {
+                    result[index] = (Double)convert(context, i, double.class, double.class);
+                }
+                context.exit();
             }
-            context.exit();
+            index++;
+        }
+        return result;
+    }
+
+    private float[] floats(Context context, int at, int count) throws Exception {
+        float[] result = new float[count];
+        int index = 0;
+        int limit = ends == null ? size : ends[at];
+        for (int i = at + 1; i < limit; i = ends == null ? i + 1 : ends[i]) {
+            Object value = tokens[i];
+            if (value instanceof CompactNumber || value instanceof BigDecimal) {
+                try {
+                    result[index] = value instanceof CompactNumber ? ((CompactNumber)value).floatValue()
+                            : ((BigDecimal)value).floatValue();
+                } catch (Exception e) {
+                    context.enter(index, null);
+                    throw e;
+                }
+            } else if (value != null) {
+                context.enter(index, null);
+                if (value instanceof String && context.getNumberFormat() == null) {
+                    String text = ((String)value).trim();
+                    result[index] = text.isEmpty() ? 0f : Float.parseFloat(text);
+                } else {
+                    result[index] = (Float)convert(context, i, float.class, float.class);
+                }
+                context.exit();
+            }
             index++;
         }
         return result;
@@ -255,17 +351,22 @@ final class TypedDecoder {
     private int[] integers(Context context, int at, int count) throws Exception {
         int[] result = new int[count];
         int index = 0;
-        for (int i = at + 1; i < ends[at]; i = ends[i]) {
-            context.enter(index, null);
+        int limit = ends == null ? size : ends[at];
+        for (int i = at + 1; i < limit; i = ends == null ? i + 1 : ends[i]) {
             Object value = tokens[i];
-            if (value instanceof CompactNumber) {
-                result[index] = ((CompactNumber)value).intValueExact();
-            } else if (value instanceof BigDecimal) {
-                result[index] = ((BigDecimal)value).intValueExact();
-            } else {
+            if (value instanceof CompactNumber || value instanceof BigDecimal) {
+                try {
+                    result[index] = value instanceof CompactNumber ? ((CompactNumber)value).intValueExact()
+                            : ((BigDecimal)value).intValueExact();
+                } catch (Exception e) {
+                    context.enter(index, null);
+                    throw e;
+                }
+            } else if (value != null) {
+                context.enter(index, null);
                 result[index] = (Integer)convert(context, i, int.class, int.class);
+                context.exit();
             }
-            context.exit();
             index++;
         }
         return result;
@@ -274,15 +375,22 @@ final class TypedDecoder {
     private long[] longs(Context context, int at, int count) throws Exception {
         long[] result = new long[count];
         int index = 0;
-        for (int i = at + 1; i < ends[at]; i = ends[i]) {
-            context.enter(index, null);
+        int limit = ends == null ? size : ends[at];
+        for (int i = at + 1; i < limit; i = ends == null ? i + 1 : ends[i]) {
             Object value = tokens[i];
-            if (value instanceof CompactNumber) {
-                result[index] = ((CompactNumber)value).longValueExact();
-            } else {
+            if (value instanceof CompactNumber || value instanceof BigDecimal) {
+                try {
+                    result[index] = value instanceof CompactNumber ? ((CompactNumber)value).longValueExact()
+                            : ((BigDecimal)value).longValueExact();
+                } catch (Exception e) {
+                    context.enter(index, null);
+                    throw e;
+                }
+            } else if (value != null) {
+                context.enter(index, null);
                 result[index] = (Long)convert(context, i, long.class, long.class);
+                context.exit();
             }
-            context.exit();
             index++;
         }
         return result;
@@ -291,15 +399,16 @@ final class TypedDecoder {
     private boolean[] booleans(Context context, int at, int count) throws Exception {
         boolean[] result = new boolean[count];
         int index = 0;
-        for (int i = at + 1; i < ends[at]; i = ends[i]) {
-            context.enter(index, null);
+        int limit = ends == null ? size : ends[at];
+        for (int i = at + 1; i < limit; i = ends == null ? i + 1 : ends[i]) {
             Object value = tokens[i];
             if (value instanceof Boolean) {
                 result[index] = (Boolean)value;
-            } else {
+            } else if (value != null) {
+                context.enter(index, null);
                 result[index] = (Boolean)convert(context, i, boolean.class, boolean.class);
+                context.exit();
             }
-            context.exit();
             index++;
         }
         return result;
@@ -387,11 +496,13 @@ final class TypedDecoder {
                 if (property.type == int.class) property.primitiveField.setInt(result, number.intValueExact());
                 else if (property.type == long.class) property.primitiveField.setLong(result, number.longValueExact());
                 else if (property.type == double.class) property.primitiveField.setDouble(result, number.doubleValue());
+                else if (property.type == float.class) property.primitiveField.setFloat(result, number.floatValue());
                 else return false;
             } else if (value instanceof BigDecimal) {
                 BigDecimal number = (BigDecimal)value;
                 if (property.type == int.class) property.primitiveField.setInt(result, number.intValueExact());
                 else if (property.type == double.class) property.primitiveField.setDouble(result, number.doubleValue());
+                else if (property.type == float.class) property.primitiveField.setFloat(result, number.floatValue());
                 else return false;
             } else if (value instanceof Boolean && property.type == boolean.class) {
                 property.primitiveField.setBoolean(result, (Boolean)value);
@@ -406,10 +517,12 @@ final class TypedDecoder {
     }
 
     Object raw() {
+        materializeEnds();
         return (size == 0) ? null : raw(0);
     }
 
     private Object raw(int at) {
+        if (tokens[at] == JSONEventType.START_OBJECT || tokens[at] == JSONEventType.START_ARRAY) materializeEnds();
         if (tokens[at] == JSONEventType.START_OBJECT) {
             Map<Object, Object> result = new LinkedHashMap<Object, Object>();
             for (int i = at + 1; i < ends[at]; i = ends[i + 1]) {

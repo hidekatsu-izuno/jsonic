@@ -21,6 +21,10 @@ import java.io.InputStreamReader;
 import java.io.PushbackInputStream;
 import java.io.Reader;
 
+import java.math.BigDecimal;
+
+import net.arnx.jsonic.parse.CompactNumber;
+
 public class ReaderInputSource implements InputSource {
 	private static int BACK = 20;
 	
@@ -46,6 +50,173 @@ public class ReaderInputSource implements InputSource {
 		this.reader = reader;
 	}
 	
+	/** Advances over ordinary string characters already present in the buffer. */
+	public int readPlainStringPrefix(int quote) {
+		int cursor = start;
+		while (cursor <= end) {
+			char c = buf[cursor];
+			if (c == quote || c == '\\' || c < 0x20 || c == 0x7F) break;
+			cursor++;
+		}
+		int consumed = cursor - start;
+		start = cursor;
+		offset += consumed;
+		columns += consumed;
+		return consumed;
+	}
+
+	/** Skips buffered spaces and tabs; line breaks retain the ordinary scanner. */
+	public int readSpaceTabPrefix() {
+		int cursor = start;
+		while (cursor <= end && (buf[cursor] == ' ' || buf[cursor] == '\t')) cursor++;
+		int consumed = cursor - start;
+		if (consumed == 0) return 0;
+		start = cursor;
+		offset += consumed;
+		columns += consumed;
+		return consumed;
+	}
+
+	/** Checks whether the next compact value can use the buffered boolean loop. */
+	public boolean hasBooleanValue(boolean afterValue) {
+		int token = start;
+		if (afterValue) {
+			if (token > end || buf[token] != ',') return false;
+			token++;
+		}
+		if (token > end) return false;
+		char c = buf[token];
+		return ((c == 't' || c == 'n') && token + 3 <= end) || (c == 'f' && token + 4 <= end);
+	}
+
+	/** Reads complete compact boolean values without refilling the input buffer. */
+	public int readBooleanValues(boolean[] values, long[] nulls, int count, boolean afterValue) {
+		int cursor = start;
+		while (count < values.length) {
+			int token = cursor;
+			if (afterValue) {
+				if (token > end || buf[token] != ',') break;
+				token++;
+			}
+			if (token > end) break;
+			int length;
+			boolean value = false;
+			boolean isNull = false;
+			if (buf[token] == 't' && token + 3 <= end
+					&& buf[token + 1] == 'r' && buf[token + 2] == 'u' && buf[token + 3] == 'e') {
+				length = 4;
+				value = true;
+			} else if (buf[token] == 'f' && token + 4 <= end && buf[token + 1] == 'a'
+					&& buf[token + 2] == 'l' && buf[token + 3] == 's' && buf[token + 4] == 'e') {
+				length = 5;
+			} else if (buf[token] == 'n' && token + 3 <= end
+					&& buf[token + 1] == 'u' && buf[token + 2] == 'l' && buf[token + 3] == 'l') {
+				length = 4;
+				isNull = true;
+			} else break;
+			values[count] = value;
+			if (isNull) nulls[count >>> 6] |= 1L << (count & 63);
+			count++;
+			cursor = token + length;
+			afterValue = true;
+		}
+		int consumed = cursor - start;
+		if (consumed != 0) {
+			start = cursor;
+			offset += consumed;
+			columns += consumed;
+		}
+		return count;
+	}
+
+	/** Matches an already buffered literal; failed probes consume no input. */
+	public boolean readLiteral(String expected) {
+		int length = expected.length();
+		if (end + 1 - start < length) return false;
+		for (int i = 0; i < length; i++) {
+			char c = buf[start + i];
+			if (c != expected.charAt(i) || c == '\r' || c == '\n') return false;
+		}
+		start += length;
+		offset += length;
+		columns += length;
+		return true;
+	}
+
+	/** Scans only a complete token already present in the character buffer. */
+	public CompactNumber readCompactNumber() {
+		return (CompactNumber)readNumber(true);
+	}
+
+	/** Same validated scan, retaining BigDecimal and its decimal scale. */
+	public BigDecimal readDecimalNumber() {
+		return (BigDecimal)readNumber(false);
+	}
+
+	private Object readNumber(boolean compact) {
+		int cursor = start;
+		int limit = end + 1;
+		if (cursor >= limit) return null;
+		boolean negative = buf[cursor] == '-';
+		if (negative && ++cursor == limit) return null;
+		int first = cursor;
+		char c = buf[cursor];
+		if (c < '0' || c > '9') return null;
+		long value = c - '0';
+		cursor++;
+		if (c != '0') {
+			while (cursor < limit) {
+				c = buf[cursor];
+				if (c < '0' || c > '9') break;
+				if (cursor - first >= 18) return null;
+				value = value * 10 + c - '0';
+				cursor++;
+			}
+		}
+		int digits = cursor - first;
+		int scale = 0;
+		if (cursor < limit && buf[cursor] == '.') {
+			int fraction = ++cursor;
+			while (cursor < limit) {
+				c = buf[cursor];
+				if (c < '0' || c > '9') break;
+				if (++digits > 18) return null;
+				value = value * 10 + c - '0';
+				cursor++;
+			}
+			scale = cursor - fraction;
+			if (scale == 0) return null;
+		}
+		if (cursor < limit && (buf[cursor] == 'e' || buf[cursor] == 'E')) {
+			cursor++;
+			boolean negativeExponent = cursor < limit && buf[cursor] == '-';
+			if (cursor < limit && (buf[cursor] == '-' || buf[cursor] == '+')) cursor++;
+			int exponentStart = cursor;
+			int exponent = 0;
+			while (cursor < limit) {
+				c = buf[cursor];
+				if (c < '0' || c > '9') break;
+				if (cursor - exponentStart >= 3) return null;
+				exponent = exponent * 10 + c - '0';
+				cursor++;
+			}
+			if (cursor == exponentStart) return null;
+			scale += negativeExponent ? exponent : -exponent;
+		}
+		if (cursor == limit) return null;
+		c = buf[cursor];
+		// Keep refills, malformed suffixes, and newline/backtracking diagnostics
+		// on the original scanner. A failed probe consumes no input.
+		if (c != ',' && c != ']' && c != '}' && c != ' ' && c != '\t') return null;
+		long signed = negative ? -value : value;
+		Object number = compact ? CompactNumber.of(signed, scale) : BigDecimal.valueOf(signed, scale);
+		int consumed = cursor - start;
+		start = cursor;
+		offset += consumed;
+		columns += consumed;
+		return number;
+	}
+
 	@Override
 	public int next() throws IOException {
 		int n = -1;

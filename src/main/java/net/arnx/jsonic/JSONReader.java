@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,10 @@ public class JSONReader {
 	}
 
 	Object readTyped(Type targetType, int inputLength) throws IOException {
-		Class<?> targetClass = ClassUtil.getRawType(targetType);
+		return readTyped(targetType, inputLength, ClassUtil.getRawType(targetType));
+	}
+
+	Object readTyped(Type targetType, int inputLength, Class<?> targetClass) throws IOException {
 		JSONEventType event = next();
 		if ((event != JSONEventType.START_OBJECT && event != JSONEventType.START_ARRAY)
 				|| (event == JSONEventType.START_OBJECT && targetClass.isArray())
@@ -72,10 +76,63 @@ public class JSONReader {
 			return context.convertInternal(value, targetClass, targetType);
 		}
 		parser.setCompactNumbers(true);
-		TypedDecoder buffer = new TypedDecoder(inputLength);
-		buffer.add(event, parser.getValue());
-		while ((event = next()) != null) buffer.add(event, parser.getValue());
+		if (targetType == boolean[].class && parser.canReadBufferedBooleans()) return readBooleanArray();
+		TypedDecoder buffer = new TypedDecoder(inputLength, targetClass);
+		if (buffer.isFlat()) {
+			buffer.addFlat(event, parser.getValue());
+			while ((event = next()) != null) buffer.addFlat(event, parser.getValue());
+		} else {
+			buffer.add(event, parser.getValue());
+			while ((event = next()) != null) buffer.add(event, parser.getValue());
+		}
 		return context.convertTyped(buffer, targetClass, targetType);
+	}
+
+	private Object readBooleanArray() throws IOException {
+		JSONEventType event = next();
+		if ((event != JSONEventType.BOOLEAN && event != JSONEventType.NULL)
+				|| !parser.hasBufferedBooleanValue()) {
+			return readBooleanRemainder(null, null, 0, event);
+		}
+		boolean[] values = new boolean[128];
+		// Retain original null positions when mixed values require the legacy buffer.
+		long[] nulls = new long[2];
+		values[0] = Boolean.TRUE.equals(parser.getValue());
+		if (event == JSONEventType.NULL) nulls[0] = 1L;
+		int count = 1;
+		while (true) {
+			count = parser.readBufferedBooleans(values, nulls, count);
+			event = next();
+			if (event == JSONEventType.END_ARRAY) {
+				// Validate trailing input before exposing the primitive result.
+				if (next() == null) return count == values.length ? values : Arrays.copyOf(values, count);
+				throw new IllegalStateException();
+			}
+			if (event != JSONEventType.BOOLEAN && event != JSONEventType.NULL) {
+				return readBooleanRemainder(values, nulls, count, event);
+			}
+			if (count == values.length) {
+				values = Arrays.copyOf(values, count * 2);
+				nulls = Arrays.copyOf(nulls, (values.length + 63) >>> 6);
+			}
+			values[count] = Boolean.TRUE.equals(parser.getValue());
+			if (event == JSONEventType.NULL) nulls[count >>> 6] |= 1L << (count & 63);
+			count++;
+		}
+	}
+
+	private Object readBooleanRemainder(boolean[] values, long[] nulls, int count, JSONEventType event)
+			throws IOException {
+		TypedDecoder buffer = new TypedDecoder((count + 2) * 4, boolean[].class);
+		buffer.addFlat(JSONEventType.START_ARRAY, null);
+		for (int i = 0; i < count; i++) {
+			boolean isNull = (nulls[i >>> 6] & (1L << (i & 63))) != 0;
+			buffer.addFlat(isNull ? JSONEventType.NULL : JSONEventType.BOOLEAN,
+					isNull ? null : Boolean.valueOf(values[i]));
+		}
+		if (event != null) buffer.addFlat(event, parser.getValue());
+		while ((event = next()) != null) buffer.addFlat(event, parser.getValue());
+		return context.convertTyped(buffer, boolean[].class, boolean[].class);
 	}
 
 	public Map<?, ?> getMap() throws IOException {

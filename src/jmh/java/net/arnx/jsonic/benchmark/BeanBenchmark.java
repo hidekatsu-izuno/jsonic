@@ -23,6 +23,9 @@ public class BeanBenchmark {
     @Param({"ascii", "japanese"})
     public String text;
 
+    @Param({"plain", "scientific"})
+    public String priceNotation;
+
     private JSON json;
     private JsonMapper jackson;
     private Item[] items;
@@ -39,7 +42,7 @@ public class BeanBenchmark {
             item.id = i;
             item.setName("japanese".equals(text) ? "日本語の商品\"名\n" + i : "item-" + i);
             item.active = (i % 2 == 0);
-            item.price = 123.5 + i;
+            item.price = "scientific".equals(priceNotation) ? 1.2345e100 * (i + 1) : 123.5 + i;
             item.tags = new String[] {"new", "sale"};
             items[i] = item;
         }
@@ -50,6 +53,9 @@ public class BeanBenchmark {
         if (!input.equals(jackson.writeValueAsString(json.parse(input, Item[].class)))) {
             throw new IllegalStateException("Decoded payload differs");
         }
+        if (!input.equals(jackson.writeValueAsString(jsonicReaderDecode()))) {
+            throw new IllegalStateException("Reader decoded payload differs");
+        }
     }
 
     @Benchmark public String jsonicEncode() { return json.format(items); }
@@ -58,6 +64,13 @@ public class BeanBenchmark {
     @Benchmark public Item[] jsonicStaticDecode() { return JSON.decode(input, Item[].class); }
     @Benchmark public String jacksonEncode() throws Exception { return jackson.writeValueAsString(items); }
     @Benchmark public Item[] jacksonDecode() throws Exception { return jackson.readValue(input, Item[].class); }
+
+    @Benchmark public Item[] jsonicReaderDecode() throws Exception {
+        return json.parse(new java.io.StringReader(input), Item[].class);
+    }
+    @Benchmark public Item[] jacksonReaderDecode() throws Exception {
+        return jackson.readValue(new java.io.StringReader(input), Item[].class);
+    }
 
     public static class Item {
         public int id;

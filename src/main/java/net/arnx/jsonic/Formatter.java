@@ -67,6 +67,7 @@ import org.w3c.dom.Text;
 
 import net.arnx.jsonic.JSON.Context;
 import net.arnx.jsonic.io.OutputSource;
+import net.arnx.jsonic.io.StringBuilderOutputSource;
 import net.arnx.jsonic.util.BeanInfo;
 import net.arnx.jsonic.util.ClassUtil;
 import net.arnx.jsonic.util.PropertyInfo;
@@ -292,7 +293,7 @@ final class NumberFormatter implements Formatter {
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(num), out);
 		} else {
-			out.append(Integer.toString(num));
+			out.append(num);
 		}
 	}
 
@@ -301,7 +302,7 @@ final class NumberFormatter implements Formatter {
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(num), out);
 		} else {
-			out.append(Long.toString(num));
+			out.append(num);
 		}
 	}
 }
@@ -323,7 +324,7 @@ final class EnumFormatter implements Formatter {
 		if (context.getEnumStyle() != null) {
 			StringFormatter.serialize(context, context.getEnumStyle().to(((Enum<?>)o).name()), out);
 		} else {
-			out.append(Integer.toString(((Enum<?>)o).ordinal()));
+			out.append(((Enum<?>)o).ordinal());
 		}
 	}
 }
@@ -380,7 +381,7 @@ final class DateFormatter implements Formatter {
 		if (f != null) {
 			StringFormatter.serialize(context, f.format(o), out);
 		} else {
-			out.append(Long.toString(date.getTime()));
+			out.append(date.getTime());
 		}
 	}
 }
@@ -514,7 +515,7 @@ final class ShortArrayFormatter implements Formatter {
 			if (f != null) {
 				StringFormatter.serialize(context, f.format(array[i]), out);
 			} else {
-				out.append(String.valueOf(array[i]));
+				out.append(array[i]);
 			}
 			if (i != array.length - 1) {
 				out.append(',');
@@ -549,7 +550,7 @@ final class IntArrayFormatter implements Formatter {
 			if (f != null) {
 				StringFormatter.serialize(context, f.format(array[i]), out);
 			} else {
-				out.append(String.valueOf(array[i]));
+				out.append(array[i]);
 			}
 			if (i != array.length - 1) {
 				out.append(',');
@@ -584,7 +585,7 @@ final class LongArrayFormatter implements Formatter {
 			if (f != null) {
 				StringFormatter.serialize(context, f.format(array[i]), out);
 			} else {
-				out.append(String.valueOf(array[i]));
+				out.append(array[i]);
 			}
 			if (i != array.length - 1) {
 				out.append(',');
@@ -798,7 +799,7 @@ final class ByteFormatter implements Formatter {
 
 	@Override
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
-		out.append(Integer.toString(((Byte)o).byteValue() & 0xFF));
+		out.append(((Byte)o).byteValue() & 0xFF);
 	}
 }
 
@@ -1050,6 +1051,33 @@ final class EnumerationFormatter implements Formatter {
 final class MapFormatter implements Formatter {
 	public static final MapFormatter INSTANCE = new MapFormatter();
 
+	static final class Plan {
+		final Class<?>[] types = new Class<?>[16];
+		final Formatter[] formatters = new Formatter[16];
+		private String[] keys;
+		private String[] prefixes;
+
+		boolean matchesFirstKey(String key) {
+			return keys == null || keys[0] == null || keys[0].equals(key);
+		}
+
+		String prefix(Context context, int index, String key) throws IOException {
+			if (keys == null) {
+				keys = new String[16];
+				prefixes = new String[16];
+			}
+			if (keys[index] == null) {
+				StringBuilderOutputSource quoted = new StringBuilderOutputSource(key.length() + 8);
+				StringFormatter.serialize(context, key, quoted);
+				quoted.append(':');
+				keys[index] = key;
+				prefixes[index] = quoted.toString();
+			}
+			return keys[index].equals(key) ? prefixes[index] : null;
+		}
+
+	}
+
 	public boolean accept(Object o) {
 		return o instanceof Map;
 	}
@@ -1063,6 +1091,8 @@ final class MapFormatter implements Formatter {
 	public void format(final Context context, final Object src, final Object o, final OutputSource out) throws Exception {
 		final Map<?, ?> map = (Map<?, ?>)o;
 		final JSONHint hint = context.getHint();
+		final Plan plan = hint == null ? context.mapFormatPlan() : null;
+		boolean reuseKeys = plan != null && out.getClass() == StringBuilderOutputSource.class;
 
 		Class<?> lastClass = null;
 		Formatter lastFormatter = null;
@@ -1081,20 +1111,15 @@ final class MapFormatter implements Formatter {
 				out.append('\n');
 				context.appendIndent(out, context.getDepth() + 1);
 			}
-			StringFormatter.serialize(context, key.toString(), out);
-			out.append(':');
+			reuseKeys = appendKey(context, key, out, plan, count, reuseKeys);
 			if (context.isPrettyPrint()) out.append(' ');
 			context.enter(key, hint);
 			value = context.preformatInternal((value != null) ? value.getClass() : Object.class, value);
 			if (value == null) {
 				NullFormatter.INSTANCE.format(context, src, value, out);
 			} else if (hint == null) {
-				if (value.getClass() == lastClass) {
-					lastFormatter.format(context, src, value, out);
-				} else {
-					lastFormatter = context.formatInternal(value, out);
-					lastClass = value.getClass();
-				}
+				lastFormatter = formatValue(context, src, value, out, lastClass, lastFormatter, plan, count);
+				lastClass = value.getClass();
 			} else {
 				context.formatInternal(value, out);
 			}
@@ -1107,6 +1132,51 @@ final class MapFormatter implements Formatter {
 		}
 		out.append('}');
 	}
+	private static boolean needsEscaping(String key) {
+		for (int i = 0; i < key.length(); i++) {
+			char c = key.charAt(i);
+			if (c < 0x20 || c == 0x7f || c == '\"' || c == '\\' || c == 0x2028 || c == 0x2029) return true;
+		}
+		return false;
+	}
+
+	private static boolean appendKey(Context context, Object key, OutputSource out, Plan plan,
+			int count, boolean reuseKeys) throws IOException {
+		// A changed first key usually means a different map shape. Skip
+		// the remaining prefix probes for this map, retaining type reuse.
+		if (reuseKeys && count == 0) {
+			reuseKeys = key instanceof String && ((String)key).length() <= 64
+				&& needsEscaping((String)key) && plan.matchesFirstKey((String)key);
+		}
+		String prefix = reuseKeys && count < plan.types.length && key instanceof String
+				&& ((String)key).length() <= 64 ? plan.prefix(context, count, (String)key) : null;
+		if (prefix != null) {
+			out.append(prefix);
+		} else {
+			StringFormatter.serialize(context, key.toString(), out);
+			out.append(':');
+		}
+		return reuseKeys;
+	}
+
+	private static Formatter formatValue(Context context, Object src, Object value, OutputSource out,
+			Class<?> lastClass, Formatter lastFormatter, Plan plan, int count) throws Exception {
+		Class<?> type = value.getClass();
+		if (type == lastClass) {
+			lastFormatter.format(context, src, value, out);
+		} else {
+			Formatter known = plan != null && count < plan.types.length && plan.types[count] == type
+					? plan.formatters[count] : null;
+			lastFormatter = known != null ? context.formatInternal(value, out, known)
+					: context.formatInternal(value, out);
+		}
+		if (plan != null && count < plan.types.length) {
+			plan.types[count] = type;
+			plan.formatters[count] = lastFormatter;
+		}
+		return lastFormatter;
+	}
+
 }
 
 final class ObjectFormatter implements Formatter {
@@ -1141,7 +1211,7 @@ final class ObjectFormatter implements Formatter {
 			for (BeanProperties.ReadProperty prop : props) {
 				key = prop.name;
 
-				Object value = prop.property.get(o);
+				Object value = prop.getter != null ? prop.get(o) : prop.property.get(o);
 				if (value == src || (context.isSuppressNull() && value == null)) {
 					continue;
 				}
@@ -1484,7 +1554,7 @@ final class TemporalEnumFormatter implements Formatter {
 		} else if (context.getEnumStyle() != null) {
 			StringFormatter.serialize(context, context.getEnumStyle().to(((Enum<?>)o).name()), out);
 		} else {
-			out.append(Integer.toString(((Enum<?>)o).ordinal()));
+			out.append(((Enum<?>)o).ordinal());
 		}
 	}
 }

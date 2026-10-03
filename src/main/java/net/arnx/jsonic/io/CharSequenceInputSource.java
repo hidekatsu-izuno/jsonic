@@ -15,8 +15,10 @@
  */
 package net.arnx.jsonic.io;
 
-import net.arnx.jsonic.util.LocalCache;
+import java.math.BigDecimal;
+
 import net.arnx.jsonic.parse.CompactNumber;
+import net.arnx.jsonic.util.LocalCache;
 
 public class CharSequenceInputSource implements InputSource {
 	private int lines = 1;
@@ -62,6 +64,15 @@ public class CharSequenceInputSource implements InputSource {
 
 	/** Reads a short decimal, or leaves the cursor untouched for the full parser. */
 	public CompactNumber readCompactNumber() {
+		return (CompactNumber)readNumber(true);
+	}
+
+	/** Same validated scan, retaining BigDecimal and its decimal scale. */
+	public BigDecimal readDecimalNumber() {
+		return (BigDecimal)readNumber(false);
+	}
+
+	private Object readNumber(boolean compact) {
 		if (!(cs instanceof String)) return null;
 		int end = start;
 		int limit = cs.length();
@@ -84,8 +95,9 @@ public class CharSequenceInputSource implements InputSource {
 				// and line breaks (including its existing error position handling).
 				if (digits == 0 || fraction == end
 						|| (c != ',' && c != ']' && c != '}' && c != ' ' && c != '\t')) return null;
-				CompactNumber number = CompactNumber.of(negative ? -value : value,
-						fraction < 0 ? 0 : end - fraction);
+				long signed = negative ? -value : value;
+				int scale = fraction < 0 ? 0 : end - fraction;
+				Object number = compact ? CompactNumber.of(signed, scale) : BigDecimal.valueOf(signed, scale);
 				int consumed = end - start;
 				start = end;
 				offset += consumed;

@@ -63,7 +63,7 @@ POJOの割り当て量は変わらない。入力・機器が異なる場合の�
   5. 大きな配列・異種要素・整数だけの入力・静的APIへの性能影響。
 調査・測定で効果が確認できたものを採用する。仕様差や有意な悪化が出る案は記録して戻す。
 
-第12段階の調査開始（未実装）
+第12段階の調査
 BeanBenchmark.jsonicEncode、ASCII 100件、JFR profile設定。
 JSONICを含む432サンプルのleaf内訳:
   AbstractStringBuilder.ensureCapacityInternal: 149
@@ -79,3 +79,1374 @@ JSONICを含む432サンプルのleaf内訳:
     Context内だけに保持し、単一Beanの割り当てを増やさない。
     例外のラップ、JSONHint、preformat、循環参照、命名変更の挙動を維持する必要がある。
 JFRと集計データ: target/performance-phase12/
+
+第12段階の実施結果（2026-10-03）
+エスケープ済みプロパティ名とコロンを一括出力する。
+既知の宣言型に対応する組み込みFormatterを不変なReadPropertyに保持する。
+実行時型が一致する場合だけ使用し、JSONHint・カスタムJSONは従来経路へ戻す。
+Formatter呼び出しはContextの同じ例外ラップ処理を使い、srcの値も変えない。
+JSONクラスやContextを共有計画に保持せず、文書ごとの可変キャッシュも追加しない。
+
+測定条件は第11段階と同じ。JMH BeanBenchmark、全体us/op。
+入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3
+ascii/1	0.813 +/- 0.010	0.718 +/- 0.014	0.247 +/- 0.019
+ascii/100	21.513 +/- 0.718	18.831 +/- 0.415	13.002 +/- 2.171
+japanese/1	1.152 +/- 0.042	1.024 +/- 0.047	0.303 +/- 0.013
+japanese/100	34.053 +/- 1.136	30.059 +/- 0.609	15.626 +/- 0.594
+
+各条件で約11〜12%の時間短縮。割り当て量は1件で32 B/op、100件で128 B/op減った。
+1件でも悪化はなく、型計画を共有することで文書ごとの追加キャッシュを不要にした。
+全106テストとmvn -Pbenchmark verify成功。
+追加テスト: 書式・命名・null抑制・Writer/StringBuilder出力・循環参照・実行時型の変化・
+入れ子の例外ラップとエラー位置。従来のフォーマッタ選択と比較して一致。
+100件のエンコードはJackson並みまでASCII約1.45倍、日本語約1.92倍必要。
+生データ・検証ログ: target/performance-phase12/
+ソースコピー: /tmp/jsonic-phase12-karx68nk/
+次の候補: 数値だけのdouble[]における一時トークンの削減、エンコード出力バッファ。
+
+第13段階: 数値だけのdouble[]の直接解析（2026-10-03）
+通常のJSONクラスでString入力をdouble[]に読む場合、文書全体を検証する専用経路を追加。
+18桁までの仮数と3桁までの指数、nullを扱い、返すまで結果は内部のプリミティブ配列に保持。
+数値トークンのオブジェクト、Object[]/endsの汎用トークンバッファを不要にした。
+文字列と入れ子は追加バッファを作る前に既存の解析へ戻す。
+より大きな仮数・指数、深さ<=2または>64、カスタムJSONなども従来経路を使う。
+Contextの構築と設定の同期スナップショットは従来通り残す。
+負のscaleのうち仮数と10のべき乗がdoubleで厳密に表せる場合は単一の乗算で変換する。
+静的な内部変換メソッドを使い、CompactNumberオブジェクト自体の生成も省いた。
+
+検証: 全110テスト、mvn -Pbenchmark verify成功。
+追加検証: 500ランダム配列、配列の成長、値のビット一致、null、指数・仮数の限界、
+途中で切れた入力、深さ制限、エラー原因・位置、設定スナップショットの同期。
+負のscaleについても追加の2万乱数でBigDecimalとのビット一致を確認。
+
+測定条件は第11段階と同じ。100要素をdouble[]に読み込む全体us/op。
+Jacksonはこの段階の先行測定、JSONICは設定のスナップショットを残した最終版で再測定。
+入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+small	1.568 +/- 0.020	0.933 +/- 0.011	1.482 +/- 0.014	2976 → 1888
+wide	2.259 +/- 0.049	1.510 +/- 0.024	1.839 +/- 0.045	6224 → 1988
+decimal	3.345 +/- 0.051	2.634 +/- 0.033	3.436 +/- 0.049	7424 → 2088
+rounding	3.669 +/- 0.050	3.147 +/- 0.045	3.433 +/- 0.131	7216 → 2088
+quoted	3.827 +/- 0.074	3.613 +/- 0.155	2.069 +/- 0.048	11024 → 10424
+scientific	4.013 +/- 0.083	1.350 +/- 0.069	1.902 +/- 0.031	7480 → 1988
+
+quoted: 0〜99を数値と引用符付き文字列で交互に格納。
+scientific: 0e2〜99e2。
+数値だけの5分布で約1.17〜2.97倍、割り当て量は約37〜73%減った。
+これらは今回のJacksonより短時間だった。quotedも平均値は短縮したが、
+時間差の解釈には信頼区間を含めて確認する。quotedでは通常の解析を使う。
+String/double[]/上記分布の結果であり、Readerや他の配列型の速度を一般化しない。
+
+POJO 100件の影響確認:
+入力	変更前(us/op)	変更後(us/op)
+ascii	24.808 +/- 0.681	24.307 +/- 0.457
+japanese	28.453 +/- 0.452	26.963 +/- 0.837
+
+ASCIIは信頼区間が重なる。日本語は今回の測定で短時間だった。
+割り当て量は両条件とも変わらない。明確な悪化は観測していない。
+生データ・検証ログ: target/performance-phase13/
+ソースコピー: /tmp/jsonic-phase13-373dm9ni/
+
+継続する候補（未完了）:
+- エンコードの初期容量・拡張、キーの区切りも含めたappend回数の削減。
+- typed Beanでも指数表記を直接走査して従来パーサへの移行を減らす。
+- int[]/long[]/float[]などのルート配列、型指定なしのMap/List、Reader/InputStream。
+- 大きな配列・異種要素・短い入力・静的APIでの性能を広げて確認する。
+有意な改善が残っているためgoalは継続中。仕様の変更を必要とする案は採用しない。
+
+第14段階: Bean の指数表記を軽量トークンへ直接解析（2026-10-03）
+StringDecoder で18桁以内の仮数・3桁以内の指数を直接扱う。
+範囲外・不正な指数や末尾は従来パーサへ戻す。BigDecimal の scale と変換エラーを維持。
+全111テストとmvn -Pbenchmark verify成功。
+追加検証: int/long/double/float/BigDecimal/Object/String/serialized の指数変換、
+桁あふれ、重複キー、巨大な指数、構文エラーの原因・メッセージ・位置。
+
+JMH 1.37 / OpenJDK 21.0.2、1スレッド、256MiB、各5回warmup/measurement各1秒、
+2fork、GC profiler。99.9%信頼区間。Bean 100件を配列へ読む全体時間 us/op。
+入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+plain/ascii	24.393 +/- 0.541	25.108 +/- 0.862	26.028 +/- 0.977	32216 → 32216
+plain/japanese	27.269 +/- 0.938	27.093 +/- 0.540	27.364 +/- 1.810	38336 → 38336
+scientific/ascii	46.700 +/- 1.090	28.574 +/- 1.279	26.221 +/- 0.483	68344 → 48968
+scientific/japanese	72.892 +/- 2.218	30.919 +/- 0.600	32.483 +/- 1.430	75689 → 55088
+
+指数表記は約1.63〜2.36倍、割り当て量は約27〜28%減。
+通常表記は信頼区間が重なり、明確な悪化を確認していない。
+科学表記のASCIIではJacksonまで約1.09倍必要。日本語は今回ほぼ同等。
+この入力条件での測定であり、任意の Bean/指数に一般化しない。
+BeanBenchmark に priceNotation パラメータを追加。以前の測定の再現には
+-p priceNotation=plain を明示する。
+生データ・検証ログ: target/performance-phase14/
+ソースコピー: /tmp/jsonic-phase14-b3_rmt_7/
+次の実施中候補: Reader/InputStream の型指定数値を軽量トークンで保持する。
+
+第15段階: Reader/InputStream の型指定解析にも軽量数値を適用（2026-10-03）
+JSONParser の検証・桁の集計を変えず、型指定コンテナ解析に限って
+既存の BigDecimal.valueOf の生成を CompactNumber.of に置換。
+型指定なし、公開 JSONReader.getNumber、任意のカスタムJSONは従来の値を維持。
+全113テストとmvn -Pbenchmark verify成功。
+追加検証: UTF-8 InputStream と1/7/1004文字ごとのReaderでの数値境界、巨大な指数、
+全scalar変換・整数配列・BigDecimal/Object配列、文法エラーと変換エラーの診断、
+公開数値がBigDecimalであること。
+
+条件は第14段階と同じ。100要素をdouble[]に読む全体時間 us/op。
+経路/入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+Reader/small	3.267 +/- 0.038	3.211 +/- 0.108	1.463 +/- 0.034	8944 → 5384
+Reader/decimal	13.176 +/- 0.397	8.344 +/- 0.103	3.490 +/- 0.051	27864 → 7864
+Reader/scientific	4.161 +/- 0.068	3.906 +/- 0.207	1.884 +/- 0.037	9396 → 7796
+InputStream/small	3.948 +/- 0.071	3.776 +/- 0.058	1.577 +/- 0.069	17536 → 13964
+InputStream/decimal	13.836 +/- 0.286	9.071 +/- 0.154	4.435 +/- 0.674	36488 → 16488
+InputStream/scientific	4.803 +/- 0.077	4.746 +/- 0.099	2.127 +/- 0.039	17976 → 16376
+
+decimal は Reader で約1.58倍・割り当て約72%減、InputStream で約1.53倍・約55%減。
+他の分布も割り当てを削減。時間差が信頼区間に重なる条件では高速化を断定しない。
+この経路はJacksonより約2.0〜2.4倍の時間を要し、さらなる改善の調査対象。
+生データ・検証ログ: target/performance-phase15/
+ソースコピー: /tmp/jsonic-phase15-ooss9cey/
+次の実施中候補: 数値出力での一時String削減、int[]/long[]の直接解析。
+
+第16段階の不採用案: 浮動小数点のStringBuilder/StringBuffer直接append
+JDK 21 の append(double/float) を試したが、decimal 100要素のdouble[]出力で
+4.278 +/- 0.109 → 5.497 +/- 0.260 us/op（約28%悪化）。
+割り当ても20008 → 22408 B/opへ増えた。他の条件でも明確な時間短縮はなかった。
+表記互換性は全115テストで確認したが、浮動小数点の変更はすべて取り消した。
+rawの試行データ: target/performance-phase16/after-encode.json、after-encode.log。
+整数だけのappend(int/long)を分けて再測定中。未採用の浮動小数点変更を含む
+上記afterデータを最終採用版の結果として扱わない。
+
+今後の追加候補:
+- floatの厳密に表せる仮数と10のべき乗での直接変換、float[]の直接代入。
+- 型指定なしの数値解析も、バッファ内の走査でBigDecimalを直接作る。
+- 小さいルート配列の出力初期容量、長い文字列・エスケープを含む場合の影響。
+- Beanのprimitiveフィールド出力のボックス化、カンマとキープレフィクスの統合。
+これらは未検証。誤差程度の改善しか残っていないとの判定はまだ行っていない。
+
+第16段階の採用版: プリミティブ整数の出力の一時Stringを削減（2026-10-03）
+OutputSource.append(int/long) に既存表記を使うdefault実装を追加。
+StringBuilder/StringBufferでは直接append。Writer/Appendableは元の文字列経路を維持。
+プリミティブ配列、整数のformatオーバーロード、enum ordinal、Date epoch、Byteの
+出力に適用。汎用Numberのformat(Object)とBeanのformatter選択は元の実装を維持。
+
+条件は第14段階と同じ。100要素を文字列へエンコードする全体 us/op。
+入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+int/small	0.900 +/- 0.024	0.353 +/- 0.023	0.295 +/- 0.020	3752 → 1352
+long/small	0.930 +/- 0.017	0.706 +/- 0.022	0.301 +/- 0.010	3880 → 1552
+int/wide	1.732 +/- 0.031	1.612 +/- 0.041	0.618 +/- 0.030	7512 → 4472
+long/wide	2.853 +/- 0.072	2.637 +/- 0.156	1.442 +/- 0.020	11488 → 5296
+smallは0〜99、wideは各型のMAX_VALUEから順に減らした整数。
+small/intは約2.55倍、small/longは約1.32倍。割り当て約40〜64%削減。
+Jacksonまで、この入力では約1.20〜2.61倍の時間短縮が必要。
+これらの配列の測定経路は、最終版へ絞る際に取り消したBean用変更を通らない。
+
+汎用Numberで毎回型分岐する案と、整数型ごとのformatterを増やす案は見送った。
+Bean/ascii/1で変更前0.688 +/- 0.018、型分岐版0.735 +/- 0.022、
+型専用版0.720 +/- 0.015 us/op。100件にも確かな時間改善はなく、
+追加する複雑さに見合う効果を確認できなかった。Beanは元の選択を維持する。
+浮動小数点の出力も従来通りであり、上記の不採用測定と混同しない。
+生データ・検証ログ: target/performance-phase16/
+ソースコピー: /tmp/jsonic-phase16-uxh_p2mp/
+第16段階の最終採用版を含むworkspaceのmvn -Pbenchmark verify成功（全119テスト）。
+整数配列の読み込みとReaderバッファ走査の候補も含めた検証。
+
+第17段階: int[]/long[]の整数だけの文書を直接解析（2026-10-03）
+String入力・通常のJSONクラス・深さ>2かつ<=64に限定したIntegralArrayDecoderを追加。
+負のlongで蓄積してLong.MIN_VALUEを含む全範囲を処理。nullは0。
+文書全体を検証してから配列を公開し、一時数値トークンと汎用トークン配列を不要にする。
+桁あふれ・小数・指数・引用符付きの数値・入れ子・不正な末尾は従来の解析へ戻す。
+変換より構文エラーを優先し、原因・エラー位置・設定スナップショットを維持。
+全117テストとmvn -Pbenchmark verify成功。Reader候補を含むworkspace全119テストも成功。
+追加検証: MIN/MAX、桁あふれと文法エラーの優先順位、TypeReference、深さ制限、
+入力の全prefix、600ランダム配列（最大499要素）で従来の値・診断と一致。
+
+条件は第14段階と同じ。Stringの100要素をプリミティブ配列へ読む全体 us/op。
+入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+int/small	1.489 +/- 0.020	0.528 +/- 0.009	1.469 +/- 0.021	2576 → 1144
+long/small	1.547 +/- 0.030	0.612 +/- 0.023	1.538 +/- 0.021	2976 → 2056
+int/wide	2.072 +/- 0.032	1.302 +/- 0.058	1.472 +/- 0.035	5424 → 1144
+long/wide	15.695 +/- 0.711	2.197 +/- 0.027	2.524 +/- 0.122	38808 → 2056
+int/quoted	3.492 +/- 0.069	3.422 +/- 0.051	1.485 +/- 0.034	6624 → 6624
+long/quoted	3.445 +/- 0.045	3.538 +/- 0.131	1.554 +/- 0.046	7024 → 7024
+
+smallは0〜99、wideは各型のMAX_VALUEから順に減らした整数。
+quotedはsmallの奇数番目を引用符付きで格納。
+数値だけの4条件は約1.59〜7.14倍、割り当て約31〜95%減。
+この4条件は今回のJacksonより短時間。引用符付きは信頼区間が重なり、
+割り当て量も従来通りで、明確な悪化は確認していない。速度はJacksonよりまだ遅い。
+大きなlongの改善は19桁で従来パーサへ戻っていた経路と、一時トークンを省いた効果。
+他の入力形式、文字列混在、Beanのlongフィールドには一般化しない。
+生データ・検証ログ: target/performance-phase17/
+ソースコピー: /tmp/jsonic-phase17-4oa_h23m/
+追加候補: smallのlong出力にint幅の直接appendを使う、Beanの19桁longを軽量トークン化。
+
+追加候補の具体化（未実施）:
+- TypedDecoderのdouble[]/float[]などで、失敗しない数値・nullの代入に限り
+  Context.enter/exitを省く。int/longは厳密変換の例外時に同じindexを追加して診断を維持。
+  1000要素以上ではindexのIntegerボックス化も減らせる可能性がある。
+- floatは仮数<=2^24、10のべき乗<=10^10の厳密に表せる範囲で直接演算し、
+  それ以外はBigDecimal.floatValueへ戻す。doubleからのcastによる二重丸めは使わない。
+  float[]のArray.setとFloat/BigDecimalボックス化、floatフィールドにも適用を検証する。
+- 小さいlongの出力は、intの範囲ならStringBuilder.append(int)を使う試行。
+  第16段階では同じ0〜99でもintの出力のほうがlongより短時間だった。
+- 19桁のlongをStringDecoder等で扱う場合、18桁の通常数値の速度を保つ必要がある。
+  任意精度の数値とLong.MIN_VALUE/scaleの互換性、Beanの重複キー・診断を追加検証する。
+
+第18段階: Reader の内部文字バッファ内で数値を一度だけ走査（2026-10-03）
+ReaderInputSource に検証済み軽量数値の直接走査を追加。型指定の内部解析にのみ適用。
+18桁以内の仮数・3桁以内の指数を、現在のバッファ内に区切りまである場合だけ扱う。
+バッファ境界、EOF、改行直前、大きい数値、不正なsuffixは位置を進めず従来へ戻す。
+成功時にoffset/columnを消費文字数分だけ更新し、行とbacktrackingの診断を維持。
+公開イベントと型指定なしの値は従来のBigDecimalを維持。
+全119テストとmvn -Pbenchmark verify成功（workspace・変更前後の作業コピー）。
+追加検証: 400要素の長い数値文書、1/7/1004文字Reader・InputStream、バッファ跨ぎ、
+CRLF、不正なsuffix、UTF-8/16/32の自動検出、深さ1/2/3/32/65で従来と一致。
+実装と追加テストが計測した最終ソースコピーにバイト単位で一致することも確認。
+
+条件は第14段階と同じ。100要素をdouble[]に読む全体時間 us/op。
+経路/入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+Reader/small	3.308 +/- 0.072	2.306 +/- 0.034	1.471 +/- 0.034	5396 → 5340
+Reader/decimal	8.509 +/- 0.167	3.766 +/- 0.036	3.468 +/- 0.030	7864 → 7840
+Reader/scientific	3.874 +/- 0.033	2.687 +/- 0.160	1.873 +/- 0.037	7808 → 7740
+InputStream/small	3.900 +/- 0.046	2.744 +/- 0.056	1.535 +/- 0.025	13976 → 13908
+InputStream/decimal	9.295 +/- 0.179	4.562 +/- 0.077	3.936 +/- 0.069	16488 → 16488
+InputStream/scientific	4.648 +/- 0.218	3.199 +/- 0.048	2.108 +/- 0.025	16376 → 16320
+
+追加で約1.42〜2.26倍。今回の改善は主に走査のCPU時間削減。
+第15段階の開始前からはdecimal Readerで13.176 → 3.766（約3.50倍）、
+InputStreamで13.836 → 4.562（約3.03倍）。段階をまたぐため測定時刻は異なる。
+今回のJacksonとの差はdecimal Readerで約1.09倍、InputStreamで約1.16倍。
+small/scientificでは約1.44〜1.79倍の差が残り、数値配列全般が同等とは言わない。
+生データ・検証ログ: target/performance-phase18/
+ソースコピー: /tmp/jsonic-phase18-5qwnacf3/
+
+goalは継続中。第14〜18段階には明確な改善があり、終了条件の「誤差程度しか
+改善できない」にはまだ到達していない。次はfloatと型指定配列の数値代入、
+小さいlongの出力、型指定なしのMap/List、出力容量、19桁のBean long等を検証する。
+
+第19段階: floatの軽量変換・配列とフィールドの直接代入（2026-10-03）
+CompactNumber.floatValueを追加。scale=0の直接cast、および仮数<=2^24かつ
+10のべき乗<=10^10の厳密なfloat乗算/除算に限定し、他はBigDecimal.floatValue。
+doubleからのcastを使う二重丸めは導入しない。
+float[]はArray.setとFloatのボックス化を省き、数値/nullでは添字管理も不要にした。
+setterとJSONHintを持たないfloatフィールドだけField.setFloatで直接代入する。
+全121テストとmvn -Pbenchmark verify成功。
+追加検証: 20万件のfloatビット一致、極値・scale・精度の境界、配列/Float[]/入れ子、
+フィールド/boxed/setter/hint、重複キー、従来のエラー原因・位置。
+
+条件は第14段階と同じ。100要素をfloat[]に読む全体時間 us/op。
+入力/経路	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+small/string	5.525 +/- 0.098	1.355 +/- 0.015	1.306 +/- 0.023	7736 → 2552
+small/reader	6.403 +/- 0.132	2.202 +/- 0.038	1.343 +/- 0.022	10112 → 4916
+decimal/string	4.378 +/- 0.071	2.259 +/- 0.032	2.517 +/- 0.040	6816 → 5192
+decimal/reader	5.279 +/- 0.077	2.995 +/- 0.024	2.567 +/- 0.035	8928 → 7304
+rounding/string	11.430 +/- 0.229	7.043 +/- 0.120	3.254 +/- 0.097	29216 → 23592
+rounding/reader	11.982 +/- 0.173	7.679 +/- 0.112	3.313 +/- 0.126	29864 → 24240
+scientific/string	5.823 +/- 0.034	1.603 +/- 0.019	1.758 +/- 0.046	9792 → 4168
+scientific/reader	6.832 +/- 0.039	2.584 +/- 0.042	1.805 +/- 0.026	12952 → 7316
+quoted/string	6.416 +/- 0.116	3.692 +/- 0.083	2.032 +/- 0.047	12784 → 10224
+quoted/reader	7.370 +/- 0.077	4.703 +/- 0.094	2.035 +/- 0.045	14608 → 12048
+
+smallは0〜99、decimalは12345.625から整数部を増やした値、roundingは第11段階と同じ。
+scientificは0e2〜99e2、quotedはsmallの奇数番目を引用符付きで格納。
+約1.56〜4.08倍。割り当て量は約18〜67%削減。
+String/decimalとString/scientificは今回Jacksonより短時間、String/smallも近い。
+roundingはまだJacksonの約2.16〜2.32倍の時間を要し、正確な丸めの改善候補が残る。
+Reader・引用符付きについても同等とは言わない。
+生データ・検証ログ: target/performance-phase19/
+ソースコピー: /tmp/jsonic-phase19-4uaerazv/
+次の候補: floatの近似候補を正確な整数の中点比較で検証してBigDecimalを省く。
+
+第20段階: プリミティブ配列の成功時の添字管理を省く（2026-10-03）
+double/int/longは数値とnull、booleanはBooleanとnullの直接代入に限って
+Context.enter/exitを省く。数値変換が例外を投げた場合は同じindexを設定して再throw。
+その他の値は必ずindexを設定して元の変換へ。floatにも第19段階で同じ方針を適用済み。
+型指定の通常JSONだけで、カスタムJSONやJSONHintの変換は従来の経路を維持。
+全122テストとmvn -Pbenchmark verify成功。
+140番目の桁あふれ・丸め・不正な文字列・深さ制限・入れ子の値とエラー原因/位置を比較。
+
+Readerの100/1000要素をプリミティブ配列へ。13要素ごとにnull、その他は整数またはBoolean。
+JacksonもFAIL_ON_NULL_FOR_PRIMITIVESを無効化し、null→0/falseの値を一致させた。
+条件は第14段階と同じ、全体us/op。
+型/要素数	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+double/100	2.496 +/- 0.038	2.300 +/- 0.028	1.415 +/- 0.020	5328 → 5316
+int/100	2.524 +/- 0.054	2.325 +/- 0.033	1.161 +/- 0.015	4928 → 4928
+long/100	2.515 +/- 0.051	2.301 +/- 0.047	1.280 +/- 0.014	5328 → 5316
+boolean/100	2.575 +/- 0.070	2.432 +/- 0.066	0.735 +/- 0.021	4632 → 4620
+double/1000	24.450 +/- 2.245	20.836 +/- 0.225	22.943 +/- 16.626	61236 → 46336
+int/1000	22.459 +/- 0.357	20.820 +/- 0.189	10.100 +/- 0.072	56312 → 42336
+long/1000	23.365 +/- 0.572	21.288 +/- 0.281	10.845 +/- 0.100	60312 → 46336
+boolean/1000	23.207 +/- 0.482	20.731 +/- 0.172	5.695 +/- 0.052	33936 → 19960
+
+100要素で約6〜9%の時間削減、1000要素で約7〜15%削減。
+1000要素では添字のInteger生成等を約14〜15kB/op削減（約23〜41%）。
+Jackson/double/1000はfork間で12.4〜12.8と32.9〜33.9 us/opに分かれ不安定。
+この平均値からJacksonとの同等性や優劣を判断しない。再測定対象とする。
+それ以外の条件はまだJacksonより遅く、読み取り/トークン作成等の負荷が残る。
+生データ・検証ログ: target/performance-phase20/
+ソースコピー: /tmp/jsonic-phase20-p124q4r_/
+
+第22段階: floatの正確な中点検証でBigDecimal変換を省く（2026-10-03）
+正のscale 1〜18、18桁以内の仮数を対象に、double除算→floatで候補を作り、
+正確な整数の中点比較を通った値だけ採用。近接値も同じ検証を行う。
+128ビットの積と差、2のべき乗直前の異なる間隔、偶数への丸めを処理する。
+範囲外や検証できない場合はBigDecimal.floatValueへ。単なるdoubleからのcastではない。
+全123テストとmvn -Pbenchmark verify成功。追加10万件と厳密な中点前後、
+正負、2のべき乗前後、shift>64の小さい値をBigDecimalのfloat生ビットと比較。
+
+条件は第19段階と同じ。100要素をfloat[]に読む全体時間 us/op。
+入力/経路	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+small/string	1.345 +/- 0.021	1.336 +/- 0.015	1.293 +/- 0.012	2552 → 2552
+small/reader	2.171 +/- 0.046	2.124 +/- 0.031	1.310 +/- 0.014	4904 → 4904
+decimal/string	2.333 +/- 0.054	2.230 +/- 0.040	2.484 +/- 0.036	5192 → 5192
+decimal/reader	2.982 +/- 0.077	2.975 +/- 0.032	2.518 +/- 0.056	7304 → 7304
+rounding/string	7.229 +/- 0.350	2.940 +/- 0.036	3.300 +/- 0.071	25592 → 6792
+rounding/reader	7.793 +/- 0.196	3.717 +/- 0.143	3.215 +/- 0.032	24240 → 7428
+
+rounding/Stringは約2.46倍、Readerは約2.10倍。割り当て量は約69〜73%削減。
+rounding/Stringは今回Jacksonより短時間、ReaderはJacksonの約1.16倍の時間。
+small/decimalは信頼区間が重なるか改善しており、意味のある退行は認めない。
+変更前rounding/Stringの割り当て量はfork間で約23.6/27.6kBに分かれたため平均値に注意。
+生データ・検証ログ: target/performance-phase22/
+ソースコピー: /tmp/jsonic-phase22-ijue6km4/
+
+第21段階（不採用）: 小さいlongをint用appendへ分岐する案（2026-10-03）
+(int)value == valueの範囲をStringBuilder/StringBufferのappend(int)へ送る案を試した。
+100要素のlong[]出力でsmall 0.648 +/- 0.078 → 0.367 +/- 0.039 us/opと改善したが、
+wide 2.515 +/- 0.105 → 2.586 +/- 0.021、mixed 1.595 +/- 0.025 → 1.791 +/- 0.186。
+mixedはInteger.MIN/MAX近傍・Long.MAX近傍・小さい負数を各25%。
+9桁以内へ限定して3forkで再測定してもmixed 1.726 +/- 0.017 us/opで約8%遅い。
+smallは0.404 +/- 0.058、wideは2.501 +/- 0.111。この案は両方とも撤回した。
+全122テストとmvn -Pbenchmark verifyはどちらも成功、境界の出力は一致。
+生データ・検証ログ: target/performance-phase21/
+ソースコピー: /tmp/jsonic-phase21-6yy6mpyo/
+
+第23段階: 引用符付きfloat/double配列のボックス化と変換探索を省く（2026-10-03）
+Stringかつ数値書式なしのプリミティブ配列要素だけ、trimとFloat/Double.parseXXXで直接代入。
+空文字列→0、特殊値、Boolean、数値書式、その他の値は従来の値/経路/エラー位置を保持。
+Contextのindexは文字列変換前に設定して、例外の発生場所も維持する。
+全124テストとmvn -Pbenchmark verify成功。140番目の値、空白・hex・suffix・NaN・
+Infinity・巨大/微小指数・不正値・数値書式の正常/不正パターンを従来処理と比較。
+
+100要素、奇数番目だけ引用符付きの0〜99。第19段階と同じJMH条件、全体us/op。
+型/入力	JSONIC変更前	JSONIC変更後	割り当て前→後(B/op)
+float/string	3.639 +/- 0.045	2.579 +/- 0.053	10224 → 9424
+float/reader	4.628 +/- 0.134	3.428 +/- 0.112	12036 → 11224
+double/string	3.671 +/- 0.051	2.494 +/- 0.067	11024 → 9824
+
+約1.35〜1.47倍、floatで約800B/op、doubleで約1200B/op削減。
+今回は変更前/後の比較のみ。Jacksonの測定値は第19段階等を参照し、同時測定と混同しない。
+生データ・検証ログ: target/performance-phase23/
+ソースコピー: /tmp/jsonic-phase23-8iq7t5pm/
+
+第24段階: StringからBeanへ読む19桁longの軽量走査（2026-10-03）
+StringDecoderの整数部に19桁目の桁あふれ検査を追加。Long.MIN_VALUEの絶対値は
+符号を戻した最終値だけで扱う。20桁、範囲外、小数点以降の19桁目等は従来処理へ戻す。
+18桁以内の通常のループには新しい桁あふれ計算を追加しない。
+全125テストとmvn -Pbenchmark verify成功。Long.MIN/MAX前後・20桁・小数・指数、
+primitive/boxed/setter/hint、重複キー、異常suffixの結果・エラー原因と位置を比較。
+
+100件のBean配列。各Beanはlongフィールド、Longフィールド、long setterを一つずつ持つ。
+smallは0〜99、wideはLong.MIN/MAXから1ずつ増減する。String入力、全体us/op。
+分布	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+small	10.768 +/- 0.252	10.916 +/- 0.238	10.228 +/- 0.180	11096 → 11096
+wide	68.497 +/- 1.401	14.429 +/- 0.203	14.740 +/- 0.285	124360 → 33656
+
+wideは約4.75倍、割り当て量は約73%削減、Jacksonとほぼ同じ時間（信頼区間は重なる）。
+smallの時間は信頼区間内、割り当て量は同一。型指定なしの公開数値型は変更しない。
+生データ・検証ログ: target/performance-phase24/
+ソースコピー: /tmp/jsonic-phase24-lxffw7ca/
+
+第25段階: 型指定なし/公開JSONReaderの数値にも軽量走査を適用（2026-10-03）
+標準のCharSequenceInputSource/StringInputSource/ReaderInputSourceが、入力を変更せず
+検証できる短い数値だけBigDecimal.valueOfで直接生成。内部CompactNumberを経由しない。
+型指定配列向けの同じ走査はCompactNumberを生成する既存動作を維持する。
+範囲外、EOF、CR/LF、未完のバッファ、不正な数値は元の走査へ戻す。
+型指定なしの高速走査は標準クラスの完全一致に限定し、カスタム派生クラスのnext等を省かない。
+全127テストとmvn -Pbenchmark verify成功。元の走査を使う委譲InputSourceと比較し、
+値・BigDecimalのunscaledValue/scale・イベント・深さ・各位置・エラー原因が一致。
+String/StringBuilder、分割Reader(1/7/1004文字)、UTF-8/16/32、極値・指数あふれ・
+不正suffix、カスタムInputSourceのnext呼び出し回数を確認。
+
+100個の123456789000.12345から整数部を増やす小数。JSONICは型指定なしでListを返す。
+Jackson 3はList<BigDecimal>を指定し、返る数値の型/scale/値を揃える（Setupでもequals確認）。
+JacksonのデフォルトのObject/List読み取りとは条件が異なるので、一般的なMap/List全体の優劣とは言わない。
+第19段階と同じJMH条件、全体us/op。
+入力	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+string	6.394 +/- 0.272	3.360 +/- 0.051	3.575 +/- 0.118	6544 → 6432
+reader	8.102 +/- 0.100	3.391 +/- 0.070	3.632 +/- 0.058	8664 → 8664
+stream	8.749 +/- 0.150	3.993 +/- 0.096	4.258 +/- 0.126	17288 → 17288
+
+Stringは約1.90倍、Readerは約2.39倍、InputStreamは約2.19倍。割り当て量は同等。
+Readerのsmall/scientificは1fork×3回の予備測定で約1.37/1.54倍（正式比較と区別する）。
+予備測定時点のStringは対象クラス不足を修正する前のため、採用結果の根拠には使わない。
+型指定配列（Reader・nullを含む1000要素）への影響、同じ正式JMH条件:
+型	JSONIC変更前	JSONIC変更後	割り当て前→後(B/op)
+double	21.209 +/- 0.959	21.445 +/- 0.414	46336 → 46336
+int	20.567 +/- 0.302	20.926 +/- 0.331	42336 → 42336
+
+時間は信頼区間が重なり、割り当て量は一致。有意な退行は認めない。
+第20段階で不安定だったJackson/double/1000を8回warmup・3forkで再確認:
+12.450 +/- 0.172 us/op、23096 B/op
+forkごとの測定値(us/op): [[12.521, 12.359, 12.81, 12.569, 12.387], [12.405, 12.497, 12.553, 12.667, 12.403], [12.471, 12.294, 12.307, 12.164, 12.345]]
+
+今回のJackson値からはJSONIC double/Reader/1000がまだ約1.7倍の時間を要する。
+第20段階の不安定な平均から同等/逆転とは判断しない。
+生データ・検証ログ: target/performance-phase25/
+ソースコピー: /tmp/jsonic-phase25-3uvek9x0/
+
+第26段階（不採用）: 小さいObject配列の出力容量を減らす案（2026-10-03）
+要素数<=4のObject[]だけ初期容量を1000から256へ変更する案を試した。
+要素は参照するだけでgetterやsizeを追加実行しない。出力文字列はStringWriterの出力と一致。
+1要素で短いBeanと、700/1100文字のASCII・700文字の日本語・エスケープ文字列を比較。
+予備測定（1fork・warmup3回・測定3回）のため正式なJackson比較としては扱わない。
+入力	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+bean	0.629	0.495	1824 → 1080
+ascii700	0.426	0.536	2080 → 3480
+ascii1100	0.743	0.761	4504 → 5080
+japanese700	0.624	0.840	4800 → 7016
+escaped700	3.004	3.254	4808 → 5704
+
+短いBeanで約1.27倍だが、ascii700は約26%、japanese700は約35%遅く、割り当ても増加。
+全体として採用せず、JSON.formatの初期容量を維持した。比較用ベンチマークは保存する。
+生データ・ビルドログ: target/performance-phase26/
+ソースコピー: /tmp/jsonic-phase26-ee8angjs/
+
+goalは継続中。第22〜25段階でも誤差を超える改善があり、終了条件には未到達。
+次は公開Bean getter/setter呼び出しの負荷、boolean等のString配列、
+Mapのキー出力、Readerのトークン割り当てを実測で絞り込む。
+単純なlong出力分岐（第21段階）と初期容量削減（第26段階）は退行のため不採用。
+
+第27段階: 公開Bean getterのMethodHandle呼び出し（2026-10-03）
+共有する標準のReadPropertyだけ、公開getterを(Object)->ObjectのMethodHandleで呼ぶ。
+メソッド・宣言クラス・全enclosing classがpublicかつmoduleのpackageが公開されている場合のみ。
+publicLookupでアクセス可能な非staticメソッドに限定し、非公開・カスタムJSON/
+statefulNamingStyle等はPropertyInfo.getを維持。Error/RuntimeExceptionは直接throw、
+checked Throwableは元と同じIllegalStateException(cause)。仮想呼び出しとgetter回数も同じ。
+ObjectFormatterではgetterを持たないフィールドを従来どおり直接PropertyInfo.getへ送る。
+全129テストとmvn -Pbenchmark verify成功。例外4種、非公開/カスタムJSONのfallback、
+仮想dispatch、重複キー、getterとsetterの呼び出し回数を比較。
+setterのMethodHandle化も試したが、1forkの予備測定でmethod-only Beanのdecodeが
+23.985 → 25.214 us/op、割り当て量34616 B/opのままで約5%遅く、この部分は撤回した。
+getter側も通常フィールドまでラップする初期案を修正し、フィールドの呼び出しを維持した。
+
+100件、出力us/op。基準はwarmup5回/測定5回/2fork、採用案は同じ条件の3fork。
+MethodBeanBenchmarkはBeanBenchmarkと同じpayloadで5プロパティすべてgetter/setterを使う。
+入力	JSONIC変更前	JSONIC変更後	割り当て前→後(B/op)
+BeanBenchmark/ascii	18.273 +/- 0.201	18.534 +/- 0.347	37056 → 37056
+BeanBenchmark/japanese	32.855 +/- 4.398	29.390 +/- 0.865	98904 → 98904
+MethodBeanBenchmark/ascii	18.558 +/- 0.669	17.636 +/- 0.227	37056 → 37056
+
+method-onlyは約5%の時間削減。通常Bean/ASCIIは信頼区間が重なる（約1.4%差）、
+通常Bean/日本語は変更前のfork間が不安定なため平均差から改善倍率を主張しない。
+割り当て量は同一。Getterだけを採用し、setterはreflectionのまま維持する。
+Jackson 3.2.3はinitial-getter-formal測定で通常Bean/ASCII 12.126 +/- 0.117、
+日本語15.148 +/- 0.626、method-only/ASCII 12.560 +/- 0.421 us/op。
+payloadは同じだがJSONICの最終再測定とは別のrunなので、同時測定として扱わない。
+この出力条件ではJSONICはまだJacksonより遅い。
+生データ・検証ログ: target/performance-phase27/
+ソースコピー: /tmp/jsonic-phase27-0vtcli8h/
+
+第28段階: Stringからboolean[]へ直接読み取る（2026-10-03）
+通常JSONのString入力だけ、全体を検証してboolean[]を作り、汎用トークン配列と型変換を省く。
+true/false/nullに加え18桁以内の整数だけ直接扱う。整数はscale=0なので0/-0→false、非zero→true。
+小数・指数（特に0.0→trueの従来仕様）、19桁以上、引用符、入れ子、コメント、
+不正な末尾、深さ<=2または>64、カスタムJSON等は従来経路へ戻す。
+入力の文字を消費していないので、fallback後も同じエラー原因と位置を再現する。
+この単独コピーで全130テストとmvn -Pbenchmark verify成功。
+極値・小数/指数・全prefix切断・深さ・StringBuilder/Reader・boolean[]/Boolean[]/
+boolean[][]、300組の乱数配列と末尾不正、カスタムpostparseの呼び出し回数を比較。
+
+String入力100/1000要素。13個ごとにnull。他はliteralがtrue/false、numericが0/1、
+quotedが引用符付きtrue/false。JacksonもFAIL_ON_NULL_FOR_PRIMITIVESを無効化して値を揃える。
+第19段階と同じJMH条件、全体us/op。
+要素数/構成	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	JSONIC割り当て前→後(B/op)
+100/literal	0.803 +/- 0.015	0.353 +/- 0.008	0.743 +/- 0.067	1584 → 464
+100/numeric	3.576 +/- 0.028	0.445 +/- 0.010	1.371 +/- 0.079	1896 → 448
+100/quoted	4.742 +/- 0.086	4.705 +/- 0.119	2.116 +/- 0.362	3928 → 3928
+1000/literal	7.603 +/- 0.118	4.047 +/- 0.040	5.572 +/- 0.143	12320 → 3200
+1000/numeric	38.353 +/- 1.365	5.520 +/- 0.182	11.981 +/- 0.166	27720 → 3200
+1000/quoted	48.040 +/- 0.442	47.848 +/- 0.715	17.959 +/- 0.446	30872 → 30872
+
+literalは約1.88〜2.28倍、numericは約6.95〜8.04倍。対象ケースの割り当ては約71〜88%削減。
+Jacksonに対してはliteralが約1.38〜2.10倍、numericが約2.17〜3.08倍の速さ。
+引用符付きは従来経路・割り当て量が同じ、時間も信頼区間内でJacksonにはまだ及ばない。
+最後だけ0/1のnumericLastも予備測定で約1.74〜2.37倍だった（正式比較とは区別）。
+Readerの経路はこの段階で変えていない。TypedArrayBenchmarkにsource指定を追加し、
+過去のReader条件は-p source=readerで再現する。
+生データ・検証ログ: target/performance-phase28/
+ソースコピー: /tmp/jsonic-phase28-fd7q560u/
+
+第29段階: Stringから型指定なしのMap/Listを直接構築（2026-10-03）
+イベントのdispatchと中間スタックを省き、LinkedHashMap/ArrayListを直接作る。
+数値は従来と同じBigDecimal。precision/scale、キーの順序、重複キーの最終値を維持。
+Stringかつ通常JSON、深さ3〜64、対応するJSON文法と数値だけ。
+未対応の構文・数値・深さ・不正末尾は元のパーサーへ戻り、診断も維持。
+返すArrayListは元と同じ要素数にtrimする。カスタムJSON、Reader等は従来経路。
+134テスト成功。500組の乱数入れ子、全prefix切断、深さ、エラー詳細、
+コレクションの具体型、数値の精度/scale/表現、UTF16/エスケープを旧経路と比較。
+
+100件の混合Map、5キー。JMH warmup5回・測定5回・2fork、gc profiler。
+キー構成	JSONIC変更前(us/op)	JSONIC変更後(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+plain	36.136 +/- 2.741	18.011 +/- 1.255	23.676 +/- 1.401	56232 → 56216
+japanese	38.951 +/- 0.762	16.427 +/- 0.472	25.571 +/- 1.653	56840 → 56568
+escaped	61.268 +/- 2.144	16.074 +/- 0.989	32.844 +/- 0.766	56304 → 56348
+unique	40.638 +/- 1.045	25.424 +/- 0.398	28.576 +/- 0.369	80232 → 80692
+
+約1.60〜3.81倍。Jacksonより約1.12〜2.04倍速い条件となったが、
+JSONICの生の数値はBigDecimal、JacksonのObject読み込みはInteger/Doubleで型が異なる。
+同じ入力を使い再出力文字列は一致するが、数値型まで同じ比較ではない。
+Typed StringDecoderとのlexer共通化も試したが、既存Bean/float経路の
+小さな速度低下を避けるため撤回した。採用案のStringDecoderは変更前と同一。
+表は共通化撤回前のraw-tree測定で、raw-tree側のアルゴリズムは同じ。
+生データ・検証ログ: target/performance-phase29/
+ソースコピー: /tmp/jsonic-phase29-oh97zflx/
+
+第30段階: Class指定のMap/List系にも直接構築を使う（2026-10-03）
+TypedDecoderが対応しないClass指定の標準JSON/String入力について、
+第29段階のツリーを作って従来と同じContext.convertInternalで変換する。
+Bean/数値配列の既存TypedDecoderが成功すればそのまま使う。
+カスタムJSON、ParameterizedType/GenericArrayType等、未対応構文は従来経路。
+136テスト成功。返す具体型、BigDecimal精度/scale、変換エラー原因/位置、
+深さ、重複キーと全prefix切断を旧経路と比較。
+100件の混合Map、String入力。前段階と同じ正式JMH条件。
+指定型	JSONIC変更前(us/op)	JSONIC変更後(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+object	36.202 +/- 1.437	16.647 +/- 0.372	22.825 +/- 0.832	56288 → 56360
+list	34.745 +/- 0.716	16.351 +/- 0.269	23.323 +/- 1.142	56288 → 56360
+mapArray	37.340 +/- 2.167	17.694 +/- 0.298	23.273 +/- 0.818	56952 → 57024
+
+約2.11〜2.17倍。JSONICの割り当ては72 B/op増加。
+JacksonのObject/List/Map[]内の数値型はJSONICのBigDecimalと異なる（第29段階と同じ留意点）。
+生データ・検証ログ: target/performance-phase30/
+ソースコピー: /tmp/jsonic-phase30-2vk6_ld2/
+
+第31段階: 引用符付きtrue/falseからboolean[]を直接構築（2026-10-03）
+第28段階のスキャナーに正確な文字列トークン\"true\"/\"false\"を追加。
+BooleanConverterの結果が同じ文字列だけ扱い、空白/大文字/他の文字列/
+エスケープ/不正末尾は従来経路へ戻す。null、literal、整数との混在も扱う。
+137テスト成功。100組の乱数混合配列、prefix切断、falseへの変換表現、
+深さ、エスケープ、不正末尾、エラー位置と原因を旧経路と比較。
+1000要素、13個ごとにnull。前段階と同じ正式JMH条件。
+escapedはtrue/falseの先頭文字をunicodeエスケープし、fallbackの負荷を確認。
+構成	JSONIC変更前(us/op)	JSONIC変更後(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+literal	4.062 +/- 0.061	3.964 +/- 0.054	5.586 +/- 0.119	3000 → 3000
+numeric	5.465 +/- 0.047	5.152 +/- 0.053	11.984 +/- 0.209	3100 → 3000
+quoted	47.901 +/- 0.593	5.624 +/- 0.159	18.152 +/- 0.756	30872 → 3000
+escaped	58.160 +/- 1.569	58.687 +/- 1.892	23.959 +/- 0.645	40144 → 40288
+
+quotedは約8.52倍、割り当て約90%削減、Jacksonより約3.23倍速い。
+escapedは時間の信頼区間が重なるが、失敗するfast-path用配列により144 B/op増える。
+この入力は従来の変換を維持し、Jacksonよりまだ遅い。
+生データ・検証ログ: target/performance-phase31/
+ソースコピー: /tmp/jsonic-phase31-w1kz_09p/
+
+goal継続中。第29〜31段階も誤差を超える改善があり、終了条件には未到達。
+次に検証する候補: float[] String読み込みの中間トークン削減、
+Map出力のキー処理（プロファイルで判断）、Readerの中間数値割り当て、
+ジェネリックなMap/List指定。拡張フックとType.getRawType等の呼び出し順序を維持する。
+
+第29〜31段階を統合した作業ツリーでもmvn -Pbenchmark verify成功、全137テスト成功。
+Map出力のstack予備測定（100件/plain、3warmup/3measurement/1fork）:
+RUNNABLE内の26.6%がContext.formatInternal、7.7%がStringFormatter.serialize。
+ただしRUNNABLEの50%はstackがfilteredなので、全CPUの網羅的比率とは扱わない。
+キーescapeだけでなくFormatter選択/呼び出し側も次の候補にする。
+このprofileの時間は正式な速度比較に使わない。ログ: target/map-encode-stack.log
+
+第32段階: Stringからfloat[]を直接読み取る（2026-10-03）
+第13段階のdouble[]と同じ検証済み数値文法で、float[]を直接構築。
+従来のCompactNumber.floatValueをstatic(value,scale)でも呼べるようにし、
+同じfloat演算と128bitのmidpoint比較を維持してトークン/数値オブジェクトを省く。
+String/通常JSONだけ。18桁以内の仮数、3桁以内の指数、null。
+未対応数値/引用符/入れ子/不正末尾/深さは従来経路。
+139テスト成功。500組の乱数配列（scale -50〜70）、極値、負のzero、
+prefix切断、TypeReference、depth、ビット一致とエラー原因/位置を旧経路と比較。
+1000要素。第31段階と同じ正式JMH条件。
+入力	JSONIC変更前(us/op)	JSONIC変更後(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+small/String	14.554 +/- 0.401	9.583 +/- 0.244	13.444 +/- 0.088	48680 → 11792
+decimal/String	20.415 +/- 0.200	15.053 +/- 0.969	23.255 +/- 0.346	48392 → 11792
+rounding/String	29.450 +/- 0.233	23.535 +/- 0.175	30.962 +/- 0.759	61160 → 11792
+scientific/String	17.959 +/- 0.408	13.185 +/- 0.238	17.254 +/- 0.298	40168 → 11792
+quoted/String	22.703 +/- 0.371	22.995 +/- 0.412	18.810 +/- 0.480	84672 → 84672
+
+Reader対照（Jacksonはこの段階で再測定していない）:
+decimal/Reader	28.491 +/- 0.493	28.971 +/- 1.556	47016 → 47016
+quoted/Reader	36.770 +/- 0.959	36.669 +/- 0.454	93520 → 93520
+
+数値入力は約1.25〜1.52倍、割り当て約71〜81%削減。
+この数値入力ではJacksonより約1.31〜1.54倍速い。quotedは変更前と同じ経路でまだJacksonより遅い。
+quoted/String・decimal/Reader・quoted/Readerの時間は信頼区間が重なり、割り当ては同じ。
+生データ・検証ログ: target/performance-phase32/
+ソースコピー: /tmp/jsonic-phase32-vh44_2u0/
+
+第33段階: ジェネリックなMap/Listにも直接ツリー構築を適用（2026-10-03）
+従来のStringDecoderとTypedDecoderに対応しない型について、
+従来JSONReader.readTypedと同じ時点でClassUtil.getRawTypeをもう一度呼び、
+その結果も対応しなければStringTreeDecoder→従来convertInternalを使う。
+失敗時は解決済みraw classをJSONReaderへ渡し、余計なType callbackを追加しない。
+独自Typeが2回目に返すclassを変える/throw/nullを返す場合も旧動作を維持。
+Stringかつ通常JSONだけ、未対応文法/深さとカスタムJSONは従来経路。
+この単独コピーで141テスト成功（第32段階の追加2テストはまだ含めていない）。
+ParameterizedType/GenericArrayTypeのcallback順序と回数、変化するraw/component type、
+数値の精度/scale、具体型、変換エラー、prefix切断と深さを旧経路と比較。
+100件の混合Map、String入力。第32段階と同じ正式JMH条件。
+指定型	JSONIC変更前(us/op)	JSONIC変更後(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+list	44.941 +/- 0.506	27.604 +/- 0.746	22.831 +/- 1.410	99832 → 99904
+mapArray	44.000 +/- 1.316	26.019 +/- 0.249	21.859 +/- 0.231	99408 → 99480
+
+約1.63〜1.69倍。割り当ては72 B/op増加。
+JSONICの数値型はBigDecimal、JacksonのMap<String,Object>内の数値はInteger/Double。
+再出力文字列は一致するが数値型まで揃えた比較ではない。Jacksonよりまだ約1.19〜1.21倍の時間を要する。
+生データ・検証ログ: target/performance-phase33/
+ソースコピー: /tmp/jsonic-phase33-8_hdtgt2/
+
+第34段階: MapのFormatterを文書内で再利用（第35段階と合わせて採用、2026-10-03）
+同じ深さ・出力位置の値が同じclassなら、直前に選んだFormatterを再利用する。
+通常JSON/ヒントなしだけ、depth<8・先頭16位置に限定。最初の2個のMapでは表を作らない。
+既存の「直前の値と同じclass」の処理とsrc、例外の包装、preformat/enter/exitの順序を維持。
+この単独案で145テスト成功。3warmup/3measurement/1forkの予備測定:
+100件/plain 21.785→20.478、escaped 31.254→29.411、unique 24.441→22.977 us/op。
+約6%の平均差だが、この単独案の倍率を正式な比較としては扱わない。
+生データ・検証ログ: target/performance-phase34/
+ソースコピー: /tmp/jsonic-phase34-5muw8the/
+
+第35段階: エスケープが必要なMapキーの再利用（2026-10-03）
+第34段階の表で、先頭キーが短いStringでエスケープを必要とする場合、
+最初に現れたキーの引用符・エスケープ・colonを保存して再利用する。
+キーは64文字以下、表の先頭16位置/depth<8、通常JSON/ヒントなし、
+出力は厳密なStringBuilderOutputSourceだけ。Writerと他のキーは従来の文字列処理。
+先頭キーが変わるMapでは残りのキーの予測を省く。違うキーに合わせて表を作り直さない。
+全Stringキーを予測する初期案はuniqueで22.987→24.504 us/opの退行があり撤回。
+処理の分割だけ/値の予測も省く案でもuniqueの退行が残ったので、
+実際に高コストなエスケープを先頭キーが必要とする場合にキーの再利用を絞った。
+Mapのループは補助メソッドへ整理した（JITの具体的な挙動は断定しない）。
+この最終コピーで146テスト成功。型の変化/繰り返し、null、循環、depth、
+pretty、hint、getter/keyの呼び出し回数とエラー、Writer、全escape/UTF16/
+64/65文字、キー順序の変化を旧経路と比較。
+100件の混合Map、前段階と同じ正式JMH条件。出力us/op。
+キー構成	JSONIC変更前	JSONIC変更後	Jackson 3.2.3	割り当て前→後(B/op)
+plain	21.638 +/- 1.427	19.382 +/- 0.310	14.213 +/- 0.199	37096 → 37344
+escaped	31.212 +/- 0.417	20.968 +/- 0.685	25.103 +/- 0.270	56640 → 57704
+unique	22.987 +/- 0.451	22.393 +/- 0.799	15.533 +/- 0.318	54592 → 54840
+escapedUnique	30.225 +/- 0.953	30.554 +/- 0.488	26.384 +/- 0.303	58096 → 59192
+
+小さいMapの対照測定（Jacksonは再測定していない）:
+件数/キー	変更前	変更後	割り当て前→後(B/op)
+1/plain	0.540 +/- 0.004	0.493 +/- 0.006	1808 → 1816
+1/unique	0.551 +/- 0.012	0.504 +/- 0.010	1816 → 1824
+2/plain	0.732 +/- 0.007	0.657 +/- 0.022	1992 → 2000
+2/unique	0.730 +/- 0.018	0.670 +/- 0.009	2016 → 2024
+
+escapedは約1.49倍、今回のJacksonより約1.20倍速い。plainは約1.12倍。
+uniqueは信頼区間が重なるので改善を主張しない。escapedUniqueも別の対照入力として確認。
+plain/unique/escapedUniqueはまだJacksonより遅い。割り当ては表/キーの保存分だけ増える。
+小さいMapでも8 B/op増えるが、測定では速度低下は見られなかった。
+全Stringキーを予測した不採用案などの生データも保存する。
+生データ・検証ログ: target/performance-phase35/
+ソースコピー: /tmp/jsonic-phase35-f8_7wy7y/
+
+goalは継続中。第32/33/35段階で誤差を超える改善があり、終了条件には未到達。
+次の候補: 引用符付きfloat[]/double[]（負のzero、numberFormat、全体検証を維持）、
+Readerの数値トークン割り当て（元の数値/scaleとエラー表現を維持）。
+今後も予備測定を正式な比較として扱わず、対照条件の退行を見て採否を判断する。
+
+第32/33/34/35段階の統合後もmvn -Pbenchmark verify成功、全146テスト成功。
+
+第36段階: 引用符付きfloat[]/double[]を直接構築（2026-10-03）
+通常JSONのString入力、numberFormat未指定の場合だけ、短い標準decimal文字列を直接変換。
+従来の数値スキャナー本体はそのまま残し、引用符付き入力には別の入口を使う。
+引用符付き負のzero/underflowは符号を保持。unquotedのBigDecimalのzeroの扱いは維持。
+全体の構文検証を終えるまで結果を返さない。escape/format/未対応数値/文法は従来経路。
+149テスト成功。raw bits、locale/format、精度、エラー内容と位置、切断入力を旧経路と比較。
+1000要素、String入力、5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37。
+Jackson 3.2.3は同一入力の初期比較で測定。最終案と同じ時点の再測定ではない。
+入力/型	変更前(us/op)	変更後(us/op)	Jackson 3(us/op)	割り当て前→後(B/op)
+quoted/float	63.535 +/- 1.861	15.227 +/- 0.184	30.267 +/- 1.822	347416 → 11896
+quoted/double	41.745 +/- 0.784	15.505 +/- 0.486	30.180 +/- 0.689	175416 → 23576
+mixed/float	41.823 +/- 0.887	14.299 +/- 0.229	26.276 +/- 0.601	198440 → 12000
+mixed/double	29.842 +/- 0.285	14.984 +/- 0.238	26.506 +/- 0.694	114440 → 23576
+
+約1.99〜4.17倍、割り当て約79〜97%削減。これらではJackson 3より約1.76〜1.99倍速い。
+初期案は数値だけの入力で退行したため撤回し、別入口へ変更。
+通常数値の最終対照は8warmup/5measurement/3forkで変更前→後:
+float 13.281 +/- 0.296 → 13.747 +/- 0.427 us/op（平均は3.5%増、信頼区間は重なる）。
+double 14.217 +/- 1.272 → 13.748 +/- 0.194 us/op（信頼区間は重なる）。
+通常数値の速度向上は主張しない。escape/numberFormatも時間・割り当ての差は誤差範囲。
+最終対照escape/formatは別入口へ分割した同じquotedアルゴリズムで測定。
+生データ・不採用案・検証ログ: target/performance-phase36/
+ソースコピー: /tmp/jsonic-phase36-o9n9ahh4/
+
+第37段階: 型付きReaderの小整数トークン共有を拡張（2026-10-03）
+CompactNumberのscale=0/非負の固定キャッシュを0〜127から0〜1023へ拡張。
+型指定なしの公開数値は引き続きBigDecimal。負数/小数/範囲外の整数は従来どおり。
+追加896トークンと参照分、compressed oops環境で約25KBの固定メモリを保持。
+初期化時の作成も増える。149テスト成功。TypedArrayBenchmarkにstartを追加。
+1000要素、Reader入力（13個に1個null）、同じ正式JMH条件。
+開始値/型	変更前(us/op)	変更後(us/op)	Jackson 3(us/op)	割り当て前→後(B/op)
+0/double	19.059 +/- 0.454	19.336 +/- 0.509	11.239 +/- 0.163	46344 → 27024
+0/int	19.158 +/- 0.303	18.554 +/- 0.657	9.179 +/- 0.319	42344 → 23024
+0/long	19.482 +/- 0.987	19.328 +/- 0.358	9.884 +/- 0.129	46344 → 27024
+100000/double	20.497 +/- 0.311	20.633 +/- 0.387	12.387 +/- 0.555	49176 → 49176
+100000/int	20.317 +/- 0.286	20.389 +/- 0.286	11.433 +/- 0.267	45176 → 45176
+100000/long	20.694 +/- 0.573	20.542 +/- 0.190	12.380 +/- 0.216	49176 → 49176
+
+小整数では約42〜46%の割り当てを削減。時間の信頼区間は重なるため速度向上は主張しない。
+範囲外の整数は割り当て量が同じ、時間差も誤差範囲。Readerは引き続きJacksonより遅い。
+生データ・検証ログ: target/performance-phase37/
+ソースコピー: /tmp/jsonic-phase37-6pxe1xt3/
+
+第38段階: 大きい最大深さでも平坦なprimitive配列を直接構築（2026-10-03）
+Float/Double/Integral/BooleanArrayDecoderのmaxDepth>64での除外を解除。
+これらのスキャナーは反復処理のみで、入れ子を先に除外するため再帰深さを増やさない。
+maxDepth<=2での除外、入れ子/未対応文法のfallback、全体検証は従来どおり。
+TypedDecoder/StringTreeDecoderの再帰処理の上限は変更していない。
+150テスト成功。深さ1/2/3/64/65/1024/Integer.MAX_VALUEで旧経路と結果/エラーを比較。
+1000要素、String入力、数値は100000〜100999、13個に1個null。正式JMH条件は前段階と同じ。
+深さ/型	変更前(us/op)	変更後(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+32/float	10.845 +/- 0.218	10.755 +/- 0.116	11.417 +/- 0.457	11896 → 12000
+32/double	11.405 +/- 0.324	11.284 +/- 0.124	11.883 +/- 0.176	23472 → 23680
+32/int	8.569 +/- 0.165	8.421 +/- 0.265	10.045 +/- 0.126	11968 → 11864
+32/long	9.413 +/- 0.331	9.401 +/- 0.239	10.636 +/- 0.192	23544 → 23440
+32/boolean	3.688 +/- 0.050	3.811 +/- 0.108	5.095 +/- 0.095	3000 → 3000
+65/float	61.220 +/- 1.952	10.835 +/- 0.271	11.390 +/- 0.145	87720 → 12000
+65/double	61.444 +/- 2.693	11.381 +/- 0.284	11.875 +/- 0.133	99720 → 23680
+65/int	59.701 +/- 3.070	8.541 +/- 0.144	10.130 +/- 0.267	86472 → 11968
+65/long	61.801 +/- 2.402	9.373 +/- 0.149	10.722 +/- 0.246	97872 → 23544
+65/boolean	52.684 +/- 0.998	3.835 +/- 0.112	4.979 +/- 0.087	31784 → 3000
+
+深さ65では約5.39〜13.74倍、割り当て量約76〜91%削減。
+深さ32で速度の改善は主張しない（信頼区間が重なる）。深さ65でも既定値と同程度になった。
+この入力ではJacksonより約1.04〜1.30倍速い。一般のBean/Readerにはこの改善は適用しない。
+JacksonのmaxDepthパラメーターはJSONIC用の設定で、Jackson側の入力/設定は同じ。
+生データ・検証ログ: target/performance-phase38/
+ソースコピー: /tmp/jsonic-phase38-wcxvi8wo/
+
+第39段階: 配列拡張時に残りの容量を見積もる（2026-10-03）
+平坦なprimitive配列の最初の容量は128以下のまま。
+拡張が必要になった時だけ、読み取った要素数/位置と文書長から残りの容量を予測する。
+従来の2倍を下限、4096か従来の2倍の大きい方を上限とする。
+入力全体の追加走査はしない。結果は全体検証後に実際の要素数へtrimする。
+151テスト成功。大きい配列/途中の拡張/末尾のエラーを旧経路と比較。
+正式JMH条件は第36段階と同じ。1000要素の変更前は第38段階の採用案。
+件数/型	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+100/float	1.084 +/- 0.033	1.049 +/- 0.015	976 → 976
+100/double	1.111 +/- 0.032	1.103 +/- 0.006	1888 → 1888
+100/int	0.789 +/- 0.048	0.766 +/- 0.030	1048 → 1048
+100/long	0.847 +/- 0.025	0.849 +/- 0.036	2064 → 1960
+100/boolean	0.302 +/- 0.002	0.302 +/- 0.003	264 → 264
+1000/float	10.755 +/- 0.116	10.770 +/- 0.084	12000 → 8832
+1000/double	11.284 +/- 0.124	10.932 +/- 0.111	23680 → 17368
+1000/int	8.421 +/- 0.265	8.606 +/- 0.189	11864 → 8800
+1000/long	9.401 +/- 0.239	8.849 +/- 0.147	23440 → 17336
+1000/boolean	3.811 +/- 0.108	3.802 +/- 0.056	3000 → 2184
+
+1000件のlongは約6%、doubleは約3%短縮。float/int/booleanと100件では信頼区間が重なるため速度向上は主張しない。
+1000件で約26〜28%の割り当てを削減。100件は拡張しないのでアルゴリズムは変わらない。
+小さいlongの104 B/op差は実装による減少とは断定しない（JVMの最適化の違いがあり得る）。
+引用符付きの対照（変更前は第36段階の最終案、String/1000要素）:
+入力/型	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+quoted/float	15.227 +/- 0.184	14.494 +/- 0.212	11896 → 8832
+quoted/double	15.505 +/- 0.486	15.189 +/- 0.198	23576 → 17368
+mixed/float	14.299 +/- 0.229	13.987 +/- 0.319	12000 → 8832
+mixed/double	14.984 +/- 0.238	14.917 +/- 0.165	23576 → 17160
+
+引用符付きfloatは約5%短縮。残りの引用符付き条件は信頼区間が重なる。
+浮動小数点の対照（FloatArrayBenchmark/String/1000要素）:
+入力	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+decimal	13.360 +/- 0.146	12.915 +/- 0.207	11896 → 8728
+rounding	21.870 +/- 0.257	21.478 +/- 0.456	11896 → 8624
+
+decimalは約3%短縮。roundingの時間差は誤差範囲、両方で約27%の割り当てを削減。
+Jacksonは再測定していない。第38段階の同一入力での比較データを参照。
+不採用: commaの事前カウントは割り当てを減らせたが、予備測定で
+float 15.138/double 15.560/int 12.181/long 12.969/boolean 7.209 us/opに悪化。
+その案を撤回し、拡張時だけの予測に変更。予備測定は正式な倍率には用いない。
+生データ・不採用案・検証ログ: target/performance-phase39/
+ソースコピー: /tmp/jsonic-phase39-ooagrkd6/
+
+第40段階: 型付きReaderの平坦なprimitive配列で終端位置の配列を省く（2026-10-03）
+JSONReaderのtyped bufferでfloat/double/int/long/booleanの1次元配列だけ、
+平坦な間はObjectトークンだけを保持し、各トークンの終端位置のint[]を省く。
+入れ子を検出した時点でそれまでの終端位置を復元し、従来の追加処理へ切り替える。
+変換エラーで元データを表示する時にも復元する。数値の元のvalue/scaleを保持。
+全体の構文/Reader読み取りが完了してから変換する順序を維持。
+StringDecoderの従来のadd()はそのまま残し、Reader側に専用addFlat()を設ける。
+変換ループは共有し、primitive arrayの平坦時だけ連続した添字で進む。
+153テスト成功。Readerのchunk=1/7/11/4096、refill、深さ、numberFormat、
+入れ子、各種数値、precision/zero、raw error/位置、prefix切断を従来経路と比較。
+正式JMH条件は前段階と同じ。予備測定は採用倍率には使わない。
+過去の測定値には差があったため、今回の比較用コピーでも主要条件の変更前を再測定した。
+件数/開始値/型	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+1000/0/double	19.088 +/- 0.521	16.250 +/- 0.361	27024 → 18864
+1000/0/int	18.617 +/- 0.327	16.123 +/- 0.309	23024 → 14864
+1000/0/long	18.710 +/- 0.265	16.028 +/- 0.239	27024 → 18864
+1000/100000/double	20.733 +/- 0.441	17.564 +/- 0.208	49176 → 41016
+1000/100000/int	20.302 +/- 0.346	17.340 +/- 0.314	45176 → 37016
+1000/100000/long	21.467 +/- 1.183	17.420 +/- 0.200	49176 → 41016
+100/0/double	2.105 +/- 0.041	1.775 +/- 0.033	5312 → 4368
+100/0/int	2.090 +/- 0.045	1.719 +/- 0.051	4912 → 3968
+1000/0/boolean	19.060 +/- 0.219	16.064 +/- 0.916	19968 → 11808
+
+1000要素の整数/double Readerは約13〜19%の時間短縮（約1.15〜1.23倍）。
+100要素は約16〜18%短縮、boolean/1000は約16%短縮。
+1000要素では8160 B/opの割り当てを省いた（範囲外の数値約17〜18%、小整数約30〜35%）。
+浮動小数点の対照（FloatArrayBenchmark、Reader/1000要素）:
+入力	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+decimal	25.162 +/- 0.357	23.321 +/- 0.353	47024 → 38864
+quoted	33.729 +/- 0.794	31.428 +/- 1.657	83064 → 74904
+
+decimal/quoted float Readerは約7%短縮。quotedもdefault numberFormatの既存変換を使用。
+Beanの対照（BeanBenchmark、String/ascii）:
+件数/数値表記	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+1/plain	0.321 +/- 0.015	0.334 +/- 0.019	1240 → 1240
+1/scientific	0.341 +/- 0.023	0.348 +/- 0.008	1304 → 1304
+100/plain	21.621 +/- 0.255	21.833 +/- 0.349	32224 → 32224
+100/scientific	25.168 +/- 0.832	25.821 +/- 0.676	48976 → 48976
+
+Beanの全条件で時間の信頼区間は重なる。割り当ても同じ。Beanの速度改善は主張しない。
+Jacksonは再測定していない。第37段階で測った同一TypedArray入力のJackson 3.2.3は
+小整数double/int/longが11.239/9.179/9.884 us/op、範囲外が12.387/11.433/12.380。
+今回のReaderはまだそれより約1.4〜1.8倍の時間がかかる。JSONICの今回の直前/直後比較と区別する。
+生データ・検証ログ: target/performance-phase40/
+ソースコピー: /tmp/jsonic-phase40-l_9eehmk/
+
+第36〜40段階の統合後もmvn -Pbenchmark verify成功、全153テスト成功。
+git -c core.whitespace=cr-at-eol diff --check成功。
+goalは継続中。誤差を超える改善があり、終了条件にはまだ到達していない。
+次の調査対象: Readerで範囲外の整数/小数を読む時のCompactNumberとトークンバッファの割り当て。
+元のvalue/scale、変換エラーの表示、Readerの読み取り、全体検証後の変換順序を維持すること。
+
+第41段階（速度効果が誤差範囲のため不採用）: Readerで直前の数値トークンを再利用（2026-10-03）
+ReaderInputSourceに直前のCompactNumber 1個だけを保持し、valueとscaleが一致する時に再利用する案。
+初期案、小整数キャッシュを先に選ぶfactory案、小整数の既存処理をそのまま使う最終案を検証。
+value/scale、zero、refill、改行、元データを含む変換エラー、syntax errorを旧経路と比較し、
+初期案/factory案/最終案で154テスト成功。RepeatedNumberBenchmarkと互換性試験は再現用に残す。
+各試作の実装は作業ツリーに採用しない。ソースコピーとログを保存する。
+1000要素、Reader、13個に1個null。5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37。
+入力/型	変更前(us/op)	最終案(us/op)	割り当て前→後(B/op)
+repeat/double	22.312 +/- 0.683	22.164 +/- 2.533	41016 → 19040
+repeat/int	17.560 +/- 0.137	17.843 +/- 1.104	37016 → 15040
+unique/double	22.292 +/- 0.337	22.666 +/- 0.918	41016 → 41024
+unique/int	18.072 +/- 0.629	18.327 +/- 0.204	37016 → 37024
+
+繰り返し値の割り当ては約54〜59%減ったが、最終案の時間差はすべて信頼区間が重なる。
+factory案のrepeat/doubleは22.312→21.276 us/opの差があったが、
+最終案は22.164 +/- 2.533でばらつきが大きく、安定した速度改善として扱わない。
+小整数の最終対照（TypedArrayBenchmark、開始値0、Reader）:
+件数/型	変更前(us/op)	最終案(us/op)	割り当て前→後(B/op)
+100/double	1.788 +/- 0.011	1.822 +/- 0.093	4368 → 4388
+100/int	1.757 +/- 0.023	1.775 +/- 0.042	3968 → 3976
+1000/double	16.725 +/- 0.516	16.589 +/- 0.439	18864 → 18872
+1000/int	16.183 +/- 0.379	16.495 +/- 0.358	14864 → 14872
+
+この対照も信頼区間が重なる。Sourceの参照保持分が8 B/op増える。
+100/doubleは平均で20 B/op増えたが、8 B/op以外の差はJVMの最適化の違いがあり得る。
+Reader Beanの対照（100件/ascii/plain）:
+47.311 +/- 0.604 → 47.246 +/- 0.812 us/op、51896 → 51904 B/op。
+
+Reader Beanも時間差は誤差範囲。Jacksonはこの案では計測していない。
+生データ・試作ソース・検証ログ: target/performance-phase41/
+ソースコピー: /tmp/jsonic-phase41-5buo1run/
+
+第42段階: 平坦なprimitive配列のroot管理トークンを省く（2026-10-03）
+TypedDecoderのflat bufferでrootのSTART_ARRAYをObject[]の要素として保持しない。
+これにより128/1024などの容量にちょうど収まる配列で、管理用1要素のための倍増を避ける。
+入れ子が現れた時と変換エラーの元データを組み立てる時にrootを復元し、従来の終端位置表を作る。
+平坦な値は0から連続した添字で進む。Whole documentの検証後に変換する順序は維持。
+155テスト成功（第41段階の追加テストはこのコピーには含めていない）。
+境界前後/空配列/先頭と末尾の入れ子/変換エラー/構文エラーを旧経路と比較。
+空配列のGenericArrayTypeコールバックが失敗した場合も、元データ[]と元の例外を保持。
+Numeric Scalarをdouble/float/int/long/booleanへ変換する処理は共有したまま。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+TypedArrayBenchmark、Reader/開始値0、13個に1個null。
+件数/型	変更前(us/op)	変更後(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+128/double	2.451 +/- 0.032	2.300 +/- 0.080	1.616 +/- 0.052	5632 → 4616
+128/int	2.382 +/- 0.035	2.164 +/- 0.050	1.312 +/- 0.026	5120 → 4080
+129/double	2.479 +/- 0.023	2.533 +/- 0.093	再測定なし	5640 → 5652
+129/int	2.394 +/- 0.047	2.430 +/- 0.082	再測定なし	5128 → 5128
+1000/double	16.727 +/- 0.507	16.499 +/- 0.179	再測定なし	18864 → 18864
+1000/int	16.221 +/- 0.326	16.194 +/- 0.189	再測定なし	14864 → 14864
+1024/double	17.665 +/- 0.417	17.160 +/- 0.545	12.379 +/- 0.220	27264 → 19056
+1024/int	17.384 +/- 0.141	16.743 +/- 0.368	11.608 +/- 0.174	23168 → 14960
+1025/double	17.803 +/- 0.214	17.690 +/- 0.121	再測定なし	27296 → 27296
+1025/int	17.644 +/- 0.396	17.572 +/- 0.276	再測定なし	23200 → 23200
+
+128のdouble/intは約6〜9%、1024のintは約4%の時間短縮。
+1024のdoubleと129/1000/1025では時間の信頼区間が重なるため、速度向上は主張しない。
+128では約18〜20%、1024では約30〜35%の割り当てを削減（rootの占有による拡張を回避）。
+128/doubleの24 B/op、129/doubleの12 B/op差はJVMの最適化の違いがあり得る。
+境界以外のアルゴリズムは同じ容量拡張を使う。少量の時間差から普遍的な倍率を主張しない。
+今回のReaderは比較した境界サイズでもJacksonより約1.39〜1.65倍の時間がかかる。
+Beanの対照（100件/ascii/plain）:
+入力	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+jsonicDecode	22.213 +/- 0.383	22.162 +/- 0.366	32224 → 32224
+jsonicReaderDecode	47.594 +/- 0.695	46.889 +/- 0.891	51896 → 51896
+
+Beanも時間差は誤差範囲で、割り当ては同じ。Reader Beanのベンチマークを追加。
+StackProfilerの予備調査（変更後、double/Reader/1000、3warmup/3measurement/1fork）:
+RUNNABLEの表示でJSONParser.next 22.8%、ReaderInputSource.readCompactNumber 18.1%、
+TypedDecoder.doubles 2.5%。50%はfiltered/emptyなので全CPUの正確な割合とは扱わない。
+次は数値トークンの走査とJSONParser.nextの制御処理を実測で検討する。
+このprofile runは測定への影響があるので正式な速度比較に用いない。
+生データ・検証ログ・試作ソース: target/performance-phase42/
+ソースコピー: /tmp/jsonic-phase42-iimqhvii/
+
+第41段階の再現用ベンチマーク/互換性試験と、第42段階の採用実装を統合後、
+mvn -Pbenchmark verify成功、全156テスト成功。Reader Beanのsetupでも結果一致を確認する。
+git -c core.whitespace=cr-at-eol diff --check成功。
+goalは継続中。第42段階で誤差を超える改善があり、全候補の終了条件には未到達。
+次は改善後のReaderで残るJSONParser.nextとReaderInputSourceの数値走査を調べる。
+構文/エラー位置、Readerの読み取り、元のvalue/scale、全体検証後の変換を維持する。
+
+第43段階（不採用）: Readerの整数を区切り文字で早期確定（2026-10-03）
+整数走査直後にcomma/closing bracket/space/tabを検出し、decimal/exponent判定を省く案。
+改行、refill、不正なsuffix、小数・指数は元の経路を維持。変更前後で156テスト成功。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+TypedArrayBenchmark、1000要素、Reader、13個に1個null。
+開始値/型	変更前(us/op)	試作(us/op)	割り当て(B/op、同じ)
+0/double	16.426 +/- 0.232	17.256 +/- 0.641	18864
+0/int	16.282 +/- 0.155	17.246 +/- 0.724	14864
+100000/double	18.278 +/- 0.725	17.943 +/- 0.302	41016
+100000/int	18.368 +/- 0.937	18.127 +/- 0.861	37016
+
+小整数は平均で約5〜6%遅く、範囲外整数は信頼区間が重なる。安定した改善ではないため不採用。
+StreamNumberBenchmarkのsmall/decimal/scientificの予備対照でも有意な改善は見えない。
+この案のproduction変更は作業ツリーに採用しない。Jacksonはこの案では再測定していない。
+生データ・試作ソース・検証ログ: target/performance-phase43/
+ソースコピー: /tmp/jsonic-phase43-serd7ad4/
+
+第44段階: separatorだけのパーサー状態遷移をまとめる（2026-10-03）
+JSONParserのcolon/comma後、同じnext内で次の名前/値を読む。
+標準JSONParserかつignoreWhitespace=trueだけに限定し、subclassのoverride呼び出しを保持。
+入力のnext/back/mark/copy順序、イベント/値/深さ/位置、maxDepthでの読み捨て、
+interpreterMode、エラーと不完全な入力を旧経路と比較。変更前後で全159テスト成功。
+中間状態を先に保存してからイベントをclearし、InputSourceからの再入も従来と同じにする。
+標準入力以外にも同じ入力操作を使い、Readerのrefillやpublic numberのBigDecimalは変更しない。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+TypedArrayBenchmark、1000要素、Reader、13個に1個null。
+開始値/型	変更前(us/op)	変更後(us/op)	割り当て(B/op、同じ)
+0/double	16.610 +/- 0.204	15.848 +/- 0.391	18864
+0/int	16.593 +/- 0.257	15.474 +/- 0.249	14864
+100000/double	18.095 +/- 0.330	17.964 +/- 0.304	41016
+100000/int	17.917 +/- 0.224	17.369 +/- 0.360	37016
+
+小整数double/intの読み取り時間は約4.6%/6.7%短縮。
+開始値100000の2条件は信頼区間が重なるため速度改善を主張しない。割り当ては全条件で同じ。
+Beanの対照（100件、ascii、plain/scientificはpriceNotation）:
+型/priceNotation	変更前(us/op)	変更後(us/op)	割り当て(B/op、同じ)
+jsonicDecode/plain	22.444 +/- 0.356	24.320 +/- 3.045	32224
+jsonicDecode/scientific	26.700 +/- 1.162	26.109 +/- 0.585	48976
+jsonicReaderDecode/plain	47.266 +/- 0.877	45.964 +/- 0.613	51896
+jsonicReaderDecode/scientific	51.640 +/- 0.675	50.763 +/- 0.987	66808
+
+Beanは全条件で信頼区間が重なる。String/plainの変更後はばらつきが大きい。
+追加対照のLongBean/MethodBeanのString入力も信頼区間が重なる。Beanの速度向上は主張しない。
+型指定なしの数値（UntypedNumberBenchmark、100要素、BigDecimalのvalue/scale一致を確認）:
+分布/入力	変更前(us/op)	変更後(us/op)	割り当て(B/op、同じ)
+small/reader	2.079 +/- 0.026	2.010 +/- 0.051	8120
+small/stream	2.579 +/- 0.105	2.461 +/- 0.047	16688
+decimal/reader	3.276 +/- 0.081	3.183 +/- 0.088	8672
+decimal/stream	3.821 +/- 0.102	3.758 +/- 0.103	17296
+scientific/reader	2.370 +/- 0.070	2.331 +/- 0.123	8560
+scientific/stream	2.862 +/- 0.074	2.719 +/- 0.033	17128
+
+scientific/streamの時間は約5%短縮。他の5条件は信頼区間が重なる。
+Jacksonはこの段階では再測定していない。以前のJackson測定と今回の前後比較を区別する。
+生データ・試作ソース・検証ログ: target/performance-phase44/
+ソースコピー: /tmp/jsonic-phase44-3wrjax9g/
+次はReaderの通常文字列を、既存バッファから直接走査する案を検証する。
+エスケープ/補充/長い文字列/カスタム入力・キャッシュの動作を維持すること。
+
+第44段階の採用実装を作業ツリーへ統合後、mvn -Pbenchmark verify成功、159テスト成功。
+git -c core.whitespace=cr-at-eol diff --check成功。goalは継続中。
+
+第45段階: Readerの通常文字列をバッファ単位で走査（2026-10-03）
+ReaderInputSourceに、引用符/escape/controlの直前まで普通の文字をまとめて進める処理を追加。
+parseReaderStringは既存のmark/copy/補充順序を維持し、特殊文字は元の処理を使う。
+標準ReaderInputSourceと標準LocalCacheだけに限定する。subclassの操作やcache callbackは維持。
+CharSequence/custom input用には従来のparseStringSlowの走査ループをそのまま残す。
+変更前160テスト成功、最終版163テスト成功。追加テストで深さ/値/位置/不完全入力/不正escape/
+改行・DEL/補充境界/長い値/UTF-8/16/32/mark/back/copy/カスタム入力・cacheを旧経路と比較。
+最初の「完全な短い文字列だけを先に試す」案は、longが211.184→223.809 us/opと約6%悪化し不採用。
+重複走査を避けるprefix案を作成し、String用の従来ループを残した版を最終採用。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+ReaderStringBenchmark、String[] 100要素、13個に1個null、Reader入力。
+分布	変更前(us/op)	最終版(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+plain	4.043 +/- 0.089	3.605 +/- 0.070	1.766 +/- 0.037	10448 → 10448
+escaped	6.196 +/- 0.189	5.815 +/- 0.334	2.349 +/- 0.058	13416 → 13416
+long	211.184 +/- 2.670	59.774 +/- 1.742	42.042 +/- 0.535	104441 → 104440
+refill	495.709 +/- 7.180	245.843 +/- 6.437	161.262 +/- 2.490	292475 → 292474
+
+plain: item-0〜99。escaped: 日本語と引用符/改行のescapeを含む。
+long/refill: xを1000/3000文字繰り返し、各要素の末尾に番号を付加。
+plainは約11%時間短縮、longは約3.53倍、refillは約2.02倍の高速化。
+escapedは時間の信頼区間が重なるため速度向上を主張しない。Readerの割り当てはほぼ同じ。
+Jacksonと同じString[]の結果を確認。最終版でもJacksonより約1.42〜2.48倍の時間がかかる。
+BeanBenchmark、100件、Reader、priceNotation=plain:
+text	変更前(us/op)	最終版(us/op)	Jackson 3.2.3(us/op)	割り当て前→後(B/op)
+ascii	46.536 +/- 0.682	40.536 +/- 0.715	23.272 +/- 2.086	51896 → 51896
+japanese	51.383 +/- 3.503	44.752 +/- 1.899	26.289 +/- 4.441	56792 → 56792
+
+両条件とも約13%の時間短縮。割り当ては同じ。Jacksonに対しては約1.70〜1.74倍の時間。
+公開JSONReaderのString入力（ReaderStringBenchmark.jsonicStringEvents、100要素）:
+分布	変更前(us/op)	最終版(us/op)	割り当て前→後(B/op)
+plain	2.283 +/- 0.066	2.314 +/- 0.037	5872 → 5872
+escaped	6.555 +/- 1.323	6.357 +/- 0.906	8896 → 8896
+
+時間差は両条件で信頼区間が重なる。plainの120 B/op増加はclass/field追加によるものではなく、
+この経路でのJVM最適化の違いがあり得る。Reader側の割り当て削減は主張しない。
+変更前escapedはfork間のばらつきが大きく（約5.7/7.4 us/op）、8warmup/5measurement/3forkで再確認:
+変更前escaped再確認: 7.409 +/- 0.183 us/op。
+
+これと最終版も信頼区間が重なる。String入力での改善は主張しない。
+Jacksonの公開event読み取りは比較していない。Bean/配列のdecodeとevent読み取りを混同しない。
+生データ・各試作ソース・検証ログ: target/performance-phase45/
+ソースコピー: /tmp/jsonic-phase45-mosw124f/
+goalは継続中。Readerで誤差を超える改善を確認したため、終了条件にはまだ到達していない。
+次の候補: Readerの型付きString[]の変換/トークン管理、およびtrue/false/nullと空白の走査。
+全体検証後の変換・callbacks・公開数値型・構文エラー/入力位置を維持し、実測で採否を決める。
+
+第45段階の最終版を統合後、mvn -Pbenchmark verify成功、全163テスト成功（失敗/エラー/skipなし）。
+git -c core.whitespace=cr-at-eol diff --check成功。統合ログをtarget/performance-phase45/へ保存。
+
+第46段階: 平坦なReaderのString[]で終端位置表を省く（2026-10-03）
+String[]にもprimitive配列と同じflat bufferを使い、root tokenと各scalarのend offsetを保持しない。
+入れ子が現れた場合と変換エラーの元データを作る場合は従来の表を復元する。
+String/nullの直接代入、数値・BooleanのString変換、GenericArrayTypeのcallback順は維持。
+文字列配列のflat/mixed/nested/境界前後/空配列/構文・変換エラー/Reader・Stream/depth/型callbackを
+旧経路と比較し、変更前後とも166テスト成功。Class指定以外のgeneric elementも同じ添字で変換する。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+ReaderStringBenchmark、ReaderからString[]へ、13個に1個null。
+件数/分布	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+100/plain	3.605 +/- 0.084	3.334 +/- 0.081	10448 → 9504
+100/escaped	5.425 +/- 0.209	5.388 +/- 0.215	13416 → 12472
+1000/plain	36.860 +/- 0.260	33.959 +/- 0.421	68368 → 60208
+1000/escaped	59.549 +/- 1.461	54.518 +/- 1.401	111224 → 103064
+
+plain/100・1000は約8%、escaped/1000は約8%の時間短縮。escaped/100は信頼区間が重なる。
+100で944 B/op、1000で8160 B/opの削減。割り当て削減率は今回の分布で約7〜12%。
+Beanの対照（100件、Reader、priceNotation=plain）:
+text	変更前(us/op)	変更後(us/op)	割り当て(B/op、同じ)
+ascii	40.568 +/- 1.023	41.284 +/- 0.827	51896
+japanese	45.182 +/- 1.046	45.355 +/- 0.897	56792
+
+両条件とも時間差は信頼区間が重なり、割り当ても同じ。Beanの速度向上は主張しない。
+Jackson 3.2.3の同じString[]入力の1000件を再測定:
+分布	Jackson(us/op)	JSONIC/Jacksonの平均時間比
+plain	16.239 +/- 0.248	2.09
+escaped	25.458 +/- 0.644	2.14
+
+100件のJacksonは今回再測定していない。第45段階の同一入力の結果と区別する。
+生データ・試作ソース・検証ログ: target/performance-phase46/
+ソースコピー: /tmp/jsonic-phase46-vt40_bza/
+goalは継続中。次はバッファに収まるtrue/false/nullの走査を検証する。
+
+第46段階を統合後、mvn -Pbenchmark verify成功、166テスト成功。
+git -c core.whitespace=cr-at-eol diff --check成功。統合ログをtarget/performance-phase46/へ保存。
+
+第47段階: バッファ内のtrue/false/nullをまとめて読む（2026-10-03）
+標準ReaderInputSourceで、既にバッファに収まるリテラルを照合してoffset/columnsをまとめて進める。
+不一致・途中での補充・改行は元の走査へ戻り、失敗したprobeでは入力を消費しない。
+元のparseLiteralと同じくliteral直後のdelimiterは呼び出し側が検証する。
+subclassのInputSourceは元のnext呼び出しを維持。maxDepth、public eventと値、エラー位置も保持。
+変更前164テスト、最終版166テスト成功（第46段階とは独立した第45段階後のコピーで検証）。
+literal/invalid suffix/不足したprefix/複数root/改行/補充/depth/mark/back/copy/subclassを旧経路と比較。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+TypedArrayBenchmark、Reader、開始値0、13個に1個null。
+件数/型	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+100/boolean	1.772 +/- 0.056	1.480 +/- 0.066	3672 → 3684
+100/double	1.712 +/- 0.033	1.737 +/- 0.020	4368 → 4368
+1000/boolean	16.275 +/- 0.239	12.370 +/- 0.180	11808 → 11808
+1000/double	15.842 +/- 0.124	16.064 +/- 0.212	18864 → 18864
+
+booleanは100件で約16%、1000件で約24%の時間短縮。
+doubleの対照は両サイズで信頼区間が重なるため、改善/悪化を断定しない。
+100/booleanの12 B/op増加はSource/Parserのfield追加によるものではなく、JVM最適化の違いがあり得る。
+Beanの対照（100件、Reader、priceNotation=plain）:
+text	変更前(us/op)	変更後(us/op)	割り当て(B/op、同じ)
+ascii	40.456 +/- 0.651	39.983 +/- 0.659	51896
+japanese	44.968 +/- 0.867	44.301 +/- 0.696	56792
+
+Beanの時間差も信頼区間が重なる。割り当ては同じ。Beanの速度向上は主張しない。
+Jackson 3.2.3の同じboolean[]入力を再測定（nullをfalseへ変換する設定）:
+件数	Jackson(us/op)	JSONIC/Jacksonの平均時間比
+100	0.696 +/- 0.012	2.13
+1000	5.411 +/- 0.062	2.29
+
+boolean配列は依然Jacksonより約2.1〜2.3倍の時間がかかる。
+生データ・試作ソース・検証ログ: target/performance-phase47/
+ソースコピー: /tmp/jsonic-phase47-n3v1_xp6/
+次はignored whitespaceの走査と、改善後のReaderで残る変換・トークン処理を調べる。
+構文/位置/補充順序/カスタム入力・cache/全体検証後の変換を維持する。
+
+第46・47段階を作業ツリーに統合後、mvn -Pbenchmark verify成功、全169テスト成功。
+git -c core.whitespace=cr-at-eol diff --check成功。第47段階の統合ログを保存。
+組み合わせの再確認（1000要素、同じ正式JMH条件）:
+integration-boolean.json: 12.437 +/- 0.129 us/op、11808 B/op。
+integration-string.json: 34.101 +/- 0.735 us/op、60208 B/op。
+両条件とも単独採用版の信頼区間と重なり、組み合わせで明確な性能低下は確認されない。
+goalは継続中。次はReaderのignored whitespaceの走査を検証する。
+
+第48段階: Readerで読み捨てる空白をまとめて走査（2026-10-03）
+標準JSONParser/ReaderInputSourceかつignoreWhitespace=trueだけ、space/tabをバッファ内でまとめて進める。
+CR/LFは従来のnextで行番号と列を更新し、mark/補充/非空白でのbackを維持する。
+空白がないprobeはfieldを書き戻さない調整版を最終採用。
+空白イベントを取得するモード、入力・パーサーsubclassのcallbackは元の経路を維持。
+変更前170テスト、最終版172テスト成功。イベント/値/深さ/不完全入力/不正文字/長い空白/
+CR/LF/CRLF/補充時のReader.read要求とoffset・line・column/mark/back/copyを旧経路と比較。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+WhitespaceBenchmark、Reader、arrayはint[]1000件、beanは100件。
+layout/payload	変更前(us/op)	最終版(us/op)	割り当て前→後(B/op)
+compact/array	15.688 +/- 0.300	15.532 +/- 0.327	14864 → 14864
+compact/bean	40.265 +/- 0.732	40.586 +/- 0.622	51896 → 51896
+pretty/array	21.561 +/- 0.543	21.575 +/- 0.394	14864 → 14864
+pretty/bean	62.640 +/- 1.310	64.430 +/- 1.641	51896 → 51896
+indented/array	31.512 +/- 0.430	27.918 +/- 2.486	14864 → 14864
+indented/bean	71.587 +/- 1.790	65.119 +/- 2.102	51896 → 51896
+
+prettyはJacksonのdefault pretty printer。indentedはarrayを各行8space+CRLF、
+beanをprettyの各改行の後に8spaceを追加したもの。値や文字列の内容は同じ。
+indented/arrayは約11%、indented/beanは約9%の時間短縮。compact/prettyは信頼区間が重なる。
+pretty/beanは平均で約3%遅いが信頼区間が重なるため、改善/悪化を断定しない。
+割り当ては全条件で同じ。空白の長さによって効果が異なり、普遍的な倍率を主張しない。
+公開JSONReaderのString入力を使う対照（pretty、同じpayload）:
+payload	変更前(us/op)	最終版(us/op)	割り当て前→後(B/op)
+array	24.143 +/- 0.300	21.950 +/- 0.324	39976 → 39976
+bean	49.940 +/- 0.880	45.976 +/- 1.405	15016 → 15016
+
+このString対照にも時間短縮が見える（array約9%、bean約8%）。String入力は元の走査ループを使う。
+Readerの経路を分けたことによるJVM最適化の違いが影響し得るので、helperの直接効果とは扱わない。
+Jackson 3.2.3のReader decode（pretty/indented、同じ入力と結果を確認）:
+layout/payload	Jackson(us/op)	JSONIC/Jacksonの平均時間比
+pretty/array	12.836 +/- 0.151	1.68
+pretty/bean	25.495 +/- 1.103	2.53
+indented/array	16.567 +/- 0.172	1.69
+indented/bean	29.367 +/- 1.364	2.22
+
+今回のJSONICはJacksonより約1.68〜2.53倍の時間がかかる。compactは今回Jacksonを再測定していない。
+生データ・試作ソース・検証ログ: target/performance-phase48/
+ソースコピー: /tmp/jsonic-phase48-3ssc5h2n/
+goalは継続中。次はReaderのboolean token bufferの三状態圧縮を実測で検討する。
+短い配列と数値・文字列・入れ子のフォールバック、元のnull/Boolean、error/callback順を維持する。
+
+第48段階を作業ツリーに統合後、mvn -Pbenchmark verify成功、全172テスト成功。
+git -c core.whitespace=cr-at-eol diff --check成功。統合ログをtarget/performance-phase48/へ保存。
+
+第49段階（不採用）: 長いReader boolean[]のtokenを三状態byteへ圧縮（2026-10-03）
+Readerの平坦なboolean[]で最初のObject[]32要素を超えた時、false/true/nullを0/1/2として保持する案。
+数字/文字列/入れ子が現れた場合とerrorの元データが必要な場合にObject[]とend offsetを復元。
+GenericArrayTypeのcomponent callback、全体検証後の変換、元のnull位置と原因・pathを比較し、
+変更前後で171テスト成功（第47段階の後の独立コピー）。短い/引用符/数値/遅い混在を対照。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+ReaderBooleanBenchmark、13個に1個null。literal以外の対照は末尾1要素だけを数値/引用符付きに変更。
+件数/分布	変更前(us/op)	試作(us/op)	割り当て前→後(B/op)
+100/literal	1.408 +/- 0.037	1.498 +/- 0.038	3672 → 3096
+100/numericLast	1.489 +/- 0.053	1.765 +/- 0.039	3696 → 3660
+100/quotedLast	1.590 +/- 0.099	1.769 +/- 0.042	3800 → 3752
+1000/literal	12.283 +/- 0.241	11.686 +/- 0.134	11808 → 5856
+1000/numericLast	12.642 +/- 0.121	14.714 +/- 0.255	11848 → 10008
+1000/quotedLast	12.664 +/- 0.194	14.772 +/- 0.213	11952 → 10112
+
+literal/1000は約5%短縮、割り当ては約50%減る。一方でliteral/100は約6%遅くなり、
+末尾のmixed valueの対照は約11〜19%遅い。通常のfallbackに無視できない負担があるため不採用。
+quoted/numeric全要素の予備対照はほぼ同じだが、formalの明確な悪化を優先する。
+productionのbyte token実装は採用しない。互換性試験・ReaderBooleanBenchmarkを再現用に残す。
+Jacksonはこの案では再測定していない。literalの同一入力は第47段階の結果を参照。
+生データ・試作ソース・検証ログ: target/performance-phase49/
+ソースコピー: /tmp/jsonic-phase49-hv7jhxep/
+次は改善済みのReader boolean[]をprofileし、実際に残っているCPU処理から候補を選ぶ。
+
+第49段階の再現用試験・benchmarkを統合後、mvn -Pbenchmark verify成功、全174テスト成功。
+git -c core.whitespace=cr-at-eol diff --check成功。productionは第48段階までの採用版。
+改善後のReader boolean[]1000をStackProfilerで予備調査（3warmup/3measurement/1fork）:
+RUNNABLE表示のafterValue 34.4%、JSONReader.readTyped 5.5%、beforeValue 3.5%、
+JSONParser.next 2.0%、ReaderInputSource.get 1.5%、TypedDecoder.booleans 1.3%、addFlat 0.9%。
+50%はfiltered/emptyなので全CPUの正確な割合とは扱わない。afterValueのサンプルには
+インラインされた下位処理が含まれ得る。profileのscoreは正式な速度比較に使わない。
+次はafterValueのseparator判定と、その中に入るliteral走査の残る処理を実測で検討する。
+生データ・統合ログ・profile: target/performance-phase49/
+goalは継続中。第48段階で誤差を超える改善があり、ReaderのCPU候補の調査は未完了。
+
+第51段階（不採用）: true/false/nullの固定文字照合（2026-10-03）
+ReaderInputSource.readLiteralで、internされた3語を直接比較する案。
+一般のexpected文字列とnew Stringの引数は元のloopへ戻す。位置/失敗probe/改行/不足したprefixを維持。
+変更後175テスト成功。追加のintern/non-intern引数の互換性試験を再現用に残す。
+第50段階の変更前と同一productionソースを共通の基準として逐次比較。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+1000要素、Reader、開始値0、13個に1個null。
+型	変更前(us/op)	試作(us/op)	割り当て(B/op、同じ)
+boolean	12.324 +/- 0.456	12.280 +/- 0.245	11808
+double	16.079 +/- 0.244	15.845 +/- 0.551	18864
+Bean100/ascii/plain: 41.170 +/- 2.074 → 39.630 +/- 0.966 us/op、51896 B/op。
+
+全条件で時間の信頼区間が重なるため、速度改善は確認できない。productionへの採用はしない。
+Jacksonはこの案では再測定していない。生データ・試作ソース・検証ログ: target/performance-phase51/
+ソースコピー: /tmp/jsonic-phase51-v_3m9_5q/（共通基準のログは/tmp/jsonic-phase50-pil78z3d/before/）。
+
+第50段階: comma後のコンテナ種別を一度だけ判定（2026-10-03）
+標準JSONParserかつignoreWhitespace=trueで、comma後のgetBeginTypeを一回にまとめ、arrayを先に判定。
+中間stateとイベントclearを先に行い、InputSourceの再入に同じstateを見せる。
+subclassと空白event取得のモードは旧経路を維持。構文/深さ/位置/補充/invalid prefix/再入を比較し、
+変更前後174テスト成功。第51段階の追加試験は別途再現用として残す。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+TypedArrayBenchmark、Reader、13個に1個null。
+件数/開始値/型	変更前(us/op)	変更後(us/op)	割り当て(B/op、同じ)
+100/0/boolean	1.443 +/- 0.046	1.342 +/- 0.027	3672
+100/0/double	1.717 +/- 0.033	1.655 +/- 0.013	4368
+1000/0/boolean	12.324 +/- 0.456	11.869 +/- 0.358	11808
+1000/0/double	16.079 +/- 0.244	15.063 +/- 0.135	18864
+1000/100000/int	17.567 +/- 0.333	17.041 +/- 0.279	37016
+1000/100000/double	17.570 +/- 0.229	16.989 +/- 0.214	41016
+
+開始値0のdoubleは100/1000で約4%/6%、boolean/100は約7%、開始値100000のdouble/1000は約3%短縮。
+boolean/1000と開始値100000のint/1000は信頼区間が重なるため、速度改善を主張しない。
+Beanの対照（Reader、100件、priceNotation=plain）:
+text	変更前(us/op)	変更後(us/op)	割り当て(B/op、同じ)
+ascii	41.170 +/- 2.074	40.136 +/- 0.635	51896
+japanese	43.880 +/- 0.606	44.226 +/- 0.851	56792
+
+両Beanの時間差は信頼区間が重なる。割り当ては全条件で同じ。Jacksonは今回再測定していない。
+生データ・試作ソース・検証ログ: target/performance-phase50/
+ソースコピー: /tmp/jsonic-phase50-pil78z3d/
+次はリテラルの先頭文字を再度読まない案を検証する。
+
+第50段階と第51段階の互換性試験を統合後、mvn -Pbenchmark verify成功、全175テスト成功。
+統合ログ: target/performance-phase50/integration-verify.log。
+
+第52段階（不採用）: true/false/nullの先頭文字を再利用（2026-10-03）
+標準Parser/ReaderInputSourceのみ、beforeRoot/beforeValueですでに読んだ一文字を戻さず、
+残りのsuffixをbuffer内で照合する案。不足/不一致は元のbackとparseLiteralへ戻す。
+独立版174テスト、採用済み第50段階との組み合わせ175テスト成功。
+5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+独立版は第50段階の変更前と同じproductionを共通基準に使用。
+型/1000要素	共通基準(us/op)	独立試作(us/op)
+boolean	12.324 +/- 0.456	11.765 +/- 0.248
+double	16.079 +/- 0.244	15.525 +/- 0.240
+Bean100/ascii/plain: 41.170 +/- 2.074 → 39.917 +/- 0.497 us/op（信頼区間は重なる）。
+
+採用済み第50段階に追加した場合の比較（Reader、開始値0、13個に1個null）:
+件数/型	第50段階(us/op)	組み合わせ(us/op)	割り当て(B/op、同じ)
+100/boolean	1.342 +/- 0.027	1.301 +/- 0.044	3672
+100/double	1.655 +/- 0.013	1.630 +/- 0.017	4368
+1000/boolean	11.869 +/- 0.358	11.345 +/- 0.338	11808
+1000/double	15.063 +/- 0.135	15.700 +/- 0.527	18864
+
+全条件で信頼区間が重なる。double/1000の平均は約4%増え、安定した追加効果が確認できないため不採用。
+productionは第50段階の採用版を維持する。Jacksonは今回再測定していない。
+生データ・試作ソース・検証ログ: target/performance-phase52/
+ソースコピー: /tmp/jsonic-phase52-x0s4epow/（共通基準と採用版は第50段階のコピー）。
+次はコンテナ種別をpush/pop時に保持し、getBeginTypeのList参照を省く案を検証する。
+
+第53段階（不採用）: コンテナ種別をpush/pop時に保持（2026-10-03）
+getBeginTypeのList参照を省くため、private fieldへ現在の種別を保持する案。
+private stackの更新と同時に保持値を変更する。全175テスト成功。
+第50段階の採用版と比較、5warmup/5measurement/2fork/GC、Java21.0.2/JMH1.37、us/op、99.9% CI。
+Reader/1000要素/開始値0/13個に1個null:
+型	第50段階(us/op)	試作(us/op)	割り当て(B/op、同じ)
+boolean	11.869 +/- 0.358	12.183 +/- 1.056	11808
+double	15.063 +/- 0.135	15.323 +/- 0.615	18864
+Bean100/ascii/plain: 40.136 +/- 0.635 → 40.507 +/- 0.600 us/op、51896 B/op。
+全条件で信頼区間が重なり、平均でも改善しないため不採用。
+生データ・試作ソース・検証ログ: target/performance-phase53/
+ソースコピー: /tmp/jsonic-phase53-4nhb1le5/。
+productionは第50段階を維持。最終版のCPU調査とJackson 3の代表条件の再比較を行う。
+
+Reader boolean[]のJackson 3との原因切り分け（2026-10-03）
+ユーザーの指摘に基づき、分岐の微調整ではなくReader経路の構造差を調査。
+比較に使ったJackson 3.2.3の公式sources.jarをMaven Centralから取得して確認。
+core: https://repo.maven.apache.org/maven2/tools/jackson/core/jackson-core/3.2.3/jackson-core-3.2.3-sources.jar
+databind: https://repo.maven.apache.org/maven2/tools/jackson/core/jackson-databind/3.2.3/jackson-databind-3.2.3-sources.jar
+ReaderBasedJsonParser: buffered char[]を直接参照し、comma処理から次の値へ進み、
+true/false/nullのsuffixと次の文字を照合する。位置はbuffer cursorと行頭位置から計算。
+BooleanDeser: nextTokenのVALUE_TRUE/FALSE/NULLをboolean[] chunkへ直接格納する。
+JSONIC: ReaderInputSourceのnext/backが位置を更新し、JSONParserの状態・イベントを通り、
+readTypedがBoolean singleton/null参照をObject[]へ蓄積、全入力検証後にboolean[]へ変換する。
+各要素に新しいBoolean objectを生成しているわけではない。
+
+1000要素、13個に1個null、他はtrue/false交互、compactな同一入力5463文字。
+Java21.0.2/JMH1.37、5warmup/5measurement/2fork、1thread、heap256MiB、GC、us/op、99.9% CI。
+通常のReader経路は現在の採用版（第50段階）。セットアップで値の一致とevent checksum一致を確認。
+Jackson strictはFAIL_ON_TRAILING_TOKENSを有効化。NULL primitive failureは両Jacksonで無効化。
+イベント/tokenの対照は両方ともEOFまで読む。戻り値は全tokenとbooleanの値を反映したchecksum。
+条件	時間(us/op)	割り当て(B/op)
+jacksonReader	5.482 +/- 0.079	3584
+jacksonReaderTokens	4.732 +/- 0.097	712
+jacksonStrictReader	5.468 +/- 0.097	3584
+jsonicCopyThenString	7.304 +/- 0.878	29800
+jsonicReader	11.875 +/- 0.233	11808
+jsonicReaderEvents	10.137 +/- 0.215	2536
+jsonicString	3.688 +/- 0.118	2184
+
+Readerのread(char[],off,len)回数: JSONIC 7回/最大要求1004、Jackson通常・strictとも3回/最大要求4000。
+両方とも5463文字を取得。実Readerに対する一文字ずつのreadではない。
+JSONIC copyThenStringはStringReader.transferTo(StringWriter)、toString後に既存のString専用scanを実行。
+copy込みで約38%時間短縮（11.875→7.304）、割り当ては11808→29800 B/opで約2.52倍。
+全文保持とReader callback/補充要求等が異なるので、この対照を仕様維持の改善として採用しない。
+EOF検証を有効にしてもJackson 5.482→5.468で信頼区間内。末尾検証の差が主因とは確認されない。
+Reader event/tokenだけでも10.137/4.732=約2.14倍。配列生成前から差がある。
+イベント対照とfull decodeは実行経路が異なるため、時間の差分で厳密なCPU割合は算出しない。
+
+バッファ容量だけの対照: ReaderInputSourceのchar[1024]をchar[4000]へ変更したclassを別CPで使用。
+同じセットアップの値/checksumが一致。Reader呼び出しは3回/最大要求3980へ減った。
+時間 12.699 +/- 0.238 us/op、割り当て 17760 B/op。
+元の11.875 +/- 0.233から約7%遅い。バッファ容量を揃えるだけでは差は埋まらない。
+これは原因切り分け専用の対照で、productionには反映しない。
+
+判断: Reader上の汎用イベントパーサーに大きな差が残る。Object[]中間表も追加負荷だが単独の主因とはしない。
+次に検討する価値があるのは、標準JSONの型指定boolean[]について、Reader bufferの走査とprimitive生成を
+統合した内部経路。前回のbyte中間表案（第49段階）は汎用パーサーを残し、混在fallbackで退行した別の案。
+構文検証、null/引用符/数値/入れ子への従来変換、深さ、補充時のcallback/位置、例外の元データと順序を
+維持できるかは、専用経路の実装で検証が必要。速度改善倍率はまだ保証しない。
+微調整の不採用が続いたことだけから、構造的なReader改善も誤差しかないと判断したのは早かった。
+この調査はgoalの再開やproduction変更を伴わない。対象は今回のcompact boolean[]、実I/Oや短いreadは未測定。
+生データ、診断用Javaソース、Jackson3.2.3ソース、容量対照: target/performance-reader-investigation/
+再現: 同ディレクトリのReaderBooleanInvestigation.javaをJMH annotation processor付きjavacでcompile。
+classes:target/classes:target/benchmark-classpath.txtの依存をCPとし、同class全methodをJMHで上記条件で実行。
+
+第55段階: Readerのboolean[]でbuffer走査とprimitive生成を統合（2026-10-03）
+標準JSON、target Typeがboolean[].class、標準Parser/ReaderInputSource、depth3〜64に限定。
+バッファ内の完全なtrue/false/nullとcommaをまとめて処理し、boolean[]へ直接格納する。
+位置は消費文字数分だけまとめて更新し、補充・空白・不完全なliteral・不正なseparatorはnext()へ戻す。
+Readerのrequest length、refill時のoffset/line/columnとParserの値・深さを旧経路と比較。
+null位置はlong bit maskに保持。数値/文字列/入れ子では読み済みのBoolean/nullを元のtoken bufferへ復元し、
+全文検証後に従来変換する。初期の値がbuffer走査対象外ならprimitive bufferを確保しない。
+GenericArrayType、カスタムJSON/Source/Parser、低い/高いdepthは従来経路を使う。
+純粋な配列も末尾のEOF/不正文字を検証してから結果を返す。buffer容量と補充要求を変えない。
+
+試作版で全179テスト成功。境界/混在/不正末尾/切断prefix/short read/乱数混合を追加検証。
+UTF-8/16LE/16BE/32LE/32BEとI/O例外、元のnullを含む変換例外を比較。
+統合時に4096件超の混在復元とSource/Parser subclassの追加試験も実行する。
+最初の試作は混在復元の容量が不足して再拡張が起きたため、追加値/root用の余裕を持たせて修正。
+最終案を以下の正式測定で比較。予備測定のscoreから速度を主張しない。
+Java21.0.2/JMH1.37、Jackson3.2.3、5warmup/5measurement/2fork、heap256MiB、1thread、GC。
+ReaderBooleanBenchmark、Reader入力、13個に1個null、literalはtrue/false交互。
+numeric/quotedは全non-null値を数値/引用符付きに、numericLast/quotedLastは末尾1要素のみ変更。
+us/op、+/-は99.9% CI。
+件数/分布	変更前(us/op)	変更後(us/op)	割り当て前→後(B/op)
+100/literal	1.397 +/- 0.019	0.383 +/- 0.015	3672 → 2832
+100/numeric	3.620 +/- 0.093	3.711 +/- 0.049	3708 → 3720
+100/quoted	5.515 +/- 0.097	5.636 +/- 0.151	5716 → 5728
+100/numericLast	1.544 +/- 0.069	0.827 +/- 0.010	3696 → 3376
+100/quotedLast	1.564 +/- 0.065	0.847 +/- 0.027	3800 → 3480
+1000/literal	12.095 +/- 0.074	2.038 +/- 0.045	11808 → 5840
+1000/numeric	34.840 +/- 0.565	35.039 +/- 0.585	24768 → 24768
+1000/quoted	53.823 +/- 0.801	53.716 +/- 1.047	26720 → 26720
+1000/numericLast	12.645 +/- 0.176	5.190 +/- 0.119	11848 → 10000
+1000/quotedLast	12.893 +/- 0.318	5.278 +/- 0.142	11952 → 10104
+
+literalは100/1000で約3.65/5.93倍高速。割り当ては約23/51%削減。
+末尾mixedは100で約1.84〜1.87倍、1000で約2.44倍。割り当ては約8〜16%削減。
+numeric/quotedの全要素対照は全条件で信頼区間が重なる。100件は平均で約2〜3%増えるため、
+混在全体の普遍的な改善は主張しない。100件で12B/opの増加、1000件は割り当て同一。
+
+Jackson3.2.3の同一入力・同じ正式条件での再測定:
+件数	JSONIC(us/op)	Jackson3(us/op)	Jacksonの時間/JSONICの時間
+100	0.383 +/- 0.015	0.717 +/- 0.008	1.87
+1000	2.038 +/- 0.045	5.598 +/- 0.089	2.75
+
+対照（JSONIC、同じ5/5/2fork/GC、割り当て同一）:
+double: 15.448 +/- 0.294 → 15.635 +/- 0.522 us/op。
+bean: 41.086 +/- 0.890 → 42.147 +/- 3.097 us/op。
+doubleはReader/1000要素/開始0、BeanはReader/100件/ascii/plain。両条件で時間のCIは重なる。
+今回の効果はcompactなリテラルboolean配列と長いliteral prefixが主な対象。
+空白の多い配列や全要素の数値/文字列を同じ倍率で高速化したとは主張しない。
+生データ・試作ソース・検証ログ: target/performance-phase55/
+ソースコピー: /tmp/jsonic-phase55-ga8l5uzo/。採用版の3ファイルと追加試験を作業ツリーへ反映。
+
+第55段階を統合後、mvn -Pbenchmark verify成功、全181テスト成功（失敗・エラー・skipなし）。
+git -c core.whitespace=cr-at-eol diff --check成功。統合ログ: target/performance-phase55/integration-verify.log。

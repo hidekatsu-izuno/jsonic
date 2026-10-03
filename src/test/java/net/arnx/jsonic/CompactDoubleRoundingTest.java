@@ -21,6 +21,11 @@ public class CompactDoubleRoundingTest {
         }
     }
 
+    @Test public void negativeScaleMultiplicationMatchesBigDecimalBits() {
+        Random random = new Random(131201);
+        for (int i = 0; i < 20000; i++) check(random.nextLong() % 10000000000000000L, -1 - random.nextInt(18));
+    }
+
     @Test public void binaryMidpointsAndPowerOfTwoBoundariesMatchBigDecimal() {
         for (int exponent = -7; exponent <= 59; exponent++) {
             double power = Math.scalb(1.0, exponent);
