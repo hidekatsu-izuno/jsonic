@@ -84,7 +84,7 @@ final class StringTreeDecoder extends StringScanner {
     private Object array(int depth) {
         position++;
         whitespace();
-        if (take(']')) return new ArrayList<Object>(0);
+        if (take(']')) return new ArrayList<>(0);
         ArrayList<Object> values = new ArrayList<>(2);
         do {
             Object value = value(depth + 1);

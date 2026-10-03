@@ -24,7 +24,7 @@ import java.util.List;
 public class ConstructorInfo implements Comparable<ConstructorInfo> {
 	private Class<?> beanClass;
 	
-	List<Constructor<?>> constructors = new ArrayList<Constructor<?>>();
+	List<Constructor<?>> constructors = new ArrayList<>();
 	
 	public ConstructorInfo(Class<?> beanClass, Collection<Constructor<?>> constructors) {
 		this.beanClass = beanClass;

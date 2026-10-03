@@ -72,7 +72,7 @@ import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaClass;
 import org.apache.commons.beanutils.DynaProperty;
 
-@SuppressWarnings({"unchecked", "unused", "serial", "rawtypes"})
+@SuppressWarnings({"unchecked", "unused", "rawtypes"})
 public class JSONTest {
 
 	static class JSONTester implements Callable<Object> {
@@ -147,7 +147,7 @@ public class JSONTest {
 
 		assertEquals("[\"ja\"]", JSON.encode(new Object[] {Locale.JAPANESE}));
 		assertEquals("[\"ja-JP\"]", JSON.encode(new Object[] {Locale.JAPAN}));
-		assertEquals("[\"ja-JP-osaka\"]", JSON.encode(new Object[] {new Locale("ja", "JP", "osaka")}));
+		assertEquals("[\"ja-JP-osaka\"]", JSON.encode(new Object[] {Locale.of("ja", "JP", "osaka")}));
 
 		Date date = new Date();
 		assertEquals("[" + date.getTime() + "]", JSON.encode(new Object[] {date}));
@@ -247,7 +247,7 @@ public class JSONTest {
 
 		list = new ArrayList<Object>();
 		list.add(new URI("http://www.google.co.jp/"));
-		list.add(new URL("http://www.google.co.jp/"));
+		list.add(new URI("http://www.google.co.jp/").toURL());
 		list.add(InetAddress.getByName("localhost"));
 		list.add(Charset.forName("UTF-8"));
 		list.add(uuid);
@@ -461,6 +461,7 @@ public class JSONTest {
 	}
 
 	public static class HogeList extends ArrayList<MyData> {
+		private static final long serialVersionUID = 1L;
 
 	}
 
@@ -611,7 +612,7 @@ public class JSONTest {
 		TestClassLoader cl = new TestClassLoader(getClass().getClassLoader());
 		Class cls = cl.loadClass("net.arnx.jsonic.TestClassLoader$TestBean");
 
-		assertEquals(cls.newInstance(), JSON.decode("{\"class\": {\"classloader\": {\"vulnerability\": true}}}", cls));
+		assertEquals(cls.getDeclaredConstructor().newInstance(), JSON.decode("{\"class\": {\"classloader\": {\"vulnerability\": true}}}", cls));
 	}
 
 	@Test
@@ -1624,7 +1625,7 @@ public class JSONTest {
 		assertEquals(new URI("http://www.google.co.jp"), json.convert(uris, URI.class));
 
 		// URL
-		assertEquals(new URL("http://www.google.co.jp"), json.convert("http://www.google.co.jp", URL.class));
+		assertEquals(new URI("http://www.google.co.jp").toURL(), json.convert("http://www.google.co.jp", URL.class));
 
 		// File
 		assertEquals(new File("./hoge.txt"), json.convert("./hoge.txt", File.class));
@@ -1770,6 +1771,7 @@ class TestBeanWrapper {
 
 @SuppressWarnings("rawtypes")
 class TestBean implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private int a;
 	public void setA(int a) { this.a = a; }
 	public int getA() { return a; }
@@ -2240,10 +2242,12 @@ class InheritedBean {
 
 
 class InheritList extends ArrayList<String> {
+	private static final long serialVersionUID = 1L;
 
 };
 
 class InheritMap extends LinkedHashMap<Integer, String> {
+	private static final long serialVersionUID = 1L;
 
 };
 
@@ -2281,7 +2285,7 @@ class InheritList2 implements List<String> {
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		return list.contains(c);
+		return list.containsAll(c);
 	}
 
 	@Override

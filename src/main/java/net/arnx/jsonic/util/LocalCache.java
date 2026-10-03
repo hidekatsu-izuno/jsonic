@@ -121,12 +121,12 @@ public class LocalCache {
 	public <T> T get(Class<T> cls, Object key, Provider<T> provider) {
 		Map<Object, Object> map = null;
 		if (formatCache == null) {
-			formatCache = new HashMap<Class<?>, Map<Object, Object>>();
+			formatCache = new HashMap<>();
 		} else {
 			map = formatCache.get(cls);
 		}
 		if (map == null) {
-			map = new HashMap<Object, Object>();
+			map = new HashMap<>();
 			formatCache.put(cls, map);
 		}
 		Object f = map.get(key);

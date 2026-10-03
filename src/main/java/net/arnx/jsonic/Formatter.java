@@ -692,7 +692,8 @@ final class ObjectArrayFormatter implements Formatter {
 		final JSONHint hint = context.getHint();
 
 		Class<?> lastClass = null;
-		Formatter lastFormatter = null;
+		// The cache is used only after lastClass matches a non-null value.
+		Formatter lastFormatter = NullFormatter.INSTANCE;
 		Class<?> cType = array.getClass().getComponentType();
 
 		out.append('[');
@@ -879,7 +880,8 @@ final class ListFormatter implements Formatter {
 		final int length = list.size();
 
 		Class<?> lastClass = null;
-		Formatter lastFormatter = null;
+		// The cache is used only after lastClass matches a non-null value.
+		Formatter lastFormatter = NullFormatter.INSTANCE;
 
 		out.append('[');
 		int count = 0;
@@ -935,7 +937,8 @@ final class IteratorFormatter implements Formatter {
 		final JSONHint hint = context.getHint();
 
 		Class<?> lastClass = null;
-		Formatter lastFormatter = null;
+		// The cache is used only after lastClass matches a non-null value.
+		Formatter lastFormatter = NullFormatter.INSTANCE;
 
 		out.append('[');
 		int count = 0;
@@ -1013,7 +1016,8 @@ final class EnumerationFormatter implements Formatter {
 		int count = 0;
 
 		Class<?> lastClass = null;
-		Formatter lastFormatter = null;
+		// The cache is used only after lastClass matches a non-null value.
+		Formatter lastFormatter = NullFormatter.INSTANCE;
 		while (e.hasMoreElements()) {
 			Object item = e.nextElement();
 			if (item == src) item = null;
@@ -1095,7 +1099,8 @@ final class MapFormatter implements Formatter {
 		boolean reuseKeys = plan != null && out.getClass() == StringBuilderOutputSource.class;
 
 		Class<?> lastClass = null;
-		Formatter lastFormatter = null;
+		// The cache is used only after lastClass matches a non-null value.
+		Formatter lastFormatter = NullFormatter.INSTANCE;
 
 		out.append('{');
 		int count = 0;
@@ -1206,7 +1211,8 @@ final class ObjectFormatter implements Formatter {
 		String key = null;
 		try {
 			Class<?> lastClass = null;
-			Formatter lastFormatter = null;
+			// The cache is used only after lastClass matches a non-null value.
+			Formatter lastFormatter = NullFormatter.INSTANCE;
 
 			for (BeanProperties.ReadProperty prop : props) {
 				key = prop.name;
@@ -1260,7 +1266,7 @@ final class ObjectFormatter implements Formatter {
 	}
 
 	static PropertyInfo[] getGetProperties(Context context, Class<?> c) {
-		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
+		Map<String, PropertyInfo> props = new HashMap<>();
 
 		// Field
 		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {

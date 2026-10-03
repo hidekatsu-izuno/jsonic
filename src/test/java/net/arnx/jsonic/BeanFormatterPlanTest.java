@@ -31,6 +31,7 @@ public class BeanFormatterPlanTest {
         @Override public String toString() { return "BadBean"; }
     }
     public static class DateSubclass extends Date {
+        private static final long serialVersionUID = 1L;
         DateSubclass() { super(987654321000L); }
     }
 

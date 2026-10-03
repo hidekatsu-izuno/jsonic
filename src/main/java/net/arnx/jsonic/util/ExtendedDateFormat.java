@@ -21,6 +21,9 @@ import java.util.Date;
 import java.util.Locale;
 
 public class ExtendedDateFormat extends SimpleDateFormat {
+	// Matches the previously generated identifier to preserve serialized forms.
+	private static final long serialVersionUID = -4772280912747449714L;
+
 	boolean escape = false;
 	
 	public ExtendedDateFormat(String pattern, Locale locale) {

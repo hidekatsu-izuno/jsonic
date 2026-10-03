@@ -27,14 +27,14 @@ import java.util.WeakHashMap;
 
 public final class BeanInfo {
 	private static final Map<ClassLoader, Map<Class<?>, BeanInfo>> cache =
-		new WeakHashMap<ClassLoader, Map<Class<?>, BeanInfo>>();
+		new WeakHashMap<>();
 
 	public static BeanInfo get(Class<?> cls) {
 		synchronized(cache) {
 			BeanInfo info = null;
 			Map<Class<?>, BeanInfo> map = cache.get(cls.getClassLoader());
 			if (map == null) {
-				map = new LinkedHashMap<Class<?>, BeanInfo>(16, 0.75f, true) {
+				map = new LinkedHashMap<>(16, 0.75f, true) {
 					protected boolean removeEldestEntry(Map.Entry<Class<?>, BeanInfo> eldest) {
 						return size() > 1024;
 					};

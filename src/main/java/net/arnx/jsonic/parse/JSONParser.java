@@ -58,7 +58,7 @@ public class JSONParser {
 	private boolean compactNumbers;
 
 	private int state = BEFORE_ROOT;
-	private List<JSONEventType> stack = new ArrayList<JSONEventType>();
+	private List<JSONEventType> stack = new ArrayList<>();
 
 	private JSONEventType type;
 	private Object value;
@@ -265,6 +265,7 @@ public class JSONParser {
 				in.back();
 				return BEFORE_ROOT;
 			}
+			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		default:
 			throw createParseException(in, "json.parse.UnexpectedChar", (char)n);
 		}
@@ -691,7 +692,7 @@ public class JSONParser {
 					(c >= 'A' && c <= 'F') ? c-65+10 :
 					(c >= 'a' && c <= 'f') ? c-97+10 : -1;
 				if (hex != -1) {
-					escape |= (hex << ((5-point)*4));
+					escape = (char)(escape | (hex << ((5-point)*4)));
 					if (point != 5) {
 						point++;
 					} else {

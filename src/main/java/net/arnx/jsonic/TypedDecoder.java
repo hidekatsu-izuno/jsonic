@@ -39,13 +39,13 @@ import net.arnx.jsonic.util.ClassUtil;
  * skip subtrees and resolve duplicate keys before converting their final values.
  */
 final class TypedDecoder {
-    private static final ClassValue<Boolean> BEAN_TYPES = new ClassValue<Boolean>() {
+    private static final ClassValue<Boolean> BEAN_TYPES = new ClassValue<>() {
         @Override protected Boolean computeValue(Class<?> type) {
             return JSON.isBeanType(type);
         }
     };
 
-    private static final ClassValue<BeanConstructor> CONSTRUCTORS = new ClassValue<BeanConstructor>() {
+    private static final ClassValue<BeanConstructor> CONSTRUCTORS = new ClassValue<>() {
         @Override protected BeanConstructor computeValue(Class<?> type) {
             if (type.isInterface() || Modifier.isAbstract(type.getModifiers())
                     || ((type.isMemberClass() || type.isAnonymousClass())
@@ -524,13 +524,13 @@ final class TypedDecoder {
     private Object raw(int at) {
         if (tokens[at] == JSONEventType.START_OBJECT || tokens[at] == JSONEventType.START_ARRAY) materializeEnds();
         if (tokens[at] == JSONEventType.START_OBJECT) {
-            Map<Object, Object> result = new LinkedHashMap<Object, Object>();
+            Map<Object, Object> result = new LinkedHashMap<>();
             for (int i = at + 1; i < ends[at]; i = ends[i + 1]) {
                 result.put(tokens[i], raw(i + 1));
             }
             return result;
         } else if (tokens[at] == JSONEventType.START_ARRAY) {
-            List<Object> result = new ArrayList<Object>();
+            List<Object> result = new ArrayList<>();
             for (int i = at + 1; i < ends[at]; i = ends[i]) result.add(raw(i));
             return result;
         }

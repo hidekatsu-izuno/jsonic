@@ -39,7 +39,7 @@ import java.io.ObjectStreamClass;
 
 public final class ClassUtil {
 	private static final Map<ClassLoader, Map<String, Class<?>>> cache =
-		new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
+		new WeakHashMap<>();
 
 	public static Class<?> findClass(String name) {
 		ClassLoader cl;
@@ -54,7 +54,7 @@ public final class ClassUtil {
 			map = cache.get(cl);
 
 			if (map == null) {
-				map = new LinkedHashMap<String, Class<?>>(16, 0.75f, true) {
+				map = new LinkedHashMap<>(16, 0.75f, true) {
 					protected boolean removeEldestEntry(Map.Entry<String, Class<?>> eldest) {
 						return size() > 1024;
 					};
@@ -145,7 +145,7 @@ public final class ClassUtil {
 	}
 
 	public static Type getResolvedType(Type ptype, Class<?> pcls, Type type) {
-		Map<Type, Type> map = new HashMap<Type, Type>();
+		Map<Type, Type> map = new HashMap<>();
 		collectTypeVariableMap(ptype, pcls, map);
 
 		Type result;

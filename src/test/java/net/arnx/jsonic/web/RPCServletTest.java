@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 
 import net.arnx.jsonic.JSON;
@@ -51,7 +52,7 @@ public class RPCServletTest {
 	public void testRPC(String app) throws Exception {
 		System.out.println("\n<<START testRPC: " + app + ">>");
 		
-		URL url = new URL(server.url() + "/" + app + "/rpc/rpc/rpc.json");
+		URL url = new URI(server.url() + "/" + app + "/rpc/rpc/rpc.json").toURL();
 		HttpURLConnection con = null;
 		
 		// GET
@@ -140,7 +141,7 @@ public class RPCServletTest {
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 		
-		con = (HttpURLConnection)new URL(server.url() + "/" + app + "/rpc/rpc/calc.json").openConnection();
+		con = (HttpURLConnection)new URI(server.url() + "/" + app + "/rpc/rpc/calc.json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -151,7 +152,7 @@ public class RPCServletTest {
 				JSON.decode(read(con.getInputStream())));
 		con.disconnect();
 
-		con = (HttpURLConnection)new URL(server.url() + "/" + app + "/rpc/rpc/calc.json").openConnection();
+		con = (HttpURLConnection)new URI(server.url() + "/" + app + "/rpc/rpc/calc.json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -307,7 +308,7 @@ public class RPCServletTest {
 		con.disconnect();
 		
 		// DUMMY
-		url = new URL(server.url() + "/" + app + "/rpc/test.json");
+		url = new URI(server.url() + "/" + app + "/rpc/test.json").toURL();
 		con = (HttpURLConnection)url.openConnection();
 		con.setRequestMethod("POST");
 		con.connect();

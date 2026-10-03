@@ -45,6 +45,9 @@ import static jakarta.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
 
 public class RPCServlet extends HttpServlet {	
+	// Matches the previously generated identifier to preserve serialized forms.
+	private static final long serialVersionUID = -1326925229150276877L;
+
 	static class Config {
 		public Class<? extends Container> container;
 		
@@ -68,7 +71,7 @@ public class RPCServlet extends HttpServlet {
 		JSON json = new JSON();
 		
 		if (configText == null) {
-			Map<String, String> map = new HashMap<String, String>();
+			Map<String, String> map = new HashMap<>();
 			Enumeration<String> e =  cast(servletConfig.getInitParameterNames());
 			while (e.hasMoreElements()) {
 				map.put(e.nextElement(), servletConfig.getInitParameter(e.nextElement()));
@@ -85,7 +88,7 @@ public class RPCServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 		
-		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
+		if (config.definitions == null) config.definitions = new HashMap<>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
 		
 		if (config.errors == null) config.errors = Collections.emptyMap();
@@ -107,7 +110,7 @@ public class RPCServlet extends HttpServlet {
 		
 		JSON json = null;
 		boolean isBatch = false;
-		List<Object> responseList = new ArrayList<Object>();
+		List<Object> responseList = new ArrayList<>();
 		
 		try {
 			ExternalContext.start(getServletConfig(), getServletContext(), request, response);		
@@ -135,7 +138,7 @@ public class RPCServlet extends HttpServlet {
 			json = container.createJSON(request.getLocale());
 			
 			// request processing
-			List<Object> requestList = new ArrayList<Object>(0);
+			List<Object> requestList = new ArrayList<>(0);
 			Object value = json.parse(request.getReader());
 			if (value instanceof List<?> && !((List<?>)value).isEmpty()) {
 				requestList = cast(value);					
@@ -176,7 +179,7 @@ public class RPCServlet extends HttpServlet {
 					if (req.get("params") instanceof List<?> || (rjsonrpc != null && req.get("params") instanceof Map<?, ?>)) {
 						rparams = req.get("params");
 					} else if (rjsonrpc != null && req.get("params") == null) {
-						rparams = new ArrayList<Object>(0);
+						rparams = new ArrayList<>(0);
 					} else {
 						throw new IllegalArgumentException("params must be array" + ((rjsonrpc != null) ? " or object." : "."));
 					}
@@ -209,7 +212,7 @@ public class RPCServlet extends HttpServlet {
 					json.setContext(component);
 					result = container.execute(json, component, method, params);
 				} catch (Exception e) {
-					error = new LinkedHashMap<String, Object>();
+					error = new LinkedHashMap<>();
 					if (e instanceof IllegalArgumentException) {
 						container.debug("Invalid Request.", e);
 						container.exception(e, request, response);
@@ -277,7 +280,7 @@ public class RPCServlet extends HttpServlet {
 					continue;
 				}
 				
-				Map<String, Object> responseData = new LinkedHashMap<String, Object>();
+				Map<String, Object> responseData = new LinkedHashMap<>();
 				if (rjsonrpc != null) {
 					responseData.put("jsonrpc", rjsonrpc);
 					if (result != null) responseData.put("result", result);
@@ -291,7 +294,7 @@ public class RPCServlet extends HttpServlet {
 				responseList.add(responseData);
 			}
 		} catch (Exception e) {
-			Map<String, Object> error = new LinkedHashMap<String, Object>();
+			Map<String, Object> error = new LinkedHashMap<>();
 			if (e instanceof JSONException) {
 				container.debug("Fails to parse JSON.", e);
 				error.put("code", -32700);
@@ -303,7 +306,7 @@ public class RPCServlet extends HttpServlet {
 				error.put("message", "Invalid Request.");
 			}
 			
-			Map<String, Object> responseData = new LinkedHashMap<String, Object>();
+			Map<String, Object> responseData = new LinkedHashMap<>();
 			responseData.put("jsonrpc", "2.0");
 			responseData.put("error", error);
 			responseData.put("id", null);
@@ -331,6 +334,8 @@ public class RPCServlet extends HttpServlet {
 		Writer writer = response.getWriter();
 		
 		Object target = (isBatch) ? responseList : responseList.get(0);
+		// An exception in startup or routing can precede JSON creation.
+		if (json == null) json = container.createJSON(request.getLocale());
 		json.setContext(target);
 		json.format(target, writer);
 	}
@@ -357,7 +362,7 @@ public class RPCServlet extends HttpServlet {
 		public void init(String path, Config config) {
 			this.config = config;
 			
-			this.names = new ArrayList<String>();
+			this.names = new ArrayList<>();
 			StringBuffer sb = new StringBuffer("^\\Q");
 			Matcher m = PLACE_PATTERN.matcher(path);
 			while (m.find()) {
@@ -379,7 +384,7 @@ public class RPCServlet extends HttpServlet {
 		public Route matches(HttpServletRequest request, String path) throws IOException {
 			Matcher m = pattern.matcher(path);
 			if (m.matches()) {
-				Map<String, Object> params = new HashMap<String, Object>(); 
+				Map<String, Object> params = new HashMap<>();
 				for (int i = 0; i < names.size(); i++) {
 					String key = names.get(i);
 					Object value = m.group(i+1);
@@ -388,7 +393,7 @@ public class RPCServlet extends HttpServlet {
 						if (target instanceof List) {
 							((List<Object>)target).add(value);
 						} else {
-							List<Object> list = new ArrayList<Object>(2);
+							List<Object> list = new ArrayList<>(2);
 							list.add(target);
 							list.add(value);
 						}
@@ -465,7 +470,7 @@ public class RPCServlet extends HttpServlet {
 							if (target instanceof List) {
 								((List<Object>)target).add(entry.getValue());
 							} else {
-								List<Object> list = new ArrayList<Object>();
+								List<Object> list = new ArrayList<>();
 								list.add(target);
 								list.add(entry.getValue());
 								map.put(null, list);
@@ -476,7 +481,7 @@ public class RPCServlet extends HttpServlet {
 					} else  if (target instanceof List) {
 						((List<Object>)target).add(entry.getValue());
 					} else {
-						List<Object> list = new ArrayList<Object>();
+						List<Object> list = new ArrayList<>();
 						list.add(target);
 						list.add(entry.getValue());
 						params.put(entry.getKey(), list);

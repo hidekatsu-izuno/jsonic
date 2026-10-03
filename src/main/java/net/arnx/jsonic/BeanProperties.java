@@ -45,7 +45,7 @@ final class BeanProperties {
         NamingStyle.UPPER_HYPHEN, NamingStyle.UPPER_UNDERSCORE
     };
 
-    private static final ClassValue<Plans> CACHE = new ClassValue<Plans>() {
+    private static final ClassValue<Plans> CACHE = new ClassValue<>() {
         @Override protected Plans computeValue(Class<?> type) {
             return new Plans();
         }
@@ -95,7 +95,7 @@ final class BeanProperties {
         WritePlan result = (plans != null) ? plans.write.get(index) : null;
         if (result == null) {
             Map<String, PropertyInfo> properties = ObjectConverter.getSetProperties(context, type);
-            Map<String, WriteProperty> values = new HashMap<String, WriteProperty>();
+            Map<String, WriteProperty> values = new HashMap<>();
             WriteProperty[] indexed = new WriteProperty[properties.size()];
             int i = 0;
             for (Map.Entry<String, PropertyInfo> entry : properties.entrySet()) {
@@ -123,9 +123,9 @@ final class BeanProperties {
 
     private static final class Plans {
         final AtomicReferenceArray<ReadProperty[]> read =
-                new AtomicReferenceArray<ReadProperty[]>(STYLES.length);
+                new AtomicReferenceArray<>(STYLES.length);
         final AtomicReferenceArray<WritePlan> write =
-                new AtomicReferenceArray<WritePlan>(STYLES.length);
+                new AtomicReferenceArray<>(STYLES.length);
     }
 
     private static MethodHandle publicHandle(Method method, MethodType signature) {

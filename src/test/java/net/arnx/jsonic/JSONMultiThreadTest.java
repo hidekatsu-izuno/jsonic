@@ -15,21 +15,22 @@ import org.junit.jupiter.api.Test;
 public class JSONMultiThreadTest {
 	@Test
 	public void testMultiThread() throws Exception {
-		ExecutorService service = new ThreadPoolExecutor(50, 50,
+		try (ExecutorService service = new ThreadPoolExecutor(50, 50,
 				0L, TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<Runnable>());
+				new LinkedBlockingQueue<Runnable>())) {
 
-		List<JSONTester> list = new ArrayList<JSONTester>();
-		for (int i = 0; i < 1000; i++) {
-			list.add(new JSONTester());
-		}
-		List<Future<Object>> results = service.invokeAll(list);
+			List<JSONTester> list = new ArrayList<JSONTester>();
+			for (int i = 0; i < 1000; i++) {
+				list.add(new JSONTester());
+			}
+			List<Future<Object>> results = service.invokeAll(list);
 
-		service.shutdown();
-		service.awaitTermination(60 * 1000, TimeUnit.MILLISECONDS);
+			service.shutdown();
+			service.awaitTermination(60 * 1000, TimeUnit.MILLISECONDS);
 
-		for (Future<Object> future : results) {
-			future.get();
+			for (Future<Object> future : results) {
+				future.get();
+			}
 		}
 	}
 }

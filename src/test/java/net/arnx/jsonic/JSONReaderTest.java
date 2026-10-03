@@ -43,6 +43,13 @@ public class JSONReaderTest {
 			case STRING:
 				list.add(reader.getString());
 				break;
+			case NAME:
+			case NULL:
+			case COMMENT:
+			case WHITESPACE:
+			case END_OBJECT:
+			case END_ARRAY:
+				break;
 			}
 		}
 		assertEquals(7, list.size());
@@ -58,10 +65,8 @@ public class JSONReaderTest {
 
 		reader = json.getReader("[{\"value\": \"a\"}, {\"value\": \"b\", \"child\": {\"value\": \"b1\"} }, {\"value\": \"c\"}]");
 		while ((type = reader.next()) != null) {
-			switch (type) {
-			case START_OBJECT:
+			if (type == JSONEventType.START_OBJECT) {
 				list.add(reader.getValue(ReaderBean.class));
-				break;
 			}
 		}
 		assertEquals(3, list.size());
@@ -73,10 +78,8 @@ public class JSONReaderTest {
 
 		reader = json.getReader("{\"value\": \"a\"}\n{\"value\": \"b\", \"child\": {\"value\": \"b1\"} }\n{\"value\": \"c\"}");
 		while ((type = reader.next()) != null) {
-			switch (type) {
-			case START_OBJECT:
+			if (type == JSONEventType.START_OBJECT) {
 				list.add(reader.getValue(ReaderBean.class));
-				break;
 			}
 		}
 		assertEquals(3, list.size());
@@ -110,6 +113,13 @@ public class JSONReaderTest {
 				break;
 			case NULL:
 				list.add(null);
+				break;
+			case COMMENT:
+			case WHITESPACE:
+			case START_OBJECT:
+			case END_OBJECT:
+			case START_ARRAY:
+			case END_ARRAY:
 				break;
 			}
 		}

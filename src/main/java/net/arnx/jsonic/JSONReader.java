@@ -172,6 +172,14 @@ public class JSONReader {
 			case END_OBJECT:
 				ilen--;
 				break;
+			case NAME:
+			case STRING:
+			case NUMBER:
+			case BOOLEAN:
+			case NULL:
+			case WHITESPACE:
+			case COMMENT:
+				break;
 			}
 
 			if (parser.isInterpretterMode() && ilen == 0) {
@@ -202,7 +210,7 @@ public class JSONReader {
 			case END_ARRAY: {
 				int start = istack[--ilen];
 				int len = olen - start;
-				List<Object> array = new ArrayList<Object>(len);
+				List<Object> array = new ArrayList<>(len);
 				for (int i = start; i < olen; i++) {
 					array.add(ostack[i]);
 				}
@@ -214,7 +222,7 @@ public class JSONReader {
 			case END_OBJECT: {
 				int start = istack[--ilen];
 				int len = olen - start;
-				Map<Object, Object> object = new LinkedHashMap<Object, Object>(
+				Map<Object, Object> object = new LinkedHashMap<>(
 						(len < 2) ? 4 :
 						(len < 4) ? 8 :
 						(len < 12) ? 16 :
@@ -237,6 +245,9 @@ public class JSONReader {
 				ostack[olen++] = value;
 				break;
 			}
+			case WHITESPACE:
+			case COMMENT:
+				break;
 			}
 
 			if (parser.isInterpretterMode() && ilen == 0) {

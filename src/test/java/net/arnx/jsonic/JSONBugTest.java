@@ -52,9 +52,20 @@ public class JSONBugTest {
 	}
 
 	@Test
+	public void testContainsAll() {
+		InheritList2 list = new InheritList2();
+		list.add("a");
+		list.add("b");
+		assertTrue(list.containsAll(java.util.List.of("a", "b")));
+		assertTrue(list.containsAll(java.util.List.of()));
+		assertFalse(list.containsAll(java.util.List.of("a", "c")));
+	}
+
+	@Test
 	public void testGenerics() {
 		Sample<Address> aList = JSON.decode("{\"items\":[{\"name\":\"a\"}]}", new TypeReference<Sample<Address>>(){});
-        Address address = aList.getItems().get(0);
+		Address address = aList.getItems().get(0);
+		assertEquals("a", address.getName());
 	}
 
 	public static class TestClass {

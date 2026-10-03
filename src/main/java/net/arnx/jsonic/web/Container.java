@@ -88,21 +88,31 @@ public class Container {
 		if (expire == null) expire = true;
 
 		// set encoding
-		if (encoding != null) {
-			request.setCharacterEncoding(encoding);
-			response.setCharacterEncoding(encoding);
-		}
+		request.setCharacterEncoding(encoding);
+		response.setCharacterEncoding(encoding);
 
 		// set expiration
-		if (expire != null && expire) {
+		if (expire) {
 			response.setHeader("Cache-Control", "no-cache");
 			response.setHeader("Pragma", "no-cache");
 			response.setHeader("Expires", "Tue, 29 Feb 2000 12:00:00 GMT");
 		}
 	}
 
+	// Preserve Class.newInstance's unwrapped constructor exceptions and access checks.
+	@SuppressWarnings("deprecation")
+	private static Object instantiateComponent(Class<?> type) throws Exception {
+		return type.newInstance();
+	}
+
+	// canAccess() tests language access, rather than the explicit override flag used here.
+	@SuppressWarnings("deprecation")
+	private static void makeAccessible(Method method) {
+		if (!method.isAccessible()) method.setAccessible(true);
+	}
+
 	public Object getComponent(String className) throws Exception {
-		Object o = findClass(className).newInstance();
+		Object o = instantiateComponent(findClass(className));
 
 		for (Field field : o.getClass().getFields()) {
 			Class<?> cls = field.getType();
@@ -163,7 +173,7 @@ public class Container {
 				}
 				ctypes = tmp;
 
-				if (vmethod == null || ctypes.length > vtypes.length) {
+				if (vmethod == null || vtypes == null || ctypes.length > vtypes.length) {
 					vmethod = cmethod;
 					vtypes = ctypes;
 				} else {
@@ -182,7 +192,7 @@ public class Container {
 					continue;
 				}
 
-				if (method == null || ctypes.length > types.length) {
+				if (method == null || types == null || ctypes.length > types.length) {
 					method = cmethod;
 					types = ctypes;
 				} else {
@@ -287,13 +297,13 @@ public class Container {
 			if (this.isDebugMode()) {
 				this.debug("Execute: " + toPrintString(component.getClass(), init.getName(), null));
 			}
-			if (!init.isAccessible()) init.setAccessible(true);
+			makeAccessible(init);
 			init.invoke(component);
 		}
 
 		args = this.preinvoke(component, method, args);
 
-		if (!method.isAccessible()) method.setAccessible(true);
+		makeAccessible(method);
 		result = method.invoke(component, args);
 
 		result = this.postinvoke(component, method, result);
@@ -302,7 +312,7 @@ public class Container {
 			if (this.isDebugMode()) {
 				this.debug("Execute: " + toPrintString(component.getClass(), destroy.getName(), null));
 			}
-			if (!destroy.isAccessible()) destroy.setAccessible(true);
+			makeAccessible(destroy);
 			destroy.invoke(component);
 		}
 
@@ -410,7 +420,7 @@ public class Container {
 				continue;
 			}
 
-			if (data == null) data = new LinkedHashMap<String, Object>();
+			if (data == null) data = new LinkedHashMap<>();
 			data.put(name, value);
 		}
 		return (data != null) ? data : Collections.emptyMap();

@@ -33,6 +33,7 @@ class SerializableHintTest {
     }
 
     public static class Marker implements Serializable {
+        private static final long serialVersionUID = 1L;
         static boolean read;
         static boolean written;
         private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {

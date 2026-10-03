@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -61,7 +61,7 @@ public class RESTServletTest {
 		List<Map<String, Object>> content = null;
 
 		// POST
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -71,7 +71,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// GET
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setRequestMethod("GET");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
@@ -79,7 +79,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// PUT
-		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + "/" + content.get(0).get("id") + ".json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("PUT");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -89,7 +89,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// POST
-		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + "/" + content.get(0).get("id") + ".json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -99,7 +99,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// DELETE
-		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + "/" + content.get(0).get("id") + ".json").toURL().openConnection();
 		con.setRequestMethod("DELETE");
 		con.setRequestProperty("Content-Type", "application/json");
 		con.setRequestProperty("Content-Length", "0");
@@ -109,7 +109,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// DELETE
-		con = (HttpURLConnection)new URL(url + "/" + content.get(0).get("id") + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + "/" + content.get(0).get("id") + ".json").toURL().openConnection();
 		con.setRequestMethod("DELETE");
 		con.setRequestProperty("Content-Type", "application/json");
 		con.setRequestProperty("Content-Length", "0");
@@ -119,7 +119,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// POST
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -129,7 +129,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// POST
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -139,7 +139,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// POST
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
@@ -150,27 +150,27 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// HEAD
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setRequestMethod("HEAD");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
 
 		// OPTIONS
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setRequestMethod("OPTIONS");
 		con.connect();
 		assertEquals(SC_METHOD_NOT_ALLOWED, con.getResponseCode());
 		con.disconnect();
 
 		// methods specified
-		con = (HttpURLConnection)new URL(url + ".print.json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".print.json").toURL().openConnection();
 		con.setRequestMethod("GET");
 		con.connect();
 		assertEquals(SC_OK, con.getResponseCode());
 		con.disconnect();
 
-		con = (HttpURLConnection)new URL(url + ".exception.json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".exception.json").toURL().openConnection();
 		con.setRequestMethod("GET");
 		con.connect();
 		assertEquals(SC_NOT_ACCEPTABLE, con.getResponseCode());
@@ -180,7 +180,7 @@ public class RESTServletTest {
 
 		// DUMMY
 		url = server.url() + "/" + app + "/rest/test";
-		con = (HttpURLConnection)new URL(url + ".json").openConnection();
+		con = (HttpURLConnection)new URI(url + ".json").toURL().openConnection();
 		con.setRequestMethod("GET");
 		con.connect();
 		assertEquals(SC_NOT_FOUND, con.getResponseCode());
@@ -199,7 +199,7 @@ public class RESTServletTest {
 		List<Map<String, Object>> content = null;
 
 		// POST
-		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
+		con = (HttpURLConnection)new URI(url + "?_method=POST").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -209,7 +209,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// GET
-		con = (HttpURLConnection)new URL(url + "?_method=GET").openConnection();
+		con = (HttpURLConnection)new URI(url + "?_method=GET").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Length", "0");
@@ -220,7 +220,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// PUT
-		con = (HttpURLConnection)new URL(url + "?_method=PUT").openConnection();
+		con = (HttpURLConnection)new URI(url + "?_method=PUT").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -230,7 +230,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// DELETE
-		con = (HttpURLConnection)new URL(url + "?_method=DELETE").openConnection();
+		con = (HttpURLConnection)new URI(url + "?_method=DELETE").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -240,7 +240,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// POST
-		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
+		con = (HttpURLConnection)new URI(url + "?_method=POST").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");
@@ -250,7 +250,7 @@ public class RESTServletTest {
 		con.disconnect();
 
 		// POST
-		con = (HttpURLConnection)new URL(url + "?_method=POST").openConnection();
+		con = (HttpURLConnection)new URI(url + "?_method=POST").toURL().openConnection();
 		con.setDoOutput(true);
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json");

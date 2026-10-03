@@ -2,7 +2,6 @@ package net.arnx.jsonic;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -24,10 +23,12 @@ public class JSONGenericsTest {
 
 
 	public static class InheritList extends ArrayList<InheritMap<Integer, Date>> {
+		private static final long serialVersionUID = 1L;
 
 	}
 
 	public static class InheritMap<V, Y> extends LinkedHashMap<Y, V> implements ImplTest<Y> {
+		private static final long serialVersionUID = 1L;
 
 	}
 

@@ -719,11 +719,11 @@ final class LocaleConverter implements Converter {
 		} else if (value instanceof List<?>) {
 			List<?> src = (List<?>)value;
 			if (src.size() == 1) {
-				return new Locale(src.get(0).toString());
+				return Locale.of(src.get(0).toString());
 			} else if (src.size() == 2) {
-				return new Locale(src.get(0).toString(), src.get(1).toString());
+				return Locale.of(src.get(0).toString(), src.get(1).toString());
 			} else if (src.size() > 2) {
-				return new Locale(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
+				return Locale.of(src.get(0).toString(), src.get(1).toString(), src.get(2).toString());
 			} else {
 				return null;
 			}
@@ -736,11 +736,11 @@ final class LocaleConverter implements Converter {
 				String[] array = value.toString().split("\\p{Punct}");
 
 				if (array.length == 1) {
-					return new Locale(array[0]);
+					return Locale.of(array[0]);
 				} else if (array.length == 2) {
-					return new Locale(array[0], array[1]);
+					return Locale.of(array[0], array[1]);
 				} else if (array.length > 2) {
-					return new Locale(array[0], array[1], array[2]);
+					return Locale.of(array[0], array[1], array[2]);
 				} else {
 					return null;
 				}
@@ -805,11 +805,17 @@ final class URLConverter implements Converter {
 			} else if (value instanceof URI) {
 				return ((URI)value).toURL();
 			} else {
-				return new URL(value.toString().trim());
+				return parseLegacyURL(value.toString().trim());
 			}
 		} else {
 			throw new UnsupportedOperationException("Cannot convert " + value.getClass() + " to " + t);
 		}
+	}
+
+	// URL accepts legacy inputs, including spaces, that URI.toURL() rejects.
+	@SuppressWarnings("deprecation")
+	private static URL parseLegacyURL(String value) throws java.net.MalformedURLException {
+		return new URL(value);
 	}
 }
 
@@ -1109,7 +1115,7 @@ final class DateConverter implements Converter {
 		if (value instanceof Number) {
 			date = (Date)context.createInternal(c);
 			date.setTime(((Number)value).longValue());
-		} else if (value != null) {
+		} else {
 			String str = value.toString().trim();
 			if (str.length() > 0) {
 				DateFormat format = context.getDateFormat();
@@ -1672,7 +1678,7 @@ final class ObjectConverter implements Converter {
 	}
 
 	static Map<String, PropertyInfo> getSetProperties(Context context, Class<?> c) {
-		Map<String, PropertyInfo> props = new HashMap<String, PropertyInfo>();
+		Map<String, PropertyInfo> props = new HashMap<>();
 
 		// Field
 		for (PropertyInfo prop : BeanInfo.get(c).getProperties()) {

@@ -22,7 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 public class ExternalContext {
-	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new InheritableThreadLocal<ExternalContext>() {
+	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new InheritableThreadLocal<>() {
 		protected ExternalContext initialValue() {
 			throw new UnsupportedOperationException();
 		};

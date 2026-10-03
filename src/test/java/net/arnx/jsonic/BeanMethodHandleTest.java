@@ -19,6 +19,8 @@ public class BeanMethodHandleTest {
     private static class PrivateBean extends Arguments {
         private int own;
         public int getOwn() { return own; }
+        // Invoked reflectively when parsing PrivateBean.
+        @SuppressWarnings("unused")
         public void setOwn(int value) { own = value; }
     }
 

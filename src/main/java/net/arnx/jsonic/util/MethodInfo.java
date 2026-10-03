@@ -27,7 +27,7 @@ public class MethodInfo implements Iterable<Method>, Comparable<MethodInfo> {
 	private String name;
 	private boolean isStatic;
 
-	List<Method> methods = new ArrayList<Method>();
+	List<Method> methods = new ArrayList<>();
 
 	public MethodInfo(Class<?> beanClass, String name, Collection<Method> methods, boolean isStatic) {
 		this.beanClass = beanClass;

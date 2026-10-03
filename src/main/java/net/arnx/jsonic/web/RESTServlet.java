@@ -51,8 +51,11 @@ import static jakarta.servlet.http.HttpServletResponse.*;
 import static net.arnx.jsonic.web.Container.*;
 
 public class RESTServlet extends HttpServlet {
-	private static final Map<String, String> DEFAULT_METHOD = new HashMap<String, String>();
-	private static final Set<String> DEFAULT_VERB = new HashSet<String>();
+	// Matches the previously generated identifier to preserve serialized forms.
+	private static final long serialVersionUID = 2653172050503808344L;
+
+	private static final Map<String, String> DEFAULT_METHOD = new HashMap<>();
+	private static final Set<String> DEFAULT_VERB = new HashSet<>();
 
 	static {
 		DEFAULT_METHOD.put("GET", "find");
@@ -93,7 +96,7 @@ public class RESTServlet extends HttpServlet {
 		JSON json = new JSON();
 
 		if (configText == null) {
-			Map<String, String> map = new HashMap<String, String>();
+			Map<String, String> map = new HashMap<>();
 			Enumeration<String> e =  cast(servletConfig.getInitParameterNames());
 			while (e.hasMoreElements()) {
 				map.put(e.nextElement(), servletConfig.getInitParameter(e.nextElement()));
@@ -110,7 +113,7 @@ public class RESTServlet extends HttpServlet {
 			throw new ServletException(e);
 		}
 
-		if (config.definitions == null) config.definitions = new HashMap<String, Pattern>();
+		if (config.definitions == null) config.definitions = new HashMap<>();
 		if (!config.definitions.containsKey("package")) config.definitions.put("package", Pattern.compile(".+"));
 
 		if (config.errors == null) config.errors = Collections.emptyMap();
@@ -225,20 +228,20 @@ public class RESTServlet extends HttpServlet {
 				if (o instanceof List<?>) {
 					params = cast(o);
 					if (params.isEmpty()) {
-						params = new ArrayList<Object>(1);
+						params = new ArrayList<>(1);
 						params.add(route.getParameterMap());
 					} else if (params.get(0) instanceof Map<?, ?>) {
 						params.set(0, route.mergeParameterMap((Map<?, ?>)params.get(0)));
 					}
 				} else if (o instanceof Map<?, ?>) {
-					params = new ArrayList<Object>(1);
+					params = new ArrayList<>(1);
 					params.add(route.mergeParameterMap((Map<?, ?>)o));
 				} else {
-					params = new ArrayList<Object>(1);
+					params = new ArrayList<>(1);
 					params.add(o);
 				}
 			} else {
-				params = new ArrayList<Object>(1);
+				params = new ArrayList<>(1);
 				params.add(route.getParameterMap());
 			}
 
@@ -291,7 +294,7 @@ public class RESTServlet extends HttpServlet {
 					}
 					if (errorCode != null) {
 						response.setStatus(errorCode);
-						Map<String, Object> error = new LinkedHashMap<String, Object>();
+						Map<String, Object> error = new LinkedHashMap<>();
 						error.put("name", cause.getClass().getSimpleName());
 						error.put("message", cause.getMessage());
 						error.put("data", container.getErrorData(cause));
@@ -327,6 +330,7 @@ public class RESTServlet extends HttpServlet {
 		} else {
 			response.setContentType("application/json");
 			Writer writer = response.getWriter();
+			if (json == null) json = container.createJSON(request.getLocale());
 			json.format(result, writer);
 		}
 	}
@@ -386,7 +390,7 @@ public class RESTServlet extends HttpServlet {
 		public void init(String path, Config config) {
 			this.config = config;
 
-			this.names = new ArrayList<String>();
+			this.names = new ArrayList<>();
 			StringBuffer sb = new StringBuffer("^\\Q");
 			Matcher m = PLACE_PATTERN.matcher(path);
 			while (m.find()) {
@@ -408,7 +412,7 @@ public class RESTServlet extends HttpServlet {
 		public Route matches(HttpServletRequest request, String path) throws IOException {
 			Matcher m = pattern.matcher(path);
 			if (m.matches()) {
-				Map<String, Object> params = new HashMap<String, Object>();
+				Map<String, Object> params = new HashMap<>();
 				for (int i = 0; i < names.size(); i++) {
 					String key = names.get(i);
 					Object value = m.group(i+1);
@@ -417,7 +421,7 @@ public class RESTServlet extends HttpServlet {
 						if (target instanceof List) {
 							((List<Object>)target).add(value);
 						} else {
-							List<Object> list = new ArrayList<Object>(2);
+							List<Object> list = new ArrayList<>(2);
 							list.add(target);
 							list.add(value);
 						}
@@ -477,7 +481,7 @@ public class RESTServlet extends HttpServlet {
 						if (target instanceof Map) {
 							current = (Map<Object, Object>)target;
 						} else {
-							Map<Object, Object> map = new LinkedHashMap<Object, Object>();
+							Map<Object, Object> map = new LinkedHashMap<>();
 							if (target != null) map.put(null, target);
 							current.put(key, map);
 							current = map;
@@ -509,13 +513,13 @@ public class RESTServlet extends HttpServlet {
 								List<Object> list = ((List<Object>)target);
 								for (String value : values) list.add(value);
 							} else {
-								List<Object> list = new ArrayList<Object>(values.length+1);
+								List<Object> list = new ArrayList<>(values.length+1);
 								list.add(target);
 								for (String value : values) list.add(value);
 								map.put(null, list);
 							}
 						} else if (multiValue || values.length > 1) {
-							List<Object> list = new ArrayList<Object>(values.length);
+							List<Object> list = new ArrayList<>(values.length);
 							for (String value : values) list.add(value);
 							map.put(null, list);
 						} else {
@@ -525,13 +529,13 @@ public class RESTServlet extends HttpServlet {
 						List<Object> list = ((List<Object>)target);
 						for (String value : values) list.add(value);
 					} else {
-						List<Object> list = new ArrayList<Object>(values.length+1);
+						List<Object> list = new ArrayList<>(values.length+1);
 						list.add(target);
 						for (String value : values) list.add(value);
 						current.put(key, list);
 					}
 				} else if (multiValue || values.length > 1) {
-					List<Object> list = new ArrayList<Object>(values.length);
+					List<Object> list = new ArrayList<>(values.length);
 					for (String value : values) list.add(value);
 					current.put(key, list);
 				} else {
@@ -616,7 +620,7 @@ public class RESTServlet extends HttpServlet {
 							if (target instanceof List) {
 								((List<Object>)target).add(entry.getValue());
 							} else {
-								List<Object> list = new ArrayList<Object>();
+								List<Object> list = new ArrayList<>();
 								list.add(target);
 								list.add(entry.getValue());
 								map.put(null, list);
@@ -627,7 +631,7 @@ public class RESTServlet extends HttpServlet {
 					} else  if (target instanceof List) {
 						((List<Object>)target).add(entry.getValue());
 					} else {
-						List<Object> list = new ArrayList<Object>();
+						List<Object> list = new ArrayList<>();
 						list.add(target);
 						list.add(entry.getValue());
 						params.put(entry.getKey(), list);

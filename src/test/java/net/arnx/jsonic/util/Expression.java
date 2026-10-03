@@ -214,6 +214,8 @@ public class Expression {
 			case NULL:
 				stack.add(null);
 				break;
+			case GROUP:
+				break;
 			}
 		}
 		

@@ -50,7 +50,7 @@ import net.arnx.jsonic.JSON;
 public class GatewayFilter implements Filter {
 	public static final String GATEWAY_KEY = Config.class.getName();
 	
-	Map<Pattern, Config> locations = new LinkedHashMap<Pattern, Config>();
+	Map<Pattern, Config> locations = new LinkedHashMap<>();
 	ServletContext context;
 	
 	class Config {
@@ -73,7 +73,7 @@ public class GatewayFilter implements Filter {
 
 		Map map = json.parse(configText, Map.class);
 		
-		Map<String, Object> baseMap = new LinkedHashMap<String, Object>();
+		Map<String, Object> baseMap = new LinkedHashMap<>();
 		for (Field field : Config.class.getFields()) {
 			baseMap.put(field.getName(), map.get(field.getName()));
 		}
@@ -125,6 +125,10 @@ public class GatewayFilter implements Filter {
 			}
 		}
 		
+		if (config == null || matcher == null) {
+			throw new ServletException("No gateway configuration matches the request path.");
+		}
+
 		URI dest = null;
 		// access check
 		if (config.access != null) {

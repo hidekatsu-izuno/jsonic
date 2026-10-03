@@ -163,11 +163,11 @@ public class JSON {
 	static final Character ROOT = '$';
 
 	private static final String PACKAGE_NAME = JSON.class.getName().substring(0, JSON.class.getName().lastIndexOf('.'));
-	private static final Map<Class<?>, Class<?>> PRIMITIVE_MAP = new HashMap<Class<?>, Class<?>>(10);
-	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<Class<?>, Formatter>(50);
-	private static final List<Formatter> FORMAT_LIST = new ArrayList<Formatter>(24);
-	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<Class<?>, Converter>(50);
-	private static final List<Converter> CONVERT_LIST = new ArrayList<Converter>(24);
+	private static final Map<Class<?>, Class<?>> PRIMITIVE_MAP = new HashMap<>(10);
+	private static final Map<Class<?>, Formatter> FORMAT_MAP = new HashMap<>(50);
+	private static final List<Formatter> FORMAT_LIST = new ArrayList<>(24);
+	private static final Map<Class<?>, Converter> CONVERT_MAP = new HashMap<>(50);
+	private static final List<Converter> CONVERT_LIST = new ArrayList<>(24);
 
 	static {
 		ClassLoader cl = JSON.class.getClassLoader();
@@ -1247,7 +1247,7 @@ public class JSON {
 			}
 
 			if (context.memberCache == null) {
-				context.memberCache = new HashMap<Class<?>, Object>();
+				context.memberCache = new HashMap<>();
 			}
 			context.memberCache.put(cls, c);
 		}
@@ -1296,24 +1296,24 @@ public class JSON {
 
 		if (Collection.class.equals(c) || List.class.equals(c) || ArrayList.class.equals(c)) {
 			if (context.createSizeHint >= 0) {
-				instance = new ArrayList<Object>(context.createSizeHint);
+				instance = new ArrayList<>(context.createSizeHint);
 			} else {
-				instance = new ArrayList<Object>();
+				instance = new ArrayList<>();
 			}
 		} else if (Map.class.equals(c)) {
 			if (context.createSizeHint >= 0) {
 				int capacity = 	Math.max((int) (context.createSizeHint / 0.75F) + 1, 16);
-				instance = new LinkedHashMap<Object, Object>(capacity);
+				instance = new LinkedHashMap<>(capacity);
 			} else {
-				instance = new LinkedHashMap<Object, Object>();
+				instance = new LinkedHashMap<>();
 			}
 		} else if (c.isInterface()) {
 			if (SortedMap.class.equals(c)) {
-				instance = new TreeMap<Object, Object>();
+				instance = new TreeMap<>();
 			} else if (SortedSet.class.equals(c)) {
-				instance = new TreeSet<Object>();
+				instance = new TreeSet<>();
 			} else if (Set.class.equals(c)) {
-				instance = new LinkedHashSet<Object>();
+				instance = new LinkedHashSet<>();
 			} else if (Appendable.class.equals(c)) {
 				instance = new StringBuilder();
 			}
@@ -1669,7 +1669,7 @@ public class JSON {
 			Formatter f = null;
 
 			if (o == null) {
-				f = NullFormatter.INSTANCE;
+				return formatInternal(src, ap, NullFormatter.INSTANCE);
 			} else {
 				JSONHint hint = getHint();
 				if (hint == null) {
@@ -1702,7 +1702,7 @@ public class JSON {
 				}
 
 				if (memberCache == null) {
-					memberCache = new HashMap<Class<?>, Object>();
+					memberCache = new HashMap<>();
 				}
 				memberCache.put(o.getClass(), f);
 			}
