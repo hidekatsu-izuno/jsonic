@@ -96,6 +96,33 @@ class ReaderPlainStringTest {
         assertEquals('x', input.next());
     }
 
+    @Test void failedSliceProbesPreserveTheMarkAndHandOffOnlyOrdinaryCharacters() throws Exception {
+        JSON json = new JSON();
+        for (String suffix : new String[]{"\\n\"", "\nline\"", "\177\""}) {
+            ReaderInputSource input = new ReaderInputSource(new StringReader("\"plain" + suffix));
+            assertEquals('"', input.next()); input.mark();
+            assertNull(input.readPlainString('"', json.new Context().getLocalCache()));
+            assertNull(input.readPlainString('"', json.new Context().getLocalCache()));
+            assertEquals(1, input.getOffset());
+            assertEquals("plain", input.copy(5));
+            assertEquals(5, input.readPlainStringPrefix('"'));
+            assertEquals(suffix.charAt(0), input.next());
+        }
+    }
+
+    @Test void aFailedSlicePrefixExpiresWhenTheSameBufferPositionsAreRefilled() throws Exception {
+        ReaderInputSource input = new ReaderInputSource(new StringReader("\"" + "x".repeat(2000) + "\""));
+        assertEquals('"', input.next());
+        int available = input.mark();
+        LocalCache cache = new JSON().new Context().getLocalCache();
+        assertNull(input.readPlainString('"', cache));
+        assertEquals(available, input.readPlainStringPrefix('"'));
+        assertEquals('x', input.next());
+        assertEquals("x".repeat(2000 - available - 1), input.readPlainString('"', cache));
+        assertEquals(2002, input.getOffset());
+        assertEquals(-1, input.next());
+    }
+
     @Test void customInputAndCacheKeepTheirOriginalCallbacks() throws Exception {
         ReaderInputSource subclass = new ReaderInputSource(new StringReader("[\"plain\"]")) {
             @Override public int readPlainStringPrefix(int quote) {

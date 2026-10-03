@@ -39,6 +39,9 @@ public class ReaderInputSource implements InputSource {
 	private int start = BACK;
 	private int end = BACK - 1;
 	private int mark = -1;
+	private int plainStart = -1;
+	private int plainEnd;
+	private int plainQuote;
 	
 	public ReaderInputSource(InputStream in) {
 		if (in == null) throw new NullPointerException();
@@ -50,13 +53,44 @@ public class ReaderInputSource implements InputSource {
 		this.reader = reader;
 	}
 	
-	/** Advances over ordinary string characters already present in the buffer. */
-	public int readPlainStringPrefix(int quote) {
+	/** Reads a complete plain string; failed probes leave the cursor and mark unchanged. */
+	public String readPlainString(int quote, net.arnx.jsonic.util.LocalCache cache) {
+		if (plainStart == start && plainQuote == quote) return null;
 		int cursor = start;
 		while (cursor <= end) {
 			char c = buf[cursor];
-			if (c == quote || c == '\\' || c < 0x20 || c == 0x7F) break;
+			if (c == quote) {
+				String value = cache.getBufferedString(buf, start, cursor);
+				plainStart = -1;
+				mark = start;
+				int consumed = cursor + 1 - start;
+				start = cursor + 1;
+				offset += consumed;
+				columns += consumed;
+				return value;
+			}
+			if (c == '\\' || c < 0x20 || c == 0x7F) break;
 			cursor++;
+		}
+		// The ordinary scanner can reuse this prefix until the buffer is refilled.
+		plainStart = start;
+		plainEnd = cursor;
+		plainQuote = quote;
+		return null;
+	}
+
+	/** Advances over ordinary string characters already present in the buffer. */
+	public int readPlainStringPrefix(int quote) {
+		int cursor = start;
+		if (plainStart == start && plainQuote == quote) {
+			cursor = plainEnd;
+			plainStart = -1;
+		} else {
+			while (cursor <= end) {
+				char c = buf[cursor];
+				if (c == quote || c == '\\' || c < 0x20 || c == 0x7F) break;
+				cursor++;
+			}
 		}
 		int consumed = cursor - start;
 		start = cursor;
@@ -125,6 +159,52 @@ public class ReaderInputSource implements InputSource {
 			start = cursor;
 			offset += consumed;
 			columns += consumed;
+		}
+		return count;
+	}
+
+	/** Avoids starting scalar batching on a tiny initial buffer. */
+	public boolean hasScalarRun() {
+		return end + 1 - start >= 32;
+	}
+
+	/** Reads complete strings/nulls or numbers/nulls without refilling. */
+	public int readScalarValues(Object[] values, int count, boolean strings,
+			boolean afterValue, net.arnx.jsonic.util.LocalCache cache) {
+		while (count < values.length) {
+			int savedStart = start;
+			long savedOffset = offset;
+			long savedColumns = columns;
+			if (afterValue) {
+				if (start > end || buf[start] != ',') break;
+				start++;
+				offset++;
+				columns++;
+			}
+			Object value = null;
+			boolean matched = false;
+			if (start <= end) {
+				if (buf[start] == 'n') {
+					matched = readLiteral("null");
+				} else if (strings && buf[start] == '"') {
+					start++;
+					offset++;
+					columns++;
+					value = readPlainString('"', cache);
+					matched = value != null;
+				} else if (!strings) {
+					value = readCompactNumber();
+					matched = value != null;
+				}
+			}
+			if (!matched) {
+				start = savedStart;
+				offset = savedOffset;
+				columns = savedColumns;
+				break;
+			}
+			values[count++] = value;
+			afterValue = true;
 		}
 		return count;
 	}
@@ -239,6 +319,7 @@ public class ReaderInputSource implements InputSource {
 	
 	private int get() throws IOException {
 		if (start > end) {
+			plainStart = -1;
 			if (end > BACK) {
 				int len = Math.min(BACK, end - BACK  + 1);
 				System.arraycopy(buf, end + 1 - len, buf, BACK - len, len);

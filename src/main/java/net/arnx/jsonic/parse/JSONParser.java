@@ -56,6 +56,7 @@ public class JSONParser {
 	private boolean ignoreWhirespace;
 	private LocalCache cache;
 	private boolean compactNumbers;
+	private boolean bufferedStringBatch = true;
 
 	private int state = BEFORE_ROOT;
 	private List<JSONEventType> stack = new ArrayList<>();
@@ -164,6 +165,26 @@ public class JSONParser {
 			boolean isNull = (nulls[last >>> 6] & (1L << (last & 63))) != 0;
 			set(isNull ? JSONEventType.NULL : JSONEventType.BOOLEAN,
 					isNull ? null : Boolean.valueOf(values[last]), true);
+			state = AFTER_VALUE;
+		}
+		return end;
+	}
+
+	/** Chooses the ordinary token loop for tiny or incomplete initial buffers. */
+	public boolean canReadBufferedScalars() {
+		return canReadBufferedBooleans() && ((ReaderInputSource)in).hasScalarRun();
+	}
+
+	/** Batches flat typed scalar values, retaining normal parsing at buffer boundaries. */
+	public int readBufferedScalars(Object[] values, int count, boolean strings) {
+		if ((strings && !bufferedStringBatch) || !canReadBufferedBooleans() || !compactNumbers
+				|| cache.getClass() != LocalCache.class
+				|| (state != BEFORE_VALUE && state != AFTER_VALUE)) return count;
+		int end = ((ReaderInputSource)in).readScalarValues(values, count, strings, state == AFTER_VALUE, cache);
+		if (end > count) {
+			Object value = values[end - 1];
+			set(value == null ? JSONEventType.NULL : strings ? JSONEventType.STRING : JSONEventType.NUMBER,
+					value, true);
 			state = AFTER_VALUE;
 		}
 		return end;
@@ -530,6 +551,10 @@ public class JSONParser {
 			if (value != null) return value;
 		}
 		if (in.getClass() == ReaderInputSource.class && cache.getClass() == LocalCache.class) {
+			if (active) {
+				String value = ((ReaderInputSource)in).readPlainString(start, cache);
+				if (value != null) return value;
+			}
 			return parseReaderString(any, start);
 		}
 		return parseStringSlow(any, start);
@@ -626,6 +651,8 @@ public class JSONParser {
 						if (rest == 0 && sb != null) in.copy(sb, len);
 					}
 				} else if (type == 2) { // escape chars
+					// Escaped documents benefit from the ordinary token loop.
+					bufferedStringBatch = false;
 					if (len > 0 && sb != null) in.copy(sb, len - 1);
 					rest = 0;
 

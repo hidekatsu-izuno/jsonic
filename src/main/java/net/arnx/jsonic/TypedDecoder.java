@@ -144,6 +144,11 @@ final class TypedDecoder {
 
     boolean isFlat() { return ends == null; }
 
+    void readBufferedScalars(net.arnx.jsonic.parse.JSONParser parser, boolean strings) {
+        if (ends != null || size == tokens.length) return;
+        size = parser.readBufferedScalars(tokens, size, strings);
+    }
+
     void addFlat(JSONEventType event, Object value) {
         if (ends != null) {
             add(event, value);

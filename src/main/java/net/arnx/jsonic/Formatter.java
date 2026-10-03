@@ -696,7 +696,12 @@ final class ObjectArrayFormatter implements Formatter {
 		Formatter lastFormatter = NullFormatter.INSTANCE;
 		Class<?> cType = array.getClass().getComponentType();
 
+		StringBuilderOutputSource buffer = array.length >= 16 && context.hasDefaultBeanBehavior()
+				&& !context.isPrettyPrint() && out.getClass() == StringBuilderOutputSource.class
+				? (StringBuilderOutputSource)out : null;
 		out.append('[');
+		int firstStart = buffer != null ? buffer.length() : 0;
+		int firstLength = 0;
 		int i = 0;
 		for (; i < array.length; i++) {
 			Object item = array[i];
@@ -723,6 +728,20 @@ final class ObjectArrayFormatter implements Formatter {
 				context.formatInternal(item, out);
 			}
 			context.exit();
+			if (buffer != null) {
+				if (i == 0) {
+					firstLength = buffer.length() - firstStart;
+				} else if (i == 1) {
+					int secondLength = buffer.length() - firstStart - firstLength - 1;
+					// Similar first two values give a bounded estimate without reading ahead.
+					if (Math.abs((long)firstLength - secondLength) <= firstLength / 4) {
+						long estimate = buffer.length() + ((long)firstLength + secondLength + 2)
+								* 5 / 8 * (array.length - 2) + 1;
+						buffer.ensureCapacity((int)Math.min(16384L, estimate));
+					}
+					buffer = null;
+				}
+			}
 		}
 		if (context.isPrettyPrint() && i > 0) {
 			out.append('\n');

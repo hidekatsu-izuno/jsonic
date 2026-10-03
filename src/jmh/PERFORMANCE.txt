@@ -1450,3 +1450,149 @@ doubleはReader/1000要素/開始0、BeanはReader/100件/ascii/plain。両条�
 
 第55段階を統合後、mvn -Pbenchmark verify成功、全181テスト成功（失敗・エラー・skipなし）。
 git -c core.whitespace=cr-at-eol diff --check成功。統合ログ: target/performance-phase55/integration-verify.log。
+
+
+第56段階前のJackson 3比較（2026-10-04）
+第56段階の改善前の基準値。production revision ef669ad0（警告修正と追加回帰試験を含む）を再測定。
+JSONICとJacksonを同じベンチマークソース・入力で順次実行し、setupで出力文字列・変換結果を照合。
+採用前の試作や過去のJackson測定を混ぜず、今回の20条件を対にして比較する。
+AMD Ryzen AI 9 465／WSL2、OpenJDK21.0.2、JMH1.37、Jackson3.2.3、Blackbirdなし。
+5warmup/5measurement（各1秒）/2fork、1thread、heap256MiB、GC profiler。
+共有JSON/JsonMapperを再利用するformat/parse比較。静的JSON.encode/decodeは測定していない。
+ReaderはStringReaderで実I/Oなし。compact JSON。Bean100件はascii/plain。
+TypedArrayは1000要素/開始0、13要素に1個null、doubleは整数値、booleanはtrue/false交互。
+ReaderStringは1000要素/plain、13要素に1個null。他の値はitem-<index>。
+Jackson FAIL_ON_NULL_FOR_PRIMITIVESを無効化し、primitive nullを0/falseへ揃える。
+Jacksonは各ソースの標準設定（末尾tokenの追加チェックは有効にしていない）。
+us/op、+/-は99.9%信頼区間の半幅。相対速度はJackson時間/JSONIC時間。
+処理	対象	JSONIC(us/op)	Jackson3(us/op)	JSONIC相対速度	JSONIC(B/op)	Jackson3(B/op)
+encode	Bean 100件 → String	18.631 +/- 0.256	12.304 +/- 0.564	0.66	37064	19552
+encode	Map 100件 → String（通常の共通キー）	23.968 +/- 5.707	15.522 +/- 0.301	0.65	37344	17152
+encode	Map 100件 → String（エスケープを含む共通キー）	22.874 +/- 0.296	27.830 +/- 0.394	1.22	57704	20696
+decode	Bean 100件 ← String	24.056 +/- 0.354	23.902 +/- 0.855	0.99	32224	25384
+decode	Bean 100件 ← Reader	41.881 +/- 0.861	24.860 +/- 2.018	0.59	51896	25424
+decode	double[] 1000要素 ← String	10.355 +/- 0.120	12.361 +/- 0.160	1.19	18920	23056
+decode	double[] 1000要素 ← Reader	16.318 +/- 0.216	12.488 +/- 0.280	0.77	18864	23096
+decode	boolean[] 1000要素 ← String	3.895 +/- 0.062	5.651 +/- 0.183	1.45	2184	3544
+decode	boolean[] 1000要素 ← Reader	2.150 +/- 0.245	5.693 +/- 0.146	2.65	5780	3584
+decode	String[] 1000要素 ← Reader	35.548 +/- 1.018	17.185 +/- 0.617	0.48	60208	55416
+
+BeanのString decodeは信頼区間が重なり、優劣を主張しない。
+通常キーMapのJSONIC encodeは測定のばらつきが大きいので信頼区間もREADMEに併記する。
+その他の対は信頼区間が重ならない。全条件でJSONICが速いという主張はしない。
+生データ、GC指標、ログ、実行コマンド: target/performance-release-2.0.0/
+
+再現手順（プロジェクトルート、JDK21、ビルドとJMHは逐次実行）:
+mvn -Pbenchmark verify
+mvn -Pbenchmark dependency:build-classpath -Dmdep.includeScope=test -Dmdep.outputFile=target/benchmark-classpath.txt
+CP="target/test-classes:target/classes:$(cat target/benchmark-classpath.txt)"
+Bashで共通引数を設定:
+JSONIC_JMH_ARGS=(-wi 5 -i 5 -w 1s -r 1s -f 2 -t 1 -prof gc -rf json)
+java -cp "$CP" org.openjdk.jmh.Main '^net\.arnx\.jsonic\.benchmark\.BeanBenchmark\.(jsonicEncode|jacksonEncode|jsonicDecode|jacksonDecode|jsonicReaderDecode|jacksonReaderDecode)$' -p count=100 -p text=ascii -p priceNotation=plain "${JSONIC_JMH_ARGS[@]}" -rff target/release-bean.json
+java -cp "$CP" org.openjdk.jmh.Main '^net\.arnx\.jsonic\.benchmark\.MapBenchmark\.(jsonicEncode|jacksonEncode)$' -p count=100 -p keys=plain,escaped "${JSONIC_JMH_ARGS[@]}" -rff target/release-map.json
+java -cp "$CP" org.openjdk.jmh.Main '^net\.arnx\.jsonic\.benchmark\.TypedArrayBenchmark\.(jsonicDecode|jacksonDecode)$' -p count=1000 -p type=double,boolean -p source=string,reader -p start=0 "${JSONIC_JMH_ARGS[@]}" -rff target/release-array.json
+java -cp "$CP" org.openjdk.jmh.Main '^net\.arnx\.jsonic\.benchmark\.ReaderStringBenchmark\.(jsonicDecode|jacksonDecode)$' -p count=1000 -p distribution=plain "${JSONIC_JMH_ARGS[@]}" -rff target/release-strings.json
+
+
+第56段階: 0.9倍以下の条件の調査と互換性を保った改善（2026-10-04）
+第56段階前のREADME比較で遅かった5条件を対象に、JFRのCPUサンプルで負荷を調査。
+Reader文字列の一時StringBuilderへのコピーとLocalCacheの走査、配列の値ごとの
+JSONParser状態遷移、encodeの出力バッファ拡張を主な候補とした。
+JFRは優先順位付けに使い、サンプルの比率を処理時間の正確な内訳とはみなさない。
+
+採用した変更:
+- Readerバッファ内で完結する通常文字列をLocalCacheへchar[]の区間として渡す。
+  既存の短い文字列キャッシュのハッシュ、開始回数、照合条件を維持する。
+- Readerからdouble[]/String[]を読む場合、完全なscalar/nullをTypedDecoderへまとめて追加。
+  buffer境界、空白、escape、変換が必要な異種値、ネストは通常のnext()へ戻す。
+  EOFを含む文書全体の検証が終わるまで、従来どおりユーザーのconstructor/setterを実行しない。
+  エスケープを検出した文書のString[]はbatch判定を止め、通常のtokenループを使う。
+  最初のbufferに32文字未満しか残らない入力は、まとめ読みを開始せず通常ループを使う。
+- default/compactのObject[]（16要素以上）で最初の2要素の実際の出力長が25%以内なら、
+  残りの容量を見積もって確保する。要求容量は16384文字までに制限する。
+  getter/preformatを追加実行せず、既に出力した文字数だけを参照する。
+  custom JSON、pretty print、Writer/custom OutputSourceは従来の経路を維持する。
+- 完結しなかったReader文字列のprobeで、走査済みのplain prefixを通常scannerへ引き継ぐ。
+  probe失敗時のcursor/markは変更せず、refill前に走査情報を破棄する。
+  batchの失敗→parseString→plain prefixで同じ領域を何度も走査しない。
+
+不採用・修正した試作:
+- String[]専用encode経路は予備測定で明確な改善がなく、取り除いた。
+- 全escape値でもbatch probeを続ける案は約20%遅く、escape検出後の通常ループに変更した。
+- 文字列sliceの失敗後に再走査する案はlong/1000で1194.926 +/- 12.785 us/opとなり、
+  変更前824.018 +/- 25.169より約45%遅かった。走査済みprefixの再利用で解消した。
+
+検証: mvn -Pbenchmark verify成功。全191テスト成功（失敗・エラー・skipなし）。
+ECJ 3.45.0、-21 -proc:none -warn:+nullでmain/testをコンパイルし、警告0件。
+追加テストはscalarの異種値・不正入力・切り詰め・depth・capacity境界・小刻みrefill、
+refill時のSource位置/Parser値/Reader要求、失敗probeのmark保持とrefill時の破棄、
+異種/自己参照配列・Hint・custom preformat・getter回数・出力先一致を確認する。
+ビルド・テスト・JMHは逐次実行し、測定中に使用するclassesを変更しなかった。
+
+正式測定: 変更前はproduction ef669ad0の保存済みclassesを使用。
+変更後とJackson3.2.3をREADMEの全20条件で測定し、10条件の対照も変更前後で測定。
+prefix再利用を追加した後は影響するReaderの14条件を再測定し、
+小さい入力の入口判定と型付きReader配列の9条件も再測定した。
+encode/String入力は呼び出す処理を変更していないため、その正式測定値を維持する。
+5warmup/5measurement（各1秒）/2fork、1thread、heap256MiB、GC profiler。
+AMD Ryzen AI 9 465／WSL2、OpenJDK21.0.2、JMH1.37。
+us/op、+/-は99.9%信頼区間の半幅。変更前時間/変更後時間は大きいほど改善。
+対象	変更前(us/op)	変更後(us/op)	変更前/変更後	割り当て前→後(B/op)
+TypedArrayBenchmark.jsonicDecode count=1000, source=reader, start=0, type=double	16.615 +/- 0.402	8.276 +/- 0.180	2.01	18864 → 18868
+ReaderStringBenchmark.jsonicDecode count=1000, distribution=plain	35.977 +/- 0.967	21.622 +/- 0.401	1.66	60208 → 60224
+MapBenchmark.jsonicEncode count=100, keys=plain	21.712 +/- 0.447	21.384 +/- 0.771	1.02	37344 → 31448
+MapBenchmark.jsonicEncode count=100, keys=escaped	23.284 +/- 0.552	22.256 +/- 0.746	1.05	56504 → 41344
+BeanBenchmark.jsonicEncode count=100, priceNotation=plain, text=ascii	19.056 +/- 0.554	18.707 +/- 0.553	1.02	37064 → 32368
+BeanBenchmark.jsonicReaderDecode count=100, priceNotation=plain, text=ascii	43.296 +/- 1.022	38.026 +/- 1.759	1.14	51896 → 51912
+
+Reader/double/1000は約50%、Reader/String[]/plain/1000は約40%、Reader/Bean100は約12%短縮。
+この3条件は変更前後の時間の信頼区間が重ならない。
+Bean/通常キーMapのencodeの時間は信頼区間が重なり、有意な速度改善は主張しない。
+割り当てはBean約13%、通常キーMap約16%、escapeキーMap約27%削減した。
+
+対照（同じ正式測定条件）:
+対象	変更前(us/op)	変更後(us/op)	変更前/変更後	割り当て前→後(B/op)
+ReaderStringBenchmark.jsonicDecode count=1000, distribution=escaped	60.962 +/- 3.477	61.420 +/- 0.650	0.99	103064 → 103080
+ReaderStringBenchmark.jsonicDecode count=1000, distribution=long	824.018 +/- 25.169	654.304 +/- 15.487	1.26	985206 → 985221
+ReaderStringBenchmark.jsonicDecode count=1000, distribution=refill	2788.959 +/- 75.481	2373.373 +/- 24.985	1.18	2835251 → 2835264
+BeanBenchmark.jsonicEncode count=1, priceNotation=plain, text=ascii	0.733 +/- 0.013	0.724 +/- 0.022	1.01	1864 → 1864
+BeanBenchmark.jsonicReaderDecode count=1, priceNotation=plain, text=ascii	0.791 +/- 0.015	0.666 +/- 0.022	1.19	3552 → 3512
+MapBenchmark.jsonicEncode count=1, keys=plain	0.567 +/- 0.021	0.590 +/- 0.031	0.96	1816 → 1816
+OutputCapacityBenchmark.jsonicEncode count=100, shape=ascii700	45.054 +/- 0.862	44.204 +/- 1.301	1.02	326312 → 319568
+OutputCapacityBenchmark.jsonicEncode count=100, shape=japanese700	65.728 +/- 0.946	64.626 +/- 0.831	1.02	653136 → 639672
+TypedArrayBenchmark.jsonicDecode count=1, source=reader, start=0, type=double	0.307 +/- 0.007	0.295 +/- 0.010	1.04	2776 → 2804
+TypedArrayBenchmark.jsonicDecode count=32, source=reader, start=0, type=double	0.792 +/- 0.025	0.499 +/- 0.009	1.59	3036 → 3052
+
+対照の個別の平均と信頼区間は上の表に示す。平均差だけで普遍的な改善は主張しない。
+小さい入力の判定前はdouble/Reader/1で0.350 +/- 0.005 us/op（変更前0.307 +/- 0.007）となった。
+最初の2値を通常ループで読む案も0.336 +/- 0.005で十分でなく、不採用とした。
+初期bufferに32文字未満の入力を従来ループへ戻す案の結果を最終の対照に記載する。
+ReaderInputSourceの走査情報の追加で、代表的なReader条件は16 B/op増える場合がある。
+
+2.0.0最終版のJackson 3比較（第56段階統合後、2026-10-04）
+入力・環境・設定・再現手順は上の第56段階前の比較と同じ。
+Jacksonの追加末尾tokenチェックは無効のまま。JSONICのEOF検証は維持している。
+処理	対象	JSONIC(us/op)	Jackson3(us/op)	JSONIC相対速度	JSONIC(B/op)	Jackson3(B/op)
+encode	Bean 100件 → String	18.707 +/- 0.553	12.268 +/- 0.159	0.66	32368	19552
+encode	Map 100件 → String（通常の共通キー）	21.384 +/- 0.771	15.805 +/- 0.431	0.74	31448	17152
+encode	Map 100件 → String（エスケープを含む共通キー）	22.256 +/- 0.746	28.559 +/- 0.413	1.28	41344	20696
+decode	Bean 100件 ← String	24.549 +/- 0.554	26.008 +/- 1.432	1.06	32224	25384
+decode	Bean 100件 ← Reader	38.026 +/- 1.759	24.792 +/- 1.180	0.65	51912	25424
+decode	double[] 1000要素 ← String	10.435 +/- 0.128	12.891 +/- 0.513	1.24	18920	23056
+decode	double[] 1000要素 ← Reader	8.276 +/- 0.180	12.323 +/- 0.199	1.49	18868	23096
+decode	boolean[] 1000要素 ← String	3.898 +/- 0.068	5.730 +/- 0.160	1.47	2184	3544
+decode	boolean[] 1000要素 ← Reader	2.149 +/- 0.030	6.191 +/- 0.166	2.88	5844	3584
+decode	String[] 1000要素 ← Reader	21.622 +/- 0.401	16.944 +/- 0.239	0.78	60224	55416
+
+Reader/doubleの相対速度は約1.49倍となり逆転。Reader/String[]は約0.78倍、Reader/Beanは約0.65倍。
+BeanのString decodeは信頼区間が重なり、優劣を主張しない。
+Bean/通常キーMapのencodeとReader/Bean・String[]ではJacksonの方が速い。
+全条件でJSONICが速いとは主張しない。READMEの表はこの最終比較へ更新した。
+
+生データ・GC指標・ログ: target/performance-phase56/final/{before,after}/
+途中案の結果: target/performance-phase56/final/after-before-prefix-reuse/
+JFR: target/performance-phase56/profiles/。予備測定: target/performance-phase56/*/。
+ソースSHA-256と環境情報: target/performance-phase56/final/metadata.json
+実行コマンド: target/performance-phase56/final/commands.json、prefix-reuse-commands.json、threshold-commands.json
+全検証ログ: target/performance-phase56/threshold-verify.log、threshold-warnings.log
+READMEの比較は上記の再現コマンドで再測定できる。

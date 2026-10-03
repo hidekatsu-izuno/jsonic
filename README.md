@@ -5,7 +5,26 @@
 
 Simple JSON encoder/decoder written in java
 
-2026/10/2 JSONIC は、リポジトリを GitHub に移動するとともに今後機能強化が行われることがないメンテナンスモードに移行しておりましたが、AIエージェント使えば速くなるんじゃね？　ということでパフォーマンスとセキュリティ対応のみを行ったバージョンをリリースすることにしました。
+2026/10/4 JSONIC は、リポジトリを GitHub に移動するとともに今後機能強化が行われることがないメンテナンスモードに移行しておりましたが、AIエージェント使えば速くなるんじゃね？　ということでパフォーマンスとセキュリティ対応のみを行ったバージョンをリリースすることにしました。
+
+現在のところ、とはいえ仕様面での制約があり完全に Jackson 越えとはいきませんでしたが、かなり近いパフォーマンスが出るようになりました。もはや性能改善系のタスクでは人間の出る幕はなさそうです。
+
+JSONIC 2.0.0の最終版とJackson 3.2.3を、同じ入力・変換結果で比較しました（2026/10/4測定）。
+時間の単位はµs/op（1文書あたりのマイクロ秒）、±は99.9%信頼区間の半幅です。
+相対速度は「Jackson 3の処理時間 ÷ JSONICの処理時間」で、1倍より大きいとJSONICが速いことを示します。
+
+| 処理 | 対象・入出力 | JSONIC 2.0.0（µs/op） | Jackson 3.2.3（µs/op） | JSONICの相対速度 |
+| --- | --- | ---: | ---: | ---: |
+| encode | Bean 100件 → String | 18.707 ± 0.553 | 12.268 ± 0.159 | 0.66倍 |
+| encode | Map 100件 → String（通常の共通キー） | 21.384 ± 0.771 | 15.805 ± 0.431 | 0.74倍 |
+| encode | Map 100件 → String（エスケープを含む共通キー） | 22.256 ± 0.746 | 28.559 ± 0.413 | 1.28倍 |
+| decode | Bean 100件 ← String | 24.549 ± 0.554 | 26.008 ± 1.432 | 1.06倍 |
+| decode | Bean 100件 ← Reader | 38.026 ± 1.759 | 24.792 ± 1.180 | 0.65倍 |
+| decode | double[] 1000要素 ← String | 10.435 ± 0.128 | 12.891 ± 0.513 | 1.24倍 |
+| decode | double[] 1000要素 ← Reader | 8.276 ± 0.180 | 12.323 ± 0.199 | 1.49倍 |
+| decode | boolean[] 1000要素 ← String | 3.898 ± 0.068 | 5.730 ± 0.160 | 1.47倍 |
+| decode | boolean[] 1000要素 ← Reader | 2.149 ± 0.030 | 6.191 ± 0.166 | 2.88倍 |
+| decode | String[] 1000要素 ← Reader | 21.622 ± 0.401 | 16.944 ± 0.239 | 0.78倍 |
 
 ## JSONICとは
 
@@ -755,6 +774,24 @@ JSONICは、Apache License, Version 2.0下で配布します。
 <a id="releasenote"></a>
 
 ## リリースノート
+
+### 2026/10/4 version 2.0.0
+
+- [仕様変更] Java 20 以前のサポートを終了しました。Java 21 以降をご利用ください。
+
+- [仕様変更] `javax.servlet` ベースのServlet環境のサポートを終了しました。WebサービスAPIは `jakarta.servlet` ベースの Jakarta Servlet 6.1 に移行しました。
+
+- [機能削除] セキュリティ上の理由により、`@JSONHint(type=Serializable.class)` によるJavaオブジェクトのシリアル化・復元を廃止しました。この指定があるプロパティを処理するとエラーになります。既存のBase64形式のJavaシリアル化データは復元できないため、JSONで表現できるBeanなどへ移行してください。`byte[]`のBase64変換と `@JSONHint(serialized=true)` は引き続き利用できます。
+
+- [機能削除] セキュリティ上の理由により、RESTServletのJSONP対応を廃止しました。`callback`パラメータによる関数呼び出しの付加は行わず、通常のJSONレスポンス（`application/json`）を返します。
+
+- [機能削除] Guice連携用の `net.arnx.jsonic.web.extension.GuiceContainer` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。
+
+- [機能削除] Seasar2連携用の `net.arnx.jsonic.web.extension.S2Container` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。
+
+- [機能削除] 独自のBase64ユーティリティ `net.arnx.jsonic.util.Base64` を削除しました。直接利用している場合は `java.util.Base64` へ移行してください。JSONICによる `byte[]` のBase64変換は引き続き利用できます。
+
+- [機能削除] ActionScript 3版のソースコード・サンプル・テストの同梱を終了しました。
 
 ### 2015/11/2 version 1.3.10
 

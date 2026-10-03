@@ -108,6 +108,28 @@ public class LocalCache {
 		return cs.subSequence(start, end).toString();
 	}
 
+	/** Interns a buffered character slice without a temporary StringBuilder. */
+	public String getBufferedString(char[] chars, int start, int end) {
+		int length = end - start;
+		if (length == 0) return "";
+		if (length < 32 && stringCacheCount++ > 16) {
+			int hash = 0;
+			for (int i = start, limit = start + Math.min(16, length); i < limit; i++) {
+				hash = hash * 31 + chars[i];
+			}
+			int index = hash & (CACHE_SIZE - 1);
+			if (stringCache == null) stringCache = new String[CACHE_SIZE];
+			String value = stringCache[index];
+			if (value != null && value.length() == length) {
+				int i = 0;
+				while (i < length && value.charAt(i) == chars[start + i]) i++;
+				if (i == length) return value;
+			}
+			return stringCache[index] = new String(chars, start, length);
+		}
+		return new String(chars, start, length);
+	}
+
 	private int getCacheIndex(CharSequence cs) {
 		int h = 0;
 		int max = Math.min(16, cs.length());

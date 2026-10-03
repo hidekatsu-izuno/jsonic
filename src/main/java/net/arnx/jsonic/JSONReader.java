@@ -80,7 +80,16 @@ public class JSONReader {
 		TypedDecoder buffer = new TypedDecoder(inputLength, targetClass);
 		if (buffer.isFlat()) {
 			buffer.addFlat(event, parser.getValue());
-			while ((event = next()) != null) buffer.addFlat(event, parser.getValue());
+			if ((targetType == double[].class || targetType == String[].class) && parser.canReadBufferedScalars()) {
+				boolean strings = targetType == String[].class;
+				while (true) {
+					buffer.readBufferedScalars(parser, strings);
+					if ((event = next()) == null) break;
+					buffer.addFlat(event, parser.getValue());
+				}
+			} else {
+				while ((event = next()) != null) buffer.addFlat(event, parser.getValue());
+			}
 		} else {
 			buffer.add(event, parser.getValue());
 			while ((event = next()) != null) buffer.add(event, parser.getValue());

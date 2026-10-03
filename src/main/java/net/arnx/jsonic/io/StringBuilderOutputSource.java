@@ -55,6 +55,14 @@ public class StringBuilderOutputSource implements OutputSource {
 	public void flush() {
 	}
 
+	public int length() {
+		return sb.length();
+	}
+
+	public void ensureCapacity(int minimumCapacity) {
+		sb.ensureCapacity(minimumCapacity);
+	}
+
 	public void clear() {
 		sb.setLength(0);
 	}
