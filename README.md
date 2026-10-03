@@ -777,60 +777,44 @@ JSONICは、Apache License, Version 2.0下で配布します。
 
 ### 2026/10/4 version 2.0.0
 
+- [機能改善] パフォーマンスを大幅改善しました。
 - [仕様変更] Java 20 以前のサポートを終了しました。Java 21 以降をご利用ください。
-
 - [仕様変更] `javax.servlet` ベースのServlet環境のサポートを終了しました。WebサービスAPIは `jakarta.servlet` ベースの Jakarta Servlet 6.1 に移行しました。
-
 - [機能削除] セキュリティ上の理由により、`@JSONHint(type=Serializable.class)` によるJavaオブジェクトのシリアル化・復元を廃止しました。この指定があるプロパティを処理するとエラーになります。既存のBase64形式のJavaシリアル化データは復元できないため、JSONで表現できるBeanなどへ移行してください。`byte[]`のBase64変換と `@JSONHint(serialized=true)` は引き続き利用できます。
-
 - [機能削除] セキュリティ上の理由により、RESTServletのJSONP対応を廃止しました。`callback`パラメータによる関数呼び出しの付加は行わず、通常のJSONレスポンス（`application/json`）を返します。
-
 - [機能削除] Guice連携用の `net.arnx.jsonic.web.extension.GuiceContainer` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。
-
 - [機能削除] Seasar2連携用の `net.arnx.jsonic.web.extension.S2Container` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。
-
 - [機能削除] 独自のBase64ユーティリティ `net.arnx.jsonic.util.Base64` を削除しました。直接利用している場合は `java.util.Base64` へ移行してください。JSONICによる `byte[]` のBase64変換は引き続き利用できます。
-
 - [機能削除] ActionScript 3版のソースコード・サンプル・テストの同梱を終了しました。
 
 ### 2015/11/2 version 1.3.10
 
 - [不具合修正] JSONWriter にて配列中のオブジェクトや配列の後ろのカンマが出力されない問題を修正しました。
-
 - [不具合修正] JSON WebService にて例外発生時に Exception のプロパティに JSONHint が適用されない問題を ignore と name についてのみ適用されるよう修正しました。
-
 - [機能追加] JSONReader にて値の読み取りをスキップしてメモリを節約できる skipValue() メソッドを追加しました。
-
 - [機能追加] JSONWriter にて値をそのまま出力できる append(String text) メソッドを追加しました。
 
 ### 2015/8/20 version 1.3.9
 
 - [不具合修正] Java8 Date/Time API に JSONHint の format が正しく反映されない問題を修正しました[チケット:#35349]
-
 - [機能追加] Java7 の java.nio.Path 型に対応しました。
 
 ### 2015/6/29 version 1.3.8
 
 - [仕様変更] コンパイル可能な環境の構築が難しくなってきたため、Java 5 のサポートを廃止しました。Java 6 以降をご利用ください。
-
 - [不具合修正] パラメータを持つ総称型のプロパティの decode/parse に対応しました[チケット:#35153]
-
 - [機能追加] Java8 の Optional 型（OptionalInt、OptionalLong、OptionalDouble、Optional）に対応しました。
 
 ### 2014/12/23 version 1.3.7
 
 - [不具合修正] JSONHint に type を指定しても、type のプロパティに値が設定されない問題を修正しました。
-
 - [不具合修正] JSON object に PrittyPrint モードで encode/format する際、閉じ括弧のインデントがずれる問題を修正しました。
-
 - [機能追加] null に対して preformat は動作しない問題に対応するため preformatNull メソッドを追加しました。
 
 ### 2014/10/26 version 1.3.6
 
 - [仕様変更] RFC 7159 の発行に伴い、文字列、数値、true/false/null をルート要素として許容するよう変更しました。
-
 - [機能追加] Java8 Date/Time API(JSR 310) に対応しました。
-
 - [改善] JSONICをリパッケージした際、メッセージの取得に失敗する問題を修正しました。
 
 ### 2014/5/25 version 1.3.5
@@ -842,20 +826,8 @@ JSONICは、Apache License, Version 2.0下で配布します。
 - [仕様変更] JSONIC でも BeanUtils 同様の仕組みを持っているため、
   [Struts1 の ClassLoader 脆弱性](http://www.nca.gr.jp/2014/struts_s20/index.html)
   が発生する懸念があり調査いたしましたが、次の理由から JSONIC には影響しないことが確認できました（この仕様は JSONIC 全バージョンで同一です）。
-
   - JSON#ignore や Container#limit メソッド内で java.lang.Object クラスで定義されたフィールド／メソッドは無視されるようになっている。
-
-  - convert時の動作では、setterしか利用しないため、getClass() が呼びだされることがない。
-
-  しかしながら、今後同様の問題が発生する可能性を少なくし安全性を高めるため、Bean 情報取得の時点で以下の制限を行なうよう修正を実施しました。
-
-  **java.lang.Object クラスで定義された getter/setter はプロパティとして認識しない（メソッドとしては認識する）。**
-
-  この制限により Object#getClass() がプロパティとして呼び出されること自体がなくなります。
-
-  **java.lang.Class のプロパティを不可視にする。**
-
-  この制限により、開発者が明示的にjava.lang.Classを返すプロパティを定義した場合でも、Class#getClassLoader() などシステムの内部情報にアクセスされることがなくなります。
+  - convert時の動作では、setterしか利用しないため、getClass() が呼びだされることがない。<br>しかしながら、今後同様の問題が発生する可能性を少なくし安全性を高めるため、Bean 情報取得の時点で以下の制限を行なうよう修正を実施しました。<br>**java.lang.Object クラスで定義された getter/setter はプロパティとして認識しない（メソッドとしては認識する）。**<br>この制限により Object#getClass() がプロパティとして呼び出されること自体がなくなります。<br><br>**java.lang.Class のプロパティを不可視にする。**<br>この制限により、開発者が明示的にjava.lang.Classを返すプロパティを定義した場合でも、Class#getClassLoader() などシステムの内部情報にアクセスされることがなくなります。
 
 ### 2014/3/16 version 1.3.3
 
@@ -864,59 +836,35 @@ JSONICは、Apache License, Version 2.0下で配布します。
 ### 2014/2/24 version 1.3.2
 
 - [不具合修正] 列挙型にて定数ごとに継承を行なうと encode/decode に失敗する問題を修正しました。
-
 - [不具合修正] encode/format に OutputStream や BufferedWriter を引き渡すと flush されない問題を修正しました(1.3.1 でのみ発生)
-
 - [不具合修正] parse 時に markSupported が false を返す InputStream を指定すると IOException が発生していた問題を修正しました（1.3.1 でのみ発生）
 
 ### 2014/2/13 version 1.3.1
 
 - [仕様変更] setaName、isaName、getaName など1文字目が小文字となるようなプロパティに対応しました。JavaBeans規約では、set/is/getで始まるメソッドはプロパティとしてみなすことになっているため、本来はそのように修正すべきですが、影響範囲が広くなる恐れがあるため部分的な対応に留めることにしました。
-
 - [機能追加] 総称型の解決を改善しました。これにより、複雑な関係にある型変数にも対応できるようになりました。
-
 - [機能追加] type=String.class を指定した場合、 Enum の decode に失敗する問題を改善しました。
-
 - [機能追加] ストリーム的に JSON を出力する JSONWriter を追加しました。
-
 - Object の encode など一部の処理が高速化されました。
 
 ### 2012/8/4 version 1.3.0
 
 - [機能追加] JSON のストリーム的に読み取るプルパーサ API である JSONReader を追加しました。JSONReader は、 JSON#getReader() メソッドを使うことで取得できます。
-
 - [機能追加] decode/parseが新たに追加されたJSONReaderベースに書きなおされ、また、速度も大幅に改善しました。
-
 - [機能追加] 総称型を埋め込める TypeReference を追加しました。
-
 - [機能追加] Web Service API にて処理に使用する JSON クラスのプロパティ値をコンフィグから指定できるようになりました。
-
 - [機能追加] NamingStyle に何もしない NOOP を追加しました。また、EnumStyle のデフォルトスタイルが NamingStyle.NOOP に変更されました（1.2まではインデックス値に変換していました）。
-
 - [機能追加] 初期インデント幅を設定する setInitialIndent()、インデントとして使用する文字列を指定する setIndentText() を追加しました。
-
 - [機能追加] getReader()でJSONReaderを取得した場合は、連続したJSONをシーケンシャルに扱えるよう拡張しました。TwitterのJSONストリーミングのように連続したJSONが直接扱えるようになりました。
-
 - [機能追加] Container クラスに例外処理を受け取れる exception メソッドを追加しました（#28806）
-
 - [仕様変更] Web Service API にて debug: true が指定された場合、PrettyPrint が自動的に有効になっていましたが、1.3では明示的に指定する必要があります。
-
 - [仕様変更] setSuppressNull を指定すると parse 時や Map の format 時も null を無視していましたが不適切な場合が多いため、JavaBean あるいは DynaBean の format 時のみ有効となるよう変更しました。
-
 - [仕様変更] parse/decode 時は formatの指定に関わらず日時文字列からDate型へ書式の自動解析による変換を行なっていましたが、formatが指定された場合は書式に従った解析を行なうよう変更しました。
-
 - [仕様変更] TRADITIONAL モードでも、値が常に文字列型に変換されるよう仕様を変更しました（ただし、SCRIPTモードと異なり、マイナスの値も指定可能です。また、nullは文字列ではなく従来通りnull値に変換されます）。
-
 - [仕様変更] ReaderあるいはInputStreamの先頭以外でBOM（Byte Order Mark）が見つかった場合は、例外を出すように変更しました。
-
 - [仕様変更] TRADITIONAL モードでサポートされていたシェルスクリプトスタイルの行コメント（#) を廃止しました。
-
 - [仕様変更] TRADITIONAL モードでサポートされていたシングルクォートで囲まれた文字列の場合、シェルスクリプトのようにエスケープを無視する仕様にしていましたが、誤解する人が多数いたため廃止しました。
-
 - [仕様変更] TRADITIONAL モードでもSCRIPTモードと同様に<、>を\u003C、\u003Eにエスケープするように変更しました。
-
 - [仕様変更] SCRIPT モードで JSON Object のキー値としてとれる値を JavaScript の仕様に合わせ、マイナスの数値の場合エラーとし、また値が常に文字列型に変換されます。
-
 - [仕様変更] メソッド名が不統一となっていたため JSON.Context#getLevel() を非推奨とし、 JSON.Context#getDepth() に変更しました。
-
 - [仕様変更] メソッド名が不統一となっていたため JSON.Context#getPropertyCaseStyle(), JSON.Context#getEnumCaseStyle() を廃止し、それぞれ JSON.Context#getPropertyStyle(), JSON.Context#getEnumStyle() に変更しました。

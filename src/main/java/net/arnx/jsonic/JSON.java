@@ -156,6 +156,18 @@ import net.arnx.jsonic.util.LocalCache;
  */
 public class JSON {
 	/**
+	 * Legacy JSON processing mode retained for compatibility.
+	 *
+	 * @deprecated Processing modes are no longer supported.
+	 */
+	@Deprecated
+	public enum Mode {
+		TRADITIONAL,
+		STRICT,
+		SCRIPT
+	}
+
+	/**
 	 * Setup your custom class for using static method. default: net.arnx.jsonic.JSON
 	 */
 	public static volatile Class<? extends JSON> prototype = JSON.class;
@@ -794,6 +806,16 @@ public class JSON {
 			throw new NullPointerException();
 		}
 		this.timeZone = timeZone;
+	}
+
+	/**
+	 * Retained for compatibility. This method has no effect.
+	 *
+	 * @param mode ignored JSON processing mode
+	 * @deprecated Processing modes are no longer supported.
+	 */
+	@Deprecated
+	public void setMode(Mode mode) {
 	}
 
 	/**
