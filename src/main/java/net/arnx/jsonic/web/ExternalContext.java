@@ -22,7 +22,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 public class ExternalContext {
-	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new InheritableThreadLocal<>() {
+	// Request/session state must not be inherited by child or pooled worker threads.
+	private static final ThreadLocal<ExternalContext> THREAD_LOCAL = new ThreadLocal<>() {
 		protected ExternalContext initialValue() {
 			throw new UnsupportedOperationException();
 		};

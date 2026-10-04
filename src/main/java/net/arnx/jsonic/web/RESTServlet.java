@@ -185,8 +185,9 @@ public class RESTServlet extends HttpServlet {
 					request.getRequestURI().substring(request.getContextPath().length());
 
 			Route route = null;
+			json = container.createJSON(request.getLocale());
 			for (RouteMapping m : config.mappings.values()) {
-				if ((route = m.matches(request, uri)) != null) {
+				if ((route = m.matches(request, uri, json.getMaxDepth())) != null) {
 					container.debug("Route found: " + request.getMethod() + " " + uri);
 					break;
 				}
@@ -206,8 +207,6 @@ public class RESTServlet extends HttpServlet {
 			if ("POST".equals(route.getHttpMethod())) {
 				status = SC_CREATED;
 			}
-
-			json = container.createJSON(request.getLocale());
 
 			String className = route.getComponentClass(container);
 			Object component = container.getComponent(className);
@@ -410,6 +409,11 @@ public class RESTServlet extends HttpServlet {
 
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		public Route matches(HttpServletRequest request, String path) throws IOException {
+			return matches(request, path, new JSON().getMaxDepth());
+		}
+
+		@SuppressWarnings({"unchecked", "rawtypes"})
+		public Route matches(HttpServletRequest request, String path, int maxDepth) throws IOException {
 			Matcher m = pattern.matcher(path);
 			if (m.matches()) {
 				Map<String, Object> params = new HashMap<>();
@@ -452,7 +456,7 @@ public class RESTServlet extends HttpServlet {
 					restMethod = config.method.get(httpMethod);
 				}
 
-				parseParameter(request.getParameterMap(), (Map)params);
+				parseParameter(request.getParameterMap(), (Map)params, maxDepth);
 				return new Route(httpMethod, (String)restMethod, target, params);
 			}
 			return null;
@@ -460,6 +464,11 @@ public class RESTServlet extends HttpServlet {
 
 		@SuppressWarnings("unchecked")
 		static void parseParameter(Map<String, String[]> pairs, Map<Object, Object> params) {
+			parseParameter(pairs, params, new JSON().getMaxDepth());
+		}
+
+		@SuppressWarnings("unchecked")
+		static void parseParameter(Map<String, String[]> pairs, Map<Object, Object> params, int maxDepth) {
 			for (Map.Entry<String, String[]> entry : pairs.entrySet()) {
 				String name = entry.getKey();
 				boolean multiValue = false;
@@ -468,6 +477,8 @@ public class RESTServlet extends HttpServlet {
 					multiValue = true;
 				}
 				String[] values = entry.getValue();
+				int depth = 2;
+				if (depth > maxDepth) throw new JSONException("Form parameter exceeds maximum depth", JSONException.PARSE_ERROR);
 
 				int start = 0;
 				char old = '\0';
@@ -475,6 +486,7 @@ public class RESTServlet extends HttpServlet {
 				for (int i = 0; i < name.length(); i++) {
 					char c = name.charAt(i);
 					if (c == '.' || c == '[') {
+						if (++depth > maxDepth) throw new JSONException("Form parameter exceeds maximum depth", JSONException.PARSE_ERROR);
 						String key = name.substring(start, (old == ']') ? i-1 : i);
 						Object target = current.get(key);
 

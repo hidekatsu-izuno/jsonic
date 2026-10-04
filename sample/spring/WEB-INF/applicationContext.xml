@@ -8,7 +8,7 @@
 	<bean class="sample.spring.service.RpcInfoService">
 	</bean>
 	
-	<bean class="sample.spring.web.rest.service.MemoService">
+	<bean class="sample.spring.web.rest.service.MemoService" scope="prototype">
 	</bean>
 	
 	<bean class="sample.spring.web.rpc.service.CalcService">

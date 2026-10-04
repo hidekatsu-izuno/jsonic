@@ -30,6 +30,8 @@
 				{
 				  "container": "net.arnx.jsonic.web.extension.SpringContainer",
 				  "debug": true,
+				  "allowedMethods": ["find", "plus", "sum", "size", "concat", "split"],
+				  "definitions": {"package": "rpc", "class": "calc|edit|rpc_info"},
 				  "mappings": {
 				    "/rpc/{package}/rpc.json": "sample.spring.web.${package}.service.${class}Service",
 				    "/rpc/{package}/{class}.json": "sample.spring.web.${package}.service.${class}Service",
@@ -50,6 +52,7 @@
 				{
 				  "container": "net.arnx.jsonic.web.extension.SpringContainer",
 				  "debug": true,
+				  "allowedMethods": ["find", "create", "update", "delete", "print", "exception"],
 				  "mappings": {
 				    "/{package}/{class}.{method:print|exception}.json": {
 				      "target": "sample.spring.web.${package}.service.${class}Service",

@@ -794,6 +794,11 @@ JSONICは、Apache License, Version 2.0下で配布します。
 - [機能削除] セキュリティ上の理由により、RESTServletのJSONP対応を廃止しました。`callback`パラメータによる関数呼び出しの付加は行わず、通常のJSONレスポンス（`application/json`）を返します。
 - [セキュリティ対応] GatewayFilterはinclude先のパスでも認可を確認します。利用する場合はフィルタを`INCLUDE`にも登録してください。対象パスのない名前ベースのincludeは拒否します。
 - [セキュリティ対応] RESTサンプル画面で、メモのタイトル・本文をHTMLに直接埋め込む処理を廃止しました。
+- [セキュリティ対応] Webサービスに`allowedMethods`設定を追加しました。Servlet関連オブジェクトを引数に取るメソッドとSpringの`Aware`設定メソッドは外部呼び出しを拒否し、サンプルのRPC対象クラス・メソッドも制限します。
+- [仕様変更] `ExternalContext`はリクエスト情報を子スレッドに自動継承しません。子スレッドや再利用されるワーカースレッドに以前のリクエスト・セッションが残ることを防止します。非同期処理には必要な値を明示的に引き渡してください。
+- [仕様変更] SpringContainerによるリクエスト・レスポンスのsetter挿入はsingleton Beanでは拒否します。対象Beanは`prototype`または`request`スコープで登録してください。SpringのMemoServiceサンプルを`prototype`に変更しました。
+- [セキュリティ対応] RESTのフォーム・クエリパラメータの階層にも`processor.maxDepth`を適用し、深すぎる入力はサービス実行前にHTTP 400で拒否します。
+- [セキュリティ対応] メモサンプルのCSV出力でセル内の引用符・カンマ・改行を適切に扱い、数式として解釈される値には単一引用符を付けます。
 - [仕様変更] 巨大な指数によるCPU・メモリ消費を防ぐため、JSON数値や`BigDecimal`から`BigInteger`への変換は10,000桁までに制限します。超過する値は`JSONException`になります。`BigDecimal`としての読み込みと、文字列からの`BigInteger`変換は引き続き利用できます。
 - [機能削除] Guice連携用の `net.arnx.jsonic.web.extension.GuiceContainer` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。
 - [機能削除] Seasar2連携用の `net.arnx.jsonic.web.extension.S2Container` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。

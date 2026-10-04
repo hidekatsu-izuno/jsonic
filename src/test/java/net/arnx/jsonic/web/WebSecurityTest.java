@@ -56,6 +56,10 @@ class WebSecurityTest {
             rest.setInitParameter("config", "{\"mappings\":{\"/memo.json\":\""
                     + Service.class.getName() + "\"}}");
             context.addServlet(rest, "*.json");
+            ServletHolder shallow = new ServletHolder(new RESTServlet());
+            shallow.setInitParameter("config", "{\"processor\":{\"maxDepth\":3},\"mappings\":{\"/shallow.json\":\""
+                    + Service.class.getName() + "\"}}");
+            context.addServlet(shallow, "/shallow.json");
             context.addServlet(new ServletHolder(new HttpServlet() {
                 @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
                         throws IOException {
@@ -196,6 +200,31 @@ class WebSecurityTest {
         assertEquals(1, Service.deletes.get());
         assertEquals(204, request("DELETE", "/memo.json?_method=PUT").statusCode());
         assertEquals(2, Service.deletes.get());
+        assertEquals(1, Service.updates.get());
+    }
+
+    @Test
+    void rejectsOverdeepFormsBeforeInvokingTheService() throws Exception {
+        Service.updates.set(0);
+        for (String context : List.of("", "/app")) {
+            for (String[] input : List.of(
+                    new String[]{"/memo.json", "c.".repeat(3000) + "value=test"},
+                    new String[]{"/shallow.json", "a.b.c=test"})) {
+                var response = CLIENT.send(HttpRequest.newBuilder(URI.create(base + context + input[0] + "?_method=PUT"))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .POST(HttpRequest.BodyPublishers.ofString(input[1])).build(),
+                        HttpResponse.BodyHandlers.ofString());
+                assertEquals(400, response.statusCode());
+            }
+        }
+        assertEquals(0, Service.updates.get());
+        var allowed = CLIENT.send(HttpRequest.newBuilder(URI.create(base + "/shallow.json?_method=PUT"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("X-Requested-With", "XMLHttpRequest")
+                .POST(HttpRequest.BodyPublishers.ofString("a.b=test")).build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(204, allowed.statusCode());
         assertEquals(1, Service.updates.get());
     }
 

@@ -16,6 +16,8 @@
 			<param-value>
 				{
 				  "debug": true,
+				  "allowedMethods": ["find", "plus", "sum", "size", "concat", "split"],
+				  "definitions": {"package": "rpc", "class": "calc|edit|rpc_info"},
 				  "mappings": {
 				    "/rpc/{package}/rpc.json": "sample.basic.web.${package}.service.${class}Service",
 				    "/rpc/{package}/{class}.json": "sample.basic.web.${package}.service.${class}Service",
@@ -41,6 +43,7 @@
 			<param-value>
 				{
 				  "debug": false,
+				  "allowedMethods": ["find", "create", "update", "delete", "print", "exception"],
 				  "mappings": {
 				    "/{package}/{class}.{method:print|exception}.json": {
 				      "target": "sample.basic.web.${package}.service.${class}Service",

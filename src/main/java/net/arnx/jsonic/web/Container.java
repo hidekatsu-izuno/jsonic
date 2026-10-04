@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -41,6 +42,8 @@ import java.util.regex.Pattern;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -60,6 +63,7 @@ public class Container {
 	public String encoding;
 	public Boolean expire;
 	public boolean namingConversion = true;
+	public Set<String> allowedMethods;
 
 	@JSONHint(anonym = "class")
 	public ProcessorConfig processor;
@@ -136,6 +140,7 @@ public class Container {
 		if (params == null) params = Collections.emptyList();
 
 		if (namingConversion) methodName = ClassUtil.toLowerCamel(methodName);
+		if (allowedMethods != null && !allowedMethods.contains(methodName)) return null;
 
 		if (methodName.equals(init) || methodName.equals(destroy)) {
 			debug("Method name is same init or destroy method name.");
@@ -357,7 +362,13 @@ public class Container {
 	}
 
 	protected boolean limit(Class<?> c, Method method) {
-		return method.getDeclaringClass().equals(Object.class);
+		if (method.getDeclaringClass().equals(Object.class)) return true;
+		for (Class<?> type : method.getParameterTypes()) {
+			if (ServletConfig.class.isAssignableFrom(type) || ServletContext.class.isAssignableFrom(type)
+					|| ServletRequest.class.isAssignableFrom(type) || ServletResponse.class.isAssignableFrom(type)
+					|| HttpSession.class.isAssignableFrom(type)) return true;
+		}
+		return false;
 	}
 
 	public boolean isDebugMode() {

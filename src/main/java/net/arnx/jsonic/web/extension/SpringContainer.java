@@ -28,6 +28,7 @@ import net.arnx.jsonic.web.ExternalContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.Aware;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -62,14 +63,38 @@ public class SpringContainer extends Container {
 					&& params.length == 1) {
 				Class<?> c = params[0];
 				if (HttpServletRequest.class.equals(c)) {
+					checkRequestScope(className);
 					method.invoke(component, ExternalContext.getRequest());
 				} else if (HttpServletResponse.class.equals(c)) {
+					checkRequestScope(className);
 					method.invoke(component, ExternalContext.getResponse());
 				}
 			}
 		}
 		
 		return component;
+	}
+
+	private void checkRequestScope(String name) {
+		if (appContext.isSingleton(name)) {
+			throw new IllegalStateException("Request/response injection requires a prototype or request scoped bean: " + name);
+		}
+	}
+
+	@Override
+	protected boolean limit(Class<?> c, Method method) {
+		if (super.limit(c, method)) return true;
+		for (Class<?> type = c; type != null; type = type.getSuperclass()) {
+			for (Class<?> iface : type.getInterfaces()) {
+				if (!Aware.class.isAssignableFrom(iface)) continue;
+				try {
+					iface.getMethod(method.getName(), method.getParameterTypes());
+					return true;
+				} catch (NoSuchMethodException ignored) {
+				}
+			}
+		}
+		return false;
 	}
 	
 	@Override

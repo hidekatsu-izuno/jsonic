@@ -217,9 +217,12 @@ configで設定できる値は次の通りです（errorsを除き、RESTServlet
 | destroy | `java.lang.String` | 処理の実行後に呼び出されるメソッド名を設定します。デフォルトは`"destroy"`です。 |
 | processor | `net.arnx.jsonic.JSON` | 処理に使用するJSONクラスを設定します。デフォルトではThrowableのメソッドのみ無視するJSONクラスが設定されます。 |
 | namingConversion | boolean | 呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。 |
+| allowedMethods | `java.util.Set<String>` | 外部から呼び出せるJavaメソッド名を制限します。名前変換後の名前を指定してください。未設定時は従来の公開メソッドが対象となり、空配列を指定するとすべて拒否します。 |
 | errors | `java.util.Map<Class< extends Exception>, Integer>` | Exceptionクラスとエラーコードのマッピングを行います（継承したクラスも対象になります）。 |
 
 (※3) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。 また、URLパスにはコンテキストパスを含める必要はありません。
+
+公開するクラスを`mappings`と`definitions`で絞り、`allowedMethods`に必要なメソッドだけを設定してください。例えば`"allowedMethods": ["plus", "sum"]`で公開範囲を指定できます。Servletのコンテキスト・設定・リクエスト・レスポンス・セッションを引数に受け取るメソッドと、Springの`Aware`インターフェースに定義された設定メソッドは、許可リストに含めても外部から呼び出せません。`init`と`destroy`も外部から呼び出せませんが、処理前後の呼び出しは従来どおり行われます。
 
 <a id="restservlet"></a>
 
@@ -377,11 +380,14 @@ configで設定できる値は次の通りです（method, verbを除き、RPCSe
 | destroy | `java.lang.String` | 処理の実行後に呼び出されるメソッド名を設定します。デフォルトは`"destroy"`です。 |
 | processor | `net.arnx.jsonic.JSON` | 処理に使用するJSONクラスを設定します。デフォルトではThrowableのメソッドのみ無視するJSONクラスが設定されます。 |
 | namingConversion | boolean | 呼び出し時のクラス名、メソッド名の変換を行うか否か設定します。デフォルトはtrueです。 |
+| allowedMethods | `java.util.Set<String>` | 外部から呼び出せるJavaメソッド名を制限します。名前変換後の名前を指定してください。未設定時は従来の公開メソッドが対象となり、空配列を指定するとすべて拒否します。 |
 | errors | `java.util.Map<Class< extends Exception>, Integer>` | ExceptionクラスとHTTP Status Codeのマッピングを行います（継承したクラスも対象になります）。 |
 | method | `java.util.Map<String, String>` | HTTP Methodに対応するメソッド名を設定します。デフォルトは、`{ "GET": "find", "POST": "create", "PUT": "update", "DELETE": "delete" }`です。なお、パス変数にmethodが設定されている場合は無視されます。 |
 | verb | `java.util.Set<String>` | 使用できるHTTP Methodを制限します。デフォルトは、`["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS"]`です。HEADとOPTIONSを使う場合は、methodも対応付ける必要があります。 |
 
 (※8) 変数名のうち、classとpackageだけは特殊な扱いがされます。デフォルトでは、class変数中の文字列はUpperCamelに変換され、package変数中の「/」は「.」に変換されます。また、URLパスにはコンテキストパスを含める必要はありません。
+
+`.`や`[]`で指定するフォーム・クエリパラメータの階層には、`processor.maxDepth`の上限が適用されます（デフォルト32）。上限を超える入力は、サービスを呼び出す前にHTTP 400で拒否します。公開メソッドの制限はRPCと同様に`allowedMethods`で設定できます。
 
 なお、`method, verb`に関しては、`mappings`の各データ毎にも設定できます。その場合は次のようにマッピング先をJSON objectにします（マッピング先のプロパティ名は`target`にしてください）。
 
@@ -447,6 +453,8 @@ curl -X POST 'http://localhost:8080/basic/rest/memo.json' \
 
 CSVやXMLなどJSON以外のレスポンスを返したい場合やリダイレクトしたい場合は、処理の最後でHttpServletResponse#flushBuffer()を実行して出力をコミットしてください。ステータスコードやコンテントタイプの設定、JSONの出力などJSONIC側の後続処理を抑制することができます。
 
+CSVに利用者の入力を出力する場合は、各セルを二重引用符で囲み、値中の二重引用符を二重にして、カンマや改行で列・行が追加されないようにしてください。表計算ソフトで数式として解釈される値は、先頭に単一引用符を付けて出力します。basicとspringのメモサンプルでは、この処理を行っています。
+
 ```java
 public class HogeService {
     // 自動インジェクション
@@ -496,6 +504,8 @@ JSONICでは、[Spring Framework](https://spring.io/projects/spring-framework)�
 
 (※9) 呼び出されるメソッド名は設定で変更可能です。
 
+`ExternalContext`で取得できる情報は、リクエストを処理している現在のスレッドに限定されます。子スレッド（仮想スレッドを含む）への自動継承は行いません。コンテキストのないスレッドやリクエスト終了後にアクセスすると`UnsupportedOperationException`になります。非同期処理には、利用者IDなど必要な値をリクエスト処理中に取り出し、明示的に引き渡してください。
+
 暗黙オブジェクトは以下のように設定してください。クラスだけでなくフィールド名も合わせる必要があります（デフォルトコンテナのみの機能です）。
 
 ```java
@@ -509,6 +519,12 @@ public class HogeService {
 ```
 
 コンテナ自身にHttpServletRequestとHttpServletResponseのDI機能がないSpringContainerに関しては、setterによるインジェクション機能を提供しています（下記例を参照）。
+
+これらのsetterを持つBeanは、リクエストごとに独立したインスタンスになる`prototype`または`request`スコープで登録してください。singleton Beanへのリクエスト・レスポンス挿入は、同時リクエスト間で情報が混ざるため拒否します。singletonのスコープ付きプロキシもこの検査の対象です。サンプルのMemoServiceは`scope="prototype"`で登録しています。リクエスト・レスポンスのsetterを持たないBeanは、引き続きsingletonで利用できます。
+
+```xml
+<bean class="sample.spring.web.rest.service.MemoService" scope="prototype"/>
+```
 
 ```java
 public class SpringDrivenService {

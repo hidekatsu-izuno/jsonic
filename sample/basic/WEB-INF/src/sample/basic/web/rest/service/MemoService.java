@@ -125,15 +125,26 @@ public class MemoService {
 		for (Memo memo : list.values()) {
 			writer.print(memo.id);
 			writer.print(",");
-			writer.print(memo.title);
+			writeCsvCell(writer, memo.title);
 			writer.print(",");
-			writer.print(memo.text);
+			writeCsvCell(writer, memo.text);
 			writer.print("\r\n");
 		}
 		
 		response.flushBuffer();
 	}
 	
+	private static void writeCsvCell(PrintWriter writer, String value) {
+		String text = (value != null) ? value : "";
+		String leading = text.stripLeading();
+		boolean formula = !leading.isEmpty() && "=+-@＝＋－＠".indexOf(leading.charAt(0)) >= 0;
+		if (!text.isEmpty() && "\t\r\n".indexOf(text.charAt(0)) >= 0) formula = true;
+		writer.print('"');
+		if (formula) writer.print('\'');
+		writer.print(text.replace("\"", "\"\""));
+		writer.print('"');
+	}
+
 	public void exception() {
 		throw new MemoException("memo error!");
 	}
