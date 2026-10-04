@@ -1285,6 +1285,7 @@ final class ObjectFormatter implements Formatter {
 	}
 
 	static PropertyInfo[] getGetProperties(Context context, Class<?> c) {
+		if (c.isRecord()) return RecordSupport.readable(context, c);
 		Map<String, PropertyInfo> props = new HashMap<>();
 
 		// Field

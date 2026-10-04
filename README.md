@@ -138,6 +138,15 @@ POJOからJSONへの変換ルールは次の通りです。
 
 JSONからPOJOに変換する場合は、decodeを使います。デフォルトでは、object, array, string, number, true/false, nullをHashMap, ArrayList, String, BigDecimal, Boolean, nullに変換しますが、二番目の引数に変換先のクラスを指定することでそのクラスのインスタンスにデータをセットして返してくれます。また、この処理はパブリック・フィールドやパブリック・プロパティ、配列やコレクションのデータを再帰的に辿り実行されますので、一般的なJavaBeansであればencodeして作られたJSONからの逆変換も可能です（Generics型にも対応しています）。
 
+record 型にも対応しています。エンコードでは各コンポーネントのアクセサーを使い、デコードでは正規コンストラクターに値を渡して生成します。ネストや総称型、コンポーネントの `@JSONHint`（名前・書式・無視・出力順）、`setPropertyStyle` にも対応します。省略されたコンポーネントや `ignore = true` のコンポーネントには、プリミティブ型のゼロ値または参照型の `null` を渡します。コンストラクターの検証で例外が発生した場合は `JSONException` になります。
+
+```java
+record Person(String name, int age) {}
+
+String text = JSON.encode(new Person("Alice", 20));
+Person person = JSON.decode(text, Person.class);
+```
+
 なお、JSON文字列が不正であったり、型の変換に失敗した場合はJSONExceptionが投げられます。
 
 ```java
@@ -778,6 +787,7 @@ JSONICは、Apache License, Version 2.0下で配布します。
 ### 2026/10/4 version 2.0.0
 
 - [機能改善] パフォーマンスを大幅改善しました。
+- [機能追加] Record 型に対応しました。
 - [仕様変更] Java 20 以前のサポートを終了しました。Java 21 以降をご利用ください。
 - [仕様変更] `javax.servlet` ベースのServlet環境のサポートを終了しました。WebサービスAPIは `jakarta.servlet` ベースの Jakarta Servlet 6.1 に移行しました。
 - [機能削除] セキュリティ上の理由により、`@JSONHint(type=Serializable.class)` によるJavaオブジェクトのシリアル化・復元を廃止しました。この指定があるプロパティを処理するとエラーになります。既存のBase64形式のJavaシリアル化データは復元できないため、JSONで表現できるBeanなどへ移行してください。`byte[]`のBase64変換と `@JSONHint(serialized=true)` は引き続き利用できます。
@@ -868,3 +878,10 @@ JSONICは、Apache License, Version 2.0下で配布します。
 - [仕様変更] SCRIPT モードで JSON Object のキー値としてとれる値を JavaScript の仕様に合わせ、マイナスの数値の場合エラーとし、また値が常に文字列型に変換されます。
 - [仕様変更] メソッド名が不統一となっていたため JSON.Context#getLevel() を非推奨とし、 JSON.Context#getDepth() に変更しました。
 - [仕様変更] メソッド名が不統一となっていたため JSON.Context#getPropertyCaseStyle(), JSON.Context#getEnumCaseStyle() を廃止し、それぞれ JSON.Context#getPropertyStyle(), JSON.Context#getEnumStyle() に変更しました。
+
+<!--
+- mvn verify
+- git tag vX.XX.X && git push origin --tags
+- 取り消す場合: git tag -d vX.XX.X && git push origin :refs/tags/vX.XX.X
+- mvn -Prelease clean deploy
+-->

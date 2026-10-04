@@ -420,6 +420,7 @@ final class TypedDecoder {
     }
 
     private Object bean(Context context, int at, Class<?> type, Type genericType) throws Exception {
+        if (type.isRecord()) return context.postparseInternal(raw(at), type, genericType);
         BeanLayout known = layout;
         if (known != null && known.type == type && matches(at, known)) {
             Object result = known.constructor != null ? known.constructor.newInstance() : context.createInternal(type);

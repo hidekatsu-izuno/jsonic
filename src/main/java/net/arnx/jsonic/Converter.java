@@ -1627,6 +1627,8 @@ final class ObjectConverter implements Converter {
 			return null;
 		}
 
+		if (c.isRecord()) return RecordSupport.convert(context, value, c, t);
+
 		if (props == null) props = BeanProperties.writable(context, cls);
 
 		if (value instanceof Map<?, ?>) {
