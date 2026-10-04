@@ -6,12 +6,40 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 public class GatewayFilterTest {
+    @Test
+    public void authorizesTheIncludeTargetAndRejectsNamedIncludes() throws Exception {
+        for (boolean authorized : new boolean[]{false, true}) {
+            GatewayFilter filter = new GatewayFilter();
+            MockFilterConfig config = new MockFilterConfig();
+            config.addInitParameter("config", "{\"/admin/.*\":{\"access\":[\"admin\"]}}");
+            filter.init(config);
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/open");
+            request.setServletPath("/open");
+            request.setDispatcherType(DispatcherType.INCLUDE);
+            if (authorized) request.addUserRole("admin");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            try {
+                // A named include has no target path, even for an authorized caller.
+                filter.doFilter(request, response, (req, res) -> fail("Named include was allowed"));
+                request.setAttribute(RequestDispatcher.INCLUDE_SERVLET_PATH, "/admin");
+                request.setAttribute(RequestDispatcher.INCLUDE_PATH_INFO, "/secret");
+                filter.doFilter(request, response, (req, res) -> res.getWriter().write("allowed"));
+                assertEquals(authorized ? "allowed" : "", response.getContentAsString());
+                assertEquals(200, response.getStatus());
+            } finally {
+                filter.destroy();
+            }
+        }
+    }
+
     @Test
     public void rechecksRolesWhenAnExistingRequestIsForwarded() throws Exception {
         for (boolean authorized : new boolean[]{false, true}) {

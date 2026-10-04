@@ -560,6 +560,7 @@ final class DoubleConverter  implements Converter {
 
 final class BigIntegerConverter  implements Converter {
 	public static final BigIntegerConverter INSTANCE = new BigIntegerConverter();
+	private static final int MAX_DECIMAL_DIGITS = 10000;
 
 	@Override
 	public boolean accept(Class<?> cls) {
@@ -579,7 +580,16 @@ final class BigIntegerConverter  implements Converter {
 		if (value == null) {
 			return null;
 		} else if (value instanceof BigDecimal) {
-			return ((BigDecimal)value).toBigIntegerExact();
+			BigDecimal decimal = (BigDecimal)value;
+			if (decimal.signum() == 0) return BigInteger.ZERO;
+			// setScale(0) constructs powers of ten even for tiny fractional values.
+			// Use long arithmetic because an exponent can approach Integer.MAX_VALUE.
+			long digits = (long)decimal.precision() - decimal.scale();
+			if (digits <= 0) throw new ArithmeticException("Rounding necessary");
+			if (digits > MAX_DECIMAL_DIGITS) {
+				throw new ArithmeticException("BigInteger conversion exceeds " + MAX_DECIMAL_DIGITS + " decimal digits");
+			}
+			return decimal.toBigIntegerExact();
 		} else if (value instanceof BigInteger) {
 			return value;
 		} else if (value instanceof String) {

@@ -792,6 +792,9 @@ JSONICは、Apache License, Version 2.0下で配布します。
 - [仕様変更] `javax.servlet` ベースのServlet環境のサポートを終了しました。WebサービスAPIは `jakarta.servlet` ベースの Jakarta Servlet 6.1 に移行しました。
 - [機能削除] セキュリティ上の理由により、`@JSONHint(type=Serializable.class)` によるJavaオブジェクトのシリアル化・復元を廃止しました。この指定があるプロパティを処理するとエラーになります。既存のBase64形式のJavaシリアル化データは復元できないため、JSONで表現できるBeanなどへ移行してください。`byte[]`のBase64変換と `@JSONHint(serialized=true)` は引き続き利用できます。
 - [機能削除] セキュリティ上の理由により、RESTServletのJSONP対応を廃止しました。`callback`パラメータによる関数呼び出しの付加は行わず、通常のJSONレスポンス（`application/json`）を返します。
+- [セキュリティ対応] GatewayFilterはinclude先のパスでも認可を確認します。利用する場合はフィルタを`INCLUDE`にも登録してください。対象パスのない名前ベースのincludeは拒否します。
+- [セキュリティ対応] RESTサンプル画面で、メモのタイトル・本文をHTMLに直接埋め込む処理を廃止しました。
+- [仕様変更] 巨大な指数によるCPU・メモリ消費を防ぐため、JSON数値や`BigDecimal`から`BigInteger`への変換は10,000桁までに制限します。超過する値は`JSONException`になります。`BigDecimal`としての読み込みと、文字列からの`BigInteger`変換は引き続き利用できます。
 - [機能削除] Guice連携用の `net.arnx.jsonic.web.extension.GuiceContainer` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。
 - [機能削除] Seasar2連携用の `net.arnx.jsonic.web.extension.S2Container` を削除しました。連携が必要な場合は `Container` を拡張して実装してください。
 - [機能削除] 独自のBase64ユーティリティ `net.arnx.jsonic.util.Base64` を削除しました。直接利用している場合は `java.util.Base64` へ移行してください。JSONICによる `byte[]` のBase64変換は引き続き利用できます。

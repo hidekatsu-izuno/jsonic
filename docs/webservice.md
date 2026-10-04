@@ -587,12 +587,13 @@ JSONICでは、おまけ機能としてJSONを使ってServletで良く使う各
     <url-pattern>/*</url-pattern>
     <dispatcher>REQUEST</dispatcher>
     <dispatcher>FORWARD</dispatcher>
+    <dispatcher>INCLUDE</dispatcher>
 </filter-mapping>
 ```
 
-**設定上の注意:** `FORWARD`を省略すると、転送先でGatewayFilterが実行されず、転送先の認可チェックが働きません。`/*`に対して`REQUEST`と`FORWARD`を必ず登録してください。`filter-name`は使用しているfilter定義の名前に合わせます。
+**設定上の注意:** `FORWARD`や`INCLUDE`を省略すると、それぞれの転送先でGatewayFilterが実行されず、転送先の認可チェックが働きません。`/*`に対して`REQUEST`・`FORWARD`・`INCLUDE`を登録してください。`filter-name`は使用しているfilter定義の名前に合わせます。
 
-configで設定できる値は次の通りです。accessはforward先でも毎回検証します。転送先の認可を有効にするため、上記のようにREQUESTとFORWARDの両方へフィルタを登録してください。圧縮・文字コードなどの応答設定と、設定によるforwardは1リクエストにつき1回だけ適用します。
+configで設定できる値は次の通りです。accessはforward先・include先でも毎回検証します。include先が拒否された場合、その内容を出力せず、呼び出し元のHTTPステータスは変更しません。名前ベースのincludeは対象パスを判定できないため拒否します。圧縮・文字コードなどの応答設定と、設定によるforwardは1リクエストにつき1回だけ適用し、includeでは行いません。
 
 | キー | 値型 | 説明 |
 | --- | --- | --- |

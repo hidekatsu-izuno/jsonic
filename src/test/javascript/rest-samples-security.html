@@ -1,0 +1,58 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>REST sample security regression tests</title>
+<!-- Serve the repository root, then open this page in a browser. -->
+<pre id="result">Running</pre>
+<script>
+(async function() {
+	function assert(condition, message) {
+		if (!condition) throw new Error(message);
+	}
+	var payload = '\"><img src=x onerror="window.xssExecuted=true"><script>window.xssExecuted=true<\/script>';
+	var memos = [
+		{id: 1, title: payload, text: payload},
+		{id: 2, title: '日本語 & "quotes"', text: '<b>plain text</b>'}
+	];
+	var results = [];
+	try {
+		for (var app of ['basic', 'spring']) {
+			for (var page of ['json-rest-sample.html', 'form-rest-sample.html']) {
+				var frame = document.createElement('iframe');
+				var loaded = new Promise(function(resolve, reject) {
+					frame.onload = resolve;
+					frame.onerror = reject;
+				});
+				frame.src = '../../../sample/' + app + '/' + page;
+				document.body.appendChild(frame);
+				await loaded;
+				var w = frame.contentWindow;
+				w.$.ajax = function(options) { options.success(memos); };
+				w.$.getJSON = function(url, success) { success(memos); };
+				w.show();
+				assert(w.$('#list img, #list script, #list [onerror], #list [onclick]').length === 0,
+					'User input became executable markup');
+				assert(!w.xssExecuted, 'Injected script executed');
+				for (var memo of memos) {
+					assert(w.$('#title' + memo.id).val() === memo.title, 'Title changed');
+					assert(w.$('#text' + memo.id).val() === memo.text, 'Text changed');
+				}
+				var calls = [];
+				w.updateRow = function(id) { calls.push('update:' + id); };
+				w.deleteRow = function(id) { calls.push('delete:' + id); };
+				w.addRow = function() { calls.push('add'); };
+				// Render again so the Add button also uses the test callback.
+				w.show();
+				w.$('#update1, #delete2, #add').trigger('click');
+				assert(calls.join(',') === 'update:1,delete:2,add', 'Row actions selected the wrong memo');
+				assert(w.$('#list table').length === 1, 'Refresh duplicated the table');
+				results.push('PASS ' + app + '/' + page);
+				frame.remove();
+			}
+		}
+		document.getElementById('result').textContent = results.join('\n');
+	} catch (error) {
+		document.getElementById('result').textContent = 'FAIL ' + error.message;
+		throw error;
+	}
+})();
+</script>

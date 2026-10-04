@@ -30,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -110,8 +111,23 @@ public class GatewayFilter implements Filter {
 		
 		// Use the container's decoded mapping path, without path parameters.
 		// Raw request URIs can spell the same protected resource differently.
-		String path = request.getServletPath();
-		if (request.getPathInfo() != null) path += request.getPathInfo();
+		boolean include = request.getDispatcherType() == DispatcherType.INCLUDE;
+		String path;
+		String pathInfo;
+		if (include) {
+			// Include keeps the caller's path getters; the target is in attributes.
+			Object servletPath = request.getAttribute(RequestDispatcher.INCLUDE_SERVLET_PATH);
+			if (!(servletPath instanceof String)) {
+				// Named includes have no mapping path, so cannot be authorized here.
+				return;
+			}
+			path = (String)servletPath;
+			pathInfo = (String)request.getAttribute(RequestDispatcher.INCLUDE_PATH_INFO);
+		} else {
+			path = request.getServletPath();
+			pathInfo = request.getPathInfo();
+		}
+		if (pathInfo != null) path += pathInfo;
 		
 		Matcher matcher = null;
 		Config config = null;
@@ -141,14 +157,15 @@ public class GatewayFilter implements Filter {
 			}
 			
 			if (!access) {
-				response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+				// An include cannot change the caller's status or error response.
+				if (!include) response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
 				return;
 			}
 		}
 		
 		// Authorization applies to every dispatch, including forwards. Only the
 		// response transformations and configured rewrite run once per request.
-		if (request.getAttribute(GATEWAY_KEY) != null) {
+		if (include || request.getAttribute(GATEWAY_KEY) != null) {
 			chain.doFilter(request, response);
 			return;
 		}

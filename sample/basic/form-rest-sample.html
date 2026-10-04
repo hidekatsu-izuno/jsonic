@@ -26,29 +26,12 @@ div#list table td {
 }
 </style>
 <script type="text/javascript" src="jquery-4.0.0.min.js"></script>
+<script type="text/javascript" src="memo-table.js"></script>
 <script type="text/javascript">
 $.ajaxSetup({ cache: false });
 
 function show() {
-	var request = $.getJSON('rest/memo.json', function(o) {
-		var content = '<table><tr><th width="30">ID</th><th width="50">Title</th><th width="300">Text</th><th width="50">&nbsp;</th></tr>';
-		for (var i = 0; i < o.length; i++) {
-			content += '<tr>'
-				+ '<td>' + o[i].id + '</td>'
-				+ '<td><input id="title' + o[i].id + '" type="text" style="width:100%" value="' + o[i].title + '" /></td>'
-				+ '<td><input id="text' + o[i].id + '" type="text" style="width:100%" value="' + o[i].text + '" /></td>'
-				+ '<td><input type="button" id="update' + o[i].id + '" value="Update" onclick="updateRow(' + o[i].id + ')" />'
-				+ '<input type="button" id="delete' + o[i].id + '" value="Delete" onclick="deleteRow(' + o[i].id + ')" /></td>'
-				+ '</tr>';
-		}
-		content += '<tr>'
-			+ '<td>&nbsp;</td>'
-			+ '<td><input id="title" type="text" style="width:100%" /></td>'
-			+ '<td><input id="text" type="text" style="width:100%" /></td>'
-			+ '<td><input type="button" id="add" value="Add" onclick="addRow()"/></td>'
-			+ '</tr></table>';
-		$('#list').html(content);
-	});
+	var request = $.getJSON('rest/memo.json', renderMemoTable);
 }
 
 function addRow() {

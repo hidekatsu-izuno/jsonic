@@ -31,6 +31,7 @@ class WebSecurityTest {
     private static Server server;
     private static String base;
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
+    private static final AtomicInteger protectedReads = new AtomicInteger();
 
     public static class Service {
         static final AtomicInteger deletes = new AtomicInteger();
@@ -58,6 +59,7 @@ class WebSecurityTest {
             context.addServlet(new ServletHolder(new HttpServlet() {
                 @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
                         throws IOException {
+                    protectedReads.incrementAndGet();
                     response.getWriter().write("protected");
                 }
             }), "/admin/*");
@@ -69,6 +71,15 @@ class WebSecurityTest {
             }), "/jump");
             context.addServlet(new ServletHolder(new HttpServlet() {
                 @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
+                        throws IOException, ServletException {
+                    response.getWriter().write("before:");
+                    String target = "public".equals(request.getParameter("target")) ? "/open" : "/admin/secret";
+                    request.getRequestDispatcher(target).include(request, response);
+                    response.getWriter().write(":after");
+                }
+            }), "/include");
+            context.addServlet(new ServletHolder(new HttpServlet() {
+                @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
                         throws IOException {
                     response.getWriter().write("public");
                 }
@@ -78,7 +89,7 @@ class WebSecurityTest {
                     + "\"/rewrite\":{\"forward\":\"/admin/secret\"},"
                     + "\"/rewrite-open\":{\"forward\":\"/open\",\"compression\":true},"
                     + "\"/open\":{\"forward\":\"/open\"}}");
-            context.addFilter(filter, "/*", EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD));
+            context.addFilter(filter, "/*", EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.INCLUDE));
             contexts.addHandler(context);
         }
         server.setHandler(contexts);
@@ -96,6 +107,18 @@ class WebSecurityTest {
                 .header("Content-Type", "application/json")
                 .method(method, HttpRequest.BodyPublishers.noBody()).build(),
                 HttpResponse.BodyHandlers.ofString());
+    }
+
+    @Test
+    void rejectsProtectedIncludesBeforeInvokingTheTarget() throws Exception {
+        protectedReads.set(0);
+        for (String context : List.of("", "/app")) {
+            var denied = request("GET", context + "/include");
+            assertEquals(200, denied.statusCode());
+            assertEquals("before::after", denied.body());
+            assertEquals("before:public:after", request("GET", context + "/include?target=public").body());
+        }
+        assertEquals(0, protectedReads.get());
     }
 
     @Test
