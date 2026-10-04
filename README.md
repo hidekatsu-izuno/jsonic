@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.arnx/jsonic/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.arnx/jsonic)
+[![Maven Central](https://img.shields.io/maven-central/v/net.arnx/jsonic.svg)](https://central.sonatype.com/artifact/net.arnx/jsonic)
 
 # JSONIC
 
